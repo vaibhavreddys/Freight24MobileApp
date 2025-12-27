@@ -2,6 +2,8 @@ package com.freight24.trucker.feature.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.freight24.core.auth.AuthRepository
+import com.freight24.core.common.ui.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -10,27 +12,63 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class LoginViewModel @Inject constructor() : ViewModel() {
+class LoginViewModel @Inject constructor(
+    private val authRepository: AuthRepository
+) : ViewModel() {
 
     private val _phoneNumber = MutableStateFlow("")
     val phoneNumber: StateFlow<String> = _phoneNumber.asStateFlow()
 
+    // One-time navigation event
+    private val _uiState = MutableStateFlow<UiState<Unit>>(UiState.Idle)
+    val uiState: StateFlow<UiState<Unit>> = _uiState.asStateFlow()
+
+    // One-time navigation event
+    private val _navigateToVerifyOtp = MutableStateFlow<String?>(null)
+    val navigateToVerifyOtp: StateFlow<String?> = _navigateToVerifyOtp.asStateFlow()
+
+    companion object {
+        const val MAX_PHONE_LENGTH = 10
+    }
+
     fun onPhoneNumberChange(newValue: String) {
-        // Simple validation to allow only digits and max length if needed
-        if (newValue.all { it.isDigit() } && newValue.length <= 10) {
-            _phoneNumber.value = newValue
+        val digitsOnly = newValue.filter { it.isDigit() }
+        if (digitsOnly.length <= MAX_PHONE_LENGTH) {
+            _phoneNumber.value = digitsOnly
         }
     }
 
     fun onSendOtpClick() {
-        viewModelScope.launch {
-            val phone = _phoneNumber.value
-            if (phone.length == 10) {
-                // TODO: Call Trucker Login API
-                println("Initiating Trucker Login for $phone")
-            } else {
-                // TODO: Show error state
-            }
+        val phone = _phoneNumber.value
+        if (phone.length != MAX_PHONE_LENGTH) {
+            _uiState.value = UiState.Error("Please enter a valid 10-digit number")
+            return
         }
+
+        val fullPhone = "+91$phone"
+
+        viewModelScope.launch {
+            _uiState.value = UiState.Loading
+            val result = authRepository.requestOtp(fullPhone)
+            result.fold(
+                onSuccess = {
+                    _uiState.value = UiState.Success(Unit)
+                    _navigateToVerifyOtp.value = fullPhone
+                },
+                onFailure = { exception ->
+                    _uiState.value = UiState.Error(exception.message ?: "Failed to send OTP")
+                }
+            )
+        }
+    }
+
+    // Call this after UI consumes the event
+    fun onNavigationHandled() {
+        _navigateToVerifyOtp.value = null
+        _uiState.value = UiState.Idle
+    }
+
+    fun resetUiState() {
+        _uiState.value = UiState.Idle
     }
 }

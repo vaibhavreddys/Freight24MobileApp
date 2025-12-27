@@ -45,4 +45,8 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    // Material 3 Extended IconSet
+    implementation("androidx.compose.material:material-icons-extended:1.x.x")
+
 }

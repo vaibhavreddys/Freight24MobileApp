@@ -24,10 +24,15 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
             isDebuggable = true
+            buildConfigField("String", "BASE_URL", "\"https://backendapi-qhpo.onrender.com/api/v1/\"")
         }
         release {
             isMinifyEnabled = false
@@ -35,6 +40,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("String", "BASE_URL", "\"https://freight24.in/api/v1/\"")
         }
     }
 
@@ -72,9 +78,9 @@ android {
 }
 
 dependencies {
+    implementation(project(":core:auth"))
     implementation(project(":core:common"))
     implementation(project(":core:network"))
-    implementation(project(":core:auth"))
     implementation(project(":core:database"))
     implementation(project(":core:ui"))
 
@@ -92,9 +98,27 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.hilt.navigation.compose)
 
+    // Material 3 Extended IconSet
+    implementation("androidx.compose.material:material-icons-extended:1.x.x")
+
+
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }
+
+//afterEvaluate {
+//    android.applicationVariants.all { variant ->
+//        val kspConfigName = "ksp${variant.name.capitalize()}KotlinProcessorClasspath"
+//        configurations.named(kspConfigName).configure {
+//            attributes {
+//                attribute(
+//                    com.android.build.gradle.internal.attributes.VariantAttr.ATTRIBUTE,
+//                    objects.named(com.android.build.gradle.internal.attributes.VariantAttr::class.java, variant.name)
+//                )
+//            }
+//        }
+//    }
+//}

@@ -19,6 +19,18 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Enable the same dimension so Gradle can match variants
+    flavorDimensions += "env"
+
+    productFlavors {
+        create("qa") {
+            dimension = "env"
+        }
+        create("prod") {
+            dimension = "env"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -34,6 +46,9 @@ dependencies {
     implementation(project(":core:common"))
     implementation(project(":core:network"))
     implementation(project(":core:database"))
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

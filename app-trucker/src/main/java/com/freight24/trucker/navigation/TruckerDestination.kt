@@ -4,15 +4,15 @@ sealed class TruckerDestination(val route: String) {
 
     object Login : TruckerDestination("login")
 
-    object VerifyOtp : TruckerDestination("verify_otp?phone={phone}") {
-        fun createRoute(phone: String) =
-            "verify_otp?phone=$phone"
+    object VerifyOtp : TruckerDestination("verifyOtp/{phone}") {
+        fun createRoute(phone: String) = "verifyOtp/$phone"
     }
 
-    object Dashboard : TruckerDestination("dashboard")
+    // NEW authenticated root
+    object Main : TruckerDestination("main")
 
-    object TripDetail : TruckerDestination("trip_detail/{tripId}") {
-        fun createRoute(tripId: String) =
-            "trip_detail/$tripId"
+    // (Optional – keep for later deep links)
+    object TripDetail : TruckerDestination("tripDetail/{tripId}") {
+        fun createRoute(tripId: String) = "tripDetail/$tripId"
     }
 }

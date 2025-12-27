@@ -26,7 +26,8 @@ private val LightColorScheme = lightColorScheme(
     onBackground = TextMainLight,
     onSurface = TextMainLight,
     surfaceVariant = BackgroundLight, // Slightly different shade for variants
-    onSurfaceVariant = TextMutedLight
+    onSurfaceVariant = TextMutedLight,
+    surfaceDim = DisabledButtonColorLight
 )
 
 private val DarkColorScheme = darkColorScheme(
@@ -40,7 +41,8 @@ private val DarkColorScheme = darkColorScheme(
     onBackground = TextMainDark,
     onSurface = TextMainDark,
     surfaceVariant = BackgroundDark,
-    onSurfaceVariant = TextMutedDark
+    onSurfaceVariant = TextMutedDark,
+    surfaceDim = DisabledButtonColorDark
 )
 
 @Composable
