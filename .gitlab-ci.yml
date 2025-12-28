@@ -38,7 +38,6 @@ build:trucker:qaDebug:
   artifacts:
     paths:
       - app-trucker/build/outputs/apk/qa/debug/
-    expire_in: 7 days
 
 build:employee:qaDebug:
   stage: build
@@ -47,7 +46,6 @@ build:employee:qaDebug:
   artifacts:
     paths:
       - app-employee/build/outputs/apk/qa/debug/
-    expire_in: 7 days
 
 # -----------------------------
 # TEST (OPTIONAL BUT SAFE)
@@ -65,21 +63,23 @@ unit-tests:
 
 package:trucker:prodRelease:
   stage: package
+  when: manual
   script:
     - ./gradlew :app-trucker:assembleProdRelease
   artifacts:
     paths:
       - app-trucker/build/outputs/apk/prod/release/
-    when: manual
+
 
 package:employee:prodRelease:
   stage: package
+  when: manual
   script:
     - ./gradlew :app-employee:assembleProdRelease
   artifacts:
     paths:
       - app-employee/build/outputs/apk/prod/release/
-    when: manual
+
 
 # -----------------------------
 # DEPLOY (PLACEHOLDER)
