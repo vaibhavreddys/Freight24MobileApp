@@ -30,7 +30,9 @@ private const val IV_SEPARATOR = ":"
 val Context.authDataStore: DataStore<Preferences> by preferencesDataStore(name = "auth_prefs_secure")
 
 @Singleton
-class AuthDataStore @Inject constructor(@ApplicationContext private val context: Context) {
+class AuthDataStore @Inject constructor(
+    @param:ApplicationContext private val context: Context
+) {
 
     companion object {
         private val TOKEN_KEY = stringPreferencesKey("encrypted_token")

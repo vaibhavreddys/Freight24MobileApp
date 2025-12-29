@@ -1,9 +1,12 @@
 package com.freight24.trucker.feature.login
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.freight24.core.auth.AuthRepository
 import com.freight24.core.common.ui.UiState
+import com.freight24.core.notifications.AppNotification
+import com.freight24.core.notifications.NotificationDispatcher
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +16,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val notificationDispatcher: NotificationDispatcher
 ) : ViewModel() {
 
     private val _phoneNumber = MutableStateFlow("")
@@ -51,7 +55,14 @@ class LoginViewModel @Inject constructor(
             _uiState.value = UiState.Loading
             val result = authRepository.requestOtp(fullPhone)
             result.fold(
-                onSuccess = {
+                onSuccess = { response ->
+                    Log.e("LoginViewModel", "Response: $response")
+                    notificationDispatcher.show(
+                        AppNotification.Critical(
+                            message = "OTP for $fullPhone is ${response.message?.otp_code}"
+                        )
+                    )
+                    Log.e("LoginViewModel", "Notification sent")
                     _uiState.value = UiState.Success(Unit)
                     _navigateToVerifyOtp.value = fullPhone
                 },

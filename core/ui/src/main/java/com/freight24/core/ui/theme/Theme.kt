@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.freight24.core.ui.theme
 
 import android.app.Activity

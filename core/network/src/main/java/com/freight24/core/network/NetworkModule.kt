@@ -43,7 +43,8 @@ object NetworkModule {
         // You should configure the Base URL via BuildConfig in a real app,
         // passing it as a parameter or injecting it.
         // For now, using a placeholder.
-        .baseUrl("https://backendapi-qhpo.onrender.com/api/v1/")
+//        .baseUrl("https://backendapi-qhpo.onrender.com/api/v1/")
+        .baseUrl("http://192.168.1.38:3000/api/v1/")
         .callFactory(okhttpCallFactory)
         .addConverterFactory(
             networkJson.asConverterFactory("application/json".toMediaType()),

@@ -2,6 +2,7 @@ package com.freight24.core.auth
 
 import android.util.Log
 import com.freight24.core.network.api.AuthApi
+import com.freight24.core.network.model.OtpDebugInfo
 import com.freight24.core.network.model.RequestOtpRequest
 import com.freight24.core.network.model.VerifyOtpRequest
 import kotlinx.coroutines.flow.first
@@ -14,11 +15,16 @@ class AuthRepository @Inject constructor(
     private val authDataStore: AuthDataStore
 ) {
 
-    suspend fun requestOtp(phoneNumber: String): Result<Unit> {
+    suspend fun requestOtp(phoneNumber: String): Result<OtpDebugInfo> {
         return try {
             val response = authApi.requestOtp(RequestOtpRequest(phoneNumber))
             if (response.success) {
-                Result.success(Unit)
+                Log.e("AuthRepository", "OTP sent successfully: $response")
+                    val otp = OtpExtractor.extract(response.data)
+                    otp?.let {
+                        Log.d("AuthRepository", "DEBUG OTP: $it")
+                    }
+                Result.success(OtpDebugInfo(response.data))
             } else {
                 Result.failure(Exception(response.message))
             }

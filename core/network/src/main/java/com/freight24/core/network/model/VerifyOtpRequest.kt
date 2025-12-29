@@ -1,3 +1,5 @@
+@file:OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
+
 package com.freight24.core.network.model
 
 import kotlinx.serialization.EncodeDefault

@@ -14,7 +14,8 @@ data class AuthData(
     val token: String? = null,
     val user: User? = null,
     val token_type: String? = null,
-    val expires_in: Int? = null
+    val expires_in: Int? = null,
+    val otp_code: String? = null
 )
 
 @Serializable

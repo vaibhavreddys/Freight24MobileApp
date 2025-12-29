@@ -1,5 +1,9 @@
 package com.freight24.trucker.feature.login
 
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -60,6 +64,44 @@ fun LoginScreen(navController: NavHostController, viewModel: LoginViewModel = hi
         }
     }
 
+    // Request to send notifications
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    var notificationPermissionGranted by remember {
+        mutableStateOf(Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)
+    }
+
+    var showPermissionDeniedSnackbar by remember {
+        mutableStateOf(false)
+    }
+
+    val notificationPermissionLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { granted ->
+            notificationPermissionGranted = granted
+            if (!granted) {
+                showPermissionDeniedSnackbar = true
+            }
+        }
+
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            notificationPermissionLauncher.launch(
+                Manifest.permission.POST_NOTIFICATIONS
+            )
+        }
+    }
+    LaunchedEffect(showPermissionDeniedSnackbar) {
+        if (showPermissionDeniedSnackbar) {
+            snackbarHostState.showSnackbar(
+                message = "Enable notifications to receive alerts",
+                duration = SnackbarDuration.Long
+            )
+            showPermissionDeniedSnackbar = false // reset
+        }
+    }
+
     // Loading overlay
     if (uiState is UiState.Loading) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -68,7 +110,6 @@ fun LoginScreen(navController: NavHostController, viewModel: LoginViewModel = hi
     }
 
     // Error snackbar
-    val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(uiState) {
         if (uiState is UiState.Error) {
             snackbarHostState.showSnackbar((uiState as UiState.Error).message)
@@ -107,23 +148,24 @@ fun LoginScreen(navController: NavHostController, viewModel: LoginViewModel = hi
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier.padding(bottom = 32.dp)
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(80.dp)
-                                    .background(
-                                        color = colors.surface,
-                                        shape = RoundedCornerShape(16.dp)
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.file),
-                                    contentDescription = "Logo",
-                                    tint = Color.Unspecified,
-                                    modifier = Modifier.size(48.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(16.dp))
+                            // TODO: Add logo here
+//                            Box(
+//                                modifier = Modifier
+//                                    .size(80.dp)
+//                                    .background(
+//                                        color = colors.surface,
+//                                        shape = RoundedCornerShape(16.dp)
+//                                    ),
+//                                contentAlignment = Alignment.Center
+//                            ) {
+//                                Icon(
+//                                    painter = painterResource(id = R.drawable.file),
+//                                    contentDescription = "Logo",
+//                                    tint = Color.Unspecified,
+//                                    modifier = Modifier.size(48.dp)
+//                                )
+//                            }
+//                            Spacer(modifier = Modifier.height(16.dp))
                             Text(
                                 text = stringResource(R.string.app_name),
                                 color = colors.onBackground,
