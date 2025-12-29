@@ -1,0 +1,99 @@
+image: gradle:8.4-jdk17
+
+variables:
+  ANDROID_SDK_ROOT: "/sdk"
+  GRADLE_USER_HOME: "$CI_PROJECT_DIR/.gradle"
+
+cache:
+  key: gradle-cache
+  paths:
+    - .gradle/
+    - /sdk/
+
+stages:
+  - build
+  - test
+  - package
+  - deploy
+
+before_script:
+  - apt-get update -qq
+  - apt-get install -y wget unzip
+  - mkdir -p $ANDROID_SDK_ROOT
+  - wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+  - unzip -q commandlinetools-linux-*.zip -d $ANDROID_SDK_ROOT
+
+  # Accept licenses FIRST (non-interactive)
+  - yes | $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses
+
+  # Then install required SDK components
+  - $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT \
+      "platform-tools" \
+      "platforms;android-36" \
+      "build-tools;36.0.0"
+
+
+
+# -----------------------------
+# BUILD (QA DEBUG)
+# -----------------------------
+
+build:trucker:qaDebug:
+  stage: build
+  script:
+    - ./gradlew :app-trucker:assembleQaDebug
+  artifacts:
+    paths:
+      - app-trucker/build/outputs/apk/qa/debug/
+
+build:employee:qaDebug:
+  stage: build
+  script:
+    - ./gradlew :app-employee:assembleQaDebug
+  artifacts:
+    paths:
+      - app-employee/build/outputs/apk/qa/debug/
+
+# -----------------------------
+# TEST (OPTIONAL BUT SAFE)
+# -----------------------------
+
+unit-tests:
+  stage: test
+  script:
+    - ./gradlew test
+  allow_failure: true
+
+# -----------------------------
+# PACKAGE (PROD RELEASE)
+# -----------------------------
+
+package:trucker:prodRelease:
+  stage: package
+  when: manual
+  script:
+    - ./gradlew :app-trucker:assembleProdRelease
+  artifacts:
+    paths:
+      - app-trucker/build/outputs/apk/prod/release/
+
+
+package:employee:prodRelease:
+  stage: package
+  when: manual
+  script:
+    - ./gradlew :app-employee:assembleProdRelease
+  artifacts:
+    paths:
+      - app-employee/build/outputs/apk/prod/release/
+
+
+# -----------------------------
+# DEPLOY (PLACEHOLDER)
+# -----------------------------
+
+deploy:
+  stage: deploy
+  script:
+    - echo "Deploy step (Play Store / Firebase coming later)"
+  when: manual
