@@ -1,11 +1,16 @@
 package com.freight24.core.auth
 
+import OtpExtractor
 import android.util.Log
 import com.freight24.core.network.api.AuthApi
 import com.freight24.core.network.model.OtpDebugInfo
 import com.freight24.core.network.model.RequestOtpRequest
 import com.freight24.core.network.model.VerifyOtpRequest
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import okhttp3.Interceptor
+import okhttp3.Response
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -63,4 +68,31 @@ class AuthRepository @Inject constructor(
     }
 
     suspend fun getSavedToken(): String? = authDataStore.authToken.first()
+    fun authTokenFlow(): Flow<String?> = authDataStore.authToken
+
+}
+
+class AuthInterceptor @Inject constructor(
+    private val authDataStore: AuthDataStore
+) : Interceptor {
+
+    override fun intercept(chain: Interceptor.Chain): Response {
+        val token = runBlocking {
+            authDataStore.authToken.first()
+        }
+        Log.e("AuthInterceptor", "Intercepting → token = $token")
+
+        val request = chain.request().newBuilder()
+            .apply {
+                if (!token.isNullOrBlank()) {
+                    addHeader("Authorization", "Bearer $token")
+                    Log.d("AuthInterceptor", "Token attached = $token")
+                } else {
+                    Log.e("AuthInterceptor", "Token is null or blank")
+                }
+            }
+            .build()
+
+        return chain.proceed(request)
+    }
 }

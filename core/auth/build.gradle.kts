@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    id("dagger.hilt.android.plugin")
 }
 
 kotlin {
@@ -43,9 +44,14 @@ android {
 }
 
 dependencies {
-    implementation(project(":core:common"))
     implementation(project(":core:network"))
-    implementation(project(":core:database"))
+
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.okhttp.core)
+    implementation(libs.okhttp.logging)
+    implementation(libs.kotlinx.serialization.json)
+
     implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
 

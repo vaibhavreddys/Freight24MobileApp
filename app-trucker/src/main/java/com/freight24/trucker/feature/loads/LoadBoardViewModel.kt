@@ -1,37 +1,57 @@
 package com.freight24.trucker.feature.loads
 
 import androidx.lifecycle.ViewModel
-import com.freight24.trucker.feature.loads.data.DummyLoadData
+import androidx.lifecycle.viewModelScope
+import com.freight24.core.auth.AuthRepository
+import com.freight24.core.common.model.CityLoadSummary
+import com.freight24.core.common.model.CityPaginationState
+import com.freight24.core.common.repository.LoadBoardRepository
+import com.freight24.trucker.feature.loads.mapper.toUi
 import com.freight24.trucker.feature.loads.model.LoadBoardItem
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlin.collections.emptyList
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class LoadBoardViewModel : ViewModel() {
+
+@HiltViewModel
+class LoadBoardViewModel @Inject constructor(
+    private val repository: LoadBoardRepository,
+    private val authRepository: AuthRepository
+) : ViewModel() {
 
     private val pageSize = 10
-    private val _expandedCityId = MutableStateFlow<String?>(null)
-    var expandedCityId: StateFlow<String?> = _expandedCityId
-    private var loadedCount = 0
 
-    private val cities = listOf(
-        "Mumbai", "Pune", "Bangalore", "Hyderabad", "Chennai"
-    )
+    private val _expandedCityId = MutableStateFlow<Int?>(null)
+    val expandedCityId: StateFlow<Int?> = _expandedCityId
 
-    private val _items = MutableStateFlow<List<LoadBoardItem>>(initialCityItems())
+    val cityData = mutableMapOf<Int, CityLoadSummary>()
+
+    private val _items = MutableStateFlow<List<LoadBoardItem>>(emptyList())
     val items: StateFlow<List<LoadBoardItem>> = _items
 
-    private fun initialCityItems(): List<LoadBoardItem> =
-        cities.map {
-            LoadBoardItem.CityItem(
-                cityId = it,
-                cityName = it,
-                totalLoads = 120,
-                expanded = false
-            )
-        }
+    private val cityPagination =
+        mutableMapOf<Int, CityPaginationState>()
 
-    fun onCityClicked(cityId: String) {
+
+    init {
+        viewModelScope.launch {
+            authRepository.authTokenFlow().filterNotNull().first()
+            loadInitial()
+        }
+    }
+
+    private suspend fun loadInitial() {
+        repository.fetchLoadBoardSummary().forEach { summary ->
+            cityData[summary.cityId] = summary
+        }
+        rebuild()
+    }
+
+    fun onCityClicked(cityId: Int) {
         if (_expandedCityId.value == cityId) {
             collapse()
         } else {
@@ -39,76 +59,164 @@ class LoadBoardViewModel : ViewModel() {
         }
     }
 
-    fun onShowMoreClicked(cityId: String) {
-        val nextLoads = DummyLoadData.loadsForCity(
-            city = cityId,
-            start = loadedCount,
-            count = pageSize
-        )
+    private fun expand(cityId: Int) {
+        _expandedCityId.value = cityId
 
-        loadedCount += pageSize
-        _items.value = _items.value.flatMap { item ->
-            when (item) {
-                is LoadBoardItem.ShowMoreItem -> {
-                    if (item.cityId == cityId) {
-                        buildList<LoadBoardItem> {
-                            // Add newly loaded loads
-                            addAll(
-                                nextLoads.map { load ->
-                                    LoadBoardItem.LoadItem(load)
-                                }
-                            )
-                            // Add ShowMore again if needed
-                            if (loadedCount < item.totalCount) {
-                                add(
-                                    LoadBoardItem.ShowMoreItem(
-                                        cityId = cityId,
-                                        loadedCount = loadedCount,
-                                        totalCount = item.totalCount
-                                    )
-                                )
-                            }
-                        }
-                    } else {
-                        listOf(item)
-                    }
-                }
-                else -> listOf(item)
-            }
+        cityPagination[cityId] = CityPaginationState()
+
+        viewModelScope.launch {
+            val result = repository.fetchLoadsForCity(cityId, page = 1)
+
+            cityPagination[cityId] = CityPaginationState(
+                page = 1,
+                hasMore = result.hasMore
+            )
+
+            buildItems(
+                cityId = cityId,
+                loads = result.loads,
+                hasMore = result.hasMore,
+                total = result.totalLoads
+            )
         }
     }
 
-    private fun expand(cityId: String) {
-        _expandedCityId.value = cityId
-        loadedCount = pageSize
+    fun onShowMoreClicked(cityId: Int) {
+        val state = cityPagination[cityId] ?: return
+        if (!state.hasMore || state.isLoading) return
 
-        val loads = DummyLoadData.loadsForCity(cityId, 0, pageSize)
+        cityPagination[cityId] = state.copy(isLoading = true)
 
-        _items.value = cities.flatMap { city ->
-            if (city == cityId) {
-                listOf(
-                    LoadBoardItem.CityItem(city, city, 120, true)
-                ) +
-                        loads.map { LoadBoardItem.LoadItem(it) } +
-                        LoadBoardItem.ShowMoreItem(city, loadedCount, 120)
-            } else {
-                listOf(
-                    LoadBoardItem.CityItem(city, city, 120, false)
-                )
-            }
+        viewModelScope.launch {
+            val nextPage = state.page + 1
+            val result = repository.fetchLoadsForCity(cityId, nextPage)
+
+            cityPagination[cityId] = state.copy(
+                page = nextPage,
+                hasMore = result.hasMore,
+                isLoading = false
+            )
+
+            appendLoads(
+                cityId = cityId,
+                loads = result.loads,
+                hasMore = result.hasMore
+            )
         }
     }
 
     private fun collapse() {
         _expandedCityId.value = null
-        loadedCount = 0
-        _items.value = initialCityItems()
+        rebuild()
     }
 
-    fun indexOfCity(cityId: String): Int {
-        return _items.value.indexOfFirst {
+    private fun buildItems(
+        cityId: Int,
+        loads: List<com.freight24.core.common.model.Load>,
+        hasMore: Boolean,
+        total: Int
+    ) {
+        val city = cityData[cityId] ?: return
+
+        _items.value = buildList {
+            cityData.values.forEach { c ->
+                val expanded = c.cityId == cityId
+
+                add(
+                    LoadBoardItem.CityItem(
+                        cityId = c.cityId,
+                        cityName = c.cityName,
+                        totalLoads = c.totalLoads,
+                        expanded = expanded
+                    )
+                )
+
+                if (expanded) {
+                    addAll(loads.map { LoadBoardItem.LoadItem(it.toUi()) })
+
+                    if (hasMore) {
+                        add(
+                            LoadBoardItem.ShowMoreItem(
+                                cityId = cityId,
+                                loadedCount = loads.size,
+                                totalCount = total
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun appendLoads(
+        cityId: Int,
+        loads: List<com.freight24.core.common.model.Load>,
+        hasMore: Boolean
+    ) {
+        _items.value = buildList {
+            items.value.forEach { item ->
+                when (item) {
+                    is LoadBoardItem.ShowMoreItem -> {
+                        if (item.cityId == cityId) {
+                            // Insert new loads before Show More
+                            addAll(loads.map { LoadBoardItem.LoadItem(it.toUi()) })
+
+                            if (hasMore) {
+                                add(item) // keep Show More
+                            }
+                        } else {
+                            add(item)
+                        }
+                    }
+
+                    else -> add(item)
+                }
+            }
+        }
+    }
+
+
+    fun indexOfCity(cityId: Int): Int {
+        return items.value.indexOfFirst {
             it is LoadBoardItem.CityItem && it.cityId == cityId
         }
     }
 
+
+    private fun rebuild() {
+        _items.value = buildList {
+            cityData.values.forEach { city ->
+                val expanded = _expandedCityId.value == city.cityId
+
+                add(
+                    LoadBoardItem.CityItem(
+                        cityId = city.cityId,
+                        cityName = city.cityName,
+                        totalLoads = city.totalLoads,
+                        expanded = expanded
+                    )
+                )
+
+                if (expanded) {
+                    addAll(
+                        city.initialLoads.map {
+                            LoadBoardItem.LoadItem(it.toUi())
+                        }
+                    )
+
+                    // ShowMore handled ONLY via pagination state
+                    val pagination = cityPagination[city.cityId]
+                    if (pagination?.hasMore == true) {
+                        add(
+                            LoadBoardItem.ShowMoreItem(
+                                cityId = city.cityId,
+                                loadedCount = city.initialLoads.size,
+                                totalCount = city.totalLoads
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
 }

@@ -1,15 +1,21 @@
 package com.freight24.trucker.feature.main
 
-import androidx.compose.runtime.*
-import androidx.compose.material3.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.freight24.core.ui.components.FreightBottomNavScaffold
 import com.freight24.core.ui.components.LoadBoardTopBar
-import com.freight24.core.ui.navigation.BottomNavItem
 import com.freight24.trucker.feature.loads.LoadBoardScreen
 import com.freight24.trucker.feature.loads.LoadBoardViewModel
 import com.freight24.trucker.navigation.TruckerTabs
@@ -18,7 +24,7 @@ import com.freight24.trucker.navigation.TruckerTabs
 fun TruckerMainScreen() {
     var selectedTab by remember { mutableStateOf(TruckerTabs.first()) }
 
-    val loadBoardViewModel: LoadBoardViewModel = viewModel()
+    val loadBoardViewModel: LoadBoardViewModel = hiltViewModel()
 
     // 👇 HOIST SCROLL STATE
     val loadBoardListState = rememberLazyListState()

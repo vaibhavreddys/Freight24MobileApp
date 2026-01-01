@@ -5,7 +5,7 @@ import com.freight24.trucker.feature.loads.model.ui.LoadUi
 sealed interface LoadBoardItem {
 
     data class CityItem(
-        val cityId: String,
+        val cityId: Int,
         val cityName: String,
         val totalLoads: Int,
         val expanded: Boolean
@@ -16,7 +16,7 @@ sealed interface LoadBoardItem {
     ) : LoadBoardItem
 
     data class ShowMoreItem(
-        val cityId: String,
+        val cityId: Int,
         val loadedCount: Int,
         val totalCount: Int
     ) : LoadBoardItem

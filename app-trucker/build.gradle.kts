@@ -85,6 +85,10 @@ dependencies {
     implementation(project(":core:ui"))
     implementation(project(":core:notifications"))
 
+    implementation(libs.okhttp.core)
+    implementation(libs.okhttp.logging)
+    implementation(libs.kotlinx.serialization.json)
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -109,17 +113,3 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }
-
-//afterEvaluate {
-//    android.applicationVariants.all { variant ->
-//        val kspConfigName = "ksp${variant.name.capitalize()}KotlinProcessorClasspath"
-//        configurations.named(kspConfigName).configure {
-//            attributes {
-//                attribute(
-//                    com.android.build.gradle.internal.attributes.VariantAttr.ATTRIBUTE,
-//                    objects.named(com.android.build.gradle.internal.attributes.VariantAttr::class.java, variant.name)
-//                )
-//            }
-//        }
-//    }
-//}

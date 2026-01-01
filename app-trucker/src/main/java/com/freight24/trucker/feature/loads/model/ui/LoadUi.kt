@@ -9,5 +9,6 @@ data class LoadUi(
     val truckInfo: String,
     val loadWeight: String,
     val commodity: String,
-    val f24AgentName: String
+    val f24AgentName: String,
+    val f24AgentPhone: String
 )

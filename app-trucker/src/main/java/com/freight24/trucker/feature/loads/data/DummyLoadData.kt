@@ -15,7 +15,8 @@ object DummyLoadData {
                 truckInfo = "32 ft Multi-Axle",
                 loadWeight = "20 Tons",
                 commodity = "Steel",
-                f24AgentName = "Ram Kumar"
+                f24AgentName = "Ram Kumar",
+                f24AgentPhone = "9876543210"
             )
         }
     }
