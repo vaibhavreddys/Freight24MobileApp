@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.freight24.core.auth.AuthRepository
-import com.freight24.core.common.ui.UiState
+import com.freight24.core.ui.UiState
 import com.freight24.core.notifications.AppNotification
 import com.freight24.core.notifications.NotificationDispatcher
 import dagger.hilt.android.lifecycle.HiltViewModel

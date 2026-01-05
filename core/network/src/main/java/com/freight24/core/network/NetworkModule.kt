@@ -2,11 +2,16 @@ package com.freight24.core.network
 
 import com.freight24.core.network.api.AuthApi
 import com.freight24.core.network.api.LoadBoardApi
+import com.freight24.core.network.api.TripApi
+import com.freight24.core.network.cache.LoadMemoryCache
+import com.freight24.core.network.cache.TripMemoryCache
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -17,6 +22,12 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
+
+    var HOST1 = "192.168.1.2"
+    var HOST2 = "192.168.1.8"
+    var RENDER = "backendapi-qhpo.onrender.com"
+    var HOST = HOST2
+    var BACKEND_URL = "http://${HOST}:3000/api/v1/"
 
     @Provides
     @Singleton
@@ -31,7 +42,7 @@ object NetworkModule {
         networkJson: Json
     ): Retrofit =
         Retrofit.Builder()
-            .baseUrl("https://backendapi-qhpo.onrender.com/api/v1/")
+            .baseUrl(BACKEND_URL)
             .client(okHttpClient)
             .addConverterFactory(
                 networkJson.asConverterFactory("application/json".toMediaType())
@@ -47,4 +58,21 @@ object NetworkModule {
     @Singleton
     fun provideLoadBoardApi(retrofit: Retrofit): LoadBoardApi =
         retrofit.create(LoadBoardApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideTripApi(retrofit: Retrofit): TripApi =
+        retrofit.create(TripApi::class.java)
+
+    @Provides
+    @Singleton
+    fun provideLoadMemoryCache(): LoadMemoryCache = LoadMemoryCache()
+
+    @Provides
+    @Singleton
+    fun provideTripMemoryCache(): TripMemoryCache = TripMemoryCache()
+
+    @Provides
+    @Singleton
+    fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
 }

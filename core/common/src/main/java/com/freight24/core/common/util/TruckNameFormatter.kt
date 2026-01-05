@@ -16,7 +16,7 @@ object TruckNameFormatter {
 
         // Replace Container types
         formatted = formatted.replace(Regex("(?i)container"), "Cont")
-//        formatted = formatted.replace(Regex("(?i)high\\s*cube"), "HQ") // High Cube Container
+        formatted = formatted.replace(Regex("(?i)high\\s*cube"), "HQ") // High Cube Container
 
         // Replace Body Types
         formatted = formatted.replace(Regex("(?i)open\\s*body"), "Open")

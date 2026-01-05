@@ -49,10 +49,16 @@ android {
 }
 
 dependencies {
-//    implementation(project(":core:common"))
     implementation(libs.androidx.core.ktx)
 
-    // Room / DataStore dependencies will go here
+    // Room
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+
+    // DI
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

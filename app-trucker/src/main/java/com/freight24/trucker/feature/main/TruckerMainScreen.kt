@@ -13,11 +13,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.freight24.core.ui.components.AppTopBar
 import com.freight24.core.ui.components.FreightBottomNavScaffold
-import com.freight24.core.ui.components.LoadBoardTopBar
 import com.freight24.trucker.feature.loads.LoadBoardScreen
 import com.freight24.trucker.feature.loads.LoadBoardViewModel
+import com.freight24.trucker.feature.trips.TripsScreen
+import com.freight24.trucker.feature.trucks.TrucksScreen
 import com.freight24.trucker.navigation.TruckerTabs
 
 @Composable
@@ -34,9 +37,12 @@ fun TruckerMainScreen() {
         selectedItem = selectedTab,
         onItemSelected = { selectedTab = it },
         topBar = {
-            if (selectedTab.id == "loads") {
-                LoadBoardTopBar()
-            }
+            AppTopBar(
+                title = getFormattedTabName(selectedTab.id),
+                showSearch = selectedTab.id == "loads",
+                onSearchClick = {
+                    // TODO: trigger search
+                })
         }
     ) { paddingValues, tab ->
 
@@ -46,12 +52,29 @@ fun TruckerMainScreen() {
                 viewModel = loadBoardViewModel,
                 listState = loadBoardListState
             )
-            "trips" -> PlaceholderScreen("Trips", paddingValues)
-            "trucks" -> PlaceholderScreen("Trucks", paddingValues)
-            "profile" -> PlaceholderScreen("Profile", paddingValues)
+
+            "trucks" -> TrucksScreen(
+                paddingValues = paddingValues
+            )
+
+            "trips" -> TripsScreen(paddingValues = paddingValues)
+
+            "profile" -> PlaceholderScreen("Profile", PaddingValues(0.dp))
         }
     }
 }
+
+/*
+  Returns a neatly formatted name for the tab.
+  @input name: String
+  @output String
+  Eg. "loads" -> "Loads"
+ */
+fun getFormattedTabName(name: String): String =
+    when (name) {
+        "trips" -> "My Trips"
+        else -> name.replaceFirstChar { it.uppercase() }
+    }
 
 
 @Composable

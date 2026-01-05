@@ -1,11 +1,12 @@
 package com.freight24.core.network.repository
 
 import com.freight24.core.common.model.CityLoadSummary
-import com.freight24.core.common.model.Load
 import com.freight24.core.common.model.PaginatedLoads
 import com.freight24.core.common.repository.LoadBoardRepository
 import com.freight24.core.network.api.LoadBoardApi
 import com.freight24.core.network.mapper.toDomain
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -14,39 +15,31 @@ class LoadBoardRepositoryImpl @Inject constructor(
     private val api: LoadBoardApi
 ) : LoadBoardRepository {
 
-    override suspend fun fetchLoadBoardSummary(): List<CityLoadSummary> {
+    override suspend fun fetchLoadBoardSummary(forceRefresh: Boolean): Flow<List<CityLoadSummary>> = flow {
         val response = api.getLoadBoardSummary()
-        if (!response.success) return emptyList()
-
-        return response.data.orEmpty().map { city ->
-            CityLoadSummary(
-                cityId = city.operationalCityId,
-                cityName = city.operationalCity,
-                totalLoads = city.totalLoads,
-                initialLoads = city.latestLoads.map { it.toDomain(city.operationalCity) }
-            )
+        if (response.success) {
+            val summaries = response.data.orEmpty().map { dto ->
+                CityLoadSummary(
+                    cityId = dto.operationalCityId,
+                    cityName = dto.operationalCity,
+                    totalLoads = dto.totalLoads,
+                    initialLoads = dto.latestLoads.map { it.toDomain(dto.operationalCity) }
+                )
+            }
+            emit(summaries)
         }
-    }
-
-    override suspend fun fetchMoreLoads(
-        cityId: Int,
-        offset: Int,
-        limit: Int
-    ): List<Load> {
-        // Future API:
-        // GET /indents/trucker/load-board?city_id=&offset=&limit=
-        // TODO("Hook when backend endpoint is ready")
-        return emptyList()
     }
 
     override suspend fun fetchLoadsForCity(
         cityId: Int,
-        page: Int
-    ): PaginatedLoads {
+        page: Int,
+        forceRefresh: Boolean
+    ): Flow<PaginatedLoads> = flow {
 
         val response = api.getPaginatedLoads(cityId, page)
         if (!response.success || response.data == null) {
-            return PaginatedLoads(emptyList(), page, false, 0)
+            emit(PaginatedLoads(emptyList(), page, false, 0))
+            return@flow
         }
 
         val fallbackCity =
@@ -54,17 +47,12 @@ class LoadBoardRepositoryImpl @Inject constructor(
                 ?: response.data.loads.firstOrNull()?.loadingArea
                 ?: "--"
 
-        return PaginatedLoads(
+        val result = PaginatedLoads(
             loads = response.data.loads.map { it.toDomain(fallbackCity) },
             page = response.data.pagination.page,
             hasMore = response.data.pagination.has_more,
             totalLoads = response.data.pagination.total_loads
         )
+        emit(result)
     }
-
-
-
-
 }
-
-

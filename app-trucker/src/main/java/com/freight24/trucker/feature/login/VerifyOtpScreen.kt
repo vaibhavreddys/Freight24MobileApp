@@ -19,10 +19,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.freight24.core.common.ui.UiState
+import com.freight24.core.ui.UiState
 import com.freight24.core.ui.theme.AppTypography
 import com.freight24.core.ui.theme.Freight24Theme
-import com.freight24.core.ui.theme.PrimaryGreen
 
 @Composable
 fun VerifyOtpScreen(

@@ -1,6 +1,6 @@
 // core/common/src/main/java/com/freight24/core/common/ui/UiState.kt
 
-package com.freight24.core.common.ui
+package com.freight24.core.ui
 
 sealed class UiState<out T> {
     object Idle : UiState<Nothing>()

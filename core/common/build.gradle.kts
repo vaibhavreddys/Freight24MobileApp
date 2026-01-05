@@ -49,6 +49,9 @@ android {
 }
 
 dependencies {
+    implementation(project(":core:database"))
+//    implementation(project(":core:network"))
+
     implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
 
