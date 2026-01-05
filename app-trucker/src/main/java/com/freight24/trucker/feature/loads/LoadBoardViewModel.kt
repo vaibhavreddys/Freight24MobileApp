@@ -32,31 +32,13 @@ class LoadBoardViewModel @Inject constructor(
     private val cityPages = mutableMapOf<Int, Int>()
 
     init {
-        fetchLoadBoardSummary()
-    }
-
-    private fun fetchLoadBoardSummary(forceRefresh: Boolean = false) {
         viewModelScope.launch {
-            repository.fetchLoadBoardSummary(forceRefresh).collectLatest { summaryList ->
-                val newItems = mutableListOf<LoadBoardItem>()
-                summaryList.forEach { summary ->
-                    // Check if this city was already expanded
-                    val isExpanded = _expandedCityId.value == summary.cityId
-                    
-                    newItems.add(
-                        LoadBoardItem.CityItem(
-                            cityId = summary.cityId,
-                            cityName = summary.cityName,
-                            totalLoads = summary.totalLoads,
-                            expanded = isExpanded 
-                        )
-                    )
-                }
-                _items.value = newItems
+            repository.fetchLoadBoardSummary(false).collectLatest { summaryList ->
+                updateCityList(summaryList)
             }
         }
     }
-    
+
     /**
      * Handle pull-to-refresh action.
      * Forces a network fetch and updates the UI.
@@ -65,11 +47,55 @@ class LoadBoardViewModel @Inject constructor(
         viewModelScope.launch {
             _isRefreshing.value = true
             try {
-                fetchLoadBoardSummary(forceRefresh = true)
+                // 1. Refresh city summary and wait for it
+                repository.fetchLoadBoardSummary(forceRefresh = true).collectLatest { summaryList ->
+                    updateCityList(summaryList)
+                    
+                    // 2. Refresh currently expanded city if any
+                    _expandedCityId.value?.let { cityId ->
+                        fetchLoadsForCity(cityId, page = 1, forceRefresh = true)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("LoadBoardViewModel", "Refresh failed", e)
             } finally {
                 _isRefreshing.value = false
             }
         }
+    }
+
+    private fun updateCityList(summaryList: List<com.freight24.core.common.model.CityLoadSummary>) {
+        val newItems = mutableListOf<LoadBoardItem>()
+        summaryList.forEach { summary ->
+            val isExpanded = _expandedCityId.value == summary.cityId
+            newItems.add(
+                LoadBoardItem.CityItem(
+                    cityId = summary.cityId,
+                    cityName = summary.cityName,
+                    totalLoads = summary.totalLoads,
+                    expanded = isExpanded
+                )
+            )
+            
+            // If this city is expanded, populate it with initial loads immediately
+            if (isExpanded) {
+                summary.initialLoads.forEach { load ->
+                    newItems.add(LoadBoardItem.LoadItem(load.toUi()))
+                }
+                
+                // Add Show More if there are more loads
+                if (summary.totalLoads > summary.initialLoads.size) {
+                    newItems.add(
+                        LoadBoardItem.ShowMoreItem(
+                            cityId = summary.cityId,
+                            loadedCount = summary.initialLoads.size,
+                            totalCount = summary.totalLoads
+                        )
+                    )
+                }
+            }
+        }
+        _items.value = newItems
     }
 
     fun onCityClicked(cityId: String) {
@@ -134,9 +160,9 @@ class LoadBoardViewModel @Inject constructor(
         _items.value = currentItems
     }
 
-    private fun fetchLoadsForCity(cityId: Int, page: Int) {
+    private fun fetchLoadsForCity(cityId: Int, page: Int, forceRefresh: Boolean = false) {
         viewModelScope.launch {
-            repository.fetchLoadsForCity(cityId, page).collectLatest { paginatedLoads ->
+            repository.fetchLoadsForCity(cityId, page, forceRefresh).collectLatest { paginatedLoads ->
                 val currentItems = _items.value.toMutableList()
                 val cityIndex = currentItems.indexOfFirst {
                     it is LoadBoardItem.CityItem && it.cityId == cityId

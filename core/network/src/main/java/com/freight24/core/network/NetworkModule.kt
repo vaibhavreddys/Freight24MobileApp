@@ -1,5 +1,6 @@
 package com.freight24.core.network
 
+import android.util.Log
 import com.freight24.core.network.api.AuthApi
 import com.freight24.core.network.api.LoadBoardApi
 import com.freight24.core.network.api.TripApi
@@ -25,9 +26,13 @@ object NetworkModule {
 
     var HOST1 = "192.168.1.2"
     var HOST2 = "192.168.1.8"
-    var RENDER = "backendapi-qhpo.onrender.com"
-    var HOST = HOST2
-    var BACKEND_URL = "http://${HOST}:3000/api/v1/"
+    var LOCALHOST = "http://${HOST2}:3000"
+    var RENDER = "https://backendapi-qhpo.onrender.com"
+
+    var HOST = RENDER
+//    var HOST = LOCALHOST
+
+    var BACKEND_URL = "${HOST}/api/v1/"
 
     @Provides
     @Singleton
@@ -47,7 +52,9 @@ object NetworkModule {
             .addConverterFactory(
                 networkJson.asConverterFactory("application/json".toMediaType())
             )
-            .build()
+            .build().also {
+                Log.d("NetworkModule", "BACKEND_URL: $BACKEND_URL")
+            }
 
     @Provides
     @Singleton

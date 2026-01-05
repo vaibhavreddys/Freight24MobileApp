@@ -29,6 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import com.freight24.core.ui.components.TripCard
 
 @Preview
@@ -41,32 +42,39 @@ fun TripsScreen(
     val selectedFilter by viewModel.selectedFilter.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
 
-    Column(
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = { viewModel.onRefresh() },
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)
-            .background(Color(0xFFF8F9FA))
     ) {
-        // Filter Tabs
-        TripFilterTabs(
-            selectedFilter = selectedFilter,
-            onFilterSelected = viewModel::onFilterSelected
-        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xFFF8F9FA))
+        ) {
+            // Filter Tabs
+            TripFilterTabs(
+                selectedFilter = selectedFilter,
+                onFilterSelected = viewModel::onFilterSelected
+            )
 
-        Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-        // Trips List
-        if (trips.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = "No trips found", color = Color.Gray)
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 16.dp)
-            ) {
-                items(trips) { trip ->
-                    TripCard(trip = trip)
+            // Trips List
+            if (trips.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(text = "No trips found", color = Color.Gray)
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = 16.dp)
+                ) {
+                    items(trips) { trip ->
+                        TripCard(trip = trip)
+                    }
                 }
             }
         }

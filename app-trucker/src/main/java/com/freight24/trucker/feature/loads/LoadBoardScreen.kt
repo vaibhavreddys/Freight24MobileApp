@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import com.freight24.core.ui.components.CityCard
 import com.freight24.core.ui.components.LoadCard
 import com.freight24.trucker.feature.loads.model.LoadBoardItem
@@ -38,13 +39,12 @@ fun LoadBoardScreen(
     listState: LazyListState
 ) {
     val items by viewModel.items.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
     val previousExpandedCityId = remember { mutableStateOf<Int?>(null) }
 
     val animatedLoadIds = remember { mutableSetOf<String>() }
     val expandedCityId by viewModel.expandedCityId.collectAsState()
     val context = LocalContext.current
-
-
 
     LaunchedEffect(expandedCityId, items) {
         val prev = previousExpandedCityId.value
@@ -64,21 +64,29 @@ fun LoadBoardScreen(
         previousExpandedCityId.value = current
     }
 
-
-    if (items.isEmpty()) {
-        Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = androidx.compose.ui.Alignment.Center) {
-            Text(
-                "No loads available right now",
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center
-            )
-        }
-    } else {
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = { viewModel.onRefresh() },
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+    ) {
+        if (items.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = androidx.compose.ui.Alignment.Center
+            ) {
+                Text(
+                    "No loads available right now",
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center
+                )
+            }
+        } else {
         LazyColumn(
             state = listState,
             modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
+                .fillMaxSize(),
             contentPadding = PaddingValues(
                 top = 12.dp,
                 start = 16.dp,
@@ -202,4 +210,5 @@ fun LoadBoardScreen(
             }
         }
     }
+}
 }
