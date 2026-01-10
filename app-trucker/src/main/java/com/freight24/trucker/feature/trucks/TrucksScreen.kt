@@ -1,7 +1,6 @@
 // TrucksScreen.kt
 package com.freight24.trucker.feature.trucks
 
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,32 +42,33 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 @Composable
 fun TrucksScreen(
     paddingValues: PaddingValues,
-    viewModel: TrucksViewModel = hiltViewModel()
+    viewModel: TrucksViewModel = hiltViewModel(),
 ) {
     val selectedFilter by viewModel.selectedFilter.collectAsState()
     val trucks by viewModel.trucks.collectAsState()
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
     ) {
         Column {
-
             FilterChips(
                 options = TruckFilter.entries,
                 selected = selectedFilter,
-                onSelected = viewModel::onFilterSelected
+                onSelected = viewModel::onFilterSelected,
             )
 
             LazyColumn(
-                contentPadding = PaddingValues(
-                    start = 16.dp,
-                    end = 16.dp,
-                    top = 8.dp,
-                    bottom = 96.dp
-                ),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                contentPadding =
+                    PaddingValues(
+                        start = 16.dp,
+                        end = 16.dp,
+                        top = 8.dp,
+                        bottom = 96.dp,
+                    ),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 items(trucks) { truck ->
                     TruckCard(truck)
@@ -78,27 +78,25 @@ fun TrucksScreen(
     }
 }
 
-
 @Composable
 fun FilterChips(
     options: List<TruckFilter>,
     selected: TruckFilter,
-    onSelected: (TruckFilter) -> Unit
+    onSelected: (TruckFilter) -> Unit,
 ) {
     LazyRow(
         contentPadding = PaddingValues(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(options) { option ->
             FilterChip(
                 selected = option == selected,
                 onClick = { onSelected(option) },
-                label = { Text(option.name.replace("_", " ")) }
+                label = { Text(option.name.replace("_", " ")) },
             )
         }
     }
 }
-
 
 @Composable
 fun TruckCard(truck: TruckUiModel) {
@@ -106,9 +104,10 @@ fun TruckCard(truck: TruckUiModel) {
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -130,16 +129,18 @@ fun TruckCard(truck: TruckUiModel) {
 
 @Composable
 fun TruckIcon(status: TruckStatus) {
-    val bg = when (status) {
-        TruckStatus.AVAILABLE -> Color(0xFFEAF2FF)
-        TruckStatus.ON_TRIP -> Color(0xFFFFF3E0)
-        TruckStatus.MAINTENANCE -> Color(0xFFFFEBEE)
-    }
+    val bg =
+        when (status) {
+            TruckStatus.AVAILABLE -> Color(0xFFEAF2FF)
+            TruckStatus.ON_TRIP -> Color(0xFFFFF3E0)
+            TruckStatus.MAINTENANCE -> Color(0xFFFFEBEE)
+        }
     Box(
-        modifier = Modifier
-            .size(40.dp)
-            .background(bg, RoundedCornerShape(12.dp)),
-        contentAlignment = Alignment.Center
+        modifier =
+            Modifier
+                .size(40.dp)
+                .background(bg, RoundedCornerShape(12.dp)),
+        contentAlignment = Alignment.Center,
     ) {
         Icon(Icons.Default.LocalShipping, contentDescription = null)
     }
@@ -147,16 +148,18 @@ fun TruckIcon(status: TruckStatus) {
 
 @Composable
 fun StatusChip(status: TruckStatus) {
-    val (text, bg) = when (status) {
-        TruckStatus.AVAILABLE -> "Available" to Color(0xFFE8F5E9)
-        TruckStatus.ON_TRIP -> "On Trip" to Color(0xFFE3F2FD)
-        TruckStatus.MAINTENANCE -> "Maintenance" to Color(0xFFFFEBEE)
-    }
+    val (text, bg) =
+        when (status) {
+            TruckStatus.AVAILABLE -> "Available" to Color(0xFFE8F5E9)
+            TruckStatus.ON_TRIP -> "On Trip" to Color(0xFFE3F2FD)
+            TruckStatus.MAINTENANCE -> "Maintenance" to Color(0xFFFFEBEE)
+        }
 
     Box(
-        modifier = Modifier
-            .background(bg, RoundedCornerShape(20.dp))
-            .padding(horizontal = 12.dp, vertical = 6.dp)
+        modifier =
+            Modifier
+                .background(bg, RoundedCornerShape(20.dp))
+                .padding(horizontal = 12.dp, vertical = 6.dp),
     ) {
         Text(text, style = MaterialTheme.typography.labelSmall)
     }
@@ -164,12 +167,13 @@ fun StatusChip(status: TruckStatus) {
 
 @Composable
 fun VerificationRow(status: VerificationStatus) {
-    val (text, icon, color) = when (status) {
-        VerificationStatus.COMPLETED ->
-            Triple("Document verification completed", Icons.Default.CheckCircle, Color(0xFF2E7D32))
-        VerificationStatus.PENDING ->
-            Triple("Document verification pending", Icons.Default.Error, Color(0xFFF9A825))
-    }
+    val (text, icon, color) =
+        when (status) {
+            VerificationStatus.COMPLETED ->
+                Triple("Document verification completed", Icons.Default.CheckCircle, Color(0xFF2E7D32))
+            VerificationStatus.PENDING ->
+                Triple("Document verification pending", Icons.Default.Error, Color(0xFFF9A825))
+        }
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(icon, contentDescription = null, tint = color)
@@ -181,38 +185,40 @@ fun VerificationRow(status: VerificationStatus) {
 @Composable
 fun OnboardTruckButton(
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     ExtendedFloatingActionButton(
         onClick = onClick,
         modifier = modifier,
         text = { Text("Onboard a New Truck") },
-        icon = { Icon(Icons.Default.Add, contentDescription = null) }
+        icon = { Icon(Icons.Default.Add, contentDescription = null) },
     )
 }
-
 
 // -------- Dummy data --------
 
 enum class TruckStatus { AVAILABLE, ON_TRIP, MAINTENANCE }
+
 enum class VerificationStatus { COMPLETED, PENDING }
 
 data class TruckUiModel(
     val number: String,
     val description: String,
     val status: TruckStatus,
-    val verification: VerificationStatus
+    val verification: VerificationStatus,
 )
 
-fun dummyTrucks() = listOf(
-    TruckUiModel("KA01AP1232", "32ft SXL Container", TruckStatus.AVAILABLE, VerificationStatus.COMPLETED),
-    TruckUiModel("RJ14GC9988", "20ft MXL Open Body", TruckStatus.ON_TRIP, VerificationStatus.COMPLETED),
-    TruckUiModel("TN09AY4567", "32ft MXL Multi-Axle", TruckStatus.MAINTENANCE, VerificationStatus.PENDING)
-)
+fun dummyTrucks() =
+    listOf(
+        TruckUiModel("KA01AP1232", "32ft SXL Container", TruckStatus.AVAILABLE, VerificationStatus.COMPLETED),
+        TruckUiModel("RJ14GC9988", "20ft MXL Open Body", TruckStatus.ON_TRIP, VerificationStatus.COMPLETED),
+        TruckUiModel("TN09AY4567", "32ft MXL Multi-Axle", TruckStatus.MAINTENANCE, VerificationStatus.PENDING),
+    )
 
-fun List<TruckUiModel>.filterBy(filter: String): List<TruckUiModel> = when (filter) {
-    "Available" -> filter { it.status == TruckStatus.AVAILABLE }
-    "On Trip" -> filter { it.status == TruckStatus.ON_TRIP }
-    "Maintenance" -> filter { it.status == TruckStatus.MAINTENANCE }
-    else -> this
-}
+fun List<TruckUiModel>.filterBy(filter: String): List<TruckUiModel> =
+    when (filter) {
+        "Available" -> filter { it.status == TruckStatus.AVAILABLE }
+        "On Trip" -> filter { it.status == TruckStatus.ON_TRIP }
+        "Maintenance" -> filter { it.status == TruckStatus.MAINTENANCE }
+        else -> this
+    }

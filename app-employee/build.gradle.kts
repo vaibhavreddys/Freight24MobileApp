@@ -38,7 +38,7 @@ android {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
             buildConfigField("String", "BASE_URL", "\"https://freight24.in/api/v1/\"")
         }
@@ -53,7 +53,7 @@ android {
             buildConfigField(
                 "String",
                 "BASE_URL",
-                "\"https://qa.api.freight24.com\""
+                "\"https://qa.api.freight24.com\"",
             )
         }
 
@@ -62,7 +62,7 @@ android {
             buildConfigField(
                 "String",
                 "BASE_URL",
-                "\"https://api.freight24.com\""
+                "\"https://api.freight24.com\"",
             )
         }
     }

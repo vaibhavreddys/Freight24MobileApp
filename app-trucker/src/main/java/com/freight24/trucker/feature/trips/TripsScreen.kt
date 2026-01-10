@@ -1,6 +1,6 @@
 package com.freight24.trucker.feature.trips
 
-//import androidx.hilt.navigation.compose.hiltViewModel
+// import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -29,14 +30,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import com.freight24.core.ui.components.TripCard
+import com.freight24.ui.components.TripCard
 
 @Preview
 @Composable
 fun TripsScreen(
     paddingValues: PaddingValues = PaddingValues(0.dp),
-    viewModel: TripsViewModel = hiltViewModel()
+    viewModel: TripsViewModel = hiltViewModel(),
 ) {
     val trips by viewModel.filteredTrips.collectAsState()
     val selectedFilter by viewModel.selectedFilter.collectAsState()
@@ -45,19 +45,21 @@ fun TripsScreen(
     PullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = { viewModel.onRefresh() },
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0xFFF8F9FA))
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFFF8F9FA)),
         ) {
             // Filter Tabs
             TripFilterTabs(
                 selectedFilter = selectedFilter,
-                onFilterSelected = viewModel::onFilterSelected
+                onFilterSelected = viewModel::onFilterSelected,
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -70,7 +72,7 @@ fun TripsScreen(
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 16.dp)
+                    contentPadding = PaddingValues(bottom = 16.dp),
                 ) {
                     items(trips) { trip ->
                         TripCard(trip = trip)
@@ -84,40 +86,41 @@ fun TripsScreen(
 @Composable
 fun TripFilterTabs(
     selectedFilter: TripFilter,
-    onFilterSelected: (TripFilter) -> Unit
+    onFilterSelected: (TripFilter) -> Unit,
 ) {
     LazyRow(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
             FilterTab(
                 label = "Active",
                 isSelected = selectedFilter == TripFilter.ACTIVE,
-                onClick = { onFilterSelected(TripFilter.ACTIVE) }
+                onClick = { onFilterSelected(TripFilter.ACTIVE) },
             )
         }
         item {
             FilterTab(
                 label = "POD",
                 isSelected = selectedFilter == TripFilter.POD,
-                onClick = { onFilterSelected(TripFilter.POD) }
+                onClick = { onFilterSelected(TripFilter.POD) },
             )
         }
         item {
             FilterTab(
                 label = "Completed",
                 isSelected = selectedFilter == TripFilter.COMPLETED,
-                onClick = { onFilterSelected(TripFilter.COMPLETED) }
+                onClick = { onFilterSelected(TripFilter.COMPLETED) },
             )
         }
         item {
             FilterTab(
                 label = "All",
                 isSelected = selectedFilter == TripFilter.ALL,
-                onClick = { onFilterSelected(TripFilter.ALL) }
+                onClick = { onFilterSelected(TripFilter.ALL) },
             )
         }
     }
@@ -127,7 +130,7 @@ fun TripFilterTabs(
 fun FilterTab(
     label: String,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     val backgroundColor = if (isSelected) Color(0xFF1B1B3A) else Color.White
     val textColor = if (isSelected) Color.White else Color.Gray
@@ -137,14 +140,14 @@ fun FilterTab(
         modifier = Modifier.clickable { onClick() },
         color = backgroundColor,
         shape = RoundedCornerShape(20.dp),
-        border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, borderColor)
+        border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, borderColor),
     ) {
         Text(
             text = label,
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
             fontSize = 14.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-            color = textColor
+            color = textColor,
         )
     }
 }

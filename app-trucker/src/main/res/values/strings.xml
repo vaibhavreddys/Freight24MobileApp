@@ -1,5 +1,9 @@
 <resources>
     <string name="app_name">Freight24</string>
     <string name="login_page_tagline">Let\'s get moving</string>
+    <string name="tab_loads">Loads</string>
+    <string name="tab_trips">Trips</string>
+    <string name="tab_trucks">Trucks</string>
+    <string name="tab_profile">Profile</string>
 
 </resources>

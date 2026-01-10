@@ -9,7 +9,7 @@ kotlin {
 }
 
 android {
-    namespace = "com.freight24.core.notifications"
+    namespace = "com.freight24.notifications"
     compileSdk = 36
 
     defaultConfig {
@@ -17,32 +17,12 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    // 1. Enable the Dimension
-    flavorDimensions += "env"
-
-    // 2. Define the matching flavors
-    productFlavors {
-        create("qa") {
-            dimension = "env"
-            // Define QA URL here so the Network Module owns it
-            buildConfigField("String", "BASE_URL", "\"https://qa.api.freight24.com\"")
-        }
-        create("prod") {
-            dimension = "env"
-            // Define Prod URL here
-            buildConfigField("String", "BASE_URL", "\"https://api.freight24.com\"")
-        }
-    }
-    buildFeatures {
-        buildConfig = true
-    }
-
     buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
     }
@@ -68,5 +48,4 @@ dependencies {
 
     // Material 3 Extended IconSet
     implementation("androidx.compose.material:material-icons-extended:1.x.x")
-
 }

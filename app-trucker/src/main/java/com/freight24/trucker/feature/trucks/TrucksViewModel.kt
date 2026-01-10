@@ -11,36 +11,40 @@ import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 @HiltViewModel
-class TrucksViewModel @Inject constructor() : ViewModel() {
+class TrucksViewModel
+    @Inject
+    constructor() : ViewModel() {
+        private val _selectedFilter =
+            MutableStateFlow(TruckFilter.ALL)
+        val selectedFilter: StateFlow<TruckFilter> = _selectedFilter
 
-    private val _selectedFilter =
-        MutableStateFlow(TruckFilter.ALL)
-    val selectedFilter: StateFlow<TruckFilter> = _selectedFilter
+        private val allTrucks = dummyTrucks()
 
-    private val allTrucks = dummyTrucks()
+        val trucks: StateFlow<List<TruckUiModel>> =
+            _selectedFilter.map { filter ->
+                when (filter) {
+                    TruckFilter.ALL -> allTrucks
+                    TruckFilter.AVAILABLE ->
+                        allTrucks.filter { it.status == TruckStatus.AVAILABLE }
+                    TruckFilter.ON_TRIP ->
+                        allTrucks.filter { it.status == TruckStatus.ON_TRIP }
+                    TruckFilter.MAINTENANCE ->
+                        allTrucks.filter { it.status == TruckStatus.MAINTENANCE }
+                }
+            }.stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.Eagerly,
+                initialValue = allTrucks,
+            )
 
-    val trucks: StateFlow<List<TruckUiModel>> =
-        _selectedFilter.map { filter ->
-            when (filter) {
-                TruckFilter.ALL -> allTrucks
-                TruckFilter.AVAILABLE ->
-                    allTrucks.filter { it.status == TruckStatus.AVAILABLE }
-                TruckFilter.ON_TRIP ->
-                    allTrucks.filter { it.status == TruckStatus.ON_TRIP }
-                TruckFilter.MAINTENANCE ->
-                    allTrucks.filter { it.status == TruckStatus.MAINTENANCE }
-            }
-        }.stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = allTrucks
-        )
-
-    fun onFilterSelected(filter: TruckFilter) {
-        _selectedFilter.value = filter
+        fun onFilterSelected(filter: TruckFilter) {
+            _selectedFilter.value = filter
+        }
     }
-}
 
 enum class TruckFilter {
-    ALL, AVAILABLE, ON_TRIP, MAINTENANCE
+    ALL,
+    AVAILABLE,
+    ON_TRIP,
+    MAINTENANCE,
 }

@@ -11,35 +11,13 @@ kotlin {
 }
 
 android {
-    namespace = "com.freight24.core.auth"
+    namespace = "com.freight24.auth"
     compileSdk = 36
 
     defaultConfig {
         minSdk = 24
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
-
-    // Enable the same dimension so Gradle can match variants
-    flavorDimensions += "env"
-
-    productFlavors {
-        create("qa") {
-            dimension = "env"
-        }
-        create("prod") {
-            dimension = "env"
-        }
-    }
-
-    buildTypes {
-        release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
-        }
     }
 }
 

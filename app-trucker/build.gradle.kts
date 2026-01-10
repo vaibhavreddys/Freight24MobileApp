@@ -38,7 +38,7 @@ android {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
             buildConfigField("String", "BASE_URL", "\"https://freight24.in/api/v1/\"")
         }
@@ -52,7 +52,7 @@ android {
             buildConfigField(
                 "String",
                 "BASE_URL",
-                "\"https://qa.api.freight24.com\""
+                "\"https://qa.api.freight24.com\"",
             )
         }
 
@@ -61,7 +61,7 @@ android {
             buildConfigField(
                 "String",
                 "BASE_URL",
-                "\"https://api.freight24.com\""
+                "\"https://api.freight24.com\"",
             )
         }
     }
@@ -84,6 +84,7 @@ dependencies {
     implementation(project(":core:database"))
     implementation(project(":core:ui"))
     implementation(project(":core:notifications"))
+    implementation(project(":core:rest"))
 
     implementation(libs.okhttp.core)
     implementation(libs.okhttp.logging)
@@ -105,7 +106,6 @@ dependencies {
 
     // Material 3 Extended IconSet
     implementation("androidx.compose.material:material-icons-extended:1.x.x")
-
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

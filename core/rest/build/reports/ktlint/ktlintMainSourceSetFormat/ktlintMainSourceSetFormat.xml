@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<checkstyle version="8.0">
+    <file name="/Users/infomerica-1170/AndroidStudioProjects/Freight24/core/rest/src/main/java/com/freight24/rest/response/AuthResponse.kt">
+        <error line="21" column="38" severity="error" message="A comment in a &apos;value_parameter_list&apos; is only allowed when placed on a separate line" source="standard:discouraged-comment-location" />
+        <error line="22" column="44" severity="error" message="A comment in a &apos;value_parameter_list&apos; is only allowed when placed on a separate line" source="standard:discouraged-comment-location" />
+        <error line="33" column="43" severity="error" message="A comment in a &apos;value_parameter_list&apos; is only allowed when placed on a separate line" source="standard:discouraged-comment-location" />
+    </file>
+</checkstyle>

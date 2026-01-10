@@ -1,31 +1,28 @@
 package com.freight24.trucker.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.freight24.trucker.feature.login.LoginScreen
-import com.freight24.trucker.feature.login.VerifyOtpScreen
-import com.freight24.trucker.feature.main.TruckerMainScreen
+import com.freight24.trucker.feature.home.TruckerHomeScreen
+import com.freight24.trucker.feature.login.view.signin.LoginScreen
+import com.freight24.trucker.feature.login.view.verify.VerifyOtpScreen
 
 @Composable
 fun TruckerNavGraph(
     navController: NavHostController,
-    startDestination: String
+    startDestination: String,
 ) {
-
     NavHost(
         navController = navController,
-        startDestination = startDestination
+        startDestination = startDestination,
     ) {
         // 1. Login Screen
         composable(TruckerDestination.Login.route) {
             LoginScreen(
-                navController = navController,  // Pass it down
-                viewModel = hiltViewModel()
+                navController = navController,
             )
             // Replace with your actual LoginScreen composable
 //            LoginScreen()
@@ -39,9 +36,10 @@ fun TruckerNavGraph(
         // 2️⃣ Verify OTP
         composable(
             route = TruckerDestination.VerifyOtp.route,
-            arguments = listOf(
-                navArgument("phone") { type = NavType.StringType }
-            )
+            arguments =
+                listOf(
+                    navArgument("phone") { type = NavType.StringType },
+                ),
         ) { backStackEntry ->
             val phone = backStackEntry.arguments?.getString("phone") ?: ""
 
@@ -54,7 +52,7 @@ fun TruckerNavGraph(
                             inclusive = true
                         }
                     }
-                }
+                },
             )
         }
 //        // 2. Verify OTP Screen
@@ -83,7 +81,7 @@ fun TruckerNavGraph(
 
         // 3. LoadBoard
         composable(TruckerDestination.Main.route) {
-            TruckerMainScreen()
+            TruckerHomeScreen()
 //        composable(TruckerDestination.Dashboard.route) {
             // Replace with your actual LoadBoardScreen composable
             // LoadBoardScreen(
@@ -96,11 +94,12 @@ fun TruckerNavGraph(
         // 4️⃣ Trip detail (optional, later)
         composable(
             route = TruckerDestination.TripDetail.route,
-            arguments = listOf(
-                navArgument("tripId") { type = NavType.StringType }
-            )
+            arguments =
+                listOf(
+                    navArgument("tripId") { type = NavType.StringType },
+                ),
         ) {
-            /* TripDetailScreen() */
+            // TripDetailScreen()
         }
 //        // 4. Trip Detail Screen
 //        composable(

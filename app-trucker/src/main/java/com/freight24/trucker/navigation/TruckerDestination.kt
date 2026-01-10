@@ -1,7 +1,6 @@
 package com.freight24.trucker.navigation
 
 sealed class TruckerDestination(val route: String) {
-
     object Login : TruckerDestination("login")
 
     object VerifyOtp : TruckerDestination("verifyOtp/{phone}") {
