@@ -12,7 +12,11 @@
 /build
 /captures
 .externalNativeBuild
-.cxx
+**/build/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
 local.properties
 .kotlin/*
 *.txt
