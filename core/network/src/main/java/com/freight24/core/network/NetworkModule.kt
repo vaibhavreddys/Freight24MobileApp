@@ -4,6 +4,7 @@ import android.util.Log
 import com.freight24.core.network.api.AuthApi
 import com.freight24.core.network.api.LoadBoardApi
 import com.freight24.core.network.api.TripApi
+import com.freight24.core.network.auth.AuthInterceptor
 import com.freight24.core.network.cache.LoadMemoryCache
 import com.freight24.core.network.cache.TripMemoryCache
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
@@ -16,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import javax.inject.Singleton
 
@@ -25,14 +27,28 @@ import javax.inject.Singleton
 object NetworkModule {
 
     var HOST1 = "192.168.1.2"
-    var HOST2 = "192.168.1.8"
+    var HOST2 = "192.168.1.159"
     var LOCALHOST = "http://${HOST2}:3000"
     var RENDER = "https://backendapi-qhpo.onrender.com"
 
-    var HOST = RENDER
-//    var HOST = LOCALHOST
+//    var HOST = RENDER
+    var HOST = LOCALHOST
 
     var BACKEND_URL = "${HOST}/api/v1/"
+
+    @Provides
+    @Singleton
+    fun provideOkHttpClient(
+        authInterceptor: AuthInterceptor
+    ): OkHttpClient {
+        val loggingInterceptor = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
+        return OkHttpClient.Builder()
+            .addInterceptor(authInterceptor)
+            .addInterceptor(loggingInterceptor)
+            .build()
+    }
 
     @Provides
     @Singleton

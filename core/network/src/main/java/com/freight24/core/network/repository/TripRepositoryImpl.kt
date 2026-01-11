@@ -24,6 +24,7 @@ class TripRepositoryImpl @Inject constructor(
     private val api: TripApi,
     private val dao: TripDao,
     private val memoryCache: TripMemoryCache,
+    private val globalMessageManager: com.freight24.core.common.util.GlobalMessageManager,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : TripRepository {
 
@@ -116,7 +117,21 @@ class TripRepositoryImpl @Inject constructor(
             }
         } catch (e: Exception) {
             Log.e(TAG, "❌ Network error: ${e.message}")
-            if (dbTrips.isEmpty()) throw e
+            globalMessageManager.showMessage("Unable to fetch trips")
+        }
+    }.flowOn(ioDispatcher)
+
+    override suspend fun fetchTripDetail(tripId: String): Flow<com.freight24.core.common.model.TripDetail> = flow {
+        try {
+            val response = api.getTripDetail(tripId)
+            if (response.success && response.data != null) {
+                emit(response.data.toDomain())
+            } else {
+                throw Exception("Failed to fetch trip details")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error fetching trip detail: ${e.message}")
+            globalMessageManager.showMessage("Failed to load trip details")
         }
     }.flowOn(ioDispatcher)
 

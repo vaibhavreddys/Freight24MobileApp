@@ -39,6 +39,7 @@ class LoadBoardRepositoryCachedImpl @Inject constructor(
     private val api: LoadBoardApi,
     private val dao: LoadBoardDao,
     private val memoryCache: LoadMemoryCache,
+    private val globalMessageManager: com.freight24.core.common.util.GlobalMessageManager,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : LoadBoardRepository {
 
@@ -91,62 +92,70 @@ class LoadBoardRepositoryCachedImpl @Inject constructor(
             Log.d(TAG, "🌐 L3 FETCH: Fetching city summary from network")
             val response = api.getLoadBoardSummary()
             
-            if (response.success && response.data != null) {
-                val cities = response.data
-                
-                // Update L2 (Room) - atomic transaction
-                val cityEntities = cities.map {
-                    CityEntity(
-                        cityId = it.operationalCityId,
-                        cityName = it.operationalCity,
-                        totalLoads = it.totalLoads
-                    )
-                }
-                dao.refreshCities(cityEntities)
-                
-                // Store initial loads for each city
-                cities.forEach { city ->
-                    val domainLoads = city.latestLoads.map {
-                        it.toDomain(city.operationalCity)
+            if (response.success) {
+                if (response.data != null) {
+                    val cities = response.data
+                    
+                    // Update L2 (Room) - atomic transaction
+                    val cityEntities = cities.map {
+                        CityEntity(
+                            cityId = it.operationalCityId,
+                            cityName = it.operationalCity,
+                            totalLoads = it.totalLoads
+                        )
+                    }
+                    dao.refreshCities(cityEntities)
+                    
+                    // Store initial loads for each city
+                    cities.forEach { city ->
+                        val domainLoads = city.latestLoads.map {
+                            it.toDomain(city.operationalCity)
+                        }
+                        
+                        if (domainLoads.isNotEmpty()) {
+                            dao.refreshLoadsForCity(
+                                cityId = city.operationalCityId,
+                                page = 1,
+                                loads = domainLoads.map { it.toEntity(city.operationalCityId, page = 1) }
+                            )
+                            
+                            dao.upsertPagination(
+                                CityPaginationEntity(
+                                    cityId = city.operationalCityId,
+                                    currentPage = 1,
+                                    totalPages = (city.totalLoads + CacheConstants.LOADS_PAGE_SIZE - 1) / CacheConstants.LOADS_PAGE_SIZE,
+                                    hasMore = city.totalLoads > domainLoads.size,
+                                    totalLoads = city.totalLoads
+                                )
+                            )
+                        }
                     }
                     
-                    if (domainLoads.isNotEmpty()) {
-                        dao.refreshLoadsForCity(
-                            cityId = city.operationalCityId,
-                            page = 1,
-                            loads = domainLoads.map { it.toEntity(city.operationalCityId, page = 1) }
-                        )
-                        
-                        dao.upsertPagination(
-                            CityPaginationEntity(
-                                cityId = city.operationalCityId,
-                                currentPage = 1,
-                                totalPages = (city.totalLoads + CacheConstants.LOADS_PAGE_SIZE - 1) / CacheConstants.LOADS_PAGE_SIZE,
-                                hasMore = city.totalLoads > domainLoads.size,
-                                totalLoads = city.totalLoads
-                            )
+                    // Build summary from fresh data
+                    val summary = cityEntities.map { city ->
+                        val loads = dao.getLoadsForCity(city.cityId)
+                        CityLoadSummary(
+                            cityId = city.cityId,
+                            cityName = city.cityName,
+                            totalLoads = city.totalLoads,
+                            initialLoads = loads.map { it.toDomain() }
                         )
                     }
+                    
+                    // Update L1 (Memory)
+                    memoryCache.putCitySummary(summary)
+                    
+                    Log.d(TAG, "✅ L3 SUCCESS: Fetched ${summary.size} cities from network")
+                    emit(summary)
+                } else {
+                    Log.d(TAG, "✅ L3 SUCCESS (EMPTY): No loads available")
+                    // Success but no data = empty state
+                    dao.refreshCities(emptyList())
+                    memoryCache.putCitySummary(emptyList())
+                    emit(emptyList())
                 }
-                
-                // Build summary from fresh data
-                val summary = cityEntities.map { city ->
-                    val loads = dao.getLoadsForCity(city.cityId)
-                    CityLoadSummary(
-                        cityId = city.cityId,
-                        cityName = city.cityName,
-                        totalLoads = city.totalLoads,
-                        initialLoads = loads.map { it.toDomain() }
-                    )
-                }
-                
-                // Update L1 (Memory)
-                memoryCache.putCitySummary(summary)
-                
-                Log.d(TAG, "✅ L3 SUCCESS: Fetched ${summary.size} cities from network")
-                emit(summary)
             } else {
-                Log.w(TAG, "⚠️ Network response unsuccessful")
+                Log.w(TAG, "⚠️ Network response unsuccessful: $response")
                 // Emit stale cache if available
                 if (dbCities.isNotEmpty()) {
                     val staleSummary = dbCities.map { it.toDomainSummary() }
@@ -155,14 +164,12 @@ class LoadBoardRepositoryCachedImpl @Inject constructor(
             }
         } catch (e: Exception) {
             Log.e(TAG, "❌ Network error: ${e.message}")
+            globalMessageManager.showMessage("Unable to connect to server")
             // Graceful degradation: emit stale cache
             if (dbCities.isNotEmpty()) {
                 val staleSummary = dbCities.map { it.toDomainSummary() }
                 Log.d(TAG, "📦 Fallback: Emitting stale cache (${staleSummary.size} cities)")
                 emit(staleSummary)
-            } else {
-                // No cache available, propagate error
-                throw e
             }
         }
     }.flowOn(ioDispatcher)
@@ -284,11 +291,8 @@ class LoadBoardRepositoryCachedImpl @Inject constructor(
             }
         } catch (e: Exception) {
             Log.e(TAG, "❌ Network error for city $cityId page $page: ${e.message}")
+            globalMessageManager.showMessage("Connection error. Please try again.")
             // Already emitted stale cache above if available
-            if (dbLoads.isEmpty()) {
-                // No cache available, propagate error
-                throw e
-            }
         }
     }.flowOn(ioDispatcher)
     

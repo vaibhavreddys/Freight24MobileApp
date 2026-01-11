@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,19 +31,21 @@ import com.freight24.core.ui.components.StatusChip
 @Composable
 fun TripCard(
     trip: Trip,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {}
 ) {
     Card(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
+        onClick = onClick,
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier
-                .padding(8.dp)
+                .padding(12.dp)
                 .fillMaxWidth()
         ) {
             // Header: Reg Number | Truck Type and Date
@@ -56,12 +59,12 @@ fun TripCard(
                         text = trip.registrationNumber,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Black
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = " | ${trip.truckType}",
                         fontSize = 12.sp,
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(start = 4.dp)
                     )
                 }
@@ -69,11 +72,11 @@ fun TripCard(
                 Text(
                     text = trip.createdAt,
                     fontSize = 12.sp,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Route Section + Status Chip in Center-Right
             Row(
@@ -89,9 +92,9 @@ fun TripCard(
                 StatusChip(status = trip.status)
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-            Divider(color = Color(0xFFEEEEEE), thickness = 1.dp)
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+            Divider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Footer: Trip Cost and Paid
             Row(
@@ -102,14 +105,14 @@ fun TripCard(
                     Text(
                         text = "TRIP COST",
                         fontSize = 10.sp,
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium
                     )
                     Text(
                         text = "₹${trip.tripCost}",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Black
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
 
@@ -118,7 +121,7 @@ fun TripCard(
                     modifier = Modifier
                         .height(30.dp)
                         .width(1.dp)
-                        .background(Color(0xFFEEEEEE))
+                        .background(MaterialTheme.colorScheme.outlineVariant)
                         .align(Alignment.CenterVertically)
                 )
 
@@ -126,14 +129,14 @@ fun TripCard(
                     Text(
                         text = "PAID",
                         fontSize = 10.sp,
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium
                     )
                     Text(
                         text = "₹${trip.advanceAmount}",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.Black
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
@@ -144,11 +147,11 @@ fun TripCard(
 @Composable
 fun StatusChip(status: String) {
     val (backgroundColor, textColor) = when (status.uppercase()) {
-        "ASSIGNED" -> Color(0xFFE3F2FD) to Color(0xFF1976D2)
-        "LOADING", "IN_TRANSIT", "IN-TRANSIT" -> Color(0xFFFFF3E0) to Color(0xFFEF6C00)
-        "UNLOADED", "INVOICED" -> Color(0xFFE8F5E9) to Color(0xFF2E7D32)
+        "ASSIGNED" -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
+        "LOADING", "IN_TRANSIT", "IN-TRANSIT" -> Color(0xFFFFF3E0) to Color(0xFFEF6C00) // Keep warning colors
+        "UNLOADED", "INVOICED" -> Color(0xFFE8F5E9) to Color(0xFF2E7D32) // Keep success colors
         "PAID" -> Color(0xFFF3E5F5) to Color(0xFF7B1FA2)
-        else -> Color(0xFFF5F5F5) to Color(0xFF616161)
+        else -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     Surface(

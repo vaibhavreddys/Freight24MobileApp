@@ -40,7 +40,11 @@ import com.freight24.trucker.navigation.TruckerDestination
 import com.freight24.core.ui.UiState
 
 @Composable
-fun LoginScreen(navController: NavHostController, viewModel: LoginViewModel = hiltViewModel()) {
+fun LoginScreen(
+    navController: NavHostController,
+    viewModel: LoginViewModel = hiltViewModel(),
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
+) {
 
     val phoneNumber by viewModel.phoneNumber.collectAsState()
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -63,7 +67,6 @@ fun LoginScreen(navController: NavHostController, viewModel: LoginViewModel = hi
     }
 
     // Request to send notifications
-    val snackbarHostState = remember { SnackbarHostState() }
 
     var notificationPermissionGranted by remember {
         mutableStateOf(Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)

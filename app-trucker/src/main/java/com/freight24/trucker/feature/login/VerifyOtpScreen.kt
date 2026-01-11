@@ -28,6 +28,7 @@ fun VerifyOtpScreen(
     navController: NavController,
     phoneNumber: String,
     onLoginSuccess: () -> Unit,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     viewModel: VerifyOtpViewModel = hiltViewModel()
 ) {
     val remainingSeconds by viewModel.remainingSeconds.collectAsState()
@@ -61,7 +62,6 @@ fun VerifyOtpScreen(
     }
 
     // Error snackbar
-    val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(uiState) {
         if (uiState is UiState.Error) {
             snackbarHostState.showSnackbar((uiState as UiState.Error).message)

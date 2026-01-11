@@ -1,6 +1,4 @@
-// core/auth/src/main/java/com/freight24/core/auth/AuthDataStore.kt
-
-package com.freight24.core.auth
+package com.freight24.core.network.auth
 
 import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
@@ -44,7 +42,8 @@ class AuthDataStore @Inject constructor(
 
     private fun getOrCreateSecretKey(): SecretKey {
         if (keyStore.containsAlias(KEYSTORE_ALIAS)) {
-            return (keyStore.getEntry(KEYSTORE_ALIAS, null) as KeyStore.SecretKeyEntry).secretKey
+            val entry = keyStore.getEntry(KEYSTORE_ALIAS, null) as? KeyStore.SecretKeyEntry
+            if (entry != null) return entry.secretKey
         }
 
         val keyGenerator = KeyGenerator.getInstance("AES", ANDROID_KEYSTORE)
@@ -55,14 +54,14 @@ class AuthDataStore @Inject constructor(
             .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
             .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
             .setKeySize(256)
-            .setRandomizedEncryptionRequired(true) // Security best practice
+            .setRandomizedEncryptionRequired(true)
             .build()
 
         keyGenerator.init(parameterSpec)
         return keyGenerator.generateKey()
     }
 
-    private suspend fun encrypt(data: String): String {
+    private fun encrypt(data: String): String {
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(Cipher.ENCRYPT_MODE, getOrCreateSecretKey())
         val iv = cipher.iv
@@ -76,7 +75,10 @@ class AuthDataStore @Inject constructor(
 
     private fun decrypt(encryptedWithIv: String): String? {
         return try {
-            val (ivBase64, encryptedBase64) = encryptedWithIv.split(IV_SEPARATOR, limit = 2)
+            val parts = encryptedWithIv.split(IV_SEPARATOR, limit = 2)
+            if (parts.size < 2) return null
+            val ivBase64 = parts[0]
+            val encryptedBase64 = parts[1]
             val iv = Base64.decode(ivBase64, Base64.DEFAULT)
             val encrypted = Base64.decode(encryptedBase64, Base64.DEFAULT)
 
@@ -85,11 +87,10 @@ class AuthDataStore @Inject constructor(
             val decrypted = cipher.doFinal(encrypted)
             String(decrypted, Charsets.UTF_8)
         } catch (e: Exception) {
-            null // Invalid/corrupted data → treat as not logged in
+            null
         }
     }
 
-    // Public flows (decrypted)
     val authToken: Flow<String?> = context.authDataStore.data.map { prefs ->
         prefs[TOKEN_KEY]?.let { decrypt(it) }
     }
@@ -112,7 +113,5 @@ class AuthDataStore @Inject constructor(
 
     suspend fun clearAuthData() {
         context.authDataStore.edit { it.clear() }
-        // Optional: Delete the key from Keystore if you want full wipe
-        // if (keyStore.containsAlias(KEYSTORE_ALIAS)) keyStore.deleteEntry(KEYSTORE_ALIAS)
     }
 }

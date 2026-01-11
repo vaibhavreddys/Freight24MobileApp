@@ -9,6 +9,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -43,13 +44,21 @@ class TripsViewModel @Inject constructor(
         viewModelScope.launch {
             if (forceRefresh) currentPage = 1
             
-            repository.fetchTrips(currentPage, forceRefresh).collectLatest { paginatedTrips ->
-                if (currentPage == 1) {
-                    _allTrips.value = paginatedTrips.trips
-                } else {
-                    _allTrips.value += paginatedTrips.trips
-                }
-                applyFilter()
+            try {
+                repository.fetchTrips(currentPage, forceRefresh)
+                    .catch { e ->
+                        Log.e("TripsViewModel", "Error fetching trips: ${e.message}")
+                    }
+                    .collectLatest { paginatedTrips ->
+                        if (currentPage == 1) {
+                            _allTrips.value = paginatedTrips.trips
+                        } else {
+                            _allTrips.value += paginatedTrips.trips
+                        }
+                        applyFilter()
+                    }
+            } catch (e: Exception) {
+                Log.e("TripsViewModel", "Launch error in fetchTrips", e)
             }
         }
     }

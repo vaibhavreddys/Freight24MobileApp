@@ -1,7 +1,9 @@
 package com.freight24.core.network.api
 
+import com.freight24.core.network.model.TripDetailResponse
 import com.freight24.core.network.model.TripsResponse
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface TripApi {
@@ -10,4 +12,9 @@ interface TripApi {
         @Query("page") page: Int,
         @Query("limit") limit: Int = 20
     ): TripsResponse
+
+    @GET("trips/trucker/trip/{id}")
+    suspend fun getTripDetail(
+        @Path("id") id: String
+    ): TripDetailResponse
 }

@@ -16,6 +16,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Divider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,7 +38,8 @@ import com.freight24.core.ui.components.TripCard
 @Composable
 fun TripsScreen(
     paddingValues: PaddingValues = PaddingValues(0.dp),
-    viewModel: TripsViewModel = hiltViewModel()
+    viewModel: TripsViewModel = hiltViewModel(),
+    onTripClick: (String) -> Unit = {}
 ) {
     val trips by viewModel.filteredTrips.collectAsState()
     val selectedFilter by viewModel.selectedFilter.collectAsState()
@@ -52,7 +55,7 @@ fun TripsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFF8F9FA))
+                .background(MaterialTheme.colorScheme.background)
         ) {
             // Filter Tabs
             TripFilterTabs(
@@ -73,7 +76,10 @@ fun TripsScreen(
                     contentPadding = PaddingValues(bottom = 16.dp)
                 ) {
                     items(trips) { trip ->
-                        TripCard(trip = trip)
+                        TripCard(
+                            trip = trip,
+                            onClick = { onTripClick(trip.id) }
+                        )
                     }
                 }
             }

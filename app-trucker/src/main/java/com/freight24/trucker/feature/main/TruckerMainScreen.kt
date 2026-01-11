@@ -1,5 +1,6 @@
 package com.freight24.trucker.feature.main
 
+import androidx.navigation.NavHostController
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,10 +23,18 @@ import com.freight24.trucker.feature.loads.LoadBoardViewModel
 import com.freight24.trucker.feature.trips.TripsScreen
 import com.freight24.trucker.feature.trucks.TrucksScreen
 import com.freight24.trucker.navigation.TruckerTabs
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.freight24.trucker.navigation.TruckerDestination
 
 @Composable
-fun TruckerMainScreen() {
-    var selectedTab by remember { mutableStateOf(TruckerTabs.first()) }
+fun TruckerMainScreen(
+    navController: NavHostController,
+    snackbarHostState: androidx.compose.material3.SnackbarHostState = remember { androidx.compose.material3.SnackbarHostState() }
+) {
+    var selectedTabId by rememberSaveable { mutableStateOf(TruckerTabs.first().id) }
+    val selectedTab = remember(selectedTabId) {
+        TruckerTabs.find { it.id == selectedTabId } ?: TruckerTabs.first()
+    }
 
     val loadBoardViewModel: LoadBoardViewModel = hiltViewModel()
 
@@ -35,7 +44,8 @@ fun TruckerMainScreen() {
     FreightBottomNavScaffold(
         items = TruckerTabs,
         selectedItem = selectedTab,
-        onItemSelected = { selectedTab = it },
+        onItemSelected = { selectedTabId = it.id },
+        snackbarHostState = snackbarHostState,
         topBar = {
             AppTopBar(
                 title = getFormattedTabName(selectedTab.id),
@@ -57,7 +67,12 @@ fun TruckerMainScreen() {
                 paddingValues = paddingValues
             )
 
-            "trips" -> TripsScreen(paddingValues = paddingValues)
+            "trips" -> TripsScreen(
+                paddingValues = paddingValues,
+                onTripClick = { tripId ->
+                    navController.navigate(TruckerDestination.TripDetail.createRoute(tripId))
+                }
+            )
 
             "profile" -> PlaceholderScreen("Profile", PaddingValues(0.dp))
         }

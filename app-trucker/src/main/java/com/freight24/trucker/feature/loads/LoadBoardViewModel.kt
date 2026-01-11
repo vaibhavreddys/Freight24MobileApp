@@ -10,6 +10,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -33,8 +34,16 @@ class LoadBoardViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            repository.fetchLoadBoardSummary(false).collectLatest { summaryList ->
-                updateCityList(summaryList)
+            try {
+                repository.fetchLoadBoardSummary(false)
+                    .catch { e ->
+                        Log.e("LoadBoardViewModel", "Error fetching summary: ${e.message}")
+                    }
+                    .collectLatest { summaryList ->
+                        updateCityList(summaryList)
+                    }
+            } catch (e: Exception) {
+                Log.e("LoadBoardViewModel", "Launch error in init", e)
             }
         }
     }
@@ -162,74 +171,82 @@ class LoadBoardViewModel @Inject constructor(
 
     private fun fetchLoadsForCity(cityId: Int, page: Int, forceRefresh: Boolean = false) {
         viewModelScope.launch {
-            repository.fetchLoadsForCity(cityId, page, forceRefresh).collectLatest { paginatedLoads ->
-                val currentItems = _items.value.toMutableList()
-                val cityIndex = currentItems.indexOfFirst {
-                    it is LoadBoardItem.CityItem && it.cityId == cityId
-                }
-
-                if (cityIndex == -1) return@collectLatest
-
-                // Handling Page 1 vs Next Pages
-                var insertIndex: Int
-                
-                if (page == 1) {
-                    // --- PAGE 1: REPLACE ALL CHILDREN ---
-                    // Find range of existing children and remove them
-                    var nextIndex = cityIndex + 1
-                    while (nextIndex < currentItems.size &&
-                        (currentItems[nextIndex] is LoadBoardItem.LoadItem ||
-                                currentItems[nextIndex] is LoadBoardItem.ShowMoreItem)
-                    ) {
-                        currentItems.removeAt(nextIndex)
+            try {
+                repository.fetchLoadsForCity(cityId, page, forceRefresh)
+                    .catch { e ->
+                        Log.e("LoadBoardViewModel", "Error fetching loads for city $cityId: ${e.message}")
                     }
-                    insertIndex = cityIndex + 1
-                } else {
-                    // --- PAGE > 1: APPEND ---
-                    // Find the "Show More" item (should be the last child) and remove it
-                    // The new items will be inserted where "Show More" was.
-                    
-                    var lastChildIndex = cityIndex
-                    var nextIndex = cityIndex + 1
-                    while (nextIndex < currentItems.size &&
-                        (currentItems[nextIndex] is LoadBoardItem.LoadItem ||
-                                currentItems[nextIndex] is LoadBoardItem.ShowMoreItem)
-                    ) {
-                        lastChildIndex = nextIndex
-                        nextIndex++
+                    .collectLatest { paginatedLoads ->
+                        val currentItems = _items.value.toMutableList()
+                        val cityIndex = currentItems.indexOfFirst {
+                            it is LoadBoardItem.CityItem && it.cityId == cityId
+                        }
+
+                        if (cityIndex == -1) return@collectLatest
+
+                        // Handling Page 1 vs Next Pages
+                        var insertIndex: Int
+                        
+                        if (page == 1) {
+                            // --- PAGE 1: REPLACE ALL CHILDREN ---
+                            // Find range of existing children and remove them
+                            var nextIndex = cityIndex + 1
+                            while (nextIndex < currentItems.size &&
+                                (currentItems[nextIndex] is LoadBoardItem.LoadItem ||
+                                        currentItems[nextIndex] is LoadBoardItem.ShowMoreItem)
+                            ) {
+                                currentItems.removeAt(nextIndex)
+                            }
+                            insertIndex = cityIndex + 1
+                        } else {
+                            // --- PAGE > 1: APPEND ---
+                            // Find the "Show More" item (should be the last child) and remove it
+                            // The new items will be inserted where "Show More" was.
+                            
+                            var lastChildIndex = cityIndex
+                            var nextIndex = cityIndex + 1
+                            while (nextIndex < currentItems.size &&
+                                (currentItems[nextIndex] is LoadBoardItem.LoadItem ||
+                                        currentItems[nextIndex] is LoadBoardItem.ShowMoreItem)
+                            ) {
+                                lastChildIndex = nextIndex
+                                nextIndex++
+                            }
+                            
+                            // If the last child is ShowMore, remove it and insert there
+                            if (currentItems.getOrNull(lastChildIndex) is LoadBoardItem.ShowMoreItem) {
+                                currentItems.removeAt(lastChildIndex)
+                                insertIndex = lastChildIndex
+                            } else {
+                                // Just append after the last child
+                                insertIndex = lastChildIndex + 1
+                            }
+                        }
+
+                        // Insert New Children
+                        paginatedLoads.loads.forEach { load ->
+                            currentItems.add(insertIndex++, LoadBoardItem.LoadItem(load.toUi()))
+                        }
+
+                        // Add "Show More" if needed
+                        if (paginatedLoads.hasMore) {
+                            // Calculate loaded count approx
+                            val loadedSoFar = cityPages[cityId]?.times(10) ?: 10 // Approximation or track exactly if needed
+                            
+                            currentItems.add(
+                                insertIndex,
+                                LoadBoardItem.ShowMoreItem(
+                                    cityId = cityId,
+                                    loadedCount = loadedSoFar, // Placeholder or exact logic
+                                    totalCount = paginatedLoads.totalLoads
+                                )
+                            )
+                        }
+
+                        _items.value = currentItems
                     }
-                    
-                    // If the last child is ShowMore, remove it and insert there
-                    if (currentItems.getOrNull(lastChildIndex) is LoadBoardItem.ShowMoreItem) {
-                        currentItems.removeAt(lastChildIndex)
-                        insertIndex = lastChildIndex
-                    } else {
-                        // Just append after the last child
-                        insertIndex = lastChildIndex + 1
-                    }
-                }
-
-                // Insert New Children
-                paginatedLoads.loads.forEach { load ->
-                    currentItems.add(insertIndex++, LoadBoardItem.LoadItem(load.toUi()))
-                }
-
-                // Add "Show More" if needed
-                if (paginatedLoads.hasMore) {
-                    // Calculate loaded count approx
-                    val loadedSoFar = cityPages[cityId]?.times(10) ?: 10 // Approximation or track exactly if needed
-                    
-                    currentItems.add(
-                        insertIndex,
-                        LoadBoardItem.ShowMoreItem(
-                            cityId = cityId,
-                            loadedCount = loadedSoFar, // Placeholder or exact logic
-                            totalCount = paginatedLoads.totalLoads
-                        )
-                    )
-                }
-
-                _items.value = currentItems
+            } catch (e: Exception) {
+                Log.e("LoadBoardViewModel", "Launch error in fetchLoadsForCity", e)
             }
         }
     }
