@@ -1,0 +1,13 @@
+package com.freight24.trucker.feature.trips.data.repository
+
+
+import com.freight24.rest.response.TripResponse
+
+internal interface TripRepository {
+
+    suspend fun fetchTrips(
+        page: Int,
+        forceRefresh: Boolean = false,
+    ): Result<TripResponse>
+
+}
