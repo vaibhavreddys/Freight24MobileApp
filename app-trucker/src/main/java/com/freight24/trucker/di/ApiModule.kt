@@ -1,9 +1,9 @@
 package com.freight24.trucker.di
 
 import com.freight24.network.RetrofitFactory
-import com.freight24.network.api.TripApi
 import com.freight24.network.di.DefaultNetwork
 import com.freight24.rest.api.IndentsApi
+import com.freight24.rest.api.TripApi
 import com.freight24.rest.api.TruckerLoginApi
 import com.freight24.trucker.BuildConfig
 import dagger.Module

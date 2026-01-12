@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<checkstyle version="8.0">
-    <file name="/Users/infomerica-1170/AndroidStudioProjects/Freight24/core/rest/src/test/java/com/freight24/rest/ExampleUnitTest.kt">
-        <error line="1" column="1" severity="error" message="File must end with a newline (\n)" source="standard:final-newline" />
-        <error line="3" column="1" severity="error" message="Imports must be ordered in lexicographic order without any empty lines in-between with &quot;java&quot;, &quot;javax&quot;, &quot;kotlin&quot; and aliases in the end" source="standard:import-ordering" />
-        <error line="3" column="1" severity="error" message="Wildcard import" source="standard:no-wildcard-imports" />
-    </file>
-</checkstyle>
