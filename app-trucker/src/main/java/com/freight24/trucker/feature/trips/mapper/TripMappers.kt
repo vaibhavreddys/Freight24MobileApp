@@ -6,7 +6,7 @@ import com.freight24.common.model.TripDetail
 import com.freight24.common.model.TripDocument
 import com.freight24.common.model.TripLocation
 import com.freight24.common.util.DateTimeUtils
-import com.freight24.common.util.TruckNameFormatter
+import com.freight24.common.util.NameFormatter
 import com.freight24.rest.response.StatusEventDto
 import com.freight24.rest.response.TripDetailDto
 import com.freight24.rest.response.TripDocumentDto
@@ -17,7 +17,7 @@ fun TripDto.toDomain(): Trip {
     return Trip(
         id = id,
         registrationNumber = registration_number,
-        truckType = TruckNameFormatter.shortenTruckName(truck_type),
+        truckType = NameFormatter.shortenTruckName(truck_type),
         status = trucker_status,
         createdAt = DateTimeUtils.formatRelativeTime(created_at),
         tripCost = trucker_trip_cost,
@@ -32,11 +32,11 @@ fun TripDetailDto.toDomain(): TripDetail {
         id = id,
         tripCode = trip_code,
         registrationNumber = registration_number,
-        truckType = TruckNameFormatter.shortenTruckName(truck_type),
+        truckType = NameFormatter.shortenTruckName(truck_type),
         createdAt = DateTimeUtils.formatRelativeTime(created_at),
         tripCost = trucker_trip_cost,
         advanceAmount = advance_amount,
-        status = trucker_status ?: "ASSIGNED",
+        status = NameFormatter.formatTripStatusMessage(trucker_status),
         origin = origin.toDomain(),
         destination = destination.toDomain(),
         statusEvents = status_events.map { it.toDomain() },

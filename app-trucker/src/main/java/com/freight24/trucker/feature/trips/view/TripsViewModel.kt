@@ -72,7 +72,7 @@ internal class TripsViewModel
                 when (_selectedFilter.value) {
                     TripFilter.ACTIVE ->
                         trips.filter {
-                            it.status.uppercase() in listOf("ASSIGNED", "LOADING", "IN_TRANSIT", "IN-TRANSIT")
+                            it.status.uppercase() in listOf("ASSIGNED", "LOADING", "IN_TRANSIT", "IN TRANSIT")
                         }
                     TripFilter.POD ->
                         trips.filter {

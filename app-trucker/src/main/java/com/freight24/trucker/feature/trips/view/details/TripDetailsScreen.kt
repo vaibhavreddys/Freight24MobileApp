@@ -1,5 +1,6 @@
 package com.freight24.trucker.feature.trips.view.details
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -138,7 +139,7 @@ fun extractStage(details: String): String? {
         details.contains("INVOICED", ignoreCase = true) -> "INVOICED"
         details.contains("UNLOADED", ignoreCase = true) -> "UNLOADED"
         details.contains("IN_TRANSIT", ignoreCase = true)
-                || details.contains("IN-TRANSIT", ignoreCase = true) -> "IN_TRANSIT"
+                || details.contains("IN-TRANSIT", ignoreCase = true) -> "IN TRANSIT"
         details.contains("LOADING", ignoreCase = true) -> "LOADING"
         details.contains("ASSIGNED", ignoreCase = true) -> "ASSIGNED"
         else -> null
@@ -157,6 +158,7 @@ fun TripDetailsContent(
             .padding(bottom = 24.dp)
     ) {
         // Hero Trip Card (Converted from TripDetail to Trip for reuse)
+        Log.e("TripDetailsContent", "Trip: $trip")
         TripCard(
             trip = Trip(
                 id = trip.id,
@@ -178,7 +180,7 @@ fun TripDetailsContent(
         ExpandableDetailCard(
             title = "Documents",
             icon = Icons.Default.Description,
-            initiallyExpanded = true
+            initiallyExpanded = false
         ) {
             if (trip.tripDocuments.isEmpty()) {
                 Text(
@@ -202,15 +204,15 @@ fun TripDetailsContent(
                         onUploadClick = { /* Camera or File picker logic */ }
                     )
                 }
+                Text(
+                    text = "Please ensure all uploaded documents are clear. Verification usually takes 2-4 hours.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                )
             }
             
-            Text(
-                text = "Please ensure all uploaded documents are clear and legible. Verification usually takes 2-4 hours.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-            )
         }
 
         // Payments Card

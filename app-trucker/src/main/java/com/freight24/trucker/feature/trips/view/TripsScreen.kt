@@ -123,7 +123,7 @@ fun FilterTab(
         border = if (isSelected) null else BorderStroke(1.dp, borderColor),
     ) {
         Text(
-            text = label.lowercase().replaceFirstChar { it.uppercase() },
+            text = label, //.lowercase().replaceFirstChar { it.uppercase() },
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
             fontSize = 14.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,

@@ -1,6 +1,6 @@
 package com.freight24.common.util
 
-object TruckNameFormatter {
+object NameFormatter {
     fun shortenTruckName(name: String?): String {
         if (name.isNullOrBlank()) return "--"
 
@@ -39,4 +39,14 @@ object TruckNameFormatter {
 
         return formatted
     }
+
+    fun formatTripStatusMessage(statusMessage: String?): String {
+        if (statusMessage.isNullOrBlank()) return "STATUS ??"
+        return when {
+            statusMessage.contains("IN_TRANSIT", ignoreCase = true)
+                    || statusMessage.contains("IN-TRANSIT", ignoreCase = true) -> "IN TRANSIT"
+            else -> statusMessage
+        }
+    }
+
 }
