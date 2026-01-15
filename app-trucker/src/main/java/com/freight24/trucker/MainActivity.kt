@@ -3,6 +3,9 @@ package com.freight24.trucker
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.core.view.WindowCompat
 import androidx.navigation.compose.rememberNavController
@@ -25,6 +28,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             Freight24Theme {
                 val navController = rememberNavController()
+                val isLoggedIn by sessionManager.isLoggedIn.collectAsState(initial = sessionManager.isSessionValid())
+
                 val startDestination =
                     remember {
                         if (sessionManager.isSessionValid()) {
@@ -33,6 +38,17 @@ class MainActivity : ComponentActivity() {
                             TruckerDestination.Login.route
                         }
                     }
+
+                LaunchedEffect(isLoggedIn) {
+                    if (!isLoggedIn) {
+                        // Clear backstack and redirect to Login on 401 or manual logout
+                        navController.navigate(TruckerDestination.Login.route) {
+                            popUpTo(0) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                }
+
                 TruckerNavGraph(navController, startDestination)
             }
         }

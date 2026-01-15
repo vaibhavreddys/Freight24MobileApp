@@ -2,7 +2,8 @@ package com.freight24.trucker.feature.trips.view
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.freight24.trucker.feature.trips.data.model.Trip
+import com.freight24.common.model.PaginatedTrips
+import com.freight24.common.model.Trip
 import com.freight24.trucker.feature.trips.domain.usecase.FetchTripsUseCase
 import com.freight24.trucker.feature.trips.domain.usecase.FetchTripsUseCaseParams
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -47,15 +48,15 @@ internal class TripsViewModel
                 if (forceRefresh) currentPage = 1
 
                 useCase(FetchTripsUseCaseParams(currentPage))
-                    .onSuccess { paginatedTrips ->
+                    .onSuccess { paginatedTrips: PaginatedTrips ->
                         if (currentPage == 1) {
                             _allTrips.value = paginatedTrips.trips
                         } else {
                             _allTrips.value += paginatedTrips.trips
                         }
                         applyFilter()
-                    }.onFailure {
-
+                    }.onFailure { error: Throwable ->
+                        // Handle error
                     }
             }
         }

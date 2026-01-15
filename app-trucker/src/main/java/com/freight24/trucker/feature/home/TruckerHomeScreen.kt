@@ -11,27 +11,31 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import com.freight24.trucker.enums.TruckerTab
 import com.freight24.trucker.feature.loads.LoadBoardScreen
 import com.freight24.trucker.feature.loads.LoadBoardViewModel
 import com.freight24.trucker.feature.trips.view.TripsScreen
 import com.freight24.trucker.feature.trucks.TrucksScreen
+import com.freight24.trucker.navigation.TruckerDestination
 import com.freight24.ui.components.AppTopBar
 import com.freight24.ui.components.FreightBottomNavScaffold
 
 @Composable
-fun TruckerHomeScreen() {
-    var selectedTab by remember { mutableStateOf(TruckerTab.Loads) }
+fun TruckerHomeScreen(navController: NavHostController) {
+    var selectedTab by rememberSaveable { mutableStateOf(TruckerTab.Loads) }
 
     val loadBoardViewModel: LoadBoardViewModel = hiltViewModel()
 
     // 👇 HOIST SCROLL STATE
     val loadBoardListState = rememberLazyListState()
+    val tripsListState = rememberLazyListState()
 
     FreightBottomNavScaffold(
         items = TruckerTab.entries,
@@ -62,7 +66,13 @@ fun TruckerHomeScreen() {
                         paddingValues = paddingValues,
                     )
 
-                TruckerTab.Trips -> TripsScreen(paddingValues = paddingValues)
+                TruckerTab.Trips -> TripsScreen(
+                    paddingValues = paddingValues,
+                    listState = tripsListState,
+                    onTripClick = { tripId ->
+                        navController.navigate(TruckerDestination.TripDetail.createRoute(tripId))
+                    }
+                )
 
                 TruckerTab.Profile -> PlaceholderScreen("Profile", PaddingValues(0.dp))
             }

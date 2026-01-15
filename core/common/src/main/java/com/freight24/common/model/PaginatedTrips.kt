@@ -1,4 +1,4 @@
-package com.freight24.trucker.feature.trips.data.model
+package com.freight24.common.model
 
 data class PaginatedTrips(
     val trips: List<Trip>,

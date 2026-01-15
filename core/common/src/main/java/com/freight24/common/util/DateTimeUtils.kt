@@ -1,60 +1,63 @@
 package com.freight24.common.util
 
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
+import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Locale
-import kotlin.math.abs
+import java.util.TimeZone
 
 object DateTimeUtils {
-    @RequiresApi(Build.VERSION_CODES.O)
+
+    private val IST_TIMEZONE = TimeZone.getTimeZone("Asia/Kolkata")
+    private val UTC_TIMEZONE = TimeZone.getTimeZone("UTC")
+
+    // No locale captured here - we'll create formatters with current locale when needed
+    private const val SUPABASE_PATTERN = "yyyy-MM-dd'T'HH:mm:ss"
+    private const val DISPLAY_PATTERN = "dd MMM | hh:mm a"
+
     fun formatRelativeTime(timestamp: String?): String {
         if (timestamp.isNullOrBlank()) return "--"
 
-        return try {
-            val createdDateTime =
-                try {
-                    // Try parsing with offset (e.g. 2026-01-04T20:57:13.3042+00:00)
-                    OffsetDateTime.parse(timestamp, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-                        .atZoneSameInstant(ZoneId.systemDefault())
-                        .toLocalDateTime()
-                } catch (e: Exception) {
-                    // Fallback to local date time (e.g. 2025-12-31T18:20:08.679988)
-                    LocalDateTime.parse(timestamp, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                }
-
-            val now = LocalDateTime.now()
-            val seconds = ChronoUnit.SECONDS.between(createdDateTime, now)
-
-            // If event is significantly in the future, show formatted date
-            if (seconds < -60) {
-                val fullDatePattern = DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.getDefault())
-                return createdDateTime.format(fullDatePattern)
+        Log.e("DateTimeUtils", "Timestamp: $timestamp")
+        try {
+            // Create formatters with current locale each time
+            val supabaseFormat = SimpleDateFormat(SUPABASE_PATTERN, Locale.getDefault()).apply {
+                timeZone = UTC_TIMEZONE
             }
 
-            val absSeconds = abs(seconds)
-            val minutes = ChronoUnit.MINUTES.between(createdDateTime, now)
-            val hours = ChronoUnit.HOURS.between(createdDateTime, now)
-            val days = ChronoUnit.DAYS.between(createdDateTime, now)
+            // Parse the timestamp (handle optional milliseconds/microseconds)
+            val cleanTimestamp = timestamp.substringBefore(".")
+            val utcDate = supabaseFormat.parse(cleanTimestamp) ?: return "--"
 
-            when {
-                absSeconds < 60 -> "Just Now"
-                minutes < 60 -> "$minutes mins ago"
-                hours < 24 -> "$hours hours ago"
-                days == 1L -> "Yesterday"
+            // Convert UTC time to IST time
+            val istCalendar = Calendar.getInstance(IST_TIMEZONE).apply {
+                time = utcDate
+            }
+
+            // Get current time in IST
+            val nowIstCalendar = Calendar.getInstance(IST_TIMEZONE)
+
+            // Calculate difference in seconds
+            val diffMillis = nowIstCalendar.timeInMillis - istCalendar.timeInMillis
+            val diffSeconds = diffMillis / 1000
+
+            return when {
+                diffSeconds < 60 -> "Just now"
+                diffSeconds < 3600 -> "${diffSeconds / 60} mins ago"
+                diffSeconds < 86400 -> "${diffSeconds / 3600} hours ago"
+                diffSeconds < 172800 -> "Yesterday"
                 else -> {
-                    val datePattern = DateTimeFormatter.ofPattern("dd MMM | hh:mm a", Locale.getDefault())
-                    createdDateTime.format(datePattern)
+                    // Create display formatter with current locale
+                    val displayFormat = SimpleDateFormat(DISPLAY_PATTERN, Locale.getDefault()).apply {
+                        timeZone = IST_TIMEZONE
+                    }
+                    displayFormat.format(istCalendar.time)
                 }
             }
+
         } catch (e: Exception) {
-            Log.e("DateTimeUtils", "Error parsing time: $timestamp", e)
-            timestamp
+            Log.e("DateTimeUtils", "Invalid UTC timestamp: $timestamp", e)
+            return "--"
         }
     }
 }

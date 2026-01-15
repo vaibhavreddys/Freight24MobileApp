@@ -1,27 +1,21 @@
 package com.freight24.trucker.feature.trips.domain.usecase
 
-import com.freight24.trucker.feature.trips.data.model.PaginatedTrips
+import com.freight24.common.model.PaginatedTrips
 import com.freight24.trucker.feature.trips.data.repository.TripRepository
 import com.freight24.trucker.feature.trips.mapper.toDomain
 import javax.inject.Inject
 
 internal class FetchTripsUseCaseImpl @Inject constructor(
-    private val repository: TripRepository,
+    private val repository: TripRepository
 ) : FetchTripsUseCase {
-
-    override suspend fun invoke(params: FetchTripsUseCaseParams): Result<PaginatedTrips> =
-        runCatching {
-           val response = getTrips(params.page)
-           val domainTrips = response.data?.map { it.toDomain() } ?: emptyList()
+    override suspend fun invoke(params: FetchTripsUseCaseParams): Result<PaginatedTrips> {
+        return repository.fetchTrips(params.page).mapCatching { response ->
             PaginatedTrips(
-                trips = domainTrips,
-                page = params.page,
-                hasMore = (response.pagination?.pages ?: 0) > params.page,
-                totalTrips = response.pagination?.total ?: 0,
+                trips = response.data?.map { it.toDomain() } ?: emptyList(),
+                page = response.pagination?.page ?: 1,
+                hasMore = response.pagination?.let { it.page < it.pages } ?: false,
+                totalTrips = response.pagination?.total ?: 0
             )
         }
-
-
-    private suspend fun getTrips(page: Int) = repository.fetchTrips(page).getOrThrow()
-
+    }
 }

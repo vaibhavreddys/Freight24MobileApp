@@ -1,29 +1,27 @@
 package com.freight24.trucker.feature.trips.view
 
-// import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -31,11 +29,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.freight24.ui.components.TripCard
 
 @Preview
 @Composable
 fun TripsScreen(
     paddingValues: PaddingValues = PaddingValues(0.dp),
+    onTripClick: (String) -> Unit = {},
+    listState: LazyListState = rememberLazyListState(),
 ) {
     val viewModel: TripsViewModel = hiltViewModel()
     val trips by viewModel.filteredTrips.collectAsState()
@@ -54,29 +55,28 @@ fun TripsScreen(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .background(Color(0xFFF8F9FA)),
+                    .background(MaterialTheme.colorScheme.background),
         ) {
             // Filter Tabs
-            TripFilterTabs(
+            TripFilters(
                 selectedFilter = selectedFilter,
-                onFilterSelected = viewModel::onFilterSelected,
+                onFilterSelected = { viewModel.onFilterSelected(it) },
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
-
             // Trips List
-            if (trips.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = "No trips found", color = Color.Gray)
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = 16.dp),
-                ) {
-                    items(trips) { trip ->
-                        TripCard(trip = trip)
-                    }
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(bottom = 16.dp),
+            ) {
+                items(
+                    items = trips,
+                    key = { it.id },
+                ) { trip ->
+                    TripCard(
+                        trip = trip,
+                        onClick = { onTripClick(trip.id) },
+                    )
                 }
             }
         }
@@ -84,7 +84,7 @@ fun TripsScreen(
 }
 
 @Composable
-fun TripFilterTabs(
+fun TripFilters(
     selectedFilter: TripFilter,
     onFilterSelected: (TripFilter) -> Unit,
 ) {
@@ -92,35 +92,15 @@ fun TripFilterTabs(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(vertical = 12.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        item {
+        items(TripFilter.entries.toTypedArray()) { filter ->
             FilterTab(
-                label = "Active",
-                isSelected = selectedFilter == TripFilter.ACTIVE,
-                onClick = { onFilterSelected(TripFilter.ACTIVE) },
-            )
-        }
-        item {
-            FilterTab(
-                label = "POD",
-                isSelected = selectedFilter == TripFilter.POD,
-                onClick = { onFilterSelected(TripFilter.POD) },
-            )
-        }
-        item {
-            FilterTab(
-                label = "Completed",
-                isSelected = selectedFilter == TripFilter.COMPLETED,
-                onClick = { onFilterSelected(TripFilter.COMPLETED) },
-            )
-        }
-        item {
-            FilterTab(
-                label = "All",
-                isSelected = selectedFilter == TripFilter.ALL,
-                onClick = { onFilterSelected(TripFilter.ALL) },
+                label = filter.name,
+                isSelected = selectedFilter == filter,
+                onClick = { onFilterSelected(filter) },
             )
         }
     }
@@ -132,9 +112,9 @@ fun FilterTab(
     isSelected: Boolean,
     onClick: () -> Unit,
 ) {
-    val backgroundColor = if (isSelected) Color(0xFF1B1B3A) else Color.White
-    val textColor = if (isSelected) Color.White else Color.Gray
-    val borderColor = if (isSelected) Color.Transparent else Color(0xFFEEEEEE)
+    val backgroundColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
+    val textColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+    val borderColor = if (isSelected) Color.Transparent else MaterialTheme.colorScheme.outlineVariant
 
     Surface(
         modifier = Modifier.clickable { onClick() },
@@ -143,7 +123,7 @@ fun FilterTab(
         border = if (isSelected) null else BorderStroke(1.dp, borderColor),
     ) {
         Text(
-            text = label,
+            text = label.lowercase().replaceFirstChar { it.uppercase() },
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
             fontSize = 14.sp,
             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,

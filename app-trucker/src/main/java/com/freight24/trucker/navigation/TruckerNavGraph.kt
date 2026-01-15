@@ -9,6 +9,7 @@ import androidx.navigation.navArgument
 import com.freight24.trucker.feature.home.TruckerHomeScreen
 import com.freight24.trucker.feature.login.view.signin.LoginScreen
 import com.freight24.trucker.feature.login.view.verify.VerifyOtpScreen
+import com.freight24.trucker.feature.trips.view.details.TripDetailsScreen
 
 @Composable
 fun TruckerNavGraph(
@@ -81,7 +82,7 @@ fun TruckerNavGraph(
 
         // 3. LoadBoard
         composable(TruckerDestination.Main.route) {
-            TruckerHomeScreen()
+            TruckerHomeScreen(navController = navController)
 //        composable(TruckerDestination.Dashboard.route) {
             // Replace with your actual LoadBoardScreen composable
             // LoadBoardScreen(
@@ -99,7 +100,9 @@ fun TruckerNavGraph(
                     navArgument("tripId") { type = NavType.StringType },
                 ),
         ) {
-            // TripDetailScreen()
+            TripDetailsScreen(
+                onBackClick = { navController.popBackStack() }
+            )
         }
 //        // 4. Trip Detail Screen
 //        composable(
