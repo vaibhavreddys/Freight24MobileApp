@@ -162,7 +162,7 @@ fun extractStage(details: String): String? {
         details.contains("INVOICED", ignoreCase = true) -> "INVOICED"
         details.contains("UNLOADED", ignoreCase = true) -> "UNLOADED"
         details.contains("IN_TRANSIT", ignoreCase = true)
-                || details.contains("IN-TRANSIT", ignoreCase = true) -> "IN TRANSIT"
+                || details.contains("IN-TRANSIT", ignoreCase = true) -> "IN_TRANSIT"
         details.contains("LOADING", ignoreCase = true) -> "LOADING"
         details.contains("ASSIGNED", ignoreCase = true) -> "ASSIGNED"
         else -> null
@@ -182,7 +182,6 @@ fun TripDetailsContent(
             .padding(bottom = 24.dp)
     ) {
         // Hero Trip Card (Converted from TripDetail to Trip for reuse)
-        Log.e("TripDetailsContent", "Trip: $trip")
         TripCard(
             trip = Trip(
                 id = trip.id,
@@ -274,7 +273,6 @@ fun TripDetailsContent(
 
             val currentStageIndex =
                 completedStages.maxOfOrNull { stages.indexOf(it) } ?: -1
-
 
             val timelineItems = stages.mapIndexed { index, stage ->
 
