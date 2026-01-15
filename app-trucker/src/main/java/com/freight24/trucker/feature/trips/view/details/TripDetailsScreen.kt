@@ -1,6 +1,8 @@
 package com.freight24.trucker.feature.trips.view.details
 
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -25,12 +27,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -48,6 +54,7 @@ import com.freight24.ui.components.TimelineItem
 import com.freight24.ui.components.TimelineStatus
 import com.freight24.ui.components.TimelineView
 import com.freight24.ui.components.TripCard
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,8 +64,23 @@ internal fun TripDetailsScreen(
     viewModel: TripDetailsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            Log.d("TripDetailsScreen", "Selected document URI: $uri")
+            // Future implementation: viewModel.uploadDocument(uri)
+            scope.launch {
+                snackbarHostState.showSnackbar("Upload feature incomplete. Selected URI: $uri")
+            }
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -124,7 +146,8 @@ internal fun TripDetailsScreen(
                 is UiState.Success -> {
                     TripDetailsContent(
                         trip = state.data,
-                        onNavigateToPayments = { onNavigateToPayments(state.data.id) }
+                        onNavigateToPayments = { onNavigateToPayments(state.data.id) },
+                        onUploadClick = { filePickerLauncher.launch("image/*") }
                     )
                 }
                 UiState.Idle -> {}
@@ -149,7 +172,8 @@ fun extractStage(details: String): String? {
 @Composable
 fun TripDetailsContent(
     trip: TripDetail,
-    onNavigateToPayments: () -> Unit
+    onNavigateToPayments: () -> Unit,
+    onUploadClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -183,12 +207,21 @@ fun TripDetailsContent(
             initiallyExpanded = false
         ) {
             if (trip.tripDocuments.isEmpty()) {
-                Text(
-                    text = "No documents currently available for this trip.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
+                if (trip.status.uppercase() != "ASSIGNED") {
+                    DocumentUploadItem(
+                        title = "Loading Receipt (LR)",
+                        subtitle = "Upload LR",
+                        status = DocumentStatus.Pending,
+                        onUploadClick = onUploadClick
+                    )
+                } else {
+                    Text(
+                        text = "No documents currently available for this trip.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
             } else {
                 trip.tripDocuments.forEach { doc ->
                     val status = when (doc.verificationStatus.lowercase()) {
