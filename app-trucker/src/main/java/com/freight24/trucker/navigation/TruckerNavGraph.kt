@@ -10,6 +10,7 @@ import com.freight24.trucker.feature.home.TruckerHomeScreen
 import com.freight24.trucker.feature.login.view.signin.LoginScreen
 import com.freight24.trucker.feature.login.view.verify.VerifyOtpScreen
 import com.freight24.trucker.feature.trips.view.details.TripDetailsScreen
+import com.freight24.trucker.feature.trucks.view.details.TruckDetailsScreen
 
 @Composable
 fun TruckerNavGraph(
@@ -104,16 +105,16 @@ fun TruckerNavGraph(
                 onBackClick = { navController.popBackStack() }
             )
         }
-//        // 4. Trip Detail Screen
-//        composable(
-//            route = TruckerDestination.TripDetail.route,
-//            arguments = listOf(
-//                navArgument("tripId") { type = NavType.StringType }
-//            )
-//        ) { backStackEntry ->
-//            val tripId = backStackEntry.arguments?.getString("tripId") ?: ""
-//            // Replace with your actual TripDetailScreen composable
-//            // TripDetailScreen(tripId = tripId)
-//        }
+        composable(
+            route = TruckerDestination.TruckDetail.route,
+            arguments =
+                listOf(
+                    navArgument("truckId") { type = NavType.StringType },
+                ),
+        ) {
+            TruckDetailsScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
     }
 }

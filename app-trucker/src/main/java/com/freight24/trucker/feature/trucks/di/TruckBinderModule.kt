@@ -2,6 +2,8 @@ package com.freight24.trucker.feature.trucks.di
 
 import com.freight24.trucker.feature.trucks.data.repository.TruckRepository
 import com.freight24.trucker.feature.trucks.data.repository.TruckRepositoryImpl
+import com.freight24.trucker.feature.trucks.domain.usecase.FetchTruckDetailUseCase
+import com.freight24.trucker.feature.trucks.domain.usecase.FetchTruckDetailUseCaseImpl
 import com.freight24.trucker.feature.trucks.domain.usecase.FetchTrucksUseCase
 import com.freight24.trucker.feature.trucks.domain.usecase.FetchTrucksUseCaseImpl
 import dagger.Binds
@@ -20,4 +22,8 @@ internal interface TruckBinderModule {
     @Binds
     @Singleton
     fun bindFetchTrucksUseCase(impl: FetchTrucksUseCaseImpl): FetchTrucksUseCase
+
+    @Binds
+    @Singleton
+    fun bindFetchTruckDetailUseCase(impl: FetchTruckDetailUseCaseImpl): FetchTruckDetailUseCase
 }

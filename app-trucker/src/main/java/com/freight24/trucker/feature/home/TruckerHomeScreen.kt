@@ -64,6 +64,9 @@ fun TruckerHomeScreen(navController: NavHostController) {
                 TruckerTab.Trucks ->
                     TrucksScreen(
                         paddingValues = paddingValues,
+                        onTruckClick = { truckId ->
+                            navController.navigate(TruckerDestination.TruckDetail.createRoute(truckId))
+                        }
                     )
 
                 TruckerTab.Trips -> TripsScreen(
