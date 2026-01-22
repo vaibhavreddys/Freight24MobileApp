@@ -7,7 +7,7 @@ import com.freight24.rest.response.LoadBoardResponse
 
 fun LoadBoardResponse.LatestLoad.toLoad(fallbackCity: String): Load =
     Load(
-        id = indentId,
+        id = indentId.orEmpty(),
         sourceCity =
             loadingArea
                 ?: loadingCity

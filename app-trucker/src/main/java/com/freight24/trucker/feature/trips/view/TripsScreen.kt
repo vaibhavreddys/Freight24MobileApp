@@ -29,6 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.freight24.ui.components.FilterSelectionChip
 import com.freight24.ui.components.TripCard
 
 @Preview
@@ -92,42 +93,16 @@ fun TripFilters(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(vertical = 12.dp),
+                .padding(vertical = 8.dp),
         contentPadding = PaddingValues(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(TripFilter.entries.toTypedArray()) { filter ->
-            FilterTab(
-                label = filter.name,
+            FilterSelectionChip(
+                label = filter.name.lowercase().replaceFirstChar { it.uppercase() },
                 isSelected = selectedFilter == filter,
                 onClick = { onFilterSelected(filter) },
             )
         }
-    }
-}
-
-@Composable
-fun FilterTab(
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-) {
-    val backgroundColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
-    val textColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-    val borderColor = if (isSelected) Color.Transparent else MaterialTheme.colorScheme.outlineVariant
-
-    Surface(
-        modifier = Modifier.clickable { onClick() },
-        color = backgroundColor,
-        shape = RoundedCornerShape(20.dp),
-        border = if (isSelected) null else BorderStroke(1.dp, borderColor),
-    ) {
-        Text(
-            text = label, //.lowercase().replaceFirstChar { it.uppercase() },
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-            fontSize = 14.sp,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-            color = textColor,
-        )
     }
 }

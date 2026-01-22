@@ -22,7 +22,7 @@ import com.freight24.trucker.enums.TruckerTab
 import com.freight24.trucker.feature.loads.LoadBoardScreen
 import com.freight24.trucker.feature.loads.LoadBoardViewModel
 import com.freight24.trucker.feature.trips.view.TripsScreen
-import com.freight24.trucker.feature.trucks.TrucksScreen
+import com.freight24.trucker.feature.trucks.view.TrucksScreen
 import com.freight24.trucker.navigation.TruckerDestination
 import com.freight24.ui.components.AppTopBar
 import com.freight24.ui.components.FreightBottomNavScaffold
