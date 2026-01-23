@@ -31,6 +31,7 @@ android {
 dependencies {
 
     implementation(libs.retrofit.core)
+    implementation(libs.retrofit.gson.convertor)
     implementation(libs.kotlinx.serialization.json)
 
     testImplementation(libs.junit)

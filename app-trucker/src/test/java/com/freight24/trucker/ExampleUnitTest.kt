@@ -1,4 +1,4 @@
-package com.freight24.employee
+package com.freight24.connect
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

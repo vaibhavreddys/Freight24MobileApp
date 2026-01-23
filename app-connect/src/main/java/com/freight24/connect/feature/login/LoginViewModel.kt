@@ -1,4 +1,4 @@
-package com.freight24.employee.feature.login
+package com.freight24.connect.feature.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
