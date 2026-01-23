@@ -102,7 +102,7 @@ fun LoadBoardScreen(
                     items = items,
                     key = {
                         when (it) {
-                            is LoadBoardItem.CityItem -> "city-${it.cityId}"
+                            is LoadBoardItem.CityItem -> "city-${it.cityId}-${it.cityName}"
                             is LoadBoardItem.LoadItem -> "load-${it.load.id}"
                             is LoadBoardItem.ShowMoreItem -> "show-more-${it.cityId}"
                         }
