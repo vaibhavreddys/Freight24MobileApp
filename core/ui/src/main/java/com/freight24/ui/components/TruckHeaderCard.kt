@@ -102,8 +102,8 @@ fun TruckIcon(status: String, isBlacklisted: Boolean) {
 fun TruckStatusChip(status: String, isBlacklisted: Boolean) {
     val (text, color) = when {
         isBlacklisted -> "Blacklisted" to MaterialTheme.colorScheme.error
-        status.uppercase() == "ACTIVE" || status.uppercase() == "AVAILABLE" -> "Active" to Color(0xFF2E7D32)
-        status.uppercase() == "ON_TRIP" -> "On Trip" to Color(0xFF1976D2)
+        status.uppercase() == "ACTIVE" || status.uppercase() == "AVAILABLE" -> "Active" to MaterialTheme.colorScheme.primary
+        status.uppercase() == "ON_TRIP" -> "On Trip" to MaterialTheme.colorScheme.secondary
         else -> "Inactive" to MaterialTheme.colorScheme.outline
     }
 
@@ -124,9 +124,10 @@ fun TruckStatusChip(status: String, isBlacklisted: Boolean) {
 @Composable
 fun TruckVerificationRow(isVerified: Boolean) {
     val (text, icon, color) = if (isVerified) {
-        Triple("Document verification completed", Icons.Default.CheckCircle, Color(0xFF2E7D32))
+        Triple("Document verification completed", Icons.Default.CheckCircle, MaterialTheme.colorScheme.primary)
     } else {
-        Triple("Verification Pending", Icons.Default.Error, Color(0xFFF9A825))
+        Triple("Verification Pending", Icons.Default.Error, Color(0xFFF9A825)) // Warning yellow is often fine, but let's check if we have a better one.
+        // Actually, let's use a standard warning color if possible, or stick to this but ensure it looks okay in dark mode.
     }
 
     Row(

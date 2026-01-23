@@ -2,7 +2,6 @@ package com.freight24.trucker.feature.trucks.view.details
 
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,8 +21,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Tune
@@ -53,6 +52,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.freight24.common.model.TruckDetail
 import com.freight24.common.model.TruckDocument
 import com.freight24.ui.UiState
+import com.freight24.ui.components.FilterSelectionChip
 import com.freight24.ui.components.TruckHeaderCard
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -99,7 +99,7 @@ internal fun TruckDetailsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(Color(0xFFF5F7F9)) // Light grayish background as seen in screens
+                .background(MaterialTheme.colorScheme.background)
         ) {
             when (val state = uiState) {
                 is UiState.Loading -> {
@@ -167,7 +167,7 @@ private fun SpecificationsSection(truck: TruckDetail) {
     Card(
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -204,7 +204,7 @@ private fun SpecificationsSection(truck: TruckDetail) {
 private fun SpecItem(modifier: Modifier, label: String, value: String) {
     Surface(
         modifier = modifier,
-        color = Color(0xFFF8F9FA), // Very light gray subcard
+        color = MaterialTheme.colorScheme.surfaceVariant, // Using theme aware surface variant
         shape = RoundedCornerShape(8.dp)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
@@ -232,7 +232,7 @@ private fun DocumentsSection(
     Card(
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -254,26 +254,6 @@ private fun DocumentsSection(
             DocumentItem("RC Book", truck.rcCard, onDocumentClick)
             DocumentItem("Insurance Policy", truck.insurance, onDocumentClick)
             DocumentItem("Fitness Certificate", truck.fcCertificate, onDocumentClick)
-
-            Spacer(Modifier.height(16.dp))
-            
-            Surface(
-                onClick = { /* TODO */ },
-                shape = RoundedCornerShape(8.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                color = Color.Transparent,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.padding(12.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text("Upload New Document", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                }
-            }
         }
     }
 }
@@ -284,17 +264,25 @@ private fun DocumentItem(
     doc: TruckDocument?,
     onDocumentClick: (String?) -> Unit
 ) {
+    val hasUrl = !doc?.url.isNullOrEmpty()
+    
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = doc?.url != null) { onDocumentClick(doc?.url) }
+            .clickable { 
+                if (hasUrl) {
+                    onDocumentClick(doc.url)
+                } else {
+                    // Trigger upload flow
+                }
+            }
             .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         val iconColor = when (doc?.status?.uppercase()) {
-            "COMPLETED", "VERIFIED" -> Color(0xFF2E7D32)
+            "COMPLETED", "VERIFIED" -> MaterialTheme.colorScheme.primary
             "PENDING" -> Color(0xFFF9A825)
-            else -> MaterialTheme.colorScheme.primary
+            else -> if (hasUrl) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
         }
         
         Surface(
@@ -321,17 +309,26 @@ private fun DocumentItem(
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = if (doc?.status?.uppercase() == "VERIFIED") "Valid until Dec 2024" else doc?.status ?: "Pending", // Mocking validity for verified for visual parity
+                text = if (hasUrl) doc.status else ("Pending Upload"),
                 style = MaterialTheme.typography.bodySmall,
-                color = if (doc?.status?.uppercase() == "VERIFIED") Color(0xFF2E7D32) else MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (doc?.status?.uppercase() == "VERIFIED") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
         
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.outline,
-            modifier = Modifier.size(20.dp)
-        )
+        if (hasUrl) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.outline,
+                modifier = Modifier.size(20.dp)
+            )
+        } else {
+            FilterSelectionChip(
+                label = "Upload",
+                isSelected = false,
+                onClick = { /* Trigger upload flow */ },
+                leadingIcon = Icons.Default.FileUpload
+            )
+        }
     }
 }
