@@ -1,4 +1,4 @@
-package com.freight24.employee
+package com.freight24.connect
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry

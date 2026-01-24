@@ -11,11 +11,11 @@ kotlin {
 }
 
 android {
-    namespace = "com.freight24.employee"
+    namespace = "com.freight24.connect"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.freight24.employee"
+        applicationId = "com.freight24.connect"
         minSdk = 24
         targetSdk = 36
         versionCode = 1

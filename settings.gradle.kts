@@ -24,7 +24,7 @@ rootProject.name = "Freight24"
 
 // App Modules
 include(":app-trucker")
-include(":app-employee")
+include(":app-connect")
 
 // Core Modules
 include(":core:auth")

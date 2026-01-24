@@ -1,4 +1,4 @@
-package com.freight24.employee
+package com.freight24.connect
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
