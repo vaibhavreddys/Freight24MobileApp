@@ -21,6 +21,7 @@ import androidx.navigation.NavHostController
 import com.freight24.trucker.enums.TruckerTab
 import com.freight24.trucker.feature.loads.LoadBoardScreen
 import com.freight24.trucker.feature.loads.LoadBoardViewModel
+import com.freight24.trucker.feature.profile.view.ProfileScreen
 import com.freight24.trucker.feature.trips.view.TripsScreen
 import com.freight24.trucker.feature.trucks.view.TrucksScreen
 import com.freight24.trucker.navigation.TruckerDestination
@@ -81,7 +82,7 @@ fun TruckerHomeScreen(navController: NavHostController) {
                     }
                 )
 
-                TruckerTab.Profile -> PlaceholderScreen("Profile", PaddingValues(0.dp))
+                TruckerTab.Profile -> ProfileScreen(paddingValues = paddingValues)
             }
         }
     }
