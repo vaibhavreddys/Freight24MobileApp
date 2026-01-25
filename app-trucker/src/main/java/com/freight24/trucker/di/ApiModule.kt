@@ -5,6 +5,7 @@ import com.freight24.network.di.DefaultNetwork
 import com.freight24.rest.api.IndentsApi
 import com.freight24.rest.api.TripApi
 import com.freight24.rest.api.TruckApi
+import com.freight24.rest.api.ProfileApi
 import com.freight24.rest.api.TruckerLoginApi
 import com.freight24.trucker.BuildConfig
 import dagger.Module
@@ -43,5 +44,12 @@ object ApiModule {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "TruckerTrucksService")
             .create(TruckApi::class.java)
+    }
+
+    @Provides
+    fun providesProfileApi(retrofitFactory: RetrofitFactory): ProfileApi {
+        return retrofitFactory
+            .create(BuildConfig.BASE_URL, "TruckerProfileService")
+            .create(ProfileApi::class.java)
     }
 }

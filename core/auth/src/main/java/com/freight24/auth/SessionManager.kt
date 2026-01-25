@@ -26,4 +26,8 @@ class SessionManager
             runBlocking {
                 return@runBlocking authDataStore.authToken.first() != null
             }
+
+        suspend fun logout() {
+            authDataStore.clearAuthData()
+        }
     }

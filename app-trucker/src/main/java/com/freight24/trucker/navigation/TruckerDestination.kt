@@ -18,4 +18,6 @@ sealed class TruckerDestination(val route: String) {
     object TruckDetail : TruckerDestination("truckDetail/{truckId}") {
         fun createRoute(truckId: String) = "truckDetail/$truckId"
     }
+
+    object OnboardTruck : TruckerDestination("onboardTruck")
 }
