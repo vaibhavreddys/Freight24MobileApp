@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "1044650559657",
+    "project_id": "freight24-fcm",
+    "storage_bucket": "freight24-fcm.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1044650559657:android:f4aa400f7d9bf6063601b8",
+        "android_client_info": {
+          "package_name": "com.freight24.connect"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDEW1MWShFd_Mj5gCA9zcmZKQ5wOBYTymg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1044650559657:android:7dfc8712798925183601b8",
+        "android_client_info": {
+          "package_name": "com.freight24.connect.debug"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDEW1MWShFd_Mj5gCA9zcmZKQ5wOBYTymg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1044650559657:android:fb3005e53841bb213601b8",
+        "android_client_info": {
+          "package_name": "com.freight24.trucker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDEW1MWShFd_Mj5gCA9zcmZKQ5wOBYTymg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

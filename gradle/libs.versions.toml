@@ -20,6 +20,8 @@ navigationCompose = "2.9.6"
 hiltNavigationCompose = "1.3.0"
 room = "2.7.0-alpha13"
 ktlint = "12.1.1"
+gServices = "4.4.4"
+firebaseBom = "34.8.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -53,6 +55,12 @@ retrofit-gson-convertor = { group = "com.squareup.retrofit2", name = "converter-
 
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 
+#Firebase
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
+firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
+firebase-inappmessaging = { group = "com.google.firebase", name = "firebase-inappmessaging" }
+firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
@@ -62,3 +70,4 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
+google-services = { id = "com.google.gms.google-services", version.ref = "gServices"}

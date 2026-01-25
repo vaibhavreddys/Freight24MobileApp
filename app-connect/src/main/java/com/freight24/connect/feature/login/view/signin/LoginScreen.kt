@@ -1,4 +1,4 @@
-package com.freight24.connect.feature.login
+package com.freight24.connect.feature.login.view.signin
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,11 +12,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -28,13 +30,35 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.freight24.ui.UiState
 import com.freight24.ui.theme.Freight24Theme
 import com.freight24.ui.theme.PrimaryGreen
 
 @Composable
-fun LoginScreen() {
+fun LoginScreen(onVerify: (String) -> Unit) {
     val viewModel: LoginViewModel = hiltViewModel()
     val phoneNumber by viewModel.phoneNumber.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    
+    LaunchedEffect(uiState) {
+        if (uiState is UiState.Success) {
+            onVerify(phoneNumber)
+        }
+    }
+
+    when (val state = uiState) {
+        is UiState.Loading -> {
+            CircularProgressIndicator()
+        }
+        is UiState.Error -> {
+            // Show an error message from the state
+        }
+        is UiState.Success -> {
+            // You might show a success checkmark or just the main screen content
+        }
+        else -> {}
+    }
 
     Freight24Theme {
         Surface(modifier = Modifier.fillMaxSize()) {
@@ -59,7 +83,9 @@ fun LoginScreen() {
                     text = "Let's get moving",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 24.dp).align(Alignment.Start),
+                    modifier = Modifier
+                        .padding(bottom = 24.dp)
+                        .align(Alignment.Start),
                 )
 
                 // Mobile Number Input
