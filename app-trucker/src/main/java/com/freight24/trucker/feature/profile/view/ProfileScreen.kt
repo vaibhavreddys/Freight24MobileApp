@@ -33,7 +33,7 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Fingerprint
-import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -70,8 +70,11 @@ import com.freight24.trucker.feature.profile.domain.DocumentType
 import com.freight24.trucker.feature.profile.domain.Profile
 import com.freight24.trucker.feature.profile.domain.ProfileDocument
 import com.freight24.ui.UiState
+import com.freight24.ui.theme.PrimaryGreen
 
-private val BrandGreen = Color(0xFF10B981)
+// Define theme-aware colors or use MaterialTheme directly
+// For BrandGreen, we can keep it as a constant for branding, but text colors should adapt
+private val BrandGreen = PrimaryGreen 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -142,7 +145,7 @@ private fun ProfileMainContent(
 //                    text = "Profile",
 //                    style = MaterialTheme.typography.headlineMedium,
 //                    fontWeight = FontWeight.Bold,
-//                    color = Color(0xFF111827) // background-dark
+//                    color = MaterialTheme.colorScheme.onBackground
 //                )
 //                IconButton(onClick = { /* TODO */ }) {
 //                    Icon(
@@ -174,14 +177,14 @@ private fun ProfileMainContent(
                     isEditing = isEditing,
                     onValueChange = { viewModel.editableFullName.value = it; viewModel.onFieldChanged() }
                 )
-                HorizontalDivider(color = Color(0xFFF3F4F6), thickness = 1.dp)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
                 ProfileField(
                     label = "EMAIL ADDRESS",
                     value = viewModel.editableEmailId.collectAsState().value,
                     isEditing = isEditing,
                     onValueChange = { viewModel.editableEmailId.value = it; viewModel.onFieldChanged() }
                 )
-                HorizontalDivider(color = Color(0xFFF3F4F6), thickness = 1.dp)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
                 ProfileField(
                     label = "PHONE NUMBER",
                     value = viewModel.editablePhoneNo.collectAsState().value,
@@ -199,7 +202,7 @@ private fun ProfileMainContent(
                     isEditing = isEditing,
                     onValueChange = { viewModel.editableBusinessName.value = it; viewModel.onFieldChanged() }
                 )
-                HorizontalDivider(color = Color(0xFFF3F4F6), thickness = 1.dp)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
                 ProfileField(
                     label = "GST NUMBER",
                     value = viewModel.editableGstNumber.collectAsState().value,
@@ -217,7 +220,7 @@ private fun ProfileMainContent(
                     isEditing = isEditing,
                     onValueChange = { viewModel.editableAccountHolderName.value = it; viewModel.onFieldChanged() }
                 )
-                HorizontalDivider(color = Color(0xFFF3F4F6), thickness = 1.dp)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
                 ProfileField(
                     label = "ACCOUNT NUMBER",
                     value = viewModel.editableAccountNumber.collectAsState().value,
@@ -225,14 +228,14 @@ private fun ProfileMainContent(
                     isSensitive = true,
                     onValueChange = { viewModel.editableAccountNumber.value = it; viewModel.onFieldChanged() }
                 )
-                HorizontalDivider(color = Color(0xFFF3F4F6), thickness = 1.dp)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
                 ProfileField(
                     label = "IFSC CODE",
                     value = viewModel.editableIfscCode.collectAsState().value,
                     isEditing = isEditing,
                     onValueChange = { viewModel.editableIfscCode.value = it; viewModel.onFieldChanged() }
                 )
-                HorizontalDivider(color = Color(0xFFF3F4F6), thickness = 1.dp)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
                 ProfileField(
                     label = "UPI ID",
                     value = viewModel.editableUpiId.collectAsState().value,
@@ -287,7 +290,7 @@ private fun ProfileHeaderCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Row(
@@ -319,7 +322,7 @@ private fun ProfileHeaderCard(
                         tint = BrandGreen,
                         modifier = Modifier
                             .size(22.dp)
-                            .background(Color.White, CircleShape)
+                            .background(MaterialTheme.colorScheme.surface, CircleShape)
                             .padding(1.dp)
                     )
                 }
@@ -332,19 +335,19 @@ private fun ProfileHeaderCard(
                     text = fullName.ifEmpty { "Member" },
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF111827)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = role,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF6B7280) // text-muted-light
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = "Partner ID: $partnerId",
                     style = MaterialTheme.typography.labelMedium,
-                    color = Color(0xFF9CA3AF) // text-muted-dark
+                    color = MaterialTheme.colorScheme.outline
                 )
             }
 
@@ -353,12 +356,12 @@ private fun ProfileHeaderCard(
                     onClick = onEditClick,
                     modifier = Modifier
                         .size(40.dp)
-                        .background(Color(0xFFF3F4F6), CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Edit,
                         contentDescription = "Edit",
-                        tint = Color(0xFF1F2937),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -397,7 +400,7 @@ private fun ProfileSection(
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
             Column(
@@ -425,7 +428,7 @@ private fun ProfileField(
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = Color(0xFF9CA3AF),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.5.sp
         )
@@ -441,7 +444,7 @@ private fun ProfileField(
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = BrandGreen,
-                    unfocusedBorderColor = Color(0xFFE5E7EB)
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
                 )
             )
         } else {
@@ -450,7 +453,7 @@ private fun ProfileField(
                 text = displayValue,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
-                color = if (value.isEmpty()) Color(0xFFD1D5DB) else Color(0xFF111827)
+                color = if (value.isEmpty()) MaterialTheme.colorScheme.outlineVariant else MaterialTheme.colorScheme.onSurface
             )
         }
     }
@@ -479,7 +482,7 @@ private fun DocumentList(documents: List<ProfileDocument>) {
                     imageVector = getDocIcon(type),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
-                    tint = Color(0xFF6B7280)
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
@@ -487,12 +490,12 @@ private fun DocumentList(documents: List<ProfileDocument>) {
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier.weight(1f),
-                    color = Color(0xFF374151)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 StatusBadge(status)
             }
             if (index < types.lastIndex) {
-                HorizontalDivider(color = Color(0xFFF3F4F6), thickness = 1.dp, modifier = Modifier.padding(horizontal = 20.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp, modifier = Modifier.padding(horizontal = 20.dp))
             }
         }
     }
@@ -502,8 +505,8 @@ private fun DocumentList(documents: List<ProfileDocument>) {
 private fun StatusBadge(status: DocumentStatus) {
     val (text, color) = when (status) {
         DocumentStatus.UPLOADED -> "Verified" to BrandGreen
-        DocumentStatus.PENDING -> "Pending" to Color(0xFFEF4444)
-        DocumentStatus.UNKNOWN -> "N/A" to Color(0xFF9CA3AF)
+        DocumentStatus.PENDING -> "Pending" to MaterialTheme.colorScheme.error
+        DocumentStatus.UNKNOWN -> "N/A" to MaterialTheme.colorScheme.onSurfaceVariant
     }
     
     Surface(
@@ -529,12 +532,12 @@ private fun LogoutButton(onLogout: () -> Unit) {
             .height(56.dp),
         shape = RoundedCornerShape(28.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFFFEE2E2),
-            contentColor = Color(0xFFEF4444)
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.error
         ),
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
     ) {
-        Icon(imageVector = Icons.Default.Logout, contentDescription = null, modifier = Modifier.size(20.dp))
+        Icon(imageVector = Icons.AutoMirrored.Filled.Logout, contentDescription = null, modifier = Modifier.size(20.dp))
         Spacer(modifier = Modifier.width(8.dp))
         Text(text = "LOGOUT", fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
     }
@@ -586,9 +589,9 @@ private fun ProfileErrorState(message: String, onRetry: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(Icons.Default.ErrorOutline, null, Modifier.size(48.dp), tint = Color(0xFFEF4444))
+        Icon(Icons.Default.ErrorOutline, null, Modifier.size(48.dp), tint = MaterialTheme.colorScheme.error)
         Spacer(Modifier.height(16.dp))
-        Text(message, style = MaterialTheme.typography.bodyLarge, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+        Text(message, style = MaterialTheme.typography.bodyLarge, textAlign = androidx.compose.ui.text.style.TextAlign.Center, color = MaterialTheme.colorScheme.onBackground)
         TextButton(onClick = onRetry, colors = ButtonDefaults.textButtonColors(contentColor = BrandGreen)) { 
             Text("Retry", fontWeight = FontWeight.Bold) 
         }
