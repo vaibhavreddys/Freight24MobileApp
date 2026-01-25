@@ -11,6 +11,7 @@ import com.freight24.trucker.feature.login.view.signin.LoginScreen
 import com.freight24.trucker.feature.login.view.verify.VerifyOtpScreen
 import com.freight24.trucker.feature.trips.view.details.TripDetailsScreen
 import com.freight24.trucker.feature.trucks.view.details.TruckDetailsScreen
+import com.freight24.trucker.feature.trucks.view.onboard.OnboardTruckScreen
 
 @Composable
 fun TruckerNavGraph(
@@ -114,6 +115,18 @@ fun TruckerNavGraph(
         ) {
             TruckDetailsScreen(
                 onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = TruckerDestination.OnboardTruck.route
+        ) {
+            OnboardTruckScreen(
+                onBackClick = { navController.popBackStack() },
+                onSuccessAction = {
+                    navController.popBackStack(TruckerDestination.Main.route, false)
+                },
+                navController = navController
             )
         }
     }

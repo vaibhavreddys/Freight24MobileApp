@@ -1,5 +1,6 @@
 package com.freight24.trucker.feature.trucks.view
 
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,6 +29,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -36,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.freight24.ui.UiState
 import com.freight24.ui.components.FilterSelectionChip
 import com.freight24.ui.components.TruckHeaderCard
@@ -44,12 +47,27 @@ import com.freight24.ui.components.TruckHeaderCard
 @Composable
 internal fun TrucksScreen(
     paddingValues: PaddingValues,
+    navController: NavController,
     viewModel: TrucksViewModel = hiltViewModel(),
     onTruckClick: (String) -> Unit = {},
+    onOnboardClick: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val selectedFilter by viewModel.selectedFilter.collectAsState()
+
+    // Observe refresh signal from result of onboarding
+    val refreshSignal = navController.currentBackStackEntry
+        ?.savedStateHandle
+        ?.get<Boolean>("refresh_trucks")
+
+    LaunchedEffect(refreshSignal) {
+        if (refreshSignal == true) {
+            Log.d("TrucksScreen", "Refresh signal received, refreshing list")
+            viewModel.onRefresh()
+            navController.currentBackStackEntry?.savedStateHandle?.remove<Boolean>("refresh_trucks")
+        }
+    }
 
     PullToRefreshBox(
         isRefreshing = isRefreshing,
@@ -120,7 +138,7 @@ internal fun TrucksScreen(
                             
                             item {
                                 Spacer(modifier = Modifier.height(8.dp))
-                                OnboardTruckButton(onClick = { /* Action to be defined next iteration */ })
+                                OnboardTruckButton(onClick = onOnboardClick)
                                 Spacer(modifier = Modifier.height(16.dp))
                             }
                         }
