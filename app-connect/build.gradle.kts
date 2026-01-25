@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.google.services)
 }
 
 kotlin {
@@ -32,7 +33,7 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             isDebuggable = true
-            buildConfigField("String", "BASE_URL", "\"https://backendapi-qhpo.onrender.com/api/v1/\"")
+            buildConfigField("String", "BASE_URL", "\"http://192.168.1.176:3000/api/v1/\"")
         }
         release {
             isMinifyEnabled = false
@@ -84,6 +85,7 @@ dependencies {
     implementation(project(":core:auth"))
     implementation(project(":core:database"))
     implementation(project(":core:ui"))
+    implementation(project(":core:rest"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
@@ -97,6 +99,12 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.hilt.navigation.compose)
+
+    // Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
+    implementation(libs.firebase.inappmessaging)
+    implementation(libs.firebase.analytics)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

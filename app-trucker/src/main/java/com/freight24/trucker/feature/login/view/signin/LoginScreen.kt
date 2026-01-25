@@ -124,7 +124,7 @@ internal fun LoginScreen(navController: NavHostController) {
         }
     }
 
-    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { _ ->
+    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
         Freight24Theme(darkTheme = isDarkTheme) {
             val colors = MaterialTheme.colorScheme
 

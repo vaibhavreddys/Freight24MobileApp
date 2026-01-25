@@ -1,6 +1,5 @@
 package com.freight24.network.adapter
 
-import okhttp3.Authenticator
 import okhttp3.Interceptor
 
 data class AuthNetworkConfig(
