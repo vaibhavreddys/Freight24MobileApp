@@ -19,6 +19,7 @@ fun <T : NavTabItem> FreightBottomNavScaffold(
     onItemSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
     topBar: @Composable (() -> Unit)? = null,
+    floatingActionButton: @Composable (() -> Unit)? = null,
     content: @Composable (PaddingValues, T) -> Unit,
 ) {
     Scaffold(
@@ -33,6 +34,9 @@ fun <T : NavTabItem> FreightBottomNavScaffold(
                 onItemSelected = onItemSelected,
             )
         },
+        floatingActionButton = {
+            floatingActionButton?.invoke()
+        }
     ) { paddingValues ->
         content(paddingValues, selectedItem)
     }

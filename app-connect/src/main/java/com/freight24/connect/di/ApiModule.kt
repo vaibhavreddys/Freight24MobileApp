@@ -31,5 +31,12 @@ object ApiModule {
             .create(NotificationServiceApi::class.java)
     }
 
+    @Provides
+    fun providesIndentsApi(retrofitFactory: RetrofitFactory): IndentsApi {
+        return retrofitFactory
+            .create(BuildConfig.BASE_URL, "IndentsApi")
+            .create(IndentsApi::class.java)
+    }
+
 
 }

@@ -29,14 +29,8 @@ internal class VerifyOtpViewModel
         private val _otp = MutableStateFlow("")
         val otp: StateFlow<String> = _otp.asStateFlow()
 
-        private val _showPasteHint = MutableStateFlow(false)
-        val showPasteHint: StateFlow<Boolean> = _showPasteHint.asStateFlow()
-
         private val _shake = MutableStateFlow(false)
         val shake: StateFlow<Boolean> = _shake.asStateFlow()
-
-        private val _otpDigits = MutableStateFlow(List(OTP_LENGTH) { "" })
-        val otpDigits: StateFlow<List<String>> = _otpDigits.asStateFlow()
 
         private val _remainingSeconds = MutableStateFlow(RESEND_DELAY_SECONDS)
         val remainingSeconds: StateFlow<Int> = _remainingSeconds.asStateFlow()
@@ -63,10 +57,6 @@ internal class VerifyOtpViewModel
 
             _otp.value = value
             _isVerifyEnabled.value = value.length == OTP_LENGTH
-
-            if (value.length > 1) {
-                _showPasteHint.value = true
-            }
         }
 
         private fun triggerShake() {
@@ -75,10 +65,6 @@ internal class VerifyOtpViewModel
                 delay(400)
                 _shake.value = false
             }
-        }
-
-        private fun updateVerifyEnabled() {
-            _isVerifyEnabled.value = _otpDigits.value.all { it.isNotEmpty() }
         }
 
         private fun startResendTimer() {
@@ -97,7 +83,6 @@ internal class VerifyOtpViewModel
                 println("Resending OTP...")
                 _remainingSeconds.value = RESEND_DELAY_SECONDS
                 _isResendEnabled.value = false
-                _otpDigits.value = List(OTP_LENGTH) { "" }
                 startResendTimer()
             }
         }
@@ -107,7 +92,6 @@ internal class VerifyOtpViewModel
                 triggerShake()
                 return
             }
-            // TODO: Call verify OTP API and navigate to Dashboard on success
             println("Verifying OTP: ${_otp.value}")
             viewModelScope.launch {
                 _uiState.value = UiState.Loading
@@ -121,10 +105,14 @@ internal class VerifyOtpViewModel
                     onSuccess = { verifyOtpResult ->
                         when (verifyOtpResult) {
                             is VerifyOtpResult.Error -> {
+                                _uiState.value = UiState.Error(verifyOtpResult.message)
                             }
                             is VerifyOtpResult.InvalidOtp -> {
+                                _uiState.value = UiState.Error(verifyOtpResult.message)
+                                triggerShake()
                             }
                             is VerifyOtpResult.OtpExpired -> {
+                                _uiState.value = UiState.Error(verifyOtpResult.message)
                             }
                             is VerifyOtpResult.Success -> {
                                 _uiState.value = UiState.Success(verifyOtpResult.token)

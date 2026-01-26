@@ -27,6 +27,7 @@ android {
 
     buildFeatures {
         buildConfig = true
+        compose = true
     }
 
     buildTypes {
@@ -68,9 +69,7 @@ android {
         }
     }
 
-    buildFeatures {
-        buildConfig = true
-    }
+
 
     packaging {
         resources {
@@ -96,9 +95,11 @@ dependencies {
     implementation(platform(libs.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
+    debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.hilt.navigation.compose)
+    implementation("androidx.compose.material:material-icons-extended:1.x.x")
 
     // Firebase
     implementation(platform(libs.firebase.bom))

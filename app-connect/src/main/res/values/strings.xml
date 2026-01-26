@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">Freight24</string>
+
+    <string name="tab_home">Home</string>
+    <string name="tab_indents">Indents</string>
+    <string name="tab_trips">Trips</string>
+    <string name="tab_find_trucks">Find Trucks</string>
+    <string name="tab_more">More</string>
+    <string name="cd_add_indent">Create new indent</string>
+
 </resources>

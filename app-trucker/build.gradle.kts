@@ -103,8 +103,6 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.hilt.navigation.compose)
-
-    // Material 3 Extended IconSet
     implementation("androidx.compose.material:material-icons-extended:1.x.x")
 
     implementation(libs.hilt.android)

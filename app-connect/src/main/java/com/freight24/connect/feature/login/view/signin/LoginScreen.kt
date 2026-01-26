@@ -1,5 +1,6 @@
 package com.freight24.connect.feature.login.view.signin
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,7 +16,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,21 +48,9 @@ fun LoginScreen(onVerify: (String) -> Unit) {
         }
     }
 
-    when (val state = uiState) {
-        is UiState.Loading -> {
-            CircularProgressIndicator()
-        }
-        is UiState.Error -> {
-            // Show an error message from the state
-        }
-        is UiState.Success -> {
-            // You might show a success checkmark or just the main screen content
-        }
-        else -> {}
-    }
-
     Freight24Theme {
-        Surface(modifier = Modifier.fillMaxSize()) {
+        Scaffold(modifier = Modifier.fillMaxSize()) { contentPadding ->
+            Box(modifier = Modifier.padding(contentPadding).fillMaxSize()) {
             Column(
                 modifier =
                     Modifier
@@ -129,6 +118,10 @@ fun LoginScreen(onVerify: (String) -> Unit) {
                     modifier = Modifier.padding(bottom = 32.dp),
                 )
             }
+            if (uiState is UiState.Loading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            }
         }
+    }
     }
 }
