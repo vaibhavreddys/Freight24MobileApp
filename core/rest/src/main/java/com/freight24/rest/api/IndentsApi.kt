@@ -15,4 +15,15 @@ interface IndentsApi {
         @Query("operational_city_id") cityId: Int,
         @Query("page") page: Int,
     ): Response<PaginatedLoadBoardResponse>
+    @GET("indents/locations/search")
+    suspend fun searchLocations(@Query("query") query: String): Response<List<com.freight24.rest.response.LocationDto>>
+
+    @GET("indents/clients/search")
+    suspend fun searchClients(@Query("query") query: String): Response<List<com.freight24.rest.response.ClientDto>>
+
+    @GET("indents/truck-types")
+    suspend fun getTruckTypes(): Response<List<com.freight24.rest.response.TruckTypeDto>>
+
+    @retrofit2.http.POST("indents")
+    suspend fun createIndent(@retrofit2.http.Body request: com.freight24.rest.request.CreateIndentRequest): Response<com.freight24.rest.response.BaseResponse>
 }

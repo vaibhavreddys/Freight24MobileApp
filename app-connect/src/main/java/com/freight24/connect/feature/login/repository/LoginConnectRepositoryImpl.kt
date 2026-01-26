@@ -1,6 +1,7 @@
 package com.freight24.connect.feature.login.repository
 
 import com.freight24.common.di.IoDispatcher
+import com.freight24.connect.feature.login.domain.model.AuthInfo
 import com.freight24.rest.api.LoginConnectApi
 import com.freight24.rest.request.OtpRequest
 import com.freight24.rest.request.VerifyOtpRequest
@@ -16,23 +17,51 @@ constructor(
     @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : LoginConnectRepository {
 
-    override suspend fun requestOtp(phoneNumber: String): LoginResponse {
-       return withContext(ioDispatcher) {
-           loginConnectApi.requestOtp(OtpRequest(phoneNumber))
-       }
+    override suspend fun requestOtp(phoneNumber: String): Result<Unit> {
+        return withContext(ioDispatcher) {
+            try {
+                val response = loginConnectApi.requestOtp(OtpRequest(phoneNumber))
+                if (response.success) {
+                    Result.success(Unit)
+                } else {
+                    Result.failure(Exception(response.message))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
     }
 
     override suspend fun verifyOtp(
         phoneNumber: String,
         otp: String
-    ): LoginResponse {
+    ): Result<AuthInfo> {
         return withContext(ioDispatcher) {
-            loginConnectApi.verifyOtp(
-                VerifyOtpRequest(
-                    phone_number = phoneNumber,
-                    otp = otp,
+            try {
+                val response = loginConnectApi.verifyOtp(
+                    VerifyOtpRequest(
+                        phone_number = phoneNumber,
+                        otp = otp,
+                    )
                 )
-            )
+                if (response.success) {
+                    val data = response.data
+                    if (data != null && !data.token.isNullOrEmpty() && !data.user?.id.isNullOrEmpty()) {
+                         Result.success(
+                             AuthInfo(
+                                 token = data.token.orEmpty(),
+                                 userId = data.user?.id.orEmpty()
+                             )
+                         )
+                    } else {
+                        Result.failure(Exception("Invalid server response"))
+                    }
+                } else {
+                    Result.failure(Exception(response.message))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
         }
     }
 }

@@ -1,3 +1,5 @@
+package com.freight24.connect.feature.login.view.verify
+
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -109,7 +111,7 @@ fun OtpInputField(
                         modifier =
                             Modifier
                                 .size(36.dp)
-                                .background(Color.White, RoundedCornerShape(12.dp))
+                                .background(colors.surface, RoundedCornerShape(12.dp))
                                 .border(
                                     2.dp,
                                     if (otp.length == index) colors.primary else Color.Transparent,
@@ -121,7 +123,7 @@ fun OtpInputField(
                             text = if (char.isEmpty() && otp.length == index) "|" else char,
                             fontSize = 28.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.Black,
+                            color = colors.onSurface,
                         )
                     }
                 }

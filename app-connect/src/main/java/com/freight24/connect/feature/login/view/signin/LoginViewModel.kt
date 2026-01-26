@@ -3,7 +3,7 @@ package com.freight24.connect.feature.login.view.signin
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.freight24.connect.feature.login.domain.model.LoginResult
+
 import com.freight24.connect.feature.login.domain.usecase.LoginConnectUseCase
 import com.freight24.connect.feature.login.domain.usecase.LoginConnectUseCaseParams
 import com.freight24.ui.UiState
@@ -40,13 +40,10 @@ internal class LoginViewModel
                     loginConnectUseCase.invoke(
                         LoginConnectUseCaseParams("+91$phone")
                     ).fold(
-                        onSuccess = { response ->
-                            Log.e("LoginViewModel", "Response: $response")
-                            if (response is LoginResult.Success) {
-                                Log.e("LoginViewModel", "Notification sent")
-                                _uiState.value = UiState.Success(phone)
-                                //_navigateToVerifyOtp.value = fullPhone
-                            }
+                        onSuccess = {
+                            Log.e("LoginViewModel", "Notification sent")
+                            _uiState.value = UiState.Success(phone)
+                            //_navigateToVerifyOtp.value = fullPhone
                         },
                         onFailure = { exception ->
                             _uiState.value = UiState.Error(

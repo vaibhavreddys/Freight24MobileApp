@@ -1,6 +1,7 @@
 package com.freight24.connect.feature.login.view.verify
 
-import OtpInputField
+
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,11 +24,12 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -35,7 +37,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -47,6 +48,7 @@ import androidx.navigation.NavController
 import com.freight24.ui.UiState
 import com.freight24.ui.theme.AppTypography
 import com.freight24.ui.theme.Freight24Theme
+import java.util.Locale
 
 @Composable
 internal fun VerifyOtpScreen(
@@ -85,18 +87,22 @@ internal fun VerifyOtpScreen(
     }
 
     // Error snackbar
-    val snackbarHostState = remember { SnackbarHostState() }
+    val snackBarHostState = remember { SnackbarHostState() }
     LaunchedEffect(uiState) {
         if (uiState is UiState.Error) {
-            snackbarHostState.showSnackbar((uiState as UiState.Error).message)
+            snackBarHostState.showSnackbar((uiState as UiState.Error).message)
             viewModel.resetUiState()
         }
     }
-
+    val colors = MaterialTheme.colorScheme
     Freight24Theme {
-        val colors = MaterialTheme.colorScheme
-        Surface(modifier = Modifier.fillMaxSize(), color = colors.background) {
-            Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold (modifier = Modifier.fillMaxSize()) { contentPadding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(contentPadding)
+                    .background(color = colors.background),
+            ) {
                 // Back button
                 IconButton(
                     onClick = { navController.popBackStack() },
@@ -143,24 +149,26 @@ internal fun VerifyOtpScreen(
 
                     Spacer(Modifier.height(40.dp))
 
-                    Text(
-                        text =
-                            if (isResendEnabled) {
-                                "Resend code"
-                            } else {
-                                "Resend code in ${String.format(
-                                    "%02d:%02d",
-                                    remainingSeconds / 60,
-                                    remainingSeconds % 60,
-                                )}"
-                            },
-                        color = colors.onSurfaceVariant,
-                        style = AppTypography.bodyMedium,
-                        modifier =
-                            Modifier.clickable(enabled = isResendEnabled) {
-                                viewModel.onResendClick()
-                            },
-                    )
+                    TextButton(
+                        onClick = { viewModel.onResendClick() },
+                        enabled = isResendEnabled,
+                    ) {
+                        Text(
+                            text =
+                                if (isResendEnabled) {
+                                    "Resend code"
+                                } else {
+                                    "Resend code in ${remainingSeconds.toMmSs()}"
+                                },
+                            color =
+                                if (isResendEnabled) {
+                                    colors.primary
+                                } else {
+                                    colors.onSurfaceVariant
+                                },
+                            style = AppTypography.bodyMedium,
+                        )
+                    }
 
                     Spacer(Modifier.height(80.dp)) // Push button down naturally
 
@@ -201,17 +209,28 @@ internal fun VerifyOtpScreen(
 
                 // Snackbar
                 SnackbarHost(
-                    hostState = snackbarHostState,
+                    hostState = snackBarHostState,
                     modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
                 ) { data ->
                     Snackbar(
                         snackbarData = data,
-                        containerColor = Color.Black,
-                        contentColor = Color.White,
+                        containerColor = MaterialTheme.colorScheme.inverseSurface,
+                        contentColor = MaterialTheme.colorScheme.inverseOnSurface,
                         shape = RoundedCornerShape(12.dp),
                     )
                 }
             }
         }
     }
+}
+
+private fun Int.toMmSs(): String {
+    val minutes = this / 60
+    val seconds = this % 60
+    return String.format(
+        Locale.getDefault(),
+        "%02d:%02d",
+        minutes,
+        seconds
+    )
 }

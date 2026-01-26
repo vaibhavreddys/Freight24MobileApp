@@ -5,6 +5,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.freight24.connect.feature.home.HomeScreen
+import com.freight24.connect.feature.indents.views.CreateIndentScreen
 import com.freight24.connect.feature.login.view.signin.LoginScreen
 import com.freight24.connect.feature.login.view.verify.VerifyOtpScreen
 
@@ -50,7 +51,19 @@ fun ConnectNavGraph(
         }
 
         composable(ConnectDestination.Home.route) {
-            HomeScreen()
+            HomeScreen(
+                onCreateIndentClick = {
+                    navHostController.navigate(ConnectDestination.CreateIndent.route)
+                }
+            )
+        }
+
+        composable(ConnectDestination.CreateIndent.route) {
+            CreateIndentScreen(
+                onBackClick = {
+
+                }
+            )
         }
     }
 }

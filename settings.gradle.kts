@@ -7,7 +7,13 @@ pluginManagement {
                 includeGroupByRegex("androidx.*")
             }
         }
-        mavenCentral()
+        mavenCentral {
+            content {
+                excludeGroupByRegex("com\\.android.*")
+                excludeGroupByRegex("com\\.google.*")
+                excludeGroupByRegex("androidx.*")
+            }
+        }
         gradlePluginPortal()
     }
 }

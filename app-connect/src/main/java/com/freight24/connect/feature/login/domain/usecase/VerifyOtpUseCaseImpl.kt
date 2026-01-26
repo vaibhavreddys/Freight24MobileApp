@@ -11,26 +11,14 @@ internal class VerifyOtpUseCaseImpl @Inject constructor(
 ) : VerifyOtpUseCase {
 
     override suspend fun invoke(params: VerifyOtpUseCaseParams): Result<VerifyOtpResult> {
-        return runCatching {
-           val response = loginConnectRepository.verifyOtp(params.phoneNumber, params.otp)
-            if (!response.success) {
-                return@runCatching VerifyOtpResult.OtpExpired(response.message)
+        return loginConnectRepository.verifyOtp(params.phoneNumber, params.otp)
+            .map { authInfo ->
+                authDataStore.saveAuthData(authInfo.token, params.phoneNumber, authInfo.userId)
+                VerifyOtpResult.Success(true, authInfo.token)
             }
-
-            val authData =
-                response.data
-                    ?: return@runCatching VerifyOtpResult.OtpExpired("Missing data in response")
-
-            val token =
-                authData.token
-                    ?: return@runCatching VerifyOtpResult.InvalidOtp("Token not provided by server")
-
-            val userId = authData.user?.id.orEmpty()
-            authDataStore.saveAuthData(token, params.phoneNumber, userId)
-            VerifyOtpResult.Success(true, token)
-        }.recover {
-            VerifyOtpResult.Error(it.message.orEmpty())
-        }
+            .recover { e ->
+                VerifyOtpResult.Error(e.message ?: "Unknown error")
+            }
     }
 
 
