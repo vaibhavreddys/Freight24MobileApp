@@ -31,7 +31,8 @@ fun FilterSelectionChip(
     isSelected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    leadingIcon: ImageVector? = null
+    leadingIcon: ImageVector? = null,
+    count: Int? = null
 ) {
     val backgroundColor = if (isSelected) {
         MaterialTheme.colorScheme.primary
@@ -54,7 +55,7 @@ fun FilterSelectionChip(
     Surface(
         modifier = modifier.clickable { onClick() },
         color = backgroundColor,
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(50),
         border = if (isSelected) null else BorderStroke(1.dp, borderColor),
     ) {
         Row(
@@ -75,7 +76,24 @@ fun FilterSelectionChip(
                 fontSize = 13.sp,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                 color = textColor,
+                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
             )
+            
+            if (count != null && count > 0) {
+                Spacer(Modifier.width(6.dp))
+                Surface(
+                    color = if (isSelected) MaterialTheme.colorScheme.surface.copy(alpha = 0.2f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(50),
+                ) {
+                    Text(
+                        text = count.toString(),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
         }
     }
 }

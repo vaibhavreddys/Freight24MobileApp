@@ -16,4 +16,9 @@ internal interface TripRepository {
         forceRefresh: Boolean = false,
     ): Result<TripDetail>
 
+    suspend fun updateTripStatus(
+        tripId: String,
+        status: String,
+    ): Result<TripDetail>
+
 }

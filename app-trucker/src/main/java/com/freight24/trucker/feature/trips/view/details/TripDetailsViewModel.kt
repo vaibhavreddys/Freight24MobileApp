@@ -17,6 +17,7 @@ import javax.inject.Inject
 @HiltViewModel
 internal class TripDetailsViewModel @Inject constructor(
     private val fetchTripDetailUseCase: FetchTripDetailUseCase,
+    private val updateTripStatusUseCase: com.freight24.trucker.feature.trips.domain.usecase.UpdateTripStatusUseCase,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -46,5 +47,23 @@ internal class TripDetailsViewModel @Inject constructor(
 
     fun retry() {
         fetchTripDetail(forceRefresh = true)
+    }
+
+    fun updateTripStatus(status: String) {
+        viewModelScope.launch {
+            _uiState.value = UiState.Loading
+            updateTripStatusUseCase(
+                com.freight24.trucker.feature.trips.domain.usecase.UpdateTripStatusParams(
+                    tripId,
+                    status
+                )
+            )
+                .onSuccess { tripDetail ->
+                    _uiState.value = UiState.Success(tripDetail)
+                }
+                .onFailure { error ->
+                    _uiState.value = UiState.Error(error.message ?: "Failed to update status")
+                }
+        }
     }
 }

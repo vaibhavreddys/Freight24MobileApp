@@ -28,4 +28,9 @@ internal interface TripBinderModule {
     @Singleton
     fun bindFetchTripDetailUseCase(impl: FetchTripDetailUseCaseImpl): FetchTripDetailUseCase
 
+    @Binds
+    @Singleton
+    fun bindUpdateTripStatusUseCase(impl: com.freight24.trucker.feature.trips.domain.usecase.UpdateTripStatusUseCaseImpl): com.freight24.trucker.feature.trips.domain.usecase.UpdateTripStatusUseCase
+
+
 }

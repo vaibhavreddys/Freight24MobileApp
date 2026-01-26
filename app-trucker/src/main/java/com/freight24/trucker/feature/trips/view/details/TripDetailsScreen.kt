@@ -20,6 +20,10 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,6 +39,8 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -55,6 +61,11 @@ import com.freight24.ui.components.TimelineStatus
 import com.freight24.ui.components.TimelineView
 import com.freight24.ui.components.TripCard
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.material3.RadioButton
+import androidx.compose.runtime.saveable.rememberSaveable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,6 +77,9 @@ internal fun TripDetailsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    var showBottomSheet by rememberSaveable { mutableStateOf(false) }
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
 
     val filePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -115,6 +129,17 @@ internal fun TripDetailsScreen(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
             )
+        },
+        floatingActionButton = {
+            if (uiState is UiState.Success) {
+                FloatingActionButton(
+                    onClick = { showBottomSheet = true },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    Icon(Icons.Default.Edit, contentDescription = "Update Status")
+                }
+            }
         }
     ) { paddingValues ->
         Box(
@@ -152,6 +177,123 @@ internal fun TripDetailsScreen(
                 }
                 UiState.Idle -> {}
             }
+        }
+    }
+
+    if (showBottomSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showBottomSheet = false },
+            sheetState = bottomSheetState,
+            containerColor = MaterialTheme.colorScheme.surface,
+        ) {
+            val currentStatus = (uiState as? UiState.Success)?.data?.status ?: ""
+            // Map "In Transit" back to "IN_TRANSIT" for comparison if needed, or rely on extracting the raw enum value.
+            // The status from UI state might be formatted (e.g. "In Transit"), so we need to be careful.
+            // Let's rely on the raw status if possible, or normalize.
+            // The `status` field in TripDetail seems to be formatted message in mapper: `NameFormatter.formatTripStatusMessage(trucker_status)`.
+            // We should arguably use the raw status from API, but we might not have it easily in domain model if we mapped it away.
+            // Let's check TripMappers.kt again.
+            // TripDetail.status = NameFormatter.formatTripStatusMessage(trucker_status)
+            // This is "In Transit", "Loading", etc.
+            // We need to map it back or change TripDetail to store raw status.
+            // For now, let's normalize "In Transit" -> "IN_TRANSIT" etc.
+            
+            StatusSelectionContent(
+                currentStatus = currentStatus, // This is the formatted string like "Loading"
+                onStatusSelected = { status ->
+                    viewModel.updateTripStatus(status)
+                    scope.launch { bottomSheetState.hide() }.invokeOnCompletion {
+                        if (!bottomSheetState.isVisible) {
+                            showBottomSheet = false
+                        }
+                    }
+                }
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun StatusSelectionContent(
+    currentStatus: String,
+    onStatusSelected: (String) -> Unit
+) {
+    val statuses = listOf("ASSIGNED", "LOADING", "IN_TRANSIT", "UNLOADED", "INVOICED", "PAID")
+    
+    // Normalize the display status back to API status format for comparison
+    val normalizedCurrentStatus = when (currentStatus.uppercase()) {
+        "IN TRANSIT" -> "IN_TRANSIT"
+        else -> currentStatus.uppercase().replace(" ", "_")
+    }
+
+    val currentIndex = statuses.indexOf(normalizedCurrentStatus)
+    // Filter out statuses that are before the current status
+    val availableStatuses = if (currentIndex != -1) {
+        statuses.drop(currentIndex + 1) // Only show next statuses
+         // Or if you want to show all but disable previous:
+         // statuses
+    } else {
+        statuses
+    }
+
+    // Bug Fix 1: Use normalizedCurrentStatus as key or in LaunchedEffect, but simplest is to initialize state with it correctly 
+    // AND update it if the prop changes (though bottom sheet usually recreates). 
+    // To ensure it's selected when opening, we default to the current status (or the next one?). 
+    // The user usually wants to select the NEXT status.
+    // If we want to show the current one as selected initially:
+    var selectedOption by rememberSaveable(normalizedCurrentStatus) { mutableStateOf(normalizedCurrentStatus) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+            .padding(bottom = 32.dp)
+    ) {
+        Text(
+            text = "Update Trip Status",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        // Show all statuses but disable previous ones
+        statuses.forEachIndexed { index, status ->
+            val isEnabled = index >= currentIndex
+            
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .selectable(
+                        selected = (status == selectedOption),
+                        onClick = { if (isEnabled) selectedOption = status },
+                        enabled = isEnabled
+                    )
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                RadioButton(
+                    selected = (status == selectedOption),
+                    onClick = { if (isEnabled) selectedOption = status },
+                    enabled = isEnabled
+                )
+                Text(
+                    text = status.replace("_", " "),
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(start = 16.dp),
+                    color = if (isEnabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(
+            onClick = { onStatusSelected(selectedOption) },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = selectedOption != normalizedCurrentStatus
+        ) {
+            Text("Update Status")
         }
     }
 }

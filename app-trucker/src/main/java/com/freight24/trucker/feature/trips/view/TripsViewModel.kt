@@ -37,6 +37,9 @@ internal class TripsViewModel
         private val _isRefreshing = MutableStateFlow(false)
         val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
+        private val _filterCounts = MutableStateFlow<Map<TripFilter, Int>>(emptyMap())
+        val filterCounts: StateFlow<Map<TripFilter, Int>> = _filterCounts.asStateFlow()
+
         private var currentPage = 1
 
         init {
@@ -55,10 +58,33 @@ internal class TripsViewModel
                             _allTrips.value += paginatedTrips.trips
                         }
                         applyFilter()
+                        calculateCounts()
                     }.onFailure { error: Throwable ->
                         // Handle error
                     }
             }
+        }
+        
+        private fun calculateCounts() {
+            val trips = _allTrips.value
+            val counts = TripFilter.entries.associateWith { filter ->
+                when (filter) {
+                    TripFilter.ACTIVE ->
+                        trips.count {
+                            it.status.uppercase() in listOf("ASSIGNED", "LOADING", "IN_TRANSIT", "IN TRANSIT")
+                        }
+                    TripFilter.POD ->
+                        trips.count {
+                            it.status.uppercase() in listOf("UNLOADED", "INVOICED")
+                        }
+                    TripFilter.COMPLETED ->
+                        trips.count {
+                            it.status.uppercase() == "PAID"
+                        }
+                    TripFilter.ALL -> trips.size
+                }
+            }
+            _filterCounts.value = counts
         }
 
         fun onFilterSelected(filter: TripFilter) {

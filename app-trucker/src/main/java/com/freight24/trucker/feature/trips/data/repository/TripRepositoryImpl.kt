@@ -33,4 +33,22 @@ internal class TripRepositoryImpl @Inject constructor(
             response.data?.toDomain() ?: throw IllegalStateException("Trip detail data is null")
         }
 
+    override suspend fun updateTripStatus(
+        tripId: String,
+        status: String
+    ): Result<TripDetail> {
+        val updateResult = safeCallProvider.safeApiCall(ioDispatcher) {
+            tripApi.updateTripStatus(
+                tripId,
+                com.freight24.rest.request.UpdateTripStatusRequest(status)
+            )
+        }
+
+        return if (updateResult.isSuccess) {
+            fetchTripDetail(tripId, forceRefresh = true)
+        } else {
+            Result.failure(updateResult.exceptionOrNull() ?: Exception("Failed to update status"))
+        }
+    }
+
 }
