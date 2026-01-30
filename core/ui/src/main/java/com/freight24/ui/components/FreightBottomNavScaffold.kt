@@ -36,7 +36,7 @@ fun <T : NavTabItem> FreightBottomNavScaffold(
         },
         floatingActionButton = {
             floatingActionButton?.invoke()
-        }
+        },
     ) { paddingValues ->
         content(paddingValues, selectedItem)
     }

@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class TruckResponse(
     val success: Boolean,
-    val trucks: List<TruckDto>?
+    val trucks: List<TruckDto>?,
 )
 
 @Serializable
@@ -16,5 +16,5 @@ data class TruckDto(
     val isBlacklisted: Boolean,
     val availability: String,
     val truckType: String?,
-    val bodyType: String?
+    val bodyType: String?,
 )

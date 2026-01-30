@@ -10,5 +10,5 @@ data class AddTruckParams(
     val year: String?,
     val rcCard: File?,
     val fcCertificate: File?,
-    val insurance: File?
+    val insurance: File?,
 )

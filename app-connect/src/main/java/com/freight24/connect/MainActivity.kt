@@ -17,7 +17,6 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
     @Inject
     lateinit var sessionManager: SessionManager
 
@@ -28,7 +27,8 @@ class MainActivity : ComponentActivity() {
             Freight24Theme {
                 val navController = rememberNavController()
 
-                val startDestination = remember {
+                val startDestination =
+                    remember {
                         if (sessionManager.isSessionValid()) {
                             ConnectDestination.Home.route
                         } else {
@@ -37,7 +37,7 @@ class MainActivity : ComponentActivity() {
                     }
                 ConnectNavGraph(
                     navHostController = navController,
-                    startDestination = startDestination
+                    startDestination = startDestination,
                 )
             }
         }
@@ -48,15 +48,17 @@ class MainActivity : ComponentActivity() {
         FirebaseMessaging
             .getInstance()
             .token
-            .addOnCompleteListener(OnCompleteListener { task ->
-                if (!task.isSuccessful) {
-                    Log.w("FCM", "Fetching FCM registration token failed", task.exception)
-                    return@OnCompleteListener
-                }
+            .addOnCompleteListener(
+                OnCompleteListener { task ->
+                    if (!task.isSuccessful) {
+                        Log.w("FCM", "Fetching FCM registration token failed", task.exception)
+                        return@OnCompleteListener
+                    }
 
-                // Get new FCM registration token
-                val token = task.result
-                Log.w("FCM", "Token is $token")
-            })
+                    // Get new FCM registration token
+                    val token = task.result
+                    Log.w("FCM", "Token is $token")
+                },
+            )
     }
 }

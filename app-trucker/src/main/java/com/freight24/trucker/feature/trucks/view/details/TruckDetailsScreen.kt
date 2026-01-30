@@ -59,7 +59,7 @@ import com.freight24.ui.components.TruckHeaderCard
 @Composable
 internal fun TruckDetailsScreen(
     onBackClick: () -> Unit,
-    viewModel: TruckDetailsViewModel = hiltViewModel()
+    viewModel: TruckDetailsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
@@ -71,12 +71,12 @@ internal fun TruckDetailsScreen(
                 title = {
                     Column(
                         horizontalAlignment = Alignment.Start,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text(
                             text = "Truck Details",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
                         )
                     }
                 },
@@ -89,17 +89,18 @@ internal fun TruckDetailsScreen(
 //                    IconButton(onClick = { /* More options */ }) {
 //                        Icon(Icons.Default.MoreVert, contentDescription = "More")
 //                    }
-                }
+                },
             )
-        }
+        },
     ) { paddingValues ->
         PullToRefreshBox(
             isRefreshing = isRefreshing,
             onRefresh = { viewModel.onRefresh() },
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.background)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .background(MaterialTheme.colorScheme.background),
         ) {
             when (val state = uiState) {
                 is UiState.Loading -> {
@@ -117,13 +118,14 @@ internal fun TruckDetailsScreen(
                         truck = state.data,
                         onDocumentClick = { url ->
                             if (url != null) {
-                                val intent = Intent(Intent.ACTION_VIEW).apply {
-                                    setDataAndType(Uri.parse(url), "application/pdf")
-                                    flags = Intent.FLAG_ACTIVITY_NO_HISTORY
-                                }
+                                val intent =
+                                    Intent(Intent.ACTION_VIEW).apply {
+                                        setDataAndType(Uri.parse(url), "application/pdf")
+                                        flags = Intent.FLAG_ACTIVITY_NO_HISTORY
+                                    }
                                 context.startActivity(Intent.createChooser(intent, "Open PDF"))
                             }
-                        }
+                        },
                     )
                 }
                 else -> {}
@@ -135,12 +137,12 @@ internal fun TruckDetailsScreen(
 @Composable
 private fun TruckDetailsContent(
     truck: TruckDetail,
-    onDocumentClick: (String?) -> Unit
+    onDocumentClick: (String?) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         item {
             TruckHeaderCard(
@@ -148,7 +150,7 @@ private fun TruckDetailsContent(
                 truckType = truck.truckType,
                 availability = "AVAILABLE", // Defaulting as detail API doesn't have it yet, or use a field if added
                 isVerified = truck.isVerified,
-                isBlacklisted = truck.isBlacklisted
+                isBlacklisted = truck.isBlacklisted,
             )
         }
 
@@ -167,7 +169,7 @@ private fun SpecificationsSection(truck: TruckDetail) {
     Card(
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -175,17 +177,17 @@ private fun SpecificationsSection(truck: TruckDetail) {
                     imageVector = Icons.Default.Tune,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(20.dp),
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
                     text = "Specifications",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             }
             Spacer(Modifier.height(16.dp))
-            
+
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     SpecItem(Modifier.weight(1f), "BODY TYPE", truck.bodyType ?: "NA")
@@ -201,24 +203,28 @@ private fun SpecificationsSection(truck: TruckDetail) {
 }
 
 @Composable
-private fun SpecItem(modifier: Modifier, label: String, value: String) {
+private fun SpecItem(
+    modifier: Modifier,
+    label: String,
+    value: String,
+) {
     Surface(
         modifier = modifier,
         color = MaterialTheme.colorScheme.surfaceVariant, // Using theme aware surface variant
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(8.dp),
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                fontSize = 10.sp
+                fontSize = 10.sp,
             )
             Spacer(Modifier.height(4.dp))
             Text(
                 text = value,
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
         }
     }
@@ -227,12 +233,12 @@ private fun SpecItem(modifier: Modifier, label: String, value: String) {
 @Composable
 private fun DocumentsSection(
     truck: TruckDetail,
-    onDocumentClick: (String?) -> Unit
+    onDocumentClick: (String?) -> Unit,
 ) {
     Card(
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -240,13 +246,13 @@ private fun DocumentsSection(
                     imageVector = Icons.Default.FolderOpen,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(20.dp),
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
                     text = "Documents",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             }
             Spacer(Modifier.height(16.dp))
@@ -262,72 +268,74 @@ private fun DocumentsSection(
 private fun DocumentItem(
     title: String,
     doc: TruckDocument?,
-    onDocumentClick: (String?) -> Unit
+    onDocumentClick: (String?) -> Unit,
 ) {
     val hasUrl = !doc?.url.isNullOrEmpty()
-    
+
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { 
-                if (hasUrl) {
-                    onDocumentClick(doc.url)
-                } else {
-                    // Trigger upload flow
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable {
+                    if (hasUrl) {
+                        onDocumentClick(doc.url)
+                    } else {
+                        // Trigger upload flow
+                    }
                 }
-            }
-            .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
+                .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        val iconColor = when (doc?.status?.uppercase()) {
-            "COMPLETED", "VERIFIED" -> MaterialTheme.colorScheme.primary
-            "PENDING" -> Color(0xFFF9A825)
-            else -> if (hasUrl) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-        }
-        
+        val iconColor =
+            when (doc?.status?.uppercase()) {
+                "COMPLETED", "VERIFIED" -> MaterialTheme.colorScheme.primary
+                "PENDING" -> Color(0xFFF9A825)
+                else -> if (hasUrl) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+            }
+
         Surface(
             color = iconColor.copy(alpha = 0.1f),
             shape = RoundedCornerShape(8.dp),
-            modifier = Modifier.size(40.dp)
+            modifier = Modifier.size(40.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     imageVector = if (title.contains("Insurance")) Icons.Default.Shield else Icons.Default.Description,
                     contentDescription = null,
                     tint = iconColor,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(20.dp),
                 )
             }
         }
-        
+
         Spacer(Modifier.width(16.dp))
-        
+
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
             Text(
                 text = if (hasUrl) doc.status else ("Pending Upload"),
                 style = MaterialTheme.typography.bodySmall,
-                color = if (doc?.status?.uppercase() == "VERIFIED") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (doc?.status?.uppercase() == "VERIFIED") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        
+
         if (hasUrl) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.outline,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(20.dp),
             )
         } else {
             FilterSelectionChip(
                 label = "Upload",
                 isSelected = false,
                 onClick = { /* Trigger upload flow */ },
-                leadingIcon = Icons.Default.FileUpload
+                leadingIcon = Icons.Default.FileUpload,
             )
         }
     }

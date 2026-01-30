@@ -1,7 +1,6 @@
 package com.freight24.connect.feature.login.domain.model
 
 sealed class VerifyOtpResult {
-
     data class Success(
         val isNewUser: Boolean,
         val token: String,
@@ -18,5 +17,4 @@ sealed class VerifyOtpResult {
     data class Error(
         val message: String,
     ) : VerifyOtpResult()
-
 }

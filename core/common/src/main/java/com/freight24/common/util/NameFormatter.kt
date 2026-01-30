@@ -43,10 +43,9 @@ object NameFormatter {
     fun formatTripStatusMessage(statusMessage: String?): String {
         if (statusMessage.isNullOrBlank()) return "STATUS ??"
         return when {
-            statusMessage.contains("IN_TRANSIT", ignoreCase = true)
-                    || statusMessage.contains("IN-TRANSIT", ignoreCase = true) -> "IN TRANSIT"
+            statusMessage.contains("IN_TRANSIT", ignoreCase = true) ||
+                statusMessage.contains("IN-TRANSIT", ignoreCase = true) -> "IN TRANSIT"
             else -> statusMessage
         }
     }
-
 }

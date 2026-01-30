@@ -1,6 +1,5 @@
 package com.freight24.connect.feature.login.view.verify
 
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -96,12 +95,13 @@ internal fun VerifyOtpScreen(
     }
     val colors = MaterialTheme.colorScheme
     Freight24Theme {
-        Scaffold (modifier = Modifier.fillMaxSize()) { contentPadding ->
+        Scaffold(modifier = Modifier.fillMaxSize()) { contentPadding ->
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(contentPadding)
-                    .background(color = colors.background),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(contentPadding)
+                        .background(color = colors.background),
             ) {
                 // Back button
                 IconButton(
@@ -231,6 +231,6 @@ private fun Int.toMmSs(): String {
         Locale.getDefault(),
         "%02d:%02d",
         minutes,
-        seconds
+        seconds,
     )
 }

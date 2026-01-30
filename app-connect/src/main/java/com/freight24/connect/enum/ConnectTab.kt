@@ -15,7 +15,6 @@ enum class ConnectTab(
     override val titleRes: Int,
     override val icon: ImageVector,
 ) : NavTabItem {
-
     Home("home", R.string.tab_home, Icons.Filled.Home),
     Indents("indents", R.string.tab_indents, Icons.AutoMirrored.Outlined.Assignment),
     Trips("trips", R.string.tab_trips, Icons.Filled.LocalShipping),

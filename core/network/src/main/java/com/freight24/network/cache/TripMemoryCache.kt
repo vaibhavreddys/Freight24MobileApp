@@ -1,13 +1,13 @@
 package com.freight24.network.cache
 
-//import com.freight24.common.model.Trip
-//import com.freight24.common.util.CacheConstants
-//import java.util.concurrent.ConcurrentHashMap
-//import javax.inject.Inject
-//import javax.inject.Singleton
+// import com.freight24.common.model.Trip
+// import com.freight24.common.util.CacheConstants
+// import java.util.concurrent.ConcurrentHashMap
+// import javax.inject.Inject
+// import javax.inject.Singleton
 //
-//@Singleton
-//class TripMemoryCache
+// @Singleton
+// class TripMemoryCache
 //    @Inject
 //    constructor() {
 //        // page -> List<Trip>

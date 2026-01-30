@@ -6,8 +6,8 @@ import retrofit2.http.Body
 import retrofit2.http.POST
 
 interface NotificationServiceApi {
-
     @POST("notifications/register-device")
-    suspend fun registerDevice(@Body request: RegisterDeviceRequest): BaseResponse
-
+    suspend fun registerDevice(
+        @Body request: RegisterDeviceRequest,
+    ): BaseResponse
 }

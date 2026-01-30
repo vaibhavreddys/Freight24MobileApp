@@ -8,15 +8,14 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-internal class HomeViewModel @Inject constructor(
-    private val fcmRepository: FcmRepository
-) : ViewModel() {
-
-     fun registerDevice() {
-        viewModelScope.launch {
-            fcmRepository.sendTokenToServerIfNeeded()
+internal class HomeViewModel
+    @Inject
+    constructor(
+        private val fcmRepository: FcmRepository,
+    ) : ViewModel() {
+        fun registerDevice() {
+            viewModelScope.launch {
+                fcmRepository.sendTokenToServerIfNeeded()
+            }
         }
     }
-
-
-}

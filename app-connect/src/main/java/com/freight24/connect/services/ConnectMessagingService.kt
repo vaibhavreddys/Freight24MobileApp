@@ -9,7 +9,6 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class ConnectMessagingService : FirebaseMessagingService() {
-
     @Inject
     lateinit var preferencesManager: SharedPreferencesManager
 
@@ -33,7 +32,5 @@ class ConnectMessagingService : FirebaseMessagingService() {
         message.notification?.let {
             Log.d("FCM_MESSAGE", "Message Notification Body: ${it.body}")
         }
-
     }
-
 }

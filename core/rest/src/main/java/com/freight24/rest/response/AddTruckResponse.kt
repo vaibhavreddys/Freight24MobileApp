@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 data class AddTruckResponse(
     val success: Boolean,
     val message: String,
-    val data: AddTruckDto?
+    val data: AddTruckDto?,
 )
 
 @Serializable
@@ -27,5 +27,5 @@ data class AddTruckDto(
     val verified: Boolean,
     val status: String,
     val created_at: String,
-    val updated_at: String
+    val updated_at: String,
 )

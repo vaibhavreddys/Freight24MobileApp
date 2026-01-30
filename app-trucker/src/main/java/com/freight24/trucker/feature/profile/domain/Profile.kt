@@ -17,7 +17,7 @@ data class Profile(
     val documents: List<ProfileDocument>,
     val bankAccountDetails: BankAccountDetails?,
     val businessName: String?,
-    val gstNumber: String?
+    val gstNumber: String?,
 )
 
 data class BankAccountDetails(
@@ -26,13 +26,13 @@ data class BankAccountDetails(
     val ifscCode: String?,
     val upiId: String?,
     val bankName: String?,
-    val branchName: String?
+    val branchName: String?,
 )
 
 data class ProfileDocument(
     val type: DocumentType,
     val url: String?,
-    val status: DocumentStatus
+    val status: DocumentStatus,
 )
 
 enum class DocumentType(val displayName: String) {
@@ -41,11 +41,11 @@ enum class DocumentType(val displayName: String) {
     GST_CERTIFICATE("GST Certificate"),
     TDS_CERTIFICATE("TDS Certificate"),
     CANCELLED_CHEQUE("Cancelled Cheque"),
-    UNKNOWN("Unknown")
+    UNKNOWN("Unknown"),
 }
 
 enum class DocumentStatus(val displayText: String) {
     UPLOADED("Uploaded"),
     PENDING("Pending upload"),
-    UNKNOWN("Unknown")
+    UNKNOWN("Unknown"),
 }

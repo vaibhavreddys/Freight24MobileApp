@@ -9,10 +9,12 @@ interface CreateIndentUseCase {
     suspend fun invoke(request: CreateIndentRequest): Result<BaseResponse>
 }
 
-class CreateIndentUseCaseImpl @Inject constructor(
-    private val repository: IndentRepository
-) : CreateIndentUseCase {
-    override suspend fun invoke(request: CreateIndentRequest): Result<BaseResponse> {
-        return repository.createIndent(request)
+class CreateIndentUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: IndentRepository,
+    ) : CreateIndentUseCase {
+        override suspend fun invoke(request: CreateIndentRequest): Result<BaseResponse> {
+            return repository.createIndent(request)
+        }
     }
-}

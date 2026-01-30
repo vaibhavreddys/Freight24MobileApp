@@ -95,12 +95,13 @@ internal class VerifyOtpViewModel
             println("Verifying OTP: ${_otp.value}")
             viewModelScope.launch {
                 _uiState.value = UiState.Loading
-                val result = verifyOtpUseCase.invoke(
-                    VerifyOtpUseCaseParams(
-                        "+91$phoneNumber",
-                        _otp.value
+                val result =
+                    verifyOtpUseCase.invoke(
+                        VerifyOtpUseCaseParams(
+                            "+91$phoneNumber",
+                            _otp.value,
+                        ),
                     )
-                )
                 result.fold(
                     onSuccess = { verifyOtpResult ->
                         when (verifyOtpResult) {

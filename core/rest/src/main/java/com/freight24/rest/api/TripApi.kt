@@ -10,7 +10,6 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface TripApi {
-
     @GET("trips/trucker/list")
     suspend fun getTrips(
         @Query("page") page: Int,

@@ -11,7 +11,6 @@ data class CreateIndentRequest(
     @SerialName("material_name") val materialName: String,
     @SerialName("weight") val weight: Double,
     @SerialName("truck_type_id") val truckTypeId: String,
-    
     // Optional Fields
     @SerialName("client_cost") val clientCost: Double? = null,
     @SerialName("negotiated_cost") val negotiatedCost: Double? = null,
@@ -21,5 +20,5 @@ data class CreateIndentRequest(
     @SerialName("tat_required") val tatRequired: Boolean = false,
     @SerialName("tarpaulin_required") val tarpaulinRequired: Boolean = false,
     @SerialName("hide_cost") val hideCost: Boolean = false,
-    @SerialName("remarks") val remarks: String? = null
+    @SerialName("remarks") val remarks: String? = null,
 )

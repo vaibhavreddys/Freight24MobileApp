@@ -36,15 +36,16 @@ fun TruckHeaderCard(
     availability: String,
     isVerified: Boolean,
     isBlacklisted: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Card(
         shape = RoundedCornerShape(12.dp),
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -54,12 +55,12 @@ fun TruckHeaderCard(
                     Text(
                         text = registrationNumber,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
                     Text(
                         text = truckType ?: "Unknown Truck",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 TruckStatusChip(availability, isBlacklisted)
@@ -67,7 +68,7 @@ fun TruckHeaderCard(
 
             HorizontalDivider(
                 modifier = Modifier.padding(vertical = 12.dp),
-                color = MaterialTheme.colorScheme.outlineVariant
+                color = MaterialTheme.colorScheme.outlineVariant,
             )
 
             TruckVerificationRow(isVerified)
@@ -76,76 +77,93 @@ fun TruckHeaderCard(
 }
 
 @Composable
-fun TruckIcon(status: String, isBlacklisted: Boolean) {
-    val containerColor = when {
-        isBlacklisted -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)
-        status.uppercase() == "ACTIVE" || status.uppercase() == "AVAILABLE" -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-        status.uppercase() == "ON_TRIP" -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
-        else -> MaterialTheme.colorScheme.surfaceVariant
-    }
-    
+fun TruckIcon(
+    status: String,
+    isBlacklisted: Boolean,
+) {
+    val containerColor =
+        when {
+            isBlacklisted -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f)
+            status.uppercase() == "ACTIVE" || status.uppercase() == "AVAILABLE" ->
+                MaterialTheme.colorScheme.primaryContainer.copy(
+                    alpha = 0.5f,
+                )
+            status.uppercase() == "ON_TRIP" -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
+            else -> MaterialTheme.colorScheme.surfaceVariant
+        }
+
     Box(
-        modifier = Modifier
-            .size(44.dp)
-            .background(containerColor, RoundedCornerShape(10.dp)),
+        modifier =
+            Modifier
+                .size(44.dp)
+                .background(containerColor, RoundedCornerShape(10.dp)),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = if (isBlacklisted) Icons.Default.Warning else Icons.Default.LocalShipping,
             contentDescription = null,
-            tint = if (isBlacklisted) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+            tint = if (isBlacklisted) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
         )
     }
 }
 
 @Composable
-fun TruckStatusChip(status: String, isBlacklisted: Boolean) {
-    val (text, color) = when {
-        isBlacklisted -> "Blacklisted" to MaterialTheme.colorScheme.error
-        status.uppercase() == "ACTIVE" || status.uppercase() == "AVAILABLE" -> "Active" to MaterialTheme.colorScheme.primary
-        status.uppercase() == "ON_TRIP" -> "On Trip" to MaterialTheme.colorScheme.secondary
-        else -> "Inactive" to MaterialTheme.colorScheme.outline
-    }
+fun TruckStatusChip(
+    status: String,
+    isBlacklisted: Boolean,
+) {
+    val (text, color) =
+        when {
+            isBlacklisted -> "Blacklisted" to MaterialTheme.colorScheme.error
+            status.uppercase() == "ACTIVE" || status.uppercase() == "AVAILABLE" -> "Active" to MaterialTheme.colorScheme.primary
+            status.uppercase() == "ON_TRIP" -> "On Trip" to MaterialTheme.colorScheme.secondary
+            else -> "Inactive" to MaterialTheme.colorScheme.outline
+        }
 
     Surface(
         color = color.copy(alpha = 0.1f),
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(8.dp),
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
             color = color,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
         )
     }
 }
 
 @Composable
 fun TruckVerificationRow(isVerified: Boolean) {
-    val (text, icon, color) = if (isVerified) {
-        Triple("Document verification completed", Icons.Default.CheckCircle, MaterialTheme.colorScheme.primary)
-    } else {
-        Triple("Verification Pending", Icons.Default.Error, Color(0xFFF9A825)) // Warning yellow is often fine, but let's check if we have a better one.
-        // Actually, let's use a standard warning color if possible, or stick to this but ensure it looks okay in dark mode.
-    }
+    val (text, icon, color) =
+        if (isVerified) {
+            Triple("Document verification completed", Icons.Default.CheckCircle, MaterialTheme.colorScheme.primary)
+        } else {
+            Triple(
+                "Verification Pending",
+                Icons.Default.Error,
+                Color(0xFFF9A825),
+            ) // Warning yellow is often fine, but let's check if we have a better one.
+            // Actually, let's use a standard warning color if possible, or stick to this but ensure it looks okay in dark mode.
+        }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
             tint = color,
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(16.dp),
         )
         Spacer(Modifier.width(8.dp))
         Text(
             text = text,
             style = MaterialTheme.typography.bodySmall,
             color = color,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
         )
     }
 }

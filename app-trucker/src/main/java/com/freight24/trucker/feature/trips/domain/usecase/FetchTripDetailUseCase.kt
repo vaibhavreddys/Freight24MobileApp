@@ -8,5 +8,5 @@ internal interface FetchTripDetailUseCase : UseCase<FetchTripDetailParams, TripD
 
 data class FetchTripDetailParams(
     val tripId: String,
-    val forceRefresh: Boolean = false
+    val forceRefresh: Boolean = false,
 ) : UseCaseParams

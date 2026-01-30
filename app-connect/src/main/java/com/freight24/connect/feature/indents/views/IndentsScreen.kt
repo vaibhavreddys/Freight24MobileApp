@@ -10,7 +10,7 @@ import androidx.compose.ui.tooling.preview.Preview
 @Composable
 fun IndentsScreen(modifier: Modifier = Modifier) {
     IndentsList(
-        modifier = modifier
+        modifier = modifier,
     )
 }
 

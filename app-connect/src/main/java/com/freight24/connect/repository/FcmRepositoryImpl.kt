@@ -8,21 +8,21 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-internal class FcmRepositoryImpl @Inject constructor(
-    private val preferencesManager: SharedPreferencesManager,
-    private val notificationServiceApi: NotificationServiceApi,
-    @param:IoDispatcher private val coroutineDispatcher: CoroutineDispatcher
-) : FcmRepository {
-
-    override suspend fun sendTokenToServerIfNeeded() {
-        return withContext(coroutineDispatcher) {
-            val token = preferencesManager.firebaseToken
-            if (token.isNotEmpty()) {
-                notificationServiceApi.registerDevice(
-                    RegisterDeviceRequest(token)
-                )
+internal class FcmRepositoryImpl
+    @Inject
+    constructor(
+        private val preferencesManager: SharedPreferencesManager,
+        private val notificationServiceApi: NotificationServiceApi,
+        @param:IoDispatcher private val coroutineDispatcher: CoroutineDispatcher,
+    ) : FcmRepository {
+        override suspend fun sendTokenToServerIfNeeded() {
+            return withContext(coroutineDispatcher) {
+                val token = preferencesManager.firebaseToken
+                if (token.isNotEmpty()) {
+                    notificationServiceApi.registerDevice(
+                        RegisterDeviceRequest(token),
+                    )
+                }
             }
         }
     }
-
-}

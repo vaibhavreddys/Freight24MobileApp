@@ -3,7 +3,9 @@ package com.freight24.connect.di
 import com.freight24.connect.BuildConfig
 import com.freight24.network.RetrofitFactory
 import com.freight24.network.di.DefaultNetwork
+import com.freight24.rest.api.ClientApi
 import com.freight24.rest.api.IndentsApi
+import com.freight24.rest.api.LocationApi
 import com.freight24.rest.api.LoginConnectApi
 import com.freight24.rest.api.NotificationServiceApi
 import dagger.Module
@@ -14,14 +16,13 @@ import dagger.hilt.components.SingletonComponent
 @Module
 @InstallIn(SingletonComponent::class)
 object ApiModule {
-
     @Provides
     fun providesLoginConnectApi(
         @DefaultNetwork retrofitFactory: RetrofitFactory,
     ): LoginConnectApi {
-      return retrofitFactory
-          .create(BuildConfig.BASE_URL, "ConnectLoginService")
-          .create(LoginConnectApi::class.java)
+        return retrofitFactory
+            .create(BuildConfig.BASE_URL, "ConnectLoginService")
+            .create(LoginConnectApi::class.java)
     }
 
     @Provides
@@ -38,5 +39,17 @@ object ApiModule {
             .create(IndentsApi::class.java)
     }
 
+    @Provides
+    fun providesLocationsApi(retrofitFactory: RetrofitFactory): LocationApi {
+        return retrofitFactory
+            .create(BuildConfig.BASE_URL, "LocationApi")
+            .create(LocationApi::class.java)
+    }
 
+    @Provides
+    fun providesClientApi(retrofitFactory: RetrofitFactory): ClientApi {
+        return retrofitFactory
+            .create(BuildConfig.BASE_URL, "ClientApi")
+            .create(ClientApi::class.java)
+    }
 }

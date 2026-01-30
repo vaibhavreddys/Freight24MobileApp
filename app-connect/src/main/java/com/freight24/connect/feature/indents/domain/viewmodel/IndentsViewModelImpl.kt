@@ -5,13 +5,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 @HiltViewModel
-class IndentsViewModelImpl @Inject constructor() : ViewModel(), IndentsViewModel {
-
-
-    override fun onCreateIndentClick() {
-
+class IndentsViewModelImpl
+    @Inject
+    constructor() : ViewModel(), IndentsViewModel {
+        override fun onCreateIndentClick() {
+        }
     }
-
-
-}
-

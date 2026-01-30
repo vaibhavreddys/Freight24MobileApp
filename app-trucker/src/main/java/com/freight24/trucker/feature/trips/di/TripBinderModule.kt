@@ -15,7 +15,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 internal interface TripBinderModule {
-
     @Binds
     @Singleton
     fun bindTripRepository(impl: TripRepositoryImpl): TripRepository

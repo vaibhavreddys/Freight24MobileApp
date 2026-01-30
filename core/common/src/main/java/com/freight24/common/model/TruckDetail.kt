@@ -11,5 +11,5 @@ data class TruckDetail(
     val rcCard: TruckDocument?,
     val fcCertificate: TruckDocument?,
     val insurance: TruckDocument?,
-    val isBlacklisted: Boolean
+    val isBlacklisted: Boolean,
 )

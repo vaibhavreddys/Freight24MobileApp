@@ -10,10 +10,10 @@ import androidx.compose.ui.Modifier
 @Composable
 fun TripsScreen(paddingValues: PaddingValues) {
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
     ) {
-
     }
 }

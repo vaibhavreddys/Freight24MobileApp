@@ -12,9 +12,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.Modifier
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -25,14 +25,14 @@ fun <T> AppDropdown(
     onOptionSelected: (T) -> Unit,
     optionToString: (T) -> String,
     modifier: Modifier = Modifier,
-    focusRequester: FocusRequester? = null
+    focusRequester: FocusRequester? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded },
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth(),
     ) {
         OutlinedTextField(
             value = selectedOption?.let { optionToString(it) } ?: "",
@@ -41,15 +41,16 @@ fun <T> AppDropdown(
             label = { Text(label) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-            modifier = Modifier
-                .menuAnchor()
-                .fillMaxWidth()
-                .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
+            modifier =
+                Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
+                    .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier),
         )
 
         ExposedDropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false }
+            onDismissRequest = { expanded = false },
         ) {
             options.forEach { option ->
                 DropdownMenuItem(
@@ -57,7 +58,7 @@ fun <T> AppDropdown(
                     onClick = {
                         onOptionSelected(option)
                         expanded = false
-                    }
+                    },
                 )
             }
         }

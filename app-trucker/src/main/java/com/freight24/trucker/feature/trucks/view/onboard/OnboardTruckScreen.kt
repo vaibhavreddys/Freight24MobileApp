@@ -103,13 +103,13 @@ internal fun OnboardTruckScreen(
     onBackClick: () -> Unit,
     onSuccessAction: () -> Unit,
     navController: NavController,
-    viewModel: OnboardTruckViewModel = hiltViewModel()
+    viewModel: OnboardTruckViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val currentStep by viewModel.currentStep.collectAsState()
     val isStep1Valid by viewModel.isStep1Valid.collectAsState()
     val isStep2Valid by viewModel.isStep2Valid.collectAsState()
-    
+
     val context = LocalContext.current
 
     LaunchedEffect(currentStep) {
@@ -119,14 +119,14 @@ internal fun OnboardTruckScreen(
     if (uiState is UiState.Success) {
         OnboardSuccessScreen(
             truck = (uiState as UiState.Success<AddTruckDto>).data,
-                            onViewFleet = {
-                                viewModel.resetState()
-                                // Set refresh signal before popping back
-                                navController.previousBackStackEntry?.savedStateHandle?.set("refresh_trucks", true)
-                                onSuccessAction()
-                            },
+            onViewFleet = {
+                viewModel.resetState()
+                // Set refresh signal before popping back
+                navController.previousBackStackEntry?.savedStateHandle?.set("refresh_trucks", true)
+                onSuccessAction()
+            },
             onAddAnother = { viewModel.resetState() },
-            truckTypes = viewModel.truckTypes
+            truckTypes = viewModel.truckTypes,
         )
     } else {
         Scaffold(
@@ -136,33 +136,36 @@ internal fun OnboardTruckScreen(
                         Text(
                             text = if (currentStep == 1) "Truck Details" else "Add New Truck",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
                         )
                     },
                     navigationIcon = {
                         IconButton(onClick = { if (currentStep == 1) onBackClick() else viewModel.previousStep() }) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
-                    }
+                    },
                 )
             },
             bottomBar = {
                 Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .padding(bottom = 24.dp), // Moved up slightly
-                    color = Color.Transparent
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                            .padding(bottom = 24.dp),
+                    // Moved up slightly
+                    color = Color.Transparent,
                 ) {
                     if (currentStep == 1) {
                         Button(
                             onClick = { viewModel.nextStep() },
                             enabled = isStep1Valid && uiState !is UiState.Loading,
                             shape = RoundedCornerShape(50.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(56.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(56.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text("Next", fontWeight = FontWeight.Bold, fontSize = 16.sp)
@@ -176,9 +179,10 @@ internal fun OnboardTruckScreen(
                                 onClick = { viewModel.previousStep() },
                                 enabled = uiState !is UiState.Loading,
                                 shape = RoundedCornerShape(50.dp),
-                                modifier = Modifier
-                                    .weight(0.4f)
-                                    .height(56.dp)
+                                modifier =
+                                    Modifier
+                                        .weight(0.4f)
+                                        .height(56.dp),
                             ) {
                                 Text("Back", fontWeight = FontWeight.Bold)
                             }
@@ -186,17 +190,18 @@ internal fun OnboardTruckScreen(
                                 onClick = { viewModel.submit() },
                                 enabled = isStep2Valid && uiState !is UiState.Loading,
                                 shape = RoundedCornerShape(50.dp),
-                                modifier = Modifier
-                                    .weight(0.6f)
-                                    .height(56.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                                modifier =
+                                    Modifier
+                                        .weight(0.6f)
+                                        .height(56.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     if (uiState is UiState.Loading) {
                                         CircularProgressIndicator(
                                             modifier = Modifier.size(20.dp),
                                             color = MaterialTheme.colorScheme.onPrimary,
-                                            strokeWidth = 2.dp
+                                            strokeWidth = 2.dp,
                                         )
                                     } else {
                                         Text("Complete", fontWeight = FontWeight.Bold)
@@ -208,18 +213,18 @@ internal fun OnboardTruckScreen(
                         }
                     }
                 }
-            }
+            },
         ) { paddingValues ->
             Box(modifier = Modifier.padding(paddingValues)) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     StepIndicator(currentStep)
-                    
+
                     AnimatedContent(
                         targetState = currentStep,
                         transitionSpec = {
                             fadeIn(animationSpec = tween(300)) togetherWith fadeOut(animationSpec = tween(300))
                         },
-                        label = "StepTransition"
+                        label = "StepTransition",
                     ) { step ->
                         when (step) {
                             1 -> BasicInfoStep(viewModel)
@@ -227,27 +232,28 @@ internal fun OnboardTruckScreen(
                         }
                     }
                 }
-                
+
                 if (uiState is UiState.Loading) {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.3f)
+                        color = MaterialTheme.colorScheme.scrim.copy(alpha = 0.3f),
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                         }
                     }
                 }
-                
+
                 if (uiState is UiState.Error) {
                     val errorMessage = (uiState as UiState.Error).message
                     Text(
                         text = errorMessage,
                         color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .align(Alignment.BottomCenter)
-                            .offset(y = (-100).dp) // Move away from bottom bar
+                        modifier =
+                            Modifier
+                                .padding(16.dp)
+                                .align(Alignment.BottomCenter)
+                                .offset(y = (-100).dp), // Move away from bottom bar
                     )
                 }
             }
@@ -261,30 +267,31 @@ private fun StepIndicator(currentStep: Int) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = "Step $currentStep of 2",
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Text(
                 text = if (currentStep == 1) "Basic Info" else "Documents",
                 style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
         }
         Spacer(Modifier.height(8.dp))
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             repeat(2) { index ->
                 Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(4.dp)
-                        .background(
-                            color = if (index + 1 <= currentStep) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
-                            shape = RoundedCornerShape(2.dp)
-                        )
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .height(4.dp)
+                            .background(
+                                color = if (index + 1 <= currentStep) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                                shape = RoundedCornerShape(2.dp),
+                            ),
                 )
             }
         }
@@ -327,11 +334,12 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         OutlinedTextField(
             value = registrationNumber,
@@ -342,10 +350,11 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             singleLine = true,
-            keyboardOptions = KeyboardOptions(
-                capitalization = KeyboardCapitalization.Characters,
-                keyboardType = KeyboardType.Text
-            )
+            keyboardOptions =
+                KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Characters,
+                    keyboardType = KeyboardType.Text,
+                ),
         )
 
         AppDropdown(
@@ -355,7 +364,7 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
             onOptionSelected = { viewModel.selectedTruckType.value = it },
             optionToString = { it.name },
             modifier = Modifier.fillMaxWidth(),
-            focusRequester = truckTypeFocusRequester
+            focusRequester = truckTypeFocusRequester,
         )
 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -364,11 +373,12 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
                 onValueChange = { viewModel.make.value = it },
                 label = { Text("Make") },
                 placeholder = { Text("Volvo") },
-                modifier = Modifier
-                    .weight(1f)
-                    .focusRequester(makeFocusRequester),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .focusRequester(makeFocusRequester),
                 shape = RoundedCornerShape(12.dp),
-                singleLine = true
+                singleLine = true,
             )
             OutlinedTextField(
                 value = model,
@@ -377,7 +387,7 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
                 placeholder = { Text("FH Aero") },
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp),
-                singleLine = true
+                singleLine = true,
             )
         }
 
@@ -386,12 +396,13 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
             onValueChange = { viewModel.updateYear(it) },
             label = { Text("Year") },
             placeholder = { Text("2024") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .focusRequester(yearFocusRequester),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .focusRequester(yearFocusRequester),
             shape = RoundedCornerShape(12.dp),
             singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         )
     }
 }
@@ -401,7 +412,7 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
 private fun DocumentsStep(viewModel: OnboardTruckViewModel) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    
+
     val rcFile by viewModel.rcCardFile.collectAsState()
     val fcFile by viewModel.fcCertificateFile.collectAsState()
     val insuranceFile by viewModel.insuranceFile.collectAsState()
@@ -413,47 +424,51 @@ private fun DocumentsStep(viewModel: OnboardTruckViewModel) {
     val sheetState = rememberModalBottomSheetState()
 
     // 1. Gallery Launcher (Photo Picker)
-    val galleryLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.PickVisualMedia()
-    ) { uri ->
-        Log.d(TAG, "Gallery result: $uri for $currentTargetPrefix")
-        uri?.let { currentTargetPrefix?.let { prefix -> viewModel.onFileSelected(context, it, prefix) } }
-        currentTargetPrefix = null
-    }
+    val galleryLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.PickVisualMedia(),
+        ) { uri ->
+            Log.d(TAG, "Gallery result: $uri for $currentTargetPrefix")
+            uri?.let { currentTargetPrefix?.let { prefix -> viewModel.onFileSelected(context, it, prefix) } }
+            currentTargetPrefix = null
+        }
 
     // 2. Document Launcher (PDF)
-    val docLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.OpenDocument()
-    ) { uri ->
-        Log.d(TAG, "Document result: $uri for $currentTargetPrefix")
-        uri?.let { currentTargetPrefix?.let { prefix -> viewModel.onFileSelected(context, it, prefix) } }
-        currentTargetPrefix = null
-    }
+    val docLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.OpenDocument(),
+        ) { uri ->
+            Log.d(TAG, "Document result: $uri for $currentTargetPrefix")
+            uri?.let { currentTargetPrefix?.let { prefix -> viewModel.onFileSelected(context, it, prefix) } }
+            currentTargetPrefix = null
+        }
 
     // 3. Camera Launcher
-    val cameraLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.TakePicture()
-    ) { success ->
-        Log.d(TAG, "Camera result: $success for $currentTargetPrefix")
-        if (success) {
-            tempCameraUri?.let { currentTargetPrefix?.let { prefix -> viewModel.onFileSelected(context, it, prefix) } }
+    val cameraLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.TakePicture(),
+        ) { success ->
+            Log.d(TAG, "Camera result: $success for $currentTargetPrefix")
+            if (success) {
+                tempCameraUri?.let { currentTargetPrefix?.let { prefix -> viewModel.onFileSelected(context, it, prefix) } }
+            }
+            currentTargetPrefix = null
+            tempCameraUri = null
         }
-        currentTargetPrefix = null
-        tempCameraUri = null
-    }
 
     // 4. Camera Permission Launcher
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            val uri = createTempImageUri(context)
-            tempCameraUri = uri
-            cameraLauncher.launch(uri)
-        } else {
-            Log.w(TAG, "Camera permission denied")
+    val cameraPermissionLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestPermission(),
+        ) { isGranted ->
+            if (isGranted) {
+                val uri = createTempImageUri(context)
+                tempCameraUri = uri
+                cameraLauncher.launch(uri)
+            } else {
+                Log.w(TAG, "Camera permission denied")
+            }
         }
-    }
 
     fun initiateCapture() {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
@@ -472,30 +487,32 @@ private fun DocumentsStep(viewModel: OnboardTruckViewModel) {
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 32.dp)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 32.dp),
             ) {
                 Text(
                     text = "Select source",
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(16.dp),
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
-                
+
                 ListItem(
                     headlineContent = { Text("Camera") },
-                    leadingContent = { 
+                    leadingContent = {
                         Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = CircleShape) {
                             Icon(Icons.Default.CameraAlt, null, modifier = Modifier.padding(8.dp).size(20.dp))
                         }
                     },
-                    modifier = Modifier.clickable {
-                        scope.launch { sheetState.hide() }.invokeOnCompletion { 
-                            showSourcePicker = false
-                            initiateCapture()
-                        }
-                    }
+                    modifier =
+                        Modifier.clickable {
+                            scope.launch { sheetState.hide() }.invokeOnCompletion {
+                                showSourcePicker = false
+                                initiateCapture()
+                            }
+                        },
                 )
                 ListItem(
                     headlineContent = { Text("Gallery (Images)") },
@@ -504,12 +521,13 @@ private fun DocumentsStep(viewModel: OnboardTruckViewModel) {
                             Icon(Icons.Default.PhotoLibrary, null, modifier = Modifier.padding(8.dp).size(20.dp))
                         }
                     },
-                    modifier = Modifier.clickable {
-                        scope.launch { sheetState.hide() }.invokeOnCompletion { 
-                            showSourcePicker = false
-                            galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                        }
-                    }
+                    modifier =
+                        Modifier.clickable {
+                            scope.launch { sheetState.hide() }.invokeOnCompletion {
+                                showSourcePicker = false
+                                galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            }
+                        },
                 )
                 ListItem(
                     headlineContent = { Text("Documents (PDF)") },
@@ -518,33 +536,35 @@ private fun DocumentsStep(viewModel: OnboardTruckViewModel) {
                             Icon(Icons.Default.InsertDriveFile, null, modifier = Modifier.padding(8.dp).size(20.dp))
                         }
                     },
-                    modifier = Modifier.clickable {
-                        scope.launch { sheetState.hide() }.invokeOnCompletion { 
-                            showSourcePicker = false
-                            docLauncher.launch(arrayOf("application/pdf"))
-                        }
-                    }
+                    modifier =
+                        Modifier.clickable {
+                            scope.launch { sheetState.hide() }.invokeOnCompletion {
+                                showSourcePicker = false
+                                docLauncher.launch(arrayOf("application/pdf"))
+                            }
+                        },
                 )
             }
         }
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
         Text(
             text = "Upload Documents",
             style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
         )
         Text(
             text = "Choose your preferred method to upload mandatory Registration Certificate. Insurance and Fitness are optional.",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         DashedUploadCard(
@@ -553,10 +573,10 @@ private fun DocumentsStep(viewModel: OnboardTruckViewModel) {
             label = "Required",
             isUploaded = rcFile != null,
             statusText = if (rcFile != null) "Ready to Upload" else "Pending Selection",
-            onUploadClick = { 
+            onUploadClick = {
                 currentTargetPrefix = "RC"
                 showSourcePicker = true
-            }
+            },
         )
 
         DashedUploadCard(
@@ -565,10 +585,10 @@ private fun DocumentsStep(viewModel: OnboardTruckViewModel) {
             label = "Optional",
             isUploaded = insuranceFile != null,
             icon = Icons.Default.Shield,
-            onUploadClick = { 
+            onUploadClick = {
                 currentTargetPrefix = "INSURANCE"
                 showSourcePicker = true
-            }
+            },
         )
 
         DashedUploadCard(
@@ -577,10 +597,10 @@ private fun DocumentsStep(viewModel: OnboardTruckViewModel) {
             label = "Optional",
             isUploaded = fcFile != null,
             icon = Icons.AutoMirrored.Filled.Assignment,
-            onUploadClick = { 
+            onUploadClick = {
                 currentTargetPrefix = "FC"
                 showSourcePicker = true
-            }
+            },
         )
     }
 }
@@ -590,7 +610,7 @@ private fun createTempImageUri(context: Context): Uri {
     return FileProvider.getUriForFile(
         context,
         "${context.packageName}.fileprovider",
-        tempFile
+        tempFile,
     )
 }
 
@@ -599,78 +619,79 @@ private fun OnboardSuccessScreen(
     truck: AddTruckDto,
     onViewFleet: () -> Unit,
     onAddAnother: () -> Unit,
-    truckTypes: List<TruckType>
+    truckTypes: List<TruckType>,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         // Truck Icon with Check Circle
         Box(contentAlignment = Alignment.BottomEnd) {
             Surface(
                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                 shape = RoundedCornerShape(50.dp),
-                modifier = Modifier.size(120.dp)
+                modifier = Modifier.size(120.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         Icons.Default.LocalShipping,
                         contentDescription = null,
                         modifier = Modifier.size(64.dp),
-                        tint = MaterialTheme.colorScheme.onSurface
+                        tint = MaterialTheme.colorScheme.onSurface,
                     )
                 }
             }
             Surface(
                 color = MaterialTheme.colorScheme.primary,
                 shape = RoundedCornerShape(50.dp),
-                modifier = Modifier.size(40.dp).offset(x = 4.dp, y = 4.dp)
+                modifier = Modifier.size(40.dp).offset(x = 4.dp, y = 4.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
-                        Icons.Default.Check, 
-                        contentDescription = null, 
-                        tint = MaterialTheme.colorScheme.onPrimary, 
-                        modifier = Modifier.size(24.dp)
+                        Icons.Default.Check,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(24.dp),
                     )
                 }
             }
         }
-        
+
         Spacer(Modifier.height(32.dp))
-        
+
         Text(
             text = "Truck Onboarded Successfully!",
             color = MaterialTheme.colorScheme.onPrimaryContainer,
             style = MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.ExtraBold,
             modifier = Modifier.fillMaxWidth(),
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         )
-        
+
         Spacer(Modifier.height(16.dp))
-        
+
         Text(
             text = "Your vehicle details have been submitted and added to your fleet.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         )
-        
+
         Spacer(Modifier.height(48.dp))
-        
+
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         ) {
             Row(
                 modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = "Truck #${truck.registration_number}", fontWeight = FontWeight.Bold)
@@ -678,38 +699,39 @@ private fun OnboardSuccessScreen(
                     Spacer(Modifier.height(8.dp))
                     Surface(
                         color = MaterialTheme.colorScheme.primary,
-                        shape = RoundedCornerShape(4.dp)
+                        shape = RoundedCornerShape(4.dp),
                     ) {
                         Text(
                             text = "● ACTIVE",
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
                         )
                     }
                 }
                 Icon(Icons.Default.LocalShipping, contentDescription = null, modifier = Modifier.size(48.dp).alpha(0.3f))
             }
         }
-        
+
         Spacer(Modifier.height(64.dp))
-        
+
         Button(
             onClick = onViewFleet,
             modifier = Modifier.fillMaxWidth().height(56.dp),
             shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
-            )
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                ),
         ) {
             Text("View My Fleet", fontWeight = FontWeight.Bold)
         }
-        
+
         TextButton(
             onClick = onAddAnother,
-            modifier = Modifier.padding(top = 16.dp)
+            modifier = Modifier.padding(top = 16.dp),
         ) {
             Text("Add Another Truck", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
         }

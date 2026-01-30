@@ -1,9 +1,14 @@
 package com.freight24.rest.api
 
+import com.freight24.rest.request.CreateIndentRequest
+import com.freight24.rest.response.BaseResponse
 import com.freight24.rest.response.LoadBoardResponse
 import com.freight24.rest.response.PaginatedLoadBoardResponse
+import com.freight24.rest.response.TruckTypeResponse
 import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.POST
 import retrofit2.http.Query
 
 interface IndentsApi {
@@ -15,15 +20,12 @@ interface IndentsApi {
         @Query("operational_city_id") cityId: Int,
         @Query("page") page: Int,
     ): Response<PaginatedLoadBoardResponse>
-    @GET("indents/locations/search")
-    suspend fun searchLocations(@Query("query") query: String): Response<List<com.freight24.rest.response.LocationDto>>
 
-    @GET("indents/clients/search")
-    suspend fun searchClients(@Query("query") query: String): Response<List<com.freight24.rest.response.ClientDto>>
+    @GET("truck-types")
+    suspend fun getTruckTypes(): Response<TruckTypeResponse>
 
-    @GET("indents/truck-types")
-    suspend fun getTruckTypes(): Response<List<com.freight24.rest.response.TruckTypeDto>>
-
-    @retrofit2.http.POST("indents")
-    suspend fun createIndent(@retrofit2.http.Body request: com.freight24.rest.request.CreateIndentRequest): Response<com.freight24.rest.response.BaseResponse>
+    @POST("indents")
+    suspend fun createIndent(
+        @Body request: CreateIndentRequest,
+    ): Response<BaseResponse>
 }

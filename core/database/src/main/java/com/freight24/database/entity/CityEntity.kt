@@ -9,5 +9,5 @@ data class CityEntity(
     val cityName: String,
     val totalLoads: Int,
     val cachedAt: Long = System.currentTimeMillis(),
-    val expiresAt: Long = System.currentTimeMillis() + (5 * 60 * 1000L), // 5 minutes TTL
+    val expiresAt: Long = System.currentTimeMillis() + (5 * 60 * 1000L),
 )

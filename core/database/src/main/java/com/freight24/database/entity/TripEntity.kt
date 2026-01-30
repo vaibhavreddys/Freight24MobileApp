@@ -27,7 +27,7 @@ data class TripEntity(
 
 @Entity(tableName = "trips_pagination")
 data class TripsPaginationEntity(
-    @PrimaryKey val id: String = "trips_sync", // Single entry for trips sync state
+    @PrimaryKey val id: String = "trips_sync",
     val lastPage: Int,
     val hasMore: Boolean,
     val totalTrips: Int,

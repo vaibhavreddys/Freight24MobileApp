@@ -7,5 +7,5 @@ data class Truck(
     val isBlacklisted: Boolean,
     val availability: String,
     val truckType: String?,
-    val bodyType: String?
+    val bodyType: String?,
 )

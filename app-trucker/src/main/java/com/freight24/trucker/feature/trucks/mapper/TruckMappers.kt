@@ -15,7 +15,7 @@ fun TruckDto.toDomain(): Truck {
         isBlacklisted = isBlacklisted,
         availability = availability,
         truckType = truckType,
-        bodyType = bodyType
+        bodyType = bodyType,
     )
 }
 
@@ -31,13 +31,13 @@ fun TruckDetailDto.toDomain(): TruckDetail {
         rcCard = rcCard?.toDomain(),
         fcCertificate = fcCertificate?.toDomain(),
         insurance = insurance?.toDomain(),
-        isBlacklisted = isBlacklisted
+        isBlacklisted = isBlacklisted,
     )
 }
 
 fun DocumentDto.toDomain(): TruckDocument {
     return TruckDocument(
         url = url,
-        status = status
+        status = status,
     )
 }

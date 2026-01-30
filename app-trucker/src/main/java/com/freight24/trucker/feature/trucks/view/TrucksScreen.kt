@@ -57,9 +57,10 @@ internal fun TrucksScreen(
     val selectedFilter by viewModel.selectedFilter.collectAsState()
 
     // Observe refresh signal from result of onboarding
-    val refreshSignal = navController.currentBackStackEntry
-        ?.savedStateHandle
-        ?.get<Boolean>("refresh_trucks")
+    val refreshSignal =
+        navController.currentBackStackEntry
+            ?.savedStateHandle
+            ?.get<Boolean>("refresh_trucks")
 
     LaunchedEffect(refreshSignal) {
         if (refreshSignal == true) {
@@ -72,9 +73,10 @@ internal fun TrucksScreen(
     PullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = { viewModel.onRefresh() },
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             FilterChips(
@@ -91,12 +93,12 @@ internal fun TrucksScreen(
                     is UiState.Error -> {
                         Column(
                             modifier = Modifier.align(Alignment.Center),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                            horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             Text(
                                 text = state.message,
                                 color = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.padding(16.dp)
+                                modifier = Modifier.padding(16.dp),
                             )
                             Button(onClick = { viewModel.retry() }) {
                                 Text("Retry")
@@ -107,19 +109,20 @@ internal fun TrucksScreen(
                         LazyColumn(
                             contentPadding = PaddingValues(16.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier.fillMaxSize(),
                         ) {
                             if (state.data.isEmpty()) {
                                 item {
                                     Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(top = 100.dp),
-                                        contentAlignment = Alignment.Center
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .padding(top = 100.dp),
+                                        contentAlignment = Alignment.Center,
                                     ) {
                                         Text(
                                             text = "No trucks found",
-                                            style = MaterialTheme.typography.bodyLarge
+                                            style = MaterialTheme.typography.bodyLarge,
                                         )
                                     }
                                 }
@@ -131,11 +134,11 @@ internal fun TrucksScreen(
                                         availability = truck.availability,
                                         isVerified = truck.isVerified,
                                         isBlacklisted = truck.isBlacklisted,
-                                        modifier = Modifier.clickable { onTruckClick(truck.id) }
+                                        modifier = Modifier.clickable { onTruckClick(truck.id) },
                                     )
                                 }
                             }
-                            
+
                             item {
                                 Spacer(modifier = Modifier.height(8.dp))
                                 OnboardTruckButton(onClick = onOnboardClick)
@@ -156,28 +159,29 @@ private fun OnboardTruckButton(onClick: () -> Unit) {
         onClick = onClick,
         shape = RoundedCornerShape(50.dp),
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        shadowElevation = 2.dp
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+        shadowElevation = 2.dp,
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
             horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 imageVector = Icons.Default.Add,
                 contentDescription = null,
                 tint = Color.White,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(20.dp),
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Onboard a New Truck",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = Color.White,
             )
         }
     }
@@ -197,7 +201,7 @@ fun FilterChips(
             FilterSelectionChip(
                 label = option.name.lowercase().replaceFirstChar { it.uppercase() }.replace("_", " "),
                 isSelected = option == selected,
-                onClick = { onSelected(option) }
+                onClick = { onSelected(option) },
             )
         }
     }

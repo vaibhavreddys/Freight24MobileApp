@@ -34,7 +34,7 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             isDebuggable = true
-            buildConfigField("String", "BASE_URL", "\"http://192.168.1.176:3000/api/v1/\"")
+            buildConfigField("String", "BASE_URL", "\"http://192.168.1.181:3000/api/v1/\"")
         }
         release {
             isMinifyEnabled = false
@@ -68,8 +68,6 @@ android {
             )
         }
     }
-
-
 
     packaging {
         resources {

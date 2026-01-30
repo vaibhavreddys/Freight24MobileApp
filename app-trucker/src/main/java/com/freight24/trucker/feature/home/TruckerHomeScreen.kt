@@ -10,12 +10,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.freight24.trucker.enums.TruckerTab
@@ -71,16 +69,17 @@ fun TruckerHomeScreen(navController: NavHostController) {
                         },
                         onOnboardClick = {
                             navController.navigate(TruckerDestination.OnboardTruck.route)
-                        }
+                        },
                     )
 
-                TruckerTab.Trips -> TripsScreen(
-                    paddingValues = paddingValues,
-                    listState = tripsListState,
-                    onTripClick = { tripId ->
-                        navController.navigate(TruckerDestination.TripDetail.createRoute(tripId))
-                    }
-                )
+                TruckerTab.Trips ->
+                    TripsScreen(
+                        paddingValues = paddingValues,
+                        listState = tripsListState,
+                        onTripClick = { tripId ->
+                            navController.navigate(TruckerDestination.TripDetail.createRoute(tripId))
+                        },
+                    )
 
                 TruckerTab.Profile -> ProfileScreen(paddingValues = paddingValues)
             }

@@ -3,7 +3,6 @@ package com.freight24.connect.feature.login.view.signin
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-
 import com.freight24.connect.feature.login.domain.usecase.LoginConnectUseCase
 import com.freight24.connect.feature.login.domain.usecase.LoginConnectUseCaseParams
 import com.freight24.ui.UiState
@@ -38,17 +37,18 @@ internal class LoginViewModel
                 val phone = _phoneNumber.value
                 if (phone.length == 10) {
                     loginConnectUseCase.invoke(
-                        LoginConnectUseCaseParams("+91$phone")
+                        LoginConnectUseCaseParams("+91$phone"),
                     ).fold(
                         onSuccess = {
                             Log.e("LoginViewModel", "Notification sent")
                             _uiState.value = UiState.Success(phone)
-                            //_navigateToVerifyOtp.value = fullPhone
+                            // _navigateToVerifyOtp.value = fullPhone
                         },
                         onFailure = { exception ->
-                            _uiState.value = UiState.Error(
-                                exception.message ?: "Failed to send OTP"
-                            )
+                            _uiState.value =
+                                UiState.Error(
+                                    exception.message ?: "Failed to send OTP",
+                                )
                         },
                     )
                 } else {

@@ -25,10 +25,7 @@ import com.freight24.ui.components.AppTopBar
 import com.freight24.ui.components.FreightBottomNavScaffold
 
 @Composable
-fun HomeScreen(
-    onCreateIndentClick: () -> Unit
-) {
-
+fun HomeScreen(onCreateIndentClick: () -> Unit) {
     var selectedTab by rememberSaveable { mutableStateOf(ConnectTab.Home) }
 
     FreightBottomNavScaffold(
@@ -53,13 +50,13 @@ fun HomeScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
-                        contentDescription = stringResource(R.string.cd_add_indent)
+                        contentDescription = stringResource(R.string.cd_add_indent),
                     )
                 }
             }
-        }
-    )  { paddingValues, tab ->
-        Crossfade(tab,  label = "TabTransition") { currentTab ->
+        },
+    ) { paddingValues, tab ->
+        Crossfade(tab, label = "TabTransition") { currentTab ->
             when (currentTab) {
                 ConnectTab.Home -> DashboardScreen(paddingValues)
                 ConnectTab.Indents -> IndentsScreen(Modifier.padding(paddingValues))

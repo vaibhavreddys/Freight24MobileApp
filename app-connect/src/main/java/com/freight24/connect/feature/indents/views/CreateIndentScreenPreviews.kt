@@ -5,20 +5,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.freight24.rest.response.ClientDto
 import com.freight24.rest.response.LocationDto
+import com.freight24.rest.response.TruckCategoryDto
 import com.freight24.rest.response.TruckTypeDto
 
 @Preview(showBackground = true, name = "Full Screen Content")
 @Composable
 fun CreateIndentContentPreview() {
     CreateIndentContent(
-        uiState = CreateIndentUiState(
-            truckTypes = mockTruckTypes(),
-            selectedFromLocation = LocationDto("1", "Mumbai", "Mumbai", "Maharashtra"),
-            fromLocationQuery = "Mumbai"
-        ),
+        uiState =
+            CreateIndentUiState(
+                truckTypes = mockTruckTypes(),
+                selectedFromLocation = LocationDto("1", "Mumbai", "Mumbai", "Maharashtra"),
+                fromLocationQuery = "Mumbai",
+            ),
         snackbarHostState = SnackbarHostState(),
         onBackClick = {},
-        onEvent = {}
+        onEvent = {},
     )
 }
 
@@ -29,11 +31,12 @@ fun LocationAutoCompletePreview() {
         label = "From Location",
         query = "Mum",
         onQueryChange = {},
-        searchResults = listOf(
-            LocationDto("1", "Mumbai", "Mumbai", "Maharashtra"),
-            LocationDto("2", "Mumbai Port", "Mumbai", "Maharashtra")
-        ),
-        onSelect = {}
+        searchResults =
+            listOf(
+                LocationDto("1", "Mumbai", "Mumbai", "Maharashtra"),
+                LocationDto("2", "Mumbai Port", "Mumbai", "Maharashtra"),
+            ),
+        onSelect = {},
     )
 }
 
@@ -44,11 +47,26 @@ fun ClientAutoCompletePreview() {
         label = "Client Name",
         query = "Tata",
         onQueryChange = {},
-        searchResults = listOf(
-            ClientDto("1", "Tata Steel"),
-            ClientDto("2", "Tata Motors")
-        ),
-        onSelect = {}
+        searchResults =
+            listOf(
+                ClientDto(
+                    "1",
+                    "12234",
+                    "Tata Steel",
+                    "F23-1233",
+                    "9035892114",
+                    "Active",
+                ),
+                ClientDto(
+                    "2",
+                    "12234",
+                    "Tata Motors",
+                    "F23-1233",
+                    "9035892114",
+                    "Active",
+                ),
+            ),
+        onSelect = {},
     )
 }
 
@@ -57,8 +75,8 @@ fun ClientAutoCompletePreview() {
 fun TruckTypeSelectionPreview() {
     TruckTypeSelection(
         truckTypes = mockTruckTypes(),
-        selectedTruckType = mockTruckTypes().first(),
-        onSelect = {}
+        selectedTruckType = mockTruckTypes().open.first(),
+        onSelect = {},
     )
 }
 
@@ -66,18 +84,27 @@ fun TruckTypeSelectionPreview() {
 @Composable
 fun OptionalFieldsSectionPreview() {
     OptionalFieldsSection(
-        uiState = CreateIndentUiState(
-            clientCost = "25000",
-            negotiatedCost = "24000",
-            remarks = "Urgent delivery"
-        ),
-        onEvent = {}
+        uiState =
+            CreateIndentUiState(
+                clientCost = "25000",
+                negotiatedCost = "24000",
+                remarks = "Urgent delivery",
+            ),
+        onEvent = {},
     )
 }
 
-private fun mockTruckTypes() = listOf(
-    TruckTypeDto("1", "19 ft Open", "Open"),
-    TruckTypeDto("2", "20 ft Open", "Open"),
-    TruckTypeDto("3", "32 ft SXL", "Closed"),
-    TruckTypeDto("4", "32 ft MXL", "Closed"),
-)
+private fun mockTruckTypes() =
+    TruckCategoryDto(
+        open =
+            listOf(
+                TruckTypeDto("1", "19 ft Open", "19 ft Open"),
+                TruckTypeDto("2", "20 ft Open", "20 ft Open"),
+            ),
+        closed =
+            listOf(
+                TruckTypeDto("3", "32 ft SXL", "32 ft SXL"),
+                TruckTypeDto("4", "32 ft MXL", "32 ft MXL"),
+            ),
+        trailer = listOf(),
+    )

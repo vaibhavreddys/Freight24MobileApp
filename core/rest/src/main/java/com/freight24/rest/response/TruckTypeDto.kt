@@ -5,7 +5,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class TruckTypeDto(
     val id: String,
-    val name: String,
-    val category: String, // "Open" or "Closed"
-    val capacity: Double? = null
+    val truckType: String,
+    val displayName: String,
+    val description: String? = null,
+    val bodyType: String? = null,
 )

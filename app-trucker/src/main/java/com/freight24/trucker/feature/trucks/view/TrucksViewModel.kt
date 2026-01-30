@@ -21,68 +21,70 @@ enum class TruckFilter {
 }
 
 @HiltViewModel
-internal class TrucksViewModel @Inject constructor(
-    private val fetchTrucksUseCase: FetchTrucksUseCase
-) : ViewModel() {
+internal class TrucksViewModel
+    @Inject
+    constructor(
+        private val fetchTrucksUseCase: FetchTrucksUseCase,
+    ) : ViewModel() {
+        private val _uiState = MutableStateFlow<UiState<List<Truck>>>(UiState.Loading)
+        val uiState: StateFlow<UiState<List<Truck>>> = _uiState.asStateFlow()
 
-    private val _uiState = MutableStateFlow<UiState<List<Truck>>>(UiState.Loading)
-    val uiState: StateFlow<UiState<List<Truck>>> = _uiState.asStateFlow()
+        private val _selectedFilter = MutableStateFlow(TruckFilter.ALL)
+        val selectedFilter: StateFlow<TruckFilter> = _selectedFilter.asStateFlow()
 
-    private val _selectedFilter = MutableStateFlow(TruckFilter.ALL)
-    val selectedFilter: StateFlow<TruckFilter> = _selectedFilter.asStateFlow()
+        private val _isRefreshing = MutableStateFlow(false)
+        val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
-    private val _isRefreshing = MutableStateFlow(false)
-    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+        private var allTrucks: List<Truck> = emptyList()
 
-    private var allTrucks: List<Truck> = emptyList()
+        init {
+            fetchTrucks()
+        }
 
-    init {
-        fetchTrucks()
-    }
-
-    fun fetchTrucks(forceRefresh: Boolean = false) {
-        viewModelScope.launch {
-            if (forceRefresh) {
-                _isRefreshing.value = true
-            } else if (allTrucks.isEmpty()) {
-                _uiState.value = UiState.Loading
-            }
-
-            fetchTrucksUseCase(EmptyUseCaseParams)
-                .onSuccess { trucks ->
-                    allTrucks = trucks
-                    applyFilter()
+        fun fetchTrucks(forceRefresh: Boolean = false) {
+            viewModelScope.launch {
+                if (forceRefresh) {
+                    _isRefreshing.value = true
+                } else if (allTrucks.isEmpty()) {
+                    _uiState.value = UiState.Loading
                 }
-                .onFailure { error ->
-                    if (allTrucks.isEmpty()) {
-                        _uiState.value = UiState.Error(error.message ?: "Failed to fetch trucks")
+
+                fetchTrucksUseCase(EmptyUseCaseParams)
+                    .onSuccess { trucks ->
+                        allTrucks = trucks
+                        applyFilter()
                     }
+                    .onFailure { error ->
+                        if (allTrucks.isEmpty()) {
+                            _uiState.value = UiState.Error(error.message ?: "Failed to fetch trucks")
+                        }
+                    }
+
+                _isRefreshing.value = false
+            }
+        }
+
+        fun onFilterSelected(filter: TruckFilter) {
+            _selectedFilter.value = filter
+            applyFilter()
+        }
+
+        private fun applyFilter() {
+            val filtered =
+                when (_selectedFilter.value) {
+                    TruckFilter.ALL -> allTrucks
+                    TruckFilter.AVAILABLE -> allTrucks.filter { it.availability.uppercase() == "AVAILABLE" || it.availability.uppercase() == "ACTIVE" }
+                    TruckFilter.ON_TRIP -> allTrucks.filter { it.availability.uppercase() == "ON_TRIP" }
+                    TruckFilter.BLACKLISTED -> allTrucks.filter { it.isBlacklisted }
                 }
-            
-            _isRefreshing.value = false
+            _uiState.value = UiState.Success(filtered)
+        }
+
+        fun onRefresh() {
+            fetchTrucks(forceRefresh = true)
+        }
+
+        fun retry() {
+            fetchTrucks()
         }
     }
-
-    fun onFilterSelected(filter: TruckFilter) {
-        _selectedFilter.value = filter
-        applyFilter()
-    }
-
-    private fun applyFilter() {
-        val filtered = when (_selectedFilter.value) {
-            TruckFilter.ALL -> allTrucks
-            TruckFilter.AVAILABLE -> allTrucks.filter { it.availability.uppercase() == "AVAILABLE" || it.availability.uppercase() == "ACTIVE" }
-            TruckFilter.ON_TRIP -> allTrucks.filter { it.availability.uppercase() == "ON_TRIP" }
-            TruckFilter.BLACKLISTED -> allTrucks.filter { it.isBlacklisted }
-        }
-        _uiState.value = UiState.Success(filtered)
-    }
-
-    fun onRefresh() {
-        fetchTrucks(forceRefresh = true)
-    }
-
-    fun retry() {
-        fetchTrucks()
-    }
-}

@@ -7,7 +7,9 @@ import okhttp3.MultipartBody
 
 interface TruckRepository {
     suspend fun fetchTrucks(): Result<TruckResponse>
+
     suspend fun fetchTruckDetail(id: String): Result<TruckDetailResponse>
+
     suspend fun addTruck(
         registrationNumber: MultipartBody.Part,
         truckTypeId: MultipartBody.Part,
@@ -17,6 +19,6 @@ interface TruckRepository {
         year: MultipartBody.Part?,
         rcCard: MultipartBody.Part?,
         fcCertificate: MultipartBody.Part?,
-        insurance: MultipartBody.Part?
+        insurance: MultipartBody.Part?,
     ): Result<AddTruckResponse>
 }

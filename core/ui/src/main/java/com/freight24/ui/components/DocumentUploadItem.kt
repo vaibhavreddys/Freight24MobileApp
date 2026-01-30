@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 
 sealed class DocumentStatus {
     object Pending : DocumentStatus()
+
     data class Uploaded(val id: String, val isVerified: Boolean) : DocumentStatus()
 }
 
@@ -34,12 +35,13 @@ fun DocumentUploadItem(
     subtitle: String,
     status: DocumentStatus,
     onUploadClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -63,7 +65,7 @@ fun DocumentUploadItem(
                     Icon(
                         imageVector = Icons.Default.CloudUpload,
                         contentDescription = "Upload",
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = MaterialTheme.colorScheme.primary,
                     )
                 }
             }

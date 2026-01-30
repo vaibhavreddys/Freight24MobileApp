@@ -15,44 +15,45 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-internal class TruckDetailsViewModel @Inject constructor(
-    private val fetchTruckDetailUseCase: FetchTruckDetailUseCase,
-    savedStateHandle: SavedStateHandle
-) : ViewModel() {
+internal class TruckDetailsViewModel
+    @Inject
+    constructor(
+        private val fetchTruckDetailUseCase: FetchTruckDetailUseCase,
+        savedStateHandle: SavedStateHandle,
+    ) : ViewModel() {
+        private val truckId: String = checkNotNull(savedStateHandle["truckId"])
 
-    private val truckId: String = checkNotNull(savedStateHandle["truckId"])
+        private val _uiState = MutableStateFlow<UiState<TruckDetail>>(UiState.Loading)
+        val uiState: StateFlow<UiState<TruckDetail>> = _uiState.asStateFlow()
 
-    private val _uiState = MutableStateFlow<UiState<TruckDetail>>(UiState.Loading)
-    val uiState: StateFlow<UiState<TruckDetail>> = _uiState.asStateFlow()
+        private val _isRefreshing = MutableStateFlow(false)
+        val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
-    private val _isRefreshing = MutableStateFlow(false)
-    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+        init {
+            fetchTruckDetail()
+        }
 
-    init {
-        fetchTruckDetail()
-    }
+        fun fetchTruckDetail(forceRefresh: Boolean = false) {
+            viewModelScope.launch {
+                if (forceRefresh) {
+                    _isRefreshing.value = true
+                } else {
+                    _uiState.value = UiState.Loading
+                }
 
-    fun fetchTruckDetail(forceRefresh: Boolean = false) {
-        viewModelScope.launch {
-            if (forceRefresh) {
-                _isRefreshing.value = true
-            } else {
-                _uiState.value = UiState.Loading
+                fetchTruckDetailUseCase(FetchTruckDetailParams(truckId))
+                    .onSuccess { detail ->
+                        _uiState.value = UiState.Success(detail)
+                    }
+                    .onFailure { error ->
+                        _uiState.value = UiState.Error(error.message ?: "Failed to fetch truck details")
+                    }
+
+                _isRefreshing.value = false
             }
+        }
 
-            fetchTruckDetailUseCase(FetchTruckDetailParams(truckId))
-                .onSuccess { detail ->
-                    _uiState.value = UiState.Success(detail)
-                }
-                .onFailure { error ->
-                    _uiState.value = UiState.Error(error.message ?: "Failed to fetch truck details")
-                }
-            
-            _isRefreshing.value = false
+        fun onRefresh() {
+            fetchTruckDetail(forceRefresh = true)
         }
     }
-
-    fun onRefresh() {
-        fetchTruckDetail(forceRefresh = true)
-    }
-}

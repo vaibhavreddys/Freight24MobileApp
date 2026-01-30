@@ -16,24 +16,15 @@ import dagger.hilt.android.components.ViewModelComponent
 @Module
 @InstallIn(ViewModelComponent::class)
 abstract class IndentsDomainModule {
+    @Binds
+    abstract fun bindGetLocationsUseCase(useCaseImpl: GetLocationsUseCaseImpl): GetLocationsUseCase
 
     @Binds
-    abstract fun bindGetLocationsUseCase(
-        useCaseImpl: GetLocationsUseCaseImpl
-    ): GetLocationsUseCase
+    abstract fun bindGetClientsUseCase(useCaseImpl: GetClientsUseCaseImpl): GetClientsUseCase
 
     @Binds
-    abstract fun bindGetClientsUseCase(
-        useCaseImpl: GetClientsUseCaseImpl
-    ): GetClientsUseCase
+    abstract fun bindGetTruckTypesUseCase(useCaseImpl: GetTruckTypesUseCaseImpl): GetTruckTypesUseCase
 
     @Binds
-    abstract fun bindGetTruckTypesUseCase(
-        useCaseImpl: GetTruckTypesUseCaseImpl
-    ): GetTruckTypesUseCase
-
-    @Binds
-    abstract fun bindCreateIndentUseCase(
-        useCaseImpl: CreateIndentUseCaseImpl
-    ): CreateIndentUseCase
+    abstract fun bindCreateIndentUseCase(useCaseImpl: CreateIndentUseCaseImpl): CreateIndentUseCase
 }

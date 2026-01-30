@@ -15,7 +15,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 internal interface LoginBinderModule {
-
     @Binds
     @Singleton
     fun bindLoginConnectRepository(impl: LoginConnectRepositoryImpl): LoginConnectRepository
@@ -27,6 +26,4 @@ internal interface LoginBinderModule {
     @Binds
     @Singleton
     fun bindVerifyOtpUseCase(impl: VerifyOtpUseCaseImpl): VerifyOtpUseCase
-
-
 }

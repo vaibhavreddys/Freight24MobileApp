@@ -26,26 +26,28 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 enum class TimelineStatus {
-    COMPLETED, ACTIVE, PENDING
+    COMPLETED,
+    ACTIVE,
+    PENDING,
 }
 
 data class TimelineItem(
     val title: String,
     val description: String,
     val time: String,
-    val status: TimelineStatus
+    val status: TimelineStatus,
 )
 
 @Composable
 fun TimelineView(
     items: List<TimelineItem>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         items.forEachIndexed { index, item ->
             TimelineEventItem(
                 item = item,
-                isLast = index == items.lastIndex
+                isLast = index == items.lastIndex,
             )
         }
     }
@@ -61,17 +63,19 @@ private fun TimelineEventItem(
     ) {
         // Timeline indicator
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            val indicatorColor = when (item.status) {
-                TimelineStatus.ACTIVE -> Color(0xFF4CAF50)
-                TimelineStatus.COMPLETED -> MaterialTheme.colorScheme.primary
-                TimelineStatus.PENDING -> MaterialTheme.colorScheme.outlineVariant
-            }
+            val indicatorColor =
+                when (item.status) {
+                    TimelineStatus.ACTIVE -> Color(0xFF4CAF50)
+                    TimelineStatus.COMPLETED -> MaterialTheme.colorScheme.primary
+                    TimelineStatus.PENDING -> MaterialTheme.colorScheme.outlineVariant
+                }
 
             Box(
-                modifier = Modifier
-                    .size(24.dp)
-                    .clip(CircleShape)
-                    .background(indicatorColor),
+                modifier =
+                    Modifier
+                        .size(24.dp)
+                        .clip(CircleShape)
+                        .background(indicatorColor),
                 contentAlignment = Alignment.Center,
             ) {
                 if (item.status == TimelineStatus.COMPLETED) {
@@ -83,20 +87,22 @@ private fun TimelineEventItem(
                     )
                 } else if (item.status == TimelineStatus.ACTIVE) {
                     Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(Color.White)
+                        modifier =
+                            Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(Color.White),
                     )
                 }
             }
 
             if (!isLast) {
                 Box(
-                    modifier = Modifier
-                        .width(2.dp)
-                        .height(40.dp)
-                        .background(MaterialTheme.colorScheme.outlineVariant),
+                    modifier =
+                        Modifier
+                            .width(2.dp)
+                            .height(40.dp)
+                            .background(MaterialTheme.colorScheme.outlineVariant),
                 )
             }
         }
@@ -105,20 +111,21 @@ private fun TimelineEventItem(
 
         // Event details
         Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(bottom = if (!isLast) 16.dp else 0.dp),
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .padding(bottom = if (!isLast) 16.dp else 0.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = item.title,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = if (item.status == TimelineStatus.ACTIVE) FontWeight.Bold else FontWeight.Medium,
-                    color = if (item.status == TimelineStatus.PENDING) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+                    color = if (item.status == TimelineStatus.PENDING) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
                     text = item.time,

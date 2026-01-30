@@ -11,10 +11,7 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class IndentsBinderModule {
-
     @Binds
     @Singleton
-    abstract fun bindIndentRepository(
-        indentRepositoryImpl: IndentRepositoryImpl
-    ): IndentRepository
+    abstract fun bindIndentRepository(indentRepositoryImpl: IndentRepositoryImpl): IndentRepository
 }

@@ -12,7 +12,7 @@ import com.freight24.connect.feature.login.view.verify.VerifyOtpScreen
 @Composable
 fun ConnectNavGraph(
     navHostController: NavHostController,
-    startDestination: String = ConnectDestination.Login.route
+    startDestination: String = ConnectDestination.Login.route,
 ) {
     NavHost(
         navController = navHostController,
@@ -21,19 +21,20 @@ fun ConnectNavGraph(
         composable(ConnectDestination.Login.route) {
             LoginScreen(onVerify = { phoneNumber ->
                 navHostController.navigate(
-                    ConnectDestination.VerifyOtp.createRoute(phoneNumber)
+                    ConnectDestination.VerifyOtp.createRoute(phoneNumber),
                 )
             })
         }
 
         composable(
             route = ConnectDestination.VerifyOtp.route,
-            arguments = ConnectDestination.VerifyOtp.arguments
+            arguments = ConnectDestination.VerifyOtp.arguments,
         ) { backStackEntry ->
 
-            val phoneNumber = backStackEntry
-                .arguments
-                ?.getString(ConnectDestination.VerifyOtp.PHONE_ARG)
+            val phoneNumber =
+                backStackEntry
+                    .arguments
+                    ?.getString(ConnectDestination.VerifyOtp.PHONE_ARG)
 
             VerifyOtpScreen(
                 navController = navHostController,
@@ -46,7 +47,7 @@ fun ConnectNavGraph(
                         }
                         launchSingleTop = true
                     }
-                }
+                },
             )
         }
 
@@ -54,15 +55,14 @@ fun ConnectNavGraph(
             HomeScreen(
                 onCreateIndentClick = {
                     navHostController.navigate(ConnectDestination.CreateIndent.route)
-                }
+                },
             )
         }
 
         composable(ConnectDestination.CreateIndent.route) {
             CreateIndentScreen(
                 onBackClick = {
-
-                }
+                },
             )
         }
     }

@@ -9,16 +9,18 @@ import com.freight24.trucker.feature.profile.mapper.toDomain
 import kotlinx.coroutines.CoroutineDispatcher
 import javax.inject.Inject
 
-internal class ProfileRepositoryImpl @Inject constructor(
-    private val api: ProfileApi,
-    private val safeCallProvider: SafeCallProvider,
-    @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher
-) : ProfileRepository {
-    override suspend fun getProfile(): Result<Profile> {
-        return safeCallProvider.safeApiCall(ioDispatcher) {
-            api.getProfile()
-        }.map { response ->
-            response.data?.toDomain() ?: throw IllegalStateException("Profile data is null")
+internal class ProfileRepositoryImpl
+    @Inject
+    constructor(
+        private val api: ProfileApi,
+        private val safeCallProvider: SafeCallProvider,
+        @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+    ) : ProfileRepository {
+        override suspend fun getProfile(): Result<Profile> {
+            return safeCallProvider.safeApiCall(ioDispatcher) {
+                api.getProfile()
+            }.map { response ->
+                response.data?.toDomain() ?: throw IllegalStateException("Profile data is null")
+            }
         }
     }
-}

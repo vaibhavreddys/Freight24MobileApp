@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ProfileResponse(
     val success: Boolean,
-    val data: ProfileDto?
+    val data: ProfileDto?,
 )
 
 @Serializable
@@ -23,7 +23,7 @@ data class ProfileDto(
     val documents: List<ProfileDocumentDto>?,
     val bankAccountDetails: BankAccountDetailsDto?,
     val businessName: String?,
-    val gstNumber: String?
+    val gstNumber: String?,
 )
 
 @Serializable
@@ -33,12 +33,12 @@ data class BankAccountDetailsDto(
     val ifscCode: String?,
     val upiId: String?,
     val bankName: String?,
-    val branchName: String?
+    val branchName: String?,
 )
 
 @Serializable
 data class ProfileDocumentDto(
     val type: String?,
     val url: String?,
-    val status: String?
+    val status: String?,
 )

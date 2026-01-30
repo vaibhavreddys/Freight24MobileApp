@@ -78,7 +78,7 @@ fun FilterSelectionChip(
                 color = textColor,
                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
             )
-            
+
             if (count != null && count > 0) {
                 Spacer(Modifier.width(6.dp))
                 Surface(

@@ -11,6 +11,5 @@ fun DashboardScreen(paddingValues: PaddingValues) {
     Box(
         modifier = Modifier.padding(paddingValues),
     ) {
-
     }
 }

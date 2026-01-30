@@ -17,7 +17,7 @@ interface TruckApi {
 
     @GET("trucks/{id}")
     suspend fun getTruckDetail(
-        @Path("id") id: String
+        @Path("id") id: String,
     ): Response<TruckDetailResponse>
 
     @Multipart
@@ -31,6 +31,6 @@ interface TruckApi {
         @Part year: MultipartBody.Part?,
         @Part rc_card: MultipartBody.Part?,
         @Part fc_certificate: MultipartBody.Part?,
-        @Part insurance: MultipartBody.Part?
+        @Part insurance: MultipartBody.Part?,
     ): Response<AddTruckResponse>
 }

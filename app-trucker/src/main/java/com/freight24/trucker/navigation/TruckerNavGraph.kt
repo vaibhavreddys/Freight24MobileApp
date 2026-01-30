@@ -103,7 +103,7 @@ fun TruckerNavGraph(
                 ),
         ) {
             TripDetailsScreen(
-                onBackClick = { navController.popBackStack() }
+                onBackClick = { navController.popBackStack() },
             )
         }
         composable(
@@ -114,19 +114,19 @@ fun TruckerNavGraph(
                 ),
         ) {
             TruckDetailsScreen(
-                onBackClick = { navController.popBackStack() }
+                onBackClick = { navController.popBackStack() },
             )
         }
 
         composable(
-            route = TruckerDestination.OnboardTruck.route
+            route = TruckerDestination.OnboardTruck.route,
         ) {
             OnboardTruckScreen(
                 onBackClick = { navController.popBackStack() },
                 onSuccessAction = {
                     navController.popBackStack(TruckerDestination.Main.route, false)
                 },
-                navController = navController
+                navController = navController,
             )
         }
     }
