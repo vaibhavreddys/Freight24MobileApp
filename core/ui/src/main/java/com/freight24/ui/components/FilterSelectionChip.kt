@@ -39,13 +39,13 @@ fun FilterSelectionChip(
     } else {
         MaterialTheme.colorScheme.surface
     }
-    
+
     val textColor = if (isSelected) {
         MaterialTheme.colorScheme.onPrimary
     } else {
         MaterialTheme.colorScheme.onSurfaceVariant
     }
-    
+
     val borderColor = if (isSelected) {
         Color.Transparent
     } else {
@@ -59,7 +59,7 @@ fun FilterSelectionChip(
         border = if (isSelected) null else BorderStroke(1.dp, borderColor),
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (leadingIcon != null) {
@@ -71,6 +71,7 @@ fun FilterSelectionChip(
                 )
                 Spacer(Modifier.width(8.dp))
             }
+
             Text(
                 text = label,
                 fontSize = 13.sp,
@@ -80,7 +81,9 @@ fun FilterSelectionChip(
             )
 
             if (count != null && count > 0) {
+
                 Spacer(Modifier.width(6.dp))
+
                 Surface(
                     color = if (isSelected) MaterialTheme.colorScheme.surface.copy(alpha = 0.2f) else MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
                     shape = RoundedCornerShape(50),

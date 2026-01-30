@@ -21,6 +21,8 @@ fun CreateIndentContentPreview() {
         snackbarHostState = SnackbarHostState(),
         onBackClick = {},
         onEvent = {},
+        onNavigateToSearch = {},
+        onNavigateToReview = {}
     )
 }
 

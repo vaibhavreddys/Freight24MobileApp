@@ -7,13 +7,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -21,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -34,6 +36,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -45,6 +48,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,18 +58,29 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import androidx.navigation.compose.currentBackStackEntryAsState
+import com.freight24.connect.navigation.ConnectDestination
 import com.freight24.rest.response.ClientDto
 import com.freight24.rest.response.LocationDto
 import com.freight24.rest.response.TruckCategoryDto
 import com.freight24.rest.response.TruckTypeDto
 import com.freight24.ui.components.FilterSelectionChip
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateIndentScreen(
     onBackClick: () -> Unit,
-    viewModel: CreateIndentViewModel = hiltViewModel(),
+    onNavigateToSearch: (String) -> Unit,
+    onNavigateToReview: () -> Unit,
+    navController: NavController,
 ) {
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val createIndentBackStackEntry = remember(navBackStackEntry) {
+        navController.getBackStackEntry(ConnectDestination.CreateIndent.route)
+    }
+    val viewModel: CreateIndentViewModel = hiltViewModel(createIndentBackStackEntry)
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -80,8 +95,6 @@ fun CreateIndentScreen(
         uiState.successMessage?.let {
             snackbarHostState.showSnackbar(it)
             viewModel.onEvent(CreateIndentEvent.ClearSuccess)
-            // Optionally navigate back here
-            // onBackClick()
         }
     }
 
@@ -89,7 +102,9 @@ fun CreateIndentScreen(
         uiState = uiState,
         snackbarHostState = snackbarHostState,
         onBackClick = onBackClick,
+        onNavigateToSearch = onNavigateToSearch,
         onEvent = viewModel::onEvent,
+        onNavigateToReview = onNavigateToReview
     )
 }
 
@@ -99,12 +114,16 @@ fun CreateIndentContent(
     uiState: CreateIndentUiState,
     snackbarHostState: SnackbarHostState,
     onBackClick: () -> Unit,
+    onNavigateToSearch: (String) -> Unit,
     onEvent: (CreateIndentEvent) -> Unit,
+    onNavigateToReview: () -> Unit,
 ) {
+    val scope = rememberCoroutineScope()
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Create Indent") },
+                title = { Text("Indent") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
@@ -115,25 +134,31 @@ fun CreateIndentContent(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             Button(
-                onClick = { onEvent(CreateIndentEvent.SubmitIndent) },
+                onClick = {
+                    val errorMessage = when {
+                        uiState.selectedClient == null -> "Please select a client"
+                        uiState.selectedFromLocation == null -> "Please select loading location"
+                        uiState.selectedToLocation == null -> "Please select unloading location"
+                        uiState.selectedTruckType == null -> "Please select truck type"
+                        uiState.materialName.isBlank() -> "Please enter material name"
+                        uiState.weight.isBlank() -> "Please enter weight"
+                        uiState.tatRequired && uiState.tatHours.isBlank() -> "Please enter TAT hours"
+                        else -> null
+                    }
+                    if (errorMessage != null) {
+                        scope.launch {
+                            snackbarHostState.showSnackbar(errorMessage)
+                        }
+                    } else {
+                        onNavigateToReview()
+                    }
+                },
                 modifier =
                     Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
-                enabled = !uiState.isSubmitting,
             ) {
-                if (uiState.isSubmitting) {
-                    CircularProgressIndicator(
-                        modifier =
-                            Modifier
-                                .padding(end = 8.dp)
-                                .width(20.dp)
-                                .height(20.dp),
-                        color = Color.White,
-                        strokeWidth = 2.dp,
-                    )
-                }
-                Text("Post Indent")
+                Text("Review Indent")
             }
         },
     ) { paddingValues ->
@@ -156,38 +181,98 @@ fun CreateIndentContent(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    // 1. Client Name
-                    ClientAutoComplete(
-                        label = "Client Name",
-                        query = uiState.clientQuery,
-                        onQueryChange = { onEvent(CreateIndentEvent.SearchClient(it)) },
-                        searchResults = uiState.clientSearchResults,
-                        onSelect = { onEvent(CreateIndentEvent.SelectClient(it)) },
+                    val clientName = uiState.selectedClient?.run {
+                        "${uiState.selectedClient.companyName}, ${uiState.selectedClient.tagCode}"
+                    } ?: ""
+
+                    OutlinedTextField(
+                        value = clientName,
+                        onValueChange = {},
+                        label = { Text("Client Name") },
+                        readOnly = true,
+                        trailingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Search",
+                            )
+                        },
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    onNavigateToSearch(SearchType.CLIENT.name)
+                                },
+                        enabled = false,
+                        colors =
+                            OutlinedTextFieldDefaults.colors(
+                                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                                disabledBorderColor = MaterialTheme.colorScheme.outline,
+                                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            ),
+                        singleLine = true,
+                        textStyle = MaterialTheme.typography.bodyMedium
                     )
 
-                    // 2. From Location & 3. To Location (Side by Side)
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        LocationAutoComplete(
-                            label = "Loading",
-                            query = uiState.fromLocationQuery,
-                            onQueryChange = { onEvent(CreateIndentEvent.SearchFromLocation(it)) },
-                            searchResults = uiState.fromLocationSearchResults,
-                            onSelect = { onEvent(CreateIndentEvent.SelectFromLocation(it)) },
-                            modifier = Modifier.weight(1f),
+                        OutlinedTextField(
+                            value = uiState.selectedFromLocation?.name ?: "",
+                            onValueChange = {},
+                            label = { Text("Loading") },
+                            readOnly = true,
+                            trailingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = "Search",
+                                )
+                            },
+                            modifier =
+                                Modifier
+                                    .weight(1f)
+                                    .clickable {
+                                        onNavigateToSearch(SearchType.LOCATION_FROM.name)
+                                    },
+                            enabled = false,
+                            colors =
+                                OutlinedTextFieldDefaults.colors(
+                                    disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                                    disabledBorderColor = MaterialTheme.colorScheme.outline,
+                                    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                ),
+                            singleLine = true,
+                            textStyle = MaterialTheme.typography.bodyMedium
                         )
 
-                        LocationAutoComplete(
-                            label = "Unloading",
-                            query = uiState.toLocationQuery,
-                            onQueryChange = { onEvent(CreateIndentEvent.SearchToLocation(it)) },
-                            searchResults = uiState.toLocationSearchResults,
-                            onSelect = { onEvent(CreateIndentEvent.SelectToLocation(it)) },
-                            modifier = Modifier.weight(1f),
+                        OutlinedTextField(
+                            value = uiState.selectedToLocation?.name ?: "",
+                            onValueChange = {},
+                            label = { Text("Unloading") },
+                            readOnly = true,
+                            trailingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = "Search",
+                                )
+                            },
+                            modifier =
+                                Modifier
+                                    .weight(1f)
+                                    .clickable {
+                                        onNavigateToSearch(SearchType.LOCATION_TO.name)
+                                    },
+                            enabled = false,
+                            colors =
+                                OutlinedTextFieldDefaults.colors(
+                                    disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                                    disabledBorderColor = MaterialTheme.colorScheme.outline,
+                                    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                ),
+                            singleLine = true,
+                            textStyle = MaterialTheme.typography.bodyMedium
                         )
                     }
-
-                    // 4. Truck Type
-                    Text("Truck Type", style = MaterialTheme.typography.labelLarge)
 
                     if (uiState.isLoadingTruckTypes) {
                         CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
@@ -199,13 +284,12 @@ fun CreateIndentContent(
                         )
                     }
 
-                    // 5. Weight & 6. Material Name
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         OutlinedTextField(
                             value = uiState.weight,
                             onValueChange = { onEvent(CreateIndentEvent.UpdateWeight(it)) },
                             label = { Text("Weight (MT)") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                             modifier = Modifier.weight(1f),
                         )
 
@@ -219,7 +303,6 @@ fun CreateIndentContent(
                 }
             }
 
-            // Optional Fields
             OptionalFieldsSection(
                 uiState = uiState,
                 onEvent = onEvent,
@@ -375,11 +458,12 @@ fun TruckTypeSelection(
             .closed
             .sortedByDescending { it.displayName.length }
 
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (openTrucks.isNotEmpty()) {
+    if (openTrucks.isNotEmpty()) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+
             Text("Open", style = MaterialTheme.typography.labelMedium)
 
-            androidx.compose.foundation.layout.FlowRow(
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -392,27 +476,29 @@ fun TruckTypeSelection(
                     )
                 }
             }
+
+            Spacer(Modifier.height(8.dp))
         }
+    }
 
-        Spacer(Modifier.height(8.dp))
+    if (closedTrucks.isNotEmpty()) {
+        Text("Closed", style = MaterialTheme.typography.labelMedium)
 
-        if (closedTrucks.isNotEmpty()) {
-            Text("Closed", style = MaterialTheme.typography.labelMedium)
-            androidx.compose.foundation.layout.FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                closedTrucks.forEach { truck ->
-                    FilterSelectionChip(
-                        label = truck.displayName,
-                        isSelected = selectedTruckType?.id == truck.id,
-                        onClick = { onSelect(truck) },
-                    )
-                }
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            closedTrucks.forEach { truck ->
+                FilterSelectionChip(
+                    label = truck.displayName,
+                    isSelected = selectedTruckType?.id == truck.id,
+                    onClick = { onSelect(truck) },
+                )
             }
         }
     }
+
 }
 
 @Composable
@@ -420,7 +506,7 @@ fun OptionalFieldsSection(
     uiState: CreateIndentUiState,
     onEvent: (CreateIndentEvent) -> Unit,
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(true) }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -492,33 +578,92 @@ fun OptionalFieldsSection(
                         OutlinedTextField(
                             value = uiState.flooringType,
                             onValueChange = { onEvent(CreateIndentEvent.UpdateOptionalField(flooringType = it)) },
-                            label = { Text("Flooring") },
+                            label = { Text("Steel") },
                             modifier = Modifier.weight(1f),
                         )
                     }
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(
-                            checked = uiState.tatRequired,
-                            onCheckedChange = { onEvent(CreateIndentEvent.UpdateOptionalField(tatRequired = it)) },
-                        )
-                        Text("TAT Required")
 
-                        Spacer(Modifier.width(16.dp))
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = uiState.tarpaulinRequired,
+                                onCheckedChange = {
+                                    onEvent(
+                                        CreateIndentEvent.UpdateOptionalField(
+                                            tarpaulinRequired = it
+                                        )
+                                    )
+                                },
+                            )
+                            Text("Tarpaulin")
+                        }
 
-                        Checkbox(
-                            checked = uiState.tarpaulinRequired,
-                            onCheckedChange = { onEvent(CreateIndentEvent.UpdateOptionalField(tarpaulinRequired = it)) },
-                        )
-                        Text("Tarpaulin Required")
+                        Spacer(Modifier.size(16.dp))
+
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+
+                            Checkbox(
+                                checked = uiState.hideCost,
+                                onCheckedChange = {
+                                    onEvent(
+                                        CreateIndentEvent.UpdateOptionalField(
+                                            hideCost = it
+                                        )
+                                    )
+                                },
+                            )
+
+                            Text("Hide Cost")
+                        }
                     }
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(
-                            checked = uiState.hideCost,
-                            onCheckedChange = { onEvent(CreateIndentEvent.UpdateOptionalField(hideCost = it)) },
-                        )
-                        Text("Hide Cost")
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = uiState.tatRequired,
+                                onCheckedChange = {
+                                    onEvent(
+                                        CreateIndentEvent.UpdateOptionalField(
+                                            tatRequired = it
+                                        )
+                                    )
+                                },
+                            )
+                            Text("TAT")
+                        }
+
+                        Spacer(Modifier.size(16.dp))
+
+                        Row(
+                            modifier = Modifier.weight(1f),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+
+                            OutlinedTextField(
+                                value = uiState.tatHours,
+                                enabled = uiState.tatRequired,
+                                onValueChange = {
+                                    onEvent(
+                                        CreateIndentEvent.UpdateOptionalField(
+                                            tatHours = it
+                                        )
+                                    )
+                                },
+                                label = { Text("TAT hours") },
+                                modifier = Modifier.weight(1f),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            )
+                        }
                     }
 
                     OutlinedTextField(

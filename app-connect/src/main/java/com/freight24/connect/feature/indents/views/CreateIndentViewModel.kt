@@ -177,6 +177,7 @@ class CreateIndentViewModel
                     tarpaulinRequired = event.tarpaulinRequired ?: state.tarpaulinRequired,
                     hideCost = event.hideCost ?: state.hideCost,
                     remarks = event.remarks ?: state.remarks,
+                    tatHours = event.tatHours ?: state.tatHours,
                 )
             }
         }
@@ -271,6 +272,7 @@ data class CreateIndentUiState(
     val vehicleHeight: String = "",
     val flooringType: String = "Wooden", // Default
     val tatRequired: Boolean = false,
+    val tatHours: String = "",
     val tarpaulinRequired: Boolean = false,
     val hideCost: Boolean = false,
     val remarks: String = "",
@@ -308,6 +310,7 @@ sealed class CreateIndentEvent {
         val tarpaulinRequired: Boolean? = null,
         val hideCost: Boolean? = null,
         val remarks: String? = null,
+        val tatHours: String? = null,
     ) : CreateIndentEvent()
 
     object SubmitIndent : CreateIndentEvent()

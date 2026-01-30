@@ -6,6 +6,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.freight24.connect.feature.home.HomeScreen
 import com.freight24.connect.feature.indents.views.CreateIndentScreen
+import com.freight24.connect.feature.indents.views.ReviewIndentScreen
+import com.freight24.connect.feature.indents.views.SearchSelectionScreen
+import com.freight24.connect.feature.indents.views.SearchType
 import com.freight24.connect.feature.login.view.signin.LoginScreen
 import com.freight24.connect.feature.login.view.verify.VerifyOtpScreen
 
@@ -59,10 +62,50 @@ fun ConnectNavGraph(
             )
         }
 
-        composable(ConnectDestination.CreateIndent.route) {
+        composable(ConnectDestination.CreateIndent.route) { backStackEntry ->
             CreateIndentScreen(
                 onBackClick = {
+                    navHostController.popBackStack()
                 },
+                onNavigateToSearch = { searchType ->
+                    navHostController.navigate(ConnectDestination.SearchSelection.createRoute(searchType))
+                },
+                onNavigateToReview = {
+                    navHostController.navigate(ConnectDestination.ReviewIndent.route)
+                },
+                navController = navHostController,
+            )
+        }
+
+        composable(
+            route = ConnectDestination.SearchSelection.route,
+            arguments = ConnectDestination.SearchSelection.arguments,
+        ) { backStackEntry ->
+            val searchTypeString =
+                backStackEntry
+                    .arguments
+                    ?.getString(ConnectDestination.SearchSelection.SEARCH_TYPE_ARG) ?: "CLIENT"
+
+            val searchType = SearchType.valueOf(searchTypeString)
+
+            SearchSelectionScreen(
+                searchType = searchType,
+                onBackClick = {
+                    navHostController.popBackStack()
+                },
+                navController = navHostController,
+            )
+        }
+
+        composable(ConnectDestination.ReviewIndent.route) {
+            ReviewIndentScreen(
+                onBackClick = {
+                    navHostController.popBackStack()
+                },
+                onEditClick = {
+                    navHostController.popBackStack()
+                },
+                navController = navHostController,
             )
         }
     }
