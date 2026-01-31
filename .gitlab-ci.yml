@@ -42,7 +42,7 @@ build:trucker:qaDebug:
     paths:
       - app-trucker/build/outputs/apk/qa/debug/
 
-build:employee:qaDebug:
+build:connect:qaDebug:
   stage: build
   script:
     - ./gradlew :app-employee:assembleQaDebug
@@ -74,7 +74,7 @@ package:trucker:prodRelease:
       - app-trucker/build/outputs/apk/prod/release/
 
 
-package:employee:prodRelease:
+package:connect:prodRelease:
   stage: package
   when: manual
   script:
