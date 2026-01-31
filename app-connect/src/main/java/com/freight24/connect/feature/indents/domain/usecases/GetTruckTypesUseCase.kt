@@ -1,4 +1,4 @@
-package com.freight24.connect.feature.indents.domain
+package com.freight24.connect.feature.indents.domain.usecases
 
 import com.freight24.connect.repository.IndentRepository
 import com.freight24.rest.response.TruckCategoryDto

@@ -1,6 +1,6 @@
 package com.freight24.rest.response
 
-import com.google.gson.annotations.SerializedName
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -18,9 +18,9 @@ data class PaginatedLoadBoardResponse(
     data class Pagination(
         val page: Int,
         val limit: Int,
-        @SerializedName("total_loads")
+        @SerialName("total_loads")
         val total_loads: Int,
-        @SerializedName("has_more")
+        @SerialName("has_more")
         val has_more: Boolean,
     )
 }

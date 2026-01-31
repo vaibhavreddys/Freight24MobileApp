@@ -25,7 +25,10 @@ import com.freight24.ui.components.AppTopBar
 import com.freight24.ui.components.FreightBottomNavScaffold
 
 @Composable
-fun HomeScreen(onCreateIndentClick: () -> Unit) {
+fun HomeScreen(
+    onCreateIndentClick: () -> Unit,
+    onIndentClick: (String) -> Unit
+) {
     var selectedTab by rememberSaveable { mutableStateOf(ConnectTab.Home) }
 
     FreightBottomNavScaffold(
@@ -37,7 +40,9 @@ fun HomeScreen(onCreateIndentClick: () -> Unit) {
         topBar = {
             AppTopBar(
                 title = selectedTab.name,
-                showSearch = true,
+                showSearch = selectedTab == ConnectTab.Home,
+                showFilter = selectedTab == ConnectTab.Indents,
+                onFilterClick = { /* TODO: Filter */ }
             )
         },
         floatingActionButton = {
@@ -59,7 +64,12 @@ fun HomeScreen(onCreateIndentClick: () -> Unit) {
         Crossfade(tab, label = "TabTransition") { currentTab ->
             when (currentTab) {
                 ConnectTab.Home -> DashboardScreen(paddingValues)
-                ConnectTab.Indents -> IndentsScreen(Modifier.padding(paddingValues))
+                ConnectTab.Indents -> IndentsScreen(
+                    onIndentClick = { indentId ->
+                        onIndentClick(indentId)
+                    },
+                    modifier = Modifier.padding(paddingValues)
+                )
                 ConnectTab.Trips -> TripsScreen(paddingValues)
                 ConnectTab.Trucks -> FindTrucksScreen(paddingValues)
                 ConnectTab.More -> MoreScreen(paddingValues)

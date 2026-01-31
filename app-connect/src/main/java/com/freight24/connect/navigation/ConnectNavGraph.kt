@@ -1,11 +1,15 @@
 package com.freight24.connect.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.freight24.connect.feature.home.HomeScreen
 import com.freight24.connect.feature.indents.views.CreateIndentScreen
+import com.freight24.connect.feature.indents.views.IndentDetailsScreen
+import com.freight24.connect.feature.indents.views.IndentSuccessScreen
+import com.freight24.connect.feature.indents.views.IndentsScreen
 import com.freight24.connect.feature.indents.views.ReviewIndentScreen
 import com.freight24.connect.feature.indents.views.SearchSelectionScreen
 import com.freight24.connect.feature.indents.views.SearchType
@@ -59,6 +63,9 @@ fun ConnectNavGraph(
                 onCreateIndentClick = {
                     navHostController.navigate(ConnectDestination.CreateIndent.route)
                 },
+                onIndentClick = { indentId ->
+                    navHostController.navigate(ConnectDestination.IndentDetails.createRoute(indentId))
+                }
             )
         }
 
@@ -106,6 +113,44 @@ fun ConnectNavGraph(
                     navHostController.popBackStack()
                 },
                 navController = navHostController,
+            )
+        }
+
+        composable(
+            route = ConnectDestination.IndentSuccess.route,
+            arguments = ConnectDestination.IndentSuccess.arguments,
+        ) { backStackEntry ->
+            val indentId =
+                backStackEntry
+                    .arguments
+                    ?.getString(ConnectDestination.IndentSuccess.INDENT_ID_ARG) ?: ""
+
+            IndentSuccessScreen(
+                navController = navHostController,
+                indentId = indentId,
+                onViewIndentClick = {
+                    navHostController.navigate(ConnectDestination.Home.route) {
+                        popUpTo(ConnectDestination.CreateIndent.route) { inclusive = true }
+                    }
+                },
+                onBackToHomeClick = {
+                    navHostController.navigate(ConnectDestination.Home.route) {
+                        popUpTo(ConnectDestination.CreateIndent.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(
+            route = ConnectDestination.IndentDetails.route,
+            arguments = ConnectDestination.IndentDetails.arguments,
+        ) { backStackEntry ->
+            val indentId = backStackEntry.arguments?.getString(ConnectDestination.IndentDetails.INDENT_ID_ARG) ?: ""
+            IndentDetailsScreen(
+                indentId = indentId,
+                onBackClick = {
+                    navHostController.popBackStack()
+                }
             )
         }
     }

@@ -1,11 +1,15 @@
 package com.freight24.rest.response
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class LoginResponse(
     val success: Boolean,
     val message: String,
     val data: AuthData? = null,
 )
 
+@Serializable
 data class AuthData(
     val token: String? = null,
     val user: User? = null,
@@ -14,6 +18,7 @@ data class AuthData(
     val otp_code: String? = null,
 )
 
+@Serializable
 data class User(
     val id: String,
     val tag_code: String,
@@ -24,8 +29,9 @@ data class User(
     val created_at: String? = null,
 )
 
+@Serializable
 data class Profile(
-    val id: String,
+    val id: String ?= null,
     val user_id: String,
     val full_name: String?,
     val email: String? = null,
@@ -35,10 +41,10 @@ data class Profile(
     val aadhar_card: String? = null,
     val business_name: String? = null,
     val gst_number: String? = null,
-    val created_at: String,
-    val updated_at: String,
-    val created_by: String,
-    val updated_by: String,
-    val status: String,
-    val is_tds_applicable: Boolean,
+    val created_at: String? = null,
+    val updated_at: String? = null,
+    val created_by: String? = null,
+    val updated_by: String? = null,
+    val status: String? = null,
+    val is_tds_applicable: Boolean = false,
 )

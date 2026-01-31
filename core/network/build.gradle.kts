@@ -33,7 +33,6 @@ dependencies {
     api(libs.okhttp.core)
     api(libs.okhttp.logging)
     api(libs.kotlinx.serialization.json)
-    api(libs.retrofit.gson.convertor)
 
     // DI
     implementation(libs.hilt.android)

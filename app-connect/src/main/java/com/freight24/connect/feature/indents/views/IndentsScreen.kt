@@ -1,28 +1,399 @@
 package com.freight24.connect.feature.indents.views
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.outlined.LocalShipping
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.freight24.connect.feature.indents.domain.viewmodel.IndentTab
+import com.freight24.connect.feature.indents.domain.viewmodel.IndentsListEvent
+import com.freight24.connect.feature.indents.domain.viewmodel.IndentsListUiState
+import com.freight24.connect.feature.indents.domain.viewmodel.IndentsListViewModel
+import com.freight24.connect.feature.indents.domain.viewmodel.IndentsListViewModelImpl
+import com.freight24.rest.response.IndentResponse
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun IndentsScreen(modifier: Modifier = Modifier) {
-    IndentsList(
+fun IndentsScreen(
+    onIndentClick: (String) -> Unit = {},
+    modifier: Modifier = Modifier
+) {
+    val viewModel: IndentsListViewModel = hiltViewModel<IndentsListViewModelImpl>()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    IndentsContent(
+        uiState = uiState,
+        onEvent = viewModel::onEvent,
+        onIndentClick = onIndentClick,
         modifier = modifier,
     )
+
 }
 
 @Composable
-fun IndentsList(modifier: Modifier = Modifier) {
-    Box(modifier = modifier.fillMaxSize()) {
-        Text("List of indents will be here.")
+fun IndentsContent(
+    uiState: IndentsListUiState,
+    onEvent: (IndentsListEvent) -> Unit,
+    onIndentClick: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+    ) {
+        // Tab Switcher
+        IndentTabSwitcher(
+            selectedTab = uiState.selectedTab,
+            onTabSelected = { onEvent(IndentsListEvent.SelectTab(it)) },
+            modifier = Modifier.padding(16.dp)
+        )
+
+        if (uiState.isLoading && uiState.indents.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else if (uiState.errorMessage != null && uiState.indents.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(text = uiState.errorMessage)
+            }
+        } else {
+            IndentsList(
+                indents = uiState.indents,
+                onIndentClick = onIndentClick,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
     }
 }
 
 @Composable
-@Preview(showBackground = true)
-fun IndentsScreenPreview() {
-    IndentsScreen()
+fun IndentTabSwitcher(
+    selectedTab: IndentTab,
+    onTabSelected: (IndentTab) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+    ) {
+        TabButton(
+            text = "Mine",
+            isSelected = selectedTab == IndentTab.MINE,
+            onClick = { onTabSelected(IndentTab.MINE) },
+            modifier = Modifier.width(100.dp)
+        )
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        TabButton(
+            text = "All",
+            isSelected = selectedTab == IndentTab.ALL,
+            onClick = { onTabSelected(IndentTab.ALL) },
+            modifier = Modifier.width(100.dp)
+        )
+    }
+}
+
+@Composable
+fun TabButton(
+    text: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Button(
+        onClick = onClick,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (isSelected) Color(0xFF1D4ED8) else Color.White,
+            contentColor = if (isSelected) Color.White else Color.Gray
+        ),
+        shape = RoundedCornerShape(24.dp),
+        border = if (!isSelected) BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)) else null,
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        modifier = modifier.height(40.dp)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge.copy(
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+            )
+        )
+    }
+}
+
+@Composable
+fun IndentsList(
+    indents: List<IndentResponse.Indent>,
+    onIndentClick: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = PaddingValues(bottom = 80.dp) // Space for FAB
+    ) {
+        items(indents) { indent ->
+            IndentCard(
+                indent = indent,
+                onClick = { onIndentClick(indent.id) }
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun IndentCard(
+    indent: IndentResponse.Indent,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val loadingLocation = indent.indentGroupDetails.indentLocations.find { it.locationType == "loading" }
+    val unloadingLocation = indent.indentGroupDetails.indentLocations.find { it.locationType == "unloading" }
+    val clientProfile = indent.indentGroupDetails.clientProfile
+    val context = LocalContext.current
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp)
+        ) {
+            // Row 1: Route & Time
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RouteDot(isStart = true)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = loadingLocation?.areaName ?: loadingLocation?.cityName ?: "Unknown",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                        )
+                    }
+                    RouteVerticalLine()
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RouteDot(isStart = false)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = unloadingLocation?.areaName ?: unloadingLocation?.cityName ?: "Unknown",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                        )
+                    }
+                }
+                
+                // Posted time
+                Text(
+                    text = "45m ago", // TODO: Dynamic formatting
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.LightGray
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Row 2: Metadata (Truck, Weight, Material)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Outlined.LocalShipping,
+                    contentDescription = null,
+                    modifier = Modifier.size(14.dp),
+                    tint = Color.Gray
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                val truckDisplay = indent.indentGroupDetails.truckType?.displayName ?: "N/A"
+                val weightDisplay = "${indent.indentGroupDetails.loadWeight} tons"
+                val materialDisplay = indent.indentGroupDetails.material
+                Text(
+                    text = "$truckDisplay • $weightDisplay • $materialDisplay",
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                    color = Color.DarkGray,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Row 3: Pricing
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "CLIENT: ",
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                    color = Color.LightGray
+                )
+                Text(
+                    text = formatCurrency(indent.indentGroupDetails.clientTripCost),
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, fontSize = 13.sp),
+                    color = Color.Black
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(
+                    text = "NEG: ",
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                    color = Color.LightGray
+                )
+                Text(
+                    text = formatCurrency(indent.negotiatedTripCost),
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, fontSize = 13.sp),
+                    color = Color.Black
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+            Divider(color = Color(0xFFF1F5F9), thickness = 1.dp)
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Row 4: Client Info & Call Button
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = Color.LightGray
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = clientProfile?.fullName ?: clientProfile?.companyName ?: "Unknown",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium, fontSize = 13.sp),
+                        color = Color.DarkGray
+                    )
+                }
+
+                Button(
+                    onClick = {
+                        clientProfile?.phoneNumber?.let {
+                            val intent = Intent(Intent.ACTION_DIAL).apply {
+                                data = Uri.parse("tel:$it")
+                            }
+                            context.startActivity(intent)
+                        }
+                    },
+                    shape = RoundedCornerShape(8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFEFF6FF), // Very light blue
+                        contentColor = Color(0xFF1D4ED8) // Primary blue
+                    ),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                    modifier = Modifier.height(32.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Call,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Call",
+                            style = MaterialTheme.typography.labelLarge.copy(fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun RouteDot(isStart: Boolean) {
+    Box(
+        modifier = Modifier
+            .size(8.dp)
+            .background(
+                color = if (isStart) Color(0xFF22C55E) else Color(0xFFEF4444),
+                shape = CircleShape
+            )
+    )
+}
+
+@Composable
+fun RouteVerticalLine() {
+    Box(
+        modifier = Modifier
+            .padding(start = 3.dp) // center under 8dp dot
+            .width(2.dp)
+            .height(12.dp)
+            .background(Color(0xFFE2E8F0))
+    )
+}
+
+@Composable
+fun CostColumn(
+    label: String,
+    value: String,
+    alignment: Alignment.Horizontal = Alignment.Start,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.padding(horizontal = 4.dp),
+        horizontalAlignment = alignment
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontSize = 10.sp,
+                letterSpacing = 0.5.sp
+            ),
+            color = Color.LightGray
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp
+            ),
+            color = Color(0xFF0F172A)
+        )
+    }
+}
+
+fun formatCurrency(amount: Double?): String {
+    if (amount == null) return "₹0"
+    return "₹${"%,.0f".format(amount)}"
 }

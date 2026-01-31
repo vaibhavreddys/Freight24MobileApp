@@ -1,5 +1,6 @@
 package com.freight24.connect.feature.login.repository
 
+import android.util.Log
 import com.freight24.common.di.IoDispatcher
 import com.freight24.connect.feature.login.domain.model.AuthInfo
 import com.freight24.rest.api.LoginConnectApi
@@ -25,6 +26,7 @@ internal class LoginConnectRepositoryImpl
                         Result.failure(Exception(response.message))
                     }
                 } catch (e: Exception) {
+                    Log.e("LoginConnectRepository", e.message.orEmpty())
                     Result.failure(e)
                 }
             }
