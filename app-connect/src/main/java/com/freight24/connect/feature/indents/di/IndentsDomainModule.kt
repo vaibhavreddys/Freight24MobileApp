@@ -12,6 +12,8 @@ import com.freight24.connect.feature.indents.domain.usecases.GetMyIndentsUseCase
 import com.freight24.connect.feature.indents.domain.usecases.GetMyIndentsUseCaseImpl
 import com.freight24.connect.feature.indents.domain.usecases.GetTruckTypesUseCase
 import com.freight24.connect.feature.indents.domain.usecases.GetTruckTypesUseCaseImpl
+import com.freight24.connect.feature.indents.domain.usecases.UpdateIndentUseCase
+import com.freight24.connect.feature.indents.domain.usecases.UpdateIndentUseCaseImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -37,4 +39,7 @@ abstract class IndentsDomainModule {
 
     @Binds
     abstract fun bindGetIndentByIdUseCase(useCaseImpl: GetIndentByIdUseCaseImpl): GetIndentByIdUseCase
+
+    @Binds
+    abstract fun bindUpdateIndentUseCase(useCaseImpl: UpdateIndentUseCaseImpl): UpdateIndentUseCase
 }

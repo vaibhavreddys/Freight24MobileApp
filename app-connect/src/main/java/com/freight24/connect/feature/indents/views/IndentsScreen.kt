@@ -242,7 +242,7 @@ fun IndentCard(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 val truckDisplay = indent.indentGroupDetails.truckType?.displayName ?: "N/A"
-                val weightDisplay = "${indent.indentGroupDetails.loadWeight} tons"
+                val weightDisplay = "${indent.indentGroupDetails.loadWeight} MT"
                 val materialDisplay = indent.indentGroupDetails.material
                 Text(
                     text = "$truckDisplay • $weightDisplay • $materialDisplay",

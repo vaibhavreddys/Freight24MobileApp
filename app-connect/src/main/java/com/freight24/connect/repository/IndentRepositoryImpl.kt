@@ -3,6 +3,7 @@ package com.freight24.connect.repository
 import com.freight24.common.di.IoDispatcher
 import com.freight24.rest.api.IndentsApi
 import com.freight24.rest.request.CreateIndentRequest
+import com.freight24.rest.request.UpdateIndentRequest
 import com.freight24.rest.response.GetIndentsResponse
 import com.freight24.rest.response.IndentResponse
 import com.freight24.rest.response.TruckCategoryDto
@@ -76,5 +77,17 @@ class IndentRepositoryImpl
                 Result.failure(e)
             }
         }
-
+    override suspend fun updateIndent(id: String, request: UpdateIndentRequest): Result<IndentResponse> =
+        withContext(ioDispatcher) {
+            try {
+                val response = api.updateIndent(id, request)
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!)
+                } else {
+                    Result.failure(Exception(response.message()))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
 }

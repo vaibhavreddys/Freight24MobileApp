@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.freight24.connect.feature.home.HomeScreen
 import com.freight24.connect.feature.indents.views.CreateIndentScreen
+import com.freight24.connect.feature.indents.views.EditIndentScreen
 import com.freight24.connect.feature.indents.views.IndentDetailsScreen
 import com.freight24.connect.feature.indents.views.IndentSuccessScreen
 import com.freight24.connect.feature.indents.views.IndentsScreen
@@ -147,8 +148,27 @@ fun ConnectNavGraph(
         ) { backStackEntry ->
             val indentId = backStackEntry.arguments?.getString(ConnectDestination.IndentDetails.INDENT_ID_ARG) ?: ""
             IndentDetailsScreen(
+                navController = navHostController,
                 indentId = indentId,
                 onBackClick = {
+                    navHostController.popBackStack()
+                },
+                onEditClick = { id ->
+                    navHostController.navigate(ConnectDestination.EditIndent.createRoute(id))
+                }
+            )
+        }
+
+        composable(
+            route = ConnectDestination.EditIndent.route,
+            arguments = ConnectDestination.EditIndent.arguments,
+        ) { backStackEntry ->
+            val indentId = backStackEntry.arguments?.getString(ConnectDestination.EditIndent.INDENT_ID_ARG) ?: ""
+            EditIndentScreen(
+                indentId = indentId,
+                onBackClick = { navHostController.popBackStack() },
+                onSuccess = {
+                    navHostController.previousBackStackEntry?.savedStateHandle?.set("refresh", true)
                     navHostController.popBackStack()
                 }
             )

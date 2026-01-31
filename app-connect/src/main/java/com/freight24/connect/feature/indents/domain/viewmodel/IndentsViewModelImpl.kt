@@ -1,5 +1,6 @@
 package com.freight24.connect.feature.indents.domain.viewmodel
 
+import androidx.compose.ui.text.toLowerCase
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.freight24.connect.feature.indents.domain.usecases.CreateIndentUseCase
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -233,7 +235,7 @@ class IndentsViewModelImpl
                     tatHours = state.tatHours.toIntOrNull(),
                     tarpaulingRequired = state.tarpaulinRequired,
                     remarks = state.remarks,
-                    flooringType = state.flooringType,
+                    flooringType = state.flooringType.lowercase(Locale.getDefault()),
                     locations = listOf(loadingLocation, unLoadingLocation)
                 )
                 val result = createIndentUseCase.invoke(request)

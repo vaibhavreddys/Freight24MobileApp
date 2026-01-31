@@ -1,7 +1,7 @@
 package com.freight24.rest.api
 
 import com.freight24.rest.request.CreateIndentRequest
-import com.freight24.rest.response.BaseResponse
+import com.freight24.rest.request.UpdateIndentRequest
 import com.freight24.rest.response.GetIndentsResponse
 import com.freight24.rest.response.IndentResponse
 import com.freight24.rest.response.LoadBoardResponse
@@ -11,6 +11,7 @@ import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -42,5 +43,11 @@ interface IndentsApi {
     @GET("indents/child/{id}")
     suspend fun getIndentById(
         @Path("id") id: String,
+    ): Response<IndentResponse>
+
+    @PUT("indents/{id}")
+    suspend fun updateIndent(
+        @Path("id") id: String,
+        @Body request: UpdateIndentRequest,
     ): Response<IndentResponse>
 }

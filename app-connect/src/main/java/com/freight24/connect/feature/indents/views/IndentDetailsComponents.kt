@@ -306,12 +306,12 @@ fun SpecificationsSection(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "WEIGHT (TONS)",
+                    text = "WEIGHT (MT)",
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.Gray,
                 )
                 Text(
-                    text = "$weight Tons",
+                    text = weight,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
                 )

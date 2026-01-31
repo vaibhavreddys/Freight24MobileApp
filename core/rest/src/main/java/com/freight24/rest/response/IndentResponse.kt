@@ -59,6 +59,7 @@ data class IndentResponse(
         val fullName: String? = null,
         val companyName: String? = null,
         val phoneNumber: String? = null,
+        val tagCode: String? = null,
     )
 
     @Serializable

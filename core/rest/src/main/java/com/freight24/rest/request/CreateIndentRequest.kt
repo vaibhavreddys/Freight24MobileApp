@@ -18,7 +18,7 @@ data class CreateIndentRequest(
     @SerialName("tat_hours") val tatHours: Int? = null,
     @SerialName("tarpauling_required") val tarpaulingRequired: Boolean = false,
     @SerialName("special_requirements") val remarks: String? = null,
-    @SerialName("flooring_type") val flooringType: String = "Steel",
+    @SerialName("flooring_type") val flooringType: String = "steel",
     @SerialName("locations") val locations: List<Location>,
 ) {
 
