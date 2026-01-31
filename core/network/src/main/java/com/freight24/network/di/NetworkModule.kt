@@ -9,12 +9,23 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
+import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
+
+    @Provides
+    @Singleton
+    fun providesJson(): Json = Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+        coerceInputValues = true
+    }
+
     @Provides
     @DefaultNetwork
     fun provideDefaultOkHttpClient(config: NetworkConfig): OkHttpClient {
@@ -36,10 +47,12 @@ object NetworkModule {
     fun providesDefaultRetrofitFactory(
         @DefaultNetwork okHttpClient: OkHttpClient,
         config: NetworkConfig,
+        json: Json
     ): RetrofitFactory =
         DefaultRetrofitFactory(
             okHttpClient,
             config,
+            json
         )
 
     @Provides
@@ -60,9 +73,11 @@ object NetworkModule {
     fun providesAuthenticatedRetrofitFactory(
         okHttpClient: OkHttpClient,
         config: NetworkConfig,
+        json: Json
     ): RetrofitFactory =
         DefaultRetrofitFactory(
             okHttpClient,
             config,
+            json
         )
 }

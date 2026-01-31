@@ -42,4 +42,35 @@ sealed class ConnectDestination(val route: String) {
     }
 
     data object ReviewIndent : ConnectDestination("reviewIndent")
+
+    data object IndentSuccess : ConnectDestination("indentSuccess/{indentId}") {
+        const val INDENT_ID_ARG = "indentId"
+        override val arguments =
+            listOf(
+                navArgument(INDENT_ID_ARG) {
+                    type = NavType.StringType
+                },
+            )
+
+        fun createRoute(indentId: String): String {
+            return "indentSuccess/$indentId"
+        }
+    }
+
+    data object Indents : ConnectDestination("indents")
+    data object IndentDetails : ConnectDestination("indent_details/{indentId}") {
+        const val INDENT_ID_ARG = "indentId"
+        override val arguments = listOf(
+            navArgument(INDENT_ID_ARG) { type = NavType.StringType }
+        )
+        fun createRoute(indentId: String) = "indent_details/$indentId"
+    }
+
+    data object EditIndent : ConnectDestination("edit_indent/{indentId}") {
+        const val INDENT_ID_ARG = "indentId"
+        override val arguments = listOf(
+            navArgument(INDENT_ID_ARG) { type = NavType.StringType }
+        )
+        fun createRoute(indentId: String) = "edit_indent/$indentId"
+    }
 }

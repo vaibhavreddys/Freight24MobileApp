@@ -2,14 +2,16 @@ package com.freight24.network
 
 import com.freight24.network.adapter.NetworkConfig
 import com.freight24.network.interceptor.getHttpLoggingInterceptor
-import com.google.gson.GsonBuilder
+import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
+import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 
 class DefaultRetrofitFactory(
-    val okHttpClient: OkHttpClient,
-    val networkConfig: NetworkConfig,
+    private val okHttpClient: OkHttpClient,
+    private val networkConfig: NetworkConfig,
+    private val json: Json,
 ) : RetrofitFactory {
     override fun create(
         baseUrl: String,
@@ -17,10 +19,6 @@ class DefaultRetrofitFactory(
         clientConfigurator: OkHttpClient.Builder.() -> Unit,
         retrofitConfigurator: Retrofit.Builder.() -> Unit,
     ): Retrofit {
-        val gson =
-            GsonBuilder()
-                .setLenient()
-                .create()
 
         val client =
             okHttpClient
@@ -35,10 +33,12 @@ class DefaultRetrofitFactory(
                 }
                 .build()
 
+        val contentType = "application/json".toMediaType()
+
         return Retrofit.Builder()
             .baseUrl(baseUrl)
             .client(client)
-            .addConverterFactory(GsonConverterFactory.create(gson))
+            .addConverterFactory(json.asConverterFactory(contentType))
             .apply(retrofitConfigurator)
             .build()
     }

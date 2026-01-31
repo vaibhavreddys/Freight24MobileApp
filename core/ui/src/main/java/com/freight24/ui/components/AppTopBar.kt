@@ -3,6 +3,7 @@ package com.freight24.ui.components
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -19,6 +20,8 @@ fun AppTopBar(
     title: String = "Loads",
     showSearch: Boolean = false,
     onSearchClick: (() -> Unit)? = null,
+    showFilter: Boolean = false,
+    onFilterClick: (() -> Unit)? = null,
 ) {
     TopAppBar(
         title = {
@@ -33,6 +36,14 @@ fun AppTopBar(
                     Icon(
                         imageVector = Icons.Default.Search,
                         contentDescription = "Search",
+                    )
+                }
+            }
+            if (showFilter && onFilterClick != null) {
+                IconButton(onClick = onFilterClick) {
+                    Icon(
+                        imageVector = Icons.Default.FilterList,
+                        contentDescription = "Filter",
                     )
                 }
             }

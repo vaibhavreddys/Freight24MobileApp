@@ -35,6 +35,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.freight24.connect.feature.indents.domain.viewmodel.CreateIndentEvent
+import com.freight24.connect.feature.indents.domain.viewmodel.IndentsViewModel
+import com.freight24.connect.feature.indents.domain.viewmodel.IndentsViewModelImpl
 import com.freight24.connect.navigation.ConnectDestination
 import com.freight24.rest.response.ClientDto
 import com.freight24.rest.response.LocationDto
@@ -57,7 +60,9 @@ fun SearchSelectionScreen(
     val createIndentBackStackEntry = remember(navBackStackEntry) {
         navController.getBackStackEntry(ConnectDestination.CreateIndent.route)
     }
-    val viewModel: CreateIndentViewModel = hiltViewModel(createIndentBackStackEntry)
+    val viewModel: IndentsViewModel = hiltViewModel<IndentsViewModelImpl>(
+        createIndentBackStackEntry
+    )
     val uiState by viewModel.uiState.collectAsState()
     val focusRequester = remember { FocusRequester() }
 

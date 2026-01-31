@@ -5,20 +5,33 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class CreateIndentRequest(
-    @SerialName("from_location_id") val fromLocationId: String,
-    @SerialName("to_location_id") val toLocationId: String,
     @SerialName("client_id") val clientId: String,
-    @SerialName("material_name") val materialName: String,
-    @SerialName("weight") val weight: Double,
-    @SerialName("truck_type_id") val truckTypeId: String,
-    // Optional Fields
-    @SerialName("client_cost") val clientCost: Double? = null,
-    @SerialName("negotiated_cost") val negotiatedCost: Double? = null,
-    @SerialName("business_proposed_cost") val businessProposedCost: Double? = null,
-    @SerialName("vehicle_height") val vehicleHeight: Double? = null, // in feet
-    @SerialName("flooring_type") val flooringType: String? = null, // "Wooden", "Steel"
-    @SerialName("tat_required") val tatRequired: Boolean = false,
-    @SerialName("tarpaulin_required") val tarpaulinRequired: Boolean = false,
-    @SerialName("hide_cost") val hideCost: Boolean = false,
-    @SerialName("remarks") val remarks: String? = null,
-)
+    @SerialName("truck_type_id") val truckTypeId: Int,
+    @SerialName("load_weight") val loadWeight: Int,
+    @SerialName("material") val material: String,
+    @SerialName("client_trip_cost") val clientTripCost: Int? = null,
+    @SerialName("negotiated_trip_cost") val negotiatedTripCost: Int? = null,
+    @SerialName("business_proposed_cost") val businessProposedCost: Int? = null,
+    @SerialName("vehicle_height") val vehicleHeight: Float? = null,
+    @SerialName("hide_cost_info") val hideCostInfo: Boolean = true,
+    @SerialName("tat_enabled") val tatEnabled: Boolean = false,
+    @SerialName("tat_hours") val tatHours: Int? = null,
+    @SerialName("tarpauling_required") val tarpaulingRequired: Boolean = false,
+    @SerialName("special_requirements") val remarks: String? = null,
+    @SerialName("flooring_type") val flooringType: String = "steel",
+    @SerialName("locations") val locations: List<Location>,
+) {
+
+    @Serializable
+    data class Location(
+        @SerialName("location_type")  val locationType: String,
+        @SerialName("area_id") val areaId: Int?= null,
+        @SerialName("city_id") val cityId: Int? = null,
+        @SerialName("address") val address: String? = null,
+        @SerialName("contact_person") val contactPerson: String? = null,
+        @SerialName("contact_phone") val contactPhone: String? = null,
+        @SerialName("sequence_order") val sequenceOrder: Int
+    )
+}
+
+

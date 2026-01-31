@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 kotlin {
@@ -31,8 +32,8 @@ android {
 dependencies {
 
     implementation(libs.retrofit.core)
-    implementation(libs.retrofit.gson.convertor)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.retrofit.kotlin.serialization)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

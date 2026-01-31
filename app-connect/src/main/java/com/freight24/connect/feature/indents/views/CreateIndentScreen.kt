@@ -1,5 +1,6 @@
 package com.freight24.connect.feature.indents.views
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -60,6 +61,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.freight24.connect.feature.indents.domain.viewmodel.CreateIndentEvent
+import com.freight24.connect.feature.indents.domain.viewmodel.CreateIndentUiState
+import com.freight24.connect.feature.indents.domain.viewmodel.IndentsViewModel
+import com.freight24.connect.feature.indents.domain.viewmodel.IndentsViewModelImpl
 import com.freight24.connect.navigation.ConnectDestination
 import com.freight24.rest.response.ClientDto
 import com.freight24.rest.response.LocationDto
@@ -80,12 +85,15 @@ fun CreateIndentScreen(
     val createIndentBackStackEntry = remember(navBackStackEntry) {
         navController.getBackStackEntry(ConnectDestination.CreateIndent.route)
     }
-    val viewModel: CreateIndentViewModel = hiltViewModel(createIndentBackStackEntry)
+    val viewModel: IndentsViewModel = hiltViewModel<IndentsViewModelImpl>(
+        createIndentBackStackEntry
+    )
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let {
+            Log.e("CreateIndentScreen", "Error: $it")
             snackbarHostState.showSnackbar(it)
             viewModel.onEvent(CreateIndentEvent.ClearError)
         }
@@ -578,7 +586,7 @@ fun OptionalFieldsSection(
                         OutlinedTextField(
                             value = uiState.flooringType,
                             onValueChange = { onEvent(CreateIndentEvent.UpdateOptionalField(flooringType = it)) },
-                            label = { Text("Steel") },
+                            label = { Text("Flooring Type") },
                             modifier = Modifier.weight(1f),
                         )
                     }
