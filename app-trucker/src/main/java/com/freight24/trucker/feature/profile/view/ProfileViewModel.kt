@@ -35,6 +35,8 @@ internal class ProfileViewModel
         val editableFullName = MutableStateFlow("")
         val editableEmailId = MutableStateFlow("")
         val editablePhoneNo = MutableStateFlow("")
+        val editableAadhaarNumber = MutableStateFlow("")
+        val editablePanNumber = MutableStateFlow("")
         val editableAlternativePhone = MutableStateFlow("")
         val editableBusinessName = MutableStateFlow("")
         val editableGstNumber = MutableStateFlow("")
@@ -78,6 +80,8 @@ internal class ProfileViewModel
             editableFullName.value = profile.fullName.orEmpty()
             editableEmailId.value = profile.emailId.orEmpty()
             editablePhoneNo.value = profile.phoneNo.orEmpty()
+            editableAadhaarNumber.value = profile.aadhaarNumber.orEmpty()
+            editablePanNumber.value = profile.panNumber.orEmpty()
             editableAlternativePhone.value = profile.alternativePhoneNo.firstOrNull().orEmpty()
             editableBusinessName.value = profile.businessName.orEmpty()
             editableGstNumber.value = profile.gstNumber.orEmpty()
@@ -104,6 +108,8 @@ internal class ProfileViewModel
                 editableFullName.value != (original.fullName.orEmpty()) ||
                 editableEmailId.value != (original.emailId.orEmpty()) ||
                 editablePhoneNo.value != (original.phoneNo.orEmpty()) ||
+                editableAadhaarNumber.value != (original.aadhaarNumber.orEmpty()) ||
+                editablePanNumber.value != (original.panNumber.orEmpty()) ||
                 editableAlternativePhone.value != (original.alternativePhoneNo.firstOrNull().orEmpty()) ||
                 editableBusinessName.value != (original.businessName.orEmpty()) ||
                 editableGstNumber.value != (original.gstNumber.orEmpty()) ||
@@ -142,6 +148,8 @@ internal class ProfileViewModel
                         fullName = editableFullName.value,
                         emailId = editableEmailId.value,
                         phoneNo = editablePhoneNo.value,
+                        aadhaarNumber = editableAadhaarNumber.value,
+                        panNumber = editablePanNumber.value,
                         businessName = editableBusinessName.value,
                         gstNumber = editableGstNumber.value,
                         bankAccountDetails =

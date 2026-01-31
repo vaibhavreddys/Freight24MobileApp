@@ -17,8 +17,10 @@ fun ProfileDto.toDomain(): Profile =
         emailId = emailId,
         phoneNo = phoneNo,
         alternativePhoneNo = alternativePhoneNo.orEmpty(),
-        panCard = panCard,
-        aadharCard = aadharCard,
+        // Map both panCard and panNumber to domain's panNumber
+        panNumber = panCard ?: panNumber,
+        // Map both aadharCard and aadhaarNumber to domain's aadhaarNumber
+        aadhaarNumber = aadharCard ?: aadhaarNumber,
         isTdsApplicable = isTdsApplicable ?: false,
         tagCode = tagCode,
         documents = documents?.map { it.toDomain() }.orEmpty(),
@@ -47,7 +49,7 @@ fun ProfileDocumentDto.toDomain(): ProfileDocument =
 private fun String.toDocumentType(): DocumentType =
     when (this.uppercase()) {
         "PAN" -> DocumentType.PAN
-        "AADHAR" -> DocumentType.AADHAR
+        "AADHAAR" -> DocumentType.AADHAAR
         "GST_CERTIFICATE", "GST" -> DocumentType.GST_CERTIFICATE
         "TDS_CERTIFICATE", "TDS" -> DocumentType.TDS_CERTIFICATE
         "CANCELLED_CHEQUE" -> DocumentType.CANCELLED_CHEQUE

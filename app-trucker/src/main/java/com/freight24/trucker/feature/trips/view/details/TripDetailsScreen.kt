@@ -144,7 +144,7 @@ internal fun TripDetailsScreen(
                             .fillMaxWidth()
                             .navigationBarsPadding()
                             .padding(16.dp),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(50.dp)
                     ) {
                         Icon(Icons.Default.Edit, contentDescription = null)
                         Spacer(Modifier.width(8.dp))

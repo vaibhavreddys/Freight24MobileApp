@@ -10,8 +10,8 @@ data class Profile(
     val emailId: String?,
     val phoneNo: String?,
     val alternativePhoneNo: List<String>,
-    val panCard: String?,
-    val aadharCard: String?,
+    val panNumber: String?,
+    val aadhaarNumber: String?,
     val isTdsApplicable: Boolean,
     val tagCode: String?,
     val documents: List<ProfileDocument>,
@@ -37,7 +37,7 @@ data class ProfileDocument(
 
 enum class DocumentType(val displayName: String) {
     PAN("PAN Card"),
-    AADHAR("Aadhar Card"),
+    AADHAAR("Aadhaar Card"),
     GST_CERTIFICATE("GST Certificate"),
     TDS_CERTIFICATE("TDS Certificate"),
     CANCELLED_CHEQUE("Cancelled Cheque"),

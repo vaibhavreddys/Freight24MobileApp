@@ -199,6 +199,16 @@ private fun ProfileMainContent(
                         viewModel.onFieldChanged()
                     },
                 )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
+                ProfileField(
+                    label = "AADHAAR NUMBER",
+                    value = viewModel.editableAadhaarNumber.collectAsState().value,
+                    isEditing = isEditing,
+                    onValueChange = {
+                        viewModel.editableAadhaarNumber.value = it
+                        viewModel.onFieldChanged()
+                    },
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -265,6 +275,16 @@ private fun ProfileMainContent(
                     isEditing = isEditing,
                     onValueChange = {
                         viewModel.editableUpiId.value = it
+                        viewModel.onFieldChanged()
+                    },
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
+                ProfileField(
+                    label = "PAN NUMBER",
+                    value = viewModel.editablePanNumber.collectAsState().value,
+                    isEditing = isEditing,
+                    onValueChange = {
+                        viewModel.editablePanNumber.value = it
                         viewModel.onFieldChanged()
                     },
                 )
@@ -503,7 +523,7 @@ private fun DocumentList(documents: List<ProfileDocument>) {
     val types =
         listOf(
             DocumentType.PAN,
-            DocumentType.AADHAR,
+            DocumentType.AADHAAR,
             DocumentType.GST_CERTIFICATE,
             DocumentType.TDS_CERTIFICATE,
             DocumentType.CANCELLED_CHEQUE,
@@ -660,7 +680,7 @@ private fun ProfileErrorState(
 private fun getDocIcon(type: DocumentType) =
     when (type) {
         DocumentType.PAN -> Icons.Default.CreditCard
-        DocumentType.AADHAR -> Icons.Default.Fingerprint
+        DocumentType.AADHAAR -> Icons.Default.Fingerprint
         DocumentType.GST_CERTIFICATE -> Icons.Default.Description
         DocumentType.TDS_CERTIFICATE -> Icons.Default.Badge
         DocumentType.CANCELLED_CHEQUE -> Icons.Default.AccountBalance
