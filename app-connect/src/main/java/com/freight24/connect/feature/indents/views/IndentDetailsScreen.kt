@@ -27,6 +27,7 @@ fun IndentDetailsScreen(
     indentId: String,
     onBackClick: () -> Unit,
     onEditClick: (String) -> Unit,
+    onCreateTripClick: (String) -> Unit,
     viewModel: IndentDetailsViewModel = hiltViewModel<IndentDetailsViewModelImpl>()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -44,6 +45,64 @@ fun IndentDetailsScreen(
         }
     }
 
+    if (uiState.isAssignDialogVisible) {
+        AlertDialog(
+            onDismissRequest = { viewModel.onEvent(IndentDetailsEvent.HideAssignDialog) },
+            title = { Text("Confirm Assignment") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = uiState.assignClientCost,
+                        onValueChange = { viewModel.onEvent(IndentDetailsEvent.UpdateAssignField(clientCost = it)) },
+                        label = { Text("Client Cost") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = uiState.isNegotiatedSameAsClient,
+                            onCheckedChange = { viewModel.onEvent(IndentDetailsEvent.UpdateAssignField(isNegotiatedSameAsClient = it)) }
+                        )
+                        Text("Negotiated cost same as client cost")
+                    }
+                    OutlinedTextField(
+                        value = uiState.assignNegotiatedCost,
+                        onValueChange = { viewModel.onEvent(IndentDetailsEvent.UpdateAssignField(negotiatedCost = it)) },
+                        label = { Text("Negotiated Cost") },
+                        enabled = !uiState.isNegotiatedSameAsClient,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = uiState.assignNotes,
+                        onValueChange = { viewModel.onEvent(IndentDetailsEvent.UpdateAssignField(notes = it)) },
+                        label = { Text("Notes") },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.onEvent(IndentDetailsEvent.ConfirmAssignment) },
+                    enabled = !uiState.isAssigning
+                ) {
+                    if (uiState.isAssigning) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp).padding(end = 8.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                    }
+                    Text("Confirm")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.onEvent(IndentDetailsEvent.HideAssignDialog) }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -58,7 +117,13 @@ fun IndentDetailsScreen(
         bottomBar = {
             Button(
                 onClick = {
-
+                    uiState.indent?.let { indent ->
+                        if (indent.status.equals("open", true)) {
+                            viewModel.onEvent(IndentDetailsEvent.ShowAssignDialog)
+                        } else if (indent.status.equals("READY_FOR_ASSIGNMENT", true)) {
+                            onCreateTripClick(indentId)
+                        }
+                    }
                 },
                 modifier =
                     Modifier
@@ -66,21 +131,23 @@ fun IndentDetailsScreen(
                         .padding(16.dp),
                 enabled = true,
             ) {
-//                if (uiState.isSubmitting) {
-//                    CircularProgressIndicator(
-//                        modifier = Modifier.size(20.dp).padding(end = 8.dp),
-//                        color = Color.White,
-//                        strokeWidth = 2.dp,
-//                    )
-//                }
-                uiState.indent?.let { indent ->
-                    if(indent.status.equals("open", true)) {
-                        Text("Ready for Assignment")
-                    } else if (indent.status.equals("READY_FOR_ASSIGNMENT", true))  {
-                        Text("Create trip")
+                if (uiState.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp).padding(end = 8.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp,
+                    )
+                } else {
+                    uiState.indent?.let { indent ->
+                        if(indent.status.equals("open", true)) {
+                            Text("Ready for Assignment")
+                        } else if (indent.status.equals("READY_FOR_ASSIGNMENT", true))  {
+                            Text("Create trip")
+                        } else {
+                            Text(indent.status.replace("_", " "))
+                        }
                     }
                 }
-
             }
         }
     ) { paddingValues ->

@@ -8,6 +8,8 @@ import com.freight24.rest.api.IndentsApi
 import com.freight24.rest.api.LocationApi
 import com.freight24.rest.api.LoginConnectApi
 import com.freight24.rest.api.NotificationServiceApi
+import com.freight24.rest.api.TripApi
+import com.freight24.rest.api.TruckApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -51,5 +53,19 @@ object ApiModule {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "ClientApi")
             .create(ClientApi::class.java)
+    }
+
+    @Provides
+    fun providesTruckApi(retrofitFactory: RetrofitFactory): TruckApi {
+        return retrofitFactory
+            .create(BuildConfig.BASE_URL, "TruckApi")
+            .create(TruckApi::class.java)
+    }
+
+    @Provides
+    fun providesTripApi(retrofitFactory: RetrofitFactory): TripApi {
+        return retrofitFactory
+            .create(BuildConfig.BASE_URL, "TripApi")
+            .create(TripApi::class.java)
     }
 }

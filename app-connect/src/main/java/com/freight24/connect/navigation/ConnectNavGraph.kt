@@ -1,7 +1,6 @@
 package com.freight24.connect.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -10,8 +9,10 @@ import com.freight24.connect.feature.indents.views.CreateIndentScreen
 import com.freight24.connect.feature.indents.views.EditIndentScreen
 import com.freight24.connect.feature.indents.views.IndentDetailsScreen
 import com.freight24.connect.feature.indents.views.IndentSuccessScreen
-import com.freight24.connect.feature.indents.views.IndentsScreen
 import com.freight24.connect.feature.indents.views.ReviewIndentScreen
+import com.freight24.connect.feature.trucks.views.AssignTruckScreen
+import com.freight24.connect.feature.trips.views.CreateTripScreen
+import com.freight24.connect.feature.trips.views.TripSuccessScreen
 import com.freight24.connect.feature.indents.views.SearchSelectionScreen
 import com.freight24.connect.feature.indents.views.SearchType
 import com.freight24.connect.feature.login.view.signin.LoginScreen
@@ -155,6 +156,9 @@ fun ConnectNavGraph(
                 },
                 onEditClick = { id ->
                     navHostController.navigate(ConnectDestination.EditIndent.createRoute(id))
+                },
+                onCreateTripClick = { id ->
+                    navHostController.navigate(ConnectDestination.AssignTruck.createRoute(id))
                 }
             )
         }
@@ -170,6 +174,67 @@ fun ConnectNavGraph(
                 onSuccess = {
                     navHostController.previousBackStackEntry?.savedStateHandle?.set("refresh", true)
                     navHostController.popBackStack()
+                }
+            )
+        }
+
+        composable(
+            route = ConnectDestination.AssignTruck.route,
+            arguments = ConnectDestination.AssignTruck.arguments,
+        ) { backStackEntry ->
+            val indentId = backStackEntry.arguments?.getString(ConnectDestination.AssignTruck.INDENT_ID_ARG) ?: ""
+            AssignTruckScreen(
+                onBackClick = { navHostController.popBackStack() },
+                onTruckSelected = { truckId ->
+                   navHostController.navigate(ConnectDestination.CreateTrip.createRoute(indentId, truckId))
+                }
+            )
+        }
+
+        composable(
+            route = ConnectDestination.CreateTrip.route,
+            arguments = ConnectDestination.CreateTrip.arguments,
+        ) { backStackEntry ->
+            val indentId = backStackEntry.arguments?.getString(ConnectDestination.CreateTrip.INDENT_ID_ARG) ?: ""
+            val truckId = backStackEntry.arguments?.getString(ConnectDestination.CreateTrip.TRUCK_ID_ARG) ?: ""
+            CreateTripScreen(
+                indentId = indentId,
+                truckId = truckId,
+                onBackClick = { navHostController.popBackStack() },
+                onTripCreated = { tripId, truckNumber, origin, destination, driverName ->
+                    val route = ConnectDestination.TripSuccess.createRoute(tripId, truckNumber, origin, destination, driverName)
+                    navHostController.navigate(route) {
+                        popUpTo(ConnectDestination.CreateTrip.route) { inclusive = true } // Remove create trip from stack
+                    }
+                }
+            )
+        }
+
+        composable(
+            route = ConnectDestination.TripSuccess.route,
+            arguments = ConnectDestination.TripSuccess.arguments,
+        ) { backStackEntry ->
+            val tripId = backStackEntry.arguments?.getString(ConnectDestination.TripSuccess.TRIP_ID_ARG) ?: ""
+            val truckNumber = backStackEntry.arguments?.getString(ConnectDestination.TripSuccess.TRUCK_NUMBER_ARG) ?: ""
+            val origin = backStackEntry.arguments?.getString(ConnectDestination.TripSuccess.ORIGIN_ARG) ?: ""
+            val destination = backStackEntry.arguments?.getString(ConnectDestination.TripSuccess.DESTINATION_ARG) ?: ""
+            val driverName = backStackEntry.arguments?.getString(ConnectDestination.TripSuccess.DRIVER_NAME_ARG) ?: ""
+
+            TripSuccessScreen(
+                tripId = tripId,
+                truckNumber = truckNumber,
+                origin = origin,
+                destination = destination,
+                driverName = driverName,
+                onGoToTripsClick = {
+                    navHostController.navigate(ConnectDestination.Indents.route) {
+                        popUpTo(ConnectDestination.Indents.route) { inclusive = true }
+                    }
+                },
+                onBackToDashboardClick = {
+                     navHostController.navigate(ConnectDestination.Indents.route) {
+                        popUpTo(ConnectDestination.Indents.route) { inclusive = true }
+                    }
                 }
             )
         }

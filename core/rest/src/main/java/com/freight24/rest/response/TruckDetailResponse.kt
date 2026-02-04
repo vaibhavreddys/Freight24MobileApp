@@ -15,6 +15,7 @@ data class TruckDetailDto(
     val isVerified: Boolean,
     val truckType: String?,
     val bodyType: String?,
+    val displayName: String?,
     val make: String?,
     val model: String?,
     val rcCard: DocumentDto?,

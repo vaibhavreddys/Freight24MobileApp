@@ -35,7 +35,7 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             isDebuggable = true
-            buildConfigField("String", "BASE_URL", "\"http://192.168.1.9:3000/api/v1/\"")
+            buildConfigField("String", "BASE_URL", "\"https://freight24.in/api/v1/\"")
         }
         release {
             isMinifyEnabled = false

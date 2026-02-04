@@ -1,6 +1,7 @@
 package com.freight24.rest.api
 
 import com.freight24.rest.response.AddTruckResponse
+import com.freight24.rest.response.SearchTruckResponse
 import com.freight24.rest.response.TruckDetailResponse
 import com.freight24.rest.response.TruckResponse
 import okhttp3.MultipartBody
@@ -10,6 +11,7 @@ import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface TruckApi {
     @GET("trucks")
@@ -33,4 +35,11 @@ interface TruckApi {
         @Part fc_certificate: MultipartBody.Part?,
         @Part insurance: MultipartBody.Part?,
     ): Response<AddTruckResponse>
+
+    @GET("trucks/search")
+    suspend fun searchTrucks(
+        @Query("q") query: String,
+    ): Response<SearchTruckResponse>
+
+
 }

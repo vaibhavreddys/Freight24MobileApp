@@ -26,6 +26,7 @@ fun TruckDetailDto.toDomain(): TruckDetail {
         isVerified = isVerified,
         truckType = truckType,
         bodyType = bodyType,
+        displayName = displayName,
         make = make,
         model = model,
         rcCard = rcCard?.toDomain(),
