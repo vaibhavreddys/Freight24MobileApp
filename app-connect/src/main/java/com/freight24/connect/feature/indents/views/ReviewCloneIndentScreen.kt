@@ -47,7 +47,9 @@ fun ReviewCloneIndentScreen(
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val cloneIndentBackStackEntry = remember(navBackStackEntry) {
-        navController.getBackStackEntry(ConnectDestination.CloneIndent.route)
+        requireNotNull(navController.previousBackStackEntry) {
+            "CloneIndent back stack entry not found"
+        }
     }
     val viewModel: CloneIndentViewModel = hiltViewModel<CloneIndentViewModelImpl>(
         cloneIndentBackStackEntry
@@ -61,8 +63,6 @@ fun ReviewCloneIndentScreen(
                 navController.navigate(
                     ConnectDestination.IndentSuccess.createRoute(indentId)
                 ) {
-                    // Clear back stack to CloneIndent
-                    popUpTo(ConnectDestination.CloneIndent.route) { inclusive = true }
                     launchSingleTop = true
                 }
                 viewModel.onEvent(CloneIndentEvent.ClearSuccess)

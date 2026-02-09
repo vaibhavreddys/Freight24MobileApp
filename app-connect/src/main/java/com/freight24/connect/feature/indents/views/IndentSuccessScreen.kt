@@ -38,9 +38,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.freight24.connect.feature.indents.domain.viewmodel.CloneIndentViewModel
+import com.freight24.connect.feature.indents.domain.viewmodel.CloneIndentViewModelImpl
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsViewModel
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsViewModelImpl
 import com.freight24.connect.navigation.ConnectDestination
+import com.freight24.connect.enum.ConnectTab
 
 @Composable
 fun IndentSuccessScreen(
@@ -49,27 +52,74 @@ fun IndentSuccessScreen(
     onViewIndentClick: () -> Unit,
     onBackToHomeClick: () -> Unit,
 ) {
-
-    val backStackEntry by navController.currentBackStackEntryAsState()
-    val createIndentBackStackEntry = remember(backStackEntry) {
-        navController.getBackStackEntry(ConnectDestination.CreateIndent.route)
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    
+    // Check for CreateIndent backstack entry
+    val createIndentBackStackEntry = remember(navBackStackEntry) {
+        try {
+            navController.getBackStackEntry(ConnectDestination.CreateIndent.route)
+        } catch (e: Exception) {
+            null
+        }
     }
-    val viewModel: IndentsViewModel = hiltViewModel<IndentsViewModelImpl>(
-            createIndentBackStackEntry
-        )
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
+    // Check for CloneIndent backstack entry
+    val cloneIndentBackStackEntry = remember(navBackStackEntry) {
+        try {
+            navController.getBackStackEntry(ConnectDestination.CloneIndent.route)
+        } catch (e: Exception) {
+            null
+        }
+    }
 
-    IndentSuccessComponent(
-        indentId = uiState.createdIndentId.orEmpty(),
-        weight = uiState.weight,
-        material = uiState.materialName,
-        fromLocation = uiState.selectedFromLocation?.name ?: "",
-        toLocation = uiState.selectedToLocation?.name ?: "",
-        truckType = uiState.selectedTruckType?.displayName ?: "",
-        onViewIndentClick = onViewIndentClick,
-        onBackToHomeClick = onBackToHomeClick
-    )
+    when {
+        createIndentBackStackEntry != null -> {
+            val viewModel: IndentsViewModel = hiltViewModel<IndentsViewModelImpl>(createIndentBackStackEntry)
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            IndentSuccessComponent(
+                indentId = uiState.createdIndentId ?: indentId,
+                weight = uiState.weight,
+                material = uiState.materialName,
+                fromLocation = uiState.selectedFromLocation?.name ?: "",
+                toLocation = uiState.selectedToLocation?.name ?: "",
+                truckType = uiState.selectedTruckType?.displayName ?: "",
+                onViewIndentClick = onViewIndentClick,
+                onBackToHomeClick = onBackToHomeClick
+            )
+        }
+        cloneIndentBackStackEntry != null -> {
+            val viewModel: CloneIndentViewModel = hiltViewModel<CloneIndentViewModelImpl>(cloneIndentBackStackEntry)
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            val indent = uiState.indent
+            val groupDetails = indent?.indentGroupDetails
+            val loadingLocation = groupDetails?.indentLocations?.find { it.locationType == "loading" }
+            val unloadingLocation = groupDetails?.indentLocations?.find { it.locationType == "unloading" }
+            
+            IndentSuccessComponent(
+                indentId = uiState.createdIndentId ?: indentId,
+                weight = groupDetails?.loadWeight?.toString() ?: "",
+                material = groupDetails?.material ?: "",
+                fromLocation = loadingLocation?.areaName ?: loadingLocation?.cityName ?: "",
+                toLocation = unloadingLocation?.areaName ?: unloadingLocation?.cityName ?: "",
+                truckType = groupDetails?.truckType?.displayName ?: "",
+                onViewIndentClick = onViewIndentClick,
+                onBackToHomeClick = onBackToHomeClick
+            )
+        }
+        else -> {
+            // Fallback if no VM is found, just show the ID
+            IndentSuccessComponent(
+                indentId = indentId,
+                weight = "--",
+                material = "--",
+                fromLocation = "--",
+                toLocation = "--",
+                truckType = "--",
+                onViewIndentClick = onViewIndentClick,
+                onBackToHomeClick = onBackToHomeClick
+            )
+        }
+    }
 }
 
 @Composable

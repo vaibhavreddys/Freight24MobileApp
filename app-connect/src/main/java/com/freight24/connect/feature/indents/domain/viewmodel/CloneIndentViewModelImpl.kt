@@ -117,7 +117,7 @@ class CloneIndentViewModelImpl @Inject constructor(
                     it.copy(
                         isSubmitting = false,
                         successMessage = "Indent cloned successfully",
-                        createdIndentId = createdIndent?.id
+                        createdIndentId = createdIndent?.indentCode
                     )
                 }
             } else {
