@@ -1,5 +1,6 @@
 package com.freight24.connect.di
 
+import android.util.Log
 import com.freight24.connect.BuildConfig
 import com.freight24.network.RetrofitFactory
 import com.freight24.network.di.DefaultNetwork
@@ -22,6 +23,7 @@ object ApiModule {
     fun providesLoginConnectApi(
         @DefaultNetwork retrofitFactory: RetrofitFactory,
     ): LoginConnectApi {
+        Log.d("ApiModule", BuildConfig.BASE_URL)
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "ConnectLoginService")
             .create(LoginConnectApi::class.java)

@@ -35,7 +35,7 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             isDebuggable = true
-            buildConfigField("String", "BASE_URL", "\"https://freight24.in/api/v1/\"")
+            //buildConfigField("String", "BASE_URL", "\"https://192.168.1.195:3000/api/v1/\"")
         }
         release {
             isMinifyEnabled = false
@@ -43,7 +43,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            buildConfigField("String", "BASE_URL", "\"https://freight24.in/api/v1/\"")
+            //buildConfigField("String", "BASE_URL", "\"https://backendapi-qhpo.onrender.com/api/v1/\"")
         }
     }
 
@@ -56,7 +56,7 @@ android {
             buildConfigField(
                 "String",
                 "BASE_URL",
-                "\"https://qa.api.freight24.com\"",
+                "\"http://192.168.1.195:3000/api/v1/\"",
             )
         }
 

@@ -1,9 +1,11 @@
 package com.freight24.rest.api
 
+import com.freight24.rest.request.CloneIndentRequest
 import com.freight24.rest.request.CreateIndentRequest
 import com.freight24.rest.request.UpdateIndentRequest
 import com.freight24.rest.response.GetIndentsResponse
 import com.freight24.rest.response.IndentResponse
+import com.freight24.rest.response.IndentsListResponse
 import com.freight24.rest.response.LoadBoardResponse
 import com.freight24.rest.response.PaginatedLoadBoardResponse
 import com.freight24.rest.response.TruckTypeResponse
@@ -49,5 +51,17 @@ interface IndentsApi {
     suspend fun updateIndent(
         @Path("id") id: String,
         @Body request: UpdateIndentRequest,
+    ): Response<IndentResponse>
+
+    @GET("indents/groups")
+    suspend fun getAllIndents(
+        @Query("page") page: Int,
+        @Query("limit") limit: Int,
+    ): Response<GetIndentsResponse>
+
+    @POST("indents/groups/{groupId}/clone")
+    suspend fun cloneIndent(
+        @Path("groupId") indentGroupId: String,
+        @Body request: CloneIndentRequest,
     ): Response<IndentResponse>
 }

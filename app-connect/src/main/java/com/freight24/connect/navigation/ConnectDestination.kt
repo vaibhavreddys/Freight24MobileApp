@@ -9,9 +9,22 @@ sealed class ConnectDestination(val route: String) {
 
     data object Login : ConnectDestination("login")
 
-    data object Home : ConnectDestination("home")
+    data object Home : ConnectDestination("home?tab={tab}") {
+        const val TAB_ARG = "tab"
+        override val arguments = listOf(
+            navArgument(TAB_ARG) {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            }
+        )
+        
+        fun createRoute(tab: String? = null): String {
+            return if (tab != null) "home?tab=$tab" else "home"
+        }
+    }
 
-    data object CreateIndent : ConnectDestination("createTrip")
+    data object CreateIndent : ConnectDestination("create_indent")
 
     data object VerifyOtp : ConnectDestination("verifyOtp/{phone}") {
         const val PHONE_ARG = "phone"
@@ -74,6 +87,18 @@ sealed class ConnectDestination(val route: String) {
         fun createRoute(indentId: String) = "edit_indent/$indentId"
     }
 
+    data object CloneIndent : ConnectDestination("clone_indent/{indentId}/{indentGroupId}") {
+        const val INDENT_ID_ARG = "indentId"
+        const val INDENT_GROUP_ID_ARG = "indentGroupId"
+        override val arguments = listOf(
+            navArgument(INDENT_ID_ARG) { type = NavType.StringType },
+            navArgument(INDENT_GROUP_ID_ARG) { type = NavType.StringType }
+        )
+        fun createRoute(indentId: String, indentGroupId: String) = "clone_indent/$indentId/$indentGroupId"
+    }
+
+    data object ReviewCloneIndent : ConnectDestination("review_clone_indent")
+
     data object AssignTruck : ConnectDestination("assign_truck/{indentId}") {
         const val INDENT_ID_ARG = "indentId"
         override val arguments = listOf(
@@ -93,20 +118,22 @@ sealed class ConnectDestination(val route: String) {
     }
 
     data object TripSuccess : ConnectDestination(
-        "trip_success/{tripId}?truckNumber={truckNumber}&origin={origin}&destination={destination}&driverName={driverName}"
+        "trip_success/{tripId}?truckNumber={truckNumber}&origin={origin}&destination={destination}&driverName={driverName}&driverPhone={driverPhone}"
     ) {
         const val TRIP_ID_ARG = "tripId"
         const val TRUCK_NUMBER_ARG = "truckNumber"
         const val ORIGIN_ARG = "origin"
         const val DESTINATION_ARG = "destination"
         const val DRIVER_NAME_ARG = "driverName"
+        const val DRIVER_PHONE_ARG = "driverPhone"
 
         override val arguments = listOf(
             navArgument(TRIP_ID_ARG) { type = NavType.StringType },
             navArgument(TRUCK_NUMBER_ARG) { type = NavType.StringType },
             navArgument(ORIGIN_ARG) { type = NavType.StringType },
             navArgument(DESTINATION_ARG) { type = NavType.StringType },
-            navArgument(DRIVER_NAME_ARG) { type = NavType.StringType }
+            navArgument(DRIVER_NAME_ARG) { type = NavType.StringType },
+            navArgument(DRIVER_PHONE_ARG) { type = NavType.StringType }
         )
 
         fun createRoute(
@@ -114,9 +141,10 @@ sealed class ConnectDestination(val route: String) {
             truckNumber: String,
             origin: String,
             destination: String,
-            driverName: String
+            driverName: String,
+            driverPhone: String
         ): String {
-            return "trip_success/$tripId?truckNumber=$truckNumber&origin=$origin&destination=$destination&driverName=$driverName"
+            return "trip_success/$tripId?truckNumber=$truckNumber&origin=$origin&destination=$destination&driverName=$driverName&driverPhone=$driverPhone"
         }
     }
 }

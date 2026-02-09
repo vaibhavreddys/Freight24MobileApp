@@ -9,7 +9,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Route
@@ -17,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -37,10 +37,18 @@ internal fun CreateTripScreen(
     indentId: String,
     truckId: String,
     onBackClick: () -> Unit,
-    onTripCreated: (String, String, String, String, String) -> Unit, // tripId, truckNumber, origin, destination, driverName
+    onTripCreated: (String, String, String, String, String, String) -> Unit,
     viewModel: CreateTripViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(uiState.snackbarMessage) {
+        uiState.snackbarMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.onEvent(CreateTripEvent.ClearSnackbar)
+        }
+    }
 
     LaunchedEffect(indentId, truckId) {
         viewModel.onEvent(CreateTripEvent.LoadData(indentId, truckId))
@@ -53,11 +61,12 @@ internal fun CreateTripScreen(
             val groupDetails = uiState.indent?.indentGroupDetails
             val loadingLocation = groupDetails?.indentLocations?.find { it.locationType == "loading" }
             val unloadingLocation = groupDetails?.indentLocations?.find { it.locationType == "unloading" }
-            val origin = loadingLocation?.cityName ?: ""
-            val destination = unloadingLocation?.cityName ?: ""
+            val origin = loadingLocation?.areaName ?: loadingLocation?.cityName ?: ""
+            val destination = unloadingLocation?.areaName ?: unloadingLocation?.cityName ?: ""
+            val driverPhone = uiState.driverPhone
             val driverName = uiState.driverName
 
-            onTripCreated(trip.id, truckNumber, origin, destination, driverName)
+            onTripCreated(trip.tripCode, truckNumber, origin, destination, driverName, driverPhone)
         }
     }
 
@@ -73,6 +82,7 @@ internal fun CreateTripScreen(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             Button(
                 onClick = { viewModel.onEvent(CreateTripEvent.CreateTrip) },
@@ -140,7 +150,7 @@ internal fun CreateTripScreen(
 }
 
 @Composable
-fun IndentInfoCard(uiState: com.freight24.connect.feature.trips.domain.viewmodel.CreateTripUiState) {
+fun IndentInfoCard(uiState: CreateTripUiState) {
     Card(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -212,7 +222,7 @@ fun IndentInfoCard(uiState: com.freight24.connect.feature.trips.domain.viewmodel
                             fontSize = 10.sp
                         )
                         Text(
-                            loadingLocation?.cityName ?: "Unknown",
+                            loadingLocation?.areaName ?: loadingLocation?.cityName ?: "Unknown",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -226,7 +236,7 @@ fun IndentInfoCard(uiState: com.freight24.connect.feature.trips.domain.viewmodel
                             fontSize = 10.sp
                         )
                         Text(
-                            unloadingLocation?.cityName ?: "Unknown",
+                            unloadingLocation?.areaName ?: unloadingLocation?.cityName ?: "Unknown",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -276,7 +286,7 @@ fun IndentInfoCard(uiState: com.freight24.connect.feature.trips.domain.viewmodel
 }
 
 @Composable
-fun SelectedTruckCard(uiState: com.freight24.connect.feature.trips.domain.viewmodel.CreateTripUiState) {
+fun SelectedTruckCard(uiState: CreateTripUiState) {
     Card(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -345,6 +355,26 @@ internal fun DriverDetailsCard(
             }
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Driver Phone
+            Text("Driver Phone", style = MaterialTheme.typography.labelMedium, color = Color.Gray, fontWeight = FontWeight.SemiBold)
+            Spacer(modifier = Modifier.height(4.dp))
+            OutlinedTextField(
+                value = uiState.driverPhone,
+                onValueChange = { viewModel.onEvent(CreateTripEvent.UpdateDriverPhone(it)) },
+                placeholder = { Text("Enter phone number", color = Color.LightGray) },
+                leadingIcon = { Icon(Icons.Default.Call, contentDescription = null, tint = Color.Gray) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedContainerColor = Color(0xFFF9F9F9),
+                    focusedContainerColor = Color.White,
+                    unfocusedBorderColor = Color(0xFFEEEEEE)
+                ),
+                shape = RoundedCornerShape(8.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // Driver Name
             Text("Driver Name", style = MaterialTheme.typography.labelMedium, color = Color.Gray, fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(4.dp))
@@ -363,25 +393,7 @@ internal fun DriverDetailsCard(
                 shape = RoundedCornerShape(8.dp)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
 
-            // Driver Phone
-            Text("Driver Phone", style = MaterialTheme.typography.labelMedium, color = Color.Gray, fontWeight = FontWeight.SemiBold)
-            Spacer(modifier = Modifier.height(4.dp))
-            OutlinedTextField(
-                value = uiState.driverPhone,
-                onValueChange = { viewModel.onEvent(CreateTripEvent.UpdateDriverPhone(it)) },
-                placeholder = { Text("Enter phone number", color = Color.LightGray) },
-                leadingIcon = { Icon(Icons.Default.Call, contentDescription = null, tint = Color.Gray) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedContainerColor = Color(0xFFF9F9F9),
-                    focusedContainerColor = Color.White,
-                    unfocusedBorderColor = Color(0xFFEEEEEE)
-                ),
-                shape = RoundedCornerShape(8.dp)
-            )
         }
     }
 }

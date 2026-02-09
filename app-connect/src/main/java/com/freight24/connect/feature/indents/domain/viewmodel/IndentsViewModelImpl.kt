@@ -1,6 +1,5 @@
 package com.freight24.connect.feature.indents.domain.viewmodel
 
-import androidx.compose.ui.text.toLowerCase
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.freight24.connect.feature.indents.domain.usecases.CreateIndentUseCase
@@ -245,7 +244,7 @@ class IndentsViewModelImpl
                         it.copy(
                             isSubmitting = false, 
                             successMessage = "Indent Created Successfully",
-                            createdIndentId = indentResponse?.data?.id.orEmpty()
+                            createdIndentId = indentResponse?.data?.indentCode.orEmpty()
                         ) 
                     }
                 } else {

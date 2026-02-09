@@ -11,12 +11,15 @@ data class IndentResponse(
     @Serializable
     data class Indent(
         val id: String,
+        val indentCode: String?,
         val assignedTo: String?,
         val assignedAt: String?,
         val status: String,
         val createdAt: String,
         val negotiatedTripCost: Double?,
         val hideCostInfo: Boolean,
+        val fleetExecutive: FleetExecutive? = null,
+        val indentOwnership: String ?= null,
         val indentGroupDetails: IndentGroupDetails
     )
 
@@ -74,6 +77,13 @@ data class IndentResponse(
         val locationType: String,
         val contactPerson: String?,
         val sequenceOrder: Int
+    )
+
+    @Serializable
+    data class FleetExecutive(
+        val id: String,
+        val name: String,
+        val phone: String,
     )
 
 }

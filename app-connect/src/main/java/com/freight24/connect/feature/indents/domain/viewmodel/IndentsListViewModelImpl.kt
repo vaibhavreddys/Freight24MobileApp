@@ -2,6 +2,8 @@ package com.freight24.connect.feature.indents.domain.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.freight24.connect.feature.indents.domain.usecases.GetAllIndentsUseCase
+import com.freight24.connect.feature.indents.domain.usecases.GetAllIndentsUseCaseParams
 import com.freight24.connect.feature.indents.domain.usecases.GetMyIndentsUseCase
 import com.freight24.connect.feature.indents.domain.usecases.GetMyIndentsUseCaseParams
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,7 +16,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class IndentsListViewModelImpl @Inject constructor(
-    private val getMyIndentsUseCase: GetMyIndentsUseCase
+    private val getMyIndentsUseCase: GetMyIndentsUseCase,
+    private val getAllIndentsUseCase: GetAllIndentsUseCase
 ) : ViewModel(), IndentsListViewModel {
 
     private val _uiState = MutableStateFlow(IndentsListUiState())
@@ -43,13 +46,21 @@ class IndentsListViewModelImpl @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
-            val result = getMyIndentsUseCase.invoke(
-                GetMyIndentsUseCaseParams(
-                    status = "OPEN",
-                    page = 1,
-                    limit = 50
+            val result = when (_uiState.value.selectedTab) {
+                IndentTab.MINE -> getMyIndentsUseCase.invoke(
+                    GetMyIndentsUseCaseParams(
+                        status = "OPEN",
+                        page = 1,
+                        limit = 50
+                    )
                 )
-            )
+                IndentTab.ALL -> getAllIndentsUseCase.invoke(
+                    GetAllIndentsUseCaseParams(
+                        page = 1,
+                        limit = 50
+                    )
+                )
+            }
 
             if (result.isSuccess) {
                 val response = result.getOrNull()

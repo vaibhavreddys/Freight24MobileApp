@@ -7,6 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,9 +28,15 @@ import com.freight24.ui.components.FreightBottomNavScaffold
 @Composable
 fun HomeScreen(
     onCreateIndentClick: () -> Unit,
-    onIndentClick: (String) -> Unit
+    onIndentClick: (String) -> Unit,
+    onCloneClick: (String, String) -> Unit,
+    startTab: ConnectTab? = null
 ) {
-    var selectedTab by rememberSaveable { mutableStateOf(ConnectTab.Home) }
+    var selectedTab by rememberSaveable { mutableStateOf(startTab ?: ConnectTab.Home) }
+    
+    LaunchedEffect(startTab) {
+        startTab?.let { selectedTab = it }
+    }
 
     FreightBottomNavScaffold(
         items = ConnectTab.entries,
@@ -67,6 +74,9 @@ fun HomeScreen(
                 ConnectTab.Indents -> IndentsScreen(
                     onIndentClick = { indentId ->
                         onIndentClick(indentId)
+                    },
+                    onCloneClick = { indentId, indentGroupId ->
+                        onCloneClick(indentId, indentGroupId)
                     },
                     modifier = Modifier.padding(paddingValues)
                 )

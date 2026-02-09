@@ -61,6 +61,7 @@ fun IndentSuccessScreen(
 
 
     IndentSuccessComponent(
+        indentId = uiState.createdIndentId.orEmpty(),
         weight = uiState.weight,
         material = uiState.materialName,
         fromLocation = uiState.selectedFromLocation?.name ?: "",
@@ -73,6 +74,7 @@ fun IndentSuccessScreen(
 
 @Composable
 fun IndentSuccessComponent(
+    indentId: String,
     weight: String,
     material: String,
     fromLocation: String,
@@ -161,6 +163,13 @@ fun IndentSuccessComponent(
                     .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+
+                // Indent Id
+                DetailRow(
+                    label = "Indent Id",
+                    value = "#$indentId",
+                    valueColor = Color(0xFF1a1a1a)
+                )
 
                 // Route
                 DetailRow(
@@ -289,6 +298,7 @@ private fun DetailRow(
 @Composable
 fun IndentSuccessComponentPreview() {
     IndentSuccessComponent(
+        indentId = "IND-002328",
         weight = "17",
         material = "Cotton",
         fromLocation = "Mumbai",

@@ -4,11 +4,14 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.freight24.connect.enum.ConnectTab
 import com.freight24.connect.feature.home.HomeScreen
+import com.freight24.connect.feature.indents.views.CloneIndentScreen
 import com.freight24.connect.feature.indents.views.CreateIndentScreen
 import com.freight24.connect.feature.indents.views.EditIndentScreen
 import com.freight24.connect.feature.indents.views.IndentDetailsScreen
 import com.freight24.connect.feature.indents.views.IndentSuccessScreen
+import com.freight24.connect.feature.indents.views.ReviewCloneIndentScreen
 import com.freight24.connect.feature.indents.views.ReviewIndentScreen
 import com.freight24.connect.feature.trucks.views.AssignTruckScreen
 import com.freight24.connect.feature.trips.views.CreateTripScreen
@@ -60,14 +63,26 @@ fun ConnectNavGraph(
             )
         }
 
-        composable(ConnectDestination.Home.route) {
+        composable(
+            route = ConnectDestination.Home.route,
+            arguments = ConnectDestination.Home.arguments
+        ) { backStackEntry ->
+            val tabString = backStackEntry.arguments?.getString(ConnectDestination.Home.TAB_ARG)
+            val startTab = tabString?.let { tabId ->
+                ConnectTab.entries.find { it.id == tabId }
+            }
+            
             HomeScreen(
                 onCreateIndentClick = {
                     navHostController.navigate(ConnectDestination.CreateIndent.route)
                 },
                 onIndentClick = { indentId ->
                     navHostController.navigate(ConnectDestination.IndentDetails.createRoute(indentId))
-                }
+                },
+                onCloneClick = { indentId, indentGroupId ->
+                    navHostController.navigate(ConnectDestination.CloneIndent.createRoute(indentId, indentGroupId))
+                },
+                startTab = startTab
             )
         }
 
@@ -132,12 +147,12 @@ fun ConnectNavGraph(
                 indentId = indentId,
                 onViewIndentClick = {
                     navHostController.navigate(ConnectDestination.Home.route) {
-                        popUpTo(ConnectDestination.CreateIndent.route) { inclusive = true }
+                         launchSingleTop = true
                     }
                 },
                 onBackToHomeClick = {
                     navHostController.navigate(ConnectDestination.Home.route) {
-                        popUpTo(ConnectDestination.CreateIndent.route) { inclusive = true }
+                        launchSingleTop = true
                     }
                 }
             )
@@ -179,6 +194,34 @@ fun ConnectNavGraph(
         }
 
         composable(
+            route = ConnectDestination.CloneIndent.route,
+            arguments = ConnectDestination.CloneIndent.arguments,
+        ) { backStackEntry ->
+            val indentId = backStackEntry.arguments?.getString(ConnectDestination.CloneIndent.INDENT_ID_ARG) ?: ""
+            val indentGroupId = backStackEntry.arguments?.getString(ConnectDestination.CloneIndent.INDENT_GROUP_ID_ARG) ?: ""
+            CloneIndentScreen(
+                indentId = indentId,
+                indentGroupId = indentGroupId,
+                onBackClick = { navHostController.popBackStack() },
+                onReviewClick = {
+                    navHostController.navigate(ConnectDestination.ReviewCloneIndent.route)
+                }
+            )
+        }
+
+        composable(ConnectDestination.ReviewCloneIndent.route) {
+            ReviewCloneIndentScreen(
+                onBackClick = {
+                    navHostController.popBackStack()
+                },
+                onEditClick = {
+                    navHostController.popBackStack()
+                },
+                navController = navHostController,
+            )
+        }
+
+        composable(
             route = ConnectDestination.AssignTruck.route,
             arguments = ConnectDestination.AssignTruck.arguments,
         ) { backStackEntry ->
@@ -201,8 +244,8 @@ fun ConnectNavGraph(
                 indentId = indentId,
                 truckId = truckId,
                 onBackClick = { navHostController.popBackStack() },
-                onTripCreated = { tripId, truckNumber, origin, destination, driverName ->
-                    val route = ConnectDestination.TripSuccess.createRoute(tripId, truckNumber, origin, destination, driverName)
+                onTripCreated = { tripId, truckNumber, origin, destination, driverName, driverPhone ->
+                    val route = ConnectDestination.TripSuccess.createRoute(tripId, truckNumber, origin, destination, driverName, driverPhone)
                     navHostController.navigate(route) {
                         popUpTo(ConnectDestination.CreateTrip.route) { inclusive = true } // Remove create trip from stack
                     }
@@ -214,11 +257,13 @@ fun ConnectNavGraph(
             route = ConnectDestination.TripSuccess.route,
             arguments = ConnectDestination.TripSuccess.arguments,
         ) { backStackEntry ->
+
             val tripId = backStackEntry.arguments?.getString(ConnectDestination.TripSuccess.TRIP_ID_ARG) ?: ""
             val truckNumber = backStackEntry.arguments?.getString(ConnectDestination.TripSuccess.TRUCK_NUMBER_ARG) ?: ""
             val origin = backStackEntry.arguments?.getString(ConnectDestination.TripSuccess.ORIGIN_ARG) ?: ""
             val destination = backStackEntry.arguments?.getString(ConnectDestination.TripSuccess.DESTINATION_ARG) ?: ""
             val driverName = backStackEntry.arguments?.getString(ConnectDestination.TripSuccess.DRIVER_NAME_ARG) ?: ""
+            val driverPhone = backStackEntry.arguments?.getString(ConnectDestination.TripSuccess.DRIVER_PHONE_ARG) ?: ""
 
             TripSuccessScreen(
                 tripId = tripId,
@@ -226,14 +271,15 @@ fun ConnectNavGraph(
                 origin = origin,
                 destination = destination,
                 driverName = driverName,
+                driverPhone = driverPhone,
                 onGoToTripsClick = {
-                    navHostController.navigate(ConnectDestination.Indents.route) {
-                        popUpTo(ConnectDestination.Indents.route) { inclusive = true }
+                    navHostController.navigate(ConnectDestination.Home.createRoute("trips")) {
+                        popUpTo(ConnectDestination.Home.route) { inclusive = true }
                     }
                 },
                 onBackToDashboardClick = {
-                     navHostController.navigate(ConnectDestination.Indents.route) {
-                        popUpTo(ConnectDestination.Indents.route) { inclusive = true }
+                    navHostController.navigate(ConnectDestination.Home.createRoute("home")) {
+                        popUpTo(ConnectDestination.Home.route) { inclusive = true }
                     }
                 }
             )

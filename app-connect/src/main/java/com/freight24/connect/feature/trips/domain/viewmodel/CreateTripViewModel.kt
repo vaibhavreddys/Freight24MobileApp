@@ -29,7 +29,8 @@ data class CreateTripUiState(
     val driverName: String = "",
     val driverPhone: String = "",
     val expectedLoadingDate: String = "", // UI only for now as API doesn't support it
-    val createdTrip: CreatedTripResponse.TripData? = null
+    val createdTrip: CreatedTripResponse.TripData? = null,
+    val snackbarMessage: String? = null
 )
 
 sealed class CreateTripEvent {
@@ -39,6 +40,7 @@ sealed class CreateTripEvent {
     data class UpdateExpectedLoadingDate(val date: String) : CreateTripEvent()
     object CreateTrip : CreateTripEvent()
     object ClearError : CreateTripEvent()
+    object ClearSnackbar : CreateTripEvent()
 }
 
 @HiltViewModel
@@ -82,6 +84,9 @@ internal class CreateTripViewModel @Inject constructor(
             is CreateTripEvent.ClearError -> {
                 _uiState.update { it.copy(errorMessage = null) }
             }
+            is CreateTripEvent.ClearSnackbar -> {
+                _uiState.update { it.copy(snackbarMessage = null) }
+            }
         }
     }
 
@@ -110,6 +115,11 @@ internal class CreateTripViewModel @Inject constructor(
         val iId = indentId ?: return
         val tId = truckId ?: return
         val state = _uiState.value
+
+        if (state.driverPhone.isEmpty()) {
+            _uiState.update { it.copy(snackbarMessage = "Please update driver phone number") }
+            return
+        }
 
         viewModelScope.launch {
             _uiState.update { it.copy(isCreating = true, errorMessage = null) }

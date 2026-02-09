@@ -2,8 +2,12 @@ package com.freight24.connect.feature.indents.di
 
 import com.freight24.connect.feature.indents.domain.usecases.AssignIndentUseCase
 import com.freight24.connect.feature.indents.domain.usecases.AssignIndentUseCaseImpl
+import com.freight24.connect.feature.indents.domain.usecases.CloneIndentUseCase
+import com.freight24.connect.feature.indents.domain.usecases.CloneIndentUseCaseImpl
 import com.freight24.connect.feature.indents.domain.usecases.CreateIndentUseCase
 import com.freight24.connect.feature.indents.domain.usecases.CreateIndentUseCaseImpl
+import com.freight24.connect.feature.indents.domain.usecases.GetAllIndentsUseCase
+import com.freight24.connect.feature.indents.domain.usecases.GetAllIndentsUseCaseImpl
 import com.freight24.connect.feature.indents.domain.usecases.GetClientsUseCase
 import com.freight24.connect.feature.indents.domain.usecases.GetClientsUseCaseImpl
 import com.freight24.connect.feature.indents.domain.usecases.GetIndentByIdUseCase
@@ -47,4 +51,10 @@ abstract class IndentsDomainModule {
 
     @Binds
     abstract fun bindUpdateIndentUseCase(useCaseImpl: UpdateIndentUseCaseImpl): UpdateIndentUseCase
+
+    @Binds
+    abstract fun bindGetAllIndentsUseCase(useCaseImpl: GetAllIndentsUseCaseImpl): GetAllIndentsUseCase
+
+    @Binds
+    abstract fun bindClonedIndentUseCase(useCaseImpl: CloneIndentUseCaseImpl): CloneIndentUseCase
 }

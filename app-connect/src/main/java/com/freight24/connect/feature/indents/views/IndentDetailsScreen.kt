@@ -105,13 +105,19 @@ fun IndentDetailsScreen(
 
     Scaffold(
         topBar = {
+            // Custom Top Bar to debug navigation issues
             TopAppBar(
                 title = { Text("Indent Details") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.Black
+                        )
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
             )
         },
         bottomBar = {
@@ -188,6 +194,7 @@ fun IndentDetailsScreen(
                         GeneralInfoSection(
                             clientName = groupDetails.clientProfile?.companyName ?: groupDetails.clientProfile?.fullName ?: "Unknown",
                             tagCode = groupDetails.clientProfile?.tagCode.orEmpty(), // tagCode not available in IndentResponse
+                            indentId = indent.indentCode,
                             onEditClick = null
                         )
 

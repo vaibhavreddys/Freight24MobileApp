@@ -133,6 +133,7 @@ fun IndentDetailItemColumn(
 fun GeneralInfoSection(
     clientName: String,
     tagCode: String?,
+    indentId: String? = null,
     onEditClick: (() -> Unit)? = null
 ) {
     IndentDetailSection(
@@ -140,7 +141,11 @@ fun GeneralInfoSection(
         title = "GENERAL INFO",
         onEditClick = onEditClick,
     ) {
-        IndentDetailItem(label = "INDENT TYPE", value = "New Indent")
+        if(indentId == null) {
+            IndentDetailItem(label = "INDENT TYPE", value = "New Indent")
+        } else {
+            IndentDetailItem(label = "INDENT ID", value = "#${indentId}")
+        }
 
         Spacer(modifier = Modifier.size(8.dp))
 

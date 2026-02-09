@@ -15,13 +15,25 @@ data class CreatedTripResponse(
 
     @Serializable
     data class Trip(
-        @SerialName("id") val id: String,
-        @SerialName("indent_id") val indentId: String,
-        @SerialName("truck_id") val truckId: String,
-        @SerialName("status") val status: String,
-        @SerialName("client_trip_cost") val clientTripCost: String,
-        @SerialName("trucker_trip_cost") val truckerTripCost: String,
-        @SerialName("advance_amount") val advanceAmount: String,
+        val id: String,
+        val indentId: String,
+        val tripCode: String,
+        val status: String,
+        val clientTripCost: String,
+        val truckerTripCost: String,
+        val tripLocations: List<Location>,
+    )
+
+    @Serializable
+    data class Location(
+        val id: String,
+        val address: String?,
+        val areaId: String?,
+        val areaName: String?,
+        val cityId: String?,
+        val cityName: String?,
+        val locationType: String,
+        val sequenceOrder: Int?,
     )
 }
 

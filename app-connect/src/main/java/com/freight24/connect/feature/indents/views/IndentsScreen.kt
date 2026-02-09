@@ -42,6 +42,7 @@ import com.freight24.rest.response.IndentResponse
 @Composable
 fun IndentsScreen(
     onIndentClick: (String) -> Unit = {},
+    onCloneClick: (String, String) -> Unit = { s1, s2 -> },
     modifier: Modifier = Modifier
 ) {
     val viewModel: IndentsListViewModel = hiltViewModel<IndentsListViewModelImpl>()
@@ -51,6 +52,7 @@ fun IndentsScreen(
         uiState = uiState,
         onEvent = viewModel::onEvent,
         onIndentClick = onIndentClick,
+        onCloneClick = onCloneClick,
         modifier = modifier,
     )
 
@@ -61,6 +63,7 @@ fun IndentsContent(
     uiState: IndentsListUiState,
     onEvent: (IndentsListEvent) -> Unit,
     onIndentClick: (String) -> Unit,
+    onCloneClick: (String, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -85,7 +88,9 @@ fun IndentsContent(
         } else {
             IndentsList(
                 indents = uiState.indents,
+                selectedTab = uiState.selectedTab,
                 onIndentClick = onIndentClick,
+                onCloneClick = onCloneClick,
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -150,7 +155,9 @@ fun TabButton(
 @Composable
 fun IndentsList(
     indents: List<IndentResponse.Indent>,
+    selectedTab: IndentTab,
     onIndentClick: (String) -> Unit,
+    onCloneClick: (String, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -158,10 +165,17 @@ fun IndentsList(
         contentPadding = PaddingValues(bottom = 80.dp) // Space for FAB
     ) {
         items(indents) { indent ->
-            IndentCard(
-                indent = indent,
-                onClick = { onIndentClick(indent.id) }
-            )
+            when (selectedTab) {
+                IndentTab.MINE -> IndentCard(
+                    indent = indent,
+                    onClick = { onIndentClick(indent.id) }
+                )
+                IndentTab.ALL -> AllIndentCard(
+                    indent = indent,
+                    onClick = { onIndentClick(indent.id) },
+                    onCloneClick = { onCloneClick(indent.id, indent.indentGroupDetails.id) }
+                )
+            }
         }
     }
 }
@@ -339,6 +353,203 @@ fun IndentCard(
         }
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AllIndentCard(
+    indent: IndentResponse.Indent,
+    onClick: () -> Unit,
+    onCloneClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val loadingLocation = indent.indentGroupDetails.indentLocations.find { it.locationType == "loading" }
+    val unloadingLocation = indent.indentGroupDetails.indentLocations.find { it.locationType == "unloading" }
+    val clientProfile = indent.indentGroupDetails.clientProfile
+    val fleetExecutive = indent.fleetExecutive
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp)
+        ) {
+            // Row 1: Company Name, ID & Time
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Outlined.LocalShipping,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = Color(0xFF22C55E)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            text = clientProfile?.companyName ?: clientProfile?.fullName ?: "Unknown Company",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            )
+                        )
+                        Text(
+                            text = indent.indentCode.orEmpty(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.Gray,
+                            fontSize = 11.sp
+                        )
+                    }
+                }
+                
+                // Posted time
+                Text(
+                    text = "45m ago", // TODO: Dynamic formatting
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.LightGray
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Row 2: Route
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                RouteDot(isStart = true)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = loadingLocation?.areaName ?: loadingLocation?.cityName ?: "Unknown",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                )
+            }
+            RouteVerticalLine()
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                RouteDot(isStart = false)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = unloadingLocation?.areaName ?: unloadingLocation?.cityName ?: "Unknown",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp
+                    )
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Row 3: Metadata (Truck, Weight, Material)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Outlined.LocalShipping,
+                    contentDescription = null,
+                    modifier = Modifier.size(14.dp),
+                    tint = Color.Gray
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                val truckDisplay = indent.indentGroupDetails.truckType?.displayName ?: "N/A"
+                val weightDisplay = "${indent.indentGroupDetails.loadWeight} tons"
+                val materialDisplay = indent.indentGroupDetails.material
+                Text(
+                    text = "$truckDisplay | $weightDisplay | $materialDisplay",
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                    color = Color.DarkGray,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Row 4: Pricing
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "CLIENT: ",
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                    color = Color.LightGray
+                )
+                Text(
+                    text = formatCurrency(indent.indentGroupDetails.clientTripCost),
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, fontSize = 13.sp),
+                    color = Color.Black
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(
+                    text = "NEG: ",
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                    color = Color.LightGray
+                )
+                Text(
+                    text = formatCurrency(indent.negotiatedTripCost),
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, fontSize = 13.sp),
+                    color = Color.Black
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+            Divider(color = Color(0xFFF1F5F9), thickness = 1.dp)
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Row 5: Client Name & Clone Button
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                        tint = Color.LightGray
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = fleetExecutive?.name ?: "Unknown",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium, fontSize = 13.sp),
+                        color = Color.DarkGray
+                    )
+                }
+
+                if(indent.indentOwnership == "OTHER") {
+                    Button(
+                        onClick = onCloneClick,
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFFE8F5E9), // Light green
+                            contentColor = Color(0xFF22C55E) // Green
+                        ),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                        modifier = Modifier.height(32.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Outlined.LocalShipping,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Clone",
+                                style = MaterialTheme.typography.labelLarge.copy(fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 @Composable
 fun RouteDot(isStart: Boolean) {

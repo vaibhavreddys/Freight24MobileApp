@@ -41,6 +41,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -81,13 +82,7 @@ fun CreateIndentScreen(
     onNavigateToReview: () -> Unit,
     navController: NavController,
 ) {
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val createIndentBackStackEntry = remember(navBackStackEntry) {
-        navController.getBackStackEntry(ConnectDestination.CreateIndent.route)
-    }
-    val viewModel: IndentsViewModel = hiltViewModel<IndentsViewModelImpl>(
-        createIndentBackStackEntry
-    )
+    val viewModel: IndentsViewModel = hiltViewModel<IndentsViewModelImpl>()
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
