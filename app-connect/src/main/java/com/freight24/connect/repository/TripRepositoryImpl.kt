@@ -3,9 +3,15 @@ package com.freight24.connect.repository
 import com.freight24.common.di.IoDispatcher
 import com.freight24.rest.api.TripApi
 import com.freight24.rest.request.CreateTripRequest
+import com.freight24.rest.request.UpdateTruckerStatus
 import com.freight24.rest.response.CreatedTripResponse
+import com.freight24.rest.response.MyTripsDataResponse
+import com.freight24.rest.response.SignedDocument
+import com.freight24.rest.response.TripDataResponse
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import javax.inject.Inject
 
 class TripRepositoryImpl @Inject constructor(
@@ -29,6 +35,127 @@ class TripRepositoryImpl @Inject constructor(
                         driverPhone
                     )
                 )
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!.data)
+                } else {
+                    Result.failure(Exception(response.message()))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    override suspend fun getMyTrips(
+        filter: String,
+        page: Int,
+        limit: Int
+    ): Result<MyTripsDataResponse> =
+        withContext(ioDispatcher) {
+            try {
+                val response = api.getEmpMyTrips(
+                    filter,
+                    page,
+                    limit
+                )
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!)
+                } else {
+                    Result.failure(Exception(response.message()))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    override suspend fun getTripDetails(
+        tripId: String
+    ): Result<TripDataResponse> =
+        withContext(ioDispatcher) {
+            try {
+                val response = api.getEmpTripDetails(tripId)
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!.data)
+                } else {
+                    Result.failure(Exception(response.message()))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    override suspend fun updateTruckerStatus(
+        tripId: String,
+        truckerStatus: String,
+        remarks: String?
+    ): Result<TripDataResponse> =
+        withContext(ioDispatcher) {
+            try {
+                val response = api.updateTruckerStatus(
+                    tripId,
+                    UpdateTruckerStatus(
+                        truckerStatus = truckerStatus,
+                        remarks = remarks
+                    )
+                )
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!.data)
+                } else {
+                    Result.failure(Exception(response.message()))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    override suspend fun uploadLr(
+        tripId: String,
+        file: MultipartBody.Part,
+        description: RequestBody?
+    ): Result<TripDataResponse> =
+        withContext(ioDispatcher) {
+            try {
+                val response = api.uploadLr(
+                    tripId,
+                    file,
+                    description
+                )
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!.trip!!)
+                } else {
+                    Result.failure(Exception(response.message()))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    override suspend fun getSignedDocument(
+        tripId: String,
+        documentId: String
+    ): Result<SignedDocument> =
+        withContext(ioDispatcher) {
+            try {
+                val response = api.getSignedDocument(
+                    tripId,
+                    documentId,
+                )
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!)
+                } else {
+                    Result.failure(Exception(response.message()))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    override suspend fun verifyLr(
+        tripId: String,
+        documentId: String
+    ): Result<TripDataResponse> =
+        withContext(ioDispatcher) {
+            try {
+                val response = api.verifyLr(tripId, documentId)
                 if (response.isSuccessful && response.body() != null) {
                     Result.success(response.body()!!.data)
                 } else {

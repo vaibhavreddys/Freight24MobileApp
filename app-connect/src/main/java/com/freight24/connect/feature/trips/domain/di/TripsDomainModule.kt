@@ -2,6 +2,18 @@ package com.freight24.connect.feature.trips.domain.di
 
 import com.freight24.connect.feature.trips.domain.usecase.CreateTripUseCase
 import com.freight24.connect.feature.trips.domain.usecase.CreateTripUseCaseImpl
+import com.freight24.connect.feature.trips.domain.usecase.GetMyTripsUseCase
+import com.freight24.connect.feature.trips.domain.usecase.GetMyTripsUseCaseImpl
+import com.freight24.connect.feature.trips.domain.usecase.SignedDocumentUseCase
+import com.freight24.connect.feature.trips.domain.usecase.SignedDocumentUseCaseImpl
+import com.freight24.connect.feature.trips.domain.usecase.TripDetailsUseCase
+import com.freight24.connect.feature.trips.domain.usecase.TripDetailsUseCaseImpl
+import com.freight24.connect.feature.trips.domain.usecase.UpdateTruckerUseCase
+import com.freight24.connect.feature.trips.domain.usecase.UpdateTruckerUseCaseImpl
+import com.freight24.connect.feature.trips.domain.usecase.UploadLrUseCase
+import com.freight24.connect.feature.trips.domain.usecase.UploadLrUseCaseImpl
+import com.freight24.connect.feature.trips.domain.usecase.VerifyLrUseCase
+import com.freight24.connect.feature.trips.domain.usecase.VerifyLrUseCaseImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -13,4 +25,23 @@ internal abstract class TripsDomainModule {
 
     @Binds
     abstract fun bindCreateTripUseCase(useCaseImpl: CreateTripUseCaseImpl): CreateTripUseCase
+
+    @Binds
+    abstract fun bindGetMyTripsUseCase(useCaseImpl: GetMyTripsUseCaseImpl): GetMyTripsUseCase
+
+    @Binds
+    abstract fun bindTripDetailsUseCase(useCaseImpl: TripDetailsUseCaseImpl): TripDetailsUseCase
+
+    @Binds
+    abstract fun bindUpdateTruckerUseCase(useCaseImpl: UpdateTruckerUseCaseImpl): UpdateTruckerUseCase
+
+    @Binds
+    abstract fun bindUploadLrUseCase(useCaseImpl: UploadLrUseCaseImpl): UploadLrUseCase
+
+    @Binds
+    abstract fun bindSignedDocumentUseCase(useCaseImpl: SignedDocumentUseCaseImpl): SignedDocumentUseCase
+
+    @Binds
+    abstract fun bindVerifyLrUseCase(useCaseImpl: VerifyLrUseCaseImpl): VerifyLrUseCase
+
 }

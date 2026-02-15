@@ -30,6 +30,8 @@ fun HomeScreen(
     onCreateIndentClick: () -> Unit,
     onIndentClick: (String) -> Unit,
     onCloneClick: (String, String) -> Unit,
+    onSearchClick: () -> Unit = {},
+    onTripClick: (String) -> Unit,
     startTab: ConnectTab? = null
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(startTab ?: ConnectTab.Home) }
@@ -78,9 +80,13 @@ fun HomeScreen(
                     onCloneClick = { indentId, indentGroupId ->
                         onCloneClick(indentId, indentGroupId)
                     },
+                    onSearchClick = onSearchClick,
                     modifier = Modifier.padding(paddingValues)
                 )
-                ConnectTab.Trips -> TripsScreen(paddingValues)
+                ConnectTab.Trips -> TripsScreen(
+                    paddingValues = paddingValues,
+                    onTripClick = onTripClick
+                )
                 ConnectTab.Trucks -> FindTrucksScreen(paddingValues)
                 ConnectTab.More -> MoreScreen(paddingValues)
             }

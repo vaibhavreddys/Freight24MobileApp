@@ -56,7 +56,7 @@ android {
             buildConfigField(
                 "String",
                 "BASE_URL",
-                "\"https://backendapi-qhpo.onrender.com/api/v1/\"",
+                "\"http://192.168.1.3:3000/api/v1/\"",
             )
         }
 
@@ -105,6 +105,9 @@ dependencies {
     implementation(libs.firebase.messaging)
     implementation(libs.firebase.inappmessaging)
     implementation(libs.firebase.analytics)
+
+    // Coil
+    implementation(libs.coil.compose)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

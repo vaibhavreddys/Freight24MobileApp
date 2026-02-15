@@ -28,6 +28,4 @@ class CreateTripUseCaseImpl @Inject constructor(
             params.driverPhone
         )
     }
-
-
 }

@@ -99,6 +99,16 @@ sealed class ConnectDestination(val route: String) {
 
     data object ReviewCloneIndent : ConnectDestination("review_clone_indent")
 
+    data object SearchIndents : ConnectDestination("search_indents") {
+        const val INDENT_ID_ARG = "indentId"
+        const val INDENT_GROUP_ID_ARG = "indentGroupId"
+        override val arguments = listOf(
+            navArgument(INDENT_ID_ARG) { type = NavType.StringType },
+            navArgument(INDENT_GROUP_ID_ARG) { type = NavType.StringType }
+        )
+        fun createRoute(indentId: String, indentGroupId: String) = "clone_indent/$indentId/$indentGroupId"
+    }
+
     data object AssignTruck : ConnectDestination("assign_truck/{indentId}") {
         const val INDENT_ID_ARG = "indentId"
         override val arguments = listOf(
@@ -146,5 +156,26 @@ sealed class ConnectDestination(val route: String) {
         ): String {
             return "trip_success/$tripId?truckNumber=$truckNumber&origin=$origin&destination=$destination&driverName=$driverName&driverPhone=$driverPhone"
         }
+    }
+
+    data object TripDetails : ConnectDestination("trip_details/{tripId}") {
+        const val TRIP_ID_ARG = "tripId"
+        override val arguments = listOf(
+            navArgument(TRIP_ID_ARG) { type = NavType.StringType }
+        )
+        fun createRoute(tripId: String) = "trip_details/$tripId"
+    }
+
+    data object PdfViewer : ConnectDestination("pdf_viewer/{tripId}/{documentId}?status={status}") {
+        const val TRIP_ID_ARG = "tripId"
+        const val DOCUMENT_ID_ARG = "documentId"
+        const val STATUS_ARG = "status"
+        override val arguments = listOf(
+            navArgument(TRIP_ID_ARG) { type = NavType.StringType },
+            navArgument(DOCUMENT_ID_ARG) { type = NavType.StringType },
+            navArgument(STATUS_ARG) { type = NavType.StringType; nullable = true; defaultValue = null }
+        )
+        fun createRoute(tripId: String, documentId: String, status: String? = null) = 
+            "pdf_viewer/$tripId/$documentId" + if (status != null) "?status=$status" else ""
     }
 }

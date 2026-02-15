@@ -15,11 +15,14 @@ import com.freight24.connect.feature.indents.views.ReviewCloneIndentScreen
 import com.freight24.connect.feature.indents.views.ReviewIndentScreen
 import com.freight24.connect.feature.trucks.views.AssignTruckScreen
 import com.freight24.connect.feature.trips.views.CreateTripScreen
+import com.freight24.connect.feature.trips.views.TripDetailsScreen
 import com.freight24.connect.feature.trips.views.TripSuccessScreen
+import com.freight24.connect.feature.indents.views.SearchIndentsScreen
 import com.freight24.connect.feature.indents.views.SearchSelectionScreen
 import com.freight24.connect.feature.indents.views.SearchType
 import com.freight24.connect.feature.login.view.signin.LoginScreen
 import com.freight24.connect.feature.login.view.verify.VerifyOtpScreen
+import com.freight24.connect.feature.trips.views.PdfViewerScreen
 
 @Composable
 fun ConnectNavGraph(
@@ -82,7 +85,44 @@ fun ConnectNavGraph(
                 onCloneClick = { indentId, indentGroupId ->
                     navHostController.navigate(ConnectDestination.CloneIndent.createRoute(indentId, indentGroupId))
                 },
+                onSearchClick = {
+                    navHostController.navigate(ConnectDestination.SearchIndents.route)
+                },
+                onTripClick = { tripId ->
+                    navHostController.navigate(ConnectDestination.TripDetails.createRoute(tripId))
+                },
                 startTab = startTab
+            )
+        }
+
+        composable(
+            route = ConnectDestination.TripDetails.route,
+            arguments = ConnectDestination.TripDetails.arguments
+        ) { backStackEntry ->
+            val tripId = backStackEntry.arguments?.getString(ConnectDestination.TripDetails.TRIP_ID_ARG) ?: ""
+            TripDetailsScreen(
+                tripId = tripId,
+                onBackClick = { navHostController.popBackStack() },
+                onEditClick = { /* TODO: Edit Trip */ },
+                onDocumentView = { tripId, docId, status ->
+                    navHostController.navigate(
+                        ConnectDestination.PdfViewer.createRoute(tripId, docId, status)
+                    )
+                }
+            )
+        }
+
+        composable(ConnectDestination.SearchIndents.route) {
+            SearchIndentsScreen(
+                onBackClick = {
+                    navHostController.popBackStack()
+                },
+                onIndentClick = { indentId ->
+                    navHostController.navigate(ConnectDestination.IndentDetails.createRoute(indentId))
+                },
+                onCloneClick = { indentId, indentGroupId ->
+                    navHostController.navigate(ConnectDestination.CloneIndent.createRoute(indentId, indentGroupId))
+                }
             )
         }
 
@@ -282,6 +322,15 @@ fun ConnectNavGraph(
                         popUpTo(ConnectDestination.Home.route) { inclusive = true }
                     }
                 }
+            )
+        }
+
+        composable(
+            route = ConnectDestination.PdfViewer.route,
+            arguments = ConnectDestination.PdfViewer.arguments
+        ) {
+            PdfViewerScreen(
+                onBackClick = { navHostController.popBackStack() }
             )
         }
     }

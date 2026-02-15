@@ -133,4 +133,28 @@ class IndentRepositoryImpl
                 Result.failure(e)
             }
         }
+
+    override suspend fun searchIndents(
+        query: String,
+        priority: String?,
+        clientId: String?,
+        assignedToMe: Boolean?
+    ): Result<GetIndentsResponse> =
+        withContext(ioDispatcher) {
+            try {
+                val response = api.searchIndents(
+                    query,
+                    priority,
+                    clientId,
+                    assignedToMe
+                )
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!)
+                } else {
+                    Result.failure(Exception(response.message()))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
 }

@@ -1,6 +1,11 @@
 package com.freight24.connect.repository
 
 import com.freight24.rest.response.CreatedTripResponse
+import com.freight24.rest.response.MyTripsDataResponse
+import com.freight24.rest.response.SignedDocument
+import com.freight24.rest.response.TripDataResponse
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 
 interface TripRepository {
 
@@ -9,4 +14,36 @@ interface TripRepository {
         truckId: String,
         driverName: String?,
         driverPhone: String?): Result<CreatedTripResponse.TripData>
+
+    suspend fun getMyTrips(
+        filter: String,
+        page: Int,
+        limit: Int
+    ): Result<MyTripsDataResponse>
+
+    suspend fun getTripDetails(
+        tripId: String,
+    ): Result<TripDataResponse>
+
+    suspend fun updateTruckerStatus(
+        tripId: String,
+        truckerStatus: String,
+        remarks: String?
+    ): Result<TripDataResponse>
+
+    suspend fun uploadLr(
+        tripId: String,
+        file: MultipartBody.Part,
+       description: RequestBody? = null
+    ): Result<TripDataResponse>
+
+    suspend fun getSignedDocument(
+        tripId: String,
+        documentId: String,
+    ): Result<SignedDocument>
+
+    suspend fun verifyLr(
+        tripId: String,
+        documentId: String
+    ): Result<TripDataResponse>
 }

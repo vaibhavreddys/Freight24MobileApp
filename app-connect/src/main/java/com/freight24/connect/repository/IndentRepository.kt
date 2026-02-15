@@ -24,4 +24,5 @@ interface IndentRepository {
 
     suspend fun getAllIndents(page: Int, limit: Int): Result<GetIndentsResponse>
     suspend fun cloneIndent(indentGroupId: String, assignedTo: String?, notes: String?): Result<IndentResponse>
+    suspend fun searchIndents(query: String, priority: String?, clientId: String?, assignedToMe: Boolean?): Result<GetIndentsResponse>
 }

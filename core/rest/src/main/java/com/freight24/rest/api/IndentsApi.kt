@@ -64,4 +64,12 @@ interface IndentsApi {
         @Path("groupId") indentGroupId: String,
         @Body request: CloneIndentRequest,
     ): Response<IndentResponse>
+
+    @GET("indents/search")
+    suspend fun searchIndents(
+        @Query("q") query: String,
+        @Query("priority") priority: String?,
+        @Query("client_id") clientId: String?,
+        @Query("assigned_to_me") assignedToMe: Boolean?,
+    ): Response<GetIndentsResponse>
 }

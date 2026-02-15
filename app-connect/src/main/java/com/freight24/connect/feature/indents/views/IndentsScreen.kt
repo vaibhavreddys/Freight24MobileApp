@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -43,6 +44,7 @@ import com.freight24.rest.response.IndentResponse
 fun IndentsScreen(
     onIndentClick: (String) -> Unit = {},
     onCloneClick: (String, String) -> Unit = { s1, s2 -> },
+    onSearchClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val viewModel: IndentsListViewModel = hiltViewModel<IndentsListViewModelImpl>()
@@ -53,6 +55,7 @@ fun IndentsScreen(
         onEvent = viewModel::onEvent,
         onIndentClick = onIndentClick,
         onCloneClick = onCloneClick,
+        onSearchClick = onSearchClick,
         modifier = modifier,
     )
 
@@ -64,6 +67,7 @@ fun IndentsContent(
     onEvent: (IndentsListEvent) -> Unit,
     onIndentClick: (String) -> Unit,
     onCloneClick: (String, String) -> Unit,
+    onSearchClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -76,6 +80,16 @@ fun IndentsContent(
             onTabSelected = { onEvent(IndentsListEvent.SelectTab(it)) },
             modifier = Modifier.padding(16.dp)
         )
+
+        if (uiState.selectedTab == IndentTab.ALL) {
+            SearchBarTrigger(
+                onClick = onSearchClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 16.dp)
+            )
+        }
 
         if (uiState.isLoading && uiState.indents.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -92,6 +106,35 @@ fun IndentsContent(
                 onIndentClick = onIndentClick,
                 onCloneClick = onCloneClick,
                 modifier = Modifier.fillMaxSize()
+            )
+        }
+    }
+}
+
+@Composable
+fun SearchBarTrigger(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .height(48.dp)
+            .background(Color(0xFFF1F5F9), RoundedCornerShape(8.dp))
+            .clickable { onClick() }
+            .padding(horizontal = 12.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = "Search",
+                tint = Color.Gray
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Search by Client or Indent ID",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.Gray
             )
         }
     }
