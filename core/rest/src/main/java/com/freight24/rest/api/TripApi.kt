@@ -1,6 +1,7 @@
 package com.freight24.rest.api
 
 import com.freight24.rest.request.CreateTripRequest
+import com.freight24.rest.request.LrVerifyRequest
 import com.freight24.rest.request.UpdateTruckerStatus
 import com.freight24.rest.response.CreatedTripResponse
 import com.freight24.rest.response.TripDetailResponse
@@ -76,10 +77,10 @@ interface TripApi {
         @Path("document_id") documentId: String,
     ): Response<SignedDocument>
 
-    @PATCH("trips/{tripId}/documents/{documentId}/verify")
+    @PATCH("trips/{tripId}/lr/verify")
     suspend fun verifyLr(
         @Path("tripId") tripId: String,
-        @Path("documentId") documentId: String
+        @Body lrVerifyRequest: LrVerifyRequest
     ): Response<TripDetailDataResponse>
 
 }

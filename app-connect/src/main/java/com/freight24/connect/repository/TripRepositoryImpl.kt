@@ -3,6 +3,7 @@ package com.freight24.connect.repository
 import com.freight24.common.di.IoDispatcher
 import com.freight24.rest.api.TripApi
 import com.freight24.rest.request.CreateTripRequest
+import com.freight24.rest.request.LrVerifyRequest
 import com.freight24.rest.request.UpdateTruckerStatus
 import com.freight24.rest.response.CreatedTripResponse
 import com.freight24.rest.response.MyTripsDataResponse
@@ -120,7 +121,7 @@ class TripRepositoryImpl @Inject constructor(
                     description
                 )
                 if (response.isSuccessful && response.body() != null) {
-                    Result.success(response.body()!!.trip!!)
+                    Result.success(response.body()!!.data.trip!!)
                 } else {
                     Result.failure(Exception(response.message()))
                 }
@@ -151,11 +152,18 @@ class TripRepositoryImpl @Inject constructor(
 
     override suspend fun verifyLr(
         tripId: String,
-        documentId: String
+        status: String,
+        remarks: String?
     ): Result<TripDataResponse> =
         withContext(ioDispatcher) {
             try {
-                val response = api.verifyLr(tripId, documentId)
+                val response = api.verifyLr(
+                    tripId = tripId,
+                    lrVerifyRequest = LrVerifyRequest(
+                        status = status,
+                        remarks = remarks
+                    )
+                )
                 if (response.isSuccessful && response.body() != null) {
                     Result.success(response.body()!!.data)
                 } else {

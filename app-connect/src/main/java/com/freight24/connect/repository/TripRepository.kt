@@ -44,6 +44,7 @@ interface TripRepository {
 
     suspend fun verifyLr(
         tripId: String,
-        documentId: String
+        status: String,
+        remarks: String?
     ): Result<TripDataResponse>
 }

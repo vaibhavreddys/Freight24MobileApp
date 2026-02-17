@@ -46,6 +46,7 @@ import com.freight24.rest.response.TripDataResponse
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TripDetailsScreen(
+    navController: androidx.navigation.NavController,
     tripId: String,
     onBackClick: () -> Unit,
     onEditClick: (String) -> Unit,
@@ -57,6 +58,19 @@ fun TripDetailsScreen(
     var showSelectionDialog by remember { mutableStateOf(false) }
     var pendingStatus by remember { mutableStateOf("") }
     var pendingButtonText by remember { mutableStateOf("") }
+    
+    // Refresh trip details when returning from PDF viewer via navigation result
+    val refreshTrigger = navController.currentBackStackEntry
+        ?.savedStateHandle
+        ?.getStateFlow("refresh", false)
+        ?.collectAsStateWithLifecycle()
+
+    LaunchedEffect(tripId, refreshTrigger?.value) {
+        if (refreshTrigger?.value == true) {
+            viewModel.onEvent(TripDetailsEvent.Refresh)
+            navController.currentBackStackEntry?.savedStateHandle?.set("refresh", false)
+        }
+    }
     
     val sheetState = rememberModalBottomSheetState()
     var showSheet by remember { mutableStateOf(false) }
@@ -399,7 +413,7 @@ fun TripDocumentsSection(
             title = "Lorry Receipt (LR)",
             doc = lrDoc,
             showUploadButton = true,
-            isUploadEnabled = truckerStatus == "LOADING",
+            isUploadEnabled = truckerStatus == "LOADING" || (lrDoc != null && (lrDoc.status.lowercase() == "pending" || lrDoc.status.lowercase() == "rejected")),
             onUploadClick = onUploadLrClick,
             onCardClick = { docId, status -> onDocClick(docId, status) }
         )
@@ -421,12 +435,22 @@ fun DocumentCard(
     onUploadClick: () -> Unit = {},
     onCardClick: (String, String) -> Unit = { _, _ -> }
 ) {
+
+    fun onCardClick() {
+        doc?.let {
+            val status = it.status.lowercase()
+            if (status == "verified" || status == "rejected" || status == "pending") {
+                onCardClick(it.id, it.status)
+            }
+        }
+    }
+
     Card(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         modifier = Modifier.fillMaxWidth(),
         onClick = {
-            doc?.let { onCardClick(it.id, it.status) }
+            onCardClick()
         }
     ) {
         Row(
@@ -455,12 +479,10 @@ fun DocumentCard(
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF334155)
                 )
+                
                 if (doc != null) {
-                    Text(
-                        text = "Status: ${doc.status}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.Gray
-                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    StatusBadgeSmall(status = doc.status)
                 } else {
                     Text(
                         text = "Not Available",
@@ -470,9 +492,17 @@ fun DocumentCard(
                 }
             }
 
-            if (showUploadButton && doc == null) {
+            val docStatus = doc?.status?.lowercase()
+            val isPending = docStatus == "pending"
+            val isRejected = docStatus == "rejected"
+            val showUpload = showUploadButton && (doc == null || isPending || isRejected)
+
+            if (showUpload) {
+                val buttonText = if (isPending) "Verify" else "Upload LR"
+                val handleButtonClick = if (isPending) { { onCardClick() } } else onUploadClick
+
                 Button(
-                    onClick = onUploadClick,
+                    onClick = handleButtonClick,
                     enabled = isUploadEnabled,
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -483,14 +513,12 @@ fun DocumentCard(
                     modifier = Modifier.height(36.dp)
                 ) {
                     Text(
-                        text = "Upload LR",
+                        text = buttonText,
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                 }
-            } else if (doc != null) {
-                StatusBadgeSmall(status = doc.status)
             }
         }
     }

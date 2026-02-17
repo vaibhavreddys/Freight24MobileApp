@@ -8,7 +8,8 @@ import javax.inject.Inject
 
 data class VerifyLrUseCaseDataParams(
     val tripId : String,
-    val documentId: String,
+    val status: String,
+    val remarks: String?
 ): UseCaseParams
 
 internal interface VerifyLrUseCase : UseCase<VerifyLrUseCaseDataParams, TripDataResponse>
@@ -21,7 +22,8 @@ class VerifyLrUseCaseImpl @Inject constructor(
     override suspend fun invoke(params: VerifyLrUseCaseDataParams): Result<TripDataResponse> {
         return repository.verifyLr(
             params.tripId,
-            params.documentId
+            params.status,
+            params.remarks
         )
     }
 }

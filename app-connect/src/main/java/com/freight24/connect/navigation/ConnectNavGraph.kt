@@ -101,6 +101,7 @@ fun ConnectNavGraph(
         ) { backStackEntry ->
             val tripId = backStackEntry.arguments?.getString(ConnectDestination.TripDetails.TRIP_ID_ARG) ?: ""
             TripDetailsScreen(
+                navController = navHostController,
                 tripId = tripId,
                 onBackClick = { navHostController.popBackStack() },
                 onEditClick = { /* TODO: Edit Trip */ },
@@ -330,7 +331,11 @@ fun ConnectNavGraph(
             arguments = ConnectDestination.PdfViewer.arguments
         ) {
             PdfViewerScreen(
-                onBackClick = { navHostController.popBackStack() }
+                onBackClick = { navHostController.popBackStack() },
+                onSuccess = {
+                    navHostController.previousBackStackEntry?.savedStateHandle?.set("refresh", true)
+                    navHostController.popBackStack()
+                }
             )
         }
     }
