@@ -10,6 +10,7 @@ import com.freight24.rest.api.LocationApi
 import com.freight24.rest.api.LoginConnectApi
 import com.freight24.rest.api.NotificationServiceApi
 import com.freight24.rest.api.TripApi
+import com.freight24.rest.api.TripHaltingApi
 import com.freight24.rest.api.TruckApi
 import dagger.Module
 import dagger.Provides
@@ -69,5 +70,12 @@ object ApiModule {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "TripApi")
             .create(TripApi::class.java)
+    }
+
+    @Provides
+    fun providesTripHaltingApi(retrofitFactory: RetrofitFactory): TripHaltingApi {
+        return retrofitFactory
+            .create(BuildConfig.BASE_URL, "TripHaltingApi")
+            .create(TripHaltingApi::class.java)
     }
 }

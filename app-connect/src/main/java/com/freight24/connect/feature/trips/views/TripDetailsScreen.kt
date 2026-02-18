@@ -21,6 +21,9 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Payments
+import androidx.compose.material.icons.automirrored.filled.RotateRight
+import androidx.compose.material.icons.outlined.AccountBalanceWallet
+import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -51,6 +54,7 @@ fun TripDetailsScreen(
     onBackClick: () -> Unit,
     onEditClick: (String) -> Unit,
     onDocumentView : (String, String, String) -> Unit,
+    onHaltingClick: (String, String, Int, Int) -> Unit,
     viewModel: TripDetailsViewModel = hiltViewModel<TripDetailsViewModelImpl>()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -305,6 +309,9 @@ fun TripDetailsScreen(
                         onUploadLrClick = { showSelectionDialog = true },
                         onDocClick = { docId, status ->
                             onDocumentView(tripId, docId, status)
+                        },
+                        onHaltingClick = { loadingDays, unloadingDays ->
+                            onHaltingClick(tripId, uiState.trip!!.indentDetails.truckTypeId, loadingDays, unloadingDays)
                         }
                     )
                 }
@@ -317,7 +324,8 @@ fun TripDetailsScreen(
 fun TripDetailsContent(
     trip: TripDataResponse,
     onUploadLrClick: () -> Unit,
-    onDocClick: (String, String) -> Unit
+    onDocClick: (String, String) -> Unit,
+    onHaltingClick: (Int, Int) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -329,16 +337,35 @@ fun TripDetailsContent(
         // Reused Trip Card
         TripCard(trip = trip)
 
-        // Paid Amount Section
-        PaidAmountCard(trip.financials?.totalPaidAmount ?: 0.0)
 
         // Trip Documents
-        TripDocumentsSection(
-            truckerStatus = trip.truckerStatus,
-            documents = trip.documents ?: emptyList(),
-            onUploadLrClick = onUploadLrClick,
-            onDocClick = onDocClick
-        )
+        ExpandableSection(
+            title = "Documents",
+            icon = Icons.Outlined.Description
+        ) {
+            TripDocumentsSection(
+                truckerStatus = trip.truckerStatus,
+                documents = trip.documents ?: emptyList(),
+                onUploadLrClick = onUploadLrClick,
+                onDocClick = onDocClick
+            )
+        }
+
+        // Charges & Deductions
+        ExpandableSection(
+            title = "Charges & Deductions",
+            icon = Icons.Outlined.AccountBalanceWallet
+        ) {
+            ChargesAndDeductionsContent(
+                financials = trip.financials,
+                onHaltingClick = {
+                    onHaltingClick(
+                        trip.financials?.halting?.loading?.days ?: 0,
+                        trip.financials?.halting?.unloading?.days ?: 0
+                    )
+                }
+            )
+        }
 
         // Payment Breakdown
         ExpandableSection(
@@ -350,7 +377,7 @@ fun TripDetailsContent(
 
         // Trip Timeline
         ExpandableSection(
-            title = "Trip Timeline",
+            title = "Timeline",
             icon = Icons.Outlined.History
         ) {
             TripTimelineContent(timeline = trip.timelines ?: emptyList())
@@ -360,36 +387,6 @@ fun TripDetailsContent(
     }
 }
 
-@Composable
-fun PaidAmountCard(amount: Double) {
-    Card(
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(24.dp)
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "PAID AMOUNT",
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.Gray,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "₹${formatAmount(amount.toString())}",
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF10B981)
-                )
-            )
-        }
-    }
-}
 
 @Composable
 fun TripDocumentsSection(
@@ -398,13 +395,10 @@ fun TripDocumentsSection(
     onUploadLrClick: () -> Unit,
     onDocClick: (String, String) -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            text = "Trip Documents",
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF1E293B)
-        )
+    Column(
+        modifier = Modifier.padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
 
         val lrDoc = documents.find { it.type.lowercase() == "lr" }
         val memoDoc = documents.find { it.type.lowercase() == "loading_memo" }
@@ -447,7 +441,8 @@ fun DocumentCard(
 
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
         modifier = Modifier.fillMaxWidth(),
         onClick = {
             onCardClick()
@@ -459,15 +454,15 @@ fun DocumentCard(
         ) {
             Surface(
                 shape = RoundedCornerShape(8.dp),
-                color = Color(0xFFF8FAFC),
-                modifier = Modifier.size(48.dp)
+                color = Color.White,
+                modifier = Modifier.size(40.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = Icons.Outlined.Description,
                         contentDescription = null,
-                        tint = Color(0xFF94A3B8),
-                        modifier = Modifier.size(24.dp)
+                        tint = Color(0xFF3B82F6),
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
@@ -475,15 +470,12 @@ fun DocumentCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF334155)
                 )
                 
-                if (doc != null) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    StatusBadgeSmall(status = doc.status)
-                } else {
+                if (doc == null) {
                     Text(
                         text = "Not Available",
                         style = MaterialTheme.typography.labelSmall,
@@ -506,19 +498,22 @@ fun DocumentCard(
                     enabled = isUploadEnabled,
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF10B981),
-                        disabledContainerColor = Color(0xFF10B981).copy(alpha = 0.5f)
+                        containerColor = Color(0xFFDCFCE7),
+                        contentColor = Color(0xFF16A34A),
+                        disabledContainerColor = Color(0xFFDCFCE7).copy(alpha = 0.5f),
+                        disabledContentColor = Color(0xFF16A34A).copy(alpha = 0.5f)
                     ),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                    modifier = Modifier.height(36.dp)
+                    modifier = Modifier.height(32.dp)
                 ) {
                     Text(
                         text = buttonText,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold
                     )
                 }
+            } else if (doc != null) {
+                StatusBadgeSmall(status = doc.status)
             }
         }
     }
@@ -597,6 +592,66 @@ fun ExpandableSection(
 }
 
 @Composable
+fun ChargesAndDeductionsContent(
+    financials: TripDataResponse.FinanceDetails?,
+    onHaltingClick: () -> Unit
+) {
+    if (financials == null) {
+        Text("No data", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodySmall)
+        return
+    }
+    
+    Column(
+        modifier = Modifier.padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        val luTotal = (financials.luCharges.loading.total + financials.luCharges.unloading.total).toDouble()
+        val haltingTotal = (financials.halting.loading.totalAmount + financials.halting.unloading.totalAmount)
+        
+        ChargesSubRow("Loading & Unloading", luTotal)
+        ChargesSubRow("Halting", haltingTotal, onClick = onHaltingClick)
+        ChargesSubRow("Other Deductions", financials.otherDeductions, isDeduction = true)
+    }
+}
+
+@Composable
+fun ChargesSubRow(
+    label: String, 
+    amount: Double, 
+    isDeduction: Boolean = false,
+    onClick: (() -> Unit)? = null
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label, 
+            style = MaterialTheme.typography.bodyMedium, 
+            color = Color(0xFF475569)
+        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = (if (isDeduction) "- " else "") + "₹${formatAmount(amount.toString())}",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = if (isDeduction) Color.Red else Color(0xFF1E293B)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Icon(
+                imageVector = Icons.Outlined.ChevronRight,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+                tint = Color(0xFF94A3B8)
+            )
+        }
+    }
+}
+
+@Composable
 fun PaymentBreakdownContent(financials: TripDataResponse.FinanceDetails?) {
     if (financials == null) {
         Text("Financial data not available", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodySmall)
@@ -609,24 +664,8 @@ fun PaymentBreakdownContent(financials: TripDataResponse.FinanceDetails?) {
     ) {
         BreakdownRow("Trip Cost", financials.truckerTripCost)
         BreakdownRow("Advance Paid", financials.advance.paidAmount)
-        
-        if (financials.halting.loading.days > 0) {
-            HaltingRow("Loading Halting", financials.halting.loading)
-        }
-        if (financials.halting.unloading.days > 0) {
-            HaltingRow("Unloading Halting", financials.halting.unloading)
-        }
-
-        if (financials.luCharges.loading.total > 0) {
-            BreakdownRow("Loading Charges", financials.luCharges.loading.total.toDouble())
-        }
-        if (financials.luCharges.unloading.total > 0) {
-            BreakdownRow("Unloading Charges", financials.luCharges.unloading.total.toDouble())
-        }
-        
         BreakdownRow("Platform Fee", financials.platformFee.amount, isDeduction = true)
         BreakdownRow("TDS", financials.tds.amount, isDeduction = true)
-        BreakdownRow("Other Deductions", financials.otherDeductions, isDeduction = true)
         
         Divider(color = Color(0xFFF1F5F9))
         
@@ -636,6 +675,14 @@ fun PaymentBreakdownContent(financials: TripDataResponse.FinanceDetails?) {
         ) {
             Text("Net Payable", fontWeight = FontWeight.Bold)
             Text("₹${formatAmount(financials.netPayable.toString())}", fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("Paid Amount", fontWeight = FontWeight.Bold)
+            Text("₹${formatAmount(financials.totalPaidAmount.toString())}", fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
         }
     }
 }

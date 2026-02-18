@@ -2,12 +2,16 @@ package com.freight24.connect.feature.trips.domain.di
 
 import com.freight24.connect.feature.trips.domain.usecase.CreateTripUseCase
 import com.freight24.connect.feature.trips.domain.usecase.CreateTripUseCaseImpl
+import com.freight24.connect.feature.trips.domain.usecase.GetHaltingRateUseCase
+import com.freight24.connect.feature.trips.domain.usecase.GetHaltingRateUseCaseImpl
 import com.freight24.connect.feature.trips.domain.usecase.GetMyTripsUseCase
 import com.freight24.connect.feature.trips.domain.usecase.GetMyTripsUseCaseImpl
 import com.freight24.connect.feature.trips.domain.usecase.SignedDocumentUseCase
 import com.freight24.connect.feature.trips.domain.usecase.SignedDocumentUseCaseImpl
 import com.freight24.connect.feature.trips.domain.usecase.TripDetailsUseCase
 import com.freight24.connect.feature.trips.domain.usecase.TripDetailsUseCaseImpl
+import com.freight24.connect.feature.trips.domain.usecase.UpdateHaltingRateUseCase
+import com.freight24.connect.feature.trips.domain.usecase.UpdateHaltingRateUseCaseImpl
 import com.freight24.connect.feature.trips.domain.usecase.UpdateTruckerUseCase
 import com.freight24.connect.feature.trips.domain.usecase.UpdateTruckerUseCaseImpl
 import com.freight24.connect.feature.trips.domain.usecase.UploadLrUseCase
@@ -43,5 +47,11 @@ internal abstract class TripsDomainModule {
 
     @Binds
     abstract fun bindVerifyLrUseCase(useCaseImpl: VerifyLrUseCaseImpl): VerifyLrUseCase
+
+    @Binds
+    abstract fun bindGetHaltingRateUseCase(useCaseImpl: GetHaltingRateUseCaseImpl): GetHaltingRateUseCase
+
+    @Binds
+    abstract fun bindUpdateHaltingRateUseCase(useCaseImpl: UpdateHaltingRateUseCaseImpl): UpdateHaltingRateUseCase
 
 }

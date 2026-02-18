@@ -56,7 +56,7 @@ android {
             buildConfigField(
                 "String",
                 "BASE_URL",
-                "\"https://backendapi-qhpo.onrender.com/api/v1/\"",
+                "\"http://192.168.1.186:3000/api/v1/\"",
             )
         }
 

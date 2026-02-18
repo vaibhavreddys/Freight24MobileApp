@@ -4,6 +4,8 @@ import com.freight24.connect.repository.ClientRepository
 import com.freight24.connect.repository.ClientRepositoryImpl
 import com.freight24.connect.repository.LocationRepository
 import com.freight24.connect.repository.LocationRepositoryImpl
+import com.freight24.connect.repository.TripHaltingRepository
+import com.freight24.connect.repository.TripHaltingRepositoryImpl
 import com.freight24.connect.repository.TripRepository
 import com.freight24.connect.repository.TripRepositoryImpl
 import com.freight24.connect.repository.TruckRepository
@@ -32,4 +34,10 @@ interface RepositoryBinderModule {
     @Binds
     @Singleton
     fun bindsTripRepository(tripRepositoryImpl: TripRepositoryImpl): TripRepository
+
+    @Binds
+    @Singleton
+    fun bindsTripHaltingRepository(
+        tripHaltingRepositoryImpl: TripHaltingRepositoryImpl
+    ): TripHaltingRepository
 }

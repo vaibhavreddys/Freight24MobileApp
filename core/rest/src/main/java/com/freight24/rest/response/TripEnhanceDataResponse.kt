@@ -32,6 +32,7 @@ data class TripDataResponse(
     data class Truck(
         val id: String,
         val registrationNumber: String,
+        val truckTypeId: String,
         val truckType: TruckType,
     )
 
@@ -58,6 +59,7 @@ data class TripDataResponse(
         val flooringType: String?,
         val vehicleHeight: Double?,
         val tarpaulingRequired: Boolean,
+        val truckTypeId: String,
         val specialRequirements: String?,
         val truckType: TruckType?,
     )

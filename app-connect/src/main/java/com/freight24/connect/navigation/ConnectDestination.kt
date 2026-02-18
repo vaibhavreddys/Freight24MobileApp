@@ -178,4 +178,14 @@ sealed class ConnectDestination(val route: String) {
         fun createRoute(tripId: String, documentId: String, status: String? = null) = 
             "pdf_viewer/$tripId/$documentId" + if (status != null) "?status=$status" else ""
     }
+
+    data object HaltingCharges : ConnectDestination("halting_charges/{tripId}/{truckTypeId}") {
+        const val TRIP_ID_ARG = "tripId"
+        const val TRUCK_TYPE_ID_ARG = "truckTypeId"
+        override val arguments = listOf(
+            navArgument(TRIP_ID_ARG) { type = NavType.StringType },
+            navArgument(TRUCK_TYPE_ID_ARG) { type = NavType.StringType }
+        )
+        fun createRoute(tripId: String, truckTypeId: String) = "halting_charges/$tripId/$truckTypeId"
+    }
 }

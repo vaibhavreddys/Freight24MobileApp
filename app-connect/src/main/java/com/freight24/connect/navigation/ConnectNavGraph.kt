@@ -23,6 +23,7 @@ import com.freight24.connect.feature.indents.views.SearchType
 import com.freight24.connect.feature.login.view.signin.LoginScreen
 import com.freight24.connect.feature.login.view.verify.VerifyOtpScreen
 import com.freight24.connect.feature.trips.views.PdfViewerScreen
+import com.freight24.connect.feature.trips.views.HaltingChargesScreen
 
 @Composable
 fun ConnectNavGraph(
@@ -109,6 +110,37 @@ fun ConnectNavGraph(
                     navHostController.navigate(
                         ConnectDestination.PdfViewer.createRoute(tripId, docId, status)
                     )
+                },
+                onHaltingClick = { tripId, truckTypeId, loadingDays, unloadingDays ->
+                    navHostController.navigate(
+                        ConnectDestination.HaltingCharges.createRoute(tripId, truckTypeId) + 
+                        "?loadingDays=$loadingDays&unloadingDays=$unloadingDays"
+                    )
+                }
+            )
+        }
+
+        composable(
+            route = ConnectDestination.HaltingCharges.route + "?loadingDays={loadingDays}&unloadingDays={unloadingDays}",
+            arguments = ConnectDestination.HaltingCharges.arguments + listOf(
+                androidx.navigation.navArgument("loadingDays") { type = androidx.navigation.NavType.IntType; defaultValue = 0 },
+                androidx.navigation.navArgument("unloadingDays") { type = androidx.navigation.NavType.IntType; defaultValue = 0 }
+            )
+        ) { backStackEntry ->
+            val tripId = backStackEntry.arguments?.getString(ConnectDestination.HaltingCharges.TRIP_ID_ARG) ?: ""
+            val truckTypeId = backStackEntry.arguments?.getString(ConnectDestination.HaltingCharges.TRUCK_TYPE_ID_ARG) ?: ""
+            val loadingDays = backStackEntry.arguments?.getInt("loadingDays") ?: 0
+            val unloadingDays = backStackEntry.arguments?.getInt("unloadingDays") ?: 0
+
+            HaltingChargesScreen(
+                tripId = tripId,
+                truckTypeId = truckTypeId,
+                initialLoadingDays = loadingDays,
+                initialUnloadingDays = unloadingDays,
+                onBackClick = { navHostController.popBackStack() },
+                onSuccess = {
+                    navHostController.previousBackStackEntry?.savedStateHandle?.set("refresh", true)
+                    navHostController.popBackStack()
                 }
             )
         }
