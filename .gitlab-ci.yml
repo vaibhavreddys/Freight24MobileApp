@@ -78,10 +78,10 @@ package:connect:prodRelease:
   stage: package
   when: manual
   script:
-    - ./gradlew :app-employee:assembleProdRelease
+    - ./gradlew :app-connect:assembleProdRelease
   artifacts:
     paths:
-      - app-employee/build/outputs/apk/prod/release/
+      - app-connect/build/outputs/apk/prod/release/
 
 
 # -----------------------------
