@@ -56,7 +56,7 @@ android {
             buildConfigField(
                 "String",
                 "BASE_URL",
-                "\"http://192.168.1.186:3000/api/v1/\"",
+                "\"http://192.168.1.5:3000/api/v1/\"",
             )
         }
 
@@ -108,9 +108,6 @@ dependencies {
 
     // Coil
     implementation(libs.coil.compose)
-
-    // Pdf Viewer For Android (Lightweight Compose PDF Viewer)
-    implementation("io.github.afreakyelf:Pdf-Viewer:2.3.7")
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

@@ -20,9 +20,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.freight24.connect.feature.trips.domain.viewmodel.PdfViewerEvent
 import com.freight24.connect.feature.trips.domain.viewmodel.PdfViewerViewModel
-import com.rajat.pdfviewer.PdfRendererView
-import com.rajat.pdfviewer.compose.PdfRendererViewCompose
-import com.rajat.pdfviewer.util.PdfSource
+import com.freight24.ui.components.PdfRendererView
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -163,53 +161,6 @@ internal fun PdfViewerScreen(
                 isLoading = uiState.isApproving
             )
         }
-    }
-}
-
-@Composable
-fun PdfRendererView(file: File) {
-    val lifecycleOwner = LocalLifecycleOwner.current
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-    ) {
-
-        PdfRendererViewCompose(
-            source = PdfSource.LocalFile(file),
-            lifecycleOwner = lifecycleOwner,
-            modifier = Modifier.fillMaxSize(),
-            statusCallBack = object : PdfRendererView.StatusCallBack {
-                override fun onPdfLoadStart() {
-                    Log.d("PdfViewer", "PDF load started")
-                }
-
-                override fun onPdfLoadProgress(progress: Int, downloadedBytes: Long, totalBytes: Long?) {
-                    Log.d("PdfViewer", "Progress: $progress%")
-                }
-
-                override fun onPdfLoadSuccess(absolutePath: String) {
-                    Log.d("PdfViewer", "PDF loaded successfully: $absolutePath")
-                }
-
-                override fun onError(error: Throwable) {
-                    Log.e("PdfViewer", "Error loading PDF", error)
-                }
-
-                override fun onPageChanged(currentPage: Int, totalPage: Int) {
-                    Log.d("PdfViewer", "Page: $currentPage/$totalPage")
-                }
-
-                override fun onPdfRenderStart() {
-                    Log.d("PdfViewer", "PDF render started")
-                }
-
-                override fun onPdfRenderSuccess() {
-                    Log.d("PdfViewer", "PDF rendered successfully")
-                }
-            }
-        )
     }
 }
 

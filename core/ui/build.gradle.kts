@@ -47,4 +47,7 @@ dependencies {
 
     // Material 3 Extended IconSet
     implementation("androidx.compose.material:material-icons-extended:1.x.x")
+
+    // Pdf Viewer For Android (Lightweight Compose PDF Viewer)
+    implementation("io.github.afreakyelf:Pdf-Viewer:2.3.7")
 }
