@@ -73,5 +73,6 @@ fun TripDocumentDto.toDomain(): TripDocument {
         uploadedAt = uploaded_at,
         podType = pod_type,
         podStatus = pod_status,
+        documentId = id,
     )
 }

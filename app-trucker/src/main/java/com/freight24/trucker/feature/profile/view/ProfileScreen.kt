@@ -41,6 +41,7 @@ import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -67,6 +68,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -132,6 +134,9 @@ private fun ProfileMainContent(
     hasChanges: Boolean,
 ) {
     val scrollState = rememberScrollState()
+    // Point 1 & 2: isVerified status is assumed to be derivable here.
+    // Since Profile.kt does not contain 'isVerified', we default to false.
+    val isVerified = false // TODO: Replace with actual verified status logic
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -170,7 +175,7 @@ private fun ProfileMainContent(
                 partnerId = profile.tagCode.orEmpty(),
                 initials = viewModel.getUserInitials(),
                 role = "Fleet Owner",
-                isVerified = true,
+                isVerified = isVerified,
                 isEditing = isEditing,
                 onEditClick = { viewModel.toggleEditMode() },
             )
@@ -183,6 +188,7 @@ private fun ProfileMainContent(
                     label = "FULL NAME",
                     value = viewModel.editableFullName.collectAsState().value,
                     isEditing = isEditing,
+                    isEditable = true, // Point 1: Full name is always editable when in edit mode
                     onValueChange = {
                         viewModel.editableFullName.value = it
                         viewModel.onFieldChanged()
@@ -193,6 +199,7 @@ private fun ProfileMainContent(
                     label = "EMAIL ADDRESS",
                     value = viewModel.editableEmailId.collectAsState().value,
                     isEditing = isEditing,
+                    isEditable = !isVerified, // Point 1: Editable only if unverified
                     onValueChange = {
                         viewModel.editableEmailId.value = it
                         viewModel.onFieldChanged()
@@ -203,6 +210,7 @@ private fun ProfileMainContent(
                     label = "PHONE NUMBER",
                     value = viewModel.editablePhoneNo.collectAsState().value,
                     isEditing = isEditing,
+                    isEditable = !isVerified, // Point 1: Editable only if unverified
                     onValueChange = {
                         viewModel.editablePhoneNo.value = it
                         viewModel.onFieldChanged()
@@ -213,6 +221,7 @@ private fun ProfileMainContent(
                     label = "AADHAAR NUMBER",
                     value = viewModel.editableAadhaarNumber.collectAsState().value,
                     isEditing = isEditing,
+                    isEditable = !isVerified, // Point 1: Editable only if unverified
                     onValueChange = {
                         viewModel.editableAadhaarNumber.value = it
                         viewModel.onFieldChanged()
@@ -227,6 +236,7 @@ private fun ProfileMainContent(
                     label = "COMPANY NAME",
                     value = viewModel.editableBusinessName.collectAsState().value,
                     isEditing = isEditing,
+                    isEditable = !isVerified, // Point 1: Editable only if unverified
                     onValueChange = {
                         viewModel.editableBusinessName.value = it
                         viewModel.onFieldChanged()
@@ -237,6 +247,7 @@ private fun ProfileMainContent(
                     label = "GST NUMBER",
                     value = viewModel.editableGstNumber.collectAsState().value,
                     isEditing = isEditing,
+                    isEditable = !isVerified, // Point 1: Editable only if unverified
                     onValueChange = {
                         viewModel.editableGstNumber.value = it
                         viewModel.onFieldChanged()
@@ -251,6 +262,7 @@ private fun ProfileMainContent(
                     label = "ACCOUNT HOLDER",
                     value = viewModel.editableAccountHolderName.collectAsState().value,
                     isEditing = isEditing,
+                    isEditable = !isVerified, // Point 1: Editable only if unverified
                     onValueChange = {
                         viewModel.editableAccountHolderName.value = it
                         viewModel.onFieldChanged()
@@ -262,6 +274,7 @@ private fun ProfileMainContent(
                     value = viewModel.editableAccountNumber.collectAsState().value,
                     isEditing = isEditing,
                     isSensitive = true,
+                    isEditable = !isVerified, // Point 1: Editable only if unverified
                     onValueChange = {
                         viewModel.editableAccountNumber.value = it
                         viewModel.onFieldChanged()
@@ -272,6 +285,7 @@ private fun ProfileMainContent(
                     label = "IFSC CODE",
                     value = viewModel.editableIfscCode.collectAsState().value,
                     isEditing = isEditing,
+                    isEditable = !isVerified, // Point 1: Editable only if unverified
                     onValueChange = {
                         viewModel.editableIfscCode.value = it
                         viewModel.onFieldChanged()
@@ -282,6 +296,7 @@ private fun ProfileMainContent(
                     label = "UPI ID",
                     value = viewModel.editableUpiId.collectAsState().value,
                     isEditing = isEditing,
+                    isEditable = !isVerified, // Point 1: Editable only if unverified
                     onValueChange = {
                         viewModel.editableUpiId.value = it
                         viewModel.onFieldChanged()
@@ -292,6 +307,7 @@ private fun ProfileMainContent(
                     label = "PAN NUMBER",
                     value = viewModel.editablePanNumber.collectAsState().value,
                     isEditing = isEditing,
+                    isEditable = !isVerified, // Point 1: Editable only if unverified
                     onValueChange = {
                         viewModel.editablePanNumber.value = it
                         viewModel.onFieldChanged()
@@ -303,7 +319,36 @@ private fun ProfileMainContent(
 
             // Documents Section
             ProfileSection(title = "DOCUMENTS", icon = Icons.AutoMirrored.Filled.Assignment, false) {
-                DocumentList(documents = profile.documents)
+                DocumentList(
+                    documents = profile.documents,
+                    onDocumentClick = { type ->
+                        // Point 3: Document click logic
+//                        val context = LocalContext.current
+                        val doc = profile.documents.find { it.type == type }
+                        val status = doc?.status ?: DocumentStatus.PENDING
+
+                        when (status) {
+                            DocumentStatus.PENDING -> {
+                                // Launch file picker (Requires Context/Activity to open a platform file picker)
+                                // TODO: Implement platform-specific file picker launch logic here, using 'context'
+                                println("Launching file picker for document type: $type")
+//
+                            }
+                            DocumentStatus.UPLOADED -> {
+                                // Launch PDF viewer (Requires Context/Activity and URL)
+                                // TODO: Implement platform-specific PDF viewer logic here, using 'context' and doc?.url
+                                doc?.url?.let { url ->
+                                    println("Launching PDF viewer for URL: $url")
+//                                    this.startActivity(getPdfLaunchIntent(doc.url, getContext()))
+                                    // Example structure for Android: context.startActivity(getPdfLaunchIntent(url, context))
+                                } ?: println("Document URL not found for status $status")
+                            }
+                            else -> {
+                                android.util.Log.e("ProfileScreen", "Unknown document status: $status")
+                            }
+                        }
+                    }
+                )
             }
 
             Spacer(modifier = Modifier.height(48.dp))
@@ -383,6 +428,17 @@ private fun ProfileHeaderCard(
                                 .background(MaterialTheme.colorScheme.surface, CircleShape)
                                 .padding(1.dp),
                     )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = "UnVerified",
+                        tint = Color.Yellow, // POINT 2: Changed tint to Yellow
+                        modifier =
+                            Modifier
+                                .size(22.dp)
+                                .background(MaterialTheme.colorScheme.surface, CircleShape)
+                                .padding(1.dp),
+                    )
                 }
             }
 
@@ -416,7 +472,6 @@ private fun ProfileHeaderCard(
                         Modifier
                             .size(40.dp)
                             .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape),
-                    enabled = false
                 ) {
                     Icon(
                         imageVector = Icons.Default.Edit,
@@ -498,6 +553,7 @@ private fun ProfileField(
     label: String,
     value: String,
     isEditing: Boolean,
+    isEditable: Boolean = true, // POINT 1: Added isEditable parameter
     onValueChange: (String) -> Unit = {},
     isSensitive: Boolean = false,
 ) {
@@ -516,7 +572,7 @@ private fun ProfileField(
         )
         Spacer(modifier = Modifier.height(6.dp))
 
-        if (isEditing) {
+        if (isEditing && isEditable) { // POINT 1: Used isEditable
             OutlinedTextField(
                 value = value,
                 onValueChange = onValueChange,
@@ -550,7 +606,10 @@ private fun ProfileField(
 }
 
 @Composable
-private fun DocumentList(documents: List<ProfileDocument>) {
+private fun DocumentList(
+    documents: List<ProfileDocument>,
+    onDocumentClick: (DocumentType) -> Unit, // POINT 3: Added Callback
+) {
     val types =
         listOf(
             DocumentType.PAN,
@@ -569,6 +628,7 @@ private fun DocumentList(documents: List<ProfileDocument>) {
                 modifier =
                     Modifier
                         .fillMaxWidth()
+                        .clickable { onDocumentClick(type) } // POINT 3: Added clickable
                         .padding(horizontal = 20.dp, vertical = 18.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {

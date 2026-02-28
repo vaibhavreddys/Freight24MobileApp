@@ -52,4 +52,5 @@ data class TripDocument(
     val uploadedAt: String? = null,
     val podType: String? = null,
     val podStatus: String? = null,
+    val documentId: String? = "null",
 )

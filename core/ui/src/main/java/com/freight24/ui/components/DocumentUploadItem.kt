@@ -71,6 +71,7 @@ fun DocumentUploadItem(
             }
             is DocumentStatus.Uploaded -> {
                 Surface(
+//                    onClick = onDocumentViewClick,
                     color = if (status.isVerified) Color(0xFFE8F5E9) else Color(0xFFFFF3E0),
                     shape = RoundedCornerShape(4.dp),
                 ) {

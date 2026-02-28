@@ -1,5 +1,7 @@
 package com.freight24.ui.components
 
+import android.content.Context
+import android.content.Intent
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -8,9 +10,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLifecycleOwner
-import com.rajat.pdfviewer.compose.PdfRendererViewCompose
 import com.rajat.pdfviewer.PdfRendererView
+import com.rajat.pdfviewer.PdfViewerActivity
+import com.rajat.pdfviewer.compose.PdfRendererViewCompose
+import com.rajat.pdfviewer.util.CacheStrategy
 import com.rajat.pdfviewer.util.PdfSource
+import com.rajat.pdfviewer.util.ToolbarTitleBehavior
+import com.rajat.pdfviewer.util.saveTo
 import java.io.File
 
 @Composable
@@ -50,4 +56,19 @@ fun PdfRendererView(file: File) {
             }
         )
     }
+}
+
+/**
+ * Launches a PDF file from a URL.
+ */
+fun getPdfLaunchIntent(url: String, context: Context) : Intent {
+        return PdfViewerActivity.launchPdfFromUrl(
+            context = context,
+            pdfUrl = url,
+            pdfTitle = "F24 Document",
+            saveTo = saveTo.DOWNLOADS,
+            enableDownload = true,
+            toolbarTitleBehavior = ToolbarTitleBehavior.SINGLE_LINE_SCROLLABLE,
+            cacheStrategy = CacheStrategy.MAXIMIZE_PERFORMANCE
+        )
 }

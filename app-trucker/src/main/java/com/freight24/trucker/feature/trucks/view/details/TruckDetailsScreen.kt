@@ -54,6 +54,8 @@ import com.freight24.common.model.TruckDocument
 import com.freight24.ui.UiState
 import com.freight24.ui.components.FilterSelectionChip
 import com.freight24.ui.components.TruckHeaderCard
+import com.freight24.ui.components.getPdfLaunchIntent
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -123,7 +125,8 @@ internal fun TruckDetailsScreen(
                                         setDataAndType(Uri.parse(url), "application/pdf")
                                         flags = Intent.FLAG_ACTIVITY_NO_HISTORY
                                     }
-                                context.startActivity(Intent.createChooser(intent, "Open PDF"))
+//                                context.startActivity(Intent.createChooser(intent, "Open PDF"))
+                                context.startActivity(getPdfLaunchIntent(url, context))
                             }
                         },
                     )

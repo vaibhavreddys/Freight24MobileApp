@@ -51,4 +51,20 @@ internal class TripRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun uploadLr(
+        tripId: String,
+        filePart: okhttp3.MultipartBody.Part,
+        notes: okhttp3.RequestBody?
+    ): Result<TripDetail> {
+        val uploadResult = safeCallProvider.safeApiCall(ioDispatcher) {
+            tripApi.uploadLr(tripId, filePart, notes)
+        }
+
+        return if (uploadResult.isSuccess) {
+            fetchTripDetail(tripId, forceRefresh = true)
+        } else {
+            Result.failure(uploadResult.exceptionOrNull() ?: Exception("Failed to upload LR"))
+        }
+    }
+
 }

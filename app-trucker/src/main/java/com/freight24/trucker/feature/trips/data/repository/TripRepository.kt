@@ -21,4 +21,10 @@ internal interface TripRepository {
         status: String,
     ): Result<TripDetail>
 
+    suspend fun uploadLr(
+        tripId: String,
+        filePart: okhttp3.MultipartBody.Part,
+        notes: okhttp3.RequestBody? = null
+    ): Result<TripDetail>
+
 }

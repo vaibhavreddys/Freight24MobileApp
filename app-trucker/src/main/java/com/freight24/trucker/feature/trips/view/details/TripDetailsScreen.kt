@@ -1,10 +1,12 @@
 package com.freight24.trucker.feature.trips.view.details
 
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,7 +16,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,6 +30,7 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,6 +44,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -51,10 +58,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import coil3.compose.rememberAsyncImagePainter
 import com.freight24.common.model.Trip
 import com.freight24.common.model.TripDetail
 import com.freight24.common.util.DateTimeUtils
@@ -82,14 +93,137 @@ internal fun TripDetailsScreen(
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
 
-    val filePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        if (uri != null) {
-            Log.d("TripDetailsScreen", "Selected document URI: $uri")
-            // Future implementation: viewModel.uploadDocument(uri)
-            scope.launch {
-                snackbarHostState.showSnackbar("Upload feature incomplete. Selected URI: $uri")
+    val selectedUris by viewModel.selectedUris.collectAsState()
+    val isPdf by viewModel.isPdf.collectAsState()
+    val isUploading by viewModel.isUploading.collectAsState()
+
+    var showSelectionDialog by rememberSaveable { mutableStateOf(false) }
+    var showSheet by rememberSaveable { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState()
+    
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickMultipleVisualMedia(),
+        onResult = { uris ->
+            if (uris.isNotEmpty()) {
+                viewModel.onFilesPicked(uris, false)
+                showSheet = true
+            }
+        }
+    )
+
+    val pdfPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri ->
+            uri?.let {
+                viewModel.onFilesPicked(listOf(it), true)
+                showSheet = true
+            }
+        }
+    )
+
+    if (showSelectionDialog) {
+        AlertDialog(
+            onDismissRequest = { showSelectionDialog = false },
+            title = { Text("Select Document Type") },
+            text = { Text("Select images from gallery or a PDF file to upload.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                        showSelectionDialog = false
+                    }
+                ) {
+                    Text("Images", color = MaterialTheme.colorScheme.primary)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        pdfPickerLauncher.launch("application/pdf")
+                        showSelectionDialog = false
+                    }
+                ) {
+                    Text("PDF", color = MaterialTheme.colorScheme.primary)
+                }
+            },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(12.dp)
+        )
+    }
+
+    if (showSheet && selectedUris.isNotEmpty()) {
+        ModalBottomSheet(
+            onDismissRequest = {
+                showSheet = false
+                viewModel.clearSelection()
+            },
+            sheetState = sheetState,
+            containerColor = Color.White
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = if (isPdf) "PDF Selected" else "Images Selected (${selectedUris.size})",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                if (isPdf) {
+                    Icon(
+                        imageVector = Icons.Default.Description,
+                        contentDescription = null,
+                        modifier = Modifier.size(64.dp),
+                        tint = Color.Red
+                    )
+                    Text(text = "PDF Document", style = MaterialTheme.typography.bodyMedium)
+                } else {
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        items(selectedUris) { uri ->
+                            Box {
+                                Image(
+                                    painter = rememberAsyncImagePainter(uri),
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .size(100.dp)
+                                        .clip(RoundedCornerShape(8.dp)),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                Button(
+                    onClick = {
+                        viewModel.uploadLR()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    enabled = !isUploading
+                ) {
+                    if (isUploading) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Uploading...", color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                    } else {
+                        Text("Upload", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }
@@ -184,7 +318,7 @@ internal fun TripDetailsScreen(
                     TripDetailsContent(
                         trip = state.data,
                         onNavigateToPayments = { onNavigateToPayments(state.data.id) },
-                        onUploadClick = { filePickerLauncher.launch("image/*") }
+                        onUploadClick = { showSelectionDialog = true }
                     )
                 }
                 UiState.Idle -> {}
@@ -384,20 +518,27 @@ fun TripDetailsContent(
                         else -> DocumentStatus.Pending
                     }
 
+                    val subtitleText = when (doc.verificationStatus.lowercase()) {
+                        "pending" -> "Verification pending"
+                        "verified" -> "Your LR was verified."
+                        "rejected" -> "Previous LR was rejected, upload a correct LR"
+                        else -> "Upload new document"
+                    }
+
                     DocumentUploadItem(
                         title = doc.documentType.uppercase(),
-                        subtitle = if (doc.verificationStatus == "pending") "Verification pending" else doc.originalFilename ?: "Upload new document",
+                        subtitle = subtitleText,
                         status = status,
-                        onUploadClick = { /* Camera or File picker logic */ }
+                        onUploadClick = onUploadClick
                     )
                 }
-                Text(
-                    text = "Please ensure all uploaded documents are clear. Verification usually takes 2-4 hours.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-                )
+//                Text(
+//                    text = "Verification usually takes 2-4 hours.",
+//                    style = MaterialTheme.typography.bodySmall,
+//                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+//                    textAlign = TextAlign.Center,
+//                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+//                )
             }
             
         }

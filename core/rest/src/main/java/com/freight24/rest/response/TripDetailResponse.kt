@@ -41,4 +41,5 @@ data class TripDocumentDto(
     val uploaded_at: String? = null,
     val pod_type: String? = null,
     val pod_status: String? = null,
+    val id: String
 )
