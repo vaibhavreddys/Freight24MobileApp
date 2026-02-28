@@ -1,0 +1,97 @@
+package com.freight24.connect.repository.trips
+
+import android.util.Log
+import android.webkit.MimeTypeMap
+import com.freight24.common.di.IoDispatcher
+import com.freight24.connect.feature.trips.domain.model.LuChargeRequest
+import com.freight24.rest.api.TripLUChargesApi
+import com.freight24.rest.response.UpdatedLUResponse
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.File
+import javax.inject.Inject
+
+class TripLUChargesRepositoryImpl @Inject constructor(
+    private val api: TripLUChargesApi,
+    @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher
+) : TripLUChargesRepository{
+
+    override suspend fun updateLUCharges(
+        tripId: String,
+        loadingFile: File?,
+        unloadingFile: File?,
+        request: LuChargeRequest
+    ): Result<UpdatedLUResponse> = withContext(ioDispatcher) {
+
+        try {
+
+            val loadingPart = loadingFile?.toMultipart("loadingSlip")
+            val unloadingPart = unloadingFile?.toMultipart("unloadingSlip")
+
+            val partMap = request.toMultipartMap()
+
+            val response = api.updateLUCharges(
+                tripId = tripId,
+                loadingFile = loadingPart,
+                unloadingFile = unloadingPart,
+                parts = partMap
+            )
+
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception(response.message()))
+            }
+
+        } catch (e: Exception) {
+            Log.e("TripLUChargesRepository", "updateLUCharges: ", e)
+            Result.failure(e)
+        }
+    }
+
+    private fun File.toMultipart(partName: String): MultipartBody.Part {
+        val mimeType = getMimeType(this) ?: "application/octet-stream"
+        val requestBody = asRequestBody(mimeType.toMediaTypeOrNull())
+
+        return MultipartBody.Part.createFormData(
+            partName,
+            name,
+            requestBody
+        )
+    }
+
+    private fun getMimeType(file: File): String? {
+        val extension = file.extension.lowercase()
+        return MimeTypeMap.getSingleton()
+            .getMimeTypeFromExtension(extension)
+    }
+
+    private fun LuChargeRequest.toMultipartMap(): Map<String, RequestBody> {
+        return buildMap {
+
+            fun add(key: String, value: String?) {
+                value?.let {
+                    put(key, it.toRequestBody("text/plain".toMediaType()))
+                }
+            }
+
+            add("loading[amount]", loadingAmount?.toString())
+            add("loading[payment_method]", loadingPaymentMethod)
+            add("loading[reimbursable]", loadingReimbursable?.toString())
+
+            add("unloading[amount]", unloadingAmount?.toString())
+            add("unloading[payment_method]", unloadingPaymentMethod)
+            add("unloading[reimbursable]", unloadingReimbursable?.toString())
+
+            add("notes", notes)
+        }
+    }
+
+
+}

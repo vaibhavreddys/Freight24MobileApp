@@ -4,12 +4,14 @@ import com.freight24.connect.repository.ClientRepository
 import com.freight24.connect.repository.ClientRepositoryImpl
 import com.freight24.connect.repository.LocationRepository
 import com.freight24.connect.repository.LocationRepositoryImpl
-import com.freight24.connect.repository.TripHaltingRepository
-import com.freight24.connect.repository.TripHaltingRepositoryImpl
-import com.freight24.connect.repository.TripRepository
-import com.freight24.connect.repository.TripRepositoryImpl
+import com.freight24.connect.repository.trips.TripHaltingRepository
+import com.freight24.connect.repository.trips.TripHaltingRepositoryImpl
+import com.freight24.connect.repository.trips.TripRepository
+import com.freight24.connect.repository.trips.TripRepositoryImpl
 import com.freight24.connect.repository.TruckRepository
 import com.freight24.connect.repository.TruckRepositoryImpl
+import com.freight24.connect.repository.trips.TripLUChargesRepository
+import com.freight24.connect.repository.trips.TripLUChargesRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -40,4 +42,10 @@ interface RepositoryBinderModule {
     fun bindsTripHaltingRepository(
         tripHaltingRepositoryImpl: TripHaltingRepositoryImpl
     ): TripHaltingRepository
+
+    @Binds
+    @Singleton
+    fun bindsTripLUChargesRepository(
+        tripLUChargesRepositoryImpl: TripLUChargesRepositoryImpl
+    ): TripLUChargesRepository
 }

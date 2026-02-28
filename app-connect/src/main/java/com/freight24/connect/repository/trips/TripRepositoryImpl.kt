@@ -1,4 +1,4 @@
-package com.freight24.connect.repository
+package com.freight24.connect.repository.trips
 
 import com.freight24.common.di.IoDispatcher
 import com.freight24.rest.api.TripApi

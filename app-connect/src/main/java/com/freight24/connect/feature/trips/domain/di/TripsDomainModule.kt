@@ -14,6 +14,8 @@ import com.freight24.connect.feature.trips.domain.usecase.UpdateHaltingRateUseCa
 import com.freight24.connect.feature.trips.domain.usecase.UpdateHaltingRateUseCaseImpl
 import com.freight24.connect.feature.trips.domain.usecase.UpdateTruckerUseCase
 import com.freight24.connect.feature.trips.domain.usecase.UpdateTruckerUseCaseImpl
+import com.freight24.connect.feature.trips.domain.usecase.UploadLUChargesUseCase
+import com.freight24.connect.feature.trips.domain.usecase.UploadLUChargesUseCaseImpl
 import com.freight24.connect.feature.trips.domain.usecase.UploadLrUseCase
 import com.freight24.connect.feature.trips.domain.usecase.UploadLrUseCaseImpl
 import com.freight24.connect.feature.trips.domain.usecase.VerifyLrUseCase
@@ -53,5 +55,8 @@ internal abstract class TripsDomainModule {
 
     @Binds
     abstract fun bindUpdateHaltingRateUseCase(useCaseImpl: UpdateHaltingRateUseCaseImpl): UpdateHaltingRateUseCase
+
+    @Binds
+    abstract fun bindUploadLUChargesUseCase(useCaseImpl: UploadLUChargesUseCaseImpl): UploadLUChargesUseCase
 
 }

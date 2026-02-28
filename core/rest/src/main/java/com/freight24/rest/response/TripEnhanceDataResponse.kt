@@ -135,9 +135,11 @@ data class TripDataResponse(
 
     @Serializable
     data class Charges(
+        val id: String? = null,
         val total: Int,
         val reimbursable: Double,
-        val includedInTripCost: Boolean = false
+        val includedInTripCost: Boolean = false,
+        val slipUrl: String? = null,
     )
 
     @Serializable

@@ -21,7 +21,6 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Payments
-import androidx.compose.material.icons.automirrored.filled.RotateRight
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material3.*
@@ -55,6 +54,7 @@ fun TripDetailsScreen(
     onEditClick: (String) -> Unit,
     onDocumentView : (String, String, String) -> Unit,
     onHaltingClick: (String, String, Int, Int) -> Unit,
+    onLuClick: (String, String, String?, String?) -> Unit,
     viewModel: TripDetailsViewModel = hiltViewModel<TripDetailsViewModelImpl>()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -310,8 +310,11 @@ fun TripDetailsScreen(
                         onDocClick = { docId, status ->
                             onDocumentView(tripId, docId, status)
                         },
-                        onHaltingClick = { loadingDays, unloadingDays ->
-                            onHaltingClick(tripId, uiState.trip!!.indentDetails.truckTypeId, loadingDays, unloadingDays)
+                        onHaltingClick = { tripId, truckTypeId, loadingDays, unloadingDays ->
+                            onHaltingClick(tripId, truckTypeId, loadingDays, unloadingDays)
+                        },
+                        onLuClick = { loading, unloading, loadingSlipUrl, unloadingSlipUrl ->
+                            onLuClick(loading, unloading, loadingSlipUrl, unloadingSlipUrl)
                         }
                     )
                 }
@@ -325,7 +328,8 @@ fun TripDetailsContent(
     trip: TripDataResponse,
     onUploadLrClick: () -> Unit,
     onDocClick: (String, String) -> Unit,
-    onHaltingClick: (Int, Int) -> Unit
+    onHaltingClick: (String, String, Int, Int) -> Unit,
+    onLuClick: (String, String, String?, String?) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -359,11 +363,12 @@ fun TripDetailsContent(
             ChargesAndDeductionsContent(
                 financials = trip.financials,
                 onHaltingClick = {
-                    onHaltingClick(
-                        trip.financials?.halting?.loading?.days ?: 0,
-                        trip.financials?.halting?.unloading?.days ?: 0
-                    )
-                }
+                    val truckTypeId = trip.indentDetails.truckTypeId
+                    val loadingDays = trip.financials?.halting?.loading?.days ?: 0
+                    val unloadingDays = trip.financials?.halting?.unloading?.days ?: 0
+                    onHaltingClick(trip.id, truckTypeId, loadingDays, unloadingDays)
+                },
+                onLuClick = onLuClick
             )
         }
 
@@ -594,7 +599,8 @@ fun ExpandableSection(
 @Composable
 fun ChargesAndDeductionsContent(
     financials: TripDataResponse.FinanceDetails?,
-    onHaltingClick: () -> Unit
+    onHaltingClick: () -> Unit,
+    onLuClick: (String, String, String?, String?) -> Unit
 ) {
     if (financials == null) {
         Text("No data", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodySmall)
@@ -608,7 +614,14 @@ fun ChargesAndDeductionsContent(
         val luTotal = (financials.luCharges.loading.total + financials.luCharges.unloading.total).toDouble()
         val haltingTotal = (financials.halting.loading.totalAmount + financials.halting.unloading.totalAmount)
         
-        ChargesSubRow("Loading & Unloading", luTotal)
+        ChargesSubRow("Loading & Unloading", luTotal, onClick = {
+            onLuClick(
+                financials.luCharges.loading.total.toString(),
+                financials.luCharges.unloading.total.toString(),
+                financials.luCharges.loading.slipUrl,
+                financials.luCharges.unloading.slipUrl
+            )
+        })
         ChargesSubRow("Halting", haltingTotal, onClick = onHaltingClick)
         ChargesSubRow("Other Deductions", financials.otherDeductions, isDeduction = true)
     }

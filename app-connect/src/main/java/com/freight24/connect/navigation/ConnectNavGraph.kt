@@ -24,6 +24,7 @@ import com.freight24.connect.feature.login.view.signin.LoginScreen
 import com.freight24.connect.feature.login.view.verify.VerifyOtpScreen
 import com.freight24.connect.feature.trips.views.PdfViewerScreen
 import com.freight24.connect.feature.trips.views.HaltingChargesScreen
+import com.freight24.connect.feature.trips.views.LuChargesScreen
 
 @Composable
 fun ConnectNavGraph(
@@ -115,6 +116,37 @@ fun ConnectNavGraph(
                     navHostController.navigate(
                         ConnectDestination.HaltingCharges.createRoute(tripId, truckTypeId) + 
                         "?loadingDays=$loadingDays&unloadingDays=$unloadingDays"
+                    )
+                },
+                onLuClick = { loadingAmount, unloadingAmount, loadingSlipUrl, unloadingSlipUrl ->
+                navHostController.navigate(
+                    ConnectDestination.LuCharges.createRoute(
+                        tripId = tripId,
+                        loadingAmount = loadingAmount,
+                        unloadingAmount = unloadingAmount,
+                        loadingSlipUrl = loadingSlipUrl,
+                        unloadingSlipUrl = unloadingSlipUrl
+                    )
+                )
+            }
+            )
+        }
+
+        composable(
+            route = ConnectDestination.LuCharges.route,
+            arguments = ConnectDestination.LuCharges.arguments
+        ) { backStackEntry ->
+            val tripId = backStackEntry.arguments?.getString(ConnectDestination.LuCharges.TRIP_ID_ARG) ?: ""
+            LuChargesScreen(
+                tripId = tripId,
+                onBackClick = { navHostController.popBackStack() },
+                onSuccess = {
+                    navHostController.previousBackStackEntry?.savedStateHandle?.set("refresh", true)
+                    navHostController.popBackStack()
+                },
+                onPdfPreview = { tripId, docId, localPath ->
+                    navHostController.navigate(
+                        ConnectDestination.PdfViewer.createRoute(tripId, docId, localPath = localPath)
                     )
                 }
             )
