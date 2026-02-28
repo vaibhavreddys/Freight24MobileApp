@@ -38,7 +38,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.InsertDriveFile
+import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.PhotoLibrary
@@ -533,7 +533,7 @@ private fun DocumentsStep(viewModel: OnboardTruckViewModel) {
                     headlineContent = { Text("Documents (PDF)") },
                     leadingContent = {
                         Surface(color = MaterialTheme.colorScheme.tertiaryContainer, shape = CircleShape) {
-                            Icon(Icons.Default.InsertDriveFile, null, modifier = Modifier.padding(8.dp).size(20.dp))
+                            Icon(Icons.AutoMirrored.Filled.InsertDriveFile, null, modifier = Modifier.padding(8.dp).size(20.dp))
                         }
                     },
                     modifier =

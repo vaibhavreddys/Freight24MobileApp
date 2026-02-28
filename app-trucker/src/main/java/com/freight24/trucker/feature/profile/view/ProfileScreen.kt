@@ -1,10 +1,14 @@
 package com.freight24.trucker.feature.profile.view
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,6 +38,8 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -55,6 +61,9 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -169,7 +178,7 @@ private fun ProfileMainContent(
             Spacer(modifier = Modifier.height(32.dp))
 
             // Information Sections
-            ProfileSection(title = "PERSONAL INFORMATION", icon = Icons.Default.Person) {
+            ProfileSection(title = "PERSONAL INFORMATION", icon = Icons.Default.Person, true) {
                 ProfileField(
                     label = "FULL NAME",
                     value = viewModel.editableFullName.collectAsState().value,
@@ -213,7 +222,7 @@ private fun ProfileMainContent(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            ProfileSection(title = "BUSINESS DETAILS", icon = Icons.Default.Business) {
+            ProfileSection(title = "BUSINESS DETAILS", icon = Icons.Default.Business, false) {
                 ProfileField(
                     label = "COMPANY NAME",
                     value = viewModel.editableBusinessName.collectAsState().value,
@@ -237,7 +246,7 @@ private fun ProfileMainContent(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            ProfileSection(title = "BANKING INFORMATION", icon = Icons.Default.AccountBalance) {
+            ProfileSection(title = "BANKING INFORMATION", icon = Icons.Default.AccountBalance, false) {
                 ProfileField(
                     label = "ACCOUNT HOLDER",
                     value = viewModel.editableAccountHolderName.collectAsState().value,
@@ -293,7 +302,7 @@ private fun ProfileMainContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             // Documents Section
-            ProfileSection(title = "DOCUMENTS", icon = Icons.AutoMirrored.Filled.Assignment) {
+            ProfileSection(title = "DOCUMENTS", icon = Icons.AutoMirrored.Filled.Assignment, false) {
                 DocumentList(documents = profile.documents)
             }
 
@@ -407,6 +416,7 @@ private fun ProfileHeaderCard(
                         Modifier
                             .size(40.dp)
                             .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape),
+                    enabled = false
                 ) {
                     Icon(
                         imageVector = Icons.Default.Edit,
@@ -424,12 +434,19 @@ private fun ProfileHeaderCard(
 private fun ProfileSection(
     title: String,
     icon: ImageVector,
+    initiallyExpanded: Boolean,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    var isExpanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(bottom = 16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .clickable { isExpanded = !isExpanded }
+                .padding(vertical = 8.dp),
         ) {
             Icon(
                 imageVector = icon,
@@ -444,19 +461,33 @@ private fun ProfileSection(
                 color = BrandGreen,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp,
+                modifier = Modifier.weight(1f)
+            )
+            Icon(
+                imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                contentDescription = if (isExpanded) "Collapse" else "Expand",
+                tint = BrandGreen
             )
         }
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        Spacer(modifier = Modifier.height(8.dp))
+
+        AnimatedVisibility(
+            visible = isExpanded,
+            enter = expandVertically(),
+            exit = shrinkVertically()
         ) {
-            Column(
-                modifier = Modifier.padding(vertical = 8.dp),
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
             ) {
-                content()
+                Column(
+                    modifier = Modifier.padding(vertical = 8.dp),
+                ) {
+                    content()
+                }
             }
         }
     }
@@ -636,7 +667,7 @@ private fun EditActions(
                 onClick = onCancel,
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp),
-                border = ButtonDefaults.outlinedButtonBorder.copy(width = 1.dp),
+                border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(width = 1.dp),
             ) {
                 Text("Cancel", fontWeight = FontWeight.Bold)
             }
