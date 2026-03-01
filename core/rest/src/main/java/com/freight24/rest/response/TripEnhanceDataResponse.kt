@@ -76,6 +76,7 @@ data class TripDataResponse(
         val netPayable: Double,
         val clientTripCost: Double,
         val otherDeductions: Double,
+        val deductionRemarks: String? = null,
         val truckerTripCost: Double,
         val totalPaidAmount: Double,
         val tds: TDS,
@@ -119,6 +120,7 @@ data class TripDataResponse(
         val days: Int,
         val totalAmount: Double,
         val perDayAmount: Double,
+        val notes: String? = null,
     )
 
     @Serializable
@@ -140,6 +142,7 @@ data class TripDataResponse(
         val reimbursable: Double,
         val includedInTripCost: Boolean = false,
         val slipUrl: String? = null,
+        val notes: String? = null,
     )
 
     @Serializable

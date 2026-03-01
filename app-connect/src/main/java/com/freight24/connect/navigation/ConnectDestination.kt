@@ -183,6 +183,22 @@ sealed class ConnectDestination(val route: String) {
             "&localPath=${localPath ?: ""}"
     }
 
+    data object CommonPdfViewer : ConnectDestination("common_pdf_viewer?title={title}&url={url}&localPath={localPath}") {
+        const val TITLE_ARG = "title"
+        const val URL_ARG = "url"
+        const val LOCAL_PATH_ARG = "localPath"
+        override val arguments = listOf(
+            navArgument(TITLE_ARG) { type = NavType.StringType; nullable = true; defaultValue = null },
+            navArgument(URL_ARG) { type = NavType.StringType; nullable = true; defaultValue = null },
+            navArgument(LOCAL_PATH_ARG) { type = NavType.StringType; nullable = true; defaultValue = null }
+        )
+        fun createRoute(title: String, url: String? = null, localPath: String? = null) = 
+            "common_pdf_viewer" + 
+            "?title=${title}" + 
+            "&url=${url ?: ""}" + 
+            "&localPath=${localPath ?: ""}"
+    }
+
     data object HaltingCharges : ConnectDestination("halting_charges/{tripId}/{truckTypeId}") {
         const val TRIP_ID_ARG = "tripId"
         const val TRUCK_TYPE_ID_ARG = "truckTypeId"
@@ -193,29 +209,58 @@ sealed class ConnectDestination(val route: String) {
         fun createRoute(tripId: String, truckTypeId: String) = "halting_charges/$tripId/$truckTypeId"
     }
 
-    data object LuCharges : ConnectDestination("lu_charges/{tripId}?loadingAmount={loadingAmount}&unloadingAmount={unloadingAmount}&loadingSlipUrl={loadingSlipUrl}&unloadingSlipUrl={unloadingSlipUrl}") {
+    data object LuCharges : ConnectDestination("" +
+            "lu_charges/{tripId}?loadingAmount={loadingAmount}&unloadingAmount={unloadingAmount}" +
+            "&loadingSlipUrl={loadingSlipUrl}&unloadingSlipUrl={unloadingSlipUrl}" +
+            "&loadingId={loadingId}&unloadingId={unloadingId}&notes={notes}"
+    ) {
         const val TRIP_ID_ARG = "tripId"
         const val LOADING_AMOUNT_ARG = "loadingAmount"
         const val UNLOADING_AMOUNT_ARG = "unloadingAmount"
         const val LOADING_SLIP_URL_ARG = "loadingSlipUrl"
         const val UNLOADING_SLIP_URL_ARG = "unloadingSlipUrl"
+        const val LOADING_ID = "loadingId"
+        const val UNLOADING_ID = "unloadingId"
+        const val NOTES = "notes"
         override val arguments = listOf(
             navArgument(TRIP_ID_ARG) { type = NavType.StringType },
             navArgument(LOADING_AMOUNT_ARG) { type = NavType.StringType; nullable = true; defaultValue = null },
             navArgument(UNLOADING_AMOUNT_ARG) { type = NavType.StringType; nullable = true; defaultValue = null },
             navArgument(LOADING_SLIP_URL_ARG) { type = NavType.StringType; nullable = true; defaultValue = null },
-            navArgument(UNLOADING_SLIP_URL_ARG) { type = NavType.StringType; nullable = true; defaultValue = null }
+            navArgument(UNLOADING_SLIP_URL_ARG) { type = NavType.StringType; nullable = true; defaultValue = null },
+            navArgument(LOADING_ID) { type = NavType.StringType; nullable = true; defaultValue = null },
+            navArgument(UNLOADING_ID) { type = NavType.StringType; nullable = true; defaultValue = null },
+            navArgument(NOTES) { type = NavType.StringType; nullable = true; defaultValue = "" }
         )
         fun createRoute(
             tripId: String, 
             loadingAmount: String? = null, 
             unloadingAmount: String? = null,
             loadingSlipUrl: String? = null,
-            unloadingSlipUrl: String? = null
+            unloadingSlipUrl: String? = null,
+            loadingId: String? = null,
+            unloadingId: String? = null,
+            notes: String? = null
         ) = "lu_charges/$tripId" + 
             "?loadingAmount=${loadingAmount ?: ""}" + 
             "&unloadingAmount=${unloadingAmount ?: ""}" +
             "&loadingSlipUrl=${loadingSlipUrl ?: ""}" +
-            "&unloadingSlipUrl=${unloadingSlipUrl ?: ""}"
+            "&unloadingSlipUrl=${unloadingSlipUrl ?: ""}" +
+            "&loadingId=${loadingId ?: ""}" +
+            "&unloadingId=${unloadingId ?: ""}" +
+            "&notes=${notes ?: ""}"
+    }
+
+    data object OtherDeductions : ConnectDestination("other_deductions/{tripId}?amount={amount}&notes={notes}") {
+        const val TRIP_ID_ARG = "tripId"
+        const val AMOUNT_ARG = "amount"
+        const val NOTES_ARG = "notes"
+        override val arguments = listOf(
+            navArgument(TRIP_ID_ARG) { type = NavType.StringType },
+            navArgument(AMOUNT_ARG) { type = NavType.StringType; nullable = true; defaultValue = "0.0" },
+            navArgument(NOTES_ARG) { type = NavType.StringType; nullable = true; defaultValue = "" }
+        )
+        fun createRoute(tripId: String, amount: String? = null, notes: String? = null) = 
+            "other_deductions/$tripId?amount=${amount ?: "0.0"}&notes=${notes ?: ""}"
     }
 }

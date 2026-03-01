@@ -4,11 +4,13 @@ import com.freight24.common.di.IoDispatcher
 import com.freight24.rest.api.TripApi
 import com.freight24.rest.request.CreateTripRequest
 import com.freight24.rest.request.LrVerifyRequest
+import com.freight24.rest.request.UpdateOtherDeductionsRequest
 import com.freight24.rest.request.UpdateTruckerStatus
 import com.freight24.rest.response.CreatedTripResponse
 import com.freight24.rest.response.MyTripsDataResponse
 import com.freight24.rest.response.SignedDocument
 import com.freight24.rest.response.TripDataResponse
+import com.freight24.rest.response.UpdateOtherDeductionsResponse
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import okhttp3.MultipartBody
@@ -166,6 +168,30 @@ class TripRepositoryImpl @Inject constructor(
                 )
                 if (response.isSuccessful && response.body() != null) {
                     Result.success(response.body()!!.data)
+                } else {
+                    Result.failure(Exception(response.message()))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    override suspend fun updateOtherDeductions(
+        tripId: String,
+        amount: String,
+        notes: String?
+    ): Result<UpdateOtherDeductionsResponse> =
+        withContext(ioDispatcher) {
+            try {
+                val response = api.updateOtherDeductions(
+                    tripId = tripId,
+                    updateOtherDeductionsRequest = UpdateOtherDeductionsRequest(
+                        amount = amount,
+                        remarks = notes
+                    )
+                )
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!)
                 } else {
                     Result.failure(Exception(response.message()))
                 }

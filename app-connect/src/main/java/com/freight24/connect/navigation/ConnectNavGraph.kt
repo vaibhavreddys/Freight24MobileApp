@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import coil3.Uri
 import com.freight24.connect.enum.ConnectTab
 import com.freight24.connect.feature.home.HomeScreen
 import com.freight24.connect.feature.indents.views.CloneIndentScreen
@@ -22,9 +23,14 @@ import com.freight24.connect.feature.indents.views.SearchSelectionScreen
 import com.freight24.connect.feature.indents.views.SearchType
 import com.freight24.connect.feature.login.view.signin.LoginScreen
 import com.freight24.connect.feature.login.view.verify.VerifyOtpScreen
+import com.freight24.connect.feature.trips.views.CommonPdfViewerScreen
 import com.freight24.connect.feature.trips.views.PdfViewerScreen
 import com.freight24.connect.feature.trips.views.HaltingChargesScreen
 import com.freight24.connect.feature.trips.views.LuChargesScreen
+import com.freight24.connect.feature.trips.views.OtherDeductionsScreen
+import java.net.URI
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 @Composable
 fun ConnectNavGraph(
@@ -112,23 +118,40 @@ fun ConnectNavGraph(
                         ConnectDestination.PdfViewer.createRoute(tripId, docId, status)
                     )
                 },
-                onHaltingClick = { tripId, truckTypeId, loadingDays, unloadingDays ->
+                onHaltingClick = { tripId, truckTypeId, loadingDays, unloadingDays, notes ->
                     navHostController.navigate(
                         ConnectDestination.HaltingCharges.createRoute(tripId, truckTypeId) + 
-                        "?loadingDays=$loadingDays&unloadingDays=$unloadingDays"
+                        "?loadingDays=$loadingDays&unloadingDays=$unloadingDays&notes=$notes"
                     )
                 },
-                onLuClick = { loadingAmount, unloadingAmount, loadingSlipUrl, unloadingSlipUrl ->
+                onLuClick = { loadingAmount, unloadingAmount, loadingSlipUrl, unloadingSlipUrl, loadingId, unloadingId, notes ->
                 navHostController.navigate(
                     ConnectDestination.LuCharges.createRoute(
                         tripId = tripId,
                         loadingAmount = loadingAmount,
                         unloadingAmount = unloadingAmount,
                         loadingSlipUrl = loadingSlipUrl,
-                        unloadingSlipUrl = unloadingSlipUrl
+                        unloadingSlipUrl = unloadingSlipUrl,
+                        loadingId = loadingId,
+                        unloadingId = unloadingId,
+                        notes = notes
                     )
                 )
-            }
+            },
+                onOtherDeductionsClick = { tripId, amount, notes ->
+                    navHostController.navigate(
+                        ConnectDestination.OtherDeductions.createRoute(tripId, amount, notes)
+                    )
+                }
+            )
+        }
+
+        composable(
+            route = ConnectDestination.CommonPdfViewer.route,
+            arguments = ConnectDestination.CommonPdfViewer.arguments
+        ) { 
+            CommonPdfViewerScreen(
+                onBackClick = { navHostController.popBackStack() }
             )
         }
 
@@ -144,31 +167,57 @@ fun ConnectNavGraph(
                     navHostController.previousBackStackEntry?.savedStateHandle?.set("refresh", true)
                     navHostController.popBackStack()
                 },
-                onPdfPreview = { tripId, docId, localPath ->
+                onPdfPreview = { title, url, localPath ->
+                    val encodedUri = url?.let { android.net.Uri.encode(it) }
                     navHostController.navigate(
-                        ConnectDestination.PdfViewer.createRoute(tripId, docId, localPath = localPath)
+                        ConnectDestination.CommonPdfViewer.createRoute(
+                            title = title,
+                            url = encodedUri,
+                            localPath = localPath
+                        )
                     )
                 }
             )
         }
 
         composable(
-            route = ConnectDestination.HaltingCharges.route + "?loadingDays={loadingDays}&unloadingDays={unloadingDays}",
+            route = ConnectDestination.HaltingCharges.route + "?loadingDays={loadingDays}&unloadingDays={unloadingDays}&notes={notes}",
             arguments = ConnectDestination.HaltingCharges.arguments + listOf(
                 androidx.navigation.navArgument("loadingDays") { type = androidx.navigation.NavType.IntType; defaultValue = 0 },
-                androidx.navigation.navArgument("unloadingDays") { type = androidx.navigation.NavType.IntType; defaultValue = 0 }
+                androidx.navigation.navArgument("unloadingDays") { type = androidx.navigation.NavType.IntType; defaultValue = 0 },
+                androidx.navigation.navArgument("notes") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" }
             )
         ) { backStackEntry ->
             val tripId = backStackEntry.arguments?.getString(ConnectDestination.HaltingCharges.TRIP_ID_ARG) ?: ""
             val truckTypeId = backStackEntry.arguments?.getString(ConnectDestination.HaltingCharges.TRUCK_TYPE_ID_ARG) ?: ""
             val loadingDays = backStackEntry.arguments?.getInt("loadingDays") ?: 0
             val unloadingDays = backStackEntry.arguments?.getInt("unloadingDays") ?: 0
+            val notes = backStackEntry.arguments?.getString("notes") ?: ""
 
             HaltingChargesScreen(
                 tripId = tripId,
                 truckTypeId = truckTypeId,
                 initialLoadingDays = loadingDays,
                 initialUnloadingDays = unloadingDays,
+                notes = notes,
+                onBackClick = { navHostController.popBackStack() },
+                onSuccess = {
+                    navHostController.previousBackStackEntry?.savedStateHandle?.set("refresh", true)
+                    navHostController.popBackStack()
+                }
+            )
+        }
+
+        composable(
+            route = ConnectDestination.OtherDeductions.route,
+            arguments = ConnectDestination.OtherDeductions.arguments
+        ) { backStackEntry ->
+            val tripId = backStackEntry.arguments?.getString(ConnectDestination.OtherDeductions.TRIP_ID_ARG) ?: ""
+            val amount = backStackEntry.arguments?.getString(ConnectDestination.OtherDeductions.AMOUNT_ARG) ?: "0.0"
+            val notes = backStackEntry.arguments?.getString(ConnectDestination.OtherDeductions.NOTES_ARG) ?: ""
+
+            OtherDeductionsScreen(
+                tripId = tripId,
                 onBackClick = { navHostController.popBackStack() },
                 onSuccess = {
                     navHostController.previousBackStackEntry?.savedStateHandle?.set("refresh", true)

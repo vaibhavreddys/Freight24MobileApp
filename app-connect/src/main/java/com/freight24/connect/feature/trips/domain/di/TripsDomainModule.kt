@@ -8,10 +8,14 @@ import com.freight24.connect.feature.trips.domain.usecase.GetMyTripsUseCase
 import com.freight24.connect.feature.trips.domain.usecase.GetMyTripsUseCaseImpl
 import com.freight24.connect.feature.trips.domain.usecase.SignedDocumentUseCase
 import com.freight24.connect.feature.trips.domain.usecase.SignedDocumentUseCaseImpl
+import com.freight24.connect.feature.trips.domain.usecase.SlipUrlSignedDocumentUseCase
+import com.freight24.connect.feature.trips.domain.usecase.SlipUrlSignedDocumentUseCaseImpl
 import com.freight24.connect.feature.trips.domain.usecase.TripDetailsUseCase
 import com.freight24.connect.feature.trips.domain.usecase.TripDetailsUseCaseImpl
 import com.freight24.connect.feature.trips.domain.usecase.UpdateHaltingRateUseCase
 import com.freight24.connect.feature.trips.domain.usecase.UpdateHaltingRateUseCaseImpl
+import com.freight24.connect.feature.trips.domain.usecase.UpdateOtherDeductionsUseCase
+import com.freight24.connect.feature.trips.domain.usecase.UpdateOtherDeductionsUseCaseImpl
 import com.freight24.connect.feature.trips.domain.usecase.UpdateTruckerUseCase
 import com.freight24.connect.feature.trips.domain.usecase.UpdateTruckerUseCaseImpl
 import com.freight24.connect.feature.trips.domain.usecase.UploadLUChargesUseCase
@@ -58,5 +62,11 @@ internal abstract class TripsDomainModule {
 
     @Binds
     abstract fun bindUploadLUChargesUseCase(useCaseImpl: UploadLUChargesUseCaseImpl): UploadLUChargesUseCase
+
+    @Binds
+    abstract fun bindSlipUrlSignedDocumentUseCase(useCaseImpl: SlipUrlSignedDocumentUseCaseImpl): SlipUrlSignedDocumentUseCase
+
+    @Binds
+    abstract fun bindUpdateOtherDeductionsUseCase(useCaseImpl: UpdateOtherDeductionsUseCaseImpl): UpdateOtherDeductionsUseCase
 
 }

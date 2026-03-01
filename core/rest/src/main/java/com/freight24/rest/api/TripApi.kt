@@ -2,6 +2,7 @@ package com.freight24.rest.api
 
 import com.freight24.rest.request.CreateTripRequest
 import com.freight24.rest.request.LrVerifyRequest
+import com.freight24.rest.request.UpdateOtherDeductionsRequest
 import com.freight24.rest.request.UpdateTruckerStatus
 import com.freight24.rest.response.CreatedTripResponse
 import com.freight24.rest.response.TripDetailResponse
@@ -9,6 +10,7 @@ import com.freight24.rest.response.MyTripsDataResponse
 import com.freight24.rest.response.SignedDocument
 import com.freight24.rest.response.TripDetailDataResponse
 import com.freight24.rest.response.TripResponse
+import com.freight24.rest.response.UpdateOtherDeductionsResponse
 import com.freight24.rest.response.UploadedDataResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -82,5 +84,11 @@ interface TripApi {
         @Path("tripId") tripId: String,
         @Body lrVerifyRequest: LrVerifyRequest
     ): Response<TripDetailDataResponse>
+
+    @PATCH("trips/{trip_id}/other-deductions")
+    suspend fun updateOtherDeductions(
+        @Path("trip_id") tripId: String,
+        @Body updateOtherDeductionsRequest: UpdateOtherDeductionsRequest
+    ): Response<UpdateOtherDeductionsResponse>
 
 }

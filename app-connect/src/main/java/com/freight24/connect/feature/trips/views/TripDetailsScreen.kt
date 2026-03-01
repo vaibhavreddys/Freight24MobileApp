@@ -53,8 +53,9 @@ fun TripDetailsScreen(
     onBackClick: () -> Unit,
     onEditClick: (String) -> Unit,
     onDocumentView : (String, String, String) -> Unit,
-    onHaltingClick: (String, String, Int, Int) -> Unit,
-    onLuClick: (String, String, String?, String?) -> Unit,
+    onHaltingClick: (String, String, Int, Int, String?) -> Unit,
+    onLuClick: (String, String, String?, String?, String?, String?, String?) -> Unit,
+    onOtherDeductionsClick: (String, String?, String?) -> Unit,
     viewModel: TripDetailsViewModel = hiltViewModel<TripDetailsViewModelImpl>()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -310,12 +311,13 @@ fun TripDetailsScreen(
                         onDocClick = { docId, status ->
                             onDocumentView(tripId, docId, status)
                         },
-                        onHaltingClick = { tripId, truckTypeId, loadingDays, unloadingDays ->
-                            onHaltingClick(tripId, truckTypeId, loadingDays, unloadingDays)
+                        onHaltingClick = { tripId, truckTypeId, loadingDays, unloadingDays, notes ->
+                            onHaltingClick(tripId, truckTypeId, loadingDays, unloadingDays, notes)
                         },
-                        onLuClick = { loading, unloading, loadingSlipUrl, unloadingSlipUrl ->
-                            onLuClick(loading, unloading, loadingSlipUrl, unloadingSlipUrl)
-                        }
+                        onLuClick = { loading, unloading, loadingSlipUrl, unloadingSlipUrl, loadingId, unloadingId, notes ->
+                            onLuClick(loading, unloading, loadingSlipUrl, unloadingSlipUrl, loadingId, unloadingId, notes)
+                        },
+                        onOtherDeductionsClick = onOtherDeductionsClick
                     )
                 }
             }
@@ -328,8 +330,9 @@ fun TripDetailsContent(
     trip: TripDataResponse,
     onUploadLrClick: () -> Unit,
     onDocClick: (String, String) -> Unit,
-    onHaltingClick: (String, String, Int, Int) -> Unit,
-    onLuClick: (String, String, String?, String?) -> Unit,
+    onHaltingClick: (String, String, Int, Int, String?) -> Unit,
+    onLuClick: (String, String, String?, String?, String?, String?, String?) -> Unit,
+    onOtherDeductionsClick: (String, String?, String?) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -366,9 +369,13 @@ fun TripDetailsContent(
                     val truckTypeId = trip.indentDetails.truckTypeId
                     val loadingDays = trip.financials?.halting?.loading?.days ?: 0
                     val unloadingDays = trip.financials?.halting?.unloading?.days ?: 0
-                    onHaltingClick(trip.id, truckTypeId, loadingDays, unloadingDays)
+                    val notes = trip.financials?.halting?.loading?.notes
+                    onHaltingClick(trip.id, truckTypeId, loadingDays, unloadingDays, notes)
                 },
-                onLuClick = onLuClick
+                onLuClick = onLuClick,
+                onOtherDeductionsClick = { amount, notes ->
+                    onOtherDeductionsClick(trip.id, amount.toString(), notes)
+                }
             )
         }
 
@@ -600,7 +607,8 @@ fun ExpandableSection(
 fun ChargesAndDeductionsContent(
     financials: TripDataResponse.FinanceDetails?,
     onHaltingClick: () -> Unit,
-    onLuClick: (String, String, String?, String?) -> Unit
+    onLuClick: (String, String, String?, String?, String?, String?, String?) -> Unit,
+    onOtherDeductionsClick: (Double, String?) -> Unit
 ) {
     if (financials == null) {
         Text("No data", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodySmall)
@@ -619,11 +627,17 @@ fun ChargesAndDeductionsContent(
                 financials.luCharges.loading.total.toString(),
                 financials.luCharges.unloading.total.toString(),
                 financials.luCharges.loading.slipUrl,
-                financials.luCharges.unloading.slipUrl
+                financials.luCharges.unloading.slipUrl,
+                financials.luCharges.loading.id,
+                financials.luCharges.unloading.id,
+                financials.luCharges.loading.notes,
             )
         })
         ChargesSubRow("Halting", haltingTotal, onClick = onHaltingClick)
-        ChargesSubRow("Other Deductions", financials.otherDeductions, isDeduction = true)
+        val otherDeductionsNotes = financials.deductionRemarks
+        ChargesSubRow("Other Deductions", financials.otherDeductions, isDeduction = true, onClick = {
+            onOtherDeductionsClick(financials.otherDeductions, otherDeductionsNotes)
+        })
     }
 }
 
@@ -670,12 +684,18 @@ fun PaymentBreakdownContent(financials: TripDataResponse.FinanceDetails?) {
         Text("Financial data not available", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodySmall)
         return
     }
+
+    val luTotal = (financials.luCharges.loading.total + financials.luCharges.unloading.total).toDouble()
+    val haltingTotal = (financials.halting.loading.totalAmount + financials.halting.unloading.totalAmount)
     
     Column(
         modifier = Modifier.padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         BreakdownRow("Trip Cost", financials.truckerTripCost)
+        BreakdownRow("Halting Charges", haltingTotal)
+        BreakdownRow("Loading & Unloading Charges", luTotal)
+        BreakdownRow("Other Deductions", financials.otherDeductions, isDeduction = true)
         BreakdownRow("Advance Paid", financials.advance.paidAmount)
         BreakdownRow("Platform Fee", financials.platformFee.amount, isDeduction = true)
         BreakdownRow("TDS", financials.tds.amount, isDeduction = true)

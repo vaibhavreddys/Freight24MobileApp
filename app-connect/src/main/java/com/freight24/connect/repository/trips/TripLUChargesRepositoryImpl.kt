@@ -5,6 +5,7 @@ import android.webkit.MimeTypeMap
 import com.freight24.common.di.IoDispatcher
 import com.freight24.connect.feature.trips.domain.model.LuChargeRequest
 import com.freight24.rest.api.TripLUChargesApi
+import com.freight24.rest.response.SignedDocument
 import com.freight24.rest.response.UpdatedLUResponse
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -51,6 +52,28 @@ class TripLUChargesRepositoryImpl @Inject constructor(
 
         } catch (e: Exception) {
             Log.e("TripLUChargesRepository", "updateLUCharges: ", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getSignedLUDocument(
+        tripId: String,
+        chargeId: String
+    ): Result<SignedDocument> = withContext(ioDispatcher) {
+        try {
+            val response = api.getSignedLUDocument(
+                tripId = tripId,
+                chargeId = chargeId,
+            )
+
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception(response.message()))
+            }
+
+        } catch (e: Exception) {
+            Log.e("TripLUChargesRepository", "getSignedLUDocument: ", e)
             Result.failure(e)
         }
     }

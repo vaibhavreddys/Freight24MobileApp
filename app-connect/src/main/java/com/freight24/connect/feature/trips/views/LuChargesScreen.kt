@@ -41,7 +41,7 @@ fun LuChargesScreen(
     tripId: String,
     onBackClick: () -> Unit,
     onSuccess: () -> Unit,
-    onPdfPreview: (String, String, String) -> Unit,
+    onPdfPreview: (String, String?, String?) -> Unit,
     viewModel: LuChargesViewModel = hiltViewModel<LuChargesViewModelImpl>()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -50,6 +50,13 @@ fun LuChargesScreen(
     LaunchedEffect(uiState.shouldNavigateBack) {
         if (uiState.shouldNavigateBack) {
             onSuccess()
+        }
+    }
+
+    LaunchedEffect(uiState.navigateToSignedUrl) {
+        uiState.navigateToSignedUrl?.let { url ->
+            onPdfPreview("Loading & Unloading Proof", url, null)
+            viewModel.onEvent(LuChargesEvent.OnSignedUrlConsumed)
         }
     }
 
@@ -240,9 +247,9 @@ fun LuChargesScreen(
                             onDelete = { viewModel.onEvent(LuChargesEvent.OnDeleteDoc(LuDocType.LOADING)) },
                             onPreview = { 
                                 if (uiState.loadingDocument != null) {
-                                    onPdfPreview(tripId, "local_loading", uiState.loadingDocument!!.absolutePath)
-                                } else {
-                                    //onPdfPreview(tripId, "LOADING_SLIP", null)
+                                    onPdfPreview("Loading Proof", null, uiState.loadingDocument!!.absolutePath)
+                                } else if (uiState.loadingSlipUrl != null) {
+                                    viewModel.onEvent(LuChargesEvent.OnRemoteDocClick("LOADING_SLIP"))
                                 }
                             }
                         )
@@ -256,9 +263,9 @@ fun LuChargesScreen(
                             onDelete = { viewModel.onEvent(LuChargesEvent.OnDeleteDoc(LuDocType.UNLOADING)) },
                             onPreview = { 
                                 if (uiState.unloadingDocument != null) {
-                                    onPdfPreview(tripId, "local_unloading", uiState.unloadingDocument!!.absolutePath)
-                                } else {
-                                    //onPdfPreview(tripId, "UNLOADING_SLIP", null)
+                                    onPdfPreview("Unloading Proof", null, uiState.unloadingDocument!!.absolutePath)
+                                } else if (uiState.unloadingSlipUrl != null) {
+                                    viewModel.onEvent(LuChargesEvent.OnRemoteDocClick("UNLOADING_SLIP"))
                                 }
                             }
                         )

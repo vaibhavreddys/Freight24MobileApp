@@ -14,7 +14,12 @@ data class HaltingChargesUiState(
 )
 
 sealed class HaltingChargesEvent {
-    data class LoadHaltingRate(val truckTypeId: String, val initialLoadingDays: Int = 0, val initialUnloadingDays: Int = 0) : HaltingChargesEvent()
+    data class LoadHaltingRate(
+        val truckTypeId: String,
+        val initialLoadingDays: Int = 0,
+        val initialUnloadingDays: Int = 0,
+        val notes: String = ""
+    ) : HaltingChargesEvent()
     data class UpdateLoadingDays(val days: Int) : HaltingChargesEvent()
     data class UpdateUnloadingDays(val days: Int) : HaltingChargesEvent()
     data class UpdateNotes(val notes: String) : HaltingChargesEvent()

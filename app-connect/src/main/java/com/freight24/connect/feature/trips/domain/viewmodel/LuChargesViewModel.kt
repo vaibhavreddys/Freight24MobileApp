@@ -13,9 +13,12 @@ data class LuChargesUiState(
     val unloadingDocument: File? = null,
     val loadingSlipUrl: String? = null,
     val unloadingSlipUrl: String? = null,
+    val loadingId: String? = null,
+    val unloadingId: String? = null,
     val isSubmitting: Boolean = false,
     val error: String? = null,
     val shouldNavigateBack: Boolean = false,
+    val navigateToSignedUrl: String? = null,
     val showDocTypeSheet: Boolean = false,
     val showFilePicker: Boolean = false,
     val selectedDocType: LuDocType? = null
@@ -29,8 +32,10 @@ sealed class LuChargesEvent {
     data class OnDocTypeSelected(val type: LuDocType) : LuChargesEvent()
     data class OnFilePicked(val uris: List<Uri>, val isPdf: Boolean) : LuChargesEvent()
     data class OnDeleteDoc(val type: LuDocType) : LuChargesEvent()
+    data class OnRemoteDocClick(val docType: String) : LuChargesEvent()
     data object OnSubmit : LuChargesEvent()
     data object OnDismissSheet : LuChargesEvent()
+    data object OnSignedUrlConsumed : LuChargesEvent()
 }
 
 enum class LuDocType {

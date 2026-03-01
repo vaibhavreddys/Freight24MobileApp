@@ -20,7 +20,7 @@ import com.rajat.pdfviewer.util.saveTo
 import java.io.File
 
 @Composable
-fun PdfRendererView(file: File) {
+fun PdfRendererView(source: PdfSource) {
     val lifecycleOwner = LocalLifecycleOwner.current
 
     Box(
@@ -30,7 +30,7 @@ fun PdfRendererView(file: File) {
     ) {
 
         PdfRendererViewCompose(
-            source = PdfSource.LocalFile(file),
+            source = source,
             lifecycleOwner = lifecycleOwner,
             modifier = Modifier.fillMaxSize(),
             statusCallBack = object : PdfRendererView.StatusCallBack {
