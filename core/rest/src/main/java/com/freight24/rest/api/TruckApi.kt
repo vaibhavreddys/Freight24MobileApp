@@ -36,6 +36,15 @@ interface TruckApi {
         @Part insurance: MultipartBody.Part?,
     ): Response<AddTruckResponse>
 
+    @Multipart
+    @retrofit2.http.PUT("trucks/{id}")
+    suspend fun updateTruck(
+        @Path("id") id: String,
+        @Part rc_card: MultipartBody.Part? = null,
+        @Part fc_certificate: MultipartBody.Part? = null,
+        @Part insurance: MultipartBody.Part? = null,
+    ): Response<AddTruckResponse>
+
     @GET("trucks/search")
     suspend fun searchTrucks(
         @Query("q") query: String,

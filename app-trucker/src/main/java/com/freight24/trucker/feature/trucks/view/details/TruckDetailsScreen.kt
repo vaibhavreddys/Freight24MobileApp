@@ -1,7 +1,10 @@
 package com.freight24.trucker.feature.trucks.view.details
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,10 +23,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.FolderOpen
-import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -32,28 +35,40 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import coil3.compose.rememberAsyncImagePainter
 import com.freight24.common.model.TruckDetail
 import com.freight24.common.model.TruckDocument
 import com.freight24.ui.UiState
-import com.freight24.ui.components.FilterSelectionChip
+import com.freight24.ui.components.DocumentStatus
+import com.freight24.ui.components.DocumentUploadItem
 import com.freight24.ui.components.TruckHeaderCard
 import com.freight24.ui.components.getPdfLaunchIntent
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,32 +78,153 @@ internal fun TruckDetailsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val selectedUris by viewModel.selectedUris.collectAsState()
     val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val isUploading by viewModel.isUploading.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.uploadSuccess.collect {
+            snackbarHostState.showSnackbar("Document uploaded successfully")
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.errorEvent.collect { error ->
+            snackbarHostState.showSnackbar(error)
+        }
+    }
+
+    var showSelectionDialogType by rememberSaveable { mutableStateOf<String?>(null) }
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickMultipleVisualMedia(),
+        onResult = { uris ->
+            if (uris.isNotEmpty()) {
+                viewModel.onFilesPicked(uris, false, showSelectionDialogType ?: "")
+                showSelectionDialogType = null
+            }
+        }
+    )
+
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument(),
+        onResult = { uri ->
+            uri?.let {
+                viewModel.onFilesPicked(listOf(it), true, showSelectionDialogType ?: "")
+                showSelectionDialogType = null
+            }
+        }
+    )
+
+    if (showSelectionDialogType != null) {
+        AlertDialog(
+            onDismissRequest = { showSelectionDialogType = null },
+            title = { Text("Select Document Source") },
+            text = { Text("Choose how you want to upload the ${showSelectionDialogType}") },
+            confirmButton = {
+                TextButton(onClick = {
+                    photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                }) {
+                    Text("Images")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    filePickerLauncher.launch(arrayOf("application/pdf"))
+                }) {
+                    Text("PDF")
+                }
+            }
+        )
+    }
+
+    if (selectedUris.isNotEmpty()) {
+        Dialog(onDismissRequest = { viewModel.clearSelection() }) {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surface,
+                modifier = Modifier.padding(16.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Prepare Upload",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "${selectedUris.size} file(s) selected for ${viewModel.currentDocumentType.value}",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    if (!viewModel.isPdf.value) {
+                        Box(
+                            modifier = Modifier
+                                .height(200.dp)
+                                .fillMaxWidth()
+                                .background(Color.LightGray, RoundedCornerShape(8.dp))
+                        ) {
+                            Image(
+                                painter = rememberAsyncImagePainter(selectedUris.first()),
+                                contentDescription = null,
+                                modifier = Modifier.fillMaxSize().padding(4.dp),
+                                contentScale = ContentScale.Fit
+                            )
+                        }
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Description,
+                            contentDescription = null,
+                            modifier = Modifier.size(100.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Button(
+                        onClick = { viewModel.uploadDocuments() },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isUploading
+                    ) {
+                        if (isUploading) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White)
+                        } else {
+                            Text("Upload Now")
+                        }
+                    }
+                    TextButton(
+                        onClick = { viewModel.clearSelection() },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Cancel")
+                    }
+                }
+            }
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
-                    Column(
-                        horizontalAlignment = Alignment.Start,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(
-                            text = "Truck Details",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
+                    Text(
+                        text = "Truck Details",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-//                },
-//                actions = {
-//                    IconButton(onClick = { /* More options */ }) {
-//                        Icon(Icons.Default.MoreVert, contentDescription = "More")
-//                    }
                 },
             )
         },
@@ -96,11 +232,10 @@ internal fun TruckDetailsScreen(
         PullToRefreshBox(
             isRefreshing = isRefreshing,
             onRefresh = { viewModel.onRefresh() },
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .background(MaterialTheme.colorScheme.background),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .background(MaterialTheme.colorScheme.background),
         ) {
             when (val state = uiState) {
                 is UiState.Loading -> {
@@ -110,18 +245,45 @@ internal fun TruckDetailsScreen(
                 }
                 is UiState.Error -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(state.message, color = MaterialTheme.colorScheme.error)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(state.message, color = MaterialTheme.colorScheme.error)
+                            Button(onClick = { viewModel.fetchTruckDetail(true) }) {
+                                Text("Retry")
+                            }
+                        }
                     }
                 }
                 is UiState.Success -> {
-                    TruckDetailsContent(
-                        truck = state.data,
-                        onDocumentClick = { url ->
-                            if (url != null) {
-                                context.startActivity(getPdfLaunchIntent(url, context))
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        TruckDetailsContent(
+                            truck = state.data,
+                            onViewClick = { s3Url ->
+                                if (!s3Url.isNullOrEmpty()) {
+                                    viewModel.fetchSignedUrl(s3Url) { signedUrl ->
+                                        context.startActivity(getPdfLaunchIntent(signedUrl, context))
+                                    }
+                                }
+                            },
+                            onUploadClick = { type ->
+                                showSelectionDialogType = type
                             }
-                        },
-                    )
+                        )
+
+                        if (isUploading) {
+                            Surface(
+                                color = Color.Black.copy(alpha = 0.5f),
+                                modifier = Modifier.fillMaxSize()
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        CircularProgressIndicator(color = Color.White)
+                                        Spacer(Modifier.height(16.dp))
+                                        Text("Uploading Document...", color = Color.White)
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
                 else -> {}
             }
@@ -132,7 +294,8 @@ internal fun TruckDetailsScreen(
 @Composable
 private fun TruckDetailsContent(
     truck: TruckDetail,
-    onDocumentClick: (String?) -> Unit,
+    onViewClick: (String?) -> Unit,
+    onUploadClick: (String) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -143,7 +306,7 @@ private fun TruckDetailsContent(
             TruckHeaderCard(
                 registrationNumber = truck.registrationNumber,
                 truckType = truck.truckType,
-                availability = "AVAILABLE", // Defaulting as detail API doesn't have it yet, or use a field if added
+                availability = "AVAILABLE",
                 isVerified = truck.isVerified,
                 isBlacklisted = truck.isBlacklisted,
             )
@@ -154,7 +317,7 @@ private fun TruckDetailsContent(
         }
 
         item {
-            DocumentsSection(truck, onDocumentClick)
+            DocumentsSection(truck, onViewClick, onUploadClick)
         }
     }
 }
@@ -205,7 +368,7 @@ private fun SpecItem(
 ) {
     Surface(
         modifier = modifier,
-        color = MaterialTheme.colorScheme.surfaceVariant, // Using theme aware surface variant
+        color = MaterialTheme.colorScheme.surfaceVariant,
         shape = RoundedCornerShape(8.dp),
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
@@ -228,7 +391,8 @@ private fun SpecItem(
 @Composable
 private fun DocumentsSection(
     truck: TruckDetail,
-    onDocumentClick: (String?) -> Unit,
+    onViewClick: (String?) -> Unit,
+    onUploadClick: (String) -> Unit,
 ) {
     Card(
         shape = RoundedCornerShape(12.dp),
@@ -252,9 +416,9 @@ private fun DocumentsSection(
             }
             Spacer(Modifier.height(16.dp))
 
-            DocumentItem("RC Book", truck.rcCard, onDocumentClick)
-            DocumentItem("Insurance Policy", truck.insurance, onDocumentClick)
-            DocumentItem("Fitness Certificate", truck.fcCertificate, onDocumentClick)
+            DocumentItem("RC Book", truck.rcCard, onViewClick, onUploadClick)
+            DocumentItem("Insurance Policy", truck.insurance, onViewClick, onUploadClick)
+            DocumentItem("Fitness Certificate", truck.fcCertificate, onViewClick, onUploadClick)
         }
     }
 }
@@ -263,75 +427,41 @@ private fun DocumentsSection(
 private fun DocumentItem(
     title: String,
     doc: TruckDocument?,
-    onDocumentClick: (String?) -> Unit,
+    onViewClick: (String?) -> Unit,
+    onUploadClick: (String) -> Unit,
 ) {
     val hasUrl = !doc?.url.isNullOrEmpty()
+    val statusText = doc?.status?.uppercase() ?: "NOT UPLOADED"
 
-    Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clickable {
-                    if (hasUrl) {
-                        onDocumentClick(doc.url)
-                    } else {
-                        // Trigger upload flow
-                    }
-                }
-                .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        val iconColor =
-            when (doc?.status?.uppercase()) {
-                "COMPLETED", "VERIFIED" -> MaterialTheme.colorScheme.primary
-                "PENDING" -> Color(0xFFF9A825)
-                else -> if (hasUrl) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-            }
-
-        Surface(
-            color = iconColor.copy(alpha = 0.1f),
-            shape = RoundedCornerShape(8.dp),
-            modifier = Modifier.size(40.dp),
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = if (title.contains("Insurance")) Icons.Default.Shield else Icons.Default.Description,
-                    contentDescription = null,
-                    tint = iconColor,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-        }
-
-        Spacer(Modifier.width(16.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = if (hasUrl) doc.status else ("Pending Upload"),
-                style = MaterialTheme.typography.bodySmall,
-                color = if (doc?.status?.uppercase() == "VERIFIED") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-
-        if (hasUrl) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.outline,
-                modifier = Modifier.size(20.dp),
-            )
-        } else {
-            FilterSelectionChip(
-                label = "Upload",
-                isSelected = false,
-                onClick = { /* Trigger upload flow */ },
-                leadingIcon = Icons.Default.FileUpload,
-            )
-        }
+    val subtitle = if (!hasUrl) "Not Uploaded" else
+        when (statusText) {
+        "VERIFIED", "COMPLETED" -> "Verified"
+        "PENDING" -> "Verification Pending"
+        "REJECTED" -> "Rejected. Please upload again."
+        else -> ""
     }
+
+    println("")
+
+    val docStatus = if (hasUrl) {
+        DocumentStatus.Uploaded(
+            id = doc!!.url!!,
+            label = statusText,
+            backgroundColor = Color.Transparent, // Not used when chip is hidden
+            textColor = Color.Transparent,
+            canReupload = statusText == "REJECTED" || statusText == "NOT UPLOADED"
+        )
+    } else {
+        DocumentStatus.Pending
+    }
+
+    DocumentUploadItem(
+        title = title,
+        subtitle = subtitle,
+        status = docStatus,
+        onUploadClick = { onUploadClick(title) },
+        onViewClick = { onViewClick(it) },
+        showStatusChip = false,
+        trailingIcon = if (hasUrl) Icons.AutoMirrored.Filled.KeyboardArrowRight else null
+    )
 }

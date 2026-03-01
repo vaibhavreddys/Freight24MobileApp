@@ -21,14 +21,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -38,7 +37,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -79,7 +77,6 @@ import com.freight24.ui.components.TimelineStatus
 import com.freight24.ui.components.TimelineView
 import com.freight24.ui.components.TripCard
 import com.freight24.ui.components.getPdfLaunchIntent
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -230,6 +227,32 @@ internal fun TripDetailsScreen(
         }
     }
 
+    var showStatusConfirmation by rememberSaveable { mutableStateOf<String?>(null) }
+
+    if (showStatusConfirmation != null) {
+        val targetStatus = showStatusConfirmation!!
+        AlertDialog(
+            onDismissRequest = { showStatusConfirmation = null },
+            title = { Text("Confirm Update") },
+            text = { Text("Are you sure you want to update the trip status to ${targetStatus.replace("_", " ")}?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.updateTripStatus(targetStatus)
+                        showStatusConfirmation = null
+                    }
+                ) {
+                    Text("Confirm", color = MaterialTheme.colorScheme.primary)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showStatusConfirmation = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -269,22 +292,52 @@ internal fun TripDetailsScreen(
         },
         bottomBar = {
             if (uiState is UiState.Success) {
+                val trip = (uiState as UiState.Success<TripDetail>).data
+                val rawStatus = trip.status.uppercase().replace(" ", "_")
+                val lrDoc = trip.tripDocuments.find { it.documentType.lowercase() == "lr" }
+                val lrStatus = lrDoc?.verificationStatus?.lowercase()
+
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shadowElevation = 8.dp,
                     color = MaterialTheme.colorScheme.surface
                 ) {
-                    Button(
-                        onClick = { showBottomSheet = true },
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .navigationBarsPadding()
-                            .padding(16.dp),
-                        shape = RoundedCornerShape(50.dp)
+                            .padding(16.dp)
                     ) {
-                        Icon(Icons.Default.Edit, contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Update Status")
+                        when (rawStatus) {
+                            "ASSIGNED" -> {
+                                Button(
+                                    onClick = { showStatusConfirmation = "LOADING" },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(50.dp)
+                                ) {
+                                    Text("Update Trip Status to LOADING")
+                                }
+                            }
+                            "LOADING" -> {
+                                InfoBanner(text = "Please upload LR to change status to IN TRANSIT")
+                            }
+                            "IN_TRANSIT" -> {
+                                if (lrStatus == "verified") {
+                                    Button(
+                                        onClick = { showStatusConfirmation = "UNLOADED" },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(50.dp)
+                                    ) {
+                                        Text("Update Trip Status to UNLOADED")
+                                    }
+                                } else if (lrStatus == "rejected") {
+                                    ErrorBanner(text = "LR document was rejected. Upload new one to proceed.")
+                                } else {
+                                    InfoBanner(text = "Trip status can be changed to \"UNLOADED\" after LR is verified.")
+                                }
+                            }
+                            // Other statuses managed by backend
+                        }
                     }
                 }
             }
@@ -333,124 +386,68 @@ internal fun TripDetailsScreen(
             }
         }
     }
+}
 
-    if (showBottomSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showBottomSheet = false },
-            sheetState = bottomSheetState,
-            containerColor = MaterialTheme.colorScheme.surface,
+@Composable
+fun InfoBanner(text: String) {
+    Surface(
+        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            val currentStatus = (uiState as? UiState.Success)?.data?.status ?: ""
-            // Map "In Transit" back to "IN_TRANSIT" for comparison if needed, or rely on extracting the raw enum value.
-            // The status from UI state might be formatted (e.g. "In Transit"), so we need to be careful.
-            // Let's rely on the raw status if possible, or normalize.
-            // The `status` field in TripDetail seems to be formatted message in mapper: `NameFormatter.formatTripStatusMessage(trucker_status)`.
-            // We should arguably use the raw status from API, but we might not have it easily in domain model if we mapped it away.
-            // Let's check TripMappers.kt again.
-            // TripDetail.status = NameFormatter.formatTripStatusMessage(trucker_status)
-            // This is "In Transit", "Loading", etc.
-            // We need to map it back or change TripDetail to store raw status.
-            // For now, let's normalize "In Transit" -> "IN_TRANSIT" etc.
-            
-            StatusSelectionContent(
-                currentStatus = currentStatus, // This is the formatted string like "Loading"
-                onStatusSelected = { status ->
-                    viewModel.updateTripStatus(status)
-                    scope.launch { bottomSheetState.hide() }.invokeOnCompletion {
-                        if (!bottomSheetState.isVisible) {
-                            showBottomSheet = false
-                        }
-                    }
-                }
+            Icon(
+                Icons.Default.Description,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(Modifier.width(12.dp))
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ErrorBanner(text: String) {
+    Surface(
+        color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f),
+        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                Icons.Default.Info,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(Modifier.width(12.dp))
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
 @Composable
 fun StatusSelectionContent(
     currentStatus: String,
     onStatusSelected: (String) -> Unit
 ) {
-    val statuses = listOf("ASSIGNED", "LOADING", "IN_TRANSIT", "UNLOADED", "INVOICED", "PAID")
-    
-    // Normalize the display status back to API status format for comparison
-    val normalizedCurrentStatus = when (currentStatus.uppercase()) {
-        "IN TRANSIT" -> "IN_TRANSIT"
-        else -> currentStatus.uppercase().replace(" ", "_")
-    }
-
-    val currentIndex = statuses.indexOf(normalizedCurrentStatus)
-    // Filter out statuses that are before the current status
-    val availableStatuses = if (currentIndex != -1) {
-        statuses.drop(currentIndex + 1) // Only show next statuses
-         // Or if you want to show all but disable previous:
-         // statuses
-    } else {
-        statuses
-    }
-
-    // Bug Fix 1: Use normalizedCurrentStatus as key or in LaunchedEffect, but simplest is to initialize state with it correctly 
-    // AND update it if the prop changes (though bottom sheet usually recreates). 
-    // To ensure it's selected when opening, we default to the current status (or the next one?). 
-    // The user usually wants to select the NEXT status.
-    // If we want to show the current one as selected initially:
-    var selectedOption by rememberSaveable(normalizedCurrentStatus) { mutableStateOf(normalizedCurrentStatus) }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .padding(bottom = 32.dp)
-    ) {
-        Text(
-            text = "Update Trip Status",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-        // Show all statuses but disable previous ones
-        statuses.forEachIndexed { index, status ->
-            val isEnabled = index >= currentIndex
-            
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .selectable(
-                        selected = (status == selectedOption),
-                        onClick = { if (isEnabled) selectedOption = status },
-                        enabled = isEnabled
-                    )
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                RadioButton(
-                    selected = (status == selectedOption),
-                    onClick = { if (isEnabled) selectedOption = status },
-                    enabled = isEnabled
-                )
-                Text(
-                    text = status.replace("_", " "),
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(start = 16.dp),
-                    color = if (isEnabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Button(
-            onClick = { onStatusSelected(selectedOption) },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = selectedOption != normalizedCurrentStatus
-        ) {
-            Text("Update Status")
-        }
-        Spacer(modifier = Modifier.height(24.dp))
-    }
+    // This component is no longer used in the streamlined flow but kept for potential future use or until fully deprecated
 }
 
 fun extractStage(details: String): String? {
@@ -498,10 +495,15 @@ fun TripDetailsContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Documents Card
+        val lrDoc = trip.tripDocuments.find { it.documentType.lowercase() == "lr" }
+        val isLrMissing = lrDoc == null
+        val isLrRejected = lrDoc?.verificationStatus?.lowercase() == "rejected"
+        val expandDocuments = isLrMissing || isLrRejected
+
         ExpandableDetailCard(
             title = "Documents",
             icon = Icons.Default.Description,
-            initiallyExpanded = false
+            initiallyExpanded = expandDocuments
         ) {
             if (trip.tripDocuments.isEmpty()) {
                 if (trip.status.uppercase() != "ASSIGNED") {
@@ -558,13 +560,6 @@ fun TripDetailsContent(
                         onViewClick = onViewClick
                     )
                 }
-//                Text(
-//                    text = "Verification usually takes 2-4 hours.",
-//                    style = MaterialTheme.typography.bodySmall,
-//                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-//                    textAlign = TextAlign.Center,
-//                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-//                )
             }
             
         }

@@ -1,5 +1,6 @@
 package com.freight24.ui.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -42,12 +43,19 @@ fun DocumentUploadItem(
     status: DocumentStatus,
     onUploadClick: () -> Unit,
     onViewClick: (String) -> Unit = {},
+    showStatusChip: Boolean = true,
+    trailingIcon: androidx.compose.ui.graphics.vector.ImageVector? = null,
     modifier: Modifier = Modifier,
 ) {
     Row(
         modifier =
             modifier
                 .fillMaxWidth()
+                .clickable(enabled = status is DocumentStatus.Uploaded) {
+                    if (status is DocumentStatus.Uploaded) {
+                        onViewClick(status.id)
+                    }
+                }
                 .padding(vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
@@ -66,33 +74,35 @@ fun DocumentUploadItem(
             )
         }
 
-        when (status) {
-            is DocumentStatus.Pending -> {
-                IconButton(onClick = onUploadClick) {
-                    Icon(
-                        imageVector = Icons.Default.CloudUpload,
-                        contentDescription = "Upload",
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
-                }
-            }
-            is DocumentStatus.Uploaded -> {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Surface(
-                        onClick = { onViewClick(status.id) },
-                        color = status.backgroundColor,
-                        shape = RoundedCornerShape(4.dp),
-                    ) {
-                        Text(
-                            text = status.label,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = status.textColor,
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            when (status) {
+                is DocumentStatus.Pending -> {
+                    IconButton(onClick = onUploadClick) {
+                        Icon(
+                            imageVector = Icons.Default.CloudUpload,
+                            contentDescription = "Upload",
+                            tint = MaterialTheme.colorScheme.primary,
                         )
+                    }
+                }
+                is DocumentStatus.Uploaded -> {
+                    if (showStatusChip) {
+                        Surface(
+                            onClick = { onViewClick(status.id) },
+                            color = status.backgroundColor,
+                            shape = RoundedCornerShape(4.dp),
+                        ) {
+                            Text(
+                                text = status.label,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = status.textColor,
+                            )
+                        }
                     }
 
                     if (status.canReupload) {
@@ -104,8 +114,17 @@ fun DocumentUploadItem(
                             )
                         }
                     }
+
+                    if (trailingIcon != null) {
+                        Icon(
+                            imageVector = trailingIcon,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.outline
+                        )
+                    }
                 }
             }
         }
     }
 }
+

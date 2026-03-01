@@ -141,7 +141,7 @@ fun TruckVerificationRow(isVerified: Boolean) {
             Triple("Document verification completed", Icons.Default.CheckCircle, MaterialTheme.colorScheme.primary)
         } else {
             Triple(
-                "Verification Pending",
+                "Verification Pending (def)",
                 Icons.Default.Error,
                 Color(0xFFF9A825),
             ) // Warning yellow is often fine, but let's check if we have a better one.

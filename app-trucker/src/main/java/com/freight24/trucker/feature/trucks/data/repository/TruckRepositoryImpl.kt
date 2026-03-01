@@ -14,6 +14,7 @@ internal class TruckRepositoryImpl
     @Inject
     constructor(
         private val api: TruckApi,
+        private val documentApi: com.freight24.rest.api.DocumentApi,
         private val safeCallProvider: SafeCallProvider,
         @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) : TruckRepository {
@@ -53,5 +54,21 @@ internal class TruckRepositoryImpl
                     insurance,
                 )
             }
+        }
+        override suspend fun updateTruckDocuments(
+            truckId: String,
+            rcCard: MultipartBody.Part?,
+            fcCertificate: MultipartBody.Part?,
+            insurance: MultipartBody.Part?
+        ): Result<AddTruckResponse> {
+            return safeCallProvider.safeApiCall(ioDispatcher) {
+                api.updateTruck(truckId, rcCard, fcCertificate, insurance)
+            }
+        }
+
+        override suspend fun getGenericSignedUrl(s3Url: String): Result<String> {
+            return safeCallProvider.safeApiCall(ioDispatcher) {
+                documentApi.getGenericSignedUrl(s3Url)
+            }.map { it.data.signedUrl }
         }
     }

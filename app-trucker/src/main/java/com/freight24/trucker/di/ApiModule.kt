@@ -52,4 +52,11 @@ object ApiModule {
             .create(BuildConfig.BASE_URL, "TruckerProfileService")
             .create(ProfileApi::class.java)
     }
+
+    @Provides
+    fun providesDocumentApi(retrofitFactory: RetrofitFactory): com.freight24.rest.api.DocumentApi {
+        return retrofitFactory
+            .create(BuildConfig.BASE_URL, "TruckerDocumentService")
+            .create(com.freight24.rest.api.DocumentApi::class.java)
+    }
 }
