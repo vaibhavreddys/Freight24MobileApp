@@ -30,7 +30,8 @@ sealed class DocumentStatus {
         val id: String,
         val label: String,
         val backgroundColor: Color,
-        val textColor: Color
+        val textColor: Color,
+        val canReupload: Boolean = false
     ) : DocumentStatus()
 }
 
@@ -76,18 +77,33 @@ fun DocumentUploadItem(
                 }
             }
             is DocumentStatus.Uploaded -> {
-                Surface(
-                    onClick = { onViewClick(status.id) },
-                    color = status.backgroundColor,
-                    shape = RoundedCornerShape(4.dp),
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        text = status.label,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = status.textColor,
-                    )
+                    Surface(
+                        onClick = { onViewClick(status.id) },
+                        color = status.backgroundColor,
+                        shape = RoundedCornerShape(4.dp),
+                    ) {
+                        Text(
+                            text = status.label,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = status.textColor,
+                        )
+                    }
+
+                    if (status.canReupload) {
+                        IconButton(onClick = onUploadClick) {
+                            Icon(
+                                imageVector = Icons.Default.CloudUpload,
+                                contentDescription = "Upload",
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                    }
                 }
             }
         }

@@ -148,7 +148,7 @@ internal fun TripDetailsScreen(
                     Text("PDF", color = MaterialTheme.colorScheme.primary)
                 }
             },
-            containerColor = Color.White,
+            containerColor = MaterialTheme.colorScheme.surface,
             shape = RoundedCornerShape(12.dp)
         )
     }
@@ -543,8 +543,9 @@ fun TripDetailsContent(
                                 id = doc.id ?: "",
                                 label = "Rejected",
                                 backgroundColor = Color(0xFFFFEBEE),
-                                textColor = Color(0xFFC62828)
-                            ) to "Your LR is rejected"
+                                textColor = Color(0xFFC62828),
+                                canReupload = true
+                            ) to "Your LR is rejected, upload again"
                         }
                         else -> DocumentStatus.Pending to "Upload new document"
                     }
