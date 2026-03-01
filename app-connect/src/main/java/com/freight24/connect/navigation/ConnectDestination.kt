@@ -166,6 +166,14 @@ sealed class ConnectDestination(val route: String) {
         fun createRoute(tripId: String) = "trip_details/$tripId"
     }
 
+    data object EditTrip : ConnectDestination("edit_trip/{tripId}") {
+        const val TRIP_ID_ARG = "tripId"
+        override val arguments = listOf(
+            navArgument(TRIP_ID_ARG) { type = NavType.StringType }
+        )
+        fun createRoute(tripId: String) = "edit_trip/$tripId"
+    }
+
     data object PdfViewer : ConnectDestination("pdf_viewer/{tripId}/{documentId}?status={status}&localPath={localPath}") {
         const val TRIP_ID_ARG = "tripId"
         const val DOCUMENT_ID_ARG = "documentId"

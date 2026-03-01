@@ -112,7 +112,9 @@ fun ConnectNavGraph(
                 navController = navHostController,
                 tripId = tripId,
                 onBackClick = { navHostController.popBackStack() },
-                onEditClick = { /* TODO: Edit Trip */ },
+                onEditClick = { id ->
+                    navHostController.navigate(ConnectDestination.EditTrip.createRoute(id))
+                },
                 onDocumentView = { tripId, docId, status ->
                     navHostController.navigate(
                         ConnectDestination.PdfViewer.createRoute(tripId, docId, status)
@@ -382,8 +384,15 @@ fun ConnectNavGraph(
             val indentId = backStackEntry.arguments?.getString(ConnectDestination.AssignTruck.INDENT_ID_ARG) ?: ""
             AssignTruckScreen(
                 onBackClick = { navHostController.popBackStack() },
-                onTruckSelected = { truckId ->
-                   navHostController.navigate(ConnectDestination.CreateTrip.createRoute(indentId, truckId))
+                onTruckSelected = { truckId, truckNumber ->
+                    val fromEditTrip = navHostController.previousBackStackEntry?.destination?.route?.startsWith("edit_trip") ?: false
+                    if (fromEditTrip) {
+                        navHostController.previousBackStackEntry?.savedStateHandle?.set("selected_truck_id", truckId)
+                        navHostController.previousBackStackEntry?.savedStateHandle?.set("selected_truck_number", truckNumber)
+                        navHostController.popBackStack()
+                    } else {
+                        navHostController.navigate(ConnectDestination.CreateTrip.createRoute(indentId, truckId))
+                    }
                 }
             )
         }
@@ -445,6 +454,25 @@ fun ConnectNavGraph(
         ) {
             PdfViewerScreen(
                 onBackClick = { navHostController.popBackStack() },
+                onSuccess = {
+                    navHostController.previousBackStackEntry?.savedStateHandle?.set("refresh", true)
+                    navHostController.popBackStack()
+                }
+            )
+        }
+
+        composable(
+            route = ConnectDestination.EditTrip.route,
+            arguments = ConnectDestination.EditTrip.arguments
+        ) { backStackEntry ->
+            val tripId = backStackEntry.arguments?.getString(ConnectDestination.EditTrip.TRIP_ID_ARG) ?: ""
+            com.freight24.connect.feature.trips.views.EditTripScreen(
+                navController = navHostController,
+                tripId = tripId,
+                onBackClick = { navHostController.popBackStack() },
+                onNavigateToTruckSearch = { id ->
+                    navHostController.navigate(ConnectDestination.AssignTruck.createRoute(id))
+                },
                 onSuccess = {
                     navHostController.previousBackStackEntry?.savedStateHandle?.set("refresh", true)
                     navHostController.popBackStack()

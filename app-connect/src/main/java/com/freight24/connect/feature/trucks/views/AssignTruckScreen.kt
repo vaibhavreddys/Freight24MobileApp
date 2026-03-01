@@ -31,7 +31,7 @@ import com.freight24.rest.utils.isEnabled
 @Composable
 fun AssignTruckScreen(
     onBackClick: () -> Unit,
-    onTruckSelected: (String) -> Unit, // Callback with Truck ID
+    onTruckSelected: (String, String) -> Unit, // Callback with Truck ID and Registration Number
     viewModel: AssignTruckViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -62,16 +62,28 @@ fun AssignTruckScreen(
                 onValueChange = { viewModel.onEvent(AssignTruckEvent.UpdateQuery(it)) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White, RoundedCornerShape(8.dp)),
-                placeholder = { Text("Enter vehicle no. (e.g. KA01AB1234)") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = Color.Gray) },
-                shape = RoundedCornerShape(8.dp),
+                    .background(Color.White, RoundedCornerShape(12.dp)),
+                placeholder = { 
+                    Text(
+                        "Enter vehicle no. (e.g. KA01AB1234)",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color(0xFF94A3B8)
+                    ) 
+                },
+                leadingIcon = { 
+                    Icon(
+                        Icons.Default.Search, 
+                        contentDescription = "Search", 
+                        tint = Color(0xFF94A3B8)
+                    ) 
+                },
+                shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = Color.White,
                     unfocusedContainerColor = Color.White,
-                    focusedBorderColor = Color.Transparent, // Remove border for cleaner look if desired, or keep default
-                    unfocusedBorderColor = Color.Transparent,
-                    disabledBorderColor = Color.Transparent
+                    focusedBorderColor = Color(0xFFE2E8F0),
+                    unfocusedBorderColor = Color(0xFFE2E8F0),
+                    disabledBorderColor = Color(0xFFF1F5F9)
                 ),
                 singleLine = true
             )
@@ -87,20 +99,21 @@ fun AssignTruckScreen(
                 ) {
                     Text(
                         "SEARCH RESULTS",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.Gray,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color(0xFF64748B),
                         fontWeight = FontWeight.Bold
                     )
                     Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = Color(0xFFE0E0E0)
+                        shape = RoundedCornerShape(8.dp),
+                        color = Color(0xFFE2E8F0)
                     ) {
                         Text(
                             "${uiState.trucks.size} TRUCKS FOUND",
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             style = MaterialTheme.typography.labelSmall,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF475569)
                         )
                     }
                 }
@@ -118,11 +131,11 @@ fun AssignTruckScreen(
                 }
             } else {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
                     contentPadding = PaddingValues(bottom = 16.dp)
                 ) {
                     items(uiState.trucks) { truck ->
-                        TruckItem(truck = truck, onSelect = { onTruckSelected(truck.truckId) })
+                        TruckItem(truck = truck, onSelect = { onTruckSelected(truck.truckId, truck.registrationNumber) })
                     }
                 }
             }
@@ -136,104 +149,87 @@ fun TruckItem(
     onSelect: () -> Unit
 ) {
     val isEnabled = truck.isEnabled()
+    val statusText = TruckStatus.from(truck).displayText
+    val statusColor = if (isEnabled) Color(0xFF22C55E) else Color(0xFFEF4444)
+    val buttonColor = if (isEnabled) Color(0xFF22C55E) else Color(0xFFE2E8F0)
+    val buttonContentColor = if (isEnabled) Color.White else Color(0xFF94A3B8)
 
     Card(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9)),
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalAlignment = Alignment.Top
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            // Truck Icon
+            // Truck Icon Box
             Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = Color(0xFFEEF1F6), // Light blue-gray
+                shape = RoundedCornerShape(12.dp),
+                color = Color(0xFFF8FAFC),
                 modifier = Modifier.size(48.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         Icons.Default.LocalShipping,
                         contentDescription = "Truck",
-                        tint = Color(0xFF5F6368)
+                        tint = Color(0xFF64748B),
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(16.dp))
 
             // Truck Details
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        truck.registrationNumber,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        text = truck.registrationNumber,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1E293B)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Surface(
-                        shape = RoundedCornerShape(4.dp),
-                        color = Color(0xFFE8EAED) // Light gray for tag
-                    ) {
-                        Text(
-                            truck.owner.tagCode,
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-                            style = MaterialTheme.typography.bodySmall,
-                            fontSize = 10.sp,
-                            color = Color.Gray
-                        )
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(4.dp))
-                
-                // Truck Type
-                Text(
-                    truck.displayName, // e.g. "32 ft SXL - Open Body" (Combines truckType + bodyType in mock?)
-                    // Mock: "32 ft SXL • Open Body"
-                    // Data: truckType="32 Feet Multi Axle High Cube", bodyType="Closed". 
-                    // Let's just use what we have.
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
-                )
-                
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // Owner
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Icon(Icons.Default.Person, ...) // Optionally add person icon
                     Text(
-                        "Owner: ${truck.owner.name}",
+                        text = truck.owner.tagCode,
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
+                        color = Color(0xFF94A3B8)
                     )
                 }
+                
+                Spacer(modifier = Modifier.height(2.dp))
+                
+                Text(
+                    text = truck.displayName,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF64748B)
+                )
+                
+                Text(
+                    text = "Owner: ${truck.owner.name}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF64748B)
+                )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 // Status
                 Row(verticalAlignment = Alignment.CenterVertically) {
-
-                    val status = TruckStatus.from(truck)
-                    val statusText = status.displayText
-                    val statusColor = status.color
-
                     Box(
                         modifier = Modifier
-                            .size(8.dp)
+                            .size(6.dp)
                             .background(statusColor, CircleShape)
                     )
-
-                    Spacer(modifier = Modifier.width(4.dp))
-
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        statusText,
+                        text = statusText,
                         style = MaterialTheme.typography.bodySmall,
                         color = statusColor,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }
@@ -242,15 +238,21 @@ fun TruckItem(
             Button(
                 onClick = onSelect,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF00C853), // Green color from mock
-                    contentColor = Color.White
+                    containerColor = buttonColor,
+                    contentColor = buttonContentColor,
+                    disabledContainerColor = buttonColor,
+                    disabledContentColor = buttonContentColor
                 ),
                 enabled = isEnabled,
-                shape = RoundedCornerShape(8.dp),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                shape = RoundedCornerShape(10.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp),
                 modifier = Modifier.height(36.dp)
             ) {
-                Text("Select")
+                Text(
+                    text = "Select",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }
