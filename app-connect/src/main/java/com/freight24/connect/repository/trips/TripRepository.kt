@@ -1,9 +1,11 @@
-package com.freight24.connect.repository
+package com.freight24.connect.repository.trips
 
+import com.freight24.rest.request.UpdateOtherDeductionsRequest
 import com.freight24.rest.response.CreatedTripResponse
 import com.freight24.rest.response.MyTripsDataResponse
 import com.freight24.rest.response.SignedDocument
 import com.freight24.rest.response.TripDataResponse
+import com.freight24.rest.response.UpdateOtherDeductionsResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 
@@ -47,4 +49,10 @@ interface TripRepository {
         status: String,
         remarks: String?
     ): Result<TripDataResponse>
+
+    suspend fun updateOtherDeductions(
+        tripId: String,
+        amount: String,
+        notes: String?
+    ): Result<UpdateOtherDeductionsResponse>
 }

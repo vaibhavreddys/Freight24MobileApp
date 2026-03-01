@@ -24,7 +24,7 @@ internal class HaltingChargesViewModelImpl @Inject constructor(
 
     override fun onEvent(event: HaltingChargesEvent) {
         when (event) {
-            is HaltingChargesEvent.LoadHaltingRate -> loadHaltingRate(event.truckTypeId, event.initialLoadingDays, event.initialUnloadingDays)
+            is HaltingChargesEvent.LoadHaltingRate -> loadHaltingRate(event.truckTypeId, event.initialLoadingDays, event.initialUnloadingDays, event.notes)
             is HaltingChargesEvent.UpdateLoadingDays -> {
                 _uiState.update { it.copy(loadingDays = event.days.coerceAtLeast(0)) }
             }
@@ -38,8 +38,8 @@ internal class HaltingChargesViewModelImpl @Inject constructor(
         }
     }
 
-    private fun loadHaltingRate(truckTypeId: String, loadingDays: Int, unloadingDays: Int) {
-        _uiState.update { it.copy(isLoading = true, errorMessage = null, loadingDays = loadingDays, unloadingDays = unloadingDays) }
+    private fun loadHaltingRate(truckTypeId: String, loadingDays: Int, unloadingDays: Int, notes: String) {
+        _uiState.update { it.copy(isLoading = true, errorMessage = null, loadingDays = loadingDays, unloadingDays = unloadingDays, notes = notes) }
         viewModelScope.launch {
             getHaltingRateUseCase(GetHaltingRateUseCaseDataParams(truckTypeId)).fold(
                 onSuccess = { rate ->

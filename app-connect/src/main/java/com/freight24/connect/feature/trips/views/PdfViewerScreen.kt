@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -33,7 +34,7 @@ internal fun PdfViewerScreen(
     val uiState by viewModel.uiState.collectAsState()
     
     // Navigate back when approval/rejection is successful
-    androidx.compose.runtime.LaunchedEffect(uiState.shouldNavigateBack) {
+    LaunchedEffect(uiState.shouldNavigateBack) {
         if (uiState.shouldNavigateBack) {
             onSuccess()
         }
@@ -133,7 +134,7 @@ internal fun PdfViewerScreen(
                     }
                 }
                 uiState.pdfFile != null -> {
-                    PdfRendererView(file = uiState.pdfFile!!)
+                    PdfRendererView(source = com.rajat.pdfviewer.util.PdfSource.LocalFile(uiState.pdfFile!!))
                 }
             }
         }

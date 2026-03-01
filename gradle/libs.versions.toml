@@ -23,6 +23,7 @@ ktlint = "12.1.1"
 gServices = "4.4.4"
 firebaseBom = "34.8.0"
 coilComposeVersion = "3.3.0"
+pdfViewerVersion = "2.3.7"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -64,6 +65,9 @@ firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.r
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
 firebase-inappmessaging = { group = "com.google.firebase", name = "firebase-inappmessaging" }
 firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
+
+#PDFVIEWER
+pdf-viewer = { group = "io.github.afreakyelf", name = "Pdf-Viewer", version.ref = "pdfViewerVersion"}
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

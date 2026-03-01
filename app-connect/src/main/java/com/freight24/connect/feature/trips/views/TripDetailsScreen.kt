@@ -16,12 +16,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Payments
-import androidx.compose.material.icons.automirrored.filled.RotateRight
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material3.*
@@ -54,7 +54,9 @@ fun TripDetailsScreen(
     onBackClick: () -> Unit,
     onEditClick: (String) -> Unit,
     onDocumentView : (String, String, String) -> Unit,
-    onHaltingClick: (String, String, Int, Int) -> Unit,
+    onHaltingClick: (String, String, Int, Int, String?) -> Unit,
+    onLuClick: (String, String, String?, String?, String?, String?, String?) -> Unit,
+    onOtherDeductionsClick: (String, String?, String?) -> Unit,
     viewModel: TripDetailsViewModel = hiltViewModel<TripDetailsViewModelImpl>()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -310,9 +312,13 @@ fun TripDetailsScreen(
                         onDocClick = { docId, status ->
                             onDocumentView(tripId, docId, status)
                         },
-                        onHaltingClick = { loadingDays, unloadingDays ->
-                            onHaltingClick(tripId, uiState.trip!!.indentDetails.truckTypeId, loadingDays, unloadingDays)
-                        }
+                        onHaltingClick = { tripId, truckTypeId, loadingDays, unloadingDays, notes ->
+                            onHaltingClick(tripId, truckTypeId, loadingDays, unloadingDays, notes)
+                        },
+                        onLuClick = { loading, unloading, loadingSlipUrl, unloadingSlipUrl, loadingId, unloadingId, notes ->
+                            onLuClick(loading, unloading, loadingSlipUrl, unloadingSlipUrl, loadingId, unloadingId, notes)
+                        },
+                        onOtherDeductionsClick = onOtherDeductionsClick
                     )
                 }
             }
@@ -325,7 +331,9 @@ fun TripDetailsContent(
     trip: TripDataResponse,
     onUploadLrClick: () -> Unit,
     onDocClick: (String, String) -> Unit,
-    onHaltingClick: (Int, Int) -> Unit
+    onHaltingClick: (String, String, Int, Int, String?) -> Unit,
+    onLuClick: (String, String, String?, String?, String?, String?, String?) -> Unit,
+    onOtherDeductionsClick: (String, String?, String?) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -341,7 +349,9 @@ fun TripDetailsContent(
         // Trip Documents
         ExpandableSection(
             title = "Documents",
-            icon = Icons.Outlined.Description
+            icon = Icons.Outlined.Description,
+            iconBg = Color(0xFFEFF6FF),
+            iconTint = Color(0xFF3B82F6)
         ) {
             TripDocumentsSection(
                 truckerStatus = trip.truckerStatus,
@@ -354,15 +364,22 @@ fun TripDetailsContent(
         // Charges & Deductions
         ExpandableSection(
             title = "Charges & Deductions",
-            icon = Icons.Outlined.AccountBalanceWallet
+            icon = Icons.Outlined.AccountBalanceWallet,
+            iconBg = Color(0xFFECFDF5),
+            iconTint = Color(0xFF10B981)
         ) {
             ChargesAndDeductionsContent(
                 financials = trip.financials,
                 onHaltingClick = {
-                    onHaltingClick(
-                        trip.financials?.halting?.loading?.days ?: 0,
-                        trip.financials?.halting?.unloading?.days ?: 0
-                    )
+                    val truckTypeId = trip.indentDetails.truckTypeId
+                    val loadingDays = trip.financials?.halting?.loading?.days ?: 0
+                    val unloadingDays = trip.financials?.halting?.unloading?.days ?: 0
+                    val notes = trip.financials?.halting?.loading?.notes
+                    onHaltingClick(trip.id, truckTypeId, loadingDays, unloadingDays, notes)
+                },
+                onLuClick = onLuClick,
+                onOtherDeductionsClick = { amount, notes ->
+                    onOtherDeductionsClick(trip.id, amount.toString(), notes)
                 }
             )
         }
@@ -370,7 +387,9 @@ fun TripDetailsContent(
         // Payment Breakdown
         ExpandableSection(
             title = "Payment Breakdown",
-            icon = Icons.Outlined.Payments
+            icon = Icons.Outlined.Payments,
+            iconBg = Color(0xFFECFDF5),
+            iconTint = Color(0xFF10B981)
         ) {
             PaymentBreakdownContent(trip.financials)
         }
@@ -397,7 +416,7 @@ fun TripDocumentsSection(
 ) {
     Column(
         modifier = Modifier.padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
 
         val lrDoc = documents.find { it.type.lowercase() == "lr" }
@@ -441,7 +460,7 @@ fun DocumentCard(
 
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
         modifier = Modifier.fillMaxWidth(),
         onClick = {
@@ -454,7 +473,7 @@ fun DocumentCard(
         ) {
             Surface(
                 shape = RoundedCornerShape(8.dp),
-                color = Color.White,
+                color = Color(0xFFEFF6FF),
                 modifier = Modifier.size(40.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
@@ -470,15 +489,15 @@ fun DocumentCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF334155)
+                    color = Color(0xFF1E293B)
                 )
                 
                 if (doc == null) {
                     Text(
                         text = "Not Available",
-                        style = MaterialTheme.typography.labelSmall,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = Color(0xFFEF4444)
                     )
                 }
@@ -498,10 +517,10 @@ fun DocumentCard(
                     enabled = isUploadEnabled,
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFDCFCE7),
-                        contentColor = Color(0xFF16A34A),
-                        disabledContainerColor = Color(0xFFDCFCE7).copy(alpha = 0.5f),
-                        disabledContentColor = Color(0xFF16A34A).copy(alpha = 0.5f)
+                        containerColor = Color(0xFFECFDF5),
+                        contentColor = Color(0xFF10B981),
+                        disabledContainerColor = Color(0xFFECFDF5).copy(alpha = 0.5f),
+                        disabledContentColor = Color(0xFF10B981).copy(alpha = 0.5f)
                     ),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
                     modifier = Modifier.height(32.dp)
@@ -544,6 +563,8 @@ fun StatusBadgeSmall(status: String) {
 fun ExpandableSection(
     title: String,
     icon: ImageVector,
+    iconBg: Color = Color(0xFFF1F5F9),
+    iconTint: Color = Color(0xFF3B82F6),
     content: @Composable () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -563,11 +584,11 @@ fun ExpandableSection(
             ) {
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = Color(0xFFF1F5F9),
+                    color = iconBg,
                     modifier = Modifier.size(32.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Icon(icon, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color(0xFF3B82F6))
+                        Icon(icon, contentDescription = null, modifier = Modifier.size(16.dp), tint = iconTint)
                     }
                 }
                 Spacer(modifier = Modifier.width(12.dp))
@@ -594,7 +615,9 @@ fun ExpandableSection(
 @Composable
 fun ChargesAndDeductionsContent(
     financials: TripDataResponse.FinanceDetails?,
-    onHaltingClick: () -> Unit
+    onHaltingClick: () -> Unit,
+    onLuClick: (String, String, String?, String?, String?, String?, String?) -> Unit,
+    onOtherDeductionsClick: (Double, String?) -> Unit
 ) {
     if (financials == null) {
         Text("No data", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodySmall)
@@ -608,9 +631,22 @@ fun ChargesAndDeductionsContent(
         val luTotal = (financials.luCharges.loading.total + financials.luCharges.unloading.total).toDouble()
         val haltingTotal = (financials.halting.loading.totalAmount + financials.halting.unloading.totalAmount)
         
-        ChargesSubRow("Loading & Unloading", luTotal)
+        ChargesSubRow("Loading & Unloading", luTotal, onClick = {
+            onLuClick(
+                financials.luCharges.loading.total.toString(),
+                financials.luCharges.unloading.total.toString(),
+                financials.luCharges.loading.slipUrl,
+                financials.luCharges.unloading.slipUrl,
+                financials.luCharges.loading.id,
+                financials.luCharges.unloading.id,
+                financials.luCharges.loading.notes,
+            )
+        })
         ChargesSubRow("Halting", haltingTotal, onClick = onHaltingClick)
-        ChargesSubRow("Other Deductions", financials.otherDeductions, isDeduction = true)
+        val otherDeductionsNotes = financials.deductionRemarks
+        ChargesSubRow("Other Deductions", financials.otherDeductions, isDeduction = true, onClick = {
+            onOtherDeductionsClick(financials.otherDeductions, otherDeductionsNotes)
+        })
     }
 }
 
@@ -624,7 +660,8 @@ fun ChargesSubRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
+            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
+            .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -645,7 +682,7 @@ fun ChargesSubRow(
                 imageVector = Icons.Outlined.ChevronRight,
                 contentDescription = null,
                 modifier = Modifier.size(20.dp),
-                tint = Color(0xFF94A3B8)
+                tint = Color(0xFF3B82F6)
             )
         }
     }
@@ -657,70 +694,157 @@ fun PaymentBreakdownContent(financials: TripDataResponse.FinanceDetails?) {
         Text("Financial data not available", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodySmall)
         return
     }
-    
+
     Column(
         modifier = Modifier.padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(15.dp)
     ) {
-        BreakdownRow("Trip Cost", financials.truckerTripCost)
-        BreakdownRow("Advance Paid", financials.advance.paidAmount)
-        BreakdownRow("Platform Fee", financials.platformFee.amount, isDeduction = true)
-        BreakdownRow("TDS", financials.tds.amount, isDeduction = true)
+        PaymentDetailRow("Trip Cost", financials.truckerTripCost)
         
-        Divider(color = Color(0xFFF1F5F9))
+        // Halting Loading
+        PaymentDetailRow(
+            label = "Loading",
+            amount = financials.halting.loading.totalAmount,
+            isAddition = true,
+            detailText = "(${financials.halting.loading.days} Days x ₹${formatAmount(financials.halting.loading.perDayAmount.toString())})",
+            addHeader = true,
+            headerName = "Halting Charges"
+        )
+
+        // Halting Unloading
+        PaymentDetailRow(
+            label = "Unloading",
+            amount = financials.halting.unloading.totalAmount,
+            isAddition = true,
+            detailText = "(${financials.halting.unloading.days} Days x ₹${formatAmount(financials.halting.unloading.perDayAmount.toString())})"
+        )
+
+        // Loading Charges (from LU)
+        PaymentDetailRow(
+            label = "Loading Charges",
+            amount = financials.luCharges.loading.total.toDouble(),
+            isAddition = true
+        )
+
+        // Unloading Charges (from LU)
+        PaymentDetailRow(
+            label = "Unloading Charges",
+            amount = financials.luCharges.unloading.total.toDouble(),
+            isAddition = true
+        )
+
+        PaymentDetailRow("Other Deductions", financials.otherDeductions, isDeduction = true)
+        PaymentDetailRow("Advance Paid", financials.advance.paidAmount)
+        PaymentDetailRow("Platform Fee", financials.platformFee.amount, isDeduction = true)
+        PaymentDetailRow("TDS", financials.tds.amount, isDeduction = true)
+        
+        Divider(color = Color(0xFFF1F5F9), modifier = Modifier.padding(vertical = 4.dp))
         
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Net Payable", fontWeight = FontWeight.Bold)
-            Text("₹${formatAmount(financials.netPayable.toString())}", fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
+            Text("Net Payable", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
+            Text("₹${formatAmount(financials.netPayable.toString())}", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
         }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Paid Amount", fontWeight = FontWeight.Bold)
-            Text("₹${formatAmount(financials.totalPaidAmount.toString())}", fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
+            Text("Paid Amount", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
+            Text("₹${formatAmount(financials.totalPaidAmount.toString())}", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // Balance Due Box
+        val balanceDue = financials.netPayable - financials.totalPaidAmount
+        Surface(
+            color = Color(0xFFFFF7ED),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "Balance Due", 
+                    fontWeight = FontWeight.Bold, 
+                    color = Color(0xFF7C2D12),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Text(
+                    "₹${formatAmount(balanceDue.toString())}", 
+                    fontWeight = FontWeight.Bold, 
+                    color = Color(0xFFEA580C),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
         }
     }
 }
 
 @Composable
-fun HaltingRow(label: String, charges: TripDataResponse.HaltingCharges) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Column {
-            Text(text = label, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+fun PaymentDetailRow(
+    label: String,
+    amount: Double,
+    isDeduction: Boolean = false,
+    isAddition: Boolean = false,
+    detailText: String? = null,
+    addHeader: Boolean = false,
+    headerName: String = ""
+) {
+    Column(modifier = Modifier.padding(vertical = 2.dp)) {
+        if (addHeader) {
             Text(
-                text = "(${charges.days} Days x ₹${formatAmount(charges.perDayAmount.toString())})",
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.LightGray
+                text = headerName, 
+                style = MaterialTheme.typography.bodySmall, 
+                color = Color(0xFF64748B),
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 4.dp)
             )
         }
-        Text(
-            text = "₹${formatAmount(charges.totalAmount.toString())}",
-            style = MaterialTheme.typography.bodySmall,
-            color = Color.Black
-        )
-    }
-}
 
-@Composable
-fun BreakdownRow(label: String, amount: Double, isDeduction: Boolean = false) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(text = label, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-        Text(
-            text = (if (isDeduction) "- " else "") + "₹${formatAmount(amount.toString())}",
-            style = MaterialTheme.typography.bodySmall,
-            color = if (isDeduction) Color.Red else Color.Black
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = label, 
+                    style = MaterialTheme.typography.bodyMedium, 
+                    color = Color(0xFF64748B)
+                )
+                if (!detailText.isNullOrBlank()) {
+                    Text(
+                        text = detailText,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFF94A3B8),
+                        fontSize = 11.sp
+                    )
+                }
+            }
+            Text(
+                text = when {
+                    isDeduction -> "- ₹${formatAmount(amount.toString())}"
+                    isAddition && amount > 0 -> "+ ₹${formatAmount(amount.toString())}"
+                    else -> "₹${formatAmount(amount.toString())}"
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = when {
+                    isDeduction -> Color.Red
+                    isAddition && amount > 0 -> Color(0xFF10B981)
+                    else -> Color(0xFF1E293B)
+                }
+            )
+        }
     }
 }
 

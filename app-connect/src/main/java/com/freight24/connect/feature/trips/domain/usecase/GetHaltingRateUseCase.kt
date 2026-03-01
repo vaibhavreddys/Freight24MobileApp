@@ -2,7 +2,7 @@ package com.freight24.connect.feature.trips.domain.usecase
 
 import com.freight24.common.usecase.UseCase
 import com.freight24.common.usecase.UseCaseParams
-import com.freight24.connect.repository.TripHaltingRepository
+import com.freight24.connect.repository.trips.TripHaltingRepository
 import com.freight24.rest.response.TruckHaltingRate
 import javax.inject.Inject
 

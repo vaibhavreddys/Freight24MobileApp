@@ -57,12 +57,22 @@ internal class PdfViewerViewModel @Inject constructor(
     private val tripId: String = checkNotNull(savedStateHandle["tripId"])
     private val documentId: String = checkNotNull(savedStateHandle["documentId"])
     private val initialStatus: String? = savedStateHandle["status"]
+    private val localPath: String? = savedStateHandle["localPath"]
 
     private val _uiState = MutableStateFlow(PdfViewerUiState(documentStatus = initialStatus))
     val uiState: StateFlow<PdfViewerUiState> = _uiState.asStateFlow()
 
     init {
-        loadPdf()
+        if (!localPath.isNullOrBlank() && localPath != "null") {
+            val file = File(localPath)
+            if (file.exists()) {
+                _uiState.update { it.copy(pdfFile = file, isLoading = false) }
+            } else {
+                loadPdf()
+            }
+        } else {
+            loadPdf()
+        }
     }
 
     fun onEvent(event: PdfViewerEvent) {

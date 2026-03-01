@@ -13,17 +13,15 @@ import com.freight24.connect.feature.trips.domain.usecase.UpdateTruckerUseCase
 import com.freight24.connect.feature.trips.domain.usecase.UpdateTruckerUseCaseDataParams
 import com.freight24.connect.feature.trips.domain.usecase.UploadLrUseCase
 import com.freight24.connect.feature.trips.domain.usecase.UploadLrUseCaseDataParams
+import com.freight24.connect.utils.FileUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.FileOutputStream
 import javax.inject.Inject
 
 @HiltViewModel
@@ -108,9 +106,9 @@ internal class TripDetailsViewModelImpl @Inject constructor(
             
             try {
                 val file = if (_uiState.value.isPdf) {
-                    getFileFromUri(uris.first())
+                    FileUtils.getFileFromUri(context, uris.first())
                 } else {
-                    convertImagesToPdf(uris)
+                    FileUtils.convertImageToPdf(context, uris)
                 }
 
                 if (file != null) {
@@ -151,48 +149,6 @@ internal class TripDetailsViewModelImpl @Inject constructor(
         }
     }
 
-    private suspend fun getFileFromUri(uri: Uri): File? = withContext(Dispatchers.IO) {
-        try {
-            val inputStream = context.contentResolver.openInputStream(uri)
-            val file = File(context.cacheDir, "temp_lr.pdf")
-            val outputStream = FileOutputStream(file)
-            inputStream?.use { input ->
-                outputStream.use { output ->
-                    input.copyTo(output)
-                }
-            }
-            file
-        } catch (e: Exception) {
-            null
-        }
-    }
-
-    private suspend fun convertImagesToPdf(uris: List<Uri>): File? = withContext(Dispatchers.IO) {
-        try {
-            val pdfDocument = PdfDocument()
-            uris.forEachIndexed { index, uri ->
-                val inputStream = context.contentResolver.openInputStream(uri)
-                val bitmap = BitmapFactory.decodeStream(inputStream)
-                if (bitmap != null) {
-                    val pageInfo = PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, index + 1).create()
-                    val page = pdfDocument.startPage(pageInfo)
-                    page.canvas.drawBitmap(bitmap, 0f, 0f, null)
-                    pdfDocument.finishPage(page)
-                    bitmap.recycle()
-                }
-                inputStream?.close()
-            }
-
-            val file = File(context.cacheDir, "temp_lr_converted.pdf")
-            val outputStream = FileOutputStream(file)
-            pdfDocument.writeTo(outputStream)
-            pdfDocument.close()
-            outputStream.close()
-            file
-        } catch (e: Exception) {
-            null
-        }
-    }
 
     private fun loadTrip(id: String = tripId) {
         viewModelScope.launch {

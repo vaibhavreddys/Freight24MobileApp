@@ -2,7 +2,7 @@ package com.freight24.connect.feature.trips.domain.usecase
 
 import com.freight24.common.usecase.UseCase
 import com.freight24.common.usecase.UseCaseParams
-import com.freight24.connect.repository.TripRepository
+import com.freight24.connect.repository.trips.TripRepository
 import com.freight24.rest.response.MyTripsDataResponse
 import javax.inject.Inject
 

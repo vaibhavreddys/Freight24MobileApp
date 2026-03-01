@@ -56,7 +56,7 @@ android {
             buildConfigField(
                 "String",
                 "BASE_URL",
-                "\"http://192.168.1.5:3000/api/v1/\"",
+                "\"http://192.168.1.199:3000/api/v1/\"",
             )
         }
 
@@ -111,6 +111,9 @@ dependencies {
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+
+    // Pdf Viewer For Android (Lightweight Compose PDF Viewer)
+    implementation(libs.pdf.viewer)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

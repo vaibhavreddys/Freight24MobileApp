@@ -9,7 +9,7 @@ data class SignedDocument(
 
     @Serializable
     data class Document(
-        val documentId: String,
+        val documentId: String? =null,
         val signedUrl: String,
         val expiresIn: Int
     )

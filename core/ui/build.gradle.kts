@@ -40,6 +40,8 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    // Pdf Viewer For Android (Lightweight Compose PDF Viewer)
+    implementation(libs.pdf.viewer)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -47,7 +49,4 @@ dependencies {
 
     // Material 3 Extended IconSet
     implementation("androidx.compose.material:material-icons-extended:1.x.x")
-
-    // Pdf Viewer For Android (Lightweight Compose PDF Viewer)
-    implementation("io.github.afreakyelf:Pdf-Viewer:2.3.7")
 }

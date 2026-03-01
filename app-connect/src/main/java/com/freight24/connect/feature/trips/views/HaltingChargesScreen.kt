@@ -31,6 +31,7 @@ fun HaltingChargesScreen(
     truckTypeId: String,
     initialLoadingDays: Int,
     initialUnloadingDays: Int,
+    notes: String,
     onBackClick: () -> Unit,
     onSuccess: () -> Unit,
     viewModel: HaltingChargesViewModel = hiltViewModel<HaltingChargesViewModelImpl>()
@@ -38,7 +39,7 @@ fun HaltingChargesScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(truckTypeId) {
-        viewModel.onEvent(HaltingChargesEvent.LoadHaltingRate(truckTypeId, initialLoadingDays, initialUnloadingDays))
+        viewModel.onEvent(HaltingChargesEvent.LoadHaltingRate(truckTypeId, initialLoadingDays, initialUnloadingDays, notes))
     }
 
     LaunchedEffect(uiState.updateSuccess) {
