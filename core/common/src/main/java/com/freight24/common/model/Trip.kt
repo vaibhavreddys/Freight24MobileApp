@@ -45,12 +45,11 @@ data class StatusEvent(
 )
 
 data class TripDocument(
-    val id: String? = null,
+    val id: String?,
     val documentType: String,
     val originalFilename: String? = null,
     val verificationStatus: String,
     val uploadedAt: String? = null,
     val podType: String? = null,
     val podStatus: String? = null,
-    val documentId: String? = "null",
 )

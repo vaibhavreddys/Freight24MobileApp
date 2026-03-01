@@ -16,8 +16,11 @@ import android.content.Context
 import android.graphics.BitmapFactory
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
+import com.freight24.trucker.feature.trips.domain.usecase.GetSignedDocumentUseCase
+import com.freight24.trucker.feature.trips.domain.usecase.GetSignedDocumentUseCaseImpl
 import com.freight24.trucker.feature.trips.domain.usecase.UploadLrUseCase
 import com.freight24.trucker.feature.trips.domain.usecase.UploadLrUseCaseDataParams
+import com.freight24.trucker.feature.trips.domain.usecase.GetSignedDocumentParams
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -30,6 +33,7 @@ internal class TripDetailsViewModel @Inject constructor(
     private val fetchTripDetailUseCase: FetchTripDetailUseCase,
     private val updateTripStatusUseCase: com.freight24.trucker.feature.trips.domain.usecase.UpdateTripStatusUseCase,
     private val uploadLrUseCase: UploadLrUseCase,
+    private val getSignedDocumentUseCase: GetSignedDocumentUseCase,
     @ApplicationContext private val context: Context,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
@@ -181,6 +185,18 @@ internal class TripDetailsViewModel @Inject constructor(
             file
         } catch (e: Exception) {
             null
+        }
+    }
+
+    fun fetchSignedUrl(documentId: String, onUrlReady: (String) -> Unit) {
+        viewModelScope.launch {
+            getSignedDocumentUseCase(GetSignedDocumentParams(tripId, documentId))
+                .onSuccess { url ->
+                    onUrlReady(url)
+                }
+                .onFailure { error ->
+                    _uiState.value = UiState.Error(error.message ?: "Failed to get document URL")
+                }
         }
     }
 }

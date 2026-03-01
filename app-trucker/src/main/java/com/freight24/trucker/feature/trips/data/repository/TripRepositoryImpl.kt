@@ -67,4 +67,13 @@ internal class TripRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getSignedDocument(
+        tripId: String,
+        documentId: String,
+    ): Result<String> = safeCallProvider.safeApiCall(ioDispatcher) {
+        tripApi.getSignedDocument(tripId, documentId)
+    }.mapCatching { response ->
+        response.data?.signedUrl ?: throw IllegalStateException("Signed URL not found.")
+    }
+
 }

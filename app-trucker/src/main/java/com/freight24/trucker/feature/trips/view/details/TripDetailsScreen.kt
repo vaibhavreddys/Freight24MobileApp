@@ -61,6 +61,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -77,6 +78,7 @@ import com.freight24.ui.components.TimelineItem
 import com.freight24.ui.components.TimelineStatus
 import com.freight24.ui.components.TimelineView
 import com.freight24.ui.components.TripCard
+import com.freight24.ui.components.getPdfLaunchIntent
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -315,10 +317,16 @@ internal fun TripDetailsScreen(
                     }
                 }
                 is UiState.Success -> {
+                    val context = LocalContext.current
                     TripDetailsContent(
                         trip = state.data,
                         onNavigateToPayments = { onNavigateToPayments(state.data.id) },
-                        onUploadClick = { showSelectionDialog = true }
+                        onUploadClick = { showSelectionDialog = true },
+                        onViewClick = { documentId ->
+                            viewModel.fetchSignedUrl(documentId) { url ->
+                                context.startActivity(getPdfLaunchIntent(url, context))
+                            }
+                        }
                     )
                 }
                 UiState.Idle -> {}
@@ -462,7 +470,8 @@ fun extractStage(details: String): String? {
 fun TripDetailsContent(
     trip: TripDetail,
     onNavigateToPayments: () -> Unit,
-    onUploadClick: () -> Unit
+    onUploadClick: () -> Unit,
+    onViewClick: (String) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -512,24 +521,40 @@ fun TripDetailsContent(
                 }
             } else {
                 trip.tripDocuments.forEach { doc ->
-                    val status = when (doc.verificationStatus.lowercase()) {
-                        "verified" -> DocumentStatus.Uploaded(id = doc.id ?: "", isVerified = true)
-                        "pending" -> DocumentStatus.Uploaded(id = doc.id ?: "", isVerified = false)
-                        else -> DocumentStatus.Pending
-                    }
-
-                    val subtitleText = when (doc.verificationStatus.lowercase()) {
-                        "pending" -> "Verification pending"
-                        "verified" -> "Your LR was verified."
-                        "rejected" -> "Previous LR was rejected, upload a correct LR"
-                        else -> "Upload new document"
+                    val (status, subtitleText) = when (doc.verificationStatus.lowercase()) {
+                        "verified" -> {
+                            DocumentStatus.Uploaded(
+                                id = doc.id ?: "",
+                                label = "Verified",
+                                backgroundColor = Color(0xFFE8F5E9),
+                                textColor = Color(0xFF2E7D32)
+                            ) to "Your LR is verified."
+                        }
+                        "pending" -> {
+                            DocumentStatus.Uploaded(
+                                id = doc.id ?: "",
+                                label = "Pending",
+                                backgroundColor = Color(0xFFFFF3E0),
+                                textColor = Color(0xFFEF6C00)
+                            ) to "Verification pending"
+                        }
+                        "rejected" -> {
+                            DocumentStatus.Uploaded(
+                                id = doc.id ?: "",
+                                label = "Rejected",
+                                backgroundColor = Color(0xFFFFEBEE),
+                                textColor = Color(0xFFC62828)
+                            ) to "Your LR is rejected"
+                        }
+                        else -> DocumentStatus.Pending to "Upload new document"
                     }
 
                     DocumentUploadItem(
                         title = doc.documentType.uppercase(),
                         subtitle = subtitleText,
                         status = status,
-                        onUploadClick = onUploadClick
+                        onUploadClick = onUploadClick,
+                        onViewClick = onViewClick
                     )
                 }
 //                Text(

@@ -1,7 +1,5 @@
 package com.freight24.trucker.feature.trucks.view.details
 
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -120,12 +118,6 @@ internal fun TruckDetailsScreen(
                         truck = state.data,
                         onDocumentClick = { url ->
                             if (url != null) {
-                                val intent =
-                                    Intent(Intent.ACTION_VIEW).apply {
-                                        setDataAndType(Uri.parse(url), "application/pdf")
-                                        flags = Intent.FLAG_ACTIVITY_NO_HISTORY
-                                    }
-//                                context.startActivity(Intent.createChooser(intent, "Open PDF"))
                                 context.startActivity(getPdfLaunchIntent(url, context))
                             }
                         },

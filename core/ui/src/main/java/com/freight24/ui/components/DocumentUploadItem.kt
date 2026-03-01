@@ -26,7 +26,12 @@ import androidx.compose.ui.unit.sp
 sealed class DocumentStatus {
     object Pending : DocumentStatus()
 
-    data class Uploaded(val id: String, val isVerified: Boolean) : DocumentStatus()
+    data class Uploaded(
+        val id: String,
+        val label: String,
+        val backgroundColor: Color,
+        val textColor: Color
+    ) : DocumentStatus()
 }
 
 @Composable
@@ -35,6 +40,7 @@ fun DocumentUploadItem(
     subtitle: String,
     status: DocumentStatus,
     onUploadClick: () -> Unit,
+    onViewClick: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -71,16 +77,16 @@ fun DocumentUploadItem(
             }
             is DocumentStatus.Uploaded -> {
                 Surface(
-//                    onClick = onDocumentViewClick,
-                    color = if (status.isVerified) Color(0xFFE8F5E9) else Color(0xFFFFF3E0),
+                    onClick = { onViewClick(status.id) },
+                    color = status.backgroundColor,
                     shape = RoundedCornerShape(4.dp),
                 ) {
                     Text(
-                        text = if (status.isVerified) "Verified" else "Pending",
+                        text = status.label,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
-                        color = if (status.isVerified) Color(0xFF2E7D32) else Color(0xFFEF6C00),
+                        color = status.textColor,
                     )
                 }
             }

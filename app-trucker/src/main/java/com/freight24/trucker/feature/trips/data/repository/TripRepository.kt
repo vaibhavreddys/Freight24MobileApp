@@ -27,4 +27,9 @@ internal interface TripRepository {
         notes: okhttp3.RequestBody? = null
     ): Result<TripDetail>
 
+    suspend fun getSignedDocument(
+        tripId: String,
+        documentId: String,
+    ): Result<String>
+
 }

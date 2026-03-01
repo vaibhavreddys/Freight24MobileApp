@@ -67,12 +67,12 @@ fun StatusEventDto.toDomain(): StatusEvent {
 
 fun TripDocumentDto.toDomain(): TripDocument {
     return TripDocument(
+        id = id,
         documentType = document_type,
         originalFilename = original_filename,
         verificationStatus = verification_status,
         uploadedAt = uploaded_at,
         podType = pod_type,
         podStatus = pod_status,
-        documentId = id,
     )
 }
