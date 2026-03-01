@@ -28,11 +28,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Assignment
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
@@ -96,6 +98,18 @@ internal fun ProfileScreen(
     val isEditing by viewModel.isEditing.collectAsState()
     val hasChanges by viewModel.hasChanges.collectAsState()
 
+    val snackbarHostState = androidx.compose.runtime.remember { androidx.compose.material3.SnackbarHostState() }
+
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        viewModel.uploadEvent.collect { result ->
+            result.onSuccess {
+                snackbarHostState.showSnackbar("Document uploaded successfully")
+            }.onFailure { error ->
+                snackbarHostState.showSnackbar(error.message ?: "Upload failed")
+            }
+        }
+    }
+
     PullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = { viewModel.onRefresh() },
@@ -104,26 +118,34 @@ internal fun ProfileScreen(
                 .fillMaxSize()
                 .padding(paddingValues),
     ) {
-        when (val state = uiState) {
-            is UiState.Loading -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(strokeWidth = 3.dp, color = BrandGreen)
+        androidx.compose.material3.Scaffold(
+            snackbarHost = { androidx.compose.material3.SnackbarHost(hostState = snackbarHostState) },
+            containerColor = Color.Transparent
+        ) { innerPadding ->
+            Box(modifier = Modifier.padding(innerPadding)) {
+                when (val state = uiState) {
+                    is UiState.Loading -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(strokeWidth = 3.dp, color = BrandGreen)
+                        }
+                    }
+                    is UiState.Error -> {
+                        ProfileErrorState(message = state.message, onRetry = { viewModel.retry() })
+                    }
+                    is UiState.Success -> {
+                        ProfileMainContent(
+                            profile = state.data,
+                            viewModel = viewModel,
+                            isEditing = isEditing,
+                            hasChanges = hasChanges,
+                        )
+                    }
+                    UiState.Idle -> {}
                 }
             }
-            is UiState.Error -> {
-                ProfileErrorState(message = state.message, onRetry = { viewModel.retry() })
-            }
-            is UiState.Success -> {
-                ProfileMainContent(
-                    profile = state.data,
-                    viewModel = viewModel,
-                    isEditing = isEditing,
-                    hasChanges = hasChanges,
-                )
-            }
-            UiState.Idle -> {}
         }
     }
+
 }
 
 @Composable
@@ -133,17 +155,66 @@ private fun ProfileMainContent(
     isEditing: Boolean,
     hasChanges: Boolean,
 ) {
-    val scrollState = rememberScrollState()
-    // Point 1 & 2: isVerified status is assumed to be derivable here.
-    // Since Profile.kt does not contain 'isVerified', we default to false.
-    val isVerified = false // TODO: Replace with actual verified status logic
+    val isUploading by viewModel.isUploading.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    val isVerified = profile.profileVerificationStatus?.lowercase() == "verified"
+    val profileStatus = profile.profileVerificationStatus?.lowercase() ?: "incomplete"
+    
+    var pickingDocumentType by rememberSaveable { mutableStateOf<DocumentType?>(null) }
+    var pickingDocumentId by rememberSaveable { mutableStateOf<String?>(null) }
+    var showSelectionDialog by rememberSaveable { mutableStateOf(false) }
+
+    val documentPickerLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            pickingDocumentType?.let { type ->
+                viewModel.uploadDocument(listOf(it), type, isPdf = true, docId = pickingDocumentId)
+            }
+        }
+    }
+
+    val imagePickerLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.GetMultipleContents()
+    ) { uris ->
+        if (uris.isNotEmpty()) {
+            pickingDocumentType?.let { type ->
+                viewModel.uploadDocument(uris, type, isPdf = false, docId = pickingDocumentId)
+            }
+        }
+    }
+
+    if (showSelectionDialog) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showSelectionDialog = false },
+            title = { Text("Select Document Source") },
+            text = { Text("How would you like to upload your document?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showSelectionDialog = false
+                    documentPickerLauncher.launch("application/pdf")
+                }) {
+                    Text("PDF File")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showSelectionDialog = false
+                    imagePickerLauncher.launch("image/*")
+                }) {
+                    Text("Images")
+                }
+            }
+        )
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .verticalScroll(scrollState)
+                    .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp, vertical = 24.dp),
         ) {
 //            // Top Title & Settings Row
@@ -175,7 +246,7 @@ private fun ProfileMainContent(
                 partnerId = profile.tagCode.orEmpty(),
                 initials = viewModel.getUserInitials(),
                 role = "Fleet Owner",
-                isVerified = isVerified,
+                verificationStatus = profileStatus,
                 isEditing = isEditing,
                 onEditClick = { viewModel.toggleEditMode() },
             )
@@ -231,7 +302,12 @@ private fun ProfileMainContent(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            ProfileSection(title = "BUSINESS DETAILS", icon = Icons.Default.Business, false) {
+            ProfileSection(
+                title = "BUSINESS DETAILS", 
+                icon = Icons.Default.Business, 
+                initiallyExpanded = false,
+                isVerified = profile.documentsVerificationStatus
+            ) {
                 ProfileField(
                     label = "COMPANY NAME",
                     value = viewModel.editableBusinessName.collectAsState().value,
@@ -257,7 +333,12 @@ private fun ProfileMainContent(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            ProfileSection(title = "BANKING INFORMATION", icon = Icons.Default.AccountBalance, false) {
+            ProfileSection(
+                title = "BANKING INFORMATION", 
+                icon = Icons.Default.AccountBalance, 
+                initiallyExpanded = false,
+                isVerified = profile.bankAccountVerificationStatus
+            ) {
                 ProfileField(
                     label = "ACCOUNT HOLDER",
                     value = viewModel.editableAccountHolderName.collectAsState().value,
@@ -318,35 +399,24 @@ private fun ProfileMainContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             // Documents Section
-            ProfileSection(title = "DOCUMENTS", icon = Icons.AutoMirrored.Filled.Assignment, false) {
+            ProfileSection(
+                title = "DOCUMENTS", 
+                icon = Icons.AutoMirrored.Filled.Assignment, 
+                initiallyExpanded = false,
+                isVerified = profile.documentsVerificationStatus
+            ) {
                 DocumentList(
                     documents = profile.documents,
-                    onDocumentClick = { type ->
-                        // Point 3: Document click logic
-//                        val context = LocalContext.current
-                        val doc = profile.documents.find { it.type == type }
-                        val status = doc?.status ?: DocumentStatus.PENDING
-
-                        when (status) {
-                            DocumentStatus.PENDING -> {
-                                // Launch file picker (Requires Context/Activity to open a platform file picker)
-                                // TODO: Implement platform-specific file picker launch logic here, using 'context'
-                                println("Launching file picker for document type: $type")
-//
-                            }
-                            DocumentStatus.UPLOADED -> {
-                                // Launch PDF viewer (Requires Context/Activity and URL)
-                                // TODO: Implement platform-specific PDF viewer logic here, using 'context' and doc?.url
-                                doc?.url?.let { url ->
-                                    println("Launching PDF viewer for URL: $url")
-//                                    this.startActivity(getPdfLaunchIntent(doc.url, getContext()))
-                                    // Example structure for Android: context.startActivity(getPdfLaunchIntent(url, context))
-                                } ?: println("Document URL not found for status $status")
-                            }
-                            else -> {
-                                android.util.Log.e("ProfileScreen", "Unknown document status: $status")
-                            }
+                    isEditing = isEditing,
+                    onDocumentView = { s3Url ->
+                        viewModel.getSignedUrl(s3Url) { signedUrl ->
+                            context.startActivity(com.freight24.ui.components.getPdfLaunchIntent(signedUrl, context))
                         }
+                    },
+                    onDocumentUpload = { type, docId ->
+                        pickingDocumentType = type
+                        pickingDocumentId = docId
+                        showSelectionDialog = true
                     }
                 )
             }
@@ -374,6 +444,40 @@ private fun ProfileMainContent(
                 )
             }
         }
+
+        // Uploading Overlay
+        AnimatedVisibility(
+            visible = isUploading,
+            enter = androidx.compose.animation.fadeIn(),
+            exit = androidx.compose.animation.fadeOut()
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.4f))
+                    .clickable(enabled = false) {},
+                contentAlignment = Alignment.Center
+            ) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    shape = RoundedCornerShape(16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        CircularProgressIndicator(color = BrandGreen)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            "Processing...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -383,10 +487,17 @@ private fun ProfileHeaderCard(
     partnerId: String,
     initials: String,
     role: String,
-    isVerified: Boolean,
+    verificationStatus: String,
     isEditing: Boolean,
     onEditClick: () -> Unit,
 ) {
+    val isVerified = verificationStatus == "verified"
+    val statusColor = when (verificationStatus) {
+        "verified" -> BrandGreen
+        "pending" -> Color(0xFFFFA000) // Darker variant of Yellow for better visibility
+        else -> MaterialTheme.colorScheme.error 
+    }
+    val statusIcon = if (isVerified) Icons.Default.CheckCircle else Icons.Default.Warning
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -417,29 +528,16 @@ private fun ProfileHeaderCard(
                         fontWeight = FontWeight.Bold,
                     )
                 }
-                if (isVerified) {
-                    Icon(
-                        imageVector = Icons.Default.CheckCircle,
-                        contentDescription = "Verified",
-                        tint = BrandGreen,
-                        modifier =
-                            Modifier
-                                .size(22.dp)
-                                .background(MaterialTheme.colorScheme.surface, CircleShape)
-                                .padding(1.dp),
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Default.Warning,
-                        contentDescription = "UnVerified",
-                        tint = Color.Yellow, // POINT 2: Changed tint to Yellow
-                        modifier =
-                            Modifier
-                                .size(22.dp)
-                                .background(MaterialTheme.colorScheme.surface, CircleShape)
-                                .padding(1.dp),
-                    )
-                }
+                Icon(
+                    imageVector = statusIcon,
+                    contentDescription = verificationStatus,
+                    tint = statusColor,
+                    modifier =
+                        Modifier
+                            .size(22.dp)
+                            .background(MaterialTheme.colorScheme.surface, CircleShape)
+                            .padding(1.dp),
+                )
             }
 
             Spacer(modifier = Modifier.width(20.dp))
@@ -490,6 +588,7 @@ private fun ProfileSection(
     title: String,
     icon: ImageVector,
     initiallyExpanded: Boolean,
+    isVerified: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     var isExpanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
@@ -518,6 +617,14 @@ private fun ProfileSection(
                 letterSpacing = 1.sp,
                 modifier = Modifier.weight(1f)
             )
+            
+            if (isVerified) {
+                VerificationChip("Verified", BrandGreen)
+            } else {
+                VerificationChip("Unverified", Color(0xFFFFA000))
+            }
+            
+            Spacer(modifier = Modifier.width(8.dp))
             Icon(
                 imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                 contentDescription = if (isExpanded) "Collapse" else "Expand",
@@ -606,15 +713,34 @@ private fun ProfileField(
 }
 
 @Composable
+private fun VerificationChip(text: String, color: Color) {
+    Surface(
+        color = color.copy(alpha = 0.1f),
+        shape = RoundedCornerShape(12.dp),
+    ) {
+        Text(
+            text = text,
+            color = color,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+        )
+    }
+}
+
+@Composable
 private fun DocumentList(
     documents: List<ProfileDocument>,
-    onDocumentClick: (DocumentType) -> Unit, // POINT 3: Added Callback
+    isEditing: Boolean,
+    onDocumentView: (String) -> Unit,
+    onDocumentUpload: (DocumentType, String?) -> Unit,
 ) {
     val types =
         listOf(
-            DocumentType.PAN,
             DocumentType.AADHAAR,
+            DocumentType.PAN,
             DocumentType.GST_CERTIFICATE,
+            DocumentType.COMPANY_REGISTRATION,
             DocumentType.TDS_CERTIFICATE,
             DocumentType.CANCELLED_CHEQUE,
         )
@@ -622,13 +748,18 @@ private fun DocumentList(
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         types.forEachIndexed { index, type ->
             val doc = documents.find { it.type == type }
-            val status = doc?.status ?: DocumentStatus.PENDING
 
             Row(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .clickable { onDocumentClick(type) } // POINT 3: Added clickable
+                        .clickable { 
+                            if (isEditing) {
+                                onDocumentUpload(type, doc?.docId)
+                            } else if (!doc?.url.isNullOrEmpty()) {
+                                onDocumentView(doc!!.url!!)
+                            }
+                        }
                         .padding(horizontal = 20.dp, vertical = 18.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -646,7 +777,29 @@ private fun DocumentList(
                     modifier = Modifier.weight(1f),
                     color = MaterialTheme.colorScheme.onSurface,
                 )
-                StatusBadge(status)
+                if (isEditing) {
+                    if (doc != null && !doc.url.isNullOrEmpty()) {
+                        StatusBadge(doc.status)
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+                    Icon(
+                        imageVector = Icons.Default.CloudUpload,
+                        contentDescription = "Upload",
+                        tint = BrandGreen,
+                        modifier = Modifier.size(24.dp)
+                    )
+                } else if (doc != null && !doc.url.isNullOrEmpty()) {
+                    StatusBadge(doc.status)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = "View",
+                        tint = MaterialTheme.colorScheme.outline,
+                        modifier = Modifier.size(20.dp)
+                    )
+                } else {
+                    VerificationChip("Not Uploaded", MaterialTheme.colorScheme.outline)
+                }
             }
             if (index < types.lastIndex) {
                 HorizontalDivider(
@@ -663,7 +816,9 @@ private fun DocumentList(
 private fun StatusBadge(status: DocumentStatus) {
     val (text, color) =
         when (status) {
-            DocumentStatus.UPLOADED -> "Verified" to BrandGreen
+            DocumentStatus.VERIFIED -> "Verified" to BrandGreen
+            DocumentStatus.REJECTED -> "Rejected" to MaterialTheme.colorScheme.error
+            DocumentStatus.UPLOADED -> "Verification Pending" to Color(0xFFFFA000)
             DocumentStatus.PENDING -> "Pending" to MaterialTheme.colorScheme.error
             DocumentStatus.UNKNOWN -> "N/A" to MaterialTheme.colorScheme.onSurfaceVariant
         }
@@ -773,6 +928,7 @@ private fun getDocIcon(type: DocumentType) =
         DocumentType.PAN -> Icons.Default.CreditCard
         DocumentType.AADHAAR -> Icons.Default.Fingerprint
         DocumentType.GST_CERTIFICATE -> Icons.Default.Description
+        DocumentType.COMPANY_REGISTRATION -> Icons.Default.Business
         DocumentType.TDS_CERTIFICATE -> Icons.Default.Badge
         DocumentType.CANCELLED_CHEQUE -> Icons.Default.AccountBalance
         else -> Icons.Default.Description

@@ -20,4 +20,20 @@ internal abstract class ProfileModule {
     @Binds
     @ViewModelScoped
     abstract fun bindFetchProfileUseCase(impl: FetchProfileUseCaseImpl): FetchProfileUseCase
+
+    @Binds
+    @ViewModelScoped
+    abstract fun bindUpdateProfileUseCase(impl: com.freight24.trucker.feature.profile.domain.usecase.UpdateProfileUseCaseImpl): com.freight24.trucker.feature.profile.domain.usecase.UpdateProfileUseCase
+
+    @Binds
+    @ViewModelScoped
+    abstract fun bindUploadIdentityDocumentUseCase(impl: com.freight24.trucker.feature.profile.domain.usecase.UploadIdentityDocumentUseCaseImpl): com.freight24.trucker.feature.profile.domain.usecase.UploadIdentityDocumentUseCase
+
+    @Binds
+    @ViewModelScoped
+    abstract fun bindGetProfileSignedUrlUseCase(impl: com.freight24.trucker.feature.profile.domain.usecase.GetProfileSignedUrlUseCaseImpl): com.freight24.trucker.feature.profile.domain.usecase.GetProfileSignedUrlUseCase
+
+    @Binds
+    @ViewModelScoped
+    abstract fun bindUpdateIdentityDocumentUseCase(impl: com.freight24.trucker.feature.profile.domain.usecase.UpdateIdentityDocumentUseCaseImpl): com.freight24.trucker.feature.profile.domain.usecase.UpdateIdentityDocumentUseCase
 }

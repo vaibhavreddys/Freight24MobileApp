@@ -18,6 +18,9 @@ data class Profile(
     val bankAccountDetails: BankAccountDetails?,
     val businessName: String?,
     val gstNumber: String?,
+    val bankAccountVerificationStatus: Boolean,
+    val documentsVerificationStatus: Boolean,
+    val profileVerificationStatus: String?,
 )
 
 data class BankAccountDetails(
@@ -30,15 +33,20 @@ data class BankAccountDetails(
 )
 
 data class ProfileDocument(
+    val docId: String?,
     val type: DocumentType,
     val url: String?,
     val status: DocumentStatus,
 )
 
 enum class DocumentType(val displayName: String) {
-    PAN("PAN Card"),
     AADHAAR("Aadhaar Card"),
+    PAN("PAN Card"),
+    DRIVING_LICENSE("Driving License"),
+    RC_BOOK("RC Book"),
+    INSURANCE_CERTIFICATE("Insurance Certificate"),
     GST_CERTIFICATE("GST Certificate"),
+    COMPANY_REGISTRATION("Company Registration"),
     TDS_CERTIFICATE("TDS Certificate"),
     CANCELLED_CHEQUE("Cancelled Cheque"),
     UNKNOWN("Unknown"),
@@ -47,5 +55,8 @@ enum class DocumentType(val displayName: String) {
 enum class DocumentStatus(val displayText: String) {
     UPLOADED("Uploaded"),
     PENDING("Pending upload"),
+    VERIFIED("Verified"),
+    REJECTED("Rejected"),
     UNKNOWN("Unknown"),
 }
+

@@ -36,6 +36,9 @@ data class ProfileDto(
     val bankAccountDetails: BankAccountDetailsDto?,
     val businessName: String?,
     val gstNumber: String?,
+    val bankAccountVerificationStatus: Boolean? = null,
+    val documentsVerificationStatus: Boolean? = null,
+    val profileVerificationStatus: String? = null,
 )
 
 @Serializable
@@ -50,7 +53,8 @@ data class BankAccountDetailsDto(
 
 @Serializable
 data class ProfileDocumentDto(
-    val type: String?,
+    val documentId: String? = null,
+    val documentType: String?,
     val url: String?,
     val status: String?,
 )

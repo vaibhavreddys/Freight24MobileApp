@@ -27,6 +27,9 @@ fun ProfileDto.toDomain(): Profile =
         bankAccountDetails = bankAccountDetails?.toDomain(),
         businessName = businessName,
         gstNumber = gstNumber,
+        bankAccountVerificationStatus = bankAccountVerificationStatus ?: false,
+        documentsVerificationStatus = documentsVerificationStatus ?: false,
+        profileVerificationStatus = profileVerificationStatus,
     )
 
 fun BankAccountDetailsDto.toDomain(): BankAccountDetails =
@@ -41,17 +44,27 @@ fun BankAccountDetailsDto.toDomain(): BankAccountDetails =
 
 fun ProfileDocumentDto.toDomain(): ProfileDocument =
     ProfileDocument(
-        type = type?.toDocumentType() ?: DocumentType.UNKNOWN,
+        docId = documentId,
+        type = documentType?.toDocumentType() ?: DocumentType.UNKNOWN,
         url = url,
-        status = if (!url.isNullOrEmpty()) DocumentStatus.UPLOADED else DocumentStatus.PENDING,
+        status = when (status?.uppercase()) {
+            "VERIFIED" -> DocumentStatus.VERIFIED
+            "REJECTED" -> DocumentStatus.REJECTED
+            "UPLOADED" -> DocumentStatus.UPLOADED
+            else -> if (!url.isNullOrEmpty()) DocumentStatus.UPLOADED else DocumentStatus.PENDING
+        },
     )
 
 private fun String.toDocumentType(): DocumentType =
-    when (this.uppercase()) {
-        "PAN" -> DocumentType.PAN
-        "AADHAAR" -> DocumentType.AADHAAR
-        "GST_CERTIFICATE", "GST" -> DocumentType.GST_CERTIFICATE
-        "TDS_CERTIFICATE", "TDS" -> DocumentType.TDS_CERTIFICATE
-        "CANCELLED_CHEQUE" -> DocumentType.CANCELLED_CHEQUE
+    when {
+        this.contains("AADHAAR", ignoreCase = true) -> DocumentType.AADHAAR
+        this.contains("PAN", ignoreCase = true) -> DocumentType.PAN
+        this.contains("DL", ignoreCase = true) || this.contains("DRIVING", ignoreCase = true) -> DocumentType.DRIVING_LICENSE
+        this.contains("RC", ignoreCase = true) -> DocumentType.RC_BOOK
+        this.contains("INSURANCE", ignoreCase = true) -> DocumentType.INSURANCE_CERTIFICATE
+        this.contains("GST", ignoreCase = true) -> DocumentType.GST_CERTIFICATE
+        this.contains("COMPANY", ignoreCase = true) -> DocumentType.COMPANY_REGISTRATION
+        this.contains("TDS", ignoreCase = true) -> DocumentType.TDS_CERTIFICATE
+        this.contains("CANCELLED", ignoreCase = true) || this.contains("CHEQUE", ignoreCase = true) -> DocumentType.CANCELLED_CHEQUE
         else -> DocumentType.UNKNOWN
     }

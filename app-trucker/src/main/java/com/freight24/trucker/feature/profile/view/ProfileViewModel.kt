@@ -10,14 +10,30 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.asSharedFlow
 import javax.inject.Inject
+import java.io.File
+import java.io.FileOutputStream
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import android.graphics.BitmapFactory
+import android.graphics.pdf.PdfDocument
+import android.net.Uri
 
 @HiltViewModel
 internal class ProfileViewModel
     @Inject
     constructor(
         private val fetchProfileUseCase: FetchProfileUseCase,
+        private val updateProfileUseCase: com.freight24.trucker.feature.profile.domain.usecase.UpdateProfileUseCase,
+        private val uploadIdentityDocumentUseCase: com.freight24.trucker.feature.profile.domain.usecase.UploadIdentityDocumentUseCase,
+        private val updateIdentityDocumentUseCase: com.freight24.trucker.feature.profile.domain.usecase.UpdateIdentityDocumentUseCase,
+        private val getProfileSignedUrlUseCase: com.freight24.trucker.feature.profile.domain.usecase.GetProfileSignedUrlUseCase,
         private val sessionManager: com.freight24.auth.SessionManager,
+        @dagger.hilt.android.qualifiers.ApplicationContext private val context: android.content.Context,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow<UiState<Profile>>(UiState.Loading)
         val uiState: StateFlow<UiState<Profile>> = _uiState.asStateFlow()
@@ -49,6 +65,12 @@ internal class ProfileViewModel
 
         private val _hasChanges = MutableStateFlow(false)
         val hasChanges: StateFlow<Boolean> = _hasChanges.asStateFlow()
+
+        private val _isUploading = MutableStateFlow(false)
+        val isUploading: StateFlow<Boolean> = _isUploading.asStateFlow()
+
+        private val _uploadEvent = kotlinx.coroutines.flow.MutableSharedFlow<Result<Unit>>()
+        val uploadEvent = _uploadEvent.asSharedFlow()
 
         init {
             fetchProfile()
@@ -135,33 +157,151 @@ internal class ProfileViewModel
         }
 
         fun saveProfile() {
-            // TODO: Implement when backend API is available
-            // For now, just exit edit mode and keep simulated changes in UI
-            _isEditing.value = false
-            _hasChanges.value = false
+            val original = originalProfile ?: return
+            
+            viewModelScope.launch {
+                _isUploading.value = true
+                val request = com.freight24.rest.request.UpdateProfileRequest(
+                    full_name = editableFullName.value,
+                    email = editableEmailId.value,
+                    alt_phones = listOf(editableAlternativePhone.value),
+                    pan_card = editablePanNumber.value,
+                    aadhar_card = editableAadhaarNumber.value,
+                    business_name = editableBusinessName.value,
+                    gst_number = editableGstNumber.value,
+                    is_tds_applicable = original.isTdsApplicable
+                )
+                
+                updateProfileUseCase.invoke(
+                    com.freight24.trucker.feature.profile.domain.usecase.UpdateProfileParams(original.userId, request)
+                ).onSuccess {
+                    _isEditing.value = false
+                    _hasChanges.value = false
+                    fetchProfile()
+                }.onFailure {
+                    // Handle failure (e.g., show error)
+                }
+                _isUploading.value = false
+            }
+        }
 
-            // Simulating success by updating "original" cached values
-            // to match what's in the editable fields (for demo purposes)
-            originalProfile?.let { current ->
-                originalProfile =
-                    current.copy(
-                        fullName = editableFullName.value,
-                        emailId = editableEmailId.value,
-                        phoneNo = editablePhoneNo.value,
-                        aadhaarNumber = editableAadhaarNumber.value,
-                        panNumber = editablePanNumber.value,
-                        businessName = editableBusinessName.value,
-                        gstNumber = editableGstNumber.value,
-                        bankAccountDetails =
-                            current.bankAccountDetails?.copy(
-                                accountHolderName = editableAccountHolderName.value,
-                                accountNumber = editableAccountNumber.value,
-                                ifscCode = editableIfscCode.value,
-                                upiId = editableUpiId.value,
-                                bankName = editableBankName.value,
-                                branchName = editableBranchName.value,
-                            ),
-                    )
+        fun uploadDocument(uris: List<Uri>, type: com.freight24.trucker.feature.profile.domain.DocumentType, isPdf: Boolean, docId: String? = null) {
+            val original = originalProfile ?: return
+            val docTypeId = when (type) {
+                com.freight24.trucker.feature.profile.domain.DocumentType.AADHAAR -> 1
+                com.freight24.trucker.feature.profile.domain.DocumentType.PAN -> 2
+                com.freight24.trucker.feature.profile.domain.DocumentType.DRIVING_LICENSE -> 3
+                com.freight24.trucker.feature.profile.domain.DocumentType.RC_BOOK -> 4
+                com.freight24.trucker.feature.profile.domain.DocumentType.INSURANCE_CERTIFICATE -> 5
+                com.freight24.trucker.feature.profile.domain.DocumentType.GST_CERTIFICATE -> 6
+                com.freight24.trucker.feature.profile.domain.DocumentType.COMPANY_REGISTRATION -> 7
+                com.freight24.trucker.feature.profile.domain.DocumentType.TDS_CERTIFICATE -> 8
+                com.freight24.trucker.feature.profile.domain.DocumentType.CANCELLED_CHEQUE -> 9
+                else -> return
+            }
+
+            viewModelScope.launch {
+                _isUploading.value = true
+                try {
+                    val file = if (isPdf) {
+                        getFileFromUri(uris.first(), type)
+                    } else {
+                        convertImagesToPdf(uris, type)
+                    }
+                    
+                    if (file != null) {
+                        val requestFile = file.asRequestBody("application/pdf".toMediaTypeOrNull())
+                        val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
+                        
+                        val result = if (docId != null) {
+                            updateIdentityDocumentUseCase.invoke(
+                                com.freight24.trucker.feature.profile.domain.usecase.UpdateIdentityDocumentParams(
+                                    docId = docId,
+                                    userId = original.userId,
+                                    documentNumber = "DUMMY_DOC_NUMBER",
+                                    file = body
+                                )
+                            )
+                        } else {
+                            uploadIdentityDocumentUseCase.invoke(
+                                com.freight24.trucker.feature.profile.domain.usecase.UploadIdentityDocumentParams(
+                                    userId = original.userId,
+                                    documentTypeId = docTypeId,
+                                    documentNumber = "DUMMY_DOC_NUMBER",
+                                    file = body
+                                )
+                            )
+                        }
+
+                        result.onSuccess {
+                            _uploadEvent.emit(Result.success(Unit))
+                            fetchProfile(forceRefresh = true)
+                        }.onFailure {
+                            _uploadEvent.emit(Result.failure(it))
+                        }
+                    }
+                } catch (e: Exception) {
+                    _uploadEvent.emit(Result.failure(e))
+                } finally {
+                    _isUploading.value = false
+                }
+            }
+        }
+
+        private suspend fun convertImagesToPdf(uris: List<Uri>, type: com.freight24.trucker.feature.profile.domain.DocumentType): File? = withContext(Dispatchers.IO) {
+            try {
+                val pdfDocument = PdfDocument()
+                uris.forEachIndexed { index, uri ->
+                    val inputStream = context.contentResolver.openInputStream(uri)
+                    val bitmap = BitmapFactory.decodeStream(inputStream)
+                    if (bitmap != null) {
+                        val pageInfo = PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, index + 1).create()
+                        val page = pdfDocument.startPage(pageInfo)
+                        page.canvas.drawBitmap(bitmap, 0f, 0f, null)
+                        pdfDocument.finishPage(page)
+                        bitmap.recycle()
+                    }
+                    inputStream?.close()
+                }
+
+                val file = File(context.cacheDir, "temp_${type.name}_images.pdf")
+                val outputStream = FileOutputStream(file)
+                pdfDocument.writeTo(outputStream)
+                pdfDocument.close()
+                outputStream.close()
+                file
+            } catch (e: Exception) {
+                null
+            }
+        }
+
+        private suspend fun getFileFromUri(uri: android.net.Uri, type: com.freight24.trucker.feature.profile.domain.DocumentType): File? = withContext(Dispatchers.IO) {
+            try {
+                val inputStream = context.contentResolver.openInputStream(uri)
+                val file = File(context.cacheDir, "temp_${type.name}.pdf")
+                val outputStream = FileOutputStream(file)
+                inputStream?.use { input ->
+                    outputStream.use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                file
+            } catch (e: Exception) {
+                null
+            }
+        }
+
+        fun getSignedUrl(s3Url: String, onUrlReady: (String) -> Unit) {
+            viewModelScope.launch {
+                _isUploading.value = true
+                getProfileSignedUrlUseCase.invoke(s3Url)
+                    .onSuccess { signedUrl ->
+                        onUrlReady(signedUrl)
+                    }
+                    .onFailure {
+                        // Handle failure
+                    }
+                _isUploading.value = false
             }
         }
 
