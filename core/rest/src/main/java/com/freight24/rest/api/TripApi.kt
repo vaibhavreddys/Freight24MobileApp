@@ -3,6 +3,7 @@ package com.freight24.rest.api
 import com.freight24.rest.request.CreateTripRequest
 import com.freight24.rest.request.LrVerifyRequest
 import com.freight24.rest.request.UpdateOtherDeductionsRequest
+import com.freight24.rest.request.UpdateTripRequest
 import com.freight24.rest.request.UpdateTruckerStatus
 import com.freight24.rest.response.CreatedTripResponse
 import com.freight24.rest.response.TripDetailResponse
@@ -11,6 +12,7 @@ import com.freight24.rest.response.SignedDocument
 import com.freight24.rest.response.TripDetailDataResponse
 import com.freight24.rest.response.TripResponse
 import com.freight24.rest.response.UpdateOtherDeductionsResponse
+import com.freight24.rest.response.UpdateTripResponse
 import com.freight24.rest.response.UploadedDataResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -25,6 +27,7 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface TripApi {
+
     @GET("trips/trucker/list")
     suspend fun getTrips(
         @Query("page") page: Int,
@@ -90,5 +93,11 @@ interface TripApi {
         @Path("trip_id") tripId: String,
         @Body updateOtherDeductionsRequest: UpdateOtherDeductionsRequest
     ): Response<UpdateOtherDeductionsResponse>
+
+    @PATCH("trips/{trip_id}/edit-basic")
+    suspend fun updateTrip(
+        @Path("trip_id") tripId: String,
+        @Body updateTripRequest: UpdateTripRequest
+    ): Response<UpdateTripResponse>
 
 }

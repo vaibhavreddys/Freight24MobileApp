@@ -5,6 +5,7 @@ import com.freight24.rest.api.TripApi
 import com.freight24.rest.request.CreateTripRequest
 import com.freight24.rest.request.LrVerifyRequest
 import com.freight24.rest.request.UpdateOtherDeductionsRequest
+import com.freight24.rest.request.UpdateTripRequest
 import com.freight24.rest.request.UpdateTruckerStatus
 import com.freight24.rest.response.CreatedTripResponse
 import com.freight24.rest.response.MyTripsDataResponse
@@ -192,6 +193,40 @@ class TripRepositoryImpl @Inject constructor(
                 )
                 if (response.isSuccessful && response.body() != null) {
                     Result.success(response.body()!!)
+                } else {
+                    Result.failure(Exception(response.message()))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    override suspend fun updateTrip(
+        tripId: String,
+        driverName: String?,
+        driverPhone: String?,
+        clientTripCost: String?,
+        truckerTripCost: String?,
+        luIncluded: Boolean?,
+        truckId: String?,
+        reason: String?
+    ): Result<TripDataResponse> =
+        withContext(ioDispatcher) {
+            try {
+                val response = api.updateTrip(
+                    tripId = tripId,
+                    updateTripRequest = UpdateTripRequest(
+                        driverName = driverName,
+                        driverPhone = driverPhone,
+                        clientTripCost = clientTripCost,
+                        truckerTripCost = truckerTripCost,
+                        luIncluded = luIncluded,
+                        truckId = truckId,
+                        reason = reason
+                    )
+                )
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!.data)
                 } else {
                     Result.failure(Exception(response.message()))
                 }

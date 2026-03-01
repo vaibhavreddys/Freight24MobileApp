@@ -16,6 +16,8 @@ import com.freight24.connect.feature.trips.domain.usecase.UpdateHaltingRateUseCa
 import com.freight24.connect.feature.trips.domain.usecase.UpdateHaltingRateUseCaseImpl
 import com.freight24.connect.feature.trips.domain.usecase.UpdateOtherDeductionsUseCase
 import com.freight24.connect.feature.trips.domain.usecase.UpdateOtherDeductionsUseCaseImpl
+import com.freight24.connect.feature.trips.domain.usecase.UpdateTripUseCase
+import com.freight24.connect.feature.trips.domain.usecase.UpdateTripUseCaseImpl
 import com.freight24.connect.feature.trips.domain.usecase.UpdateTruckerUseCase
 import com.freight24.connect.feature.trips.domain.usecase.UpdateTruckerUseCaseImpl
 import com.freight24.connect.feature.trips.domain.usecase.UploadLUChargesUseCase
@@ -68,5 +70,8 @@ internal abstract class TripsDomainModule {
 
     @Binds
     abstract fun bindUpdateOtherDeductionsUseCase(useCaseImpl: UpdateOtherDeductionsUseCaseImpl): UpdateOtherDeductionsUseCase
+
+    @Binds
+    abstract fun bindUpdateTripUseCase(useCaseImpl: UpdateTripUseCaseImpl): UpdateTripUseCase
 
 }
