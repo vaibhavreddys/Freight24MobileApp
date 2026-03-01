@@ -349,7 +349,9 @@ fun TripDetailsContent(
         // Trip Documents
         ExpandableSection(
             title = "Documents",
-            icon = Icons.Outlined.Description
+            icon = Icons.Outlined.Description,
+            iconBg = Color(0xFFEFF6FF),
+            iconTint = Color(0xFF3B82F6)
         ) {
             TripDocumentsSection(
                 truckerStatus = trip.truckerStatus,
@@ -362,7 +364,9 @@ fun TripDetailsContent(
         // Charges & Deductions
         ExpandableSection(
             title = "Charges & Deductions",
-            icon = Icons.Outlined.AccountBalanceWallet
+            icon = Icons.Outlined.AccountBalanceWallet,
+            iconBg = Color(0xFFECFDF5),
+            iconTint = Color(0xFF10B981)
         ) {
             ChargesAndDeductionsContent(
                 financials = trip.financials,
@@ -383,7 +387,9 @@ fun TripDetailsContent(
         // Payment Breakdown
         ExpandableSection(
             title = "Payment Breakdown",
-            icon = Icons.Outlined.Payments
+            icon = Icons.Outlined.Payments,
+            iconBg = Color(0xFFECFDF5),
+            iconTint = Color(0xFF10B981)
         ) {
             PaymentBreakdownContent(trip.financials)
         }
@@ -410,7 +416,7 @@ fun TripDocumentsSection(
 ) {
     Column(
         modifier = Modifier.padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
 
         val lrDoc = documents.find { it.type.lowercase() == "lr" }
@@ -454,7 +460,7 @@ fun DocumentCard(
 
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
         modifier = Modifier.fillMaxWidth(),
         onClick = {
@@ -467,7 +473,7 @@ fun DocumentCard(
         ) {
             Surface(
                 shape = RoundedCornerShape(8.dp),
-                color = Color.White,
+                color = Color(0xFFEFF6FF),
                 modifier = Modifier.size(40.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
@@ -483,15 +489,15 @@ fun DocumentCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF334155)
+                    color = Color(0xFF1E293B)
                 )
                 
                 if (doc == null) {
                     Text(
                         text = "Not Available",
-                        style = MaterialTheme.typography.labelSmall,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = Color(0xFFEF4444)
                     )
                 }
@@ -511,10 +517,10 @@ fun DocumentCard(
                     enabled = isUploadEnabled,
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFDCFCE7),
-                        contentColor = Color(0xFF16A34A),
-                        disabledContainerColor = Color(0xFFDCFCE7).copy(alpha = 0.5f),
-                        disabledContentColor = Color(0xFF16A34A).copy(alpha = 0.5f)
+                        containerColor = Color(0xFFECFDF5),
+                        contentColor = Color(0xFF10B981),
+                        disabledContainerColor = Color(0xFFECFDF5).copy(alpha = 0.5f),
+                        disabledContentColor = Color(0xFF10B981).copy(alpha = 0.5f)
                     ),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
                     modifier = Modifier.height(32.dp)
@@ -557,6 +563,8 @@ fun StatusBadgeSmall(status: String) {
 fun ExpandableSection(
     title: String,
     icon: ImageVector,
+    iconBg: Color = Color(0xFFF1F5F9),
+    iconTint: Color = Color(0xFF3B82F6),
     content: @Composable () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -576,11 +584,11 @@ fun ExpandableSection(
             ) {
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = Color(0xFFF1F5F9),
+                    color = iconBg,
                     modifier = Modifier.size(32.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Icon(icon, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color(0xFF3B82F6))
+                        Icon(icon, contentDescription = null, modifier = Modifier.size(16.dp), tint = iconTint)
                     }
                 }
                 Spacer(modifier = Modifier.width(12.dp))
@@ -652,7 +660,8 @@ fun ChargesSubRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
+            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
+            .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -673,7 +682,7 @@ fun ChargesSubRow(
                 imageVector = Icons.Outlined.ChevronRight,
                 contentDescription = null,
                 modifier = Modifier.size(20.dp),
-                tint = Color(0xFF94A3B8)
+                tint = Color(0xFF3B82F6)
             )
         }
     }
@@ -686,15 +695,12 @@ fun PaymentBreakdownContent(financials: TripDataResponse.FinanceDetails?) {
         return
     }
 
-    val luTotal = (financials.luCharges.loading.total + financials.luCharges.unloading.total).toDouble()
-    val haltingTotal = (financials.halting.loading.totalAmount + financials.halting.unloading.totalAmount)
-    
     Column(
         modifier = Modifier.padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(15.dp)
     ) {
         PaymentDetailRow("Trip Cost", financials.truckerTripCost)
-
+        
         // Halting Loading
         PaymentDetailRow(
             label = "Loading",
@@ -732,22 +738,53 @@ fun PaymentBreakdownContent(financials: TripDataResponse.FinanceDetails?) {
         PaymentDetailRow("Platform Fee", financials.platformFee.amount, isDeduction = true)
         PaymentDetailRow("TDS", financials.tds.amount, isDeduction = true)
         
-        Divider(color = Color(0xFFF1F5F9))
+        Divider(color = Color(0xFFF1F5F9), modifier = Modifier.padding(vertical = 4.dp))
         
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Net Payable", fontWeight = FontWeight.Bold)
-            Text("₹${formatAmount(financials.netPayable.toString())}", fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
+            Text("Net Payable", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
+            Text("₹${formatAmount(financials.netPayable.toString())}", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
         }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Paid Amount", fontWeight = FontWeight.Bold)
-            Text("₹${formatAmount(financials.totalPaidAmount.toString())}", fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
+            Text("Paid Amount", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
+            Text("₹${formatAmount(financials.totalPaidAmount.toString())}", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        // Balance Due Box
+        val balanceDue = financials.netPayable - financials.totalPaidAmount
+        Surface(
+            color = Color(0xFFFFF7ED),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "Balance Due", 
+                    fontWeight = FontWeight.Bold, 
+                    color = Color(0xFF7C2D12),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Text(
+                    "₹${formatAmount(balanceDue.toString())}", 
+                    fontWeight = FontWeight.Bold, 
+                    color = Color(0xFFEA580C),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
         }
     }
 }
@@ -762,12 +799,15 @@ fun PaymentDetailRow(
     addHeader: Boolean = false,
     headerName: String = ""
 ) {
-
-    Column {
-        if(addHeader) {
-            Text(text = headerName, style = MaterialTheme.typography.bodySmall, color = Color(0xFF64748B))
-
-            Spacer(modifier = Modifier.height(4.dp))
+    Column(modifier = Modifier.padding(vertical = 2.dp)) {
+        if (addHeader) {
+            Text(
+                text = headerName, 
+                style = MaterialTheme.typography.bodySmall, 
+                color = Color(0xFF64748B),
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
         }
 
         Row(
@@ -776,9 +816,11 @@ fun PaymentDetailRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-
-                Text(text = label, style = MaterialTheme.typography.bodySmall, color = Color(0xFF64748B))
-
+                Text(
+                    text = label, 
+                    style = MaterialTheme.typography.bodyMedium, 
+                    color = Color(0xFF64748B)
+                )
                 if (!detailText.isNullOrBlank()) {
                     Text(
                         text = detailText,
@@ -788,29 +830,21 @@ fun PaymentDetailRow(
                     )
                 }
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (isAddition && amount > 0) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = null,
-                        modifier = Modifier.size(14.dp),
-                        tint = Color(0xFF10B981)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = when {
+                    isDeduction -> "- ₹${formatAmount(amount.toString())}"
+                    isAddition && amount > 0 -> "+ ₹${formatAmount(amount.toString())}"
+                    else -> "₹${formatAmount(amount.toString())}"
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = when {
+                    isDeduction -> Color.Red
+                    isAddition && amount > 0 -> Color(0xFF10B981)
+                    else -> Color(0xFF1E293B)
                 }
-                Text(
-                    text = (if (isDeduction) "- " else "") + "₹${formatAmount(amount.toString())}",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = if (isAddition || isDeduction) FontWeight.SemiBold else FontWeight.Medium,
-                    color = when {
-                        isDeduction -> Color.Red
-                        isAddition && amount > 0 -> Color(0xFF10B981)
-                        else -> Color(0xFF1E293B)
-                    }
-                )
-            }
+            )
         }
-
     }
 }
 
