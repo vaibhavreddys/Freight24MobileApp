@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.outlined.Description
@@ -692,13 +693,44 @@ fun PaymentBreakdownContent(financials: TripDataResponse.FinanceDetails?) {
         modifier = Modifier.padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        BreakdownRow("Trip Cost", financials.truckerTripCost)
-        BreakdownRow("Halting Charges", haltingTotal)
-        BreakdownRow("Loading & Unloading Charges", luTotal)
-        BreakdownRow("Other Deductions", financials.otherDeductions, isDeduction = true)
-        BreakdownRow("Advance Paid", financials.advance.paidAmount)
-        BreakdownRow("Platform Fee", financials.platformFee.amount, isDeduction = true)
-        BreakdownRow("TDS", financials.tds.amount, isDeduction = true)
+        PaymentDetailRow("Trip Cost", financials.truckerTripCost)
+
+        // Halting Loading
+        PaymentDetailRow(
+            label = "Loading",
+            amount = financials.halting.loading.totalAmount,
+            isAddition = true,
+            detailText = "(${financials.halting.loading.days} Days x ₹${formatAmount(financials.halting.loading.perDayAmount.toString())})",
+            addHeader = true,
+            headerName = "Halting Charges"
+        )
+
+        // Halting Unloading
+        PaymentDetailRow(
+            label = "Unloading",
+            amount = financials.halting.unloading.totalAmount,
+            isAddition = true,
+            detailText = "(${financials.halting.unloading.days} Days x ₹${formatAmount(financials.halting.unloading.perDayAmount.toString())})"
+        )
+
+        // Loading Charges (from LU)
+        PaymentDetailRow(
+            label = "Loading Charges",
+            amount = financials.luCharges.loading.total.toDouble(),
+            isAddition = true
+        )
+
+        // Unloading Charges (from LU)
+        PaymentDetailRow(
+            label = "Unloading Charges",
+            amount = financials.luCharges.unloading.total.toDouble(),
+            isAddition = true
+        )
+
+        PaymentDetailRow("Other Deductions", financials.otherDeductions, isDeduction = true)
+        PaymentDetailRow("Advance Paid", financials.advance.paidAmount)
+        PaymentDetailRow("Platform Fee", financials.platformFee.amount, isDeduction = true)
+        PaymentDetailRow("TDS", financials.tds.amount, isDeduction = true)
         
         Divider(color = Color(0xFFF1F5F9))
         
@@ -721,39 +753,64 @@ fun PaymentBreakdownContent(financials: TripDataResponse.FinanceDetails?) {
 }
 
 @Composable
-fun HaltingRow(label: String, charges: TripDataResponse.HaltingCharges) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Column {
-            Text(text = label, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-            Text(
-                text = "(${charges.days} Days x ₹${formatAmount(charges.perDayAmount.toString())})",
-                style = MaterialTheme.typography.labelSmall,
-                color = Color.LightGray
-            )
-        }
-        Text(
-            text = "₹${formatAmount(charges.totalAmount.toString())}",
-            style = MaterialTheme.typography.bodySmall,
-            color = Color.Black
-        )
-    }
-}
+fun PaymentDetailRow(
+    label: String,
+    amount: Double,
+    isDeduction: Boolean = false,
+    isAddition: Boolean = false,
+    detailText: String? = null,
+    addHeader: Boolean = false,
+    headerName: String = ""
+) {
 
-@Composable
-fun BreakdownRow(label: String, amount: Double, isDeduction: Boolean = false) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(text = label, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-        Text(
-            text = (if (isDeduction) "- " else "") + "₹${formatAmount(amount.toString())}",
-            style = MaterialTheme.typography.bodySmall,
-            color = if (isDeduction) Color.Red else Color.Black
-        )
+    Column {
+        if(addHeader) {
+            Text(text = headerName, style = MaterialTheme.typography.bodySmall, color = Color(0xFF64748B))
+
+            Spacer(modifier = Modifier.height(4.dp))
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+
+                Text(text = label, style = MaterialTheme.typography.bodySmall, color = Color(0xFF64748B))
+
+                if (!detailText.isNullOrBlank()) {
+                    Text(
+                        text = detailText,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFF94A3B8),
+                        fontSize = 11.sp
+                    )
+                }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (isAddition && amount > 0) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp),
+                        tint = Color(0xFF10B981)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                }
+                Text(
+                    text = (if (isDeduction) "- " else "") + "₹${formatAmount(amount.toString())}",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = if (isAddition || isDeduction) FontWeight.SemiBold else FontWeight.Medium,
+                    color = when {
+                        isDeduction -> Color.Red
+                        isAddition && amount > 0 -> Color(0xFF10B981)
+                        else -> Color(0xFF1E293B)
+                    }
+                )
+            }
+        }
+
     }
 }
 
