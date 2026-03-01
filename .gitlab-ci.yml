@@ -45,10 +45,10 @@ build:trucker:qaDebug:
 build:connect:qaDebug:
   stage: build
   script:
-    - ./gradlew :app-employee:assembleQaDebug
+    - ./gradlew :app-connect:assembleQaDebug
   artifacts:
     paths:
-      - app-employee/build/outputs/apk/qa/debug/
+      - app-connect/build/outputs/apk/qa/debug/
 
 # -----------------------------
 # TEST (OPTIONAL BUT SAFE)
