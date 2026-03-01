@@ -87,6 +87,8 @@ dependencies {
     implementation(project(":core:notifications"))
     implementation(project(":core:rest"))
 
+    implementation(libs.coil.compose)
+
     implementation(libs.okhttp.core)
     implementation(libs.okhttp.logging)
     implementation(libs.kotlinx.serialization.json)
