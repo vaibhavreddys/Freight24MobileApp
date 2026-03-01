@@ -242,10 +242,10 @@ private fun ProfileMainContent(
 
             // Profile Header Card
             ProfileHeaderCard(
-                fullName = profile.fullName.orEmpty(),
+                fullName = viewModel.editableFullName.collectAsState().value,
                 partnerId = profile.tagCode.orEmpty(),
                 initials = viewModel.getUserInitials(),
-                role = "Fleet Owner",
+                role = "Truck Owner",
                 verificationStatus = profileStatus,
                 isEditing = isEditing,
                 onEditClick = { viewModel.toggleEditMode() },
@@ -259,7 +259,7 @@ private fun ProfileMainContent(
                     label = "FULL NAME",
                     value = viewModel.editableFullName.collectAsState().value,
                     isEditing = isEditing,
-                    isEditable = true, // Point 1: Full name is always editable when in edit mode
+                    isEditable = true,
                     onValueChange = {
                         viewModel.editableFullName.value = it
                         viewModel.onFieldChanged()
@@ -270,7 +270,7 @@ private fun ProfileMainContent(
                     label = "EMAIL ADDRESS",
                     value = viewModel.editableEmailId.collectAsState().value,
                     isEditing = isEditing,
-                    isEditable = !isVerified, // Point 1: Editable only if unverified
+                    isEditable = !isVerified,
                     onValueChange = {
                         viewModel.editableEmailId.value = it
                         viewModel.onFieldChanged()
@@ -281,9 +281,20 @@ private fun ProfileMainContent(
                     label = "PHONE NUMBER",
                     value = viewModel.editablePhoneNo.collectAsState().value,
                     isEditing = isEditing,
-                    isEditable = !isVerified, // Point 1: Editable only if unverified
+                    isEditable = !isVerified,
                     onValueChange = {
                         viewModel.editablePhoneNo.value = it
+                        viewModel.onFieldChanged()
+                    },
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
+                ProfileField(
+                    label = "ALTERNATIVE PHONE",
+                    value = viewModel.editableAlternativePhone.collectAsState().value,
+                    isEditing = isEditing,
+                    isEditable = true,
+                    onValueChange = {
+                        viewModel.editableAlternativePhone.value = it
                         viewModel.onFieldChanged()
                     },
                 )
@@ -292,7 +303,7 @@ private fun ProfileMainContent(
                     label = "AADHAAR NUMBER",
                     value = viewModel.editableAadhaarNumber.collectAsState().value,
                     isEditing = isEditing,
-                    isEditable = !isVerified, // Point 1: Editable only if unverified
+                    isEditable = !isVerified,
                     onValueChange = {
                         viewModel.editableAadhaarNumber.value = it
                         viewModel.onFieldChanged()
@@ -312,7 +323,7 @@ private fun ProfileMainContent(
                     label = "COMPANY NAME",
                     value = viewModel.editableBusinessName.collectAsState().value,
                     isEditing = isEditing,
-                    isEditable = !isVerified, // Point 1: Editable only if unverified
+                    isEditable = !isVerified,
                     onValueChange = {
                         viewModel.editableBusinessName.value = it
                         viewModel.onFieldChanged()
@@ -323,7 +334,7 @@ private fun ProfileMainContent(
                     label = "GST NUMBER",
                     value = viewModel.editableGstNumber.collectAsState().value,
                     isEditing = isEditing,
-                    isEditable = !isVerified, // Point 1: Editable only if unverified
+                    isEditable = !isVerified,
                     onValueChange = {
                         viewModel.editableGstNumber.value = it
                         viewModel.onFieldChanged()
@@ -343,7 +354,7 @@ private fun ProfileMainContent(
                     label = "ACCOUNT HOLDER",
                     value = viewModel.editableAccountHolderName.collectAsState().value,
                     isEditing = isEditing,
-                    isEditable = !isVerified, // Point 1: Editable only if unverified
+                    isEditable = !isVerified,
                     onValueChange = {
                         viewModel.editableAccountHolderName.value = it
                         viewModel.onFieldChanged()
@@ -355,7 +366,7 @@ private fun ProfileMainContent(
                     value = viewModel.editableAccountNumber.collectAsState().value,
                     isEditing = isEditing,
                     isSensitive = true,
-                    isEditable = !isVerified, // Point 1: Editable only if unverified
+                    isEditable = !isVerified,
                     onValueChange = {
                         viewModel.editableAccountNumber.value = it
                         viewModel.onFieldChanged()
@@ -366,7 +377,7 @@ private fun ProfileMainContent(
                     label = "IFSC CODE",
                     value = viewModel.editableIfscCode.collectAsState().value,
                     isEditing = isEditing,
-                    isEditable = !isVerified, // Point 1: Editable only if unverified
+                    isEditable = !isVerified,
                     onValueChange = {
                         viewModel.editableIfscCode.value = it
                         viewModel.onFieldChanged()
@@ -377,9 +388,31 @@ private fun ProfileMainContent(
                     label = "UPI ID",
                     value = viewModel.editableUpiId.collectAsState().value,
                     isEditing = isEditing,
-                    isEditable = !isVerified, // Point 1: Editable only if unverified
+                    isEditable = !isVerified,
                     onValueChange = {
                         viewModel.editableUpiId.value = it
+                        viewModel.onFieldChanged()
+                    },
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
+                ProfileField(
+                    label = "BANK NAME",
+                    value = viewModel.editableBankName.collectAsState().value,
+                    isEditing = isEditing,
+                    isEditable = !isVerified,
+                    onValueChange = {
+                        viewModel.editableBankName.value = it
+                        viewModel.onFieldChanged()
+                    },
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
+                ProfileField(
+                    label = "BRANCH NAME",
+                    value = viewModel.editableBranchName.collectAsState().value,
+                    isEditing = isEditing,
+                    isEditable = !isVerified,
+                    onValueChange = {
+                        viewModel.editableBranchName.value = it
                         viewModel.onFieldChanged()
                     },
                 )
@@ -388,7 +421,7 @@ private fun ProfileMainContent(
                     label = "PAN NUMBER",
                     value = viewModel.editablePanNumber.collectAsState().value,
                     isEditing = isEditing,
-                    isEditable = !isVerified, // Point 1: Editable only if unverified
+                    isEditable = !isVerified,
                     onValueChange = {
                         viewModel.editablePanNumber.value = it
                         viewModel.onFieldChanged()
@@ -660,7 +693,7 @@ private fun ProfileField(
     label: String,
     value: String,
     isEditing: Boolean,
-    isEditable: Boolean = true, // POINT 1: Added isEditable parameter
+    isEditable: Boolean = true,
     onValueChange: (String) -> Unit = {},
     isSensitive: Boolean = false,
 ) {
@@ -679,7 +712,7 @@ private fun ProfileField(
         )
         Spacer(modifier = Modifier.height(6.dp))
 
-        if (isEditing && isEditable) { // POINT 1: Used isEditable
+        if (isEditing && isEditable) {
             OutlinedTextField(
                 value = value,
                 onValueChange = onValueChange,

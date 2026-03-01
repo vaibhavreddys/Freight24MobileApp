@@ -169,7 +169,13 @@ internal class ProfileViewModel
                     aadhar_card = editableAadhaarNumber.value,
                     business_name = editableBusinessName.value,
                     gst_number = editableGstNumber.value,
-                    is_tds_applicable = original.isTdsApplicable
+                    is_tds_applicable = original.isTdsApplicable,
+                    account_holder_name = editableAccountHolderName.value,
+                    account_number = editableAccountNumber.value,
+                    ifsc_code = editableIfscCode.value,
+                    upi_id = editableUpiId.value,
+                    bank_name = editableBankName.value,
+                    branch_name = editableBranchName.value
                 )
                 
                 updateProfileUseCase.invoke(
