@@ -13,9 +13,12 @@ data class EditTripUiState(
     val clientTripCost: String = "",
     val truckerTripCost: String = "",
     val luIncluded: Boolean = false,
+    val truckerStatus: String = "",
+    val notes: String = "",
     
     // Initial values for comparison
     val initialTruckId: String = "",
+    val initialTruckNumber: String = "",
     val initialDriverName: String = "",
     val initialDriverPhone: String = "",
     val initialClientTripCost: String = "",
@@ -25,7 +28,8 @@ data class EditTripUiState(
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
     val errorMessage: String? = null,
-    val isSuccess: Boolean = false
+    val isSuccess: Boolean = false,
+    val hasChanges: Boolean = false
 )
 
 sealed class EditTripEvent {
@@ -36,6 +40,7 @@ sealed class EditTripEvent {
     data class UpdateTruckerCost(val cost: String) : EditTripEvent()
     data object ToggleLuIncluded : EditTripEvent()
     data class OnTruckSelected(val truckId: String, val truckNumber: String) : EditTripEvent()
+    data class UpdateNotes(val notes: String) : EditTripEvent()
     data object SaveChanges : EditTripEvent()
     data object ClearError : EditTripEvent()
 }

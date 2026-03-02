@@ -21,7 +21,13 @@ data class LuChargesUiState(
     val navigateToSignedUrl: String? = null,
     val showDocTypeSheet: Boolean = false,
     val showFilePicker: Boolean = false,
-    val selectedDocType: LuDocType? = null
+    val selectedDocType: LuDocType? = null,
+    
+    // Initial values for comparison
+    val initialLoadingAmount: String = "",
+    val initialUnloadingAmount: String = "",
+    val initialNotes: String = "",
+    val hasChanges: Boolean = false
 )
 
 sealed class LuChargesEvent {

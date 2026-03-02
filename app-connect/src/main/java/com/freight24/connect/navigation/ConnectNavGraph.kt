@@ -385,7 +385,7 @@ fun ConnectNavGraph(
             AssignTruckScreen(
                 onBackClick = { navHostController.popBackStack() },
                 onTruckSelected = { truckId, truckNumber ->
-                    val fromEditTrip = navHostController.previousBackStackEntry?.destination?.route?.startsWith("edit_trip") ?: false
+                    val fromEditTrip = navHostController.previousBackStackEntry?.destination?.route == ConnectDestination.EditTrip.route
                     if (fromEditTrip) {
                         navHostController.previousBackStackEntry?.savedStateHandle?.set("selected_truck_id", truckId)
                         navHostController.previousBackStackEntry?.savedStateHandle?.set("selected_truck_number", truckNumber)
@@ -468,6 +468,7 @@ fun ConnectNavGraph(
             val tripId = backStackEntry.arguments?.getString(ConnectDestination.EditTrip.TRIP_ID_ARG) ?: ""
             com.freight24.connect.feature.trips.views.EditTripScreen(
                 navController = navHostController,
+                backStackEntry = backStackEntry,
                 tripId = tripId,
                 onBackClick = { navHostController.popBackStack() },
                 onNavigateToTruckSearch = { id ->

@@ -71,7 +71,7 @@ fun HaltingChargesScreen(
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
-                    enabled = !uiState.isUpdating
+                    enabled = !uiState.isUpdating && uiState.hasChanges
                 ) {
                     if (uiState.isUpdating) {
                         CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))

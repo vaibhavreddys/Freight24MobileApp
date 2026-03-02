@@ -27,8 +27,11 @@ internal class OtherDeductionsViewModelImpl @Inject constructor(
     private val _uiState = MutableStateFlow(
         OtherDeductionsUiState(
             tripId = tripId,
-            amount = initialAmount?.takeIf { it != "null" && it.isNotBlank() } ?: "0.00",
-            notes = initialNotes?.takeIf { it != "null" && it.isNotBlank() } ?: ""
+            amount = initialAmount?.takeIf { it != "null" && it.isNotBlank() } ?: "0",
+            notes = initialNotes?.takeIf { it != "null" && it.isNotBlank() } ?: "",
+            initialAmount = initialAmount?.takeIf { it != "null" && it.isNotBlank() } ?: "0",
+            initialNotes = initialNotes?.takeIf { it != "null" && it.isNotBlank() } ?: "",
+            hasChanges = false
         )
     )
     override val uiState: StateFlow<OtherDeductionsUiState> = _uiState.asStateFlow()
@@ -36,10 +39,10 @@ internal class OtherDeductionsViewModelImpl @Inject constructor(
     override fun onEvent(event: OtherDeductionsEvent) {
         when (event) {
             is OtherDeductionsEvent.OnAmountChange -> {
-                _uiState.update { it.copy(amount = event.amount) }
+                _uiState.update { it.copy(amount = event.amount).updateChanges() }
             }
             is OtherDeductionsEvent.OnReasonChange -> {
-                _uiState.update { it.copy(notes = event.reason) }
+                _uiState.update { it.copy(notes = event.reason).updateChanges() }
             }
             OtherDeductionsEvent.OnUpdateClick -> {
                 updateDeductions()
@@ -67,5 +70,10 @@ internal class OtherDeductionsViewModelImpl @Inject constructor(
                 }
             )
         }
+    }
+
+    private fun OtherDeductionsUiState.updateChanges(): OtherDeductionsUiState {
+        val hasChanges = amount != initialAmount || notes != initialNotes
+        return copy(hasChanges = hasChanges)
     }
 }

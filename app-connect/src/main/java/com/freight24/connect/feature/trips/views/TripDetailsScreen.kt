@@ -379,7 +379,7 @@ fun TripDetailsContent(
                 },
                 onLuClick = onLuClick,
                 onOtherDeductionsClick = { amount, notes ->
-                    onOtherDeductionsClick(trip.id, amount.toString(), notes)
+                    onOtherDeductionsClick(trip.id, amount.toInt().toString(), notes)
                 }
             )
         }

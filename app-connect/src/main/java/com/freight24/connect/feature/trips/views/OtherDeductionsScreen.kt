@@ -71,7 +71,7 @@ fun OtherDeductionsScreen(
                     .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
-                enabled = !uiState.isLoading
+                enabled = !uiState.isLoading && uiState.hasChanges
             ) {
                 if (uiState.isLoading) {
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))

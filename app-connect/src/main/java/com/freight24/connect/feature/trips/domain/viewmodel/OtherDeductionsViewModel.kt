@@ -8,7 +8,12 @@ data class OtherDeductionsUiState(
     val notes: String = "",
     val isLoading: Boolean = false,
     val error: String? = null,
-    val isSuccess: Boolean = false
+    val isSuccess: Boolean = false,
+    
+    // Initial values for comparison
+    val initialAmount: String = "0.00",
+    val initialNotes: String = "",
+    val hasChanges: Boolean = false
 )
 
 sealed class OtherDeductionsEvent {

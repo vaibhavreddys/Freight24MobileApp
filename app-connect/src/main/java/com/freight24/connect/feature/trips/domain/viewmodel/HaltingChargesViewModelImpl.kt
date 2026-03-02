@@ -26,20 +26,32 @@ internal class HaltingChargesViewModelImpl @Inject constructor(
         when (event) {
             is HaltingChargesEvent.LoadHaltingRate -> loadHaltingRate(event.truckTypeId, event.initialLoadingDays, event.initialUnloadingDays, event.notes)
             is HaltingChargesEvent.UpdateLoadingDays -> {
-                _uiState.update { it.copy(loadingDays = event.days.coerceAtLeast(0)) }
+                _uiState.update { it.copy(loadingDays = event.days.coerceAtLeast(0)).updateChanges() }
             }
             is HaltingChargesEvent.UpdateUnloadingDays -> {
-                _uiState.update { it.copy(unloadingDays = event.days.coerceAtLeast(0)) }
+                _uiState.update { it.copy(unloadingDays = event.days.coerceAtLeast(0)).updateChanges() }
             }
             is HaltingChargesEvent.UpdateNotes -> {
-                _uiState.update { it.copy(notes = event.notes) }
+                _uiState.update { it.copy(notes = event.notes).updateChanges() }
             }
             is HaltingChargesEvent.SubmitHaltingCharges -> submitHaltingCharges(event.tripId)
         }
     }
 
     private fun loadHaltingRate(truckTypeId: String, loadingDays: Int, unloadingDays: Int, notes: String) {
-        _uiState.update { it.copy(isLoading = true, errorMessage = null, loadingDays = loadingDays, unloadingDays = unloadingDays, notes = notes) }
+        _uiState.update { 
+            it.copy(
+                isLoading = true, 
+                errorMessage = null, 
+                loadingDays = loadingDays, 
+                unloadingDays = unloadingDays, 
+                notes = notes,
+                initialLoadingDays = loadingDays,
+                initialUnloadingDays = unloadingDays,
+                initialNotes = notes,
+                hasChanges = false
+            ) 
+        }
         viewModelScope.launch {
             getHaltingRateUseCase(GetHaltingRateUseCaseDataParams(truckTypeId)).fold(
                 onSuccess = { rate ->
@@ -76,5 +88,12 @@ internal class HaltingChargesViewModelImpl @Inject constructor(
                 }
             )
         }
+    }
+
+    private fun HaltingChargesUiState.updateChanges(): HaltingChargesUiState {
+        val hasChanges = loadingDays != initialLoadingDays ||
+                unloadingDays != initialUnloadingDays ||
+                notes != initialNotes
+        return copy(hasChanges = hasChanges)
     }
 }

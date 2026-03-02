@@ -10,7 +10,13 @@ data class HaltingChargesUiState(
     val unloadingDays: Int = 0,
     val dailyRate: Double = 0.0,
     val notes: String = "",
-    val updateSuccess: Boolean = false
+    val updateSuccess: Boolean = false,
+    
+    // Initial values for comparison
+    val initialLoadingDays: Int = 0,
+    val initialUnloadingDays: Int = 0,
+    val initialNotes: String = "",
+    val hasChanges: Boolean = false
 )
 
 sealed class HaltingChargesEvent {

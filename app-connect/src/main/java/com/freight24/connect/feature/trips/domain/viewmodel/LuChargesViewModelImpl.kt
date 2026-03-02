@@ -52,15 +52,21 @@ internal class LuChargesViewModelImpl @Inject constructor(
                 loadingId = loadingId,
                 unloadingId = unloadingId,
                 notes = notes,
+                
+                // Set initial values
+                initialLoadingAmount = loadingAmount,
+                initialUnloadingAmount = unloadingAmount,
+                initialNotes = notes,
+                hasChanges = false
             ) 
         }
     }
 
     override fun onEvent(event: LuChargesEvent) {
         when (event) {
-            is LuChargesEvent.OnLoadingAmountChange -> _uiState.update { it.copy(loadingAmount = event.value) }
-            is LuChargesEvent.OnUnloadingAmountChange -> _uiState.update { it.copy(unloadingAmount = event.value) }
-            is LuChargesEvent.OnNotesChange -> _uiState.update { it.copy(notes = event.value) }
+            is LuChargesEvent.OnLoadingAmountChange -> _uiState.update { it.copy(loadingAmount = event.value).updateChanges() }
+            is LuChargesEvent.OnUnloadingAmountChange -> _uiState.update { it.copy(unloadingAmount = event.value).updateChanges() }
+            is LuChargesEvent.OnNotesChange -> _uiState.update { it.copy(notes = event.value).updateChanges() }
             LuChargesEvent.OnUploadClick -> _uiState.update { it.copy(showDocTypeSheet = true) }
             is LuChargesEvent.OnDocTypeSelected -> _uiState.update { 
                 it.copy(selectedDocType = event.type, showDocTypeSheet = false, showFilePicker = true) 
@@ -69,8 +75,8 @@ internal class LuChargesViewModelImpl @Inject constructor(
             is LuChargesEvent.OnRemoteDocClick -> handleRemoteDocClick(event.docType)
             is LuChargesEvent.OnDeleteDoc -> {
                 when (event.type) {
-                    LuDocType.LOADING -> _uiState.update { it.copy(loadingDocument = null, loadingSlipUrl = null, loadingId = null) }
-                    LuDocType.UNLOADING -> _uiState.update { it.copy(unloadingDocument = null, unloadingSlipUrl = null, unloadingId = null) }
+                    LuDocType.LOADING -> _uiState.update { it.copy(loadingDocument = null, loadingSlipUrl = null, loadingId = null).updateChanges() }
+                    LuDocType.UNLOADING -> _uiState.update { it.copy(unloadingDocument = null, unloadingSlipUrl = null, unloadingId = null).updateChanges() }
                 }
             }
             LuChargesEvent.OnSubmit -> submitCharges()
@@ -92,7 +98,7 @@ internal class LuChargesViewModelImpl @Inject constructor(
                     showFilePicker = false,
                     loadingDocument = if (currentState.selectedDocType == LuDocType.LOADING) file else currentState.loadingDocument,
                     unloadingDocument = if (currentState.selectedDocType == LuDocType.UNLOADING) file else currentState.unloadingDocument
-                )
+                ).updateChanges()
             }
         }
     }
@@ -154,5 +160,14 @@ internal class LuChargesViewModelImpl @Inject constructor(
                 _uiState.update { it.copy(isSubmitting = false, error = error.message ?: "Update failed") }
             }
         }
+    }
+
+    private fun LuChargesUiState.updateChanges(): LuChargesUiState {
+        val hasChanges = loadingAmount != initialLoadingAmount ||
+                unloadingAmount != initialUnloadingAmount ||
+                notes != initialNotes ||
+                loadingDocument != null ||
+                unloadingDocument != null
+        return copy(hasChanges = hasChanges)
     }
 }

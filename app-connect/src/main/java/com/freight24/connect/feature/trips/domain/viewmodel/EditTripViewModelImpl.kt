@@ -26,20 +26,23 @@ internal class EditTripViewModelImpl @Inject constructor(
     override fun onEvent(event: EditTripEvent) {
         when (event) {
             is EditTripEvent.LoadTripDetails -> loadTripDetails(event.tripId)
-            is EditTripEvent.UpdateDriverName -> _uiState.update { it.copy(driverName = event.name) }
-            is EditTripEvent.UpdateDriverPhone -> _uiState.update { it.copy(driverPhone = event.phone) }
-            is EditTripEvent.UpdateClientCost -> _uiState.update { it.copy(clientTripCost = event.cost) }
-            is EditTripEvent.UpdateTruckerCost -> _uiState.update { it.copy(truckerTripCost = event.cost) }
-            is EditTripEvent.ToggleLuIncluded -> _uiState.update { it.copy(luIncluded = !it.luIncluded) }
+            is EditTripEvent.UpdateDriverName -> _uiState.update { it.copy(driverName = event.name).updateChanges() }
+            is EditTripEvent.UpdateDriverPhone -> _uiState.update { it.copy(driverPhone = event.phone).updateChanges() }
+            is EditTripEvent.UpdateClientCost -> _uiState.update { it.copy(clientTripCost = event.cost).updateChanges() }
+            is EditTripEvent.UpdateTruckerCost -> _uiState.update { it.copy(truckerTripCost = event.cost).updateChanges() }
+            is EditTripEvent.ToggleLuIncluded -> _uiState.update { it.copy(luIncluded = !it.luIncluded).updateChanges() }
             is EditTripEvent.OnTruckSelected -> _uiState.update { 
-                it.copy(truckId = event.truckId, truckNumber = event.truckNumber) 
+                it.copy(truckId = event.truckId, truckNumber = event.truckNumber).updateChanges() 
             }
+            is EditTripEvent.UpdateNotes -> _uiState.update { it.copy(notes = event.notes).updateChanges() }
             is EditTripEvent.SaveChanges -> saveChanges()
             is EditTripEvent.ClearError -> _uiState.update { it.copy(errorMessage = null) }
         }
     }
 
     private fun loadTripDetails(tripId: String) {
+        if (_uiState.value.internalTripId == tripId && _uiState.value.truckId.isNotEmpty()) return
+
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             tripDetailsUseCase(TripDetailsUseCaseDataParams(tripId))
@@ -55,16 +58,19 @@ internal class EditTripViewModelImpl @Inject constructor(
                             clientTripCost = response.clientTripCost ?: "",
                             truckerTripCost = response.truckerTripCost ?: "",
                             luIncluded = response.financials?.luCharges?.loading?.includedInTripCost ?: false,
+                            truckerStatus = response.truckerStatus,
                             
                             // Store initial values for comparison
                             initialTruckId = response.truck.id,
+                            initialTruckNumber = response.truck.registrationNumber,
                             initialDriverName = response.driverName ?: "",
                             initialDriverPhone = response.driverPhone ?: "",
                             initialClientTripCost = response.clientTripCost ?: "",
                             initialTruckerTripCost = response.truckerTripCost ?: "",
                             initialLuIncluded = response.financials?.luCharges?.loading?.includedInTripCost ?: false,
                             
-                            isLoading = false
+                            isLoading = false,
+                            hasChanges = false
                         )
                     }
                 }
@@ -88,7 +94,7 @@ internal class EditTripViewModelImpl @Inject constructor(
                 truckerTripCost = if (state.truckerTripCost != state.initialTruckerTripCost) state.truckerTripCost else null,
                 luIncluded = if (state.luIncluded != state.initialLuIncluded) state.luIncluded else null,
                 truckId = if (state.truckId != state.initialTruckId) state.truckId else null,
-                reason = "Updated via app"
+                reason = state.notes.ifBlank { "Updated via app" }
             )
             updateTripUseCase(params)
                 .onSuccess {
@@ -98,5 +104,16 @@ internal class EditTripViewModelImpl @Inject constructor(
                     _uiState.update { it.copy(isSaving = false, errorMessage = error.message) }
                 }
         }
+    }
+
+    private fun EditTripUiState.updateChanges(): EditTripUiState {
+        val hasChanges = truckId != initialTruckId ||
+                driverName != initialDriverName ||
+                driverPhone != initialDriverPhone ||
+                clientTripCost != initialClientTripCost ||
+                truckerTripCost != initialTruckerTripCost ||
+                luIncluded != initialLuIncluded ||
+                notes.isNotBlank()
+        return copy(hasChanges = hasChanges)
     }
 }

@@ -110,7 +110,7 @@ fun LuChargesScreen(
                     .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
-                enabled = !uiState.isSubmitting && (uiState.loadingAmount.isNotBlank() || uiState.unloadingAmount.isNotBlank())
+                enabled = !uiState.isSubmitting && uiState.hasChanges
             ) {
                 if (uiState.isSubmitting) {
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))

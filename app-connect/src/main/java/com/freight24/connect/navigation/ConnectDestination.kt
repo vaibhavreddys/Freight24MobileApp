@@ -265,10 +265,10 @@ sealed class ConnectDestination(val route: String) {
         const val NOTES_ARG = "notes"
         override val arguments = listOf(
             navArgument(TRIP_ID_ARG) { type = NavType.StringType },
-            navArgument(AMOUNT_ARG) { type = NavType.StringType; nullable = true; defaultValue = "0.0" },
+            navArgument(AMOUNT_ARG) { type = NavType.StringType; nullable = true; defaultValue = "0" },
             navArgument(NOTES_ARG) { type = NavType.StringType; nullable = true; defaultValue = "" }
         )
         fun createRoute(tripId: String, amount: String? = null, notes: String? = null) = 
-            "other_deductions/$tripId?amount=${amount ?: "0.0"}&notes=${notes ?: ""}"
+            "other_deductions/$tripId?amount=${amount ?: "0"}&notes=${notes ?: ""}"
     }
 }
