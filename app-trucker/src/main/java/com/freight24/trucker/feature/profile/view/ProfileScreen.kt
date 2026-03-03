@@ -72,7 +72,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -328,6 +335,18 @@ private fun ProfileMainContent(
                         viewModel.onFieldChanged()
                     },
                 )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
+                ProfileField(
+                    label = "PAN NUMBER",
+                    value = viewModel.editablePanNumber.collectAsState().value,
+                    isEditing = isEditing,
+                    isEditable = !isVerified,
+                    validationType = ValidationType.PAN,
+                    onValueChange = {
+                        viewModel.editablePanNumber.value = it.uppercase()
+                        viewModel.onFieldChanged()
+                    },
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -436,18 +455,6 @@ private fun ProfileMainContent(
                     isEditable = !isVerified,
                     onValueChange = {
                         viewModel.editableBranchName.value = it
-                        viewModel.onFieldChanged()
-                    },
-                )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
-                ProfileField(
-                    label = "PAN NUMBER",
-                    value = viewModel.editablePanNumber.collectAsState().value,
-                    isEditing = isEditing,
-                    isEditable = !isVerified,
-                    validationType = ValidationType.PAN,
-                    onValueChange = {
-                        viewModel.editablePanNumber.value = it.uppercase()
                         viewModel.onFieldChanged()
                     },
                 )
@@ -734,6 +741,8 @@ private fun ProfileField(
             ValidationType.PHONE -> newValue.filter { it.isDigit() }.take(10)
             ValidationType.ACCOUNT_NUMBER -> newValue.filter { it.isDigit() }.take(18)
             ValidationType.IFSC -> newValue.uppercase().filter { it.isLetterOrDigit() }.take(11)
+            ValidationType.PAN -> newValue.uppercase().filter { it.isLetterOrDigit() }.take(10)
+            ValidationType.GST -> newValue.uppercase().filter { it.isLetterOrDigit() }.take(15)
             else -> newValue
         }
         
@@ -798,6 +807,57 @@ private fun ProfileField(
                     color = if (value.isEmpty()) MaterialTheme.colorScheme.outlineVariant else MaterialTheme.colorScheme.onSurface,
                 )
             } else {
+                val keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                    keyboardType = when (validationType) {
+                        ValidationType.AADHAAR, ValidationType.PHONE, ValidationType.ACCOUNT_NUMBER -> KeyboardType.Number
+                        ValidationType.EMAIL -> KeyboardType.Email
+                        else -> KeyboardType.Text
+                    },
+                    capitalization = when (validationType) {
+                        ValidationType.PAN, ValidationType.IFSC, ValidationType.GST -> KeyboardCapitalization.Characters
+                        else -> KeyboardCapitalization.Words
+                    },
+                    imeAction = ImeAction.Next
+                )
+
+                val visualTransformation = when (validationType) {
+                    ValidationType.AADHAAR -> VisualTransformation { text ->
+                        val transformed = ProfileFieldValidators.formatAadhaar(text.text)
+                        TransformedText(
+                            AnnotatedString(transformed),
+                            object : OffsetMapping {
+                                override fun originalToTransformed(offset: Int): Int {
+                                    if (offset <= 4) return offset
+                                    if (offset <= 8) return offset + 1
+                                    return offset + 2
+                                }
+                                override fun transformedToOriginal(offset: Int): Int {
+                                    if (offset <= 4) return offset
+                                    if (offset <= 9) return offset - 1
+                                    return offset - 2
+                                }
+                            }
+                        )
+                    }
+                    ValidationType.PHONE -> VisualTransformation { text ->
+                        val transformed = ProfileFieldValidators.formatPhone(text.text)
+                        TransformedText(
+                            AnnotatedString(transformed),
+                            object : OffsetMapping {
+                                override fun originalToTransformed(offset: Int): Int {
+                                    if (offset <= 5) return offset
+                                    return offset + 1
+                                }
+                                override fun transformedToOriginal(offset: Int): Int {
+                                    if (offset <= 5) return offset
+                                    return offset - 1
+                                }
+                            }
+                        )
+                    }
+                    else -> VisualTransformation.None
+                }
+
                 OutlinedTextField(
                     value = value,
                     onValueChange = handleValueChange,
@@ -806,6 +866,8 @@ private fun ProfileField(
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
                     isError = validationError != null,
+                    keyboardOptions = keyboardOptions,
+                    visualTransformation = visualTransformation,
                     supportingText = if (validationError != null) {
                         {
                             Text(
@@ -828,6 +890,9 @@ private fun ProfileField(
                         OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = if (validationError != null) MaterialTheme.colorScheme.error else BrandGreen,
                             unfocusedBorderColor = if (validationError != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outlineVariant,
+                            errorBorderColor = MaterialTheme.colorScheme.error,
+                            errorLabelColor = MaterialTheme.colorScheme.error,
+                            errorSupportingTextColor = MaterialTheme.colorScheme.error
                         ),
                 )
             }
