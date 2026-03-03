@@ -80,12 +80,30 @@ import com.freight24.trucker.feature.profile.domain.DocumentStatus
 import com.freight24.trucker.feature.profile.domain.DocumentType
 import com.freight24.trucker.feature.profile.domain.Profile
 import com.freight24.trucker.feature.profile.domain.ProfileDocument
+import com.freight24.trucker.feature.profile.util.ProfileFieldValidators
+import com.freight24.trucker.feature.profile.util.ValidationResult
 import com.freight24.ui.UiState
 import com.freight24.ui.theme.PrimaryGreen
 
 // Define theme-aware colors or use MaterialTheme directly
 // For BrandGreen, we can keep it as a constant for branding, but text colors should adapt
 private val BrandGreen = PrimaryGreen
+
+/**
+ * Enum representing the type of validation for profile fields.
+ * Used to apply Indian-specific validation rules.
+ */
+private enum class ValidationType {
+    NONE,
+    AADHAAR,
+    PAN,
+    GST,
+    IFSC,
+    UPI,
+    PHONE,
+    EMAIL,
+    ACCOUNT_NUMBER,
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -271,6 +289,7 @@ private fun ProfileMainContent(
                     value = viewModel.editableEmailId.collectAsState().value,
                     isEditing = isEditing,
                     isEditable = !isVerified,
+                    validationType = ValidationType.EMAIL,
                     onValueChange = {
                         viewModel.editableEmailId.value = it
                         viewModel.onFieldChanged()
@@ -281,11 +300,9 @@ private fun ProfileMainContent(
                     label = "PHONE NUMBER",
                     value = viewModel.editablePhoneNo.collectAsState().value,
                     isEditing = isEditing,
-                    isEditable = !isVerified,
-                    onValueChange = {
-                        viewModel.editablePhoneNo.value = it
-                        viewModel.onFieldChanged()
-                    },
+                    isEditable = false, // Phone number is never editable - primary key factor
+                    showAsLabelOnly = true,
+                    onValueChange = { },
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
                 ProfileField(
@@ -293,6 +310,7 @@ private fun ProfileMainContent(
                     value = viewModel.editableAlternativePhone.collectAsState().value,
                     isEditing = isEditing,
                     isEditable = true,
+                    validationType = ValidationType.PHONE,
                     onValueChange = {
                         viewModel.editableAlternativePhone.value = it
                         viewModel.onFieldChanged()
@@ -304,6 +322,7 @@ private fun ProfileMainContent(
                     value = viewModel.editableAadhaarNumber.collectAsState().value,
                     isEditing = isEditing,
                     isEditable = !isVerified,
+                    validationType = ValidationType.AADHAAR,
                     onValueChange = {
                         viewModel.editableAadhaarNumber.value = it
                         viewModel.onFieldChanged()
@@ -335,6 +354,7 @@ private fun ProfileMainContent(
                     value = viewModel.editableGstNumber.collectAsState().value,
                     isEditing = isEditing,
                     isEditable = !isVerified,
+                    validationType = ValidationType.GST,
                     onValueChange = {
                         viewModel.editableGstNumber.value = it
                         viewModel.onFieldChanged()
@@ -367,6 +387,7 @@ private fun ProfileMainContent(
                     isEditing = isEditing,
                     isSensitive = true,
                     isEditable = !isVerified,
+                    validationType = ValidationType.ACCOUNT_NUMBER,
                     onValueChange = {
                         viewModel.editableAccountNumber.value = it
                         viewModel.onFieldChanged()
@@ -378,8 +399,9 @@ private fun ProfileMainContent(
                     value = viewModel.editableIfscCode.collectAsState().value,
                     isEditing = isEditing,
                     isEditable = !isVerified,
+                    validationType = ValidationType.IFSC,
                     onValueChange = {
-                        viewModel.editableIfscCode.value = it
+                        viewModel.editableIfscCode.value = it.uppercase()
                         viewModel.onFieldChanged()
                     },
                 )
@@ -389,8 +411,9 @@ private fun ProfileMainContent(
                     value = viewModel.editableUpiId.collectAsState().value,
                     isEditing = isEditing,
                     isEditable = !isVerified,
+                    validationType = ValidationType.UPI,
                     onValueChange = {
-                        viewModel.editableUpiId.value = it
+                        viewModel.editableUpiId.value = it.lowercase()
                         viewModel.onFieldChanged()
                     },
                 )
@@ -422,8 +445,9 @@ private fun ProfileMainContent(
                     value = viewModel.editablePanNumber.collectAsState().value,
                     isEditing = isEditing,
                     isEditable = !isVerified,
+                    validationType = ValidationType.PAN,
                     onValueChange = {
-                        viewModel.editablePanNumber.value = it
+                        viewModel.editablePanNumber.value = it.uppercase()
                         viewModel.onFieldChanged()
                     },
                 )
@@ -696,7 +720,59 @@ private fun ProfileField(
     isEditable: Boolean = true,
     onValueChange: (String) -> Unit = {},
     isSensitive: Boolean = false,
+    validationType: ValidationType = ValidationType.NONE,
+    showAsLabelOnly: Boolean = false,
 ) {
+    // State for validation error
+    var validationError by rememberSaveable { mutableStateOf<String?>(null) }
+    
+    // Validate on value change
+    val handleValueChange: (String) -> Unit = { newValue ->
+        // Apply input filtering based on validation type
+        val filteredValue = when (validationType) {
+            ValidationType.AADHAAR -> newValue.filter { it.isDigit() }.take(12)
+            ValidationType.PHONE -> newValue.filter { it.isDigit() }.take(10)
+            ValidationType.ACCOUNT_NUMBER -> newValue.filter { it.isDigit() }.take(18)
+            ValidationType.IFSC -> newValue.uppercase().filter { it.isLetterOrDigit() }.take(11)
+            else -> newValue
+        }
+        
+        onValueChange(filteredValue)
+        
+        // Validate and show error
+        validationError = when (validationType) {
+            ValidationType.AADHAAR -> {
+                val result = ProfileFieldValidators.validateAadhaar(filteredValue)
+                if (result is ValidationResult.Error) result.message else null
+            }
+            ValidationType.PAN -> {
+                val result = ProfileFieldValidators.validatePan(filteredValue)
+                if (result is ValidationResult.Error) result.message else null
+            }
+            ValidationType.GST -> {
+                val result = ProfileFieldValidators.validateGst(filteredValue)
+                if (result is ValidationResult.Error) result.message else null
+            }
+            ValidationType.IFSC -> {
+                val result = ProfileFieldValidators.validateIfsc(filteredValue)
+                if (result is ValidationResult.Error) result.message else null
+            }
+            ValidationType.UPI -> {
+                val result = ProfileFieldValidators.validateUpiId(filteredValue)
+                if (result is ValidationResult.Error) result.message else null
+            }
+            ValidationType.EMAIL -> {
+                val result = ProfileFieldValidators.validateEmail(filteredValue)
+                if (result is ValidationResult.Error) result.message else null
+            }
+            ValidationType.ACCOUNT_NUMBER -> {
+                val result = ProfileFieldValidators.validateAccountNumber(filteredValue)
+                if (result is ValidationResult.Error) result.message else null
+            }
+            else -> null
+        }
+    }
+
     Column(
         modifier =
             Modifier
@@ -712,20 +788,49 @@ private fun ProfileField(
         )
         Spacer(modifier = Modifier.height(6.dp))
 
-        if (isEditing && isEditable) {
-            OutlinedTextField(
-                value = value,
-                onValueChange = onValueChange,
-                modifier = Modifier.fillMaxWidth(),
-                textStyle = MaterialTheme.typography.bodyLarge,
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp),
-                colors =
-                    OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = BrandGreen,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                    ),
-            )
+        if ((isEditing && isEditable) || showAsLabelOnly) {
+            if (showAsLabelOnly) {
+                // Display as read-only label (for phone number)
+                Text(
+                    text = value.ifEmpty { "Not added" },
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (value.isEmpty()) MaterialTheme.colorScheme.outlineVariant else MaterialTheme.colorScheme.onSurface,
+                )
+            } else {
+                OutlinedTextField(
+                    value = value,
+                    onValueChange = handleValueChange,
+                    modifier = Modifier.fillMaxWidth(),
+                    textStyle = MaterialTheme.typography.bodyLarge,
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
+                    isError = validationError != null,
+                    supportingText = if (validationError != null) {
+                        {
+                            Text(
+                                text = validationError!!,
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    } else null,
+                    placeholder = when (validationType) {
+                        ValidationType.AADHAAR -> { { Text("1234 5678 9012") } }
+                        ValidationType.PAN -> { { Text("ABCDE1234F") } }
+                        ValidationType.GST -> { { Text("27ABCDE1234F1Z5") } }
+                        ValidationType.IFSC -> { { Text("HDFC0001234") } }
+                        ValidationType.UPI -> { { Text("name@okhdfcbank") } }
+                        ValidationType.EMAIL -> { { Text("email@example.com") } }
+                        else -> null
+                    },
+                    colors =
+                        OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = if (validationError != null) MaterialTheme.colorScheme.error else BrandGreen,
+                            unfocusedBorderColor = if (validationError != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outlineVariant,
+                        ),
+                )
+            }
         } else {
             val displayValue =
                 if (isSensitive && value.isNotEmpty()) {
