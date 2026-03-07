@@ -1,6 +1,7 @@
 package com.freight24.connect.feature.home
 
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -9,6 +10,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -19,9 +21,11 @@ import com.freight24.connect.R
 import com.freight24.connect.enum.ConnectTab
 import com.freight24.connect.feature.dashboard.views.DashboardScreen
 import com.freight24.connect.feature.indents.views.IndentsScreen
-import com.freight24.connect.feature.more.views.MoreScreen
+import com.freight24.connect.feature.more.MoreViewModel
+import com.freight24.connect.feature.more.views.MoreBottomSheet
 import com.freight24.connect.feature.trips.views.TripsScreen
 import com.freight24.connect.feature.trucks.views.FindTrucksScreen
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.freight24.ui.components.AppTopBar
 import com.freight24.ui.components.FreightBottomNavScaffold
 
@@ -32,9 +36,12 @@ fun HomeScreen(
     onCloneClick: (String, String) -> Unit,
     onSearchClick: () -> Unit = {},
     onTripClick: (String) -> Unit,
-    startTab: ConnectTab? = null
+    startTab: ConnectTab? = null,
+    onLogout: () -> Unit,
+    moreViewModel: MoreViewModel = hiltViewModel()
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(startTab ?: ConnectTab.Home) }
+    var showMoreSheet by rememberSaveable { mutableStateOf(false) }
     
     LaunchedEffect(startTab) {
         startTab?.let { selectedTab = it }
@@ -44,7 +51,11 @@ fun HomeScreen(
         items = ConnectTab.entries,
         selectedItem = selectedTab,
         onItemSelected = {
-            selectedTab = it
+            if (it == ConnectTab.More) {
+                showMoreSheet = true
+            } else {
+                selectedTab = it
+            }
         },
         topBar = {
             AppTopBar(
@@ -88,8 +99,23 @@ fun HomeScreen(
                     onTripClick = onTripClick
                 )
                 ConnectTab.Trucks -> FindTrucksScreen(paddingValues)
-                ConnectTab.More -> MoreScreen(paddingValues)
+                ConnectTab.More -> Spacer(Modifier.padding(paddingValues))
             }
         }
+    }
+
+    if (showMoreSheet) {
+        MoreBottomSheet(
+            onDismiss = { showMoreSheet = false },
+            onOnboardClient = { /* TODO: Navigate to Onboard Client */ },
+            onOnboardTruck = { /* TODO: Navigate to Onboard Truck */ },
+            onOnboardTruckOwner = { /* TODO: Navigate to Onboard Truck Owner */ },
+            onMyProfile = { /* TODO: Navigate to Profile */ },
+            onSettings = { /* TODO: Navigate to Settings */ },
+            onLogout = {
+                moreViewModel.logout()
+                onLogout()
+            }
+        )
     }
 }

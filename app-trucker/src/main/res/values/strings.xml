@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Freight24</string>
+    <string name="app_name">Freight 24</string>
     <string name="login_page_tagline">Let\'s get moving</string>
     <string name="tab_loads">Loads</string>
     <string name="tab_trips">Trips</string>

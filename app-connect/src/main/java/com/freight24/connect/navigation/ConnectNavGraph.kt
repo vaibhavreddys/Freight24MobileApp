@@ -99,7 +99,15 @@ fun ConnectNavGraph(
                 onTripClick = { tripId ->
                     navHostController.navigate(ConnectDestination.TripDetails.createRoute(tripId))
                 },
-                startTab = startTab
+                startTab = startTab,
+                onLogout = {
+                    navHostController.navigate(ConnectDestination.Login.route) {
+                        popUpTo(ConnectDestination.Home.route) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                }
             )
         }
 
