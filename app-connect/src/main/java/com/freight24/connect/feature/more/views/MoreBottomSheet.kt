@@ -33,9 +33,9 @@ import com.freight24.ui.components.SectionContainer
 @Composable
 fun MoreBottomSheet(
     onDismiss: () -> Unit,
-    onOnboardClient: () -> Unit,
-    onOnboardTruck: () -> Unit,
-    onOnboardTruckOwner: () -> Unit,
+    onManageClients: () -> Unit,
+    onManageTrucks: () -> Unit,
+    onManageTruckOwners: () -> Unit,
     onMyProfile: () -> Unit,
     onSettings: () -> Unit,
     onLogout: () -> Unit
@@ -89,7 +89,7 @@ fun MoreBottomSheet(
                         title = "Manage\nClients",
                         icon = Icons.Default.Person,
                         onClick = {
-                            onOnboardClient()
+                            onManageClients()
                             onDismiss()
                         },
                         modifier = Modifier.weight(1f),
@@ -104,7 +104,7 @@ fun MoreBottomSheet(
                         title = "Manage\nTrucks",
                         icon = Icons.Default.LocalShipping,
                         onClick = {
-                            onOnboardTruck()
+                            onManageTrucks()
                             onDismiss()
                         },
                         modifier = Modifier.weight(1f),
@@ -119,7 +119,7 @@ fun MoreBottomSheet(
                         title = "Manage\nTruck Owners",
                         icon = Icons.Default.Group,
                         onClick = {
-                            onOnboardTruckOwner()
+                            onManageTruckOwners()
                             onDismiss()
                         },
                         modifier = Modifier.weight(1f),

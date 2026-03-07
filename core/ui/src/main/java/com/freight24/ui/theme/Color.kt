@@ -28,6 +28,9 @@ val DividerColor = Color(0xFFE0E0E0)
 val DividerColorLight = Color(0xFFE5E7EB)
 val DividerColorDark = Color(0xFF2A2F36)
 
+// Warning Yello
+val WarningYellow = Color(0xFFF9A825)
+
 // Buttons
 val DisabledButtonColorLight = Color(0xFFE0E0E0)
 val DisabledButtonColorDark = Color(0xFF49454F)

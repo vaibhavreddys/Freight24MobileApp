@@ -25,7 +25,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
@@ -141,11 +140,10 @@ fun TruckVerificationRow(isVerified: Boolean) {
             Triple("Document verification completed", Icons.Default.CheckCircle, MaterialTheme.colorScheme.primary)
         } else {
             Triple(
-                "Verification Pending (def)",
+                "Verification Pending",
                 Icons.Default.Error,
-                Color(0xFFF9A825),
-            ) // Warning yellow is often fine, but let's check if we have a better one.
-            // Actually, let's use a standard warning color if possible, or stick to this but ensure it looks okay in dark mode.
+                MaterialTheme.colorScheme.tertiaryFixed
+            )
         }
 
     Row(

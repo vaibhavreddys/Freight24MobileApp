@@ -36,6 +36,9 @@ fun HomeScreen(
     onCloneClick: (String, String) -> Unit,
     onSearchClick: () -> Unit = {},
     onTripClick: (String) -> Unit,
+    onManageTrucks: () -> Unit,
+    onManageClients: () -> Unit,
+    onManageTruckOwners: () -> Unit,
     startTab: ConnectTab? = null,
     onLogout: () -> Unit,
     moreViewModel: MoreViewModel = hiltViewModel()
@@ -107,9 +110,9 @@ fun HomeScreen(
     if (showMoreSheet) {
         MoreBottomSheet(
             onDismiss = { showMoreSheet = false },
-            onOnboardClient = { /* TODO: Navigate to Onboard Client */ },
-            onOnboardTruck = { /* TODO: Navigate to Onboard Truck */ },
-            onOnboardTruckOwner = { /* TODO: Navigate to Onboard Truck Owner */ },
+            onManageClients = { onManageClients() },
+            onManageTrucks = { onManageTrucks() },
+            onManageTruckOwners = { onManageTruckOwners() },
             onMyProfile = { /* TODO: Navigate to Profile */ },
             onSettings = { /* TODO: Navigate to Settings */ },
             onLogout = {

@@ -12,6 +12,8 @@ import com.freight24.connect.repository.TruckRepository
 import com.freight24.connect.repository.TruckRepositoryImpl
 import com.freight24.connect.repository.trips.TripLUChargesRepository
 import com.freight24.connect.repository.trips.TripLUChargesRepositoryImpl
+import com.freight24.connect.repository.TruckOwnerRepository
+import com.freight24.connect.repository.TruckOwnerRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -48,4 +50,10 @@ interface RepositoryBinderModule {
     fun bindsTripLUChargesRepository(
         tripLUChargesRepositoryImpl: TripLUChargesRepositoryImpl
     ): TripLUChargesRepository
+
+    @Binds
+    @Singleton
+    fun bindsTruckOwnerRepository(
+        truckOwnerRepositoryImpl: TruckOwnerRepositoryImpl
+    ): TruckOwnerRepository
 }

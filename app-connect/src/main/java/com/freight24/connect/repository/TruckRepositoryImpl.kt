@@ -2,10 +2,13 @@ package com.freight24.connect.repository
 
 import com.freight24.common.di.IoDispatcher
 import com.freight24.rest.api.TruckApi
+import com.freight24.rest.response.AddTruckResponse
 import com.freight24.rest.response.SearchTruckResponse
 import com.freight24.rest.response.TruckDetailResponse
+import com.freight24.rest.response.TruckDto
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import okhttp3.MultipartBody
 import javax.inject.Inject
 
 class TruckRepositoryImpl
@@ -27,13 +30,79 @@ constructor(
             } catch (e: Exception) {
                 Result.failure(e)
             }
+        }
 
+    override suspend fun getTrucks(): Result<List<TruckDto>> =
+        withContext(ioDispatcher) {
+            try {
+                val response = api.getTrucks()
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!.trucks ?: emptyList())
+                } else {
+                    Result.failure(Exception(response.message()))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
         }
 
     override suspend fun getTruckDetail(id: String): Result<TruckDetailResponse> =
         withContext(ioDispatcher) {
              try {
                 val response = api.getTruckDetail(id)
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!)
+                } else {
+                    Result.failure(Exception(response.message()))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    override suspend fun addTruck(
+        registrationNumber: MultipartBody.Part,
+        truckTypeId: MultipartBody.Part,
+        truckOwnerId: MultipartBody.Part,
+        make: MultipartBody.Part?,
+        model: MultipartBody.Part?,
+        year: MultipartBody.Part?,
+        rcCard: MultipartBody.Part?,
+        fcCertificate: MultipartBody.Part?,
+        insurance: MultipartBody.Part?
+    ): Result<AddTruckResponse> =
+        withContext(ioDispatcher) {
+            try {
+                val response = api.addTruck(
+                    registrationNumber,
+                    truckTypeId,
+                    truckOwnerId,
+                    make,
+                    model,
+                    year,
+                    rcCard,
+                    fcCertificate,
+                    insurance
+                )
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!)
+                } else {
+                    Result.failure(Exception(response.message()))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    override suspend fun updateTruck(
+        id: String,
+        rcCard: MultipartBody.Part?,
+        fcCertificate: MultipartBody.Part?,
+        insurance: MultipartBody.Part?
+    ): Result<AddTruckResponse> =
+        withContext(ioDispatcher) {
+            try {
+                val response = api.updateTruck(id, rcCard, fcCertificate, insurance)
                 if (response.isSuccessful && response.body() != null) {
                     Result.success(response.body()!!)
                 } else {

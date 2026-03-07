@@ -28,6 +28,8 @@ import com.freight24.connect.feature.trips.views.PdfViewerScreen
 import com.freight24.connect.feature.trips.views.HaltingChargesScreen
 import com.freight24.connect.feature.trips.views.LuChargesScreen
 import com.freight24.connect.feature.trips.views.OtherDeductionsScreen
+import com.freight24.connect.feature.trucks.views.ManageTrucksScreen
+import com.freight24.connect.feature.trucks.views.OnboardTruckScreen
 import java.net.URI
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -41,6 +43,30 @@ fun ConnectNavGraph(
         navController = navHostController,
         startDestination = startDestination,
     ) {
+        composable(ConnectDestination.ManageTrucks.route) {
+            ManageTrucksScreen(
+                navController = navHostController,
+                onAddTruckClick = {
+                    navHostController.navigate(ConnectDestination.OnboardTruck.route)
+                },
+                onBackClick = {
+                    navHostController.popBackStack()
+                }
+            )
+        }
+
+        composable(ConnectDestination.OnboardTruck.route) {
+            OnboardTruckScreen(
+                onBackClick = {
+                    navHostController.popBackStack()
+                },
+                onSuccessAction = {
+                    navHostController.popBackStack()
+                },
+                navController = navHostController
+            )
+        }
+
         composable(ConnectDestination.Login.route) {
             LoginScreen(onVerify = { phoneNumber ->
                 navHostController.navigate(
@@ -98,6 +124,15 @@ fun ConnectNavGraph(
                 },
                 onTripClick = { tripId ->
                     navHostController.navigate(ConnectDestination.TripDetails.createRoute(tripId))
+                },
+                onManageTrucks = {
+                    navHostController.navigate(ConnectDestination.ManageTrucks.route)
+                },
+                onManageClients = {
+                    // TODO: Implement Manage Clients
+                },
+                onManageTruckOwners = {
+                    // TODO: Implement Manage Truck Owners
                 },
                 startTab = startTab,
                 onLogout = {

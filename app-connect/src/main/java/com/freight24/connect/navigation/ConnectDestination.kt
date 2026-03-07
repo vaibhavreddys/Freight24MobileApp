@@ -271,4 +271,7 @@ sealed class ConnectDestination(val route: String) {
         fun createRoute(tripId: String, amount: String? = null, notes: String? = null) = 
             "other_deductions/$tripId?amount=${amount ?: "0"}&notes=${notes ?: ""}"
     }
+
+    data object ManageTrucks : ConnectDestination("manage_trucks")
+    data object OnboardTruck : ConnectDestination("onboard_truck")
 }

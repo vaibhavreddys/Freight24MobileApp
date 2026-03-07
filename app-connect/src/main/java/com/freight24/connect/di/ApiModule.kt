@@ -13,6 +13,7 @@ import com.freight24.rest.api.TripApi
 import com.freight24.rest.api.TripHaltingApi
 import com.freight24.rest.api.TripLUChargesApi
 import com.freight24.rest.api.TruckApi
+import com.freight24.rest.api.TruckOwnerApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -85,5 +86,12 @@ object ApiModule {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "TripHaltingApi")
             .create(TripLUChargesApi::class.java)
+    }
+
+    @Provides
+    fun providesTruckOwnerApi(retrofitFactory: RetrofitFactory): TruckOwnerApi {
+        return retrofitFactory
+            .create(BuildConfig.BASE_URL, "TruckOwnerApi")
+            .create(TruckOwnerApi::class.java)
     }
 }
