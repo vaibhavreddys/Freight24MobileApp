@@ -39,9 +39,7 @@ import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.LocalShipping
-import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.PhotoLibrary
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -53,12 +51,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -76,6 +72,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -89,8 +86,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.freight24.connect.feature.trucks.domain.viewmodel.OnboardTruckViewModel
-import com.freight24.connect.feature.trucks.domain.viewmodel.TruckType
 import com.freight24.rest.response.AddTruckDto
 import com.freight24.ui.UiState
 import com.freight24.ui.components.AppDropdown
@@ -342,13 +337,25 @@ private fun BasicInfoStep(viewModel: com.freight24.connect.feature.trucks.domain
             ...
         }
         */
+        val registrationError by viewModel.registrationError.collectAsState()
+ 
         OutlinedTextField(
             value = registrationNumber,
             onValueChange = { viewModel.updateRegistrationNumber(it) },
             label = { Text("Vehicle Number") },
             placeholder = { Text("KA07AB1287") },
-            leadingIcon = { Icon(Icons.Default.Numbers, contentDescription = null) },
-            modifier = Modifier.fillMaxWidth(),
+//            leadingIcon = { Icon(Icons.Default.Numbers, contentDescription = null) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .onFocusChanged { focusState ->
+                    if (!focusState.isFocused) {
+                        viewModel.checkRegistrationAvailability()
+                    }
+                },
+            isError = registrationError != null,
+            supportingText = if (registrationError != null) {
+                { Text(registrationError!!) }
+            } else null,
             shape = RoundedCornerShape(12.dp),
             singleLine = true,
             keyboardOptions =

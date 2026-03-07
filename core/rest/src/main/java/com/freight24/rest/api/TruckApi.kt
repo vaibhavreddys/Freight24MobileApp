@@ -2,6 +2,7 @@ package com.freight24.rest.api
 
 import com.freight24.rest.response.AddTruckResponse
 import com.freight24.rest.response.SearchTruckResponse
+import com.freight24.rest.response.TruckAvailabilityResponse
 import com.freight24.rest.response.TruckDetailResponse
 import com.freight24.rest.response.TruckResponse
 import okhttp3.MultipartBody
@@ -21,6 +22,11 @@ interface TruckApi {
     suspend fun getTruckDetail(
         @Path("id") id: String,
     ): Response<TruckDetailResponse>
+
+    @GET("trucks/check-availability")
+    suspend fun checkTruckAvailability(
+        @Query("registration_number") registrationNumber: String,
+    ): Response<TruckAvailabilityResponse>
 
     @Multipart
     @POST("trucks")

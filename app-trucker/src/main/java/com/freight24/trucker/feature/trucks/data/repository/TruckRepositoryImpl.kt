@@ -102,4 +102,10 @@ internal class TruckRepositoryImpl
                 documentApi.getGenericSignedUrl(s3Url)
             }.map { it.data.signedUrl }
         }
+ 
+        override suspend fun checkTruckAvailability(registrationNumber: String): Result<String?> {
+            return safeCallProvider.safeApiCall(ioDispatcher) {
+                api.checkTruckAvailability(registrationNumber)
+            }.map { it.data }
+        }
     }

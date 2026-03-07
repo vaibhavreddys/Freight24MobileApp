@@ -33,6 +33,7 @@ internal class EditTruckViewModel
         private val savedStateHandle: SavedStateHandle,
         private val fetchTruckDetailUseCase: FetchTruckDetailUseCase,
         private val updateTruckUseCase: UpdateTruckUseCase,
+        private val checkTruckAvailabilityUseCase: com.freight24.trucker.feature.trucks.domain.usecase.CheckTruckAvailabilityUseCase,
     ) : ViewModel() {
         private val truckId = savedStateHandle.get<String>("truckId") ?: ""
  
@@ -58,6 +59,9 @@ internal class EditTruckViewModel
         val make = MutableStateFlow("")
         val model = MutableStateFlow("")
         val year = MutableStateFlow("")
+ 
+        private val _registrationError = MutableStateFlow<String?>(null)
+        val registrationError: StateFlow<String?> = _registrationError.asStateFlow()
 
         // Existing Doc Status
         val existingRcStatus = MutableStateFlow<String?>(null)
@@ -93,8 +97,15 @@ internal class EditTruckViewModel
                 make,
                 model,
                 isYearValid,
-            ) { reg, type, mk, md, yr ->
-                reg && type != null && mk.isNotBlank() && md.isNotBlank() && yr
+                registrationError,
+            ) { args: Array<Any?> ->
+                val reg = args[0] as Boolean
+                val type = args[1] as? TruckType
+                val mk = args[2] as String
+                val md = args[3] as String
+                val yr = args[4] as Boolean
+                val regErr = args[5] as? String
+                reg && type != null && mk.isNotBlank() && md.isNotBlank() && yr && regErr == null
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
  
     val isDirty: StateFlow<Boolean> =
@@ -118,8 +129,10 @@ internal class EditTruckViewModel
             val fcFile = args[6] as? File
             val insFile = args[7] as? File
             val initial = args[8] as? InitialData
+            val regErr = args[9] as? String
  
             if (initial == null) return@combine false
+            if (regErr != null) return@combine false
  
             val textChanged = reg != initial.registrationNumber ||
                     type != initial.truckType ||
@@ -291,6 +304,7 @@ internal class EditTruckViewModel
         fun updateRegistrationNumber(newVal: String) {
             val upper = newVal.uppercase().replace(" ", "")
             if (upper.length > 10) return
+            _registrationError.value = null // Reset error on change
 
             // Strict filtering based on typical Indian plate patterns
             // ^[A-Z]{2}[0-9]{2}[A-Z]{0,2}[0-9]{4}$
@@ -304,6 +318,28 @@ internal class EditTruckViewModel
                     }
                 }
             registrationNumber.value = filtered
+        }
+ 
+        fun checkRegistrationAvailability() {
+            val reg = registrationNumber.value.replace(" ", "").uppercase()
+            if (!registrationRegex.matches(reg)) {
+                return
+            }
+ 
+            viewModelScope.launch {
+                checkTruckAvailabilityUseCase(reg)
+                    .onSuccess { existingId ->
+                        // If it belongs to a DIFFERENT truck, it's an error
+                        if (existingId != null && existingId != truckId) {
+                            _registrationError.value = "Registration number already exists"
+                        } else {
+                            _registrationError.value = null
+                        }
+                    }
+                    .onFailure {
+                        _registrationError.value = null
+                    }
+            }
         }
 
         fun updateYear(newVal: String) {
@@ -345,5 +381,6 @@ internal class EditTruckViewModel
             existingFcStatus.value = null
             existingInsuranceStatus.value = null
             initialData.value = null
+            _registrationError.value = null
         }
     }

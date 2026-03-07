@@ -39,6 +39,7 @@ constructor(
     private val savedStateHandle: SavedStateHandle,
     private val updateTruckUseCase: UpdateTruckUseCase,
     private val getTruckByIdUseCase: GetTruckByIdUseCase,
+    private val checkTruckAvailabilityUseCase: com.freight24.connect.feature.trucks.domain.usecases.CheckTruckAvailabilityUseCase,
     private val getTruckOwnersUseCase: GetTruckOwnersUseCase,
     private val authDataStore: AuthDataStore
 ) : ViewModel() {
@@ -66,6 +67,9 @@ constructor(
     val make = MutableStateFlow("")
     val model = MutableStateFlow("")
     val year = MutableStateFlow("")
+ 
+    private val _registrationError = MutableStateFlow<String?>(null)
+    val registrationError: StateFlow<String?> = _registrationError.asStateFlow()
 
     // Existing Doc Status
     val existingRcStatus = MutableStateFlow<String?>(null)
@@ -127,9 +131,16 @@ constructor(
             selectedTruckType,
             make,
             model,
-            isYearValid
-        ) { reg, type, mk, md, yr ->
-            reg && type != null && mk.isNotBlank() && md.isNotBlank() && yr
+            isYearValid,
+            registrationError
+        ) { args: Array<Any?> ->
+            val reg = args[0] as Boolean
+            val type = args[1] as? TruckType
+            val mk = args[2] as String
+            val md = args[3] as String
+            val yr = args[4] as Boolean
+            val regErr = args[5] as? String
+            reg && type != null && mk.isNotBlank() && md.isNotBlank() && yr && regErr == null
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
  
     val isDirty: StateFlow<Boolean> =
@@ -153,8 +164,10 @@ constructor(
             val fcFile = args[6] as? File
             val insFile = args[7] as? File
             val initial = args[8] as? InitialData
+            val regErr = args[9] as? String
  
             if (initial == null) return@combine false
+            if (regErr != null) return@combine false
  
             val textChanged = reg != initial.registrationNumber ||
                     type != initial.truckType ||
@@ -168,6 +181,10 @@ constructor(
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
  
     val isStep2Valid: StateFlow<Boolean> = isDirty
+ 
+    override fun onCleared() {
+        super.onCleared()
+    }
 
     val truckTypes =
         listOf(
@@ -349,6 +366,7 @@ constructor(
     fun updateRegistrationNumber(newVal: String) {
         val upper = newVal.uppercase().replace(" ", "")
         if (upper.length > 10) return
+        _registrationError.value = null // Reset error on change
 
         val filtered =
             upper.filterIndexed { index, char ->
@@ -360,6 +378,28 @@ constructor(
                 }
             }
         registrationNumber.value = filtered
+    }
+ 
+    fun checkRegistrationAvailability() {
+        val reg = registrationNumber.value.replace(" ", "").uppercase()
+        if (!registrationRegex.matches(reg)) {
+            return
+        }
+ 
+        viewModelScope.launch {
+            checkTruckAvailabilityUseCase(reg)
+                .onSuccess { existingId ->
+                    // If it belongs to a DIFFERENT truck, it's an error
+                    if (existingId != null && existingId != truckId) {
+                        _registrationError.value = "Registration number already exists"
+                    } else {
+                        _registrationError.value = null
+                    }
+                }
+                .onFailure {
+                    _registrationError.value = null
+                }
+        }
     }
 
     fun updateYear(newVal: String) {
@@ -402,5 +442,6 @@ constructor(
         existingFcStatus.value = null
         existingInsuranceStatus.value = null
         initialData.value = null
+        _registrationError.value = null
     }
 }

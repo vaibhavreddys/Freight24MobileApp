@@ -36,4 +36,6 @@ interface TruckRepository {
         fcCertificate: MultipartBody.Part? = null,
         insurance: MultipartBody.Part? = null,
     ): Result<AddTruckResponse>
+
+    suspend fun checkTruckAvailability(registrationNumber: String): Result<String?>
 }

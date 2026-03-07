@@ -39,7 +39,6 @@ import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.LocalShipping
-import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Shield
@@ -424,7 +423,7 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
             onValueChange = { viewModel.updateRegistrationNumber(it) },
             label = { Text("Vehicle Number") },
             placeholder = { Text("KA07AB1287") },
-            leadingIcon = { Icon(Icons.Default.Numbers, contentDescription = null) },
+//            leadingIcon = { Icon(Icons.Default.Numbers, contentDescription = null) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             singleLine = true,

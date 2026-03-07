@@ -127,4 +127,18 @@ constructor(
                 Result.failure(e)
             }
         }
+
+    override suspend fun checkTruckAvailability(registrationNumber: String): Result<String?> =
+        withContext(ioDispatcher) {
+            try {
+                val response = api.checkTruckAvailability(registrationNumber)
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!.data)
+                } else {
+                    Result.failure(Exception(response.message()))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
 }

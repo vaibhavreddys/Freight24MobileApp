@@ -30,6 +30,7 @@ internal class OnboardTruckViewModel
     @Inject
     constructor(
         private val addTruckUseCase: AddTruckUseCase,
+        private val checkTruckAvailabilityUseCase: com.freight24.trucker.feature.trucks.domain.usecase.CheckTruckAvailabilityUseCase,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow<UiState<AddTruckDto>>(UiState.Idle)
         val uiState: StateFlow<UiState<AddTruckDto>> = _uiState.asStateFlow()
@@ -43,6 +44,9 @@ internal class OnboardTruckViewModel
         val make = MutableStateFlow("")
         val model = MutableStateFlow("")
         val year = MutableStateFlow("")
+ 
+        private val _registrationError = MutableStateFlow<String?>(null)
+        val registrationError: StateFlow<String?> = _registrationError.asStateFlow()
 
         // File State
         val rcCardFile = MutableStateFlow<File?>(null)
@@ -73,8 +77,15 @@ internal class OnboardTruckViewModel
                 make,
                 model,
                 isYearValid,
-            ) { reg, type, mk, md, yr ->
-                reg && type != null && mk.isNotBlank() && md.isNotBlank() && yr
+                registrationError,
+            ) { args: Array<Any?> ->
+                val reg = args[0] as Boolean
+                val type = args[1] as? TruckType
+                val mk = args[2] as String
+                val md = args[3] as String
+                val yr = args[4] as Boolean
+                val regErr = args[5] as? String
+                reg && type != null && mk.isNotBlank() && md.isNotBlank() && yr && regErr == null
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
 
         val isStep2Valid: StateFlow<Boolean> =
@@ -198,6 +209,7 @@ internal class OnboardTruckViewModel
         fun updateRegistrationNumber(newVal: String) {
             val upper = newVal.uppercase().replace(" ", "")
             if (upper.length > 10) return
+            _registrationError.value = null // Reset error on change
 
             // Strict filtering based on typical Indian plate patterns
             // ^[A-Z]{2}[0-9]{2}[A-Z]{0,2}[0-9]{4}$
@@ -211,6 +223,27 @@ internal class OnboardTruckViewModel
                     }
                 }
             registrationNumber.value = filtered
+        }
+ 
+        fun checkRegistrationAvailability() {
+            val reg = registrationNumber.value.replace(" ", "").uppercase()
+            if (!registrationRegex.matches(reg)) {
+                return
+            }
+ 
+            viewModelScope.launch {
+                checkTruckAvailabilityUseCase(reg)
+                    .onSuccess { existingId ->
+                        if (existingId != null) {
+                            _registrationError.value = "Registration number already exists"
+                        } else {
+                            _registrationError.value = null
+                        }
+                    }
+                    .onFailure {
+                        _registrationError.value = null
+                    }
+            }
         }
 
         fun updateYear(newVal: String) {
@@ -248,5 +281,6 @@ internal class OnboardTruckViewModel
             rcCardFile.value = null
             fcCertificateFile.value = null
             insuranceFile.value = null
+            _registrationError.value = null
         }
     }

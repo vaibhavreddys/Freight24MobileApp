@@ -75,6 +75,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -341,13 +342,25 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
                 .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        val registrationError by viewModel.registrationError.collectAsState()
+ 
         OutlinedTextField(
             value = registrationNumber,
             onValueChange = { viewModel.updateRegistrationNumber(it) },
             label = { Text("Vehicle Number") },
             placeholder = { Text("KA07AB1287") },
-            leadingIcon = { Icon(Icons.Default.Numbers, contentDescription = null) },
-            modifier = Modifier.fillMaxWidth(),
+//            leadingIcon = { Icon(Icons.Default.Numbers, contentDescription = null) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .onFocusChanged { focusState ->
+                    if (!focusState.isFocused) {
+                        viewModel.checkRegistrationAvailability()
+                    }
+                },
+            isError = registrationError != null,
+            supportingText = if (registrationError != null) {
+                { Text(registrationError!!) }
+            } else null,
             shape = RoundedCornerShape(12.dp),
             singleLine = true,
             keyboardOptions =

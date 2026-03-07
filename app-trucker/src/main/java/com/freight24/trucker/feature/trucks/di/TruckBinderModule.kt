@@ -4,6 +4,8 @@ import com.freight24.trucker.feature.trucks.data.repository.TruckRepository
 import com.freight24.trucker.feature.trucks.data.repository.TruckRepositoryImpl
 import com.freight24.trucker.feature.trucks.domain.usecase.AddTruckUseCase
 import com.freight24.trucker.feature.trucks.domain.usecase.AddTruckUseCaseImpl
+import com.freight24.trucker.feature.trucks.domain.usecase.CheckTruckAvailabilityUseCase
+import com.freight24.trucker.feature.trucks.domain.usecase.CheckTruckAvailabilityUseCaseImpl
 import com.freight24.trucker.feature.trucks.domain.usecase.FetchTruckDetailUseCase
 import com.freight24.trucker.feature.trucks.domain.usecase.FetchTruckDetailUseCaseImpl
 import com.freight24.trucker.feature.trucks.domain.usecase.FetchTrucksUseCase
@@ -48,4 +50,8 @@ internal interface TruckBinderModule {
     @Binds
     @Singleton
     fun bindUpdateTruckUseCase(impl: com.freight24.trucker.feature.trucks.domain.usecase.UpdateTruckUseCaseImpl): com.freight24.trucker.feature.trucks.domain.usecase.UpdateTruckUseCase
+
+    @Binds
+    @Singleton
+    fun bindCheckTruckAvailabilityUseCase(impl: CheckTruckAvailabilityUseCaseImpl): CheckTruckAvailabilityUseCase
 }
