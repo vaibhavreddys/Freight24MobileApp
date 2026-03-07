@@ -40,6 +40,11 @@ interface TruckApi {
     @retrofit2.http.PUT("trucks/{id}")
     suspend fun updateTruck(
         @Path("id") id: String,
+        @Part registration_number: MultipartBody.Part? = null,
+        @Part truck_type_id: MultipartBody.Part? = null,
+        @Part make: MultipartBody.Part? = null,
+        @Part model: MultipartBody.Part? = null,
+        @Part year: MultipartBody.Part? = null,
         @Part rc_card: MultipartBody.Part? = null,
         @Part fc_certificate: MultipartBody.Part? = null,
         @Part insurance: MultipartBody.Part? = null,

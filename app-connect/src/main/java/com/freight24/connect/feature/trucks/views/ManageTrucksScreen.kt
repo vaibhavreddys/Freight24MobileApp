@@ -56,6 +56,7 @@ fun ManageTrucksScreen(
     navController: NavController,
     viewModel: ManageTrucksViewModel = hiltViewModel(),
     onAddTruckClick: () -> Unit,
+    onTruckClick: (String) -> Unit,
     onBackClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -149,7 +150,7 @@ fun ManageTrucksScreen(
                                     isVerified = truck.isVerified,
                                     isBlacklisted = truck.isBlacklisted,
                                     modifier = Modifier.clickable { 
-                                        // TODO: Navigate to Details
+                                        onTruckClick(truck.truckId)
                                     }
                                 )
                             }

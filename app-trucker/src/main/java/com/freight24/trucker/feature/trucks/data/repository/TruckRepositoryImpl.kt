@@ -62,7 +62,38 @@ internal class TruckRepositoryImpl
             insurance: MultipartBody.Part?
         ): Result<AddTruckResponse> {
             return safeCallProvider.safeApiCall(ioDispatcher) {
-                api.updateTruck(truckId, rcCard, fcCertificate, insurance)
+                api.updateTruck(
+                    id = truckId,
+                    rc_card = rcCard,
+                    fc_certificate = fcCertificate,
+                    insurance = insurance
+                )
+            }
+        }
+
+        override suspend fun updateTruck(
+            id: String,
+            registrationNumber: MultipartBody.Part,
+            truckTypeId: MultipartBody.Part,
+            make: MultipartBody.Part?,
+            model: MultipartBody.Part?,
+            year: MultipartBody.Part?,
+            rcCard: MultipartBody.Part?,
+            fcCertificate: MultipartBody.Part?,
+            insurance: MultipartBody.Part?
+        ): Result<AddTruckResponse> {
+            return safeCallProvider.safeApiCall(ioDispatcher) {
+                api.updateTruck(
+                    id = id,
+                    registration_number = registrationNumber,
+                    truck_type_id = truckTypeId,
+                    make = make,
+                    model = model,
+                    year = year,
+                    rc_card = rcCard,
+                    fc_certificate = fcCertificate,
+                    insurance = insurance
+                )
             }
         }
 

@@ -9,6 +9,7 @@ data class TruckDetail(
     val displayName: String?,
     val make: String?,
     val model: String?,
+    val year: String?,
     val rcCard: TruckDocument?,
     val fcCertificate: TruckDocument?,
     val insurance: TruckDocument?,

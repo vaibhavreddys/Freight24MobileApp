@@ -28,5 +28,17 @@ interface TruckRepository {
         insurance: MultipartBody.Part? = null,
     ): Result<AddTruckResponse>
 
+    suspend fun updateTruck(
+        id: String,
+        registrationNumber: MultipartBody.Part,
+        truckTypeId: MultipartBody.Part,
+        make: MultipartBody.Part?,
+        model: MultipartBody.Part?,
+        year: MultipartBody.Part?,
+        rcCard: MultipartBody.Part? = null,
+        fcCertificate: MultipartBody.Part? = null,
+        insurance: MultipartBody.Part? = null,
+    ): Result<AddTruckResponse>
+
     suspend fun getGenericSignedUrl(s3Url: String): Result<String>
 }

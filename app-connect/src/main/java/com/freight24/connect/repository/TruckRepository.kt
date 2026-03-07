@@ -27,6 +27,11 @@ interface TruckRepository {
 
     suspend fun updateTruck(
         id: String,
+        registrationNumber: MultipartBody.Part,
+        truckTypeId: MultipartBody.Part,
+        make: MultipartBody.Part?,
+        model: MultipartBody.Part?,
+        year: MultipartBody.Part?,
         rcCard: MultipartBody.Part? = null,
         fcCertificate: MultipartBody.Part? = null,
         insurance: MultipartBody.Part? = null,

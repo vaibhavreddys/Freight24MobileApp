@@ -34,6 +34,9 @@ import java.net.URI
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
+import com.freight24.connect.feature.trucks.views.details.TruckDetailsScreen
+import com.freight24.connect.feature.trucks.views.EditTruckScreen
+
 @Composable
 fun ConnectNavGraph(
     navHostController: NavHostController,
@@ -49,6 +52,9 @@ fun ConnectNavGraph(
                 onAddTruckClick = {
                     navHostController.navigate(ConnectDestination.OnboardTruck.route)
                 },
+                onTruckClick = { truckId ->
+                    navHostController.navigate(ConnectDestination.TruckDetails.createRoute(truckId))
+                },
                 onBackClick = {
                     navHostController.popBackStack()
                 }
@@ -60,6 +66,32 @@ fun ConnectNavGraph(
                 onBackClick = {
                     navHostController.popBackStack()
                 },
+                onSuccessAction = {
+                    navHostController.popBackStack()
+                },
+                navController = navHostController
+            )
+        }
+
+        composable(
+            route = ConnectDestination.TruckDetails.route,
+            arguments = ConnectDestination.TruckDetails.arguments
+        ) { backStackEntry ->
+            val truckId = backStackEntry.arguments?.getString(ConnectDestination.TruckDetails.TRUCK_ID_ARG) ?: ""
+            TruckDetailsScreen(
+                onBackClick = { navHostController.popBackStack() },
+                onEditClick = { id ->
+                    navHostController.navigate(ConnectDestination.EditTruck.createRoute(id))
+                }
+            )
+        }
+
+        composable(
+            route = ConnectDestination.EditTruck.route,
+            arguments = ConnectDestination.EditTruck.arguments
+        ) { backStackEntry ->
+            EditTruckScreen(
+                onBackClick = { navHostController.popBackStack() },
                 onSuccessAction = {
                     navHostController.popBackStack()
                 },

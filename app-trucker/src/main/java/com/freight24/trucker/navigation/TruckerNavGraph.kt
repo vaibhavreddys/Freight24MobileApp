@@ -115,6 +115,22 @@ fun TruckerNavGraph(
         ) {
             TruckDetailsScreen(
                 onBackClick = { navController.popBackStack() },
+                onEditClick = { truckId ->
+                    navController.navigate(TruckerDestination.EditTruck.createRoute(truckId))
+                }
+            )
+        }
+
+        composable(
+            route = TruckerDestination.EditTruck.route,
+            arguments = listOf(navArgument("truckId") { type = NavType.StringType })
+        ) {
+            com.freight24.trucker.feature.trucks.view.onboard.EditTruckScreen(
+                onBackClick = { navController.popBackStack() },
+                onSuccessAction = {
+                    navController.popBackStack(TruckerDestination.Main.route, false)
+                },
+                navController = navController,
             )
         }
 

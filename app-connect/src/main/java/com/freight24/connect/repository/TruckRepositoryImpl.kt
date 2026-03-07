@@ -96,13 +96,28 @@ constructor(
 
     override suspend fun updateTruck(
         id: String,
+        registrationNumber: MultipartBody.Part,
+        truckTypeId: MultipartBody.Part,
+        make: MultipartBody.Part?,
+        model: MultipartBody.Part?,
+        year: MultipartBody.Part?,
         rcCard: MultipartBody.Part?,
         fcCertificate: MultipartBody.Part?,
         insurance: MultipartBody.Part?
     ): Result<AddTruckResponse> =
         withContext(ioDispatcher) {
             try {
-                val response = api.updateTruck(id, rcCard, fcCertificate, insurance)
+                val response = api.updateTruck(
+                    id,
+                    registrationNumber,
+                    truckTypeId,
+                    make,
+                    model,
+                    year,
+                    rcCard,
+                    fcCertificate,
+                    insurance
+                )
                 if (response.isSuccessful && response.body() != null) {
                     Result.success(response.body()!!)
                 } else {

@@ -18,6 +18,7 @@ data class TruckDetailDto(
     val displayName: String?,
     val make: String?,
     val model: String?,
+    val year: String?,
     val rcCard: DocumentDto?,
     val fcCertificate: DocumentDto?,
     val insurance: DocumentDto?,

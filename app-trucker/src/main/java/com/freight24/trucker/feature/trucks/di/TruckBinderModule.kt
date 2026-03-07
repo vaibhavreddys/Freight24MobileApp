@@ -44,4 +44,8 @@ internal interface TruckBinderModule {
     @Binds
     @Singleton
     fun bindGetGenericSignedUrlUseCase(impl: GetGenericSignedUrlUseCaseImpl): GetGenericSignedUrlUseCase
+
+    @Binds
+    @Singleton
+    fun bindUpdateTruckUseCase(impl: com.freight24.trucker.feature.trucks.domain.usecase.UpdateTruckUseCaseImpl): com.freight24.trucker.feature.trucks.domain.usecase.UpdateTruckUseCase
 }

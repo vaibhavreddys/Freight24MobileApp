@@ -23,4 +23,7 @@ abstract class TrucksDomainModule {
 
     @Binds
     abstract fun bindGetTruckOwnersUseCase(useCaseImpl: GetTruckOwnersUseCaseImpl): GetTruckOwnersUseCase
+
+    @Binds
+    abstract fun bindUpdateTruckUseCase(useCaseImpl: UpdateTruckUseCaseImpl): UpdateTruckUseCase
 }

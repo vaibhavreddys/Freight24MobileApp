@@ -29,6 +29,7 @@ fun TruckDetailDto.toDomain(): TruckDetail {
         displayName = displayName,
         make = make,
         model = model,
+        year = year,
         rcCard = rcCard?.toDomain(),
         fcCertificate = fcCertificate?.toDomain(),
         insurance = insurance?.toDomain(),

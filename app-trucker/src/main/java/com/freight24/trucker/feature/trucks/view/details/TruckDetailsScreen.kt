@@ -74,6 +74,7 @@ import com.freight24.ui.components.getPdfLaunchIntent
 @Composable
 internal fun TruckDetailsScreen(
     onBackClick: () -> Unit,
+    onEditClick: (String) -> Unit = {},
     viewModel: TruckDetailsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -228,6 +229,26 @@ internal fun TruckDetailsScreen(
                 },
             )
         },
+        bottomBar = {
+            val state = uiState
+            if (state is UiState.Success && !state.data.isVerified) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 12.dp, bottom = 24.dp),
+                    color = Color.Transparent
+                ) {
+                    Button(
+                        onClick = { onEditClick(state.data.truckId) },
+                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        shape = RoundedCornerShape(50.dp),
+                    ) {
+                        Text("Edit Truck", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    }
+                }
+            }
+        }
     ) { paddingValues ->
         PullToRefreshBox(
             isRefreshing = isRefreshing,
@@ -266,7 +287,8 @@ internal fun TruckDetailsScreen(
                             },
                             onUploadClick = { type ->
                                 showSelectionDialogType = type
-                            }
+                            },
+                            onEditClick = onEditClick,
                         )
 
                         if (isUploading) {
@@ -296,6 +318,7 @@ private fun TruckDetailsContent(
     truck: TruckDetail,
     onViewClick: (String?) -> Unit,
     onUploadClick: (String) -> Unit,
+    onEditClick: (String) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),

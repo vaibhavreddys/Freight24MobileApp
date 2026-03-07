@@ -274,4 +274,20 @@ sealed class ConnectDestination(val route: String) {
 
     data object ManageTrucks : ConnectDestination("manage_trucks")
     data object OnboardTruck : ConnectDestination("onboard_truck")
+
+    data object TruckDetails : ConnectDestination("truck_details/{truckId}") {
+        const val TRUCK_ID_ARG = "truckId"
+        override val arguments = listOf(
+            navArgument(TRUCK_ID_ARG) { type = NavType.StringType }
+        )
+        fun createRoute(truckId: String) = "truck_details/$truckId"
+    }
+
+    data object EditTruck : ConnectDestination("edit_truck/{truckId}") {
+        const val TRUCK_ID_ARG = "truckId"
+        override val arguments = listOf(
+            navArgument(TRUCK_ID_ARG) { type = NavType.StringType }
+        )
+        fun createRoute(truckId: String) = "edit_truck/$truckId"
+    }
 }
