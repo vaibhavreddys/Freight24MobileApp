@@ -291,6 +291,15 @@ sealed class ConnectDestination(val route: String) {
         fun createRoute(truckId: String) = "edit_truck/$truckId"
     }
 
+    data object ClientProfile : ConnectDestination("client_profile/{userId}") {
+        const val USER_ID_ARG = "userId"
+        override val arguments = listOf(
+            navArgument(USER_ID_ARG) { type = NavType.StringType }
+        )
+
+        fun createRoute(userId: String) = "client_profile/$userId"
+    }
+
     data object ManageClients : ConnectDestination("manage_clients")
     data object OnboardClient : ConnectDestination("onboard_client")
 }

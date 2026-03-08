@@ -2,7 +2,9 @@ package com.freight24.connect.repository
 
 import com.freight24.common.di.IoDispatcher
 import com.freight24.rest.api.ClientApi
+import com.freight24.rest.request.UpdateClientRequest
 import com.freight24.rest.response.ClientDto
+import com.freight24.rest.response.ClientProfileDto
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -35,6 +37,39 @@ class ClientRepositoryImpl
                         Result.success(response.body()!!.data)
                     } else {
                         Result.failure(Exception(response.message()))
+                    }
+                } catch (e: Exception) {
+                    Result.failure(e)
+                }
+            }
+
+        override suspend fun getClientByUserId(userId: String): Result<ClientProfileDto> =
+            withContext(ioDispatcher) {
+                try {
+                    val response = api.getClientByUserId(userId)
+                    val body = response.body()
+                    if (response.isSuccessful && body != null) {
+                        Result.success(body.data)
+                    } else {
+                        Result.failure(Exception(body?.message ?: response.message()))
+                    }
+                } catch (e: Exception) {
+                    Result.failure(e)
+                }
+            }
+
+        override suspend fun updateClient(
+            userId: String,
+            request: UpdateClientRequest,
+        ): Result<ClientProfileDto> =
+            withContext(ioDispatcher) {
+                try {
+                    val response = api.updateClient(userId, request)
+                    val body = response.body()
+                    if (response.isSuccessful && body != null) {
+                        Result.success(body.data)
+                    } else {
+                        Result.failure(Exception(body?.message ?: response.message()))
                     }
                 } catch (e: Exception) {
                     Result.failure(e)

@@ -88,16 +88,17 @@ fun ManageClientsScreen(
                     )
                 )
             }
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onAddClientClick,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                shape = CircleShape
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Onboard Client")
-            }
+//        },
+            // TODO: Uncomment after implementing client onboarding screens
+//        floatingActionButton = {
+//            FloatingActionButton(
+//                onClick = onAddClientClick,
+//                containerColor = MaterialTheme.colorScheme.primary,
+//                contentColor = MaterialTheme.colorScheme.onPrimary,
+//                shape = CircleShape
+//            ) {
+//                Icon(Icons.Default.Add, contentDescription = "Onboard Client")
+//            }
         }
     ) { paddingValues ->
         Column(
@@ -164,14 +165,14 @@ fun ManageClientsScreen(
                                 verticalArrangement = Arrangement.spacedBy(12.dp),
                                 modifier = Modifier.fillMaxSize()
                             ) {
-                                items(filteredClients, key = { it.clientId ?: it.clientId ?: it.hashCode() }) { client ->
+                                items(filteredClients, key = { it.userId }) { client ->
                                     ClientHeaderCard(
-                                        companyName = client.companyName ?: client.companyName,
-                                        fullName = client.fullName ?: "Unknown",
-                                        phone = client.phoneNumber ?: client.phoneNumber ?: "",
-                                        status = client.status ?: "inactive",
+                                        companyName = client.companyName,
+                                        fullName = client.fullName,
+                                        phone = client.phoneNumber,
+                                        status = client.status,
                                         modifier = Modifier.clickable {
-                                            (client.clientId ?: client.clientId)?.let { onClientClick(it) }
+                                            onClientClick(client.userId)
                                         }
                                     )
                                 }
