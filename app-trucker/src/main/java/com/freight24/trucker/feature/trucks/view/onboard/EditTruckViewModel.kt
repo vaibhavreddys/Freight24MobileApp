@@ -108,7 +108,7 @@ internal class EditTruckViewModel
                 reg && type != null && mk.isNotBlank() && md.isNotBlank() && yr && regErr == null
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
  
-    val isDirty: StateFlow<Boolean> =
+        val isDirty: StateFlow<Boolean> =
         combine(
             registrationNumber,
             selectedTruckType,
@@ -129,19 +129,17 @@ internal class EditTruckViewModel
             val fcFile = args[6] as? File
             val insFile = args[7] as? File
             val initial = args[8] as? InitialData
-            val regErr = args[9] as? String
- 
+
             if (initial == null) return@combine false
-            if (regErr != null) return@combine false
- 
+
             val textChanged = reg != initial.registrationNumber ||
                     type != initial.truckType ||
                     mk != initial.make ||
                     md != initial.model ||
                     yr != initial.year
- 
+
             val filesChanged = rcFile != null || fcFile != null || insFile != null
- 
+
             textChanged || filesChanged
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
  

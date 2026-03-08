@@ -1,5 +1,6 @@
 package com.freight24.trucker.feature.login.view.signin
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -45,6 +46,7 @@ internal class LoginViewModel
             }
         }
 
+        @SuppressLint("MissingPermission")
         fun onSendOtpClick() {
             val phone = _phoneNumber.value
             if (phone.length != MAX_PHONE_LENGTH) {
