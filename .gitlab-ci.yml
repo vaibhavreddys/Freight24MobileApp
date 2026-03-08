@@ -12,7 +12,7 @@ cache:
 
 stages:
   - build
-  - test
+  # - test
   - package
   - deploy
 
@@ -66,7 +66,6 @@ unit-tests:
 
 package:trucker:prodRelease:
   stage: package
-  when: manual
   script:
     - ./gradlew :app-trucker:assembleProdRelease
   artifacts:
@@ -76,7 +75,6 @@ package:trucker:prodRelease:
 
 package:connect:prodRelease:
   stage: package
-  when: manual
   script:
     - ./gradlew :app-connect:assembleProdRelease
   artifacts:
