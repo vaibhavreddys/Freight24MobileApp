@@ -290,4 +290,7 @@ sealed class ConnectDestination(val route: String) {
         )
         fun createRoute(truckId: String) = "edit_truck/$truckId"
     }
+
+    data object ManageClients : ConnectDestination("manage_clients")
+    data object OnboardClient : ConnectDestination("onboard_client")
 }

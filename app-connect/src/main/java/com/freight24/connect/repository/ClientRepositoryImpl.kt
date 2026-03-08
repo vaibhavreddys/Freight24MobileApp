@@ -13,6 +13,20 @@ class ClientRepositoryImpl
         private val api: ClientApi,
         @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) : ClientRepository {
+        override suspend fun getClients(): Result<List<ClientDto>> =
+            withContext(ioDispatcher) {
+                try {
+                    val response = api.getClientList()
+                    if (response.isSuccessful && response.body() != null) {
+                        Result.success(response.body()!!.data)
+                    } else {
+                        Result.failure(Exception(response.message()))
+                    }
+                } catch (e: Exception) {
+                    Result.failure(e)
+                }
+            }
+
         override suspend fun searchClients(query: String): Result<List<ClientDto>> =
             withContext(ioDispatcher) {
                 try {

@@ -36,6 +36,7 @@ import java.nio.charset.StandardCharsets
 
 import com.freight24.connect.feature.trucks.views.details.TruckDetailsScreen
 import com.freight24.connect.feature.trucks.views.EditTruckScreen
+import com.freight24.connect.feature.clients.views.ManageClientsScreen
 
 @Composable
 fun ConnectNavGraph(
@@ -70,6 +71,21 @@ fun ConnectNavGraph(
                     navHostController.popBackStack()
                 },
                 navController = navHostController
+            )
+        }
+
+        composable(ConnectDestination.ManageClients.route) {
+            ManageClientsScreen(
+                navController = navHostController,
+                onAddClientClick = {
+                    navHostController.navigate(ConnectDestination.OnboardClient.route)
+                },
+                onClientClick = { clientId ->
+                    // TODO: Navigate to client details when implemented
+                },
+                onBackClick = {
+                    navHostController.popBackStack()
+                }
             )
         }
 
@@ -161,7 +177,7 @@ fun ConnectNavGraph(
                     navHostController.navigate(ConnectDestination.ManageTrucks.route)
                 },
                 onManageClients = {
-                    // TODO: Implement Manage Clients
+                    navHostController.navigate(ConnectDestination.ManageClients.route)
                 },
                 onManageTruckOwners = {
                     // TODO: Implement Manage Truck Owners

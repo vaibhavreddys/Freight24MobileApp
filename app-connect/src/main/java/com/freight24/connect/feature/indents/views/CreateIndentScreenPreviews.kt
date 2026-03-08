@@ -59,6 +59,7 @@ fun ClientAutoCompletePreview() {
                     "F23-1233",
                     "9035892114",
                     "Active",
+                    fullName = "Nihansh"
                 ),
                 ClientDto(
                     "2",
@@ -67,6 +68,7 @@ fun ClientAutoCompletePreview() {
                     "F23-1233",
                     "9035892114",
                     "Active",
+                    fullName = "Nihansh"
                 ),
             ),
         onSelect = {},
