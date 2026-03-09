@@ -38,6 +38,8 @@ import com.freight24.connect.feature.trucks.views.details.TruckDetailsScreen
 import com.freight24.connect.feature.trucks.views.EditTruckScreen
 import com.freight24.connect.feature.clients.views.ClientProfileScreen
 import com.freight24.connect.feature.clients.views.ManageClientsScreen
+import com.freight24.connect.feature.truckowners.views.ManageTruckOwnersScreen
+import com.freight24.connect.feature.truckowners.profile.view.ProfileScreen
 
 @Composable
 fun ConnectNavGraph(
@@ -87,6 +89,26 @@ fun ConnectNavGraph(
                 onBackClick = {
                     navHostController.popBackStack()
                 }
+            )
+        }
+
+        composable(ConnectDestination.ManageTruckOwners.route) {
+            ManageTruckOwnersScreen(
+                onTruckOwnerClick = { userId ->
+                    navHostController.navigate(ConnectDestination.TruckOwnerProfile.createRoute(userId))
+                },
+                onBackClick = {
+                    navHostController.popBackStack()
+                }
+            )
+        }
+
+        composable(
+            route = ConnectDestination.TruckOwnerProfile.route,
+            arguments = ConnectDestination.TruckOwnerProfile.arguments
+        ) {
+            ProfileScreen(
+                onBackClick = { navHostController.popBackStack() }
             )
         }
 
@@ -190,7 +212,7 @@ fun ConnectNavGraph(
                     navHostController.navigate(ConnectDestination.ManageClients.route)
                 },
                 onManageTruckOwners = {
-                    // TODO: Implement Manage Truck Owners
+                    navHostController.navigate(ConnectDestination.ManageTruckOwners.route)
                 },
                 startTab = startTab,
                 onLogout = {

@@ -10,11 +10,13 @@ import com.freight24.rest.api.IndentsApi
 import com.freight24.rest.api.LocationApi
 import com.freight24.rest.api.LoginConnectApi
 import com.freight24.rest.api.NotificationServiceApi
+import com.freight24.rest.api.ProfileApi
 import com.freight24.rest.api.TripApi
 import com.freight24.rest.api.TripHaltingApi
 import com.freight24.rest.api.TripLUChargesApi
 import com.freight24.rest.api.TruckApi
 import com.freight24.rest.api.TruckOwnerApi
+import com.freight24.rest.api.DocumentApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -94,6 +96,20 @@ object ApiModule {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "TruckOwnerApi")
             .create(TruckOwnerApi::class.java)
+    }
+
+    @Provides
+    fun providesProfileApi(retrofitFactory: RetrofitFactory): ProfileApi {
+        return retrofitFactory
+            .create(BuildConfig.BASE_URL, "TruckOwnerProfileApi")
+            .create(ProfileApi::class.java)
+    }
+
+    @Provides
+    fun providesDocumentApi(retrofitFactory: RetrofitFactory): DocumentApi {
+        return retrofitFactory
+            .create(BuildConfig.BASE_URL, "TruckOwnerDocumentApi")
+            .create(DocumentApi::class.java)
     }
 
     @Provides
