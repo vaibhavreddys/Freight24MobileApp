@@ -5,6 +5,8 @@ import com.freight24.database.dao.LoadBoardDao
 import com.freight24.network.cache.LoadMemoryCache
 import com.freight24.network.provider.SafeCallProvider
 import com.freight24.rest.api.IndentsApi
+import com.freight24.rest.request.IndentInterestRequest
+import com.freight24.rest.response.IndentInterestResponse
 import com.freight24.rest.response.LoadBoardResponse
 import com.freight24.rest.response.PaginatedLoadBoardResponse
 import kotlinx.coroutines.CoroutineDispatcher
@@ -34,6 +36,13 @@ class LoadBoardRepositoryImpl
             runCatching {
                 safeCallProvider.safeApiCall(ioDispatcher) {
                     indentsApi.getPaginatedLoads(cityId, page)
+                }.getOrThrow()
+            }
+
+        override suspend fun expressInterest(indentId: String): Result<IndentInterestResponse> =
+            runCatching {
+                safeCallProvider.safeApiCall(ioDispatcher) {
+                    indentsApi.expressInterest(IndentInterestRequest(indentId))
                 }.getOrThrow()
             }
     }

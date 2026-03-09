@@ -1,6 +1,7 @@
 package com.freight24.trucker.feature.loads
 
 import android.content.Intent
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -45,6 +46,12 @@ fun LoadBoardScreen(
     val animatedLoadIds = remember { mutableSetOf<String>() }
     val expandedCityId by viewModel.expandedCityId.collectAsState()
     val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.bookmarkMessage.collect { message ->
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        }
+    }
 
     LaunchedEffect(expandedCityId, items) {
         val prev = previousExpandedCityId.value
@@ -145,6 +152,8 @@ fun LoadBoardScreen(
                                         commodity = item.load.commodity,
                                         loadWeight = item.load.loadWeight,
                                         f24AgentName = item.load.f24AgentName,
+                                        isBookmarked = item.load.isInterested,
+                                        isBookmarkLoading = item.load.isInterestLoading,
                                         onCallClick = {
                                             val phone = item.load.f24AgentPhone.trim()
 
@@ -162,7 +171,9 @@ fun LoadBoardScreen(
                                                     .show()
                                             }
                                         },
-                                        onBookmarkClick = {},
+                                        onBookmarkClick = {
+                                            viewModel.onBookmarkClicked(item.load.id)
+                                        },
                                     )
                                 }
 
@@ -181,6 +192,8 @@ fun LoadBoardScreen(
                                     commodity = item.load.commodity,
                                     loadWeight = item.load.loadWeight,
                                     f24AgentName = item.load.f24AgentName,
+                                    isBookmarked = item.load.isInterested,
+                                    isBookmarkLoading = item.load.isInterestLoading,
                                     onCallClick = {
                                         val phone = item.load.f24AgentPhone.trim()
 
@@ -198,7 +211,9 @@ fun LoadBoardScreen(
                                                 .show()
                                         }
                                     },
-                                    onBookmarkClick = {},
+                                    onBookmarkClick = {
+                                        viewModel.onBookmarkClicked(item.load.id)
+                                    },
                                 )
                             }
                         }

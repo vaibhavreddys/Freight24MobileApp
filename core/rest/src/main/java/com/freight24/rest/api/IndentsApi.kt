@@ -2,9 +2,11 @@ package com.freight24.rest.api
 
 import com.freight24.rest.request.CloneIndentRequest
 import com.freight24.rest.request.CreateIndentRequest
+import com.freight24.rest.request.IndentInterestRequest
 import com.freight24.rest.request.UpdateIndentRequest
 import com.freight24.rest.response.GetIndentsResponse
 import com.freight24.rest.response.IndentResponse
+import com.freight24.rest.response.IndentInterestResponse
 import com.freight24.rest.response.IndentsListResponse
 import com.freight24.rest.response.LoadBoardResponse
 import com.freight24.rest.response.PaginatedLoadBoardResponse
@@ -26,6 +28,11 @@ interface IndentsApi {
         @Query("operational_city_id") cityId: Int,
         @Query("page") page: Int,
     ): Response<PaginatedLoadBoardResponse>
+
+    @POST("indent-interests/interested")
+    suspend fun expressInterest(
+        @Body request: IndentInterestRequest,
+    ): Response<IndentInterestResponse>
 
     @GET("truck-types")
     suspend fun getTruckTypes(): Response<TruckTypeResponse>

@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Person
@@ -37,6 +38,8 @@ fun LoadCard(
     truckInfo: String,
     commodity: String,
     f24AgentName: String,
+    isBookmarked: Boolean = false,
+    isBookmarkLoading: Boolean = false,
     onCallClick: () -> Unit,
     onBookmarkClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -166,9 +169,11 @@ fun LoadCard(
                     Spacer(Modifier.width(8.dp))
 
                     FooterIconButton(
-                        icon = Icons.Default.BookmarkBorder,
+                        icon = if (isBookmarked) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
                         tooltipText = "Interested",
                         contentDescription = "Mark as interested",
+                        highlighted = isBookmarked,
+                        enabled = !isBookmarkLoading,
                         onClick = onBookmarkClick,
                     )
                 }

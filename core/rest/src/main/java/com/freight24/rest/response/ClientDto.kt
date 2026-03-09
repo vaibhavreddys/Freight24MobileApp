@@ -17,11 +17,11 @@ data class ClientResponse(
 
 @Serializable
 data class ClientDto(
-    val clientId: String,
-    val userId: String,
-    val companyName: String,
-    val tagCode: String,
-    val phoneNumber: String,
-    val status: String,
-    val fullName: String,
-    )
+    val clientId: String = "",
+    val userId: String = "",
+    val companyName: String = "",
+    val tagCode: String = "",
+    val phoneNumber: String = "",
+    val status: String = "",
+    val fullName: String = "",
+)

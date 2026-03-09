@@ -4,6 +4,8 @@ import com.freight24.trucker.feature.loads.data.repository.LoadBoardRepository
 import com.freight24.trucker.feature.loads.data.repository.LoadBoardRepositoryImpl
 import com.freight24.trucker.feature.loads.domain.usecase.CityLoadBoardUseCase
 import com.freight24.trucker.feature.loads.domain.usecase.CityLoadBoardUseCaseImpl
+import com.freight24.trucker.feature.loads.domain.usecase.ExpressInterestUseCase
+import com.freight24.trucker.feature.loads.domain.usecase.ExpressInterestUseCaseImpl
 import com.freight24.trucker.feature.loads.domain.usecase.LoadBoardUseCase
 import com.freight24.trucker.feature.loads.domain.usecase.LoadBoardUseCaseImpl
 import dagger.Binds
@@ -26,4 +28,8 @@ interface LoadBinderModule {
     @Binds
     @Singleton
     fun bindCityLoadBoardUseCase(impl: CityLoadBoardUseCaseImpl): CityLoadBoardUseCase
+
+    @Binds
+    @Singleton
+    fun bindExpressInterestUseCase(impl: ExpressInterestUseCaseImpl): ExpressInterestUseCase
 }

@@ -6,13 +6,18 @@ import androidx.lifecycle.viewModelScope
 import com.freight24.common.usecase.EmptyUseCaseParams
 import com.freight24.trucker.feature.loads.domain.usecase.CityLoadBoardUseCase
 import com.freight24.trucker.feature.loads.domain.usecase.CityLoadBoardUseCaseParams
+import com.freight24.trucker.feature.loads.domain.usecase.ExpressInterestUseCase
+import com.freight24.trucker.feature.loads.domain.usecase.ExpressInterestUseCaseParams
 import com.freight24.trucker.feature.loads.domain.usecase.LoadBoardUseCase
 import com.freight24.trucker.feature.loads.mapper.toUi
 import com.freight24.trucker.feature.loads.model.LoadBoardItem
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -22,6 +27,7 @@ class LoadBoardViewModel
     constructor(
         private val loadBoardUseCase: LoadBoardUseCase,
         private val cityLoadBoardUseCase: CityLoadBoardUseCase,
+        private val expressInterestUseCase: ExpressInterestUseCase,
     ) : ViewModel() {
         private val _items = MutableStateFlow<List<LoadBoardItem>>(emptyList())
         val items: StateFlow<List<LoadBoardItem>> = _items.asStateFlow()
@@ -31,6 +37,12 @@ class LoadBoardViewModel
 
         private val _isRefreshing = MutableStateFlow(false)
         val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
+        private val interestedLoadIds = mutableSetOf<String>()
+        private val loadingInterestedLoadIds = mutableSetOf<String>()
+
+        private val _bookmarkMessage = MutableSharedFlow<String>()
+        val bookmarkMessage: SharedFlow<String> = _bookmarkMessage.asSharedFlow()
 
         // Track current page for each city
         private val cityPages = mutableMapOf<Int, Int>()
@@ -85,7 +97,7 @@ class LoadBoardViewModel
                 // If this city is expanded, populate it with initial loads immediately
                 if (isExpanded) {
                     summary.initialLoads.forEach { load ->
-                        newItems.add(LoadBoardItem.LoadItem(load.toUi()))
+                        newItems.add(LoadBoardItem.LoadItem(load.toUi().decorateInterestState()))
                     }
 
                     // Add Show More if there are more loads
@@ -240,7 +252,7 @@ class LoadBoardViewModel
 
                         // Insert New Children
                         paginatedLoads.loads.forEach { load ->
-                            currentItems.add(insertIndex++, LoadBoardItem.LoadItem(load.toUi()))
+                            currentItems.add(insertIndex++, LoadBoardItem.LoadItem(load.toUi().decorateInterestState()))
                         }
 
                         // Add "Show More" if needed
@@ -289,4 +301,62 @@ class LoadBoardViewModel
                 it is LoadBoardItem.CityItem && it.cityId == cityId
             }
         }
+
+        fun onBookmarkClicked(indentId: String) {
+            val targetItem = _items.value.firstOrNull {
+                it is LoadBoardItem.LoadItem && it.load.id == indentId
+            } as? LoadBoardItem.LoadItem ?: return
+
+            if (targetItem.load.isInterested || targetItem.load.isInterestLoading) return
+
+            interestedLoadIds.add(indentId)
+            loadingInterestedLoadIds.add(indentId)
+            updateLoadInterestState(indentId, isInterested = true, isLoading = true)
+
+            viewModelScope.launch {
+                expressInterestUseCase(ExpressInterestUseCaseParams(indentId))
+                    .onSuccess { response ->
+                        val success = response.success
+                        if (success) {
+                            loadingInterestedLoadIds.remove(indentId)
+                            updateLoadInterestState(indentId, isInterested = true, isLoading = false)
+                        } else {
+                            interestedLoadIds.remove(indentId)
+                            loadingInterestedLoadIds.remove(indentId)
+                            updateLoadInterestState(indentId, isInterested = false, isLoading = false)
+                            _bookmarkMessage.emit(response.message.ifBlank { "Unable to express interest right now" })
+                        }
+                    }.onFailure { error ->
+                        interestedLoadIds.remove(indentId)
+                        loadingInterestedLoadIds.remove(indentId)
+                        updateLoadInterestState(indentId, isInterested = false, isLoading = false)
+                        _bookmarkMessage.emit(error.message ?: "Unable to express interest right now")
+                    }
+            }
+        }
+
+        private fun updateLoadInterestState(
+            indentId: String,
+            isInterested: Boolean,
+            isLoading: Boolean,
+        ) {
+            _items.value = _items.value.map { item ->
+                if (item is LoadBoardItem.LoadItem && item.load.id == indentId) {
+                    item.copy(
+                        load = item.load.copy(
+                            isInterested = isInterested,
+                            isInterestLoading = isLoading,
+                        ),
+                    )
+                } else {
+                    item
+                }
+            }
+        }
+
+        private fun com.freight24.trucker.feature.loads.model.ui.LoadUi.decorateInterestState() =
+            copy(
+                isInterested = id in interestedLoadIds,
+                isInterestLoading = id in loadingInterestedLoadIds,
+            )
     }

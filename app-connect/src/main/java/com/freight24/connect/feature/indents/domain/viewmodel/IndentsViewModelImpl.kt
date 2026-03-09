@@ -168,11 +168,21 @@ class IndentsViewModelImpl
         searchJob =
             viewModelScope.launch {
                 delay(300)
-                if (query.length < 3) return@launch
+                if (query.length < 3) {
+                    _uiState.update { it.copy(clientSearchResults = emptyList()) }
+                    return@launch
+                }
 
                 val result = getClientsUseCase.invoke(query)
                 if (result.isSuccess) {
                     _uiState.update { it.copy(clientSearchResults = result.getOrNull() ?: emptyList()) }
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            clientSearchResults = emptyList(),
+                            errorMessage = result.exceptionOrNull()?.message ?: "Failed to search clients",
+                        )
+                    }
                 }
             }
     }

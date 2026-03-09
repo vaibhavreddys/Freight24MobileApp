@@ -11,4 +11,6 @@ data class LoadUi(
     val commodity: String,
     val f24AgentName: String,
     val f24AgentPhone: String,
+    val isInterested: Boolean = false,
+    val isInterestLoading: Boolean = false,
 )

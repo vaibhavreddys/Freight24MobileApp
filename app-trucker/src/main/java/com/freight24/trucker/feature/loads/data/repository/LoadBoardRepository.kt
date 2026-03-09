@@ -1,6 +1,7 @@
 package com.freight24.trucker.feature.loads.data.repository
 
 import com.freight24.rest.response.LoadBoardResponse
+import com.freight24.rest.response.IndentInterestResponse
 import com.freight24.rest.response.PaginatedLoadBoardResponse
 
 interface LoadBoardRepository {
@@ -21,4 +22,6 @@ interface LoadBoardRepository {
         page: Int,
         forceRefresh: Boolean = false,
     ): Result<PaginatedLoadBoardResponse>
+
+    suspend fun expressInterest(indentId: String): Result<IndentInterestResponse>
 }
