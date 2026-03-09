@@ -24,4 +24,6 @@ interface LoadBoardRepository {
     ): Result<PaginatedLoadBoardResponse>
 
     suspend fun expressInterest(indentId: String): Result<IndentInterestResponse>
+
+    suspend fun withdrawInterest(indentId: String): Result<IndentInterestResponse>
 }

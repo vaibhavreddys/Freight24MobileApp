@@ -15,4 +15,5 @@ fun Load.toUi(): LoadUi =
         commodity = material,
         f24AgentName = agentName,
         f24AgentPhone = agentPhone,
+        isInterested = isInterested,
     )

@@ -34,6 +34,11 @@ interface IndentsApi {
         @Body request: IndentInterestRequest,
     ): Response<IndentInterestResponse>
 
+    @POST("indent-interests/withdraw")
+    suspend fun withdrawInterest(
+        @Body request: IndentInterestRequest,
+    ): Response<IndentInterestResponse>
+
     @GET("truck-types")
     suspend fun getTruckTypes(): Response<TruckTypeResponse>
 

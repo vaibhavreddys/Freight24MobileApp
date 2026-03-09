@@ -11,4 +11,5 @@ data class Load(
     val createdTime: String,
     val agentName: String,
     val agentPhone: String,
+    val isInterested: Boolean = false,
 )

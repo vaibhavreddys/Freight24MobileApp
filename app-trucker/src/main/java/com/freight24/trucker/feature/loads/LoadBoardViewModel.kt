@@ -9,6 +9,8 @@ import com.freight24.trucker.feature.loads.domain.usecase.CityLoadBoardUseCasePa
 import com.freight24.trucker.feature.loads.domain.usecase.ExpressInterestUseCase
 import com.freight24.trucker.feature.loads.domain.usecase.ExpressInterestUseCaseParams
 import com.freight24.trucker.feature.loads.domain.usecase.LoadBoardUseCase
+import com.freight24.trucker.feature.loads.domain.usecase.WithdrawInterestUseCase
+import com.freight24.trucker.feature.loads.domain.usecase.WithdrawInterestUseCaseParams
 import com.freight24.trucker.feature.loads.mapper.toUi
 import com.freight24.trucker.feature.loads.model.LoadBoardItem
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,6 +30,7 @@ class LoadBoardViewModel
         private val loadBoardUseCase: LoadBoardUseCase,
         private val cityLoadBoardUseCase: CityLoadBoardUseCase,
         private val expressInterestUseCase: ExpressInterestUseCase,
+        private val withdrawInterestUseCase: WithdrawInterestUseCase,
     ) : ViewModel() {
         private val _items = MutableStateFlow<List<LoadBoardItem>>(emptyList())
         val items: StateFlow<List<LoadBoardItem>> = _items.asStateFlow()
@@ -44,8 +47,14 @@ class LoadBoardViewModel
         private val _bookmarkMessage = MutableSharedFlow<String>()
         val bookmarkMessage: SharedFlow<String> = _bookmarkMessage.asSharedFlow()
 
-        // Track current page for each city
+        private var citySummaries: List<com.freight24.common.model.CityLoadSummary> = emptyList()
+
+        // City state trackers
         private val cityPages = mutableMapOf<Int, Int>()
+        private val cityLoadedCounts = mutableMapOf<Int, Int>()
+        private val cityTotalLoads = mutableMapOf<Int, Int>()
+        private val cityLoadCache = mutableMapOf<Int, MutableList<com.freight24.trucker.feature.loads.model.ui.LoadUi>>()
+        private val loadingCityIds = mutableSetOf<Int>()
 
         init {
             viewModelScope.launch {
@@ -82,8 +91,12 @@ class LoadBoardViewModel
         }
 
         private fun updateCityList(summaryList: List<com.freight24.common.model.CityLoadSummary>) {
+            citySummaries = summaryList
             val newItems = mutableListOf<LoadBoardItem>()
             summaryList.forEach { summary ->
+                cityTotalLoads[summary.cityId] = summary.totalLoads
+                cityLoadCache.putIfAbsent(summary.cityId, summary.initialLoads.map { it.toUi() }.toMutableList())
+
                 val isExpanded = _expandedCityId.value == summary.cityId
                 newItems.add(
                     LoadBoardItem.CityItem(
@@ -96,17 +109,20 @@ class LoadBoardViewModel
 
                 // If this city is expanded, populate it with initial loads immediately
                 if (isExpanded) {
-                    summary.initialLoads.forEach { load ->
-                        newItems.add(LoadBoardItem.LoadItem(load.toUi().decorateInterestState()))
+                    val cachedLoads = cityLoadCache[summary.cityId].orEmpty()
+                    cityLoadedCounts[summary.cityId] = cachedLoads.size
+
+                    cachedLoads.forEach { load ->
+                        newItems.add(LoadBoardItem.LoadItem(load.decorateInterestState()))
                     }
 
                     // Add Show More if there are more loads
-                    if (summary.totalLoads > summary.initialLoads.size) {
+                    if ((cityTotalLoads[summary.cityId] ?: summary.totalLoads) > cachedLoads.size) {
                         newItems.add(
                             LoadBoardItem.ShowMoreItem(
                                 cityId = summary.cityId,
-                                loadedCount = summary.initialLoads.size,
-                                totalCount = summary.totalLoads,
+                                loadedCount = cachedLoads.size,
+                                totalCount = cityTotalLoads[summary.cityId] ?: summary.totalLoads,
                             ),
                         )
                     }
@@ -161,15 +177,27 @@ class LoadBoardViewModel
             }
 
             // 3. Update Expanded State
+            val updatedIndex =
+                currentItems.indexOfFirst {
+                    it is LoadBoardItem.CityItem && it.cityId == cityId
+                }
+
+            if (updatedIndex == -1) return
+
             if (isExpanding) {
                 _expandedCityId.value = cityId
                 cityPages[cityId] = 1
+                insertCachedLoadsForCity(
+                    currentItems = currentItems,
+                    cityId = cityId,
+                    cityHeaderIndex = updatedIndex,
+                )
                 fetchLoadsForCity(cityId, 1)
             } else {
                 _expandedCityId.value = null
                 cityPages.remove(cityId)
                 // Remove children of THIS city
-                val nextIndex = index + 1
+                val nextIndex = updatedIndex + 1
                 while (nextIndex < currentItems.size &&
                     (
                         currentItems[nextIndex] is LoadBoardItem.LoadItem ||
@@ -189,91 +217,104 @@ class LoadBoardViewModel
             forceRefresh: Boolean = false,
         ) {
             viewModelScope.launch {
-                val params =
-                    CityLoadBoardUseCaseParams(
-                        cityId,
-                        page,
-                        forceRefresh,
-                    )
+                if (!loadingCityIds.add(cityId)) return@launch
 
-                cityLoadBoardUseCase
-                    .invoke(params)
-                    .onSuccess { paginatedLoads ->
-                        val currentItems = _items.value.toMutableList()
-                        val cityIndex =
-                            currentItems.indexOfFirst {
-                                it is LoadBoardItem.CityItem && it.cityId == cityId
-                            }
+                try {
+                    val params =
+                        CityLoadBoardUseCaseParams(
+                            cityId,
+                            page,
+                            forceRefresh,
+                        )
 
-                        if (cityIndex == -1) return@launch
+                    cityLoadBoardUseCase
+                        .invoke(params)
+                        .onSuccess { paginatedLoads ->
+                            val currentItems = _items.value.toMutableList()
+                            val cityIndex =
+                                currentItems.indexOfFirst {
+                                    it is LoadBoardItem.CityItem && it.cityId == cityId
+                                }
 
-                        // Handling Page 1 vs Next Pages
-                        var insertIndex: Int
+                            if (cityIndex == -1) return@onSuccess
 
-                        if (page == 1) {
-                            // --- PAGE 1: REPLACE ALL CHILDREN ---
-                            // Find range of existing children and remove them
-                            var nextIndex = cityIndex + 1
-                            while (nextIndex < currentItems.size &&
-                                (
-                                    currentItems[nextIndex] is LoadBoardItem.LoadItem ||
-                                        currentItems[nextIndex] is LoadBoardItem.ShowMoreItem
-                                )
-                            ) {
-                                currentItems.removeAt(nextIndex)
-                            }
-                            insertIndex = cityIndex + 1
-                        } else {
-                            // --- PAGE > 1: APPEND ---
-                            // Find the "Show More" item (should be the last child) and remove it
-                            // The new items will be inserted where "Show More" was.
+                            // Handling Page 1 vs Next Pages
+                            var insertIndex: Int
 
-                            var lastChildIndex = cityIndex
-                            var nextIndex = cityIndex + 1
-                            while (nextIndex < currentItems.size &&
-                                (
-                                    currentItems[nextIndex] is LoadBoardItem.LoadItem ||
-                                        currentItems[nextIndex] is LoadBoardItem.ShowMoreItem
-                                )
-                            ) {
-                                lastChildIndex = nextIndex
-                                nextIndex++
-                            }
+                            if (page == 1) {
+                                // --- PAGE 1: REPLACE ALL CHILDREN ---
+                                // Find range of existing children and remove them
+                                var nextIndex = cityIndex + 1
+                                while (nextIndex < currentItems.size &&
+                                    (
+                                        currentItems[nextIndex] is LoadBoardItem.LoadItem ||
+                                            currentItems[nextIndex] is LoadBoardItem.ShowMoreItem
+                                    )
+                                ) {
+                                    currentItems.removeAt(nextIndex)
+                                }
+                                insertIndex = cityIndex + 1
 
-                            // If the last child is ShowMore, remove it and insert there
-                            if (currentItems.getOrNull(lastChildIndex) is LoadBoardItem.ShowMoreItem) {
-                                currentItems.removeAt(lastChildIndex)
-                                insertIndex = lastChildIndex
+                                cityLoadCache[cityId] = mutableListOf()
+                                cityLoadedCounts[cityId] = 0
                             } else {
-                                // Just append after the last child
-                                insertIndex = lastChildIndex + 1
+                                // --- PAGE > 1: APPEND ---
+                                // Find the "Show More" item (should be the last child) and remove it
+                                // The new items will be inserted where "Show More" was.
+
+                                var lastChildIndex = cityIndex
+                                var nextIndex = cityIndex + 1
+                                while (nextIndex < currentItems.size &&
+                                    (
+                                        currentItems[nextIndex] is LoadBoardItem.LoadItem ||
+                                            currentItems[nextIndex] is LoadBoardItem.ShowMoreItem
+                                    )
+                                ) {
+                                    lastChildIndex = nextIndex
+                                    nextIndex++
+                                }
+
+                                // If the last child is ShowMore, remove it and insert there
+                                if (currentItems.getOrNull(lastChildIndex) is LoadBoardItem.ShowMoreItem) {
+                                    currentItems.removeAt(lastChildIndex)
+                                    insertIndex = lastChildIndex
+                                } else {
+                                    // Just append after the last child
+                                    insertIndex = lastChildIndex + 1
+                                }
                             }
-                        }
 
-                        // Insert New Children
-                        paginatedLoads.loads.forEach { load ->
-                            currentItems.add(insertIndex++, LoadBoardItem.LoadItem(load.toUi().decorateInterestState()))
-                        }
+                            val cityLoads = cityLoadCache.getOrPut(cityId) { mutableListOf() }
+                            val existingIds = cityLoads.map { it.id }.toMutableSet()
+                            val newLoads = paginatedLoads.loads.map { it.toUi() }.filter { existingIds.add(it.id) }
 
-                        // Add "Show More" if needed
-                        if (paginatedLoads.hasMore) {
-                            // Calculate loaded count approx
-                            val loadedSoFar = cityPages[cityId]?.times(10) ?: 10 // Approximation or track exactly if needed
+                            newLoads.forEach { load ->
+                                cityLoads.add(load)
+                                currentItems.add(insertIndex++, LoadBoardItem.LoadItem(load.decorateInterestState()))
+                            }
+                            cityLoadedCounts[cityId] = cityLoads.size
+                            cityTotalLoads[cityId] = paginatedLoads.totalLoads
+                            cityPages[cityId] = page
 
-                            currentItems.add(
-                                insertIndex,
-                                LoadBoardItem.ShowMoreItem(
-                                    cityId = cityId,
-                                    loadedCount = loadedSoFar, // Placeholder or exact logic
-                                    totalCount = paginatedLoads.totalLoads,
-                                ),
-                            )
+                            // Add "Show More" if needed
+                            if (paginatedLoads.hasMore) {
+                                currentItems.add(
+                                    insertIndex,
+                                    LoadBoardItem.ShowMoreItem(
+                                        cityId = cityId,
+                                        loadedCount = cityLoadedCounts[cityId] ?: 0,
+                                        totalCount = cityTotalLoads[cityId] ?: paginatedLoads.totalLoads,
+                                    ),
+                                )
+                            }
+                            _items.value = currentItems
                         }
-                        _items.value = currentItems
-                    }
-                    .onFailure {
-                        Log.e("LoadBoardViewModel", "Failed to fetch loads for city $cityId", it)
-                    }
+                        .onFailure {
+                            Log.e("LoadBoardViewModel", "Failed to fetch loads for city $cityId", it)
+                        }
+                } finally {
+                    loadingCityIds.remove(cityId)
+                }
             }
         }
 
@@ -285,7 +326,6 @@ class LoadBoardViewModel
         fun onShowMoreClicked(cityId: Int) {
             val currentPage = cityPages[cityId] ?: 1
             val nextPage = currentPage + 1
-            cityPages[cityId] = nextPage
 
             Log.d("LoadBoardViewModel", "Fetching page $nextPage for city $cityId")
             fetchLoadsForCity(cityId, nextPage)
@@ -307,31 +347,12 @@ class LoadBoardViewModel
                 it is LoadBoardItem.LoadItem && it.load.id == indentId
             } as? LoadBoardItem.LoadItem ?: return
 
-            if (targetItem.load.isInterested || targetItem.load.isInterestLoading) return
+            if (targetItem.load.isInterestLoading) return
 
-            interestedLoadIds.add(indentId)
-            loadingInterestedLoadIds.add(indentId)
-            updateLoadInterestState(indentId, isInterested = true, isLoading = true)
-
-            viewModelScope.launch {
-                expressInterestUseCase(ExpressInterestUseCaseParams(indentId))
-                    .onSuccess { response ->
-                        val success = response.success
-                        if (success) {
-                            loadingInterestedLoadIds.remove(indentId)
-                            updateLoadInterestState(indentId, isInterested = true, isLoading = false)
-                        } else {
-                            interestedLoadIds.remove(indentId)
-                            loadingInterestedLoadIds.remove(indentId)
-                            updateLoadInterestState(indentId, isInterested = false, isLoading = false)
-                            _bookmarkMessage.emit(response.message.ifBlank { "Unable to express interest right now" })
-                        }
-                    }.onFailure { error ->
-                        interestedLoadIds.remove(indentId)
-                        loadingInterestedLoadIds.remove(indentId)
-                        updateLoadInterestState(indentId, isInterested = false, isLoading = false)
-                        _bookmarkMessage.emit(error.message ?: "Unable to express interest right now")
-                    }
+            if (targetItem.load.isInterested) {
+                withdrawInterest(indentId)
+            } else {
+                expressInterest(indentId)
             }
         }
 
@@ -355,8 +376,86 @@ class LoadBoardViewModel
         }
 
         private fun com.freight24.trucker.feature.loads.model.ui.LoadUi.decorateInterestState() =
-            copy(
-                isInterested = id in interestedLoadIds,
-                isInterestLoading = id in loadingInterestedLoadIds,
-            )
+            run {
+                if (isInterested) interestedLoadIds.add(id)
+                copy(
+                    isInterested = isInterested || id in interestedLoadIds,
+                    isInterestLoading = id in loadingInterestedLoadIds,
+                )
+            }
+
+        private fun expressInterest(indentId: String) {
+            updateInterestLocalState(indentId, isInterested = true, isLoading = true)
+
+            viewModelScope.launch {
+                expressInterestUseCase(ExpressInterestUseCaseParams(indentId))
+                    .onSuccess { response ->
+                        if (response.success) {
+                            updateInterestLocalState(indentId, isInterested = true, isLoading = false)
+                        } else {
+                            updateInterestLocalState(indentId, isInterested = false, isLoading = false)
+                            _bookmarkMessage.emit(response.message.ifBlank { "Unable to express interest right now" })
+                        }
+                    }.onFailure { error ->
+                        updateInterestLocalState(indentId, isInterested = false, isLoading = false)
+                        _bookmarkMessage.emit(error.message ?: "Unable to express interest right now")
+                    }
+            }
+        }
+
+        private fun withdrawInterest(indentId: String) {
+            updateInterestLocalState(indentId, isInterested = false, isLoading = true)
+
+            viewModelScope.launch {
+                withdrawInterestUseCase(WithdrawInterestUseCaseParams(indentId))
+                    .onSuccess { response ->
+                        if (response.success) {
+                            updateInterestLocalState(indentId, isInterested = false, isLoading = false)
+                        } else {
+                            updateInterestLocalState(indentId, isInterested = true, isLoading = false)
+                            _bookmarkMessage.emit(response.message.ifBlank { "Unable to withdraw interest right now" })
+                        }
+                    }.onFailure { error ->
+                        updateInterestLocalState(indentId, isInterested = true, isLoading = false)
+                        _bookmarkMessage.emit(error.message ?: "Unable to withdraw interest right now")
+                    }
+            }
+        }
+
+        private fun updateInterestLocalState(
+            indentId: String,
+            isInterested: Boolean,
+            isLoading: Boolean,
+        ) {
+            if (isInterested) interestedLoadIds.add(indentId) else interestedLoadIds.remove(indentId)
+            if (isLoading) loadingInterestedLoadIds.add(indentId) else loadingInterestedLoadIds.remove(indentId)
+            updateLoadInterestState(indentId, isInterested = isInterested, isLoading = isLoading)
+        }
+
+        private fun insertCachedLoadsForCity(
+            currentItems: MutableList<LoadBoardItem>,
+            cityId: Int,
+            cityHeaderIndex: Int,
+        ) {
+            val insertAt = cityHeaderIndex + 1
+            val cachedLoads = cityLoadCache[cityId].orEmpty()
+            cityLoadedCounts[cityId] = cachedLoads.size
+
+            var cursor = insertAt
+            cachedLoads.forEach { load ->
+                currentItems.add(cursor++, LoadBoardItem.LoadItem(load.decorateInterestState()))
+            }
+
+            val totalCount = cityTotalLoads[cityId] ?: citySummaries.firstOrNull { it.cityId == cityId }?.totalLoads ?: 0
+            if (totalCount > cachedLoads.size) {
+                currentItems.add(
+                    cursor,
+                    LoadBoardItem.ShowMoreItem(
+                        cityId = cityId,
+                        loadedCount = cachedLoads.size,
+                        totalCount = totalCount,
+                    ),
+                )
+            }
+        }
     }

@@ -45,4 +45,11 @@ class LoadBoardRepositoryImpl
                     indentsApi.expressInterest(IndentInterestRequest(indentId))
                 }.getOrThrow()
             }
+
+        override suspend fun withdrawInterest(indentId: String): Result<IndentInterestResponse> =
+            runCatching {
+                safeCallProvider.safeApiCall(ioDispatcher) {
+                    indentsApi.withdrawInterest(IndentInterestRequest(indentId))
+                }.getOrThrow()
+            }
     }

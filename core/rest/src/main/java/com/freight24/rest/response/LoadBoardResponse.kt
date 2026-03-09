@@ -48,5 +48,9 @@ data class LoadBoardResponse(
         val employeeName: String?,
         @SerialName("employee_phone")
         val employeePhone: String?,
+        @SerialName("is_interested")
+        val isInterested: Boolean? = null,
+        @SerialName("interest_status")
+        val interestStatus: String? = null,
     )
 }

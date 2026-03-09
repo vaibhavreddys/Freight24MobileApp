@@ -23,4 +23,5 @@ fun LoadBoardResponse.LatestLoad.toLoad(fallbackCity: String): Load =
         createdTime = DateTimeUtils.formatRelativeTime(createdAt),
         agentName = employeeName ?: "Freight24",
         agentPhone = employeePhone ?: "--",
+        isInterested = isInterested == true || interestStatus.equals("INTERESTED", ignoreCase = true),
     )
