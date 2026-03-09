@@ -73,6 +73,7 @@ import com.freight24.rest.response.TruckCategoryDto
 import com.freight24.rest.response.TruckTypeDto
 import com.freight24.ui.components.FilterSelectionChip
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -99,6 +100,41 @@ fun CreateIndentScreen(
             snackbarHostState.showSnackbar(it)
             viewModel.onEvent(CreateIndentEvent.ClearSuccess)
         }
+    }
+
+    val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
+
+    LaunchedEffect(savedStateHandle) {
+        savedStateHandle?.getStateFlow<String?>("selected_from_location", null)
+            ?.collect { json ->
+                json?.let {
+                    val location = Json.decodeFromString<LocationDto>(it)
+                    viewModel.onEvent(CreateIndentEvent.SelectFromLocation(location))
+                    savedStateHandle.remove<String>("selected_from_location")
+                }
+            }
+    }
+
+    LaunchedEffect(savedStateHandle) {
+        savedStateHandle?.getStateFlow<String?>("selected_to_location", null)
+            ?.collect { json ->
+                json?.let {
+                    val location = Json.decodeFromString<LocationDto>(it)
+                    viewModel.onEvent(CreateIndentEvent.SelectToLocation(location))
+                    savedStateHandle.remove<String>("selected_to_location")
+                }
+            }
+    }
+
+    LaunchedEffect(savedStateHandle) {
+        savedStateHandle?.getStateFlow<String?>("selected_client", null)
+            ?.collect { json ->
+                json?.let {
+                    val client = Json.decodeFromString<ClientDto>(it)
+                    viewModel.onEvent(CreateIndentEvent.SelectClient(client))
+                    savedStateHandle.remove<String>("selected_client")
+                }
+            }
     }
 
     CreateIndentContent(

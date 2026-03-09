@@ -56,7 +56,7 @@ android {
             buildConfigField(
                 "String",
                 "BASE_URL",
-                "\"http://192.168.1.199:3000/api/v1/\"",
+                "\"http://192.168.1.195:3000/api/v1/\"",
             )
         }
 

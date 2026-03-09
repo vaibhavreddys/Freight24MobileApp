@@ -177,7 +177,7 @@ fun EditTripScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                val restrictedStatuses = listOf("UNLOADED", "INVOICED", "POD_DISPATCHED", "PAID", "CLOSED")
+                                val restrictedStatuses = listOf("IN_TRANSIT", "UNLOADED", "INVOICED", "POD_DISPATCHED", "PAID", "CLOSED")
                                 if (uiState.truckerStatus in restrictedStatuses) {
                                     scope.launch {
                                         snackbarHostState.showSnackbar(

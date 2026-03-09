@@ -200,7 +200,8 @@ fun ConnectNavGraph(
                         }
                         launchSingleTop = true
                     }
-                }
+                },
+                navController = navHostController
             )
         }
 

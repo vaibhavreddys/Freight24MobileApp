@@ -2,6 +2,8 @@ package com.freight24.connect.di
 
 import com.freight24.connect.repository.ClientRepository
 import com.freight24.connect.repository.ClientRepositoryImpl
+import com.freight24.connect.repository.FindTrucksRepository
+import com.freight24.connect.repository.FindTrucksRepositoryImpl
 import com.freight24.connect.repository.LocationRepository
 import com.freight24.connect.repository.LocationRepositoryImpl
 import com.freight24.connect.repository.trips.TripHaltingRepository
@@ -56,4 +58,12 @@ interface RepositoryBinderModule {
     fun bindsTruckOwnerRepository(
         truckOwnerRepositoryImpl: TruckOwnerRepositoryImpl
     ): TruckOwnerRepository
+
+    @Binds
+    @Singleton
+    fun bindsFindTrucksRepository(
+        findTrucksRepositoryImpl: FindTrucksRepositoryImpl
+    ): FindTrucksRepository
+
+
 }

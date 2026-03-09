@@ -272,6 +272,7 @@ sealed class ConnectDestination(val route: String) {
             "other_deductions/$tripId?amount=${amount ?: "0"}&notes=${notes ?: ""}"
     }
 
+    data object FindTrucks : ConnectDestination("find_trucks")
     data object ManageTrucks : ConnectDestination("manage_trucks")
     data object OnboardTruck : ConnectDestination("onboard_truck")
 

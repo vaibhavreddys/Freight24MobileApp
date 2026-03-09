@@ -1,5 +1,6 @@
 package com.freight24.connect.feature.indents.views
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,8 +9,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -21,6 +24,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -31,16 +35,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.unit.sp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.currentBackStackEntryAsState
-import com.freight24.connect.feature.indents.domain.viewmodel.CreateIndentEvent
-import com.freight24.connect.feature.indents.domain.viewmodel.IndentsViewModel
-import com.freight24.connect.feature.indents.domain.viewmodel.IndentsViewModelImpl
-import com.freight24.connect.navigation.ConnectDestination
+import com.freight24.connect.feature.indents.domain.viewmodel.SearchSelectionEvent
+import com.freight24.connect.feature.indents.domain.viewmodel.SearchSelectionViewModel
+import com.freight24.connect.feature.indents.domain.viewmodel.SearchSelectionViewModelImpl
 import com.freight24.rest.response.ClientDto
 import com.freight24.rest.response.LocationDto
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 enum class SearchType {
     CLIENT,
@@ -54,46 +60,16 @@ fun SearchSelectionScreen(
     searchType: SearchType,
     onBackClick: () -> Unit,
     navController: NavController,
+    viewModel: SearchSelectionViewModel = hiltViewModel<SearchSelectionViewModelImpl>()
 ) {
-    // Scope ViewModel to CreateIndent destination to share state with CreateIndentScreen
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val createIndentBackStackEntry = remember(navBackStackEntry) {
-        navController.getBackStackEntry(ConnectDestination.CreateIndent.route)
-    }
-    val viewModel: IndentsViewModel = hiltViewModel<IndentsViewModelImpl>(
-        createIndentBackStackEntry
-    )
     val uiState by viewModel.uiState.collectAsState()
     val focusRequester = remember { FocusRequester() }
 
-    val (title, hint, query, results, isLoading) =
+    val (title, hint) =
         when (searchType) {
-            SearchType.CLIENT ->
-                SearchConfig(
-                    title = "Select Client",
-                    hint = "Search by client name",
-                    query = uiState.clientQuery,
-                    results = uiState.clientSearchResults,
-                    isLoading = false,
-                )
-
-            SearchType.LOCATION_FROM ->
-                SearchConfig(
-                    title = "Select Loading Location",
-                    hint = "Search by city or area",
-                    query = uiState.fromLocationQuery,
-                    results = uiState.fromLocationSearchResults,
-                    isLoading = false,
-                )
-
-            SearchType.LOCATION_TO ->
-                SearchConfig(
-                    title = "Select Unloading Location",
-                    hint = "Search by city or area",
-                    query = uiState.toLocationQuery,
-                    results = uiState.toLocationSearchResults,
-                    isLoading = false,
-                )
+            SearchType.CLIENT -> "Select Client" to "Search by client name"
+            SearchType.LOCATION_FROM -> "Select Loading Location" to "Search by city or area"
+            SearchType.LOCATION_TO -> "Select Unloading Location" to "Search by city or area"
         }
 
     LaunchedEffect(Unit) {
@@ -103,12 +79,13 @@ fun SearchSelectionScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(title) },
+                title = { Text(title, fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
             )
         },
     ) { paddingValues ->
@@ -118,25 +95,39 @@ fun SearchSelectionScreen(
                     .fillMaxSize()
                     .padding(paddingValues),
         ) {
+            Text(
+                text = hint,
+                modifier = Modifier.padding(start = 16.dp, top = 16.dp),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF22C55E)
+            )
+            
             OutlinedTextField(
-                value = query,
+                value = uiState.query,
                 onValueChange = { newQuery ->
-                    when (searchType) {
-                        SearchType.CLIENT -> viewModel.onEvent(CreateIndentEvent.SearchClient(newQuery))
-                        SearchType.LOCATION_FROM -> viewModel.onEvent(CreateIndentEvent.SearchFromLocation(newQuery))
-                        SearchType.LOCATION_TO -> viewModel.onEvent(CreateIndentEvent.SearchToLocation(newQuery))
-                    }
+                    viewModel.onEvent(SearchSelectionEvent.OnQueryChange(newQuery, searchType))
                 },
-                label = { Text(hint) },
+                placeholder = { Text("Type to search...", color = Color(0xFF94A3B8)) },
                 modifier =
                     Modifier
                         .fillMaxWidth()
                         .padding(16.dp)
                         .focusRequester(focusRequester),
                 singleLine = true,
+                shape = RoundedCornerShape(12.dp),
+                trailingIcon = {
+                    Icon(Icons.Default.Search, contentDescription = null, tint = Color(0xFF94A3B8))
+                },
+                colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFF22C55E),
+                    unfocusedBorderColor = Color(0xFFCBD5E1),
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White
+                )
             )
 
-            if (isLoading) {
+            if (uiState.isLoading) {
                 Box(
                     modifier =
                         Modifier
@@ -150,7 +141,7 @@ fun SearchSelectionScreen(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                 ) {
-                    if (query.length < 3) {
+                    if (uiState.query.length < 3) {
                         item {
                             Text(
                                 text = "Type at least 3 characters to search",
@@ -159,7 +150,7 @@ fun SearchSelectionScreen(
                                 color = Color.Gray,
                             )
                         }
-                    } else if (results.isEmpty()) {
+                    } else if (uiState.results.isEmpty()) {
                         item {
                             Text(
                                 text = "No results found",
@@ -169,17 +160,18 @@ fun SearchSelectionScreen(
                             )
                         }
                     } else {
-                        items(results) { item ->
+                        items(uiState.results) { item ->
                             when (item) {
                                 is LocationDto -> {
                                     LocationListItem(
                                         location = item,
                                         onClick = {
-                                            when (searchType) {
-                                                SearchType.LOCATION_FROM -> viewModel.onEvent(CreateIndentEvent.SelectFromLocation(item))
-                                                SearchType.LOCATION_TO -> viewModel.onEvent(CreateIndentEvent.SelectToLocation(item))
-                                                else -> {}
+                                            val key = when (searchType) {
+                                                SearchType.LOCATION_FROM -> "selected_from_location"
+                                                SearchType.LOCATION_TO -> "selected_to_location"
+                                                else -> ""
                                             }
+                                            navController.previousBackStackEntry?.savedStateHandle?.set(key, Json.encodeToString(item))
                                             onBackClick()
                                         },
                                     )
@@ -188,7 +180,7 @@ fun SearchSelectionScreen(
                                     ClientListItem(
                                         client = item,
                                         onClick = {
-                                            viewModel.onEvent(CreateIndentEvent.SelectClient(item))
+                                            navController.previousBackStackEntry?.savedStateHandle?.set("selected_client", Json.encodeToString(item))
                                             onBackClick()
                                         },
                                     )
@@ -211,16 +203,16 @@ private fun LocationListItem(
     ListItem(
         modifier = Modifier.clickable(onClick = onClick),
         headlineContent = {
-            Text(location.name, style = MaterialTheme.typography.bodyLarge)
+            Text(location.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
         },
         supportingContent = {
             if (location.type.equals("area", true)) {
                 location.city?.let {
-                    Text(it, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    Text(it, style = MaterialTheme.typography.bodySmall, color = Color(0xFF64748B))
                 }
             } else {
                 location.state?.let {
-                    Text(it, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    Text(it, style = MaterialTheme.typography.bodySmall, color = Color(0xFF64748B))
                 }
             }
         },
@@ -238,12 +230,13 @@ private fun ClientListItem(
             Column {
                 Text(
                     text = client.companyName,
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = client.tagCode,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    color = Color(0xFF64748B)
                 )
             }
 

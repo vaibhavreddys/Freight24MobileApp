@@ -5,6 +5,7 @@ import com.freight24.connect.BuildConfig
 import com.freight24.network.RetrofitFactory
 import com.freight24.network.di.DefaultNetwork
 import com.freight24.rest.api.ClientApi
+import com.freight24.rest.api.FindTrucksApi
 import com.freight24.rest.api.IndentsApi
 import com.freight24.rest.api.LocationApi
 import com.freight24.rest.api.LoginConnectApi
@@ -93,5 +94,12 @@ object ApiModule {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "TruckOwnerApi")
             .create(TruckOwnerApi::class.java)
+    }
+
+    @Provides
+    fun providesFindTrucksApi(retrofitFactory: RetrofitFactory): FindTrucksApi {
+        return retrofitFactory
+            .create(BuildConfig.BASE_URL, "FindTrucksApi")
+            .create(FindTrucksApi::class.java)
     }
 }

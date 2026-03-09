@@ -10,7 +10,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -24,8 +23,10 @@ import com.freight24.connect.feature.indents.views.IndentsScreen
 import com.freight24.connect.feature.more.MoreViewModel
 import com.freight24.connect.feature.more.views.MoreBottomSheet
 import com.freight24.connect.feature.trips.views.TripsScreen
-import com.freight24.connect.feature.trucks.views.FindTrucksScreen
+import com.freight24.connect.feature.findTrucks.views.FindTrucksScreen
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
+import com.freight24.connect.navigation.ConnectDestination
 import com.freight24.ui.components.AppTopBar
 import com.freight24.ui.components.FreightBottomNavScaffold
 
@@ -41,6 +42,7 @@ fun HomeScreen(
     onManageTruckOwners: () -> Unit,
     startTab: ConnectTab? = null,
     onLogout: () -> Unit,
+    navController: NavController,
     moreViewModel: MoreViewModel = hiltViewModel()
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(startTab ?: ConnectTab.Home) }
@@ -101,7 +103,13 @@ fun HomeScreen(
                     paddingValues = paddingValues,
                     onTripClick = onTripClick
                 )
-                ConnectTab.Trucks -> FindTrucksScreen(paddingValues)
+                ConnectTab.Trucks -> FindTrucksScreen(
+                    paddingValues = paddingValues,
+                    onNavigateToSearch = { searchType ->
+                        navController.navigate(ConnectDestination.SearchSelection.createRoute(searchType))
+                    },
+                    navController = navController
+                )
                 ConnectTab.More -> Spacer(Modifier.padding(paddingValues))
             }
         }
