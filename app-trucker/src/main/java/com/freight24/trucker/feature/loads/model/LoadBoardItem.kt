@@ -11,6 +11,7 @@ sealed interface LoadBoardItem {
     ) : LoadBoardItem
 
     data class LoadItem(
+        val cityId: Int,
         val load: LoadUi,
     ) : LoadBoardItem
 

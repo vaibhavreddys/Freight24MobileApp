@@ -245,7 +245,7 @@ private fun ProfileMainContent(
                 Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp, vertical = 24.dp),
+                    .padding(horizontal = 20.dp),
         ) {
 //            // Top Title & Settings Row
 //            Row(

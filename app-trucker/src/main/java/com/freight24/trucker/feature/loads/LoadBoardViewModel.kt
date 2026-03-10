@@ -95,7 +95,10 @@ class LoadBoardViewModel
             val newItems = mutableListOf<LoadBoardItem>()
             summaryList.forEach { summary ->
                 cityTotalLoads[summary.cityId] = summary.totalLoads
-                cityLoadCache.putIfAbsent(summary.cityId, summary.initialLoads.map { it.toUi() }.toMutableList())
+                cityLoadCache.putIfAbsent(
+                    summary.cityId,
+                    summary.initialLoads.map { it.toUi() }.distinctBy { it.id }.toMutableList(),
+                )
 
                 val isExpanded = _expandedCityId.value == summary.cityId
                 newItems.add(
@@ -113,7 +116,12 @@ class LoadBoardViewModel
                     cityLoadedCounts[summary.cityId] = cachedLoads.size
 
                     cachedLoads.forEach { load ->
-                        newItems.add(LoadBoardItem.LoadItem(load.decorateInterestState()))
+                        newItems.add(
+                            LoadBoardItem.LoadItem(
+                                cityId = summary.cityId,
+                                load = load.decorateInterestState(),
+                            ),
+                        )
                     }
 
                     // Add Show More if there are more loads
@@ -128,7 +136,7 @@ class LoadBoardViewModel
                     }
                 }
             }
-            _items.value = newItems
+            publishItems(newItems)
         }
 
         fun onCityClicked(cityId: String) {
@@ -187,6 +195,19 @@ class LoadBoardViewModel
             if (isExpanding) {
                 _expandedCityId.value = cityId
                 cityPages[cityId] = 1
+
+                // Defensive cleanup for race conditions where async responses may have inserted
+                // children while the city was collapsed.
+                val nextIndex = updatedIndex + 1
+                while (nextIndex < currentItems.size &&
+                    (
+                        currentItems[nextIndex] is LoadBoardItem.LoadItem ||
+                            currentItems[nextIndex] is LoadBoardItem.ShowMoreItem
+                    )
+                ) {
+                    currentItems.removeAt(nextIndex)
+                }
+
                 insertCachedLoadsForCity(
                     currentItems = currentItems,
                     cityId = cityId,
@@ -208,7 +229,7 @@ class LoadBoardViewModel
                 }
             }
 
-            _items.value = currentItems
+            publishItems(currentItems)
         }
 
         private fun fetchLoadsForCity(
@@ -237,6 +258,8 @@ class LoadBoardViewModel
                                 }
 
                             if (cityIndex == -1) return@onSuccess
+                            val cityItem = currentItems[cityIndex] as? LoadBoardItem.CityItem ?: return@onSuccess
+                            val isStillExpanded = cityItem.expanded && _expandedCityId.value == cityId
 
                             // Handling Page 1 vs Next Pages
                             var insertIndex: Int
@@ -290,11 +313,21 @@ class LoadBoardViewModel
 
                             newLoads.forEach { load ->
                                 cityLoads.add(load)
-                                currentItems.add(insertIndex++, LoadBoardItem.LoadItem(load.decorateInterestState()))
+                                currentItems.add(
+                                    insertIndex++,
+                                    LoadBoardItem.LoadItem(
+                                        cityId = cityId,
+                                        load = load.decorateInterestState(),
+                                    ),
+                                )
                             }
                             cityLoadedCounts[cityId] = cityLoads.size
                             cityTotalLoads[cityId] = paginatedLoads.totalLoads
                             cityPages[cityId] = page
+
+                            if (!isStillExpanded) {
+                                return@onSuccess
+                            }
 
                             // Add "Show More" if needed
                             if (paginatedLoads.hasMore) {
@@ -307,7 +340,7 @@ class LoadBoardViewModel
                                     ),
                                 )
                             }
-                            _items.value = currentItems
+                            publishItems(currentItems)
                         }
                         .onFailure {
                             Log.e("LoadBoardViewModel", "Failed to fetch loads for city $cityId", it)
@@ -361,7 +394,8 @@ class LoadBoardViewModel
             isInterested: Boolean,
             isLoading: Boolean,
         ) {
-            _items.value = _items.value.map { item ->
+            publishItems(
+                _items.value.map { item ->
                 if (item is LoadBoardItem.LoadItem && item.load.id == indentId) {
                     item.copy(
                         load = item.load.copy(
@@ -372,7 +406,8 @@ class LoadBoardViewModel
                 } else {
                     item
                 }
-            }
+                },
+            )
         }
 
         private fun com.freight24.trucker.feature.loads.model.ui.LoadUi.decorateInterestState() =
@@ -443,7 +478,13 @@ class LoadBoardViewModel
 
             var cursor = insertAt
             cachedLoads.forEach { load ->
-                currentItems.add(cursor++, LoadBoardItem.LoadItem(load.decorateInterestState()))
+                currentItems.add(
+                    cursor++,
+                    LoadBoardItem.LoadItem(
+                        cityId = cityId,
+                        load = load.decorateInterestState(),
+                    ),
+                )
             }
 
             val totalCount = cityTotalLoads[cityId] ?: citySummaries.firstOrNull { it.cityId == cityId }?.totalLoads ?: 0
@@ -457,5 +498,22 @@ class LoadBoardViewModel
                     ),
                 )
             }
+        }
+
+        private fun publishItems(rawItems: List<LoadBoardItem>) {
+            val seenCityIds = mutableSetOf<Int>()
+            val seenLoadKeys = mutableSetOf<String>()
+            val seenShowMoreCityIds = mutableSetOf<Int>()
+
+            val dedupedItems =
+                rawItems.filter { item ->
+                    when (item) {
+                        is LoadBoardItem.CityItem -> seenCityIds.add(item.cityId)
+                        is LoadBoardItem.LoadItem -> seenLoadKeys.add("${item.cityId}:${item.load.id}")
+                        is LoadBoardItem.ShowMoreItem -> seenShowMoreCityIds.add(item.cityId)
+                    }
+                }
+
+            _items.value = dedupedItems
         }
     }
