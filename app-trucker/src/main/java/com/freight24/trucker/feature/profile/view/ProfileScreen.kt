@@ -1,8 +1,14 @@
 package com.freight24.trucker.feature.profile.view
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -19,6 +25,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,11 +38,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Assignment
+import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Call
@@ -47,6 +56,7 @@ import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -57,18 +67,26 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -87,6 +105,8 @@ import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.freight24.trucker.feature.profile.domain.DocumentStatus
 import com.freight24.trucker.feature.profile.domain.DocumentType
@@ -96,6 +116,8 @@ import com.freight24.trucker.feature.profile.util.ProfileFieldValidators
 import com.freight24.trucker.feature.profile.util.ValidationResult
 import com.freight24.ui.UiState
 import com.freight24.ui.theme.PrimaryGreen
+import kotlinx.coroutines.launch
+import java.io.File
 
 // Define theme-aware colors or use MaterialTheme directly
 // For BrandGreen, we can keep it as a constant for branding, but text colors should adapt
@@ -150,7 +172,8 @@ internal fun ProfileScreen(
     ) {
         androidx.compose.material3.Scaffold(
             snackbarHost = { androidx.compose.material3.SnackbarHost(hostState = snackbarHostState) },
-            containerColor = Color.Transparent
+            containerColor = Color.Transparent,
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
         ) { innerPadding ->
             Box(modifier = Modifier.padding(innerPadding)) {
                 when (val state = uiState) {
@@ -168,6 +191,7 @@ internal fun ProfileScreen(
                             viewModel = viewModel,
                             isEditing = isEditing,
                             hasChanges = hasChanges,
+                            snackbarHostState = snackbarHostState,
                         )
                     }
                     UiState.Idle -> {}
@@ -178,25 +202,30 @@ internal fun ProfileScreen(
 
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ProfileMainContent(
     profile: Profile,
     viewModel: ProfileViewModel,
     isEditing: Boolean,
     hasChanges: Boolean,
+    snackbarHostState: SnackbarHostState,
 ) {
     val isUploading by viewModel.isUploading.collectAsState()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     val isVerified = profile.profileVerificationStatus?.lowercase() == "verified"
     val profileStatus = profile.profileVerificationStatus?.lowercase() ?: "incomplete"
     
     var pickingDocumentType by rememberSaveable { mutableStateOf<DocumentType?>(null) }
     var pickingDocumentId by rememberSaveable { mutableStateOf<String?>(null) }
-    var showSelectionDialog by rememberSaveable { mutableStateOf(false) }
+    var showSourcePicker by rememberSaveable { mutableStateOf(false) }
+    var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
+    val sourceSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    val documentPickerLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
-        contract = androidx.activity.result.contract.ActivityResultContracts.GetContent()
+    val documentPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         uri?.let {
             pickingDocumentType?.let { type ->
@@ -205,8 +234,8 @@ private fun ProfileMainContent(
         }
     }
 
-    val imagePickerLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
-        contract = androidx.activity.result.contract.ActivityResultContracts.GetMultipleContents()
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickMultipleVisualMedia()
     ) { uris ->
         if (uris.isNotEmpty()) {
             pickingDocumentType?.let { type ->
@@ -215,28 +244,117 @@ private fun ProfileMainContent(
         }
     }
 
-    if (showSelectionDialog) {
-        androidx.compose.material3.AlertDialog(
-            onDismissRequest = { showSelectionDialog = false },
-            title = { Text("Select Document Source") },
-            text = { Text("How would you like to upload your document?") },
-            confirmButton = {
-                TextButton(onClick = {
-                    showSelectionDialog = false
-                    documentPickerLauncher.launch("application/pdf")
-                }) {
-                    Text("PDF File")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    showSelectionDialog = false
-                    imagePickerLauncher.launch("image/*")
-                }) {
-                    Text("Images")
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture(),
+        onResult = { success ->
+            if (success) {
+                tempCameraUri?.let { uri ->
+                    pickingDocumentType?.let { type ->
+                        viewModel.uploadDocument(listOf(uri), type, isPdf = false, docId = pickingDocumentId)
+                    }
                 }
             }
-        )
+            tempCameraUri = null
+        },
+    )
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                val imageUri = createTempImageUri(context)
+                tempCameraUri = imageUri
+                cameraLauncher.launch(imageUri)
+            } else {
+                scope.launch {
+                    val result =
+                        snackbarHostState.showSnackbar(
+                            message = "Camera permission denied. Grant it from app settings to use camera upload.",
+                            actionLabel = "Settings",
+                            duration = SnackbarDuration.Long,
+                        )
+                    if (result == SnackbarResult.ActionPerformed) {
+                        openAppSettings(context)
+                    }
+                }
+            }
+        },
+    )
+
+    fun startCameraCapture() {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            val imageUri = createTempImageUri(context)
+            tempCameraUri = imageUri
+            cameraLauncher.launch(imageUri)
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
+
+    if (showSourcePicker) {
+        ModalBottomSheet(
+            onDismissRequest = { showSourcePicker = false },
+            sheetState = sourceSheetState,
+        ) {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 24.dp),
+            ) {
+                Text(
+                    text = "Select source",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(16.dp),
+                )
+
+                ListItem(
+                    headlineContent = { Text("Camera") },
+                    leadingContent = {
+                        Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = CircleShape) {
+                            Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.padding(8.dp).size(20.dp))
+                        }
+                    },
+                    modifier = Modifier.clickable {
+                        scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
+                            showSourcePicker = false
+                            startCameraCapture()
+                        }
+                    },
+                )
+                ListItem(
+                    headlineContent = { Text("Gallery (Images)") },
+                    leadingContent = {
+                        Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = CircleShape) {
+                            Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.padding(8.dp).size(20.dp))
+                        }
+                    },
+                    modifier = Modifier.clickable {
+                        scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
+                            showSourcePicker = false
+                            imagePickerLauncher.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+                            )
+                        }
+                    },
+                )
+                ListItem(
+                    headlineContent = { Text("Documents (PDF)") },
+                    leadingContent = {
+                        Surface(color = MaterialTheme.colorScheme.tertiaryContainer, shape = CircleShape) {
+                            Icon(Icons.AutoMirrored.Filled.InsertDriveFile, contentDescription = null, modifier = Modifier.padding(8.dp).size(20.dp))
+                        }
+                    },
+                    modifier = Modifier.clickable {
+                        scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
+                            showSourcePicker = false
+                            documentPickerLauncher.launch(arrayOf("application/pdf"))
+                        }
+                    },
+                )
+            }
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -245,31 +363,8 @@ private fun ProfileMainContent(
                 Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp),
+                    .padding(horizontal = 20.dp, vertical = 20.dp),
         ) {
-//            // Top Title & Settings Row
-//            Row(
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .padding(vertical = 24.dp),
-//                horizontalArrangement = Arrangement.SpaceBetween,
-//                verticalAlignment = Alignment.CenterVertically
-//            ) {
-//                Text(
-//                    text = "Profile",
-//                    style = MaterialTheme.typography.headlineMedium,
-//                    fontWeight = FontWeight.Bold,
-//                    color = MaterialTheme.colorScheme.onBackground
-//                )
-//                IconButton(onClick = { /* TODO */ }) {
-//                    Icon(
-//                        imageVector = Icons.Default.Settings,
-//                        contentDescription = "Settings",
-//                        modifier = Modifier.size(24.dp)
-//                    )
-//                }
-//            }
-
             // Profile Header Card
             ProfileHeaderCard(
                 fullName = viewModel.editableFullName.collectAsState().value,
@@ -503,7 +598,7 @@ private fun ProfileMainContent(
                     onDocumentUpload = { type, docId ->
                         pickingDocumentType = type
                         pickingDocumentId = docId
-                        showSelectionDialog = true
+                        showSourcePicker = true
                     }
                 )
             }
@@ -1166,4 +1261,21 @@ private fun launchDialer(context: Context, rawPhone: String) {
     if (phone.isBlank()) return
     val dialIntent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${Uri.encode(phone)}"))
     context.startActivity(dialIntent)
+}
+
+private fun openAppSettings(context: Context) {
+    val intent =
+        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", context.packageName, null)
+        }
+    context.startActivity(intent)
+}
+
+private fun createTempImageUri(context: Context): Uri {
+    val tempFile = File(context.cacheDir, "camera_capture_${System.currentTimeMillis()}.jpg")
+    return FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.fileprovider",
+        tempFile,
+    )
 }

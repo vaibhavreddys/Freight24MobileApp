@@ -1,5 +1,11 @@
 package com.freight24.trucker.feature.trips.view.details
 
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -21,25 +27,32 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -63,6 +76,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import coil3.compose.rememberAsyncImagePainter
 import com.freight24.common.model.Trip
@@ -77,6 +92,8 @@ import com.freight24.ui.components.TimelineStatus
 import com.freight24.ui.components.TimelineView
 import com.freight24.ui.components.TripCard
 import com.freight24.ui.components.getPdfLaunchIntent
+import kotlinx.coroutines.launch
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,17 +105,17 @@ internal fun TripDetailsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-    var showBottomSheet by rememberSaveable { mutableStateOf(false) }
-    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
 
     val selectedUris by viewModel.selectedUris.collectAsState()
     val isPdf by viewModel.isPdf.collectAsState()
     val isUploading by viewModel.isUploading.collectAsState()
+    val context = LocalContext.current
 
-    var showSelectionDialog by rememberSaveable { mutableStateOf(false) }
+    var showSourcePicker by rememberSaveable { mutableStateOf(false) }
+    var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
     var showSheet by rememberSaveable { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState()
+    val sourceSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(),
@@ -111,7 +128,7 @@ internal fun TripDetailsScreen(
     )
 
     val pdfPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent(),
+        contract = ActivityResultContracts.OpenDocument(),
         onResult = { uri ->
             uri?.let {
                 viewModel.onFilesPicked(listOf(it), true)
@@ -120,34 +137,117 @@ internal fun TripDetailsScreen(
         }
     )
 
-    if (showSelectionDialog) {
-        AlertDialog(
-            onDismissRequest = { showSelectionDialog = false },
-            title = { Text("Select Document Type") },
-            text = { Text("Select images from gallery or a PDF file to upload.") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                        showSelectionDialog = false
-                    }
-                ) {
-                    Text("Images", color = MaterialTheme.colorScheme.primary)
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture(),
+        onResult = { success ->
+            if (success) {
+                tempCameraUri?.let {
+                    viewModel.onFilesPicked(listOf(it), false)
+                    showSheet = true
                 }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        pdfPickerLauncher.launch("application/pdf")
-                        showSelectionDialog = false
+            }
+            tempCameraUri = null
+        }
+    )
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                val imageUri = createTempImageUri(context)
+                tempCameraUri = imageUri
+                cameraLauncher.launch(imageUri)
+            } else {
+                scope.launch {
+                    val result =
+                        snackbarHostState.showSnackbar(
+                            message = "Camera permission denied. Grant it from app settings to use camera upload.",
+                            actionLabel = "Settings",
+                            duration = SnackbarDuration.Long,
+                        )
+                    if (result == SnackbarResult.ActionPerformed) {
+                        openAppSettings(context)
                     }
-                ) {
-                    Text("PDF", color = MaterialTheme.colorScheme.primary)
                 }
-            },
+            }
+        }
+    )
+
+    fun startCameraCapture() {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            val imageUri = createTempImageUri(context)
+            tempCameraUri = imageUri
+            cameraLauncher.launch(imageUri)
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
+
+    if (showSourcePicker) {
+        ModalBottomSheet(
+            onDismissRequest = { showSourcePicker = false },
+            sheetState = sourceSheetState,
             containerColor = MaterialTheme.colorScheme.surface,
-            shape = RoundedCornerShape(12.dp)
-        )
+        ) {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 24.dp),
+            ) {
+                Text(
+                    text = "Select source",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(16.dp),
+                )
+
+                ListItem(
+                    headlineContent = { Text("Camera") },
+                    leadingContent = {
+                        Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = CircleShape) {
+                            Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.padding(8.dp).size(20.dp))
+                        }
+                    },
+                    modifier = Modifier.clickable {
+                        scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
+                            showSourcePicker = false
+                            startCameraCapture()
+                        }
+                    },
+                )
+                ListItem(
+                    headlineContent = { Text("Gallery (Images)") },
+                    leadingContent = {
+                        Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = CircleShape) {
+                            Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.padding(8.dp).size(20.dp))
+                        }
+                    },
+                    modifier = Modifier.clickable {
+                        scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
+                            showSourcePicker = false
+                            imagePickerLauncher.launch(
+                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+                            )
+                        }
+                    },
+                )
+                ListItem(
+                    headlineContent = { Text("Documents (PDF)") },
+                    leadingContent = {
+                        Surface(color = MaterialTheme.colorScheme.tertiaryContainer, shape = CircleShape) {
+                            Icon(Icons.AutoMirrored.Filled.InsertDriveFile, contentDescription = null, modifier = Modifier.padding(8.dp).size(20.dp))
+                        }
+                    },
+                    modifier = Modifier.clickable {
+                        scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
+                            showSourcePicker = false
+                            pdfPickerLauncher.launch(arrayOf("application/pdf"))
+                        }
+                    },
+                )
+            }
+        }
     }
 
     if (showSheet && selectedUris.isNotEmpty()) {
@@ -370,11 +470,10 @@ internal fun TripDetailsScreen(
                     }
                 }
                 is UiState.Success -> {
-                    val context = LocalContext.current
                     TripDetailsContent(
                         trip = state.data,
                         onNavigateToPayments = { onNavigateToPayments(state.data.id) },
-                        onUploadClick = { showSelectionDialog = true },
+                        onUploadClick = { showSourcePicker = true },
                         onViewClick = { documentId ->
                             viewModel.fetchSignedUrl(documentId) { url ->
                                 context.startActivity(getPdfLaunchIntent(url, context))
@@ -386,6 +485,23 @@ internal fun TripDetailsScreen(
             }
         }
     }
+}
+
+private fun createTempImageUri(context: Context): Uri {
+    val tempFile = File(context.cacheDir, "camera_capture_${System.currentTimeMillis()}.jpg")
+    return FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.fileprovider",
+        tempFile,
+    )
+}
+
+private fun openAppSettings(context: Context) {
+    val intent =
+        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", context.packageName, null)
+        }
+    context.startActivity(intent)
 }
 
 @Composable

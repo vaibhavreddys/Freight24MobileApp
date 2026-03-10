@@ -2,8 +2,10 @@ package com.freight24.trucker.feature.trucks.view.onboard
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.provider.Settings
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -58,6 +60,10 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -110,6 +116,7 @@ internal fun OnboardTruckScreen(
     val currentStep by viewModel.currentStep.collectAsState()
     val isStep1Valid by viewModel.isStep1Valid.collectAsState()
     val isStep2Valid by viewModel.isStep2Valid.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     val context = LocalContext.current
 
@@ -131,6 +138,7 @@ internal fun OnboardTruckScreen(
         )
     } else {
         Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
                 CenterAlignedTopAppBar(
                     title = {
@@ -229,7 +237,7 @@ internal fun OnboardTruckScreen(
                     ) { step ->
                         when (step) {
                             1 -> BasicInfoStep(viewModel)
-                            2 -> DocumentsStep(viewModel)
+                            2 -> DocumentsStep(viewModel, snackbarHostState)
                         }
                     }
                 }
@@ -422,7 +430,10 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DocumentsStep(viewModel: OnboardTruckViewModel) {
+private fun DocumentsStep(
+    viewModel: OnboardTruckViewModel,
+    snackbarHostState: SnackbarHostState,
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -480,6 +491,17 @@ private fun DocumentsStep(viewModel: OnboardTruckViewModel) {
                 cameraLauncher.launch(uri)
             } else {
                 Log.w(TAG, "Camera permission denied")
+                scope.launch {
+                    val result =
+                        snackbarHostState.showSnackbar(
+                            message = "Camera permission denied. Grant it from app settings to use camera upload.",
+                            actionLabel = "Settings",
+                            duration = SnackbarDuration.Long,
+                        )
+                    if (result == SnackbarResult.ActionPerformed) {
+                        openAppSettings(context)
+                    }
+                }
             }
         }
 
@@ -625,6 +647,14 @@ private fun createTempImageUri(context: Context): Uri {
         "${context.packageName}.fileprovider",
         tempFile,
     )
+}
+
+private fun openAppSettings(context: Context) {
+    val intent =
+        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", context.packageName, null)
+        }
+    context.startActivity(intent)
 }
 
 @Composable
