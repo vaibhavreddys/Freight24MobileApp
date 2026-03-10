@@ -22,6 +22,9 @@ fun AppTopBar(
     onSearchClick: (() -> Unit)? = null,
     showFilter: Boolean = false,
     onFilterClick: (() -> Unit)? = null,
+    trailingActionIcon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    trailingActionContentDescription: String? = null,
+    onTrailingActionClick: (() -> Unit)? = null,
 ) {
     TopAppBar(
         title = {
@@ -44,6 +47,14 @@ fun AppTopBar(
                     Icon(
                         imageVector = Icons.Default.FilterList,
                         contentDescription = "Filter",
+                    )
+                }
+            }
+            if (trailingActionIcon != null && onTrailingActionClick != null) {
+                IconButton(onClick = onTrailingActionClick) {
+                    Icon(
+                        imageVector = trailingActionIcon,
+                        contentDescription = trailingActionContentDescription,
                     )
                 }
             }

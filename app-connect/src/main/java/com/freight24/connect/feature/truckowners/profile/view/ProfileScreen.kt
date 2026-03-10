@@ -1,5 +1,8 @@
 package com.freight24.connect.feature.truckowners.profile.view
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -34,6 +37,7 @@ import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
@@ -72,6 +76,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -156,7 +161,17 @@ internal fun ProfileScreen(
                         IconButton(onClick = onBackClick) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
-                    }
+                    },
+                    actions = {
+                        if (!isEditing) {
+                            IconButton(onClick = { viewModel.toggleEditMode() }) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "Edit profile",
+                                )
+                            }
+                        }
+                    },
                 )
             }
         ) { innerPadding ->
@@ -194,7 +209,7 @@ private fun ProfileMainContent(
     hasChanges: Boolean,
 ) {
     val isUploading by viewModel.isUploading.collectAsState()
-    val context = androidx.compose.ui.platform.LocalContext.current
+    val context = LocalContext.current
 
     val isVerified = profile.profileVerificationStatus?.lowercase() == "verified"
     val profileStatus = profile.profileVerificationStatus?.lowercase() ?: "incomplete"
@@ -285,8 +300,6 @@ private fun ProfileMainContent(
                 initials = viewModel.getUserInitials(),
                 role = "Truck Owner",
                 verificationStatus = profileStatus,
-                isEditing = isEditing,
-                onEditClick = { viewModel.toggleEditMode() },
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -298,6 +311,7 @@ private fun ProfileMainContent(
                     value = viewModel.editableFullName.collectAsState().value,
                     isEditing = isEditing,
                     isEditable = true,
+                    leadingIcon = Icons.Default.Person,
                     onValueChange = {
                         viewModel.editableFullName.value = it
                         viewModel.onFieldChanged()
@@ -310,6 +324,7 @@ private fun ProfileMainContent(
                     isEditing = isEditing,
                     isEditable = !isVerified,
                     validationType = ValidationType.EMAIL,
+                    leadingIcon = Icons.Default.Badge,
                     onValueChange = {
                         viewModel.editableEmailId.value = it
                         viewModel.onFieldChanged()
@@ -322,6 +337,10 @@ private fun ProfileMainContent(
                     isEditing = isEditing,
                     isEditable = false, // Phone number is never editable - primary key factor
                     showAsLabelOnly = true,
+                    leadingIcon = Icons.Default.Call,
+                    onLeadingIconClick = {
+                        launchDialer(context, viewModel.editablePhoneNo.value)
+                    },
                     onValueChange = { },
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
@@ -331,6 +350,10 @@ private fun ProfileMainContent(
                     isEditing = isEditing,
                     isEditable = true,
                     validationType = ValidationType.PHONE,
+                    leadingIcon = Icons.Default.Call,
+                    onLeadingIconClick = {
+                        launchDialer(context, viewModel.editableAlternativePhone.value)
+                    },
                     onValueChange = {
                         viewModel.editableAlternativePhone.value = it
                         viewModel.onFieldChanged()
@@ -343,6 +366,7 @@ private fun ProfileMainContent(
                     isEditing = isEditing,
                     isEditable = !isVerified,
                     validationType = ValidationType.AADHAAR,
+                    leadingIcon = Icons.Default.Fingerprint,
                     onValueChange = {
                         viewModel.editableAadhaarNumber.value = it
                         viewModel.onFieldChanged()
@@ -355,6 +379,7 @@ private fun ProfileMainContent(
                     isEditing = isEditing,
                     isEditable = !isVerified,
                     validationType = ValidationType.PAN,
+                    leadingIcon = Icons.Default.Badge,
                     onValueChange = {
                         viewModel.editablePanNumber.value = it.uppercase()
                         viewModel.onFieldChanged()
@@ -375,6 +400,7 @@ private fun ProfileMainContent(
                     value = viewModel.editableBusinessName.collectAsState().value,
                     isEditing = isEditing,
                     isEditable = !isVerified,
+                    leadingIcon = Icons.Default.Business,
                     onValueChange = {
                         viewModel.editableBusinessName.value = it
                         viewModel.onFieldChanged()
@@ -387,6 +413,7 @@ private fun ProfileMainContent(
                     isEditing = isEditing,
                     isEditable = !isVerified,
                     validationType = ValidationType.GST,
+                    leadingIcon = Icons.Default.Badge,
                     onValueChange = {
                         viewModel.editableGstNumber.value = it
                         viewModel.onFieldChanged()
@@ -407,6 +434,7 @@ private fun ProfileMainContent(
                     value = viewModel.editableAccountHolderName.collectAsState().value,
                     isEditing = isEditing,
                     isEditable = !isVerified,
+                    leadingIcon = Icons.Default.Person,
                     onValueChange = {
                         viewModel.editableAccountHolderName.value = it
                         viewModel.onFieldChanged()
@@ -420,6 +448,7 @@ private fun ProfileMainContent(
                     isSensitive = true,
                     isEditable = !isVerified,
                     validationType = ValidationType.ACCOUNT_NUMBER,
+                    leadingIcon = Icons.Default.CreditCard,
                     onValueChange = {
                         viewModel.editableAccountNumber.value = it
                         viewModel.onFieldChanged()
@@ -432,6 +461,7 @@ private fun ProfileMainContent(
                     isEditing = isEditing,
                     isEditable = !isVerified,
                     validationType = ValidationType.IFSC,
+                    leadingIcon = Icons.Default.Badge,
                     onValueChange = {
                         viewModel.editableIfscCode.value = it.uppercase()
                         viewModel.onFieldChanged()
@@ -444,6 +474,7 @@ private fun ProfileMainContent(
                     isEditing = isEditing,
                     isEditable = !isVerified,
                     validationType = ValidationType.UPI,
+                    leadingIcon = Icons.Default.Badge,
                     onValueChange = {
                         viewModel.editableUpiId.value = it.lowercase()
                         viewModel.onFieldChanged()
@@ -455,6 +486,7 @@ private fun ProfileMainContent(
                     value = viewModel.editableBankName.collectAsState().value,
                     isEditing = isEditing,
                     isEditable = !isVerified,
+                    leadingIcon = Icons.Default.AccountBalance,
                     onValueChange = {
                         viewModel.editableBankName.value = it
                         viewModel.onFieldChanged()
@@ -466,6 +498,7 @@ private fun ProfileMainContent(
                     value = viewModel.editableBranchName.collectAsState().value,
                     isEditing = isEditing,
                     isEditable = !isVerified,
+                    leadingIcon = Icons.AutoMirrored.Filled.Assignment,
                     onValueChange = {
                         viewModel.editableBranchName.value = it
                         viewModel.onFieldChanged()
@@ -561,8 +594,6 @@ private fun ProfileHeaderCard(
     initials: String,
     role: String,
     verificationStatus: String,
-    isEditing: Boolean,
-    onEditClick: () -> Unit,
 ) {
     val isVerified = verificationStatus == "verified"
     val statusColor = when (verificationStatus) {
@@ -636,22 +667,6 @@ private fun ProfileHeaderCard(
                 )
             }
 
-            if (!isEditing) {
-                IconButton(
-                    onClick = onEditClick,
-                    modifier =
-                        Modifier
-                            .size(40.dp)
-                            .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "Edit",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-            }
         }
     }
 }
@@ -734,6 +749,8 @@ private fun ProfileField(
     value: String,
     isEditing: Boolean,
     isEditable: Boolean = true,
+    leadingIcon: ImageVector? = null,
+    onLeadingIconClick: (() -> Unit)? = null,
     onValueChange: (String) -> Unit = {},
     isSensitive: Boolean = false,
     validationType: ValidationType = ValidationType.NONE,
@@ -797,13 +814,30 @@ private fun ProfileField(
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp, vertical = 14.dp),
     ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 0.5.sp,
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (leadingIcon != null) {
+                val iconModifier =
+                    if (onLeadingIconClick != null) {
+                        Modifier.clickable(onClick = onLeadingIconClick)
+                    } else {
+                        Modifier
+                    }
+                Icon(
+                    imageVector = leadingIcon,
+                    contentDescription = label,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = iconModifier.size(16.dp),
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.5.sp,
+            )
+        }
         Spacer(modifier = Modifier.height(6.dp))
 
         if ((isEditing && isEditable) || showAsLabelOnly) {
@@ -1123,3 +1157,10 @@ private fun getDocIcon(type: DocumentType) =
         DocumentType.CANCELLED_CHEQUE -> Icons.Default.AccountBalance
         else -> Icons.Default.Description
     }
+
+private fun launchDialer(context: Context, rawPhone: String) {
+    val phone = rawPhone.trim()
+    if (phone.isBlank()) return
+    val dialIntent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${Uri.encode(phone)}"))
+    context.startActivity(dialIntent)
+}

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -31,6 +32,7 @@ fun ClientHeaderCard(
     fullName: String,
     phone: String,
     status: String,
+    showPhone: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     Card(
@@ -45,7 +47,7 @@ fun ClientHeaderCard(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            ClientIcon()
+            ClientIcon(fullName = fullName)
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -53,6 +55,7 @@ fun ClientHeaderCard(
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                 )
+                Spacer(modifier = Modifier.height(8.dp))
                 companyName?.let {
                     Text(
                         text = it,
@@ -60,22 +63,24 @@ fun ClientHeaderCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(top = 4.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Phone,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Text(
-                        text = phone,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 4.dp)
-                    )
+                if (showPhone && phone.isNotBlank()) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(top = 6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Phone,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = phone,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(start = 4.dp)
+                        )
+                    }
                 }
             }
             ClientStatusChip(status)
@@ -84,7 +89,15 @@ fun ClientHeaderCard(
 }
 
 @Composable
-fun ClientIcon() {
+fun ClientIcon(fullName: String) {
+    val initials =
+        fullName
+            .trim()
+            .split("\\s+".toRegex())
+            .filter { it.isNotBlank() }
+            .take(2)
+            .joinToString("") { it.first().uppercase() }
+
     Box(
         modifier = Modifier
             .size(44.dp)
@@ -94,11 +107,20 @@ fun ClientIcon() {
             ),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(
-            imageVector = Icons.Default.Business,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurface,
-        )
+        if (initials.isNotBlank()) {
+            Text(
+                text = initials,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Default.Business,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurface,
+            )
+        }
     }
 }
 

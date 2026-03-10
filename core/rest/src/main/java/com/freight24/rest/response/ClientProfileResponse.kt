@@ -11,6 +11,7 @@ data class ClientProfileResponse(
 data class ClientProfileDto(
     val id: String,
     val user_id: String,
+    val tag_code: String? = null,
     val full_name: String? = null,
     val email: String? = null,
     val phone: String? = null,

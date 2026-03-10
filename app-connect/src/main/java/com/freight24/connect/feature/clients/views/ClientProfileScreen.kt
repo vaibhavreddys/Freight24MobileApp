@@ -1,5 +1,8 @@
 package com.freight24.connect.feature.clients.views
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -26,8 +29,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Person
@@ -68,6 +75,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.freight24.connect.feature.clients.domain.viewmodel.ClientProfileViewModel
 import com.freight24.connect.utils.toDateTime
@@ -108,6 +116,16 @@ fun ClientProfileScreen(
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    if (!isEditing) {
+                        IconButton(onClick = viewModel::toggleEditMode) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Edit profile",
+                            )
+                        }
                     }
                 },
             )
@@ -189,6 +207,16 @@ private fun ClientProfileContent(
     isEditing: Boolean,
     viewModel: ClientProfileViewModel,
 ) {
+    val context = LocalContext.current
+    val fullName = viewModel.editableFullName.collectAsState().value
+    val companyName = viewModel.editableCompanyName.collectAsState().value
+    val email = viewModel.editableEmail.collectAsState().value
+    val phone = viewModel.editablePhone.collectAsState().value
+    val companyGst = viewModel.editableGstNumber.collectAsState().value
+    val panCard = viewModel.editablePanCard.collectAsState().value
+    val aadhaar = viewModel.editableAadhaarCard.collectAsState().value
+    val tagCode = client.tag_code.orEmpty()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -196,13 +224,11 @@ private fun ClientProfileContent(
             .padding(horizontal = 20.dp, vertical = 20.dp),
     ) {
         ProfileHeaderCard(
-            fullName = viewModel.editableFullName.collectAsState().value,
-            companyName = viewModel.editableCompanyName.collectAsState().value,
-            partnerId = client.user_id,
+            fullName = fullName,
+            companyName = companyName,
+            tagCode = tagCode,
             initials = viewModel.getInitials(),
             status = client.status.orEmpty(),
-            isEditing = isEditing,
-            onEditClick = viewModel::toggleEditMode,
         )
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -214,8 +240,9 @@ private fun ClientProfileContent(
         ) {
             ProfileField(
                 label = "FULL NAME",
-                value = viewModel.editableFullName.collectAsState().value,
+                value = fullName,
                 isEditing = isEditing,
+                leadingIcon = Icons.Default.Person,
                 onValueChange = {
                     viewModel.editableFullName.value = it
                     viewModel.onFieldChanged()
@@ -224,8 +251,9 @@ private fun ClientProfileContent(
             DividerLine()
             ProfileField(
                 label = "EMAIL",
-                value = viewModel.editableEmail.collectAsState().value,
+                value = email,
                 isEditing = isEditing,
+                leadingIcon = Icons.Default.Badge,
                 keyboardType = KeyboardType.Email,
                 capitalization = KeyboardCapitalization.None,
                 onValueChange = {
@@ -236,8 +264,10 @@ private fun ClientProfileContent(
             DividerLine()
             ProfileField(
                 label = "PHONE",
-                value = viewModel.editablePhone.collectAsState().value,
+                value = phone,
                 isEditing = isEditing,
+                leadingIcon = Icons.Default.Call,
+                onLeadingIconClick = { launchDialer(context, phone) },
                 keyboardType = KeyboardType.Phone,
                 capitalization = KeyboardCapitalization.None,
                 onValueChange = {
@@ -251,6 +281,10 @@ private fun ClientProfileContent(
                 value = client.alt_phones?.joinToString(", ").orEmpty(),
                 isEditing = false,
                 isEditable = false,
+                leadingIcon = Icons.Default.Call,
+                onLeadingIconClick = {
+                    launchDialer(context, client.alt_phones?.firstOrNull().orEmpty())
+                },
                 placeholder = "Not added",
             )
         }
@@ -264,8 +298,9 @@ private fun ClientProfileContent(
         ) {
             ProfileField(
                 label = "COMPANY NAME",
-                value = viewModel.editableCompanyName.collectAsState().value,
+                value = companyName,
                 isEditing = isEditing,
+                leadingIcon = Icons.Default.Business,
                 onValueChange = {
                     viewModel.editableCompanyName.value = it
                     viewModel.onFieldChanged()
@@ -274,8 +309,9 @@ private fun ClientProfileContent(
             DividerLine()
             ProfileField(
                 label = "GST NUMBER",
-                value = viewModel.editableGstNumber.collectAsState().value,
+                value = companyGst,
                 isEditing = isEditing,
+                leadingIcon = Icons.Default.Badge,
                 keyboardType = KeyboardType.Ascii,
                 capitalization = KeyboardCapitalization.Characters,
                 onValueChange = {
@@ -286,8 +322,9 @@ private fun ClientProfileContent(
             DividerLine()
             ProfileField(
                 label = "PAN NUMBER",
-                value = viewModel.editablePanCard.collectAsState().value,
+                value = panCard,
                 isEditing = isEditing,
+                leadingIcon = Icons.Default.Badge,
                 keyboardType = KeyboardType.Ascii,
                 capitalization = KeyboardCapitalization.Characters,
                 onValueChange = {
@@ -298,8 +335,9 @@ private fun ClientProfileContent(
             DividerLine()
             ProfileField(
                 label = "AADHAAR NUMBER",
-                value = viewModel.editableAadhaarCard.collectAsState().value,
+                value = aadhaar,
                 isEditing = isEditing,
+                leadingIcon = Icons.Default.Fingerprint,
                 keyboardType = KeyboardType.Number,
                 capitalization = KeyboardCapitalization.None,
                 onValueChange = {
@@ -316,15 +354,29 @@ private fun ClientProfileContent(
             icon = Icons.Default.Badge,
             initiallyExpanded = false,
         ) {
-            ProfileField(label = "CLIENT ID", value = client.id, isEditing = false, isEditable = false)
+            ProfileField(
+                label = "CLIENT ID",
+                value = client.id,
+                isEditing = false,
+                isEditable = false,
+                leadingIcon = Icons.Default.Badge,
+            )
             DividerLine()
-            ProfileField(label = "USER ID", value = client.user_id, isEditing = false, isEditable = false)
+            ProfileField(
+                label = "TAG CODE",
+                value = tagCode,
+                isEditing = false,
+                isEditable = false,
+                leadingIcon = Icons.Default.Badge,
+                placeholder = "Not available",
+            )
             DividerLine()
             ProfileField(
                 label = "CREATED AT",
                 value = client.created_at?.toDateTime().orEmpty(),
                 isEditing = false,
                 isEditable = false,
+                leadingIcon = Icons.Default.Info,
             )
             DividerLine()
             ProfileField(
@@ -332,6 +384,7 @@ private fun ClientProfileContent(
                 value = client.status.orEmpty().replaceFirstChar { it.uppercase() },
                 isEditing = false,
                 isEditable = false,
+                leadingIcon = Icons.Default.CheckCircle,
             )
             DividerLine()
             ProfileField(
@@ -339,6 +392,7 @@ private fun ClientProfileContent(
                 value = branchesDisplay(client.client_branches),
                 isEditing = false,
                 isEditable = false,
+                leadingIcon = Icons.Default.Business,
                 placeholder = "No branches",
             )
         }
@@ -351,11 +405,9 @@ private fun ClientProfileContent(
 private fun ProfileHeaderCard(
     fullName: String,
     companyName: String,
-    partnerId: String,
+    tagCode: String,
     initials: String,
     status: String,
-    isEditing: Boolean,
-    onEditClick: () -> Unit,
 ) {
     val normalizedStatus = status.lowercase()
     val isActive = normalizedStatus == "active"
@@ -403,33 +455,15 @@ private fun ProfileHeaderCard(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "User ID: $partnerId",
+                    text = "Tag Code: ${tagCode.ifBlank { "Not available" }}",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.outline,
                 )
             }
-
-            Column(horizontalAlignment = Alignment.End) {
-                VerificationChip(
-                    text = if (isActive) "Active" else "Inactive",
-                    color = chipColor,
-                )
-                if (!isEditing) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    IconButton(
-                        onClick = onEditClick,
-                        modifier = Modifier
-                            .size(36.dp)
-                            .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = "Edit profile",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            }
+            VerificationChip(
+                text = if (isActive) "Active" else "Inactive",
+                color = chipColor,
+            )
         }
     }
 }
@@ -498,6 +532,8 @@ private fun ProfileField(
     value: String,
     isEditing: Boolean,
     isEditable: Boolean = true,
+    leadingIcon: ImageVector? = null,
+    onLeadingIconClick: (() -> Unit)? = null,
     onValueChange: (String) -> Unit = {},
     keyboardType: KeyboardType = KeyboardType.Text,
     capitalization: KeyboardCapitalization = KeyboardCapitalization.Words,
@@ -508,13 +544,30 @@ private fun ProfileField(
             .fillMaxWidth()
             .padding(horizontal = 18.dp, vertical = 12.dp),
     ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            letterSpacing = 0.6.sp,
-            fontWeight = FontWeight.Bold,
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (leadingIcon != null) {
+                val iconModifier =
+                    if (onLeadingIconClick != null) {
+                        Modifier.clickable(onClick = onLeadingIconClick)
+                    } else {
+                        Modifier
+                    }
+                Icon(
+                    imageVector = leadingIcon,
+                    contentDescription = label,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = iconModifier.size(16.dp),
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                letterSpacing = 0.6.sp,
+                fontWeight = FontWeight.Bold,
+            )
+        }
         Spacer(modifier = Modifier.height(6.dp))
         if (isEditing && isEditable) {
             OutlinedTextField(
@@ -649,4 +702,11 @@ private fun branchesDisplay(branches: List<ClientBranchDto>): String {
     return branches.mapIndexed { index, branch ->
         branch.name ?: branch.address ?: branch.id ?: "Branch ${index + 1}"
     }.joinToString(", ")
+}
+
+private fun launchDialer(context: Context, rawPhone: String) {
+    val phone = rawPhone.substringBefore(",").trim()
+    if (phone.isBlank()) return
+    val dialIntent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${Uri.encode(phone)}"))
+    context.startActivity(dialIntent)
 }

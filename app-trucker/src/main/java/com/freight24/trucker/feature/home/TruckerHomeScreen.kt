@@ -6,8 +6,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -20,6 +23,7 @@ import com.freight24.trucker.enums.TruckerTab
 import com.freight24.trucker.feature.loads.LoadBoardScreen
 import com.freight24.trucker.feature.loads.LoadBoardViewModel
 import com.freight24.trucker.feature.profile.view.ProfileScreen
+import com.freight24.trucker.feature.profile.view.ProfileViewModel
 import com.freight24.trucker.feature.trips.view.TripsScreen
 import com.freight24.trucker.feature.trucks.view.TrucksScreen
 import com.freight24.trucker.navigation.TruckerDestination
@@ -31,6 +35,8 @@ fun TruckerHomeScreen(navController: NavHostController) {
     var selectedTab by rememberSaveable { mutableStateOf(TruckerTab.Loads) }
 
     val loadBoardViewModel: LoadBoardViewModel = hiltViewModel()
+    val profileViewModel: ProfileViewModel = hiltViewModel()
+    val isProfileEditing by profileViewModel.isEditing.collectAsState()
 
     // 👇 HOIST SCROLL STATE
     val loadBoardListState = rememberLazyListState()
@@ -46,6 +52,13 @@ fun TruckerHomeScreen(navController: NavHostController) {
                 showSearch = selectedTab.id == "loads",
                 onSearchClick = {
                     // TODO: trigger search
+                },
+                trailingActionIcon = if (selectedTab == TruckerTab.Profile && !isProfileEditing) Icons.Default.Edit else null,
+                trailingActionContentDescription = "Edit profile",
+                onTrailingActionClick = {
+                    if (selectedTab == TruckerTab.Profile) {
+                        profileViewModel.toggleEditMode()
+                    }
                 },
             )
         },
@@ -81,7 +94,10 @@ fun TruckerHomeScreen(navController: NavHostController) {
                         },
                     )
 
-                TruckerTab.Profile -> ProfileScreen(paddingValues = paddingValues)
+                TruckerTab.Profile -> ProfileScreen(
+                    paddingValues = paddingValues,
+                    viewModel = profileViewModel,
+                )
             }
         }
     }
