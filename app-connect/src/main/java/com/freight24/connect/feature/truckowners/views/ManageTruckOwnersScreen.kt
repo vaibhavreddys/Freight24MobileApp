@@ -63,7 +63,7 @@ fun ManageTruckOwnersScreen(
                 TopAppBar(
                     title = {
                         Text(
-                            text = "Manage Truck Owners",
+                            text = "Truck Owners",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold
                         )
@@ -137,7 +137,7 @@ fun ManageTruckOwnersScreen(
                             }
                         } else {
                             LazyColumn(
-                                contentPadding = PaddingValues(16.dp),
+                                contentPadding = PaddingValues(end = 16.dp, bottom = 16.dp, start = 16.dp),
                                 verticalArrangement = Arrangement.spacedBy(12.dp),
                                 modifier = Modifier.fillMaxSize()
                             ) {

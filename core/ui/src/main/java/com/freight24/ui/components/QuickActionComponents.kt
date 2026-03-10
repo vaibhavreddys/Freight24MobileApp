@@ -98,7 +98,7 @@ fun SectionContainer(
                     text = title.uppercase(),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.ExtraBold,
-                    color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.7f),
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                     letterSpacing = 0.5.sp
                 )

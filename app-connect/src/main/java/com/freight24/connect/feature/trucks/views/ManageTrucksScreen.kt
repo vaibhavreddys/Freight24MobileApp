@@ -76,7 +76,7 @@ fun ManageTrucksScreen(
                 TopAppBar(
                     title = {
                         Text(
-                            text = "Manage Trucks",
+                            text = "Trucks",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold
                         )
@@ -129,11 +129,6 @@ fun ManageTrucksScreen(
                     },
                     shape = RoundedCornerShape(12.dp),
                     singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                        disabledBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-                    )
                 )
             }
 
@@ -168,7 +163,7 @@ fun ManageTrucksScreen(
                         }
                     } else {
                         LazyColumn(
-                            contentPadding = PaddingValues(16.dp),
+                            contentPadding = PaddingValues(end = 16.dp, bottom = 16.dp, start = 16.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                             modifier = Modifier.fillMaxSize()
                         ) {

@@ -73,7 +73,7 @@ fun ManageClientsScreen(
                 TopAppBar(
                     title = {
                         Text(
-                            text = "Manage Clients",
+                            text = "Clients",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold
                         )
@@ -161,7 +161,7 @@ fun ManageClientsScreen(
                             }
                         } else {
                             LazyColumn(
-                                contentPadding = PaddingValues(16.dp),
+                                contentPadding = PaddingValues(end = 16.dp, bottom = 16.dp, start = 16.dp),
                                 verticalArrangement = Arrangement.spacedBy(12.dp),
                                 modifier = Modifier.fillMaxSize()
                             ) {
