@@ -12,8 +12,6 @@ cache:
 
 stages:
   - build
-  # - test
-  - package
   - deploy
 
 before_script:
@@ -22,13 +20,10 @@ before_script:
   - mkdir -p $ANDROID_SDK_ROOT
   - wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
   - unzip -q commandlinetools-linux-*.zip -d $ANDROID_SDK_ROOT
-  # Accept licenses non-interactively (ignore EPIPE from yes)
   - set +o pipefail
   - yes | $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses
   - set -o pipefail
-  # Now install the actual packages you need
   - $ANDROID_SDK_ROOT/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "platforms;android-36" "build-tools;36.0.0"
-
 
 # -----------------------------
 # BUILD (QA DEBUG)
@@ -41,6 +36,7 @@ build:trucker:qaDebug:
   artifacts:
     paths:
       - app-trucker/build/outputs/apk/qa/debug/
+    expire_in: 1 week  # keep artifacts around long enough for deploy stage
 
 build:connect:qaDebug:
   stage: build
@@ -49,45 +45,46 @@ build:connect:qaDebug:
   artifacts:
     paths:
       - app-connect/build/outputs/apk/qa/debug/
+    expire_in: 1 week
 
 # -----------------------------
-# TEST (OPTIONAL BUT SAFE)
+# DEPLOY — GitLab Release
 # -----------------------------
 
-unit-tests:
-  stage: test
-  script:
-    - ./gradlew test
-  allow_failure: true
-
-# -----------------------------
-# PACKAGE (PROD RELEASE)
-# -----------------------------
-
-package:trucker:prodRelease:
-  stage: package
-  script:
-    - ./gradlew :app-trucker:assembleProdRelease
-  artifacts:
-    paths:
-      - app-trucker/build/outputs/apk/prod/release/
-
-
-package:connect:prodRelease:
-  stage: package
-  script:
-    - ./gradlew :app-connect:assembleProdRelease
-  artifacts:
-    paths:
-      - app-connect/build/outputs/apk/prod/release/
-
-
-# -----------------------------
-# DEPLOY (PLACEHOLDER)
-# -----------------------------
-
-deploy:
+deploy:release:
   stage: deploy
+  image: registry.gitlab.com/gitlab-org/release-cli:latest  # switch image just for this job
+  before_script: []  # override the global before_script — no Android SDK needed here
+  needs:
+    - job: build:trucker:qaDebug
+      artifacts: true
+    - job: build:connect:qaDebug
+      artifacts: true
   script:
-    - echo "Deploy step (Play Store / Firebase coming later)"
-  when: manual
+    # Upload APKs as Generic Package Registry files so they get a stable URL
+    - |
+      curl --fail \
+        --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+        --upload-file app-trucker/build/outputs/apk/qa/debug/app-trucker-qa-debug.apk \
+        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/apk-builds/${CI_COMMIT_SHORT_SHA}/app-trucker-qa-debug.apk"
+    - |
+      curl --fail \
+        --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+        --upload-file app-connect/build/outputs/apk/qa/debug/app-connect-qa-debug.apk \
+        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/apk-builds/${CI_COMMIT_SHORT_SHA}/app-connect-qa-debug.apk"
+  release:
+    name: "QA Debug — $CI_COMMIT_SHORT_SHA"
+    description: |
+      Automated QA debug build from branch `$CI_COMMIT_REF_NAME`.
+      Commit: $CI_COMMIT_SHA
+    tag_name: "qa-debug-$CI_COMMIT_SHORT_SHA"  # creates a new tag per build
+    assets:
+      links:
+        - name: "app-trucker-qa-debug.apk"
+          url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/apk-builds/${CI_COMMIT_SHORT_SHA}/app-trucker-qa-debug.apk"
+          link_type: package
+        - name: "app-connect-qa-debug.apk"
+          url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/apk-builds/${CI_COMMIT_SHORT_SHA}/app-connect-qa-debug.apk"
+          link_type: package
+  only:
+    - main  # or your release branch, e.g. develop
