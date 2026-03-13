@@ -37,6 +37,8 @@ val DisabledButtonColorDark = Color(0xFF49454F)
 
 val SuccessGreenLight = Color(0xFF0F6E56)
 val SuccessGreenDark = Color(0xFF1D9E75)
+val WarningAmberLight = Color(0xFF854F0B)
+val WarningAmberDark = Color(0xFFBA7517)
 val SuccessOnColor = Color(0xFFFFFFFF)
 val DialogScrimLight = Color(0x66000000)
 val DialogScrimDark = Color(0x99000000)

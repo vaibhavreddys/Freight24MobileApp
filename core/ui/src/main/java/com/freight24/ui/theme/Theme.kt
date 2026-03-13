@@ -55,6 +55,7 @@ private val DarkColorScheme =
 private val LightExtendedColors =
     FreightExtendedColors(
         successColor = SuccessGreenLight,
+        warningColor = WarningAmberLight,
         onSuccessColor = SuccessOnColor,
         dialogScrimColor = DialogScrimLight,
     )
@@ -62,6 +63,7 @@ private val LightExtendedColors =
 private val DarkExtendedColors =
     FreightExtendedColors(
         successColor = SuccessGreenDark,
+        warningColor = WarningAmberDark,
         onSuccessColor = SuccessOnColor,
         dialogScrimColor = DialogScrimDark,
     )

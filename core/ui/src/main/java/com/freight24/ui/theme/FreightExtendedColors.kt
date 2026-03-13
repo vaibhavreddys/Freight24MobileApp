@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.Color
 @Immutable
 data class FreightExtendedColors(
     val successColor: Color,
+    val warningColor: Color,
     val onSuccessColor: Color,
     val dialogScrimColor: Color,
 )
@@ -16,6 +17,7 @@ data class FreightExtendedColors(
 internal val LocalFreightExtendedColors = staticCompositionLocalOf {
     FreightExtendedColors(
         successColor = Color.Unspecified,
+        warningColor = Color.Unspecified,
         onSuccessColor = Color.Unspecified,
         dialogScrimColor = Color.Unspecified,
     )

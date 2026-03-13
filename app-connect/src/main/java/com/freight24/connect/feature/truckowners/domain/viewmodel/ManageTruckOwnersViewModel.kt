@@ -20,28 +20,44 @@ class ManageTruckOwnersViewModel @Inject constructor(
     private val getTruckOwnersUseCase: GetTruckOwnersUseCase
 ) : ViewModel() {
 
+    enum class OwnerFilter(val label: String) {
+        ALL("All"),
+        ACTIVE("Active"),
+        INACTIVE("Inactive"),
+        PENDING("Pending")
+    }
+
     private val _uiState = MutableStateFlow<UiState<List<TruckOwnerDto>>>(UiState.Loading)
     val uiState: StateFlow<UiState<List<TruckOwnerDto>>> = _uiState.asStateFlow()
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
+    private val _selectedFilter = MutableStateFlow(OwnerFilter.ALL)
+    val selectedFilter: StateFlow<OwnerFilter> = _selectedFilter.asStateFlow()
+
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
     val filteredOwners: StateFlow<List<TruckOwnerDto>> = combine(
         _uiState,
-        _searchQuery
-    ) { state, query ->
+        _searchQuery,
+        _selectedFilter
+    ) { state, query, filter ->
         if (state is UiState.Success) {
-            if (query.isBlank()) {
-                state.data
-            } else {
-                state.data.filter { owner ->
-                    owner.full_name.contains(query, ignoreCase = true) ||
-                        owner.business_name?.contains(query, ignoreCase = true) == true ||
-                        owner.phone.contains(query)
-                }
+            state.data.filter { owner ->
+                val matchesQuery =
+                    query.isBlank() ||
+                        owner.full_name.contains(query, ignoreCase = true) ||
+                        owner.tag_code.orEmpty().contains(query, ignoreCase = true)
+                val matchesFilter =
+                    when (filter) {
+                        OwnerFilter.ALL -> true
+                        OwnerFilter.ACTIVE -> owner.statusKey == OwnerFilter.ACTIVE
+                        OwnerFilter.INACTIVE -> owner.statusKey == OwnerFilter.INACTIVE
+                        OwnerFilter.PENDING -> owner.statusKey == OwnerFilter.PENDING
+                    }
+                matchesQuery && matchesFilter
             }
         } else {
             emptyList()
@@ -54,6 +70,10 @@ class ManageTruckOwnersViewModel @Inject constructor(
 
     fun onSearchQueryChanged(query: String) {
         _searchQuery.value = query
+    }
+
+    fun onFilterChanged(filter: OwnerFilter) {
+        _selectedFilter.value = filter
     }
 
     fun onRefresh() {
@@ -84,3 +104,11 @@ class ManageTruckOwnersViewModel @Inject constructor(
         }
     }
 }
+
+private val TruckOwnerDto.statusKey: ManageTruckOwnersViewModel.OwnerFilter
+    get() =
+        when (status?.trim()?.lowercase()) {
+            "active" -> ManageTruckOwnersViewModel.OwnerFilter.ACTIVE
+            "inactive" -> ManageTruckOwnersViewModel.OwnerFilter.INACTIVE
+            else -> ManageTruckOwnersViewModel.OwnerFilter.PENDING
+        }
