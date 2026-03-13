@@ -11,6 +11,7 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
@@ -51,6 +52,20 @@ private val DarkColorScheme =
         tertiaryFixed = WarningYellow,
     )
 
+private val LightExtendedColors =
+    FreightExtendedColors(
+        successColor = SuccessGreenLight,
+        onSuccessColor = SuccessOnColor,
+        dialogScrimColor = DialogScrimLight,
+    )
+
+private val DarkExtendedColors =
+    FreightExtendedColors(
+        successColor = SuccessGreenDark,
+        onSuccessColor = SuccessOnColor,
+        dialogScrimColor = DialogScrimDark,
+    )
+
 @Composable
 fun Freight24Theme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -67,6 +82,11 @@ fun Freight24Theme(
             darkTheme -> DarkColorScheme
             else -> LightColorScheme
         }
+    val extendedColors =
+        when {
+            darkTheme -> DarkExtendedColors
+            else -> LightExtendedColors
+        }
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
@@ -76,9 +96,11 @@ fun Freight24Theme(
         }
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = AppTypography,
-        content = content,
-    )
+    CompositionLocalProvider(LocalFreightExtendedColors provides extendedColors) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = AppTypography,
+            content = content,
+        )
+    }
 }

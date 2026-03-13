@@ -1,10 +1,17 @@
 package com.freight24.connect.feature.truckowners.views
 
 import android.util.Log
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +28,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Assignment
@@ -35,6 +44,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -48,7 +58,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -66,7 +75,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.AnnotatedString
@@ -78,6 +92,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -86,6 +102,7 @@ import com.freight24.connect.feature.truckowners.profile.domain.DocumentStatus
 import com.freight24.connect.feature.truckowners.profile.domain.DocumentType
 import com.freight24.connect.feature.truckowners.profile.util.ProfileFieldValidators
 import com.freight24.connect.feature.truckowners.profile.util.ValidationResult
+import com.freight24.ui.theme.FreightThemeTokens
 import com.freight24.ui.theme.PrimaryGreen
 
 private val BrandGreen = PrimaryGreen
@@ -387,69 +404,19 @@ fun OnboardTruckOwnerScreen(
     }
 
     createdTruckOwner?.let { created ->
-        AlertDialog(
-            onDismissRequest = viewModel::consumeCreatedTruckOwner,
-            containerColor = MaterialTheme.colorScheme.surface,
-            title = {
-                Text(
-                    text = "Truck Owner Onboarded",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = BrandGreen,
-                )
+        TruckOwnerOnboardedDialog(
+            truckOwnerName = created.fullName,
+            canViewProfile = !created.userId.isNullOrBlank(),
+            onDone = {
+                viewModel.consumeCreatedTruckOwner()
+                onCloseSuccess()
             },
-            text = {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Surface(
-                        color = BrandGreen.copy(alpha = 0.12f),
-                        shape = RoundedCornerShape(999.dp),
-                        modifier = Modifier.size(68.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(
-                                text = "OK",
-                                color = BrandGreen,
-                                fontWeight = FontWeight.ExtraBold,
-                                style = MaterialTheme.typography.titleMedium,
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = "${created.fullName.ifBlank { "Truck owner" }} has been onboarded successfully.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+            onViewProfile = {
+                val userId = created.userId ?: return@TruckOwnerOnboardedDialog
+                viewModel.consumeCreatedTruckOwner()
+                onViewTruckOwnerProfile(userId)
             },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        val userId = created.userId
-                        viewModel.consumeCreatedTruckOwner()
-                        if (!userId.isNullOrBlank()) {
-                            onViewTruckOwnerProfile(userId)
-                        } else {
-                            onCloseSuccess()
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = BrandGreen),
-                    enabled = !created.userId.isNullOrBlank(),
-                ) {
-                    Text("View Profile", fontWeight = FontWeight.Bold)
-                }
-            },
-            dismissButton = {
-                OutlinedButton(
-                    onClick = {
-                        viewModel.consumeCreatedTruckOwner()
-                        onCloseSuccess()
-                    }
-                ) {
-                    Text("Done", fontWeight = FontWeight.Bold)
-                }
-            }
+            onDismiss = viewModel::consumeCreatedTruckOwner,
         )
     }
 }
@@ -908,4 +875,303 @@ private fun docIcon(type: DocumentType): ImageVector = when (type) {
     DocumentType.TDS_CERTIFICATE -> Icons.Default.Badge
     DocumentType.CANCELLED_CHEQUE -> Icons.Default.AccountBalance
     else -> Icons.Default.Description
+}
+
+@Composable
+private fun TruckOwnerOnboardedDialog(
+    truckOwnerName: String,
+    canViewProfile: Boolean,
+    onDone: () -> Unit,
+    onViewProfile: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    val successColor = FreightThemeTokens.colors.successColor
+    val onSuccessColor = FreightThemeTokens.colors.onSuccessColor
+    val scrimColor = FreightThemeTokens.colors.dialogScrimColor
+    val density = LocalDensity.current
+
+    var playEntry by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { playEntry = true }
+
+    val cardScale by animateFloatAsState(
+        targetValue = if (playEntry) 1f else 0.97f,
+        animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
+        label = "dialogCardScale",
+    )
+    val cardAlpha by animateFloatAsState(
+        targetValue = if (playEntry) 1f else 0f,
+        animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing),
+        label = "dialogCardAlpha",
+    )
+    val iconScale by animateFloatAsState(
+        targetValue = if (playEntry) 1f else 0.85f,
+        animationSpec = tween(durationMillis = 500, delayMillis = 150, easing = FastOutSlowInEasing),
+        label = "successIconScale",
+    )
+    val iconAlpha by animateFloatAsState(
+        targetValue = if (playEntry) 1f else 0f,
+        animationSpec = tween(durationMillis = 500, delayMillis = 150, easing = FastOutSlowInEasing),
+        label = "successIconAlpha",
+    )
+    val iconOvershoot by animateFloatAsState(
+        targetValue = if (playEntry) 1.06f else 0.85f,
+        animationSpec = tween(durationMillis = 360, delayMillis = 150, easing = FastOutSlowInEasing),
+        label = "successIconOvershoot",
+    )
+    val checkProgress by animateFloatAsState(
+        targetValue = if (playEntry) 1f else 0f,
+        animationSpec = tween(durationMillis = 400, delayMillis = 500, easing = FastOutSlowInEasing),
+        label = "checkProgress",
+    )
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(scrimColor),
+            contentAlignment = Alignment.Center,
+        ) {
+            Card(
+                modifier = Modifier
+                    .width(320.dp)
+                    .graphicsLayer {
+                        alpha = cardAlpha
+                        scaleX = cardScale
+                        scaleY = cardScale
+                    }
+                    .border(
+                        width = 1.dp,
+                        color = colorScheme.outlineVariant.copy(alpha = 0.5f),
+                        shape = RoundedCornerShape(24.dp),
+                    ),
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
+            ) {
+                Column(
+                    modifier = Modifier.padding(start = 28.dp, top = 36.dp, end = 28.dp, bottom = 28.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Canvas(modifier = Modifier.width(180.dp).height(1.dp)) {
+                        drawLine(
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(
+                                    successColor.copy(alpha = 0f),
+                                    successColor.copy(alpha = 0.8f),
+                                    successColor.copy(alpha = 0f),
+                                )
+                            ),
+                            start = androidx.compose.ui.geometry.Offset(0f, size.height / 2f),
+                            end = androidx.compose.ui.geometry.Offset(size.width, size.height / 2f),
+                            strokeWidth = size.height,
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    Surface(
+                        modifier = Modifier
+                            .size(72.dp)
+                            .graphicsLayer {
+                                alpha = iconAlpha
+                                scaleX = iconScale * iconOvershoot
+                                scaleY = iconScale * iconOvershoot
+                            }
+                            .border(
+                                width = 1.dp,
+                                color = successColor.copy(alpha = 0.25f),
+                                shape = RoundedCornerShape(999.dp),
+                            ),
+                        shape = RoundedCornerShape(999.dp),
+                        color = successColor.copy(alpha = 0.10f),
+                    ) {
+                        Canvas(modifier = Modifier.fillMaxSize().padding(20.dp)) {
+                            val path = androidx.compose.ui.graphics.Path().apply {
+                                moveTo(size.width * 0.18f, size.height * 0.54f)
+                                lineTo(size.width * 0.42f, size.height * 0.76f)
+                                lineTo(size.width * 0.84f, size.height * 0.24f)
+                            }
+                            drawPath(
+                                path = path,
+                                color = successColor,
+                                style = androidx.compose.ui.graphics.drawscope.Stroke(
+                                    width = 2.2.dp.toPx(),
+                                    cap = StrokeCap.Round,
+                                    join = StrokeJoin.Round,
+                                    pathEffect = PathEffect.dashPathEffect(
+                                        floatArrayOf(path.getBounds().maxDimension * checkProgress, path.getBounds().maxDimension),
+                                        0f,
+                                    ),
+                                ),
+                            )
+                        }
+                    }
+
+                    AnimatedDialogContent(delayMillis = 350, density = density) {
+                        Spacer(modifier = Modifier.height(20.dp))
+                        Text(
+                            text = "ONBOARDING COMPLETE",
+                            fontSize = 11.sp,
+                            letterSpacing = 0.12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = successColor,
+                        )
+                    }
+
+                    AnimatedDialogContent(delayMillis = 400, density = density) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "${truckOwnerName.ifBlank { "Truck owner" }} has been onboarded successfully.",
+                            fontSize = 22.sp,
+                            lineHeight = 28.6.sp,
+                            fontWeight = FontWeight.Normal,
+                            letterSpacing = (-0.02).sp,
+                            textAlign = TextAlign.Center,
+                            color = colorScheme.onSurface.copy(alpha = 0.92f),
+                        )
+                    }
+
+                    AnimatedDialogContent(delayMillis = 500, density = density) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Surface(
+                            color = successColor.copy(alpha = 0.08f),
+                            shape = RoundedCornerShape(6.dp),
+                            modifier = Modifier.border(
+                                width = 0.5.dp,
+                                color = successColor.copy(alpha = 0.20f),
+                                shape = RoundedCornerShape(6.dp),
+                            ),
+                        ) {
+                            Text(
+                                text = "\u25cf TRUCK OWNER",
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
+                                fontSize = 11.sp,
+                                letterSpacing = 0.06.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = successColor.copy(alpha = 0.85f),
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(28.dp))
+                    HorizontalDivider(
+                        color = colorScheme.outlineVariant.copy(alpha = 0.4f),
+                        thickness = 0.5.dp,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    AnimatedDialogContent(delayMillis = 550, density = density) {
+                        Spacer(modifier = Modifier.height(20.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            DialogActionButton(
+                                text = "Done",
+                                onClick = onDone,
+                                modifier = Modifier.weight(1f),
+                                containerColor = Color.Transparent,
+                                contentColor = colorScheme.onSurface.copy(alpha = 0.65f),
+                                borderColor = colorScheme.outline.copy(alpha = 0.5f),
+                                filled = false,
+                            )
+                            DialogActionButton(
+                                text = "View Profile \u2192",
+                                onClick = onViewProfile,
+                                modifier = Modifier.weight(1.4f),
+                                containerColor = successColor,
+                                contentColor = onSuccessColor,
+                                borderColor = successColor,
+                                filled = true,
+                                enabled = canViewProfile,
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AnimatedDialogContent(
+    delayMillis: Int,
+    density: androidx.compose.ui.unit.Density,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { visible = true }
+    val alpha by animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        animationSpec = tween(durationMillis = 400, delayMillis = delayMillis, easing = FastOutSlowInEasing),
+        label = "dialogContentAlpha",
+    )
+    val translateY by animateFloatAsState(
+        targetValue = if (visible) 0f else with(density) { 8.dp.toPx() },
+        animationSpec = tween(durationMillis = 400, delayMillis = delayMillis, easing = FastOutSlowInEasing),
+        label = "dialogContentTranslateY",
+    )
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.graphicsLayer {
+            this.alpha = alpha
+            this.translationY = translateY
+        },
+        content = content,
+    )
+}
+
+@Composable
+private fun DialogActionButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier,
+    containerColor: Color,
+    contentColor: Color,
+    borderColor: Color,
+    filled: Boolean,
+    enabled: Boolean = true,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.98f else 1f,
+        animationSpec = tween(durationMillis = 120),
+        label = "dialogButtonScale",
+    )
+
+    if (filled) {
+        Button(
+            onClick = onClick,
+            modifier = modifier.scale(scale).height(52.dp),
+            enabled = enabled,
+            shape = RoundedCornerShape(12.dp),
+            interactionSource = interactionSource,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = containerColor,
+                contentColor = contentColor,
+            ),
+        ) {
+            Text(text = text, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+        }
+    } else {
+        OutlinedButton(
+            onClick = onClick,
+            modifier = modifier.scale(scale).height(52.dp),
+            enabled = enabled,
+            shape = RoundedCornerShape(12.dp),
+            interactionSource = interactionSource,
+            border = androidx.compose.foundation.BorderStroke(0.5.dp, borderColor),
+            colors = ButtonDefaults.outlinedButtonColors(
+                containerColor = containerColor,
+                contentColor = contentColor,
+            ),
+        ) {
+            Text(text = text, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+        }
+    }
 }
