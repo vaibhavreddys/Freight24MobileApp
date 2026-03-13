@@ -2,9 +2,13 @@ package com.freight24.rest.api
 
 import com.freight24.rest.response.TruckOwnerResponse
 import com.freight24.rest.response.ProfileResponse
+import com.freight24.rest.response.BaseResponse
+import com.freight24.rest.request.UpdateProfileRequest
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Path
+import retrofit2.http.POST
+import retrofit2.http.Body
 import retrofit2.http.Query
 
 interface TruckOwnerApi {
@@ -20,4 +24,9 @@ interface TruckOwnerApi {
     suspend fun getTruckOwnerProfile(
         @Path("userId") userId: String
     ): Response<ProfileResponse>
+
+    @POST("truck-owners/")
+    suspend fun createTruckOwner(
+        @Body request: UpdateProfileRequest
+    ): Response<BaseResponse>
 }

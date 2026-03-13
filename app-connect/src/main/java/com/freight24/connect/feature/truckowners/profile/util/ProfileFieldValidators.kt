@@ -48,9 +48,9 @@ object ProfileFieldValidators {
         val cleanPan = pan.uppercase().trim()
         
         return when {
-            cleanPan.length != 10 -> 
+            cleanPan.length != 10 ->
                 ValidationResult.Error("PAN must be 10 characters")
-            !cleanPan.matches(Regex("^[A-Z]{3}[ABCFGHLJPTE][A-Z][0-9]{4}[A-Z]$")) -> 
+            !cleanPan.matches(Regex("^[A-Z]{5}[0-9]{4}[A-Z]$")) ->
                 ValidationResult.Error("Invalid PAN format")
             else -> ValidationResult.Success
         }

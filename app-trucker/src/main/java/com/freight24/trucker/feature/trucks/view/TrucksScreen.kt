@@ -178,7 +178,7 @@ private fun OnboardTruckButton(onClick: () -> Unit) {
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Onboard a New Truck",
+                text = "Onboard Your New Truck",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,

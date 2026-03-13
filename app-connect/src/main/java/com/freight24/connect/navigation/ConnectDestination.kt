@@ -304,6 +304,7 @@ sealed class ConnectDestination(val route: String) {
     data object ManageClients : ConnectDestination("manage_clients")
     data object OnboardClient : ConnectDestination("onboard_client")
     data object ManageTruckOwners : ConnectDestination("manage_truck_owners")
+    data object OnboardTruckOwner : ConnectDestination("onboard_truck_owner")
 
     data object TruckOwnerProfile : ConnectDestination("truck_owner_profile/{userId}") {
         const val USER_ID_ARG = "userId"

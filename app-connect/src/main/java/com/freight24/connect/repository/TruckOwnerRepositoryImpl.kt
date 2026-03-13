@@ -2,6 +2,7 @@ package com.freight24.connect.repository
 
 import com.freight24.common.di.IoDispatcher
 import com.freight24.rest.api.TruckOwnerApi
+import com.freight24.rest.request.UpdateProfileRequest
 import com.freight24.rest.response.TruckOwnerDto
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -32,6 +33,20 @@ class TruckOwnerRepositoryImpl @Inject constructor(
                 val response = api.searchTruckOwners(query)
                 if (response.isSuccessful && response.body() != null) {
                     Result.success(response.body()!!.data)
+                } else {
+                    Result.failure(Exception(response.message()))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    override suspend fun createTruckOwner(request: UpdateProfileRequest): Result<Boolean> =
+        withContext(ioDispatcher) {
+            try {
+                val response = api.createTruckOwner(request)
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!.success)
                 } else {
                     Result.failure(Exception(response.message()))
                 }
