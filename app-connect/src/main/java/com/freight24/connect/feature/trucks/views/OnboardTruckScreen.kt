@@ -130,7 +130,7 @@ fun OnboardTruckScreen(
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
-                            text = if (currentStep == 1) "Truck Details" else "Add New Truck",
+                            text = "Add New Truck",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                         )

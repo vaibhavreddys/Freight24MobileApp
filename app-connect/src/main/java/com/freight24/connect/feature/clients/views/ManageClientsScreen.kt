@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -41,6 +42,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -49,6 +52,7 @@ import androidx.navigation.NavController
 import com.freight24.connect.feature.clients.domain.viewmodel.ManageClientsViewModel
 import com.freight24.ui.UiState
 import com.freight24.ui.components.ClientHeaderCard
+import com.freight24.ui.theme.FreightThemeTokens
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,17 +92,27 @@ fun ManageClientsScreen(
                     )
                 )
             }
-//        },
-            // TODO: Uncomment after implementing client onboarding screens
-//        floatingActionButton = {
-//            FloatingActionButton(
-//                onClick = onAddClientClick,
-//                containerColor = MaterialTheme.colorScheme.primary,
-//                contentColor = MaterialTheme.colorScheme.onPrimary,
-//                shape = CircleShape
-//            ) {
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onAddClientClick,
+                containerColor = FreightThemeTokens.colors.successColor,
+                contentColor = FreightThemeTokens.colors.onSuccessColor,
+                modifier = Modifier
+                    .padding(end = 4.dp, bottom = 4.dp),
+                shape = RoundedCornerShape(16.dp)
+            ) {
 //                Icon(Icons.Default.Add, contentDescription = "Onboard Client")
-//            }
+                Box(
+                    modifier = Modifier.size(52.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = com.freight24.connect.R.drawable.ic_add_truck_owner),
+                        contentDescription = "Onboard New Client"
+                    )
+                }
+            }
         }
     ) { paddingValues ->
         Column(

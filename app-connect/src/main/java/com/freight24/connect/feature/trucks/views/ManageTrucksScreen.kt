@@ -44,6 +44,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,6 +53,7 @@ import androidx.navigation.NavController
 import com.freight24.connect.feature.trucks.domain.viewmodel.ManageTrucksViewModel
 import com.freight24.ui.UiState
 import com.freight24.ui.components.TruckHeaderCard
+import com.freight24.ui.theme.FreightThemeTokens
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -92,11 +94,22 @@ fun ManageTrucksScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onAddTruckClick,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                shape = CircleShape
+                modifier = Modifier
+                    .padding(end = 4.dp, bottom = 4.dp),
+                containerColor = FreightThemeTokens.colors.successColor,
+                contentColor = FreightThemeTokens.colors.onSuccessColor,
+                shape = RoundedCornerShape(16.dp),
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Onboard Truck")
+//                Icon(Icons.Default.Add, contentDescription = "Onboard Truck")
+                Box(
+                    modifier = Modifier.size(52.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = painterResource(id = com.freight24.connect.R.drawable.ic_add_truck),
+                        contentDescription = "Onboard Truck"
+                    )
+                }
             }
         }
     ) { paddingValues ->

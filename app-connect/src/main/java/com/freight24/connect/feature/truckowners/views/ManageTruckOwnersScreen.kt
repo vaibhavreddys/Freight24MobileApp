@@ -59,6 +59,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -72,6 +73,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.freight24.connect.feature.truckowners.domain.viewmodel.ManageTruckOwnersViewModel
 import com.freight24.connect.feature.truckowners.domain.viewmodel.ManageTruckOwnersViewModel.OwnerFilter
 import com.freight24.rest.response.TruckOwnerDto
+import com.freight24.ui.R
 import com.freight24.ui.UiState
 import com.freight24.ui.theme.FreightThemeTokens
 import kotlinx.coroutines.delay
@@ -627,7 +629,7 @@ private fun AddTruckOwnerFab(
                 scaleY = scale
             },
         shape = RoundedCornerShape(16.dp),
-        containerColor = successColor,
+        containerColor = FreightThemeTokens.colors.successColor,
         contentColor = FreightThemeTokens.colors.onSuccessColor,
         interactionSource = interactionSource
     ) {
@@ -636,9 +638,8 @@ private fun AddTruckOwnerFab(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = Icons.Outlined.Add,
-                contentDescription = "Add truck owner",
-                modifier = Modifier.size(20.dp)
+                painter = painterResource(id = com.freight24.connect.R.drawable.ic_add_truck_owner),
+                contentDescription = "Add truck owner"
             )
         }
     }

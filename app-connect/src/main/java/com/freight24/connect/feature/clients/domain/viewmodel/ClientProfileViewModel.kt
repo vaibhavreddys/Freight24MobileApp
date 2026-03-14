@@ -6,7 +6,9 @@ import androidx.lifecycle.viewModelScope
 import com.freight24.connect.feature.clients.domain.usecases.GetClientByUserIdUseCase
 import com.freight24.connect.feature.clients.domain.usecases.UpdateClientParams
 import com.freight24.connect.feature.clients.domain.usecases.UpdateClientUseCase
+import com.freight24.rest.request.ClientBranchUpdateRequest
 import com.freight24.rest.request.UpdateClientRequest
+import com.freight24.rest.response.ClientBranchDto
 import com.freight24.rest.response.ClientProfileDto
 import com.freight24.ui.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,6 +18,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -55,6 +58,7 @@ class ClientProfileViewModel @Inject constructor(
     val editableGstNumber = MutableStateFlow("")
     val editablePanCard = MutableStateFlow("")
     val editableAadhaarCard = MutableStateFlow("")
+    val editableBranches = MutableStateFlow<List<EditableClientBranch>>(emptyList())
 
     init {
         fetchClient()
@@ -91,6 +95,9 @@ class ClientProfileViewModel @Inject constructor(
         editableGstNumber.value = client.gst_number.orEmpty()
         editablePanCard.value = client.pan_card.orEmpty()
         editableAadhaarCard.value = client.aadhar_card.orEmpty()
+        editableBranches.value = client.client_branches.mapIndexed { index, branch ->
+            branch.toEditableBranch(fallbackId = "branch_$index")
+        }
     }
 
     fun toggleEditMode() {
@@ -103,14 +110,17 @@ class ClientProfileViewModel @Inject constructor(
 
     fun onFieldChanged() {
         val original = originalClient ?: return
-        _hasChanges.value =
+        val topLevelChanged =
             editableFullName.value != original.full_name.orEmpty() ||
-            editableEmail.value != original.email.orEmpty() ||
-            editablePhone.value != original.phone.orEmpty() ||
-            editableCompanyName.value != original.company_name.orEmpty() ||
-            editableGstNumber.value != original.gst_number.orEmpty() ||
-            editablePanCard.value != original.pan_card.orEmpty() ||
-            editableAadhaarCard.value != original.aadhar_card.orEmpty()
+                editableEmail.value != original.email.orEmpty() ||
+                editablePhone.value != original.phone.orEmpty() ||
+                editableCompanyName.value != original.company_name.orEmpty() ||
+                editableGstNumber.value != original.gst_number.orEmpty() ||
+                editablePanCard.value != original.pan_card.orEmpty() ||
+                editableAadhaarCard.value != original.aadhar_card.orEmpty()
+
+        val branchChanged = buildChangedBranchUpdates(original.client_branches, editableBranches.value).isNotEmpty()
+        _hasChanges.value = topLevelChanged || branchChanged
     }
 
     fun cancelEdit() {
@@ -137,6 +147,46 @@ class ClientProfileViewModel @Inject constructor(
         fetchClient(forceRefresh = false)
     }
 
+    fun onBranchNameChanged(branchId: String, value: String) {
+        updateBranch(branchId) { it.copy(branchName = value) }
+    }
+
+    fun onBranchAddressChanged(branchId: String, value: String) {
+        updateBranch(branchId) { it.copy(branchAddress = value) }
+    }
+
+    fun onPodContactNameChanged(branchId: String, value: String) {
+        updateBranch(branchId) { it.copy(podContactName = value) }
+    }
+
+    fun onPodContactNumberChanged(branchId: String, value: String) {
+        updateBranch(branchId) { it.copy(podContactNumber = value) }
+    }
+
+    fun onPaymentContactNameChanged(branchId: String, value: String) {
+        updateBranch(branchId) { it.copy(paymentContactName = value) }
+    }
+
+    fun onPaymentContactNumberChanged(branchId: String, value: String) {
+        updateBranch(branchId) { it.copy(paymentContactNumber = value) }
+    }
+
+    fun onTrafficContactNameChanged(branchId: String, value: String) {
+        updateBranch(branchId) { it.copy(trafficContactName = value) }
+    }
+
+    fun onTrafficContactNumberChanged(branchId: String, value: String) {
+        updateBranch(branchId) { it.copy(trafficContactNumber = value) }
+    }
+
+    fun onTrackingContactNameChanged(branchId: String, value: String) {
+        updateBranch(branchId) { it.copy(trackingContactName = value) }
+    }
+
+    fun onTrackingContactNumberChanged(branchId: String, value: String) {
+        updateBranch(branchId) { it.copy(trackingContactNumber = value) }
+    }
+
     fun saveProfile() {
         if (!_hasChanges.value || _isSaving.value) return
 
@@ -153,15 +203,18 @@ class ClientProfileViewModel @Inject constructor(
         viewModelScope.launch {
             _isSaving.value = true
 
-            val request = UpdateClientRequest(
-                full_name = editableFullName.value.trim(),
-                email = editableEmail.value.trim().ifBlank { null },
-                company_name = editableCompanyName.value.trim().ifBlank { null },
-                gst_number = editableGstNumber.value.trim().uppercase().ifBlank { null },
-                phone_number = editablePhone.value.trim().ifBlank { null },
-                aadhar_card = editableAadhaarCard.value.trim().ifBlank { null },
-                pan_card = editablePanCard.value.trim().uppercase().ifBlank { null },
-            )
+            val branchUpdates = buildChangedBranchUpdates(original.client_branches, editableBranches.value)
+            val request =
+                UpdateClientRequest(
+                    full_name = editableFullName.value.trim(),
+                    email = editableEmail.value.trim().ifBlank { null },
+                    company_name = editableCompanyName.value.trim().ifBlank { null },
+                    gst_number = editableGstNumber.value.trim().uppercase().ifBlank { null },
+                    phone_number = editablePhone.value.trim().ifBlank { null },
+                    aadhar_card = editableAadhaarCard.value.trim().ifBlank { null },
+                    pan_card = editablePanCard.value.trim().uppercase().ifBlank { null },
+                    client_branches = branchUpdates.ifEmpty { null },
+                )
 
             updateClientUseCase(
                 UpdateClientParams(
@@ -180,6 +233,77 @@ class ClientProfileViewModel @Inject constructor(
             }
 
             _isSaving.value = false
+        }
+    }
+
+    private fun updateBranch(
+        branchId: String,
+        updater: (EditableClientBranch) -> EditableClientBranch,
+    ) {
+        editableBranches.update { branches ->
+            branches.map { branch ->
+                if (branch.id == branchId) updater(branch) else branch
+            }
+        }
+        onFieldChanged()
+    }
+
+    private fun buildChangedBranchUpdates(
+        original: List<ClientBranchDto>,
+        edited: List<EditableClientBranch>,
+    ): List<ClientBranchUpdateRequest> {
+        val originalById = original.associateBy { it.id.orEmpty() }
+        return edited.mapNotNull { branch ->
+            if (branch.id.isBlank()) return@mapNotNull null
+            val originalBranch = originalById[branch.id] ?: return@mapNotNull null
+            var hasAnyChange = false
+
+            var branchName: String? = null
+            var branchAddress: String? = null
+            var podContactName: String? = null
+            var podContactNumber: String? = null
+            var paymentContactName: String? = null
+            var trafficContactName: String? = null
+            var trackingContactName: String? = null
+            var paymentContactNumber: String? = null
+            var trafficContactNumber: String? = null
+            var trackingContactNumber: String? = null
+
+            fun applyChange(currentValue: String, originalValue: String?, assign: (String?) -> Unit) {
+                val current = currentValue.trim()
+                val old = originalValue.orEmpty().trim()
+                if (current != old) {
+                    assign(current.ifBlank { null })
+                    hasAnyChange = true
+                }
+            }
+
+            applyChange(branch.branchName, originalBranch.branch_name ?: originalBranch.name) { branchName = it }
+            applyChange(branch.branchAddress, originalBranch.branch_address ?: originalBranch.address) { branchAddress = it }
+            applyChange(branch.podContactName, originalBranch.pod_contact_name) { podContactName = it }
+            applyChange(branch.podContactNumber, originalBranch.pod_contact_number) { podContactNumber = it }
+            applyChange(branch.paymentContactName, originalBranch.payment_contact_name) { paymentContactName = it }
+            applyChange(branch.trafficContactName, originalBranch.traffic_contact_name) { trafficContactName = it }
+            applyChange(branch.trackingContactName, originalBranch.tracking_contact_name) { trackingContactName = it }
+            applyChange(branch.paymentContactNumber, originalBranch.payment_contact_number) { paymentContactNumber = it }
+            applyChange(branch.trafficContactNumber, originalBranch.traffic_contact_number) { trafficContactNumber = it }
+            applyChange(branch.trackingContactNumber, originalBranch.tracking_contact_number) { trackingContactNumber = it }
+
+            if (!hasAnyChange) return@mapNotNull null
+
+            ClientBranchUpdateRequest(
+                id = branch.id,
+                branch_name = branchName,
+                branch_address = branchAddress,
+                pod_contact_name = podContactName,
+                pod_contact_number = podContactNumber,
+                payment_contact_name = paymentContactName,
+                traffic_contact_name = trafficContactName,
+                tracking_contact_name = trackingContactName,
+                payment_contact_number = paymentContactNumber,
+                traffic_contact_number = trafficContactNumber,
+                tracking_contact_number = trackingContactNumber,
+            )
         }
     }
 
@@ -211,8 +335,56 @@ class ClientProfileViewModel @Inject constructor(
             return "Enter a valid GST number"
         }
 
+        editableBranches.value.forEachIndexed { index, branch ->
+            if (branch.branchName.trim().isBlank()) return "Branch ${index + 1}: Branch name is required"
+            if (branch.branchAddress.trim().isBlank()) return "Branch ${index + 1}: Branch address is required"
+
+            val branchPhones =
+                listOf(
+                    "POD contact number" to branch.podContactNumber,
+                    "Payment contact number" to branch.paymentContactNumber,
+                    "Traffic contact number" to branch.trafficContactNumber,
+                    "Tracking contact number" to branch.trackingContactNumber,
+                )
+            branchPhones.forEach { (label, value) ->
+                if (value.isNotBlank() && !PHONE_REGEX.matches(value.trim())) {
+                    return "Branch ${index + 1}: Enter a valid $label"
+                }
+            }
+        }
+
         return null
     }
+
+    private fun ClientBranchDto.toEditableBranch(fallbackId: String): EditableClientBranch {
+        return EditableClientBranch(
+            id = id?.takeIf { it.isNotBlank() } ?: fallbackId,
+            branchName = branch_name ?: name.orEmpty(),
+            branchAddress = branch_address ?: address.orEmpty(),
+            podContactName = pod_contact_name.orEmpty(),
+            podContactNumber = pod_contact_number.orEmpty(),
+            paymentContactName = payment_contact_name.orEmpty(),
+            trafficContactName = traffic_contact_name.orEmpty(),
+            trackingContactName = tracking_contact_name.orEmpty(),
+            paymentContactNumber = payment_contact_number.orEmpty(),
+            trafficContactNumber = traffic_contact_number.orEmpty(),
+            trackingContactNumber = tracking_contact_number.orEmpty(),
+        )
+    }
+
+    data class EditableClientBranch(
+        val id: String,
+        val branchName: String = "",
+        val branchAddress: String = "",
+        val podContactName: String = "",
+        val podContactNumber: String = "",
+        val paymentContactName: String = "",
+        val trafficContactName: String = "",
+        val trackingContactName: String = "",
+        val paymentContactNumber: String = "",
+        val trafficContactNumber: String = "",
+        val trackingContactNumber: String = "",
+    )
 
     private companion object {
         val EMAIL_REGEX = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")

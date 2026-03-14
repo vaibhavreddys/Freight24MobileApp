@@ -7,6 +7,8 @@ import com.freight24.rest.response.ClientDto
 import com.freight24.rest.response.ClientProfileDto
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
+import retrofit2.Response
 import javax.inject.Inject
 
 class ClientRepositoryImpl
@@ -22,7 +24,7 @@ class ClientRepositoryImpl
                     if (response.isSuccessful && response.body() != null) {
                         Result.success(response.body()!!.data)
                     } else {
-                        Result.failure(Exception(response.message()))
+                        Result.failure(Exception(extractErrorMessage(response)))
                     }
                 } catch (e: Exception) {
                     Result.failure(e)
@@ -36,7 +38,7 @@ class ClientRepositoryImpl
                     if (response.isSuccessful && response.body() != null) {
                         Result.success(response.body()!!.data)
                     } else {
-                        Result.failure(Exception(response.message()))
+                        Result.failure(Exception(extractErrorMessage(response)))
                     }
                 } catch (e: Exception) {
                     Result.failure(e)
@@ -51,7 +53,21 @@ class ClientRepositoryImpl
                     if (response.isSuccessful && body != null) {
                         Result.success(body.data)
                     } else {
-                        Result.failure(Exception(body?.message ?: response.message()))
+                        Result.failure(Exception(extractErrorMessage(response, body?.message)))
+                    }
+                } catch (e: Exception) {
+                    Result.failure(e)
+                }
+            }
+
+        override suspend fun createClient(request: UpdateClientRequest): Result<Boolean> =
+            withContext(ioDispatcher) {
+                try {
+                    val response = api.createClient(request)
+                    if (response.isSuccessful && response.body() != null) {
+                        Result.success(true)
+                    } else {
+                        Result.failure(Exception(extractErrorMessage(response, response.body()?.message)))
                     }
                 } catch (e: Exception) {
                     Result.failure(e)
@@ -69,10 +85,23 @@ class ClientRepositoryImpl
                     if (response.isSuccessful && body != null) {
                         Result.success(body.data)
                     } else {
-                        Result.failure(Exception(body?.message ?: response.message()))
+                        Result.failure(Exception(extractErrorMessage(response, body?.message)))
                     }
                 } catch (e: Exception) {
                     Result.failure(e)
                 }
             }
+
+    private fun extractErrorMessage(response: Response<*>, bodyMessage: String? = null): String {
+        bodyMessage?.takeIf { it.isNotBlank() }?.let { return it }
+
+        val rawError = response.errorBody()?.string().orEmpty()
+        if (rawError.isNotBlank()) {
+            runCatching {
+                JSONObject(rawError).optString("message")
+            }.getOrNull()?.takeIf { it.isNotBlank() }?.let { return it }
+        }
+
+        return response.message().ifBlank { "Request failed" }
+    }
     }

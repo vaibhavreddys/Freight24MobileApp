@@ -1,10 +1,12 @@
 package com.freight24.rest.api
 
 import com.freight24.rest.request.UpdateClientRequest
+import com.freight24.rest.response.BaseResponse
 import com.freight24.rest.response.ClientListResponse
 import com.freight24.rest.response.ClientProfileResponse
 import com.freight24.rest.response.ClientResponse
 import retrofit2.Response
+import retrofit2.http.POST
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.PUT
@@ -24,6 +26,11 @@ interface ClientApi {
     suspend fun getClientByUserId(
         @Path("userId") userId: String,
     ): Response<ClientProfileResponse>
+
+    @POST("client/")
+    suspend fun createClient(
+        @Body request: UpdateClientRequest,
+    ): Response<BaseResponse>
 
     @PUT("client/{userId}")
     suspend fun updateClient(

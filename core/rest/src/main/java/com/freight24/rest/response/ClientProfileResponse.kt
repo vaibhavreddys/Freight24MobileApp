@@ -28,6 +28,18 @@ data class ClientProfileDto(
 @Serializable
 data class ClientBranchDto(
     val id: String? = null,
+    val client_id: String? = null,
+    val branch_name: String? = null,
+    val branch_address: String? = null,
+    val pod_contact_name: String? = null,
+    val pod_contact_number: String? = null,
+    val payment_contact_name: String? = null,
+    val traffic_contact_name: String? = null,
+    val tracking_contact_name: String? = null,
+    val payment_contact_number: String? = null,
+    val traffic_contact_number: String? = null,
+    val tracking_contact_number: String? = null,
+    // Backward compatibility with older API payloads.
     val name: String? = null,
     val address: String? = null,
 )

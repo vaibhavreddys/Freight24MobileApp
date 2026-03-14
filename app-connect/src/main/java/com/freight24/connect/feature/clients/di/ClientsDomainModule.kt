@@ -4,6 +4,8 @@ import com.freight24.connect.feature.clients.domain.usecases.GetClientsUseCase
 import com.freight24.connect.feature.clients.domain.usecases.GetClientsUseCaseImpl
 import com.freight24.connect.feature.clients.domain.usecases.GetClientByUserIdUseCase
 import com.freight24.connect.feature.clients.domain.usecases.GetClientByUserIdUseCaseImpl
+import com.freight24.connect.feature.clients.domain.usecases.CreateClientUseCase
+import com.freight24.connect.feature.clients.domain.usecases.CreateClientUseCaseImpl
 import com.freight24.connect.feature.clients.domain.usecases.UpdateClientUseCase
 import com.freight24.connect.feature.clients.domain.usecases.UpdateClientUseCaseImpl
 import dagger.Binds
@@ -21,6 +23,11 @@ abstract class ClientsDomainModule {
     abstract fun bindGetClientByUserIdUseCase(
         useCaseImpl: GetClientByUserIdUseCaseImpl,
     ): GetClientByUserIdUseCase
+
+    @Binds
+    abstract fun bindCreateClientUseCase(
+        useCaseImpl: CreateClientUseCaseImpl,
+    ): CreateClientUseCase
 
     @Binds
     abstract fun bindUpdateClientUseCase(

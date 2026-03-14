@@ -11,4 +11,45 @@ data class UpdateClientRequest(
     val phone_number: String? = null,
     val aadhar_card: String? = null,
     val pan_card: String? = null,
+    val branches: Map<String, ClientBranchRequest>? = null,
+    val client_branches: List<ClientBranchUpdateRequest>? = null,
+    val branch_name: String? = null,
+    val branch_address: String? = null,
+    val payment_contact_name: String? = null,
+    val payment_contact_number: String? = null,
+    val traffic_contact_name: String? = null,
+    val traffic_contact_number: String? = null,
+    val pod_contact_name: String? = null,
+    val pod_contact_number: String? = null,
+    val tracking_contact_name: String? = null,
+    val tracking_contact_number: String? = null,
+)
+
+@Serializable
+data class ClientBranchRequest(
+    val branch_name: String? = null,
+    val branch_address: String? = null,
+    val payment_contact_name: String? = null,
+    val payment_contact_number: String? = null,
+    val traffic_contact_name: String? = null,
+    val traffic_contact_number: String? = null,
+    val pod_contact_name: String? = null,
+    val pod_contact_number: String? = null,
+    val tracking_contact_name: String? = null,
+    val tracking_contact_number: String? = null,
+)
+
+@Serializable
+data class ClientBranchUpdateRequest(
+    val id: String? = null,
+    val branch_name: String? = null,
+    val branch_address: String? = null,
+    val pod_contact_name: String? = null,
+    val pod_contact_number: String? = null,
+    val payment_contact_name: String? = null,
+    val traffic_contact_name: String? = null,
+    val tracking_contact_name: String? = null,
+    val payment_contact_number: String? = null,
+    val traffic_contact_number: String? = null,
+    val tracking_contact_number: String? = null,
 )

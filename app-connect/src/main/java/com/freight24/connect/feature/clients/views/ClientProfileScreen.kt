@@ -30,13 +30,12 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Fingerprint
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -78,8 +77,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.freight24.connect.feature.clients.domain.viewmodel.ClientProfileViewModel
-import com.freight24.connect.utils.toDateTime
-import com.freight24.rest.response.ClientBranchDto
 import com.freight24.rest.response.ClientProfileDto
 import com.freight24.ui.UiState
 
@@ -215,6 +212,7 @@ private fun ClientProfileContent(
     val companyGst = viewModel.editableGstNumber.collectAsState().value
     val panCard = viewModel.editablePanCard.collectAsState().value
     val aadhaar = viewModel.editableAadhaarCard.collectAsState().value
+    val branches = viewModel.editableBranches.collectAsState().value
     val tagCode = client.tag_code.orEmpty()
 
     Column(
@@ -350,54 +348,176 @@ private fun ClientProfileContent(
         Spacer(modifier = Modifier.height(20.dp))
 
         ProfileSection(
-            title = "ACCOUNT DETAILS",
-            icon = Icons.Default.Badge,
+            title = "BRANCHES",
+            icon = Icons.Default.Business,
             initiallyExpanded = false,
         ) {
-            ProfileField(
-                label = "CLIENT ID",
-                value = client.id,
-                isEditing = false,
-                isEditable = false,
-                leadingIcon = Icons.Default.Badge,
-            )
-            DividerLine()
-            ProfileField(
-                label = "TAG CODE",
-                value = tagCode,
-                isEditing = false,
-                isEditable = false,
-                leadingIcon = Icons.Default.Badge,
-                placeholder = "Not available",
-            )
-            DividerLine()
-            ProfileField(
-                label = "CREATED AT",
-                value = client.created_at?.toDateTime().orEmpty(),
-                isEditing = false,
-                isEditable = false,
-                leadingIcon = Icons.Default.Info,
-            )
-            DividerLine()
-            ProfileField(
-                label = "STATUS",
-                value = client.status.orEmpty().replaceFirstChar { it.uppercase() },
-                isEditing = false,
-                isEditable = false,
-                leadingIcon = Icons.Default.CheckCircle,
-            )
-            DividerLine()
-            ProfileField(
-                label = "BRANCHES",
-                value = branchesDisplay(client.client_branches),
-                isEditing = false,
-                isEditable = false,
-                leadingIcon = Icons.Default.Business,
-                placeholder = "No branches",
+            BranchesSectionContent(
+                branches = branches,
+                isEditing = isEditing,
+                onBranchNameChanged = viewModel::onBranchNameChanged,
+                onBranchAddressChanged = viewModel::onBranchAddressChanged,
+                onPodContactNameChanged = viewModel::onPodContactNameChanged,
+                onPodContactNumberChanged = viewModel::onPodContactNumberChanged,
+                onPaymentContactNameChanged = viewModel::onPaymentContactNameChanged,
+                onPaymentContactNumberChanged = viewModel::onPaymentContactNumberChanged,
+                onTrafficContactNameChanged = viewModel::onTrafficContactNameChanged,
+                onTrafficContactNumberChanged = viewModel::onTrafficContactNumberChanged,
+                onTrackingContactNameChanged = viewModel::onTrackingContactNameChanged,
+                onTrackingContactNumberChanged = viewModel::onTrackingContactNumberChanged,
             )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+    }
+}
+
+@Composable
+private fun BranchesSectionContent(
+    branches: List<ClientProfileViewModel.EditableClientBranch>,
+    isEditing: Boolean,
+    onBranchNameChanged: (String, String) -> Unit,
+    onBranchAddressChanged: (String, String) -> Unit,
+    onPodContactNameChanged: (String, String) -> Unit,
+    onPodContactNumberChanged: (String, String) -> Unit,
+    onPaymentContactNameChanged: (String, String) -> Unit,
+    onPaymentContactNumberChanged: (String, String) -> Unit,
+    onTrafficContactNameChanged: (String, String) -> Unit,
+    onTrafficContactNumberChanged: (String, String) -> Unit,
+    onTrackingContactNameChanged: (String, String) -> Unit,
+    onTrackingContactNumberChanged: (String, String) -> Unit,
+) {
+    if (branches.isEmpty()) {
+        Text(
+            text = "No branches available",
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        return
+    }
+
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        branches.forEachIndexed { index, branch ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)),
+            ) {
+                Column(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Business,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Branch ${index + 1}",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                    DividerLine()
+
+                    ProfileField(
+                        label = "BRANCH NAME",
+                        value = branch.branchName,
+                        isEditing = isEditing,
+                        leadingIcon = Icons.Default.Business,
+                        onValueChange = { onBranchNameChanged(branch.id, it) },
+                    )
+                    DividerLine()
+                    ProfileField(
+                        label = "BRANCH ADDRESS",
+                        value = branch.branchAddress,
+                        isEditing = isEditing,
+                        leadingIcon = Icons.Default.LocationOn,
+                        onValueChange = { onBranchAddressChanged(branch.id, it) },
+                    )
+                    DividerLine()
+                    ProfileField(
+                        label = "POD CONTACT NAME",
+                        value = branch.podContactName,
+                        isEditing = isEditing,
+                        leadingIcon = Icons.Default.Person,
+                        onValueChange = { onPodContactNameChanged(branch.id, it) },
+                    )
+                    DividerLine()
+                    ProfileField(
+                        label = "POD CONTACT NUMBER",
+                        value = branch.podContactNumber,
+                        isEditing = isEditing,
+                        leadingIcon = Icons.Default.Call,
+                        keyboardType = KeyboardType.Phone,
+                        capitalization = KeyboardCapitalization.None,
+                        onValueChange = { onPodContactNumberChanged(branch.id, it.filter(Char::isDigit).take(15)) },
+                    )
+                    DividerLine()
+                    ProfileField(
+                        label = "PAYMENT CONTACT NAME",
+                        value = branch.paymentContactName,
+                        isEditing = isEditing,
+                        leadingIcon = Icons.Default.Person,
+                        onValueChange = { onPaymentContactNameChanged(branch.id, it) },
+                    )
+                    DividerLine()
+                    ProfileField(
+                        label = "PAYMENT CONTACT NUMBER",
+                        value = branch.paymentContactNumber,
+                        isEditing = isEditing,
+                        leadingIcon = Icons.Default.Call,
+                        keyboardType = KeyboardType.Phone,
+                        capitalization = KeyboardCapitalization.None,
+                        onValueChange = { onPaymentContactNumberChanged(branch.id, it.filter(Char::isDigit).take(15)) },
+                    )
+                    DividerLine()
+                    ProfileField(
+                        label = "TRAFFIC CONTACT NAME",
+                        value = branch.trafficContactName,
+                        isEditing = isEditing,
+                        leadingIcon = Icons.Default.Person,
+                        onValueChange = { onTrafficContactNameChanged(branch.id, it) },
+                    )
+                    DividerLine()
+                    ProfileField(
+                        label = "TRAFFIC CONTACT NUMBER",
+                        value = branch.trafficContactNumber,
+                        isEditing = isEditing,
+                        leadingIcon = Icons.Default.Call,
+                        keyboardType = KeyboardType.Phone,
+                        capitalization = KeyboardCapitalization.None,
+                        onValueChange = { onTrafficContactNumberChanged(branch.id, it.filter(Char::isDigit).take(15)) },
+                    )
+                    DividerLine()
+                    ProfileField(
+                        label = "TRACKING CONTACT NAME",
+                        value = branch.trackingContactName,
+                        isEditing = isEditing,
+                        leadingIcon = Icons.Default.Person,
+                        onValueChange = { onTrackingContactNameChanged(branch.id, it) },
+                    )
+                    DividerLine()
+                    ProfileField(
+                        label = "TRACKING CONTACT NUMBER",
+                        value = branch.trackingContactNumber,
+                        isEditing = isEditing,
+                        leadingIcon = Icons.Default.Call,
+                        keyboardType = KeyboardType.Phone,
+                        capitalization = KeyboardCapitalization.None,
+                        onValueChange = { onTrackingContactNumberChanged(branch.id, it.filter(Char::isDigit).take(15)) },
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -695,13 +815,6 @@ private fun ClientProfileErrorState(
             Text("Retry")
         }
     }
-}
-
-private fun branchesDisplay(branches: List<ClientBranchDto>): String {
-    if (branches.isEmpty()) return ""
-    return branches.mapIndexed { index, branch ->
-        branch.name ?: branch.address ?: branch.id ?: "Branch ${index + 1}"
-    }.joinToString(", ")
 }
 
 private fun launchDialer(context: Context, rawPhone: String) {

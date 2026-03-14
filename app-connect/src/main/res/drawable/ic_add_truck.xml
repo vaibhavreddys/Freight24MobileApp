@@ -1,0 +1,76 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Cargo box body -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M6,5.5 H17.5 C18.05,5.5 18.5,5.95 18.5,6.5 V16 H4 V6.5 C4,5.95 4.45,5.5 5,5.5 Z"/>
+
+    <!-- Cab -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M18.5,8 L22,10.5 L22,16 L18.5,16"/>
+
+    <!-- Cab window -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M19.5,10.5 H21 V13.5 H19.5 Z"/>
+
+    <!-- Rear wheel -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M6,18.5 A2,2 0 1,0 10,18.5 A2,2 0 1,0 6,18.5 Z"/>
+
+    <!-- Front wheel -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M17,18.5 A2,2 0 1,0 21,18.5 A2,2 0 1,0 17,18.5 Z"/>
+
+    <!-- Badge mask — same green as FAB, covers truck corner behind badge -->
+    <path
+        android:fillColor="#2E7D32"
+        android:pathData="M1.5,7 A3.5,3.5 0 1,0 8.5,7 A3.5,3.5 0 1,0 1.5,7 Z"/>
+
+    <!-- Badge circle ring (white stroke) -->
+<!--    <path-->
+<!--        android:strokeColor="#FFFFFF"-->
+<!--        android:strokeWidth="1.5"-->
+<!--        android:fillColor="@android:color/transparent"-->
+<!--        android:pathData="M1.5,7 A3.5,3.5 0 1,0 8.5,7 A3.5,3.5 0 1,0 1.5,7 Z"/>-->
+
+    <!-- Plus horizontal bar -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M3.5,7 H6.5"/>
+
+    <!-- Plus vertical bar -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5"
+        android:strokeLineCap="round"
+        android:fillColor="@android:color/transparent"
+        android:pathData="M5,5.5 V8.5"/>
+
+</vector>

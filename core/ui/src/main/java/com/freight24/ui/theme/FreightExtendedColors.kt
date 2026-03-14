@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.Color
 data class FreightExtendedColors(
     val successColor: Color,
     val warningColor: Color,
+    val infoColor: Color,
     val onSuccessColor: Color,
     val dialogScrimColor: Color,
 )
@@ -18,6 +19,7 @@ internal val LocalFreightExtendedColors = staticCompositionLocalOf {
     FreightExtendedColors(
         successColor = Color.Unspecified,
         warningColor = Color.Unspecified,
+        infoColor = Color.Unspecified,
         onSuccessColor = Color.Unspecified,
         dialogScrimColor = Color.Unspecified,
     )
