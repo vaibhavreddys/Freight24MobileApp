@@ -57,6 +57,7 @@ private val LightExtendedColors =
         successColor = SuccessGreenLight,
         warningColor = WarningAmberLight,
         infoColor = InfoBlueLight,
+        settingsColor = SettingsPurpleLight,
         onSuccessColor = SuccessOnColor,
         dialogScrimColor = DialogScrimLight,
     )
@@ -66,6 +67,7 @@ private val DarkExtendedColors =
         successColor = SuccessGreenDark,
         warningColor = WarningAmberDark,
         infoColor = InfoBlueDark,
+        settingsColor = SettingsPurpleDark,
         onSuccessColor = SuccessOnColor,
         dialogScrimColor = DialogScrimDark,
     )

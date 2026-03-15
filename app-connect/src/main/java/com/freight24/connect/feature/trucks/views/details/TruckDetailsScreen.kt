@@ -356,7 +356,7 @@ internal fun TruckDetailsScreen(
                         }
                     },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(50.dp),
                     enabled = uiState is UiState.Success
                 ) {
                     Text("Edit Truck", fontWeight = FontWeight.Bold, fontSize = 16.sp)

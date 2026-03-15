@@ -44,3 +44,6 @@ val InfoBlueDark = Color(0xFF378ADD)
 val SuccessOnColor = Color(0xFFFFFFFF)
 val DialogScrimLight = Color(0x66000000)
 val DialogScrimDark = Color(0x99000000)
+
+val SettingsPurpleLight = Color(0xFF534AB7)
+val SettingsPurpleDark = Color(0xFF7F77DD)

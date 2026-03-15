@@ -11,6 +11,7 @@ data class FreightExtendedColors(
     val successColor: Color,
     val warningColor: Color,
     val infoColor: Color,
+    val settingsColor: Color,
     val onSuccessColor: Color,
     val dialogScrimColor: Color,
 )
@@ -20,6 +21,7 @@ internal val LocalFreightExtendedColors = staticCompositionLocalOf {
         successColor = Color.Unspecified,
         warningColor = Color.Unspecified,
         infoColor = Color.Unspecified,
+        settingsColor = Color.Unspecified,
         onSuccessColor = Color.Unspecified,
         dialogScrimColor = Color.Unspecified,
     )

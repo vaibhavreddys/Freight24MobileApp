@@ -16,6 +16,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -45,9 +46,11 @@ import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Edit
@@ -55,8 +58,11 @@ import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SettingsApplications
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -115,6 +121,9 @@ import com.freight24.trucker.feature.profile.domain.ProfileDocument
 import com.freight24.trucker.feature.profile.util.ProfileFieldValidators
 import com.freight24.trucker.feature.profile.util.ValidationResult
 import com.freight24.ui.UiState
+import com.freight24.ui.components.PODAddressCard
+import com.freight24.ui.components.ProfileUtilityRow
+import com.freight24.ui.theme.FreightThemeTokens
 import com.freight24.ui.theme.PrimaryGreen
 import kotlinx.coroutines.launch
 import java.io.File
@@ -377,7 +386,7 @@ private fun ProfileMainContent(
             Spacer(modifier = Modifier.height(32.dp))
 
             // Information Sections
-            ProfileSection(title = "PERSONAL INFORMATION", icon = Icons.Default.Person, true) {
+            ProfileSection(title = "PERSONAL INFORMATION", icon = Icons.Default.Person, false) {
                 ProfileField(
                     label = "FULL NAME",
                     value = viewModel.editableFullName.collectAsState().value,
@@ -603,12 +612,74 @@ private fun ProfileMainContent(
                 )
             }
 
+            Spacer(modifier = Modifier.height(24.dp))
+            PODAddressCard(
+                companyName = "Freight24 Private Limited",
+                addressLines = listOf(
+                    "#42, 4th Floor, 7th Main Road,",
+                    "Jakkur, Bengaluru,",
+                    "Karnataka - 560034"
+                )
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // App Section
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .padding(vertical = 8.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.SettingsApplications,
+                    contentDescription = null,
+                    tint = PrimaryGreen,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = "APP",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = PrimaryGreen,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp,
+                    modifier = Modifier.weight(1f)
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+            ) {
+                ProfileUtilityRow(
+                    title = "App Settings",
+                    icon = Icons.Default.Settings,
+                    onClick = { /* Navigate to App Settings */ },
+                    iconContainerColor = FreightThemeTokens.colors.settingsColor.copy(alpha = 0.12f),
+                    iconTint = FreightThemeTokens.colors.settingsColor
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
+                ProfileUtilityRow(
+                    title = "Contact Support",
+                    icon = Icons.Default.ChatBubble,
+                    onClick = { /* Navigate to Contact Support */ },
+                    subtitle = "Available Mon–Sat, 9am–6pm",
+                    iconContainerColor = FreightThemeTokens.colors.infoColor.copy(alpha = 0.12f),
+                    iconTint = FreightThemeTokens.colors.infoColor
+                )
+            }
+
             Spacer(modifier = Modifier.height(48.dp))
 
             // Logout Button
             LogoutButton(onLogout = { viewModel.logout() })
 
-            Spacer(modifier = Modifier.height(120.dp))
+            Spacer(modifier = Modifier.height(60.dp))
         }
 
         // Action Buttons at Bottom in Edit Mode
