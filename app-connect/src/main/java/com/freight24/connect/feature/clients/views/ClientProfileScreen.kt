@@ -3,9 +3,13 @@ package com.freight24.connect.feature.clients.views
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,9 +31,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Fingerprint
@@ -37,6 +43,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -46,7 +53,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -57,28 +66,38 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.freight24.connect.feature.clients.domain.viewmodel.ClientProfileViewModel
 import com.freight24.rest.response.ClientProfileDto
 import com.freight24.ui.UiState
+import com.freight24.ui.components.DashedUploadCard
+import com.freight24.ui.theme.FreightThemeTokens
+import java.io.File
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -91,6 +110,7 @@ fun ClientProfileScreen(
     val isEditing by viewModel.isEditing.collectAsState()
     val hasChanges by viewModel.hasChanges.collectAsState()
     val isSaving by viewModel.isSaving.collectAsState()
+
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
@@ -198,6 +218,7 @@ fun ClientProfileScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ClientProfileContent(
     client: ClientProfileDto,
@@ -205,6 +226,64 @@ private fun ClientProfileContent(
     viewModel: ClientProfileViewModel,
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    val aadhaarFile by viewModel.aadhaarFile.collectAsState()
+    val panFile by viewModel.panFile.collectAsState()
+
+    var showSourcePicker by remember { mutableStateOf(false) }
+    var currentTargetPrefix by remember { mutableStateOf<String?>(null) }
+    var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
+
+    val sheetState = rememberModalBottomSheetState()
+
+    val galleryLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.PickVisualMedia(),
+        ) { uri ->
+            uri?.let { currentTargetPrefix?.let { prefix -> viewModel.onFileSelected(context, it, prefix) } }
+            currentTargetPrefix = null
+        }
+
+    val docLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.OpenDocument(),
+        ) { uri ->
+            uri?.let { currentTargetPrefix?.let { prefix -> viewModel.onFileSelected(context, it, prefix) } }
+            currentTargetPrefix = null
+        }
+
+    val cameraLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.TakePicture(),
+        ) { success ->
+            if (success) {
+                tempCameraUri?.let { currentTargetPrefix?.let { prefix -> viewModel.onFileSelected(context, it, prefix) } }
+            }
+            currentTargetPrefix = null
+            tempCameraUri = null
+        }
+
+    val cameraPermissionLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestPermission(),
+        ) { isGranted ->
+            if (isGranted) {
+                val uri = createTempImageUri(context)
+                tempCameraUri = uri
+                cameraLauncher.launch(uri)
+            }
+        }
+
+    fun initiateCapture() {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            val uri = createTempImageUri(context)
+            tempCameraUri = uri
+            cameraLauncher.launch(uri)
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
     val fullName = viewModel.editableFullName.collectAsState().value
     val companyName = viewModel.editableCompanyName.collectAsState().value
     val email = viewModel.editableEmail.collectAsState().value
@@ -347,6 +426,47 @@ private fun ClientProfileContent(
 
         Spacer(modifier = Modifier.height(20.dp))
 
+        AnimatedVisibility(
+            visible = isEditing,
+            enter = expandVertically(),
+            exit = shrinkVertically(),
+        ) {
+            Column {
+                ProfileSection(
+                    title = "DOCUMENTS",
+                    icon = Icons.Default.Badge,
+                    initiallyExpanded = true,
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        DashedUploadCard(
+                            title = "Aadhaar Card",
+                            subtitle = "Camera, JPG or PDF",
+                            label = "Update",
+                            isUploaded = aadhaarFile != null,
+                            onUploadClick = {
+                                currentTargetPrefix = "AADHAAR"
+                                showSourcePicker = true
+                            },
+                        )
+                        DashedUploadCard(
+                            title = "PAN Card",
+                            subtitle = "Camera, JPG or PDF",
+                            label = "Update",
+                            isUploaded = panFile != null,
+                            onUploadClick = {
+                                currentTargetPrefix = "PAN"
+                                showSourcePicker = true
+                            },
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+        }
+
         ProfileSection(
             title = "BRANCHES",
             icon = Icons.Default.Business,
@@ -366,6 +486,70 @@ private fun ClientProfileContent(
                 onTrackingContactNameChanged = viewModel::onTrackingContactNameChanged,
                 onTrackingContactNumberChanged = viewModel::onTrackingContactNumberChanged,
             )
+        }
+
+        if (showSourcePicker) {
+            ModalBottomSheet(
+                onDismissRequest = { showSourcePicker = false },
+                sheetState = sheetState,
+                containerColor = MaterialTheme.colorScheme.surface,
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 32.dp),
+                ) {
+                    Text(
+                        text = "Select source",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(16.dp),
+                        fontWeight = FontWeight.Bold,
+                    )
+
+                    ListItem(
+                        headlineContent = { Text("Camera") },
+                        leadingContent = {
+                            Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = CircleShape) {
+                                Icon(Icons.Default.CameraAlt, null, modifier = Modifier.padding(8.dp).size(20.dp))
+                            }
+                        },
+                        modifier = Modifier.clickable {
+                            scope.launch { sheetState.hide() }.invokeOnCompletion {
+                                showSourcePicker = false
+                                initiateCapture()
+                            }
+                        },
+                    )
+                    ListItem(
+                        headlineContent = { Text("Gallery (Images)") },
+                        leadingContent = {
+                            Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = CircleShape) {
+                                Icon(Icons.Default.PhotoLibrary, null, modifier = Modifier.padding(8.dp).size(20.dp))
+                            }
+                        },
+                        modifier = Modifier.clickable {
+                            scope.launch { sheetState.hide() }.invokeOnCompletion {
+                                showSourcePicker = false
+                                galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            }
+                        },
+                    )
+                    ListItem(
+                        headlineContent = { Text("Documents (PDF)") },
+                        leadingContent = {
+                            Surface(color = MaterialTheme.colorScheme.tertiaryContainer, shape = CircleShape) {
+                                Icon(Icons.AutoMirrored.Filled.InsertDriveFile, null, modifier = Modifier.padding(8.dp).size(20.dp))
+                            }
+                        },
+                        modifier = Modifier.clickable {
+                            scope.launch { sheetState.hide() }.invokeOnCompletion {
+                                showSourcePicker = false
+                                docLauncher.launch(arrayOf("application/pdf"))
+                            }
+                        },
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -822,4 +1006,13 @@ private fun launchDialer(context: Context, rawPhone: String) {
     if (phone.isBlank()) return
     val dialIntent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${Uri.encode(phone)}"))
     context.startActivity(dialIntent)
+}
+
+private fun createTempImageUri(context: Context): Uri {
+    val tempFile = File(context.cacheDir, "camera_capture_${System.currentTimeMillis()}.jpg")
+    return FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.fileprovider",
+        tempFile,
+    )
 }

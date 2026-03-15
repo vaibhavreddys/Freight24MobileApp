@@ -5,12 +5,17 @@ import androidx.lifecycle.viewModelScope
 import com.freight24.connect.feature.clients.domain.usecases.CreateClientParams
 import com.freight24.connect.feature.clients.domain.usecases.CreateClientUseCase
 import com.freight24.connect.feature.clients.domain.usecases.GetClientsUseCase
+import com.freight24.connect.feature.truckowners.profile.domain.usecase.UploadIdentityDocumentParams
+import com.freight24.connect.feature.truckowners.profile.domain.usecase.UploadIdentityDocumentUseCase
 import com.freight24.connect.feature.truckowners.profile.util.ProfileFieldValidators
 import com.freight24.connect.feature.truckowners.profile.util.ValidationResult
 import com.freight24.rest.request.ClientBranchRequest
 import com.freight24.rest.request.UpdateClientRequest
 import com.freight24.rest.response.ClientDto
 import dagger.hilt.android.lifecycle.HiltViewModel
+import android.content.Context
+import android.net.Uri
+import android.util.Log
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -19,12 +24,17 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
 class OnboardClientViewModel @Inject constructor(
     private val createClientUseCase: CreateClientUseCase,
     private val getClientsUseCase: GetClientsUseCase,
+    private val uploadIdentityDocumentUseCase: UploadIdentityDocumentUseCase,
 ) : ViewModel() {
 
     val fullName = MutableStateFlow("")
@@ -34,6 +44,10 @@ class OnboardClientViewModel @Inject constructor(
     val companyName = MutableStateFlow("")
     val gstNumber = MutableStateFlow("")
     val branches = MutableStateFlow<List<BranchFormState>>(emptyList())
+
+    // Document State
+    val aadhaarFile = MutableStateFlow<File?>(null)
+    val panFile = MutableStateFlow<File?>(null)
 
     private var nextBranchId = 1
 
@@ -157,6 +171,43 @@ class OnboardClientViewModel @Inject constructor(
         }
     }
 
+    fun onFileSelected(
+        context: Context,
+        uri: Uri,
+        type: String,
+    ) {
+        viewModelScope.launch {
+            val file = fromUri(context, uri, type)
+            if (file != null) {
+                when (type) {
+                    "AADHAAR" -> aadhaarFile.value = file
+                    "PAN" -> panFile.value = file
+                }
+            }
+        }
+    }
+
+    private fun fromUri(
+        context: Context,
+        uri: Uri,
+        prefix: String,
+    ): File? {
+        return try {
+            val contentResolver = context.contentResolver
+            val extension = contentResolver.getType(uri)?.split("/")?.lastOrNull() ?: "jpg"
+            val fileName = "${prefix}_${System.currentTimeMillis()}.$extension"
+            val tempFile = File(context.cacheDir, fileName)
+            contentResolver.openInputStream(uri)?.use { input ->
+                tempFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+            tempFile
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     fun hasRequiredFields(): Boolean = requiredValidationMessage() == null
 
     fun canSubmit(): Boolean = !_isSaving.value && hasRequiredFields()
@@ -212,11 +263,19 @@ class OnboardClientViewModel @Inject constructor(
             createClientUseCase(CreateClientParams(request))
                 .onSuccess {
                     val created = resolveCreatedClient(phoneNumber.value.trim())
+                    val userId = created?.userId
+
                     _createdClient.value =
                         CreatedClientState(
                             fullName = fullName.value.trim(),
-                            userId = created?.userId,
+                            userId = userId,
                         )
+
+                    // Upload documents if client created successfully and files are selected
+                    if (!userId.isNullOrEmpty()) {
+                        uploadDocuments(userId)
+                    }
+
                     _messageEvent.emit("Client created successfully")
                 }
                 .onFailure { error ->
@@ -229,6 +288,35 @@ class OnboardClientViewModel @Inject constructor(
 
     fun consumeCreatedClient() {
         _createdClient.value = null
+    }
+
+    private suspend fun uploadDocuments(userId: String) {
+        aadhaarFile.value?.let { file ->
+            uploadIdentityDocumentUseCase(
+                UploadIdentityDocumentParams(
+                    userId = userId,
+                    documentTypeId = 1, // Aadhaar Card
+                    documentNumber = "", // Might need this if the API requires it
+                    file = file.toMultipartPart("file")
+                )
+            )
+        }
+
+        panFile.value?.let { file ->
+            uploadIdentityDocumentUseCase(
+                UploadIdentityDocumentParams(
+                    userId = userId,
+                    documentTypeId = 2, // PAN Card
+                    documentNumber = "",
+                    file = file.toMultipartPart("file")
+                )
+            )
+        }
+    }
+
+    private fun File.toMultipartPart(name: String): MultipartBody.Part {
+        val requestBody = this.asRequestBody("application/octet-stream".toMediaTypeOrNull())
+        return MultipartBody.Part.createFormData(name, this.name, requestBody)
     }
 
     private fun updateBranch(

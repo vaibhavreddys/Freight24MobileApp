@@ -6,12 +6,16 @@ import androidx.lifecycle.viewModelScope
 import com.freight24.connect.feature.clients.domain.usecases.GetClientByUserIdUseCase
 import com.freight24.connect.feature.clients.domain.usecases.UpdateClientParams
 import com.freight24.connect.feature.clients.domain.usecases.UpdateClientUseCase
+import com.freight24.connect.feature.truckowners.profile.domain.usecase.UploadIdentityDocumentParams
+import com.freight24.connect.feature.truckowners.profile.domain.usecase.UploadIdentityDocumentUseCase
 import com.freight24.rest.request.ClientBranchUpdateRequest
 import com.freight24.rest.request.UpdateClientRequest
 import com.freight24.rest.response.ClientBranchDto
 import com.freight24.rest.response.ClientProfileDto
 import com.freight24.ui.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import android.content.Context
+import android.net.Uri
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -20,6 +24,10 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
@@ -27,6 +35,7 @@ class ClientProfileViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val getClientByUserIdUseCase: GetClientByUserIdUseCase,
     private val updateClientUseCase: UpdateClientUseCase,
+    private val uploadIdentityDocumentUseCase: UploadIdentityDocumentUseCase,
 ) : ViewModel() {
 
     private val userId: String = checkNotNull(savedStateHandle["userId"])
@@ -59,6 +68,10 @@ class ClientProfileViewModel @Inject constructor(
     val editablePanCard = MutableStateFlow("")
     val editableAadhaarCard = MutableStateFlow("")
     val editableBranches = MutableStateFlow<List<EditableClientBranch>>(emptyList())
+
+    // Document State
+    val aadhaarFile = MutableStateFlow<File?>(null)
+    val panFile = MutableStateFlow<File?>(null)
 
     init {
         fetchClient()
@@ -119,13 +132,54 @@ class ClientProfileViewModel @Inject constructor(
                 editablePanCard.value != original.pan_card.orEmpty() ||
                 editableAadhaarCard.value != original.aadhar_card.orEmpty()
 
+        val documentsChanged = aadhaarFile.value != null || panFile.value != null
         val branchChanged = buildChangedBranchUpdates(original.client_branches, editableBranches.value).isNotEmpty()
-        _hasChanges.value = topLevelChanged || branchChanged
+        _hasChanges.value = topLevelChanged || branchChanged || documentsChanged
+    }
+
+    fun onFileSelected(
+        context: Context,
+        uri: Uri,
+        type: String,
+    ) {
+        viewModelScope.launch {
+            val file = fromUri(context, uri, type)
+            if (file != null) {
+                when (type) {
+                    "AADHAAR" -> aadhaarFile.value = file
+                    "PAN" -> panFile.value = file
+                }
+                onFieldChanged()
+            }
+        }
+    }
+
+    private fun fromUri(
+        context: Context,
+        uri: Uri,
+        prefix: String,
+    ): File? {
+        return try {
+            val contentResolver = context.contentResolver
+            val extension = contentResolver.getType(uri)?.split("/")?.lastOrNull() ?: "jpg"
+            val fileName = "${prefix}_${System.currentTimeMillis()}.$extension"
+            val tempFile = File(context.cacheDir, fileName)
+            contentResolver.openInputStream(uri)?.use { input ->
+                tempFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+            tempFile
+        } catch (e: Exception) {
+            null
+        }
     }
 
     fun cancelEdit() {
         _isEditing.value = false
         originalClient?.let { populateEditableFields(it) }
+        aadhaarFile.value = null
+        panFile.value = null
         _hasChanges.value = false
     }
 
@@ -224,9 +278,15 @@ class ClientProfileViewModel @Inject constructor(
             ).onSuccess { updatedClient ->
                 originalClient = updatedClient
                 populateEditableFields(updatedClient)
+
+                // Upload documents if selected
+                uploadDocuments(original.user_id)
+
                 _uiState.value = UiState.Success(updatedClient)
                 _isEditing.value = false
                 _hasChanges.value = false
+                aadhaarFile.value = null
+                panFile.value = null
                 _messageEvent.emit("Client profile updated successfully")
             }.onFailure { error ->
                 _messageEvent.emit(error.message ?: "Failed to update client profile")
@@ -234,6 +294,35 @@ class ClientProfileViewModel @Inject constructor(
 
             _isSaving.value = false
         }
+    }
+
+    private suspend fun uploadDocuments(userId: String) {
+        aadhaarFile.value?.let { file ->
+            uploadIdentityDocumentUseCase(
+                UploadIdentityDocumentParams(
+                    userId = userId,
+                    documentTypeId = 1, // Aadhaar Card
+                    documentNumber = "",
+                    file = file.toMultipartPart("file")
+                )
+            )
+        }
+
+        panFile.value?.let { file ->
+            uploadIdentityDocumentUseCase(
+                UploadIdentityDocumentParams(
+                    userId = userId,
+                    documentTypeId = 2, // PAN Card
+                    documentNumber = "",
+                    file = file.toMultipartPart("file")
+                )
+            )
+        }
+    }
+
+    private fun File.toMultipartPart(name: String): MultipartBody.Part {
+        val requestBody = this.asRequestBody("application/octet-stream".toMediaTypeOrNull())
+        return MultipartBody.Part.createFormData(name, this.name, requestBody)
     }
 
     private fun updateBranch(
