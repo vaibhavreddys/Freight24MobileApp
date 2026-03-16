@@ -28,6 +28,7 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
+import com.freight24.connect.utils.FileUtils
 import javax.inject.Inject
 
 @HiltViewModel
@@ -173,38 +174,34 @@ class OnboardClientViewModel @Inject constructor(
 
     fun onFileSelected(
         context: Context,
-        uri: Uri,
+        uris: List<Uri>,
         type: String,
+        isPdf: Boolean,
+        onSuccess: () -> Unit
     ) {
+        if (uris.isEmpty()) return
         viewModelScope.launch {
-            val file = fromUri(context, uri, type)
-            if (file != null) {
-                when (type) {
-                    "AADHAAR" -> aadhaarFile.value = file
-                    "PAN" -> panFile.value = file
+            _isSaving.value = true
+            try {
+                val file = if (isPdf) {
+                    FileUtils.getFileFromUri(context, uris.first())
+                } else {
+                    FileUtils.convertImageToPdf(context, uris)
                 }
-            }
-        }
-    }
-
-    private fun fromUri(
-        context: Context,
-        uri: Uri,
-        prefix: String,
-    ): File? {
-        return try {
-            val contentResolver = context.contentResolver
-            val extension = contentResolver.getType(uri)?.split("/")?.lastOrNull() ?: "jpg"
-            val fileName = "${prefix}_${System.currentTimeMillis()}.$extension"
-            val tempFile = File(context.cacheDir, fileName)
-            contentResolver.openInputStream(uri)?.use { input ->
-                tempFile.outputStream().use { output ->
-                    input.copyTo(output)
+                if (file != null) {
+                    when (type) {
+                        "AADHAAR" -> aadhaarFile.value = file
+                        "PAN" -> panFile.value = file
+                    }
+                    onSuccess()
+                } else {
+                    _messageEvent.emit("Failed to process document")
                 }
+            } catch (e: Exception) {
+                _messageEvent.emit(e.message ?: "Failed to process document")
+            } finally {
+                _isSaving.value = false
             }
-            tempFile
-        } catch (e: Exception) {
-            null
         }
     }
 
@@ -265,17 +262,23 @@ class OnboardClientViewModel @Inject constructor(
                     val created = resolveCreatedClient(phoneNumber.value.trim())
                     val userId = created?.userId
 
+                    if (userId.isNullOrEmpty()) {
+                        _messageEvent.emit("Client created but failed to resolve ID for document upload")
+                        return@onSuccess
+                    }
+
+                    // Upload documents if selected
+                    val uploadResult = uploadDocuments(userId)
+                    if (uploadResult.isFailure) {
+                        _messageEvent.emit("Client created but document upload failed: ${uploadResult.exceptionOrNull()?.message}")
+                        return@onSuccess
+                    }
+
                     _createdClient.value =
                         CreatedClientState(
                             fullName = fullName.value.trim(),
                             userId = userId,
                         )
-
-                    // Upload documents if client created successfully and files are selected
-                    if (!userId.isNullOrEmpty()) {
-                        uploadDocuments(userId)
-                    }
-
                     _messageEvent.emit("Client created successfully")
                 }
                 .onFailure { error ->
@@ -290,32 +293,42 @@ class OnboardClientViewModel @Inject constructor(
         _createdClient.value = null
     }
 
-    private suspend fun uploadDocuments(userId: String) {
-        aadhaarFile.value?.let { file ->
-            uploadIdentityDocumentUseCase(
-                UploadIdentityDocumentParams(
-                    userId = userId,
-                    documentTypeId = 1, // Aadhaar Card
-                    documentNumber = "", // Might need this if the API requires it
-                    file = file.toMultipartPart("file")
-                )
-            )
-        }
+    private suspend fun uploadDocuments(userId: String): Result<Unit> {
+        try {
+            aadhaarFile.value?.let { file ->
+                val result =
+                    uploadIdentityDocumentUseCase(
+                        UploadIdentityDocumentParams(
+                            userId = userId,
+                            documentTypeId = 1, // Aadhaar Card
+                            documentNumber = "", // Might need this if the API requires it
+                            file = file.toMultipartPart("file"),
+                        ),
+                    )
+                if (result.isFailure) return Result.failure(Exception("Aadhaar upload failed: ${result.exceptionOrNull()?.message}"))
+            }
 
-        panFile.value?.let { file ->
-            uploadIdentityDocumentUseCase(
-                UploadIdentityDocumentParams(
-                    userId = userId,
-                    documentTypeId = 2, // PAN Card
-                    documentNumber = "",
-                    file = file.toMultipartPart("file")
-                )
-            )
+            panFile.value?.let { file ->
+                val result =
+                    uploadIdentityDocumentUseCase(
+                        UploadIdentityDocumentParams(
+                            userId = userId,
+                            documentTypeId = 2, // PAN Card
+                            documentNumber = "",
+                            file = file.toMultipartPart("file"),
+                        ),
+                    )
+                if (result.isFailure) return Result.failure(Exception("PAN upload failed: ${result.exceptionOrNull()?.message}"))
+            }
+            return Result.success(Unit)
+        } catch (e: Exception) {
+            return Result.failure(e)
         }
     }
 
     private fun File.toMultipartPart(name: String): MultipartBody.Part {
-        val requestBody = this.asRequestBody("application/octet-stream".toMediaTypeOrNull())
+        val mimeType = if (extension.equals("pdf", ignoreCase = true)) "application/pdf" else "application/octet-stream"
+        val requestBody = this.asRequestBody(mimeType.toMediaTypeOrNull())
         return MultipartBody.Part.createFormData(name, this.name, requestBody)
     }
 

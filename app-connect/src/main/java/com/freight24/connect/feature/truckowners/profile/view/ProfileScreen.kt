@@ -243,15 +243,19 @@ private fun ProfileMainContent(
     var pickingDocumentId by rememberSaveable { mutableStateOf<String?>(null) }
     var showSourcePicker by rememberSaveable { mutableStateOf(false) }
     var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
+    var pickingUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
+    var isPdfPending by remember { mutableStateOf(false) }
     val sourceSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val documentPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
-        uri?.let {
-            pickingDocumentType?.let { type ->
-                viewModel.uploadDocument(listOf(it), type, isPdf = true, docId = pickingDocumentId)
-            }
+        if (uri != null) {
+            pickingUris = listOf(uri)
+            isPdfPending = true
+        } else {
+            pickingDocumentType = null
+            pickingDocumentId = null
         }
     }
 
@@ -259,21 +263,23 @@ private fun ProfileMainContent(
         contract = ActivityResultContracts.PickMultipleVisualMedia()
     ) { uris ->
         if (uris.isNotEmpty()) {
-            pickingDocumentType?.let { type ->
-                viewModel.uploadDocument(uris, type, isPdf = false, docId = pickingDocumentId)
-            }
+            pickingUris = uris
+            isPdfPending = false
+        } else {
+            pickingDocumentType = null
+            pickingDocumentId = null
         }
     }
 
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture(),
         onResult = { success ->
-            if (success) {
-                tempCameraUri?.let { uri ->
-                    pickingDocumentType?.let { type ->
-                        viewModel.uploadDocument(listOf(uri), type, isPdf = false, docId = pickingDocumentId)
-                    }
-                }
+            if (success && tempCameraUri != null) {
+                pickingUris = listOf(tempCameraUri!!)
+                isPdfPending = false
+            } else {
+                pickingDocumentType = null
+                pickingDocumentId = null
             }
             tempCameraUri = null
         },
@@ -312,70 +318,54 @@ private fun ProfileMainContent(
         }
     }
 
-    if (showSourcePicker) {
-        ModalBottomSheet(
-            onDismissRequest = { showSourcePicker = false },
-            sheetState = sourceSheetState,
-        ) {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 24.dp),
-            ) {
-                Text(
-                    text = "Select source",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(16.dp),
-                )
-
-                ListItem(
-                    headlineContent = { Text("Camera") },
-                    leadingContent = {
-                        Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = CircleShape) {
-                            Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.padding(8.dp).size(20.dp))
-                        }
-                    },
-                    modifier = Modifier.clickable {
-                        scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
-                            showSourcePicker = false
-                            startCameraCapture()
-                        }
-                    },
-                )
-                ListItem(
-                    headlineContent = { Text("Gallery (Images)") },
-                    leadingContent = {
-                        Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = CircleShape) {
-                            Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.padding(8.dp).size(20.dp))
-                        }
-                    },
-                    modifier = Modifier.clickable {
-                        scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
-                            showSourcePicker = false
-                            imagePickerLauncher.launch(
-                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
-                            )
-                        }
-                    },
-                )
-                ListItem(
-                    headlineContent = { Text("Documents (PDF)") },
-                    leadingContent = {
-                        Surface(color = MaterialTheme.colorScheme.tertiaryContainer, shape = CircleShape) {
-                            Icon(Icons.AutoMirrored.Filled.InsertDriveFile, contentDescription = null, modifier = Modifier.padding(8.dp).size(20.dp))
-                        }
-                    },
-                    modifier = Modifier.clickable {
-                        scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
-                            showSourcePicker = false
-                            documentPickerLauncher.launch(arrayOf("application/pdf"))
-                        }
-                    },
-                )
+    com.freight24.ui.components.FileSourcePickerSheet(
+        showSheet = showSourcePicker,
+        onDismissRequest = { 
+            showSourcePicker = false 
+            pickingDocumentType = null
+            pickingDocumentId = null
+        },
+        onCameraClick = {
+            scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
+                showSourcePicker = false
+                startCameraCapture()
             }
-        }
+        },
+        onGalleryClick = {
+            scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
+                showSourcePicker = false
+                imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            }
+        },
+        onDocumentClick = {
+            scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
+                showSourcePicker = false
+                documentPickerLauncher.launch(arrayOf("application/pdf"))
+            }
+        },
+        sheetState = sourceSheetState
+    )
+
+    if (pickingUris.isNotEmpty()) {
+        com.freight24.ui.components.FileConfirmationSheet(
+            selectedUris = pickingUris,
+            isPdf = isPdfPending,
+            isUploading = isUploading,
+            uploadButtonText = "Upload",
+            onUploadClick = {
+                pickingDocumentType?.let { type ->
+                    viewModel.uploadDocument(pickingUris, type, isPdf = isPdfPending, docId = pickingDocumentId)
+                    pickingUris = emptyList()
+                    pickingDocumentType = null
+                    pickingDocumentId = null
+                }
+            },
+            onDismiss = {
+                pickingUris = emptyList()
+                pickingDocumentType = null
+                pickingDocumentId = null
+            }
+        )
     }
 
     Box(modifier = Modifier.fillMaxSize()) {

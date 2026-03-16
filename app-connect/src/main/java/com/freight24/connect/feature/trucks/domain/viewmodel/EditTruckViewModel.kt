@@ -25,7 +25,11 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
+import com.freight24.connect.utils.FileUtils
 import javax.inject.Inject
 
 
@@ -282,44 +286,34 @@ constructor(
 
     fun onFileSelected(
         context: Context,
-        uri: Uri,
+        uris: List<Uri>,
         type: String,
+        isPdf: Boolean,
+        onSuccess: () -> Unit
     ) {
-        Log.d(TAG, "File selected: $type, uri: $uri")
+        if (uris.isEmpty()) return
+        Log.d(TAG, "File selected: $type, uris size: ${uris.size}")
         viewModelScope.launch {
-            val file = fromUri(context, uri, type)
-            if (file != null) {
-                Log.d(TAG, "File processed successfully: ${file.absolutePath}")
-            } else {
-                Log.e(TAG, "Failed to process file for $type")
-            }
-            when (type) {
-                "RC" -> rcCardFile.value = file
-                "FC" -> fcCertificateFile.value = file
-                "INSURANCE" -> insuranceFile.value = file
-            }
-        }
-    }
-
-    private fun fromUri(
-        context: Context,
-        uri: Uri,
-        prefix: String,
-    ): File? {
-        return try {
-            val contentResolver = context.contentResolver
-            val extension = contentResolver.getType(uri)?.split("/")?.lastOrNull() ?: "pdf"
-            val fileName = "${prefix}_${System.currentTimeMillis()}.$extension"
-            val tempFile = File(context.cacheDir, fileName)
-            contentResolver.openInputStream(uri)?.use { input: java.io.InputStream ->
-                tempFile.outputStream().use { output: java.io.OutputStream ->
-                    input.copyTo(output)
+            try {
+                val file = if (isPdf) {
+                    FileUtils.getFileFromUri(context, uris.first())
+                } else {
+                    FileUtils.convertImageToPdf(context, uris)
                 }
+                if (file != null) {
+                    Log.d(TAG, "File processed successfully: ${file.absolutePath}")
+                    when (type) {
+                        "RC" -> rcCardFile.value = file
+                        "FC" -> fcCertificateFile.value = file
+                        "INSURANCE" -> insuranceFile.value = file
+                    }
+                    onSuccess()
+                } else {
+                    Log.e(TAG, "Failed to process file for $type")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error processing file", e)
             }
-            tempFile
-        } catch (e: Exception) {
-            Log.e(TAG, "Error in fromUri", e)
-            null
         }
     }
 

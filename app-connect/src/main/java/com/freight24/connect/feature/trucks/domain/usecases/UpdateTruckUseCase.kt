@@ -56,7 +56,8 @@ class UpdateTruckUseCaseImpl @Inject constructor(
     }
 
     private fun File.toFilePart(name: String): MultipartBody.Part {
-        val requestBody = this.asRequestBody("application/octet-stream".toMediaTypeOrNull())
+        val mimeType = if (extension.equals("pdf", ignoreCase = true)) "application/pdf" else "application/octet-stream"
+        val requestBody = this.asRequestBody(mimeType.toMediaTypeOrNull())
         return MultipartBody.Part.createFormData(name, this.name, requestBody)
     }
 }

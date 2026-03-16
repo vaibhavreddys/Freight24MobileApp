@@ -8,6 +8,7 @@ import com.freight24.connect.feature.clients.domain.usecases.UpdateClientParams
 import com.freight24.connect.feature.clients.domain.usecases.UpdateClientUseCase
 import com.freight24.connect.feature.truckowners.profile.domain.usecase.UploadIdentityDocumentParams
 import com.freight24.connect.feature.truckowners.profile.domain.usecase.UploadIdentityDocumentUseCase
+import com.freight24.connect.feature.truckowners.profile.domain.usecase.GetProfileSignedUrlUseCase
 import com.freight24.rest.request.ClientBranchUpdateRequest
 import com.freight24.rest.request.UpdateClientRequest
 import com.freight24.rest.response.ClientBranchDto
@@ -29,6 +30,7 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
 import javax.inject.Inject
+import com.freight24.connect.utils.FileUtils
 
 @HiltViewModel
 class ClientProfileViewModel @Inject constructor(
@@ -36,6 +38,7 @@ class ClientProfileViewModel @Inject constructor(
     private val getClientByUserIdUseCase: GetClientByUserIdUseCase,
     private val updateClientUseCase: UpdateClientUseCase,
     private val uploadIdentityDocumentUseCase: UploadIdentityDocumentUseCase,
+    private val getProfileSignedUrlUseCase: GetProfileSignedUrlUseCase,
 ) : ViewModel() {
 
     private val userId: String = checkNotNull(savedStateHandle["userId"])
@@ -139,39 +142,35 @@ class ClientProfileViewModel @Inject constructor(
 
     fun onFileSelected(
         context: Context,
-        uri: Uri,
+        uris: List<Uri>,
         type: String,
+        isPdf: Boolean,
+        onSuccess: () -> Unit
     ) {
+        if (uris.isEmpty()) return
         viewModelScope.launch {
-            val file = fromUri(context, uri, type)
-            if (file != null) {
-                when (type) {
-                    "AADHAAR" -> aadhaarFile.value = file
-                    "PAN" -> panFile.value = file
+            _isSaving.value = true
+            try {
+                val file = if (isPdf) {
+                    FileUtils.getFileFromUri(context, uris.first())
+                } else {
+                    FileUtils.convertImageToPdf(context, uris)
                 }
-                onFieldChanged()
-            }
-        }
-    }
-
-    private fun fromUri(
-        context: Context,
-        uri: Uri,
-        prefix: String,
-    ): File? {
-        return try {
-            val contentResolver = context.contentResolver
-            val extension = contentResolver.getType(uri)?.split("/")?.lastOrNull() ?: "jpg"
-            val fileName = "${prefix}_${System.currentTimeMillis()}.$extension"
-            val tempFile = File(context.cacheDir, fileName)
-            contentResolver.openInputStream(uri)?.use { input ->
-                tempFile.outputStream().use { output ->
-                    input.copyTo(output)
+                if (file != null) {
+                    when (type) {
+                        "AADHAAR" -> aadhaarFile.value = file
+                        "PAN" -> panFile.value = file
+                    }
+                    onFieldChanged()
+                    onSuccess()
+                } else {
+                    _messageEvent.emit("Failed to process document")
                 }
+            } catch (e: Exception) {
+                _messageEvent.emit(e.message ?: "Failed to process document")
+            } finally {
+                _isSaving.value = false
             }
-            tempFile
-        } catch (e: Exception) {
-            null
         }
     }
 
@@ -257,6 +256,17 @@ class ClientProfileViewModel @Inject constructor(
         viewModelScope.launch {
             _isSaving.value = true
 
+            val userId = original.user_id
+
+            // 1. Upload documents if selected
+            val uploadResult = uploadDocuments(userId)
+            if (uploadResult.isFailure) {
+                _messageEvent.emit(uploadResult.exceptionOrNull()?.message ?: "Failed to upload documents")
+                _isSaving.value = false
+                return@launch
+            }
+
+            // 2. Update other fields
             val branchUpdates = buildChangedBranchUpdates(original.client_branches, editableBranches.value)
             val request =
                 UpdateClientRequest(
@@ -272,15 +282,12 @@ class ClientProfileViewModel @Inject constructor(
 
             updateClientUseCase(
                 UpdateClientParams(
-                    userId = original.user_id,
+                    userId = userId,
                     request = request,
                 ),
             ).onSuccess { updatedClient ->
                 originalClient = updatedClient
                 populateEditableFields(updatedClient)
-
-                // Upload documents if selected
-                uploadDocuments(original.user_id)
 
                 _uiState.value = UiState.Success(updatedClient)
                 _isEditing.value = false
@@ -296,32 +303,56 @@ class ClientProfileViewModel @Inject constructor(
         }
     }
 
-    private suspend fun uploadDocuments(userId: String) {
-        aadhaarFile.value?.let { file ->
-            uploadIdentityDocumentUseCase(
-                UploadIdentityDocumentParams(
-                    userId = userId,
-                    documentTypeId = 1, // Aadhaar Card
-                    documentNumber = "",
-                    file = file.toMultipartPart("file")
-                )
-            )
-        }
+    private suspend fun uploadDocuments(userId: String): Result<Unit> {
+        try {
+            aadhaarFile.value?.let { file ->
+                val result =
+                    uploadIdentityDocumentUseCase(
+                        UploadIdentityDocumentParams(
+                            userId = userId,
+                            documentTypeId = 1, // Aadhaar Card
+                            documentNumber = "",
+                            file = file.toMultipartPart("file"),
+                        ),
+                    )
+                if (result.isFailure) return Result.failure(Exception("Aadhaar upload failed: ${result.exceptionOrNull()?.message}"))
+            }
 
-        panFile.value?.let { file ->
-            uploadIdentityDocumentUseCase(
-                UploadIdentityDocumentParams(
-                    userId = userId,
-                    documentTypeId = 2, // PAN Card
-                    documentNumber = "",
-                    file = file.toMultipartPart("file")
-                )
-            )
+            panFile.value?.let { file ->
+                val result =
+                    uploadIdentityDocumentUseCase(
+                        UploadIdentityDocumentParams(
+                            userId = userId,
+                            documentTypeId = 2, // PAN Card
+                            documentNumber = "",
+                            file = file.toMultipartPart("file"),
+                        ),
+                    )
+                if (result.isFailure) return Result.failure(Exception("PAN upload failed: ${result.exceptionOrNull()?.message}"))
+            }
+            return Result.success(Unit)
+        } catch (e: Exception) {
+            return Result.failure(e)
+        }
+    }
+
+    fun getSignedUrl(s3Url: String, onUrlReady: (String) -> Unit) {
+        viewModelScope.launch {
+            _isSaving.value = true
+            getProfileSignedUrlUseCase(s3Url)
+                .onSuccess { signedUrl ->
+                    onUrlReady(signedUrl)
+                }
+                .onFailure { error ->
+                    _messageEvent.emit(error.message ?: "Failed to get document link")
+                }
+            _isSaving.value = false
         }
     }
 
     private fun File.toMultipartPart(name: String): MultipartBody.Part {
-        val requestBody = this.asRequestBody("application/octet-stream".toMediaTypeOrNull())
+        val mimeType = if (extension.equals("pdf", ignoreCase = true)) "application/pdf" else "application/octet-stream"
+        val requestBody = this.asRequestBody(mimeType.toMediaTypeOrNull())
         return MultipartBody.Part.createFormData(name, this.name, requestBody)
     }
 

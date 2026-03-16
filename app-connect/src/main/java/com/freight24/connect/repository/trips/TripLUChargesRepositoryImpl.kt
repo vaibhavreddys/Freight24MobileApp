@@ -79,7 +79,12 @@ class TripLUChargesRepositoryImpl @Inject constructor(
     }
 
     private fun File.toMultipart(partName: String): MultipartBody.Part {
-        val mimeType = getMimeType(this) ?: "application/octet-stream"
+        val mimeType =
+            if (extension.equals("pdf", ignoreCase = true)) {
+                "application/pdf"
+            } else {
+                getMimeType(this) ?: "application/octet-stream"
+            }
         val requestBody = asRequestBody(mimeType.toMediaTypeOrNull())
 
         return MultipartBody.Part.createFormData(

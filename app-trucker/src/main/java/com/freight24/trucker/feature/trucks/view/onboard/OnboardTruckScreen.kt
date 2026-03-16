@@ -441,20 +441,25 @@ private fun DocumentsStep(
     val fcFile by viewModel.fcCertificateFile.collectAsState()
     val insuranceFile by viewModel.insuranceFile.collectAsState()
 
+    var pendingUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
+    var isPdfPending by remember { mutableStateOf(false) }
     var showSourcePicker by remember { mutableStateOf(false) }
     var currentTargetPrefix by remember { mutableStateOf<String?>(null) }
     var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
-
     val sheetState = rememberModalBottomSheetState()
 
     // 1. Gallery Launcher (Photo Picker)
     val galleryLauncher =
         rememberLauncherForActivityResult(
-            ActivityResultContracts.PickVisualMedia(),
-        ) { uri ->
-            Log.d(TAG, "Gallery result: $uri for $currentTargetPrefix")
-            uri?.let { currentTargetPrefix?.let { prefix -> viewModel.onFileSelected(context, it, prefix) } }
-            currentTargetPrefix = null
+            ActivityResultContracts.PickMultipleVisualMedia(),
+        ) { uris ->
+            Log.d(TAG, "Gallery result: $uris for $currentTargetPrefix")
+            if (uris.isNotEmpty()) {
+                pendingUris = uris
+                isPdfPending = false
+            } else {
+                currentTargetPrefix = null
+            }
         }
 
     // 2. Document Launcher (PDF)
@@ -463,8 +468,12 @@ private fun DocumentsStep(
             ActivityResultContracts.OpenDocument(),
         ) { uri ->
             Log.d(TAG, "Document result: $uri for $currentTargetPrefix")
-            uri?.let { currentTargetPrefix?.let { prefix -> viewModel.onFileSelected(context, it, prefix) } }
-            currentTargetPrefix = null
+            if (uri != null) {
+                pendingUris = listOf(uri)
+                isPdfPending = true
+            } else {
+                currentTargetPrefix = null
+            }
         }
 
     // 3. Camera Launcher
@@ -473,10 +482,12 @@ private fun DocumentsStep(
             ActivityResultContracts.TakePicture(),
         ) { success ->
             Log.d(TAG, "Camera result: $success for $currentTargetPrefix")
-            if (success) {
-                tempCameraUri?.let { currentTargetPrefix?.let { prefix -> viewModel.onFileSelected(context, it, prefix) } }
+            if (success && tempCameraUri != null) {
+                pendingUris = listOf(tempCameraUri!!)
+                isPdfPending = false
+            } else {
+                currentTargetPrefix = null
             }
-            currentTargetPrefix = null
             tempCameraUri = null
         }
 
@@ -515,72 +526,50 @@ private fun DocumentsStep(
         }
     }
 
-    if (showSourcePicker) {
-        ModalBottomSheet(
-            onDismissRequest = { showSourcePicker = false },
-            sheetState = sheetState,
-            containerColor = MaterialTheme.colorScheme.surface,
-        ) {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 32.dp),
-            ) {
-                Text(
-                    text = "Select source",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(16.dp),
-                    fontWeight = FontWeight.Bold,
-                )
-
-                ListItem(
-                    headlineContent = { Text("Camera") },
-                    leadingContent = {
-                        Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = CircleShape) {
-                            Icon(Icons.Default.CameraAlt, null, modifier = Modifier.padding(8.dp).size(20.dp))
-                        }
-                    },
-                    modifier =
-                        Modifier.clickable {
-                            scope.launch { sheetState.hide() }.invokeOnCompletion {
-                                showSourcePicker = false
-                                initiateCapture()
-                            }
-                        },
-                )
-                ListItem(
-                    headlineContent = { Text("Gallery (Images)") },
-                    leadingContent = {
-                        Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = CircleShape) {
-                            Icon(Icons.Default.PhotoLibrary, null, modifier = Modifier.padding(8.dp).size(20.dp))
-                        }
-                    },
-                    modifier =
-                        Modifier.clickable {
-                            scope.launch { sheetState.hide() }.invokeOnCompletion {
-                                showSourcePicker = false
-                                galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                            }
-                        },
-                )
-                ListItem(
-                    headlineContent = { Text("Documents (PDF)") },
-                    leadingContent = {
-                        Surface(color = MaterialTheme.colorScheme.tertiaryContainer, shape = CircleShape) {
-                            Icon(Icons.AutoMirrored.Filled.InsertDriveFile, null, modifier = Modifier.padding(8.dp).size(20.dp))
-                        }
-                    },
-                    modifier =
-                        Modifier.clickable {
-                            scope.launch { sheetState.hide() }.invokeOnCompletion {
-                                showSourcePicker = false
-                                docLauncher.launch(arrayOf("application/pdf"))
-                            }
-                        },
-                )
+    com.freight24.ui.components.FileSourcePickerSheet(
+        showSheet = showSourcePicker,
+        onDismissRequest = { showSourcePicker = false },
+        onCameraClick = {
+            scope.launch { sheetState.hide() }.invokeOnCompletion {
+                showSourcePicker = false
+                initiateCapture()
             }
-        }
+        },
+        onGalleryClick = {
+            scope.launch { sheetState.hide() }.invokeOnCompletion {
+                showSourcePicker = false
+                galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            }
+        },
+        onDocumentClick = {
+            scope.launch { sheetState.hide() }.invokeOnCompletion {
+                showSourcePicker = false
+                docLauncher.launch(arrayOf("application/pdf"))
+            }
+        },
+        sheetState = sheetState
+    )
+
+    if (pendingUris.isNotEmpty()) {
+        val uiState by viewModel.uiState.collectAsState()
+        com.freight24.ui.components.FileConfirmationSheet(
+            selectedUris = pendingUris,
+            isPdf = isPdfPending,
+            isUploading = uiState is UiState.Loading,
+            uploadButtonText = "Confirm",
+            onUploadClick = {
+                currentTargetPrefix?.let { prefix ->
+                    viewModel.onFileSelected(context, pendingUris, prefix, isPdfPending) {
+                        pendingUris = emptyList()
+                        currentTargetPrefix = null
+                    }
+                }
+            },
+            onDismiss = {
+                pendingUris = emptyList()
+                currentTargetPrefix = null
+            }
+        )
     }
 
     Column(

@@ -23,6 +23,15 @@ data class ClientProfileDto(
     val created_at: String? = null,
     val status: String? = null,
     val client_branches: List<ClientBranchDto> = emptyList(),
+    val documents: List<ClientDocumentDto> = emptyList(),
+)
+
+@Serializable
+data class ClientDocumentDto(
+    val documentId: String,
+    val documentName: String,
+    val documentUrl: String,
+    val documentStatus: String,
 )
 
 @Serializable

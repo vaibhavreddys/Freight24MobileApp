@@ -28,7 +28,12 @@ class UploadLrUseCaseImpl @Inject constructor(
 
     override suspend fun invoke(params: UploadLrUseCaseDataParams): Result<TripDataResponse> {
 
-        val mimeType = getMimeType(params.file.absolutePath) ?: "application/octet-stream"
+        val mimeType =
+            if (params.file.extension.equals("pdf", ignoreCase = true)) {
+                "application/pdf"
+            } else {
+                getMimeType(params.file.absolutePath) ?: "application/octet-stream"
+            }
         val requestFile = params.file.asRequestBody(mimeType.toMediaTypeOrNull())
 
 

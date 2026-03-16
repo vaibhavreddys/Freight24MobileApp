@@ -187,140 +187,44 @@ internal fun TruckDetailsScreen(
         }
     }
 
-    if (showSourcePicker) {
-        ModalBottomSheet(
-            onDismissRequest = {
+    com.freight24.ui.components.FileSourcePickerSheet(
+        showSheet = showSourcePicker,
+        onDismissRequest = {
+            showSourcePicker = false
+            currentDocumentType = null
+        },
+        onCameraClick = {
+            scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
                 showSourcePicker = false
-                currentDocumentType = null
-            },
-            sheetState = sourceSheetState,
-        ) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
-            ) {
-                Text(
-                    text = "Select source",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(16.dp),
-                )
-
-                ListItem(
-                    headlineContent = { Text("Camera") },
-                    leadingContent = {
-                        Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = CircleShape) {
-                            Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.padding(8.dp).size(20.dp))
-                        }
-                    },
-                    modifier = Modifier.clickable {
-                        scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
-                            showSourcePicker = false
-                            startCameraCapture()
-                        }
-                    },
-                )
-                ListItem(
-                    headlineContent = { Text("Gallery (Images)") },
-                    leadingContent = {
-                        Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = CircleShape) {
-                            Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.padding(8.dp).size(20.dp))
-                        }
-                    },
-                    modifier = Modifier.clickable {
-                        scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
-                            showSourcePicker = false
-                            photoPickerLauncher.launch(
-                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
-                            )
-                        }
-                    },
-                )
-                ListItem(
-                    headlineContent = { Text("Documents (PDF)") },
-                    leadingContent = {
-                        Surface(color = MaterialTheme.colorScheme.tertiaryContainer, shape = CircleShape) {
-                            Icon(Icons.AutoMirrored.Filled.InsertDriveFile, contentDescription = null, modifier = Modifier.padding(8.dp).size(20.dp))
-                        }
-                    },
-                    modifier = Modifier.clickable {
-                        scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
-                            showSourcePicker = false
-                            documentPickerLauncher.launch(arrayOf("application/pdf"))
-                        }
-                    },
+                startCameraCapture()
+            }
+        },
+        onGalleryClick = {
+            scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
+                showSourcePicker = false
+                photoPickerLauncher.launch(
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
                 )
             }
-        }
-    }
+        },
+        onDocumentClick = {
+            scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
+                showSourcePicker = false
+                documentPickerLauncher.launch(arrayOf("application/pdf"))
+            }
+        },
+        sheetState = sourceSheetState
+    )
 
     if (selectedUris.isNotEmpty()) {
-        Dialog(onDismissRequest = { viewModel.clearSelection() }) {
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surface,
-                modifier = Modifier.padding(16.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "Prepare Upload",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "${selectedUris.size} file(s) selected for ${viewModel.currentDocumentType.value}",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    if (!viewModel.isPdf.value) {
-                        Box(
-                            modifier = Modifier
-                                .height(200.dp)
-                                .fillMaxWidth()
-                                .background(Color.LightGray, RoundedCornerShape(8.dp))
-                        ) {
-                            Image(
-                                painter = rememberAsyncImagePainter(selectedUris.first()),
-                                contentDescription = null,
-                                modifier = Modifier.fillMaxSize().padding(4.dp),
-                                contentScale = ContentScale.Fit
-                            )
-                        }
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.Description,
-                            contentDescription = null,
-                            modifier = Modifier.size(100.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Button(
-                        onClick = { viewModel.uploadDocuments() },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = !isUploading
-                    ) {
-                        if (isUploading) {
-                            CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White)
-                        } else {
-                            Text("Upload Now")
-                        }
-                    }
-                    TextButton(
-                        onClick = { viewModel.clearSelection() },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Cancel")
-                    }
-                }
-            }
-        }
+        com.freight24.ui.components.FileConfirmationSheet(
+            selectedUris = selectedUris,
+            isPdf = viewModel.isPdf.value,
+            isUploading = isUploading,
+            uploadButtonText = "Upload Now",
+            onUploadClick = { viewModel.uploadDocuments() },
+            onDismiss = { viewModel.clearSelection() }
+        )
     }
 
     Scaffold(

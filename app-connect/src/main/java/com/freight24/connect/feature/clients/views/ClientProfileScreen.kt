@@ -30,43 +30,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
-import androidx.compose.material.icons.filled.Badge
-import androidx.compose.material.icons.filled.Business
-import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.ErrorOutline
-import androidx.compose.material.icons.filled.Fingerprint
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PhotoLibrary
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material.icons.automirrored.filled.*
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -90,6 +58,7 @@ import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.freight24.connect.feature.clients.domain.viewmodel.ClientProfileViewModel
 import com.freight24.rest.response.ClientProfileDto
+import com.freight24.rest.response.ClientDocumentDto
 import com.freight24.ui.UiState
 import com.freight24.ui.components.DashedUploadCard
 import com.freight24.ui.theme.FreightThemeTokens
@@ -234,33 +203,45 @@ private fun ClientProfileContent(
     var showSourcePicker by remember { mutableStateOf(false) }
     var currentTargetPrefix by remember { mutableStateOf<String?>(null) }
     var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
+    val sheetState = androidx.compose.material3.rememberModalBottomSheetState()
 
-    val sheetState = rememberModalBottomSheetState()
+    var pendingUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
+    var isPdfPending by remember { mutableStateOf(false) }
 
     val galleryLauncher =
         rememberLauncherForActivityResult(
-            ActivityResultContracts.PickVisualMedia(),
-        ) { uri ->
-            uri?.let { currentTargetPrefix?.let { prefix -> viewModel.onFileSelected(context, it, prefix) } }
-            currentTargetPrefix = null
+            ActivityResultContracts.PickMultipleVisualMedia(),
+        ) { uris ->
+            if (uris.isNotEmpty()) {
+                pendingUris = uris
+                isPdfPending = false
+            } else {
+                currentTargetPrefix = null
+            }
         }
 
     val docLauncher =
         rememberLauncherForActivityResult(
             ActivityResultContracts.OpenDocument(),
         ) { uri ->
-            uri?.let { currentTargetPrefix?.let { prefix -> viewModel.onFileSelected(context, it, prefix) } }
-            currentTargetPrefix = null
+            if (uri != null) {
+                pendingUris = listOf(uri)
+                isPdfPending = true
+            } else {
+                currentTargetPrefix = null
+            }
         }
 
     val cameraLauncher =
         rememberLauncherForActivityResult(
             ActivityResultContracts.TakePicture(),
         ) { success ->
-            if (success) {
-                tempCameraUri?.let { currentTargetPrefix?.let { prefix -> viewModel.onFileSelected(context, it, prefix) } }
+            if (success && tempCameraUri != null) {
+                pendingUris = listOf(tempCameraUri!!)
+                isPdfPending = false
+            } else {
+                currentTargetPrefix = null
             }
-            currentTargetPrefix = null
             tempCameraUri = null
         }
 
@@ -292,7 +273,7 @@ private fun ClientProfileContent(
     val panCard = viewModel.editablePanCard.collectAsState().value
     val aadhaar = viewModel.editableAadhaarCard.collectAsState().value
     val branches = viewModel.editableBranches.collectAsState().value
-    val tagCode = client.tag_code.orEmpty()
+    val tagCode = client.tag_code ?: ""
 
     Column(
         modifier = Modifier
@@ -364,6 +345,32 @@ private fun ClientProfileContent(
                 },
                 placeholder = "Not added",
             )
+            DividerLine()
+            ProfileField(
+                label = "PAN NUMBER",
+                value = panCard,
+                isEditing = isEditing,
+                leadingIcon = Icons.Default.Badge,
+                keyboardType = KeyboardType.Ascii,
+                capitalization = KeyboardCapitalization.Characters,
+                onValueChange = {
+                    viewModel.editablePanCard.value = it.uppercase()
+                    viewModel.onFieldChanged()
+                },
+            )
+            DividerLine()
+            ProfileField(
+                label = "AADHAAR NUMBER",
+                value = aadhaar,
+                isEditing = isEditing,
+                leadingIcon = Icons.Default.Fingerprint,
+                keyboardType = KeyboardType.Number,
+                capitalization = KeyboardCapitalization.None,
+                onValueChange = {
+                    viewModel.editableAadhaarCard.value = it.filter(Char::isDigit).take(12)
+                    viewModel.onFieldChanged()
+                },
+            )
         }
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -396,76 +403,31 @@ private fun ClientProfileContent(
                     viewModel.onFieldChanged()
                 },
             )
-            DividerLine()
-            ProfileField(
-                label = "PAN NUMBER",
-                value = panCard,
-                isEditing = isEditing,
-                leadingIcon = Icons.Default.Badge,
-                keyboardType = KeyboardType.Ascii,
-                capitalization = KeyboardCapitalization.Characters,
-                onValueChange = {
-                    viewModel.editablePanCard.value = it.uppercase()
-                    viewModel.onFieldChanged()
-                },
-            )
-            DividerLine()
-            ProfileField(
-                label = "AADHAAR NUMBER",
-                value = aadhaar,
-                isEditing = isEditing,
-                leadingIcon = Icons.Default.Fingerprint,
-                keyboardType = KeyboardType.Number,
-                capitalization = KeyboardCapitalization.None,
-                onValueChange = {
-                    viewModel.editableAadhaarCard.value = it.filter(Char::isDigit).take(12)
-                    viewModel.onFieldChanged()
-                },
-            )
         }
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        AnimatedVisibility(
-            visible = isEditing,
-            enter = expandVertically(),
-            exit = shrinkVertically(),
+        ProfileSection(
+            title = "DOCUMENTS",
+            icon = Icons.Default.Assignment,
+            initiallyExpanded = true,
         ) {
-            Column {
-                ProfileSection(
-                    title = "DOCUMENTS",
-                    icon = Icons.Default.Badge,
-                    initiallyExpanded = true,
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                    ) {
-                        DashedUploadCard(
-                            title = "Aadhaar Card",
-                            subtitle = "Camera, JPG or PDF",
-                            label = "Update",
-                            isUploaded = aadhaarFile != null,
-                            onUploadClick = {
-                                currentTargetPrefix = "AADHAAR"
-                                showSourcePicker = true
-                            },
-                        )
-                        DashedUploadCard(
-                            title = "PAN Card",
-                            subtitle = "Camera, JPG or PDF",
-                            label = "Update",
-                            isUploaded = panFile != null,
-                            onUploadClick = {
-                                currentTargetPrefix = "PAN"
-                                showSourcePicker = true
-                            },
-                        )
+            DocumentList(
+                documents = client.documents,
+                isEditing = isEditing,
+                onDocumentView = { s3Url ->
+                    viewModel.getSignedUrl(s3Url) { signedUrl ->
+                        context.startActivity(com.freight24.ui.components.getPdfLaunchIntent(signedUrl, context))
                     }
+                },
+                onDocumentUpload = { typeName ->
+                    currentTargetPrefix = if (typeName.contains("Aadhaar")) "AADHAAR" else "PAN"
+                    showSourcePicker = true
                 }
-                Spacer(modifier = Modifier.height(20.dp))
-            }
+            )
         }
+
+        Spacer(modifier = Modifier.height(20.dp))
 
         ProfileSection(
             title = "BRANCHES",
@@ -488,68 +450,50 @@ private fun ClientProfileContent(
             )
         }
 
-        if (showSourcePicker) {
-            ModalBottomSheet(
-                onDismissRequest = { showSourcePicker = false },
-                sheetState = sheetState,
-                containerColor = MaterialTheme.colorScheme.surface,
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 32.dp),
-                ) {
-                    Text(
-                        text = "Select source",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(16.dp),
-                        fontWeight = FontWeight.Bold,
-                    )
-
-                    ListItem(
-                        headlineContent = { Text("Camera") },
-                        leadingContent = {
-                            Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = CircleShape) {
-                                Icon(Icons.Default.CameraAlt, null, modifier = Modifier.padding(8.dp).size(20.dp))
-                            }
-                        },
-                        modifier = Modifier.clickable {
-                            scope.launch { sheetState.hide() }.invokeOnCompletion {
-                                showSourcePicker = false
-                                initiateCapture()
-                            }
-                        },
-                    )
-                    ListItem(
-                        headlineContent = { Text("Gallery (Images)") },
-                        leadingContent = {
-                            Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = CircleShape) {
-                                Icon(Icons.Default.PhotoLibrary, null, modifier = Modifier.padding(8.dp).size(20.dp))
-                            }
-                        },
-                        modifier = Modifier.clickable {
-                            scope.launch { sheetState.hide() }.invokeOnCompletion {
-                                showSourcePicker = false
-                                galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                            }
-                        },
-                    )
-                    ListItem(
-                        headlineContent = { Text("Documents (PDF)") },
-                        leadingContent = {
-                            Surface(color = MaterialTheme.colorScheme.tertiaryContainer, shape = CircleShape) {
-                                Icon(Icons.AutoMirrored.Filled.InsertDriveFile, null, modifier = Modifier.padding(8.dp).size(20.dp))
-                            }
-                        },
-                        modifier = Modifier.clickable {
-                            scope.launch { sheetState.hide() }.invokeOnCompletion {
-                                showSourcePicker = false
-                                docLauncher.launch(arrayOf("application/pdf"))
-                            }
-                        },
-                    )
+        com.freight24.ui.components.FileSourcePickerSheet(
+            showSheet = showSourcePicker,
+            onDismissRequest = { showSourcePicker = false },
+            onCameraClick = {
+                scope.launch { sheetState.hide() }.invokeOnCompletion {
+                    showSourcePicker = false
+                    initiateCapture()
                 }
-            }
+            },
+            onGalleryClick = {
+                scope.launch { sheetState.hide() }.invokeOnCompletion {
+                    showSourcePicker = false
+                    galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                }
+            },
+            onDocumentClick = {
+                scope.launch { sheetState.hide() }.invokeOnCompletion {
+                    showSourcePicker = false
+                    docLauncher.launch(arrayOf("application/pdf"))
+                }
+            },
+            sheetState = sheetState
+        )
+
+        if (pendingUris.isNotEmpty()) {
+            val isSaving by viewModel.isSaving.collectAsState()
+            com.freight24.ui.components.FileConfirmationSheet(
+                selectedUris = pendingUris,
+                isPdf = isPdfPending,
+                isUploading = isSaving,
+                uploadButtonText = "Confirm",
+                onUploadClick = {
+                    currentTargetPrefix?.let { prefix ->
+                        viewModel.onFileSelected(context, pendingUris, prefix, isPdfPending) {
+                            pendingUris = emptyList()
+                            currentTargetPrefix = null
+                        }
+                    }
+                },
+                onDismiss = {
+                    pendingUris = emptyList()
+                    currentTargetPrefix = null
+                }
+            )
         }
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -1000,6 +944,109 @@ private fun ClientProfileErrorState(
         }
     }
 }
+
+@Composable
+private fun DocumentList(
+    documents: List<ClientDocumentDto>,
+    isEditing: Boolean,
+    onDocumentView: (String) -> Unit,
+    onDocumentUpload: (String) -> Unit,
+) {
+    val types = listOf("Aadhaar Card", "PAN Card")
+
+    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+        types.forEachIndexed { index, typeName ->
+            val doc = documents.find { it.documentName == typeName }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        if (isEditing) {
+                            onDocumentUpload(typeName)
+                        } else if (!doc?.documentUrl.isNullOrEmpty()) {
+                            onDocumentView(doc!!.documentUrl)
+                        }
+                    }
+                    .padding(horizontal = 20.dp, vertical = 18.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = when (typeName) {
+                        "PAN Card" -> Icons.Default.CreditCard
+                        "Aadhaar Card" -> Icons.Default.Fingerprint
+                        else -> Icons.Default.Description
+                    },
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(
+                    text = typeName,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.weight(1f),
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                if (isEditing) {
+                    if (doc != null && !doc.documentUrl.isNullOrEmpty()) {
+                        StatusBadge(doc.documentStatus)
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+                    Icon(
+                        imageVector = Icons.Default.CloudUpload,
+                        contentDescription = "Upload",
+                        tint = FreightThemeTokens.colors.successColor,
+                        modifier = Modifier.size(24.dp)
+                    )
+                } else if (doc != null && !doc.documentUrl.isNullOrEmpty()) {
+                    StatusBadge(doc.documentStatus)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = "View",
+                        tint = MaterialTheme.colorScheme.outline,
+                        modifier = Modifier.size(20.dp)
+                    )
+                } else {
+                    VerificationChip("Not Uploaded", MaterialTheme.colorScheme.outline)
+                }
+            }
+            if (index < types.lastIndex) {
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                    thickness = 1.dp,
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatusBadge(status: String) {
+    val (text, color) = when (status.lowercase()) {
+        "verified" -> "Verified" to FreightThemeTokens.colors.successColor
+        "rejected" -> "Rejected" to MaterialTheme.colorScheme.error
+        "pending" -> "Verification Pending" to Color(0xFFFFA000)
+        else -> "N/A" to MaterialTheme.colorScheme.onSurfaceVariant
+    }
+
+    Surface(
+        color = color.copy(alpha = 0.1f),
+        shape = RoundedCornerShape(8.dp),
+    ) {
+        Text(
+            text = text,
+            color = color,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.ExtraBold,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+        )
+    }
+}
+
 
 private fun launchDialer(context: Context, rawPhone: String) {
     val phone = rawPhone.substringBefore(",").trim()
