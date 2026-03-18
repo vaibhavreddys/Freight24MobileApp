@@ -17,6 +17,7 @@ import com.freight24.rest.api.TripLUChargesApi
 import com.freight24.rest.api.TruckApi
 import com.freight24.rest.api.TruckOwnerApi
 import com.freight24.rest.api.DocumentApi
+import com.freight24.rest.api.EmployeesApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -117,5 +118,12 @@ object ApiModule {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "FindTrucksApi")
             .create(FindTrucksApi::class.java)
+    }
+
+    @Provides
+    fun providesEmployeesApi(retrofitFactory: RetrofitFactory): EmployeesApi {
+        return retrofitFactory
+            .create(BuildConfig.BASE_URL, "EmployeesApi")
+            .create(EmployeesApi::class.java)
     }
 }

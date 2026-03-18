@@ -11,7 +11,9 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 internal interface HomeBinderModule {
+
     @Binds
     @Singleton
     fun bindFcmRepository(impl: FcmRepositoryImpl): FcmRepository
+
 }

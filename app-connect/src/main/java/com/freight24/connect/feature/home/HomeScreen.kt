@@ -88,7 +88,13 @@ fun HomeScreen(
     ) { paddingValues, tab ->
         Crossfade(tab, label = "TabTransition") { currentTab ->
             when (currentTab) {
-                ConnectTab.Home -> DashboardScreen(paddingValues)
+                ConnectTab.Home -> DashboardScreen(
+                    paddingValues = paddingValues,
+                    onCreateIndentClick = onCreateIndentClick,
+                    onCreateTripClick = { navController.navigate(ConnectDestination.CreateTrip.route) },
+                    onInterestInboxClick = { /* TODO */ },
+                    onActiveTripsClick = { selectedTab = ConnectTab.Trips }
+                )
                 ConnectTab.Indents -> IndentsScreen(
                     onIndentClick = { indentId ->
                         onIndentClick(indentId)
