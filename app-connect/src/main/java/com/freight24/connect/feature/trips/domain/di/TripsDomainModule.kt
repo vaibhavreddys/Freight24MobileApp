@@ -1,5 +1,7 @@
 package com.freight24.connect.feature.trips.domain.di
 
+import com.freight24.connect.feature.trips.domain.usecase.CancelTripUseCase
+import com.freight24.connect.feature.trips.domain.usecase.CancelTripUseCaseImpl
 import com.freight24.connect.feature.trips.domain.usecase.CreateTripUseCase
 import com.freight24.connect.feature.trips.domain.usecase.CreateTripUseCaseImpl
 import com.freight24.connect.feature.trips.domain.usecase.GetHaltingRateUseCase
@@ -73,5 +75,8 @@ internal abstract class TripsDomainModule {
 
     @Binds
     abstract fun bindUpdateTripUseCase(useCaseImpl: UpdateTripUseCaseImpl): UpdateTripUseCase
+
+    @Binds
+    abstract fun bindCancelTripUseCase(useCaseImpl: CancelTripUseCaseImpl): CancelTripUseCase
 
 }

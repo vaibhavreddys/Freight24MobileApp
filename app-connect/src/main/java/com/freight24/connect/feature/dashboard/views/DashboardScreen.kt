@@ -1,5 +1,6 @@
 package com.freight24.connect.feature.dashboard.views
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -14,7 +15,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -94,7 +97,7 @@ fun AttentionNeededSection(attentionNeeded: DashboardDataResponse.AttentionNeede
             // Trucker Interview Card
             AttentionCard(
                 modifier = Modifier.weight(1f),
-                title = "Trucker\nInterview",
+                title = "Trucker\nInterests",
                 value = "${attentionNeeded.truckerInterests} New Leads",
                 backgroundColor = Color(0xFFEAFBF3),
                 valueColor = Color(0xFF047857)
@@ -127,10 +130,13 @@ fun AttentionCard(
     backgroundColor: Color,
     valueColor: Color
 ) {
-    Surface(
-        color = backgroundColor,
+
+    Card(
+        modifier = modifier,
         shape = RoundedCornerShape(12.dp),
-        modifier = modifier
+        colors = CardDefaults.cardColors(containerColor = backgroundColor),
+        border = BorderStroke(1.dp, Color(0xFFF1F5F9)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier.padding(12.dp),
@@ -175,7 +181,7 @@ fun PulseCard(modifier: Modifier = Modifier, title: String, count: String, color
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9)),
+        border = BorderStroke(1.dp, Color(0xFFF1F5F9)),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
@@ -205,7 +211,7 @@ fun ActiveTripsSection(activeTrips: DashboardDataResponse.ActiveTrips) {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
+        border = BorderStroke(1.dp, Color(0xFFF1F5F9))
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row(
@@ -296,7 +302,7 @@ fun PendingActionsSection(pendingActions: DashboardDataResponse.PendingActions) 
 
 @Composable
 fun ActionCard(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     iconBackgroundColor: Color,
     iconTintColor: Color,
     title: String,
@@ -307,7 +313,7 @@ fun ActionCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9))
+        border = BorderStroke(1.dp, Color(0xFFF1F5F9))
     ) {
         Row(
             modifier = Modifier.padding(16.dp).fillMaxWidth(),
@@ -355,7 +361,29 @@ fun QuickActionsSection(
 ) {
     Column {
         SectionHeader("QUICK ACTIONS")
-        Spacer(modifier = Modifier.height(8.dp))
+//        Spacer(modifier = Modifier.height(8.dp))
+//        Row(
+//            modifier = Modifier.fillMaxWidth(),
+//            horizontalArrangement = Arrangement.spacedBy(12.dp)
+//        ) {
+//            QuickActionCard(
+//                modifier = Modifier.weight(1f),
+//                title = "Create Indent",
+//                icon = Icons.Default.Add,
+//                backgroundColor = Color(0xFF0D9488), // Teal green solid
+//                contentColor = Color.White,
+//                onClick = onCreateIndentClick
+//            )
+//            QuickActionCard(
+//                modifier = Modifier.weight(1f),
+//                title = "Create Trip",
+//                icon = Icons.Default.LocalShipping,
+//                backgroundColor = Color.White,
+//                contentColor = Color(0xFF0D9488),
+//                onClick = onCreateTripClick
+//            )
+//        }
+        Spacer(modifier = Modifier.height(12.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -364,7 +392,10 @@ fun QuickActionsSection(
                 modifier = Modifier.weight(1f),
                 title = "Create Indent",
                 icon = Icons.Default.Add,
-                backgroundColor = Color(0xFF0D9488), // Teal green solid
+                backgroundColor = Color.Transparent,
+                backgroundBrush = Brush.linearGradient(
+                    colors = listOf(Color(0xFF10B981), Color(0xFF0D9488))
+                ),
                 contentColor = Color.White,
                 onClick = onCreateIndentClick
             )
@@ -407,55 +438,68 @@ fun QuickActionsSection(
 fun QuickActionCard(
     modifier: Modifier = Modifier,
     title: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    backgroundColor: Color,
+    icon: ImageVector,
+    backgroundColor: Color = Color.Transparent,
+    backgroundBrush: Brush? = null,
     contentColor: Color,
     badgeText: String? = null,
     onClick: () -> Unit
 ) {
-    Card(
-        modifier = modifier.clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = backgroundColor),
-        border = if (backgroundColor == Color.White) androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)) else null
-    ) {
-        Box(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp)) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
+    Box(modifier = modifier) {
+        Card(
+            modifier = Modifier.fillMaxWidth().clickable { onClick() },
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = if (backgroundBrush != null) Color.Transparent else backgroundColor
+            ),
+            border = if (backgroundColor == Color.White) BorderStroke(1.dp, Color(0xFFE2E8F0)) else null
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(if (backgroundBrush != null) Modifier.background(backgroundBrush) else Modifier)
+                    .padding(vertical = 24.dp)
             ) {
-                Surface(
-                    color = if (backgroundColor == Color.White) Color(0xFFF1F5F9) else Color(0x33FFFFFF),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.size(48.dp)
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(icon, contentDescription = null, tint = contentColor)
+                    Surface(
+                        color = if (backgroundColor == Color.White) Color(0xFFF1F5F9) else Color(0x33FFFFFF),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(icon, contentDescription = null, tint = contentColor)
+                        }
                     }
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    title,
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = contentColor
-                )
-            }
-            if (badgeText != null) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .offset(x = (-16).dp, y = (-8).dp)
-                        .background(Color.Red, CircleShape)
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                ) {
+                    Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        badgeText,
-                        color = Color.White,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold
+                        title,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = contentColor
                     )
                 }
+            }
+        }
+        
+        if (badgeText != null) {
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .align(Alignment.TopEnd)
+                    .offset(x = 6.dp, y = (-6).dp)
+                    .background(Color(0xFFEF4444), CircleShape)
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
+            ) {
+                Text(
+                    badgeText,
+                    color = Color.White,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.align(Alignment.Center)
+                )
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.freight24.connect.repository.trips
 
+import com.freight24.rest.response.BaseResponse
 import com.freight24.rest.response.CreatedTripResponse
 import com.freight24.rest.response.MyTripsDataResponse
 import com.freight24.rest.response.SignedDocument
@@ -66,4 +67,9 @@ interface TripRepository {
        truckId: String?,
        reason: String?,
     ): Result<TripDataResponse>
+
+    suspend fun cancelTrip(
+        tripId: String,
+        reason: String,
+    ): Result<BaseResponse>
 }

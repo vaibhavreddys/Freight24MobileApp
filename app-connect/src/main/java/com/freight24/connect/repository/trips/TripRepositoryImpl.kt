@@ -2,11 +2,13 @@ package com.freight24.connect.repository.trips
 
 import com.freight24.common.di.IoDispatcher
 import com.freight24.rest.api.TripApi
+import com.freight24.rest.request.CancelTripRequest
 import com.freight24.rest.request.CreateTripRequest
 import com.freight24.rest.request.LrVerifyRequest
 import com.freight24.rest.request.UpdateOtherDeductionsRequest
 import com.freight24.rest.request.UpdateTripRequest
 import com.freight24.rest.request.UpdateTruckerStatus
+import com.freight24.rest.response.BaseResponse
 import com.freight24.rest.response.CreatedTripResponse
 import com.freight24.rest.response.MyTripsDataResponse
 import com.freight24.rest.response.SignedDocument
@@ -227,6 +229,28 @@ class TripRepositoryImpl @Inject constructor(
                 )
                 if (response.isSuccessful && response.body() != null) {
                     Result.success(response.body()!!.data)
+                } else {
+                    Result.failure(Exception(response.message()))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    override suspend fun cancelTrip(
+        tripId: String,
+        reason: String,
+    ): Result<BaseResponse> =
+        withContext(ioDispatcher) {
+            try {
+                val response = api.cancelTrip(
+                    tripId = tripId,
+                    cancelTripRequest = CancelTripRequest(
+                        reason = reason
+                    )
+                )
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!)
                 } else {
                     Result.failure(Exception(response.message()))
                 }

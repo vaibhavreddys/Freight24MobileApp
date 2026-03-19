@@ -10,7 +10,11 @@ data class TripDetailsUiState(
     val trip: TripDataResponse? = null,
     val selectedUris: List<Uri> = emptyList(),
     val isPdf: Boolean = false,
-    val isUploading: Boolean = false
+    val isUploading: Boolean = false,
+    val isCancelDialogVisible: Boolean = false,
+    val isCanceling: Boolean = false,
+    val cancelReason: String = "",
+    val cancelNotAllowedMessage: String? = null
 )
 
 sealed class TripDetailsEvent {
@@ -20,6 +24,11 @@ sealed class TripDetailsEvent {
     data object OnClearSelection : TripDetailsEvent()
     data object UploadLR : TripDetailsEvent()
     data object Refresh : TripDetailsEvent()
+    data object ShowCancelDialog : TripDetailsEvent()
+    data object HideCancelDialog : TripDetailsEvent()
+    data object ConfirmCancelTrip : TripDetailsEvent()
+    data object DismissCancelNotAllowed : TripDetailsEvent()
+    data class UpdateCancelReason(val reason: String) : TripDetailsEvent()
 }
 
 interface TripDetailsViewModel {

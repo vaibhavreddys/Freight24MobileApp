@@ -19,7 +19,9 @@ data class IndentDetailsUiState(
     val assignClientCost: String = "",
     val assignNegotiatedCost: String = "",
     val assignNotes: String = "",
-    val isNegotiatedSameAsClient: Boolean = false
+    val isNegotiatedSameAsClient: Boolean = false,
+    val isCancelDialogVisible: Boolean = false,
+    val isCanceling: Boolean = false
 )
 
 sealed class IndentDetailsEvent {
@@ -35,4 +37,7 @@ sealed class IndentDetailsEvent {
         val isNegotiatedSameAsClient: Boolean? = null
     ) : IndentDetailsEvent()
     object ConfirmAssignment : IndentDetailsEvent()
+    object ShowCancelDialog : IndentDetailsEvent()
+    object HideCancelDialog : IndentDetailsEvent()
+    object ConfirmCancel : IndentDetailsEvent()
 }

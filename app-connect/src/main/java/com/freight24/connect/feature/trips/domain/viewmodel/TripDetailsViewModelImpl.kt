@@ -7,6 +7,8 @@ import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.freight24.connect.feature.trips.domain.usecase.CancelTripUseCase
+import com.freight24.connect.feature.trips.domain.usecase.CancelTripUseCaseDataParams
 import com.freight24.connect.feature.trips.domain.usecase.TripDetailsUseCase
 import com.freight24.connect.feature.trips.domain.usecase.TripDetailsUseCaseDataParams
 import com.freight24.connect.feature.trips.domain.usecase.UpdateTruckerUseCase
@@ -29,6 +31,7 @@ internal class TripDetailsViewModelImpl @Inject constructor(
     private val tripDetailsUseCase: TripDetailsUseCase,
     private val updateTruckerUseCase: UpdateTruckerUseCase,
     private val uploadLrUseCase: UploadLrUseCase,
+    private val cancelTripUseCase: CancelTripUseCase,
     @ApplicationContext private val context: Context,
     savedStateHandle: SavedStateHandle
 ) : ViewModel(), TripDetailsViewModel {
@@ -61,6 +64,50 @@ internal class TripDetailsViewModelImpl @Inject constructor(
                 uploadLR()
             }
             TripDetailsEvent.Refresh -> loadTrip()
+            TripDetailsEvent.ShowCancelDialog -> {
+                val status = _uiState.value.trip?.truckerStatus?.uppercase() ?: ""
+                if (status == "ASSIGNED" || status == "LOADING") {
+                    _uiState.update { it.copy(isCancelDialogVisible = true) }
+                } else {
+                    val readableStatus = _uiState.value.trip?.truckerStatus?.replace("_", " ") ?: status
+                    _uiState.update { it.copy(cancelNotAllowedMessage = readableStatus) }
+                }
+            }
+            TripDetailsEvent.HideCancelDialog -> {
+                _uiState.update { it.copy(isCancelDialogVisible = false, cancelReason = "") }
+            }
+            TripDetailsEvent.ConfirmCancelTrip -> {
+                cancelTrip()
+            }
+            TripDetailsEvent.DismissCancelNotAllowed -> {
+                _uiState.update { it.copy(cancelNotAllowedMessage = null) }
+            }
+            is TripDetailsEvent.UpdateCancelReason -> {
+                _uiState.update { it.copy(cancelReason = event.reason) }
+            }
+        }
+    }
+
+    private fun cancelTrip() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isCanceling = true) }
+            val result = cancelTripUseCase(CancelTripUseCaseDataParams(tripId = tripId, reason = _uiState.value.cancelReason.trim()))
+            result.fold(
+                onSuccess = {
+                    _uiState.update { it.copy(isCanceling = false, isCancelDialogVisible = false, cancelReason = "") }
+                    loadTrip()
+                },
+                onFailure = { error ->
+                    _uiState.update {
+                        it.copy(
+                            isCanceling = false,
+                            isCancelDialogVisible = false,
+                            cancelReason = "",
+                            errorMessage = error.message ?: "Cancellation failed"
+                        )
+                    }
+                }
+            )
         }
     }
 

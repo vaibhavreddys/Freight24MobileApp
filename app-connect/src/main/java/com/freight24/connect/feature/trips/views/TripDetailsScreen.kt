@@ -19,6 +19,9 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.BorderColor
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Payments
@@ -60,6 +63,7 @@ fun TripDetailsScreen(
     viewModel: TripDetailsViewModel = hiltViewModel<TripDetailsViewModelImpl>()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var menuExpanded by remember { mutableStateOf(false) }
     var showConfirmationDialog by remember { mutableStateOf(false) }
     var showSelectionDialog by remember { mutableStateOf(false) }
     var pendingStatus by remember { mutableStateOf("") }
@@ -119,6 +123,67 @@ fun TripDetailsScreen(
             dismissButton = {
                 TextButton(onClick = { showConfirmationDialog = false }) {
                     Text("Cancel", color = Color.Gray)
+                }
+            },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(12.dp)
+        )
+    }
+
+    // Cancel Trip - Confirmation dialog (for ASSIGNED / LOADING)
+    if (uiState.isCancelDialogVisible) {
+        AlertDialog(
+            onDismissRequest = { viewModel.onEvent(TripDetailsEvent.HideCancelDialog) },
+            title = { Text("Cancel Trip") },
+            text = {
+                Column {
+                    Text("Please provide a reason for cancelling this trip.")
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = uiState.cancelReason,
+                        onValueChange = { viewModel.onEvent(TripDetailsEvent.UpdateCancelReason(it)) },
+                        label = { Text("Reason") },
+                        placeholder = { Text("Enter cancellation reason…") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = false,
+                        minLines = 3,
+                        shape = RoundedCornerShape(8.dp),
+                        enabled = !uiState.isCanceling
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.onEvent(TripDetailsEvent.ConfirmCancelTrip) },
+                    enabled = !uiState.isCanceling && uiState.cancelReason.isNotBlank(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE11D48))
+                ) {
+                    if (uiState.isCanceling) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
+                        Spacer(Modifier.width(8.dp))
+                    }
+                    Text("Confirm Cancel")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.onEvent(TripDetailsEvent.HideCancelDialog) }) {
+                    Text("No", color = Color.Gray)
+                }
+            },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(12.dp)
+        )
+    }
+
+    // Cancel not allowed dialog
+    uiState.cancelNotAllowedMessage?.let { status ->
+        AlertDialog(
+            onDismissRequest = { viewModel.onEvent(TripDetailsEvent.DismissCancelNotAllowed) },
+            title = { Text("Cannot Cancel Trip") },
+            text = { Text("You are not allowed to cancel the trip while it is in \"$status\" state.") },
+            confirmButton = {
+                TextButton(onClick = { viewModel.onEvent(TripDetailsEvent.DismissCancelNotAllowed) }) {
+                    Text("OK", color = MaterialTheme.colorScheme.primary)
                 }
             },
             containerColor = Color.White,
@@ -241,8 +306,36 @@ fun TripDetailsScreen(
                     }
                 },
                 actions = {
-                    TextButton(onClick = { onEditClick(tripId) }) {
-                        Text("Edit", color = MaterialTheme.colorScheme.primary)
+                    Box {
+                        IconButton(onClick = { menuExpanded = true }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = "More options")
+                        }
+                        DropdownMenu(
+                            expanded = menuExpanded,
+                            onDismissRequest = { menuExpanded = false },
+                            modifier = Modifier.background(Color.White)
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Edit") },
+                                leadingIcon = {
+                                    Icon(Icons.Outlined.BorderColor, contentDescription = "Edit", tint = Color.Gray)
+                                },
+                                onClick = {
+                                    menuExpanded = false
+                                    onEditClick(tripId)
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Cancel", color = Color(0xFFE11D48)) },
+                                leadingIcon = {
+                                    Icon(Icons.Outlined.Delete, contentDescription = "Cancel Trip", tint = Color(0xFFE11D48))
+                                },
+                                onClick = {
+                                    menuExpanded = false
+                                    viewModel.onEvent(TripDetailsEvent.ShowCancelDialog)
+                                }
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
@@ -251,6 +344,7 @@ fun TripDetailsScreen(
         bottomBar = {
             val trip = uiState.trip
             val truckerStatus = trip?.truckerStatus ?: ""
+            val showTripStatus = (trip?.status ?: "").equals("active", true)
             val (buttonText, nextStatus) = when (truckerStatus.uppercase()) {
                 "ASSIGNED" -> "Update to LOADING" to "LOADING"
                 "LOADING" -> "Upload LR" to "UPLOAD_LR"
@@ -258,7 +352,7 @@ fun TripDetailsScreen(
                 else -> null to null
             }
 
-            if (buttonText != null && nextStatus != null) {
+            if (buttonText != null && nextStatus != null && showTripStatus) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shadowElevation = 8.dp,

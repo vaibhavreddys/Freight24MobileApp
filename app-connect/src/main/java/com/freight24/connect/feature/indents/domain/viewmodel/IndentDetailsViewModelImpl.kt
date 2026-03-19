@@ -6,6 +6,8 @@ import com.freight24.connect.feature.indents.domain.usecases.AssignIndentUseCase
 import com.freight24.connect.feature.indents.domain.usecases.AssignIndentUseCaseParams
 import com.freight24.connect.feature.indents.domain.usecases.GetIndentByIdUseCase
 import com.freight24.connect.feature.indents.domain.usecases.GetIndentByIdUseCaseParams
+import com.freight24.connect.feature.indents.domain.usecases.CancelIndentUseCase
+import com.freight24.connect.feature.indents.domain.usecases.CancelIndentUseCaseParams
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +19,8 @@ import javax.inject.Inject
 @HiltViewModel
 class IndentDetailsViewModelImpl @Inject constructor(
     private val getIndentByIdUseCase: GetIndentByIdUseCase,
-    private val assignIndentUseCase: AssignIndentUseCase
+    private val assignIndentUseCase: AssignIndentUseCase,
+    private val cancelIndentUseCase: CancelIndentUseCase
 ) : ViewModel(), IndentDetailsViewModel {
 
     private val _uiState = MutableStateFlow(IndentDetailsUiState())
@@ -72,6 +75,15 @@ class IndentDetailsViewModelImpl @Inject constructor(
             }
             is IndentDetailsEvent.ConfirmAssignment -> {
                 confirmAssignment()
+            }
+            is IndentDetailsEvent.ShowCancelDialog -> {
+                _uiState.update { it.copy(isCancelDialogVisible = true) }
+            }
+            is IndentDetailsEvent.HideCancelDialog -> {
+                _uiState.update { it.copy(isCancelDialogVisible = false) }
+            }
+            is IndentDetailsEvent.ConfirmCancel -> {
+                confirmCancel()
             }
         }
     }
@@ -132,6 +144,36 @@ class IndentDetailsViewModelImpl @Inject constructor(
                     it.copy(
                         isAssigning = false,
                         errorMessage = result.exceptionOrNull()?.message ?: "Failed to assign indent"
+                    )
+                }
+            }
+        }
+    }
+
+    private fun confirmCancel() {
+        val indentId = currentIndentId ?: return
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isCanceling = true, errorMessage = null) }
+
+            val result = cancelIndentUseCase.invoke(
+                CancelIndentUseCaseParams(id = indentId)
+            )
+
+            if (result.isSuccess) {
+                _uiState.update {
+                    it.copy(
+                        isCanceling = false,
+                        isCancelDialogVisible = false
+                    )
+                }
+                loadIndent(indentId) // Refresh to get updated status
+            } else {
+                _uiState.update {
+                    it.copy(
+                        isCanceling = false,
+                        isCancelDialogVisible = false,
+                        errorMessage = result.exceptionOrNull()?.message ?: "Failed to cancel indent"
                     )
                 }
             }

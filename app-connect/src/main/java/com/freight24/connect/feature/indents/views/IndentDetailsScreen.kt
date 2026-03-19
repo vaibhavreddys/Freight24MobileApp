@@ -9,6 +9,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.background
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -103,9 +109,40 @@ fun IndentDetailsScreen(
         )
     }
 
+    if (uiState.isCancelDialogVisible) {
+        AlertDialog(
+            onDismissRequest = { viewModel.onEvent(IndentDetailsEvent.HideCancelDialog) },
+            title = { Text("Cancel Indent") },
+            text = { Text("Are you sure you want to cancel this indent?") },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.onEvent(IndentDetailsEvent.ConfirmCancel) },
+                    enabled = !uiState.isCanceling,
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE11D48))
+                ) {
+                    if (uiState.isCanceling) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp).padding(end = 8.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                    }
+                    Text("Yes, Cancel")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.onEvent(IndentDetailsEvent.HideCancelDialog) }) {
+                    Text("No")
+                }
+            }
+        )
+    }
+
+    var menuExpanded by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
-            // Custom Top Bar to debug navigation issues
+            // Custom Top Bar with Actions Menu
             TopAppBar(
                 title = { Text("Indent Details") },
                 navigationIcon = {
@@ -117,39 +154,68 @@ fun IndentDetailsScreen(
                         )
                     }
                 },
+                actions = {
+                    uiState.indent?.let { indent ->
+                        if (
+                            indent.status.equals("open", true)
+                            || indent.status.equals("READY_FOR_ASSIGNMENT", true)
+                        ) {
+                            IconButton(onClick = { menuExpanded = true }) {
+                                Icon(Icons.Default.MoreVert, contentDescription = "More options", tint = Color.Black)
+                            }
+                            DropdownMenu(
+                                expanded = menuExpanded,
+                                onDismissRequest = { menuExpanded = false },
+                                modifier = Modifier.background(Color.White)
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Cancel Indent", color = Color(0xFFE11D48)) },
+                                    leadingIcon = {
+                                        Icon(
+                                            Icons.Outlined.Delete,
+                                            contentDescription = "Cancel Indent",
+                                            tint = Color(0xFFE11D48)
+                                        )
+                                    },
+                                    onClick = {
+                                        menuExpanded = false
+                                        viewModel.onEvent(IndentDetailsEvent.ShowCancelDialog)
+                                    }
+                                )
+                            }
+                        }
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
             )
         },
         bottomBar = {
-            Button(
-                onClick = {
-                    uiState.indent?.let { indent ->
-                        if (indent.status.equals("open", true)) {
-                            viewModel.onEvent(IndentDetailsEvent.ShowAssignDialog)
-                        } else if (indent.status.equals("READY_FOR_ASSIGNMENT", true)) {
-                            onCreateTripClick(indentId)
+            uiState.indent?.let { indent ->
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp)
+                ) {
+                    if (indent.status.equals("open", true)) {
+                        Button(
+                            onClick = { viewModel.onEvent(IndentDetailsEvent.ShowAssignDialog) },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981))
+                        ) {
+                            Text("Ready for Assignment", color = Color.White)
                         }
-                    }
-                },
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                enabled = true,
-            ) {
-                if (uiState.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp).padding(end = 8.dp),
-                        color = Color.White,
-                        strokeWidth = 2.dp,
-                    )
-                } else {
-                    uiState.indent?.let { indent ->
-                        if(indent.status.equals("open", true)) {
-                            Text("Ready for Assignment")
-                        } else if (indent.status.equals("READY_FOR_ASSIGNMENT", true))  {
-                            Text("Create trip")
-                        } else {
+                    } else if (indent.status.equals("READY_FOR_ASSIGNMENT", true)) {
+                        Button(
+                            onClick = { onCreateTripClick(indentId) },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981))
+                        ) {
+                            Text("Create trip", color = Color.White)
+                        }
+                    } else if (!indent.status.equals("CANCELLED", true)) {
+                        Button(
+                            onClick = {},
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = false
+                        ) {
                             Text(indent.status.replace("_", " "))
                         }
                     }

@@ -1,10 +1,12 @@
 package com.freight24.rest.api
 
+import com.freight24.rest.request.CancelTripRequest
 import com.freight24.rest.request.CreateTripRequest
 import com.freight24.rest.request.LrVerifyRequest
 import com.freight24.rest.request.UpdateOtherDeductionsRequest
 import com.freight24.rest.request.UpdateTripRequest
 import com.freight24.rest.request.UpdateTruckerStatus
+import com.freight24.rest.response.BaseResponse
 import com.freight24.rest.response.CreatedTripResponse
 import com.freight24.rest.response.TripDetailResponse
 import com.freight24.rest.response.MyTripsDataResponse
@@ -99,5 +101,11 @@ interface TripApi {
         @Path("trip_id") tripId: String,
         @Body updateTripRequest: UpdateTripRequest
     ): Response<UpdateTripResponse>
+
+    @POST("trips/{trip_id}/cancel")
+    suspend fun cancelTrip(
+        @Path("trip_id") tripId: String,
+        @Body cancelTripRequest: CancelTripRequest
+    ): Response<BaseResponse>
 
 }

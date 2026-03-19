@@ -14,6 +14,7 @@ data class TripDataResponse(
     val driverPhone: String?,
     val clientStatus: String,
     val indentGroupId: String,
+    val status: String,
     val truckerStatus: String,
     val clientTripCost: String?,
     val truckerTripCost: String?,
