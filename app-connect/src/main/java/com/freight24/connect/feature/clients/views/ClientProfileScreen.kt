@@ -56,6 +56,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.freight24.common.model.DocumentUploadState
+import com.freight24.common.model.UploadStatus
 import com.freight24.connect.feature.clients.domain.viewmodel.ClientProfileViewModel
 import com.freight24.rest.response.ClientProfileDto
 import com.freight24.rest.response.ClientDocumentDto
@@ -78,13 +80,25 @@ fun ClientProfileScreen(
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val isEditing by viewModel.isEditing.collectAsState()
     val hasChanges by viewModel.hasChanges.collectAsState()
+    val hasPendingTemporaryUploads by viewModel.hasPendingTemporaryUploads.collectAsState()
     val isSaving by viewModel.isSaving.collectAsState()
+    var showCancelConfirmDialog by rememberSaveable { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
-        viewModel.messageEvent.collect { message ->
-            snackbarHostState.showSnackbar(message)
+        launch {
+            viewModel.errorEvent.collect { message ->
+                snackbarHostState.showSnackbar(
+                    message = message,
+                    duration = SnackbarDuration.Short,
+                )
+            }
+        }
+        launch {
+            viewModel.saveEvent.collect { message ->
+                snackbarHostState.showSnackbar(message)
+            }
         }
     }
 
@@ -121,7 +135,13 @@ fun ClientProfileScreen(
                 EditActions(
                     hasChanges = hasChanges,
                     onSave = viewModel::saveProfile,
-                    onCancel = viewModel::cancelEdit,
+                    onCancel = {
+                        if (hasPendingTemporaryUploads) {
+                            showCancelConfirmDialog = true
+                        } else {
+                            viewModel.cancelEdit()
+                        }
+                    },
                     isSaving = isSaving,
                 )
             }
@@ -134,6 +154,29 @@ fun ClientProfileScreen(
                 .fillMaxSize()
                 .padding(paddingValues),
         ) {
+            if (showCancelConfirmDialog) {
+                AlertDialog(
+                    onDismissRequest = { showCancelConfirmDialog = false },
+                    title = { Text("Discard uploads?") },
+                    text = { Text("Uploaded documents will be discarded. Cancel anyway?") },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                showCancelConfirmDialog = false
+                                viewModel.cancelEdit()
+                            },
+                        ) {
+                            Text("Yes, Cancel")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showCancelConfirmDialog = false }) {
+                            Text("Keep Editing")
+                        }
+                    },
+                )
+            }
+
             when (val state = uiState) {
                 is UiState.Loading -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -196,17 +239,18 @@ private fun ClientProfileContent(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-
-    val aadhaarFile by viewModel.aadhaarFile.collectAsState()
-    val panFile by viewModel.panFile.collectAsState()
+    val documentStates by viewModel.documentStates.collectAsState()
 
     var showSourcePicker by remember { mutableStateOf(false) }
-    var currentTargetPrefix by remember { mutableStateOf<String?>(null) }
+    var currentTargetFieldKey by remember { mutableStateOf<String?>(null) }
     var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
-    val sheetState = androidx.compose.material3.rememberModalBottomSheetState()
+    val sheetState = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     var pendingUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
-    var isPdfPending by remember { mutableStateOf(false) }
+    var isPdfPending by rememberSaveable { mutableStateOf(false) }
+    val selectedUploadStatus = currentTargetFieldKey
+        ?.let { fieldKey -> documentStates[fieldKey]?.uploadStatus }
+        ?: UploadStatus.IDLE
 
     val galleryLauncher =
         rememberLauncherForActivityResult(
@@ -216,7 +260,7 @@ private fun ClientProfileContent(
                 pendingUris = uris
                 isPdfPending = false
             } else {
-                currentTargetPrefix = null
+                currentTargetFieldKey = null
             }
         }
 
@@ -228,7 +272,7 @@ private fun ClientProfileContent(
                 pendingUris = listOf(uri)
                 isPdfPending = true
             } else {
-                currentTargetPrefix = null
+                currentTargetFieldKey = null
             }
         }
 
@@ -240,7 +284,7 @@ private fun ClientProfileContent(
                 pendingUris = listOf(tempCameraUri!!)
                 isPdfPending = false
             } else {
-                currentTargetPrefix = null
+                currentTargetFieldKey = null
             }
             tempCameraUri = null
         }
@@ -409,21 +453,22 @@ private fun ClientProfileContent(
 
         ProfileSection(
             title = "DOCUMENTS",
-            icon = Icons.Default.Assignment,
+            icon = Icons.AutoMirrored.Filled.Assignment,
             initiallyExpanded = true,
         ) {
             DocumentList(
                 documents = client.documents,
+                documentStates = documentStates,
                 isEditing = isEditing,
                 onDocumentView = { s3Url ->
                     viewModel.getSignedUrl(s3Url) { signedUrl ->
                         context.startActivity(com.freight24.ui.components.getPdfLaunchIntent(signedUrl, context))
                     }
                 },
-                onDocumentUpload = { typeName ->
-                    currentTargetPrefix = if (typeName.contains("Aadhaar")) "AADHAAR" else "PAN"
+                onDocumentUpload = { fieldKey ->
+                    currentTargetFieldKey = fieldKey
                     showSourcePicker = true
-                }
+                },
             )
         }
 
@@ -452,7 +497,10 @@ private fun ClientProfileContent(
 
         com.freight24.ui.components.FileSourcePickerSheet(
             showSheet = showSourcePicker,
-            onDismissRequest = { showSourcePicker = false },
+            onDismissRequest = {
+                showSourcePicker = false
+                currentTargetFieldKey = null
+            },
             onCameraClick = {
                 scope.launch { sheetState.hide() }.invokeOnCompletion {
                     showSourcePicker = false
@@ -471,28 +519,30 @@ private fun ClientProfileContent(
                     docLauncher.launch(arrayOf("application/pdf"))
                 }
             },
-            sheetState = sheetState
+            sheetState = sheetState,
         )
 
         if (pendingUris.isNotEmpty()) {
-            val isSaving by viewModel.isSaving.collectAsState()
             com.freight24.ui.components.FileConfirmationSheet(
                 selectedUris = pendingUris,
                 isPdf = isPdfPending,
-                isUploading = isSaving,
-                uploadButtonText = "Confirm",
+                isUploading = selectedUploadStatus == UploadStatus.UPLOADING,
+                uploadButtonText = "Confirm Upload",
                 onUploadClick = {
-                    currentTargetPrefix?.let { prefix ->
-                        viewModel.onFileSelected(context, pendingUris, prefix, isPdfPending) {
-                            pendingUris = emptyList()
-                            currentTargetPrefix = null
-                        }
+                    currentTargetFieldKey?.let { fieldKey ->
+                        viewModel.uploadDocument(
+                            fieldKey = fieldKey,
+                            uris = pendingUris,
+                            isPdf = isPdfPending,
+                        )
                     }
+                    pendingUris = emptyList()
+                    currentTargetFieldKey = null
                 },
                 onDismiss = {
                     pendingUris = emptyList()
-                    currentTargetPrefix = null
-                }
+                    currentTargetFieldKey = null
+                },
             )
         }
 
@@ -948,31 +998,37 @@ private fun ClientProfileErrorState(
 @Composable
 private fun DocumentList(
     documents: List<ClientDocumentDto>,
+    documentStates: Map<String, DocumentUploadState>,
     isEditing: Boolean,
     onDocumentView: (String) -> Unit,
     onDocumentUpload: (String) -> Unit,
 ) {
-    val types = listOf("Aadhaar Card", "PAN Card")
+    val types = listOf(
+        ClientDocumentTypeUi("aadhaar", "Aadhaar Card"),
+        ClientDocumentTypeUi("pan", "PAN Card"),
+    )
 
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
-        types.forEachIndexed { index, typeName ->
-            val doc = documents.find { it.documentName == typeName }
+        types.forEachIndexed { index, type ->
+            val uploadState = documentStates[type.fieldKey]
+            val doc = documents.find { it.documentName.equals(type.displayName, ignoreCase = true) }
+            val existingUrl = uploadState?.existingFileUrl ?: doc?.documentUrl
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable {
                         if (isEditing) {
-                            onDocumentUpload(typeName)
-                        } else if (!doc?.documentUrl.isNullOrEmpty()) {
-                            onDocumentView(doc!!.documentUrl)
+                            onDocumentUpload(type.fieldKey)
+                        } else if (!existingUrl.isNullOrEmpty()) {
+                            onDocumentView(existingUrl)
                         }
                     }
                     .padding(horizontal = 20.dp, vertical = 18.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
-                    imageVector = when (typeName) {
+                    imageVector = when (type.displayName) {
                         "PAN Card" -> Icons.Default.CreditCard
                         "Aadhaar Card" -> Icons.Default.Fingerprint
                         else -> Icons.Default.Description
@@ -983,25 +1039,66 @@ private fun DocumentList(
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
-                    text = typeName,
+                    text = type.displayName,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Medium,
                     modifier = Modifier.weight(1f),
                     color = MaterialTheme.colorScheme.onSurface,
                 )
+
                 if (isEditing) {
-                    if (doc != null && !doc.documentUrl.isNullOrEmpty()) {
-                        StatusBadge(doc.documentStatus)
-                        Spacer(modifier = Modifier.width(8.dp))
+                    when (uploadState?.uploadStatus ?: UploadStatus.IDLE) {
+                        UploadStatus.UPLOADING -> {
+                            LinearProgressIndicator(
+                                modifier = Modifier.width(88.dp),
+                                color = MaterialTheme.colorScheme.primary,
+                                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+
+                        UploadStatus.DONE -> {
+                            PendingSaveBadge()
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+
+                        UploadStatus.ERROR -> {
+                            UploadFailedBadge()
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+
+                        UploadStatus.IDLE -> {
+                            if (!existingUrl.isNullOrEmpty()) {
+                                ExistingStatusBadge(uploadState?.existingVerifyStatus, doc?.documentStatus)
+                                Spacer(modifier = Modifier.width(8.dp))
+                            } else {
+                                VerificationChip("Not Uploaded", MaterialTheme.colorScheme.outline)
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+                        }
                     }
-                    Icon(
-                        imageVector = Icons.Default.CloudUpload,
-                        contentDescription = "Upload",
-                        tint = FreightThemeTokens.colors.successColor,
-                        modifier = Modifier.size(24.dp)
-                    )
-                } else if (doc != null && !doc.documentUrl.isNullOrEmpty()) {
-                    StatusBadge(doc.documentStatus)
+
+                    IconButton(
+                        onClick = { onDocumentUpload(type.fieldKey) },
+                        enabled = (uploadState?.uploadStatus ?: UploadStatus.IDLE) != UploadStatus.UPLOADING,
+                    ) {
+                        Icon(
+                            imageVector = if ((uploadState?.uploadStatus ?: UploadStatus.IDLE) == UploadStatus.ERROR) {
+                                Icons.Default.Refresh
+                            } else {
+                                Icons.Default.KeyboardArrowUp
+                            },
+                            contentDescription = "Upload",
+                            tint = if ((uploadState?.uploadStatus ?: UploadStatus.IDLE) == UploadStatus.ERROR) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                FreightThemeTokens.colors.successColor
+                            },
+                            modifier = Modifier.size(24.dp),
+                        )
+                    }
+                } else if (!existingUrl.isNullOrEmpty()) {
+                    ExistingStatusBadge(uploadState?.existingVerifyStatus, doc?.documentStatus)
                     Spacer(modifier = Modifier.width(8.dp))
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
@@ -1025,11 +1122,12 @@ private fun DocumentList(
 }
 
 @Composable
-private fun StatusBadge(status: String) {
-    val (text, color) = when (status.lowercase()) {
+private fun ExistingStatusBadge(existingVerifyStatus: String?, fallbackStatus: String?) {
+    val status = existingVerifyStatus?.lowercase()?.trim() ?: fallbackStatus?.lowercase()?.trim().orEmpty()
+    val (text, color) = when (status) {
         "verified" -> "Verified" to FreightThemeTokens.colors.successColor
         "rejected" -> "Rejected" to MaterialTheme.colorScheme.error
-        "pending" -> "Verification Pending" to Color(0xFFFFA000)
+        "pending" -> "Verification Pending" to MaterialTheme.colorScheme.tertiary
         else -> "N/A" to MaterialTheme.colorScheme.onSurfaceVariant
     }
 
@@ -1046,6 +1144,44 @@ private fun StatusBadge(status: String) {
         )
     }
 }
+
+@Composable
+private fun PendingSaveBadge() {
+    Surface(
+        color = Color.Transparent,
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+    ) {
+        Text(
+            text = "Pending Save",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+        )
+    }
+}
+
+@Composable
+private fun UploadFailedBadge() {
+    Surface(
+        color = MaterialTheme.colorScheme.errorContainer,
+        shape = RoundedCornerShape(8.dp),
+    ) {
+        Text(
+            text = "Upload Failed",
+            color = MaterialTheme.colorScheme.onErrorContainer,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+        )
+    }
+}
+
+private data class ClientDocumentTypeUi(
+    val fieldKey: String,
+    val displayName: String,
+)
 
 
 private fun launchDialer(context: Context, rawPhone: String) {
