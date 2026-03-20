@@ -1,5 +1,6 @@
 package com.freight24.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -8,11 +9,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -26,13 +30,15 @@ import androidx.compose.ui.unit.sp
 
 sealed class DocumentStatus {
     object Pending : DocumentStatus()
+    object Uploading : DocumentStatus()
+    object UploadError : DocumentStatus()
 
     data class Uploaded(
         val id: String,
         val label: String,
         val backgroundColor: Color,
         val textColor: Color,
-        val canReupload: Boolean = false
+        val canReupload: Boolean = false,
     ) : DocumentStatus()
 }
 
@@ -76,7 +82,7 @@ fun DocumentUploadItem(
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             when (status) {
                 is DocumentStatus.Pending -> {
@@ -88,6 +94,44 @@ fun DocumentUploadItem(
                         )
                     }
                 }
+
+                is DocumentStatus.Uploading -> {
+                    LinearProgressIndicator(
+                        modifier = Modifier.width(88.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                    )
+                    IconButton(onClick = {}, enabled = false) {
+                        Icon(
+                            imageVector = Icons.Default.CloudUpload,
+                            contentDescription = "Uploading",
+                            tint = MaterialTheme.colorScheme.outline,
+                        )
+                    }
+                }
+
+                is DocumentStatus.UploadError -> {
+                    Surface(
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        shape = RoundedCornerShape(4.dp),
+                    ) {
+                        Text(
+                            text = "Upload Failed",
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                        )
+                    }
+                    IconButton(onClick = onUploadClick) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Retry Upload",
+                            tint = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                }
+
                 is DocumentStatus.Uploaded -> {
                     if (showStatusChip) {
                         Surface(
@@ -119,7 +163,7 @@ fun DocumentUploadItem(
                         Icon(
                             imageVector = trailingIcon,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.outline
+                            tint = MaterialTheme.colorScheme.outline,
                         )
                     }
                 }
@@ -127,4 +171,3 @@ fun DocumentUploadItem(
         }
     }
 }
-

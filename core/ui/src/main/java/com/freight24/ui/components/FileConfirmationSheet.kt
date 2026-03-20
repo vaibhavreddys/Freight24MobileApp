@@ -7,6 +7,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,6 +22,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
@@ -39,6 +41,8 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.rememberAsyncImagePainter
 import com.freight24.ui.theme.FreightThemeTokens
 import java.util.Locale
+
+private const val LARGE_FILE_THRESHOLD_BYTES = 7L * 1024L * 1024L
 
 private data class FileMeta(
     val name: String?,
@@ -84,31 +88,61 @@ fun FileConfirmationSheet(
             Spacer(modifier = Modifier.height(16.dp))
 
             if (isPdf) {
-                androidx.compose.material3.Icon(
-                    imageVector = Icons.Outlined.Description,
-                    contentDescription = null,
-                    modifier = Modifier.size(64.dp),
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = firstFileMeta?.name ?: "PDF Document",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                )
-                firstFileMeta?.sizeBytes?.let { sizeBytes ->
-                    Spacer(modifier = Modifier.height(8.dp))
+                val fileName = firstFileMeta?.name ?: "document.pdf"
+                val sizeBytes = firstFileMeta?.sizeBytes
+                val isLarge = (sizeBytes ?: 0L) > LARGE_FILE_THRESHOLD_BYTES
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     Surface(
                         shape = RoundedCornerShape(999.dp),
                         color = MaterialTheme.colorScheme.secondaryContainer,
                     ) {
-                        Text(
-                            text = formatFileSize(sizeBytes),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                        )
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Description,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier = Modifier.size(16.dp),
+                            )
+                            Text(
+                                text = fileName,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                maxLines = 1,
+                            )
+                        }
                     }
+
+                    sizeBytes?.let {
+                        Surface(
+                            shape = RoundedCornerShape(999.dp),
+                            color = if (isLarge) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.tertiaryContainer,
+                        ) {
+                            Text(
+                                text = formatFileSize(it),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = if (isLarge) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onTertiaryContainer,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            )
+                        }
+                    }
+                }
+
+                if (isLarge) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Large file — may upload slowly",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
                 }
             } else {
                 LazyRow(
@@ -181,9 +215,8 @@ private fun resolveFileMeta(context: Context, uri: Uri): FileMeta {
 }
 
 private fun formatFileSize(bytes: Long): String {
-    if (bytes < 1024) return "$bytes B"
     val kb = bytes / 1024.0
-    if (kb < 1024) return String.format(Locale.US, "%.1f KB", kb)
+    if (kb < 1024) return String.format(Locale.US, "%.0f KB", kb)
     val mb = kb / 1024.0
     return String.format(Locale.US, "%.1f MB", mb)
 }

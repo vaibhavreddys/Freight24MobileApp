@@ -109,32 +109,40 @@ internal fun TripDetailsScreen(
     val selectedUris by viewModel.selectedUris.collectAsState()
     val isPdf by viewModel.isPdf.collectAsState()
     val isUploading by viewModel.isUploading.collectAsState()
+    val uploadStatus by viewModel.uploadStatus.collectAsState()
     val context = LocalContext.current
 
     var showSourcePicker by rememberSaveable { mutableStateOf(false) }
     var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
-    var showSheet by rememberSaveable { mutableStateOf(false) }
     val sourceSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    
+
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        viewModel.errorEvent.collect { message ->
+            snackbarHostState.showSnackbar(
+                message = message,
+                duration = SnackbarDuration.Short,
+            )
+        }
+    }
+
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(),
         onResult = { uris ->
             if (uris.isNotEmpty()) {
+                viewModel.resetUploadError()
                 viewModel.onFilesPicked(uris, false)
-                showSheet = true
             }
-        }
+        },
     )
 
     val pdfPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument(),
         onResult = { uri ->
             uri?.let {
+                viewModel.resetUploadError()
                 viewModel.onFilesPicked(listOf(it), true)
-                showSheet = true
             }
-        }
+        },
     )
 
     val cameraLauncher = rememberLauncherForActivityResult(
@@ -142,12 +150,12 @@ internal fun TripDetailsScreen(
         onResult = { success ->
             if (success) {
                 tempCameraUri?.let {
+                    viewModel.resetUploadError()
                     viewModel.onFilesPicked(listOf(it), false)
-                    showSheet = true
                 }
             }
             tempCameraUri = null
-        }
+        },
     )
 
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
@@ -170,7 +178,7 @@ internal fun TripDetailsScreen(
                     }
                 }
             }
-        }
+        },
     )
 
     fun startCameraCapture() {
@@ -183,148 +191,44 @@ internal fun TripDetailsScreen(
         }
     }
 
-    if (showSourcePicker) {
-        ModalBottomSheet(
-            onDismissRequest = { showSourcePicker = false },
-            sheetState = sourceSheetState,
-            containerColor = MaterialTheme.colorScheme.surface,
-        ) {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 24.dp),
-            ) {
-                Text(
-                    text = "Select source",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(16.dp),
-                )
-
-                ListItem(
-                    headlineContent = { Text("Camera") },
-                    leadingContent = {
-                        Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = CircleShape) {
-                            Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.padding(8.dp).size(20.dp))
-                        }
-                    },
-                    modifier = Modifier.clickable {
-                        scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
-                            showSourcePicker = false
-                            startCameraCapture()
-                        }
-                    },
-                )
-                ListItem(
-                    headlineContent = { Text("Gallery (Images)") },
-                    leadingContent = {
-                        Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = CircleShape) {
-                            Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.padding(8.dp).size(20.dp))
-                        }
-                    },
-                    modifier = Modifier.clickable {
-                        scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
-                            showSourcePicker = false
-                            imagePickerLauncher.launch(
-                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
-                            )
-                        }
-                    },
-                )
-                ListItem(
-                    headlineContent = { Text("Documents (PDF)") },
-                    leadingContent = {
-                        Surface(color = MaterialTheme.colorScheme.tertiaryContainer, shape = CircleShape) {
-                            Icon(Icons.AutoMirrored.Filled.InsertDriveFile, contentDescription = null, modifier = Modifier.padding(8.dp).size(20.dp))
-                        }
-                    },
-                    modifier = Modifier.clickable {
-                        scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
-                            showSourcePicker = false
-                            pdfPickerLauncher.launch(arrayOf("application/pdf"))
-                        }
-                    },
-                )
+    com.freight24.ui.components.FileSourcePickerSheet(
+        showSheet = showSourcePicker,
+        onDismissRequest = { showSourcePicker = false },
+        onCameraClick = {
+            scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
+                showSourcePicker = false
+                startCameraCapture()
             }
-        }
-    }
+        },
+        onGalleryClick = {
+            scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
+                showSourcePicker = false
+                imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            }
+        },
+        onDocumentClick = {
+            scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
+                showSourcePicker = false
+                pdfPickerLauncher.launch(arrayOf("application/pdf"))
+            }
+        },
+        sheetState = sourceSheetState,
+    )
 
-    if (showSheet && selectedUris.isNotEmpty()) {
-        ModalBottomSheet(
-            onDismissRequest = {
-                showSheet = false
+    if (selectedUris.isNotEmpty()) {
+        com.freight24.ui.components.FileConfirmationSheet(
+            selectedUris = selectedUris,
+            isPdf = isPdf,
+            isUploading = isUploading,
+            uploadButtonText = "Confirm Upload",
+            onUploadClick = {
+                viewModel.uploadLR()
                 viewModel.clearSelection()
             },
-            sheetState = sheetState,
-            containerColor = Color.White
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = if (isPdf) "PDF Selected" else "Images Selected (${selectedUris.size})",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                if (isPdf) {
-                    Icon(
-                        imageVector = Icons.Default.Description,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = Color.Red
-                    )
-                    Text(text = "PDF Document", style = MaterialTheme.typography.bodyMedium)
-                } else {
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        items(selectedUris) { uri ->
-                            Box {
-                                Image(
-                                    painter = rememberAsyncImagePainter(uri),
-                                    contentDescription = null,
-                                    modifier = Modifier
-                                        .size(100.dp)
-                                        .clip(RoundedCornerShape(8.dp)),
-                                    contentScale = ContentScale.Crop
-                                )
-                            }
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Button(
-                    onClick = {
-                        viewModel.uploadLR()
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                    enabled = !isUploading
-                ) {
-                    if (isUploading) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White, strokeWidth = 2.dp)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Uploading...", color = Color.White, fontWeight = FontWeight.Bold)
-                        }
-                    } else {
-                        Text("Upload", color = Color.White, fontWeight = FontWeight.Bold)
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(32.dp))
-            }
-        }
+            onDismiss = {
+                viewModel.clearSelection()
+            },
+        )
     }
 
     var showStatusConfirmation by rememberSaveable { mutableStateOf<String?>(null) }
@@ -334,13 +238,13 @@ internal fun TripDetailsScreen(
         AlertDialog(
             onDismissRequest = { showStatusConfirmation = null },
             title = { Text("Confirm Update") },
-            text = { Text("Are you sure you want to update the trip status to ${targetStatus.replace("_", " ")}?") },
+            text = { Text("Are you sure you want to update the trip status to ${targetStatus.replace("_", " ")}?" ) },
             confirmButton = {
                 TextButton(
                     onClick = {
                         viewModel.updateTripStatus(targetStatus)
                         showStatusConfirmation = null
-                    }
+                    },
                 ) {
                     Text("Confirm", color = MaterialTheme.colorScheme.primary)
                 }
@@ -349,7 +253,7 @@ internal fun TripDetailsScreen(
                 TextButton(onClick = { showStatusConfirmation = null }) {
                     Text("Cancel")
                 }
-            }
+            },
         )
     }
 
@@ -360,18 +264,18 @@ internal fun TripDetailsScreen(
                 title = {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
                         Text(
                             text = "Trip Details",
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
                         )
                         if (uiState is UiState.Success) {
                             Text(
                                 text = (uiState as UiState.Success<TripDetail>).data.tripCode,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
@@ -382,12 +286,11 @@ internal fun TripDetailsScreen(
                     }
                 },
                 actions = {
-                    // Spacer to center the title
                     Spacer(modifier = Modifier.width(48.dp))
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
             )
         },
         bottomBar = {
@@ -400,20 +303,21 @@ internal fun TripDetailsScreen(
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shadowElevation = 8.dp,
-                    color = MaterialTheme.colorScheme.surface
+                    color = MaterialTheme.colorScheme.surface,
                 ) {
                     Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .navigationBarsPadding()
-                            .padding(16.dp)
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .navigationBarsPadding()
+                                .padding(16.dp),
                     ) {
                         when (rawStatus) {
                             "ASSIGNED" -> {
                                 Button(
                                     onClick = { showStatusConfirmation = "LOADING" },
                                     modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(50.dp)
+                                    shape = RoundedCornerShape(50.dp),
                                 ) {
                                     Text("Update Trip Status to LOADING")
                                 }
@@ -426,7 +330,7 @@ internal fun TripDetailsScreen(
                                     Button(
                                         onClick = { showStatusConfirmation = "UNLOADED" },
                                         modifier = Modifier.fillMaxWidth(),
-                                        shape = RoundedCornerShape(50.dp)
+                                        shape = RoundedCornerShape(50.dp),
                                     ) {
                                         Text("Update Trip Status to UNLOADED")
                                     }
@@ -436,52 +340,68 @@ internal fun TripDetailsScreen(
                                     InfoBanner(text = "Trip status can be changed to \"UNLOADED\" after LR is verified.")
                                 }
                             }
-                            // Other statuses managed by backend
                         }
                     }
                 }
             }
-        }
+        },
     ) { paddingValues ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.background)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .background(MaterialTheme.colorScheme.background),
         ) {
             when (val state = uiState) {
                 is UiState.Loading -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
                 is UiState.Error -> {
-                    Column(
-                        modifier = Modifier.align(Alignment.Center),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = state.message,
-                            color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.padding(16.dp),
-                            textAlign = TextAlign.Center
-                        )
-                        Button(onClick = { viewModel.retry() }) {
-                            Text("Retry")
-                        }
-                    }
+                    TripDetailsLoadErrorSection(
+                        onRetry = { viewModel.retry() },
+                        modifier = Modifier.padding(16.dp),
+                    )
                 }
                 is UiState.Success -> {
                     TripDetailsContent(
                         trip = state.data,
+                        uploadStatus = uploadStatus,
                         onNavigateToPayments = { onNavigateToPayments(state.data.id) },
                         onUploadClick = { showSourcePicker = true },
                         onViewClick = { documentId ->
                             viewModel.fetchSignedUrl(documentId) { url ->
                                 context.startActivity(getPdfLaunchIntent(url, context))
                             }
-                        }
+                        },
                     )
                 }
-                UiState.Idle -> {}
+                UiState.Idle -> Unit
+            }
+        }
+    }
+}
+
+@Composable
+private fun TripDetailsLoadErrorSection(
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        ExpandableDetailCard(
+            title = "Documents",
+            icon = Icons.Default.Description,
+            initiallyExpanded = true,
+        ) {
+            Text(
+                text = "Unable to load trip details right now.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            TextButton(onClick = onRetry) {
+                Text("Retry", color = MaterialTheme.colorScheme.primary)
             }
         }
     }
@@ -580,8 +500,9 @@ fun extractStage(details: String): String? {
 }
 
 @Composable
-fun TripDetailsContent(
+internal fun TripDetailsContent(
     trip: TripDetail,
+    uploadStatus: UploadStatus,
     onNavigateToPayments: () -> Unit,
     onUploadClick: () -> Unit,
     onViewClick: (String) -> Unit
@@ -616,56 +537,86 @@ fun TripDetailsContent(
         val isLrRejected = lrDoc?.verificationStatus?.lowercase() == "rejected"
         val expandDocuments = isLrMissing || isLrRejected
 
+        val lrInlineStatus: DocumentStatus = when (uploadStatus) {
+            UploadStatus.UPLOADING -> DocumentStatus.Uploading
+            UploadStatus.ERROR -> DocumentStatus.UploadError
+            UploadStatus.IDLE -> DocumentStatus.Pending
+        }
+
         ExpandableDetailCard(
             title = "Documents",
             icon = Icons.Default.Description,
-            initiallyExpanded = expandDocuments
+            initiallyExpanded = expandDocuments,
         ) {
             if (trip.tripDocuments.isEmpty()) {
                 if (trip.status.uppercase() != "ASSIGNED") {
                     DocumentUploadItem(
                         title = "Loading Receipt (LR)",
-                        subtitle = "Upload LR",
-                        status = DocumentStatus.Pending,
-                        onUploadClick = onUploadClick
+                        subtitle = when (uploadStatus) {
+                            UploadStatus.UPLOADING -> "Uploading LR..."
+                            UploadStatus.ERROR -> "Upload failed. Tap retry"
+                            UploadStatus.IDLE -> "Upload LR"
+                        },
+                        status = lrInlineStatus,
+                        onUploadClick = onUploadClick,
                     )
                 } else {
                     Text(
                         text = "No documents currently available for this trip.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(vertical = 8.dp)
+                        modifier = Modifier.padding(vertical = 8.dp),
                     )
                 }
             } else {
+                var hasLrRow = false
+
                 trip.tripDocuments.forEach { doc ->
-                    val (status, subtitleText) = when (doc.verificationStatus.lowercase()) {
-                        "verified" -> {
-                            DocumentStatus.Uploaded(
-                                id = doc.id ?: "",
-                                label = "Verified",
-                                backgroundColor = Color(0xFFE8F5E9),
-                                textColor = Color(0xFF2E7D32)
-                            ) to "Your LR is verified."
+                    val isLrRow = doc.documentType.equals("lr", ignoreCase = true)
+                    if (isLrRow) hasLrRow = true
+
+                    val (status, subtitleText) = when {
+                        isLrRow && uploadStatus == UploadStatus.UPLOADING -> {
+                            DocumentStatus.Uploading to "Uploading LR..."
                         }
-                        "pending" -> {
-                            DocumentStatus.Uploaded(
-                                id = doc.id ?: "",
-                                label = "Pending",
-                                backgroundColor = Color(0xFFFFF3E0),
-                                textColor = Color(0xFFEF6C00)
-                            ) to "Verification pending"
+
+                        isLrRow && uploadStatus == UploadStatus.ERROR -> {
+                            DocumentStatus.UploadError to "Upload failed. Tap retry"
                         }
-                        "rejected" -> {
-                            DocumentStatus.Uploaded(
-                                id = doc.id ?: "",
-                                label = "Rejected",
-                                backgroundColor = Color(0xFFFFEBEE),
-                                textColor = Color(0xFFC62828),
-                                canReupload = true
-                            ) to "Your LR is rejected, upload again"
+
+                        else -> {
+                            when (doc.verificationStatus.lowercase()) {
+                                "verified" -> {
+                                    DocumentStatus.Uploaded(
+                                        id = doc.id ?: "",
+                                        label = "Verified",
+                                        backgroundColor = MaterialTheme.colorScheme.primaryContainer,
+                                        textColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    ) to "Your LR is verified."
+                                }
+
+                                "pending" -> {
+                                    DocumentStatus.Uploaded(
+                                        id = doc.id ?: "",
+                                        label = "Pending",
+                                        backgroundColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                        textColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                                    ) to "Verification pending"
+                                }
+
+                                "rejected" -> {
+                                    DocumentStatus.Uploaded(
+                                        id = doc.id ?: "",
+                                        label = "Rejected",
+                                        backgroundColor = MaterialTheme.colorScheme.errorContainer,
+                                        textColor = MaterialTheme.colorScheme.onErrorContainer,
+                                        canReupload = true,
+                                    ) to "Your LR is rejected, upload again"
+                                }
+
+                                else -> DocumentStatus.Pending to "Upload new document"
+                            }
                         }
-                        else -> DocumentStatus.Pending to "Upload new document"
                     }
 
                     DocumentUploadItem(
@@ -673,11 +624,23 @@ fun TripDetailsContent(
                         subtitle = subtitleText,
                         status = status,
                         onUploadClick = onUploadClick,
-                        onViewClick = onViewClick
+                        onViewClick = onViewClick,
+                    )
+                }
+
+                if (!hasLrRow && trip.status.uppercase() != "ASSIGNED") {
+                    DocumentUploadItem(
+                        title = "Loading Receipt (LR)",
+                        subtitle = when (uploadStatus) {
+                            UploadStatus.UPLOADING -> "Uploading LR..."
+                            UploadStatus.ERROR -> "Upload failed. Tap retry"
+                            UploadStatus.IDLE -> "Upload LR"
+                        },
+                        status = lrInlineStatus,
+                        onUploadClick = onUploadClick,
                     )
                 }
             }
-            
         }
 
         // Payments Card
