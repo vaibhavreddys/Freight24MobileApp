@@ -6,7 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.freight24.common.usecase.EmptyUseCaseParams
-import com.freight24.connect.feature.home.usecase.DashboardUseCase
+import com.freight24.connect.feature.dashboard.domain.usecase.DashboardUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject

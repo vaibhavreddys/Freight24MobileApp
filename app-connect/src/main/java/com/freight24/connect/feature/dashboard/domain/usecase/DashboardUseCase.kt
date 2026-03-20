@@ -1,4 +1,4 @@
-package com.freight24.connect.feature.home.usecase
+package com.freight24.connect.feature.dashboard.domain.usecase
 
 import com.freight24.common.usecase.EmptyUseCaseParams
 import com.freight24.common.usecase.UseCase

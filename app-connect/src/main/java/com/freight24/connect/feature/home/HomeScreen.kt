@@ -92,7 +92,7 @@ fun HomeScreen(
                     paddingValues = paddingValues,
                     onCreateIndentClick = onCreateIndentClick,
                     onCreateTripClick = { navController.navigate(ConnectDestination.CreateTrip.route) },
-                    onInterestInboxClick = { /* TODO */ },
+                    onInterestInboxClick = { navController.navigate(ConnectDestination.InterestInbox.route) },
                     onActiveTripsClick = { selectedTab = ConnectTab.Trips }
                 )
                 ConnectTab.Indents -> IndentsScreen(

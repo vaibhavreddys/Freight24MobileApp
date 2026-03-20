@@ -1,7 +1,7 @@
 package com.freight24.connect.feature.home.di
 
-import com.freight24.connect.feature.home.usecase.DashboardUseCase
-import com.freight24.connect.feature.home.usecase.DashboardUseCaseImpl
+import com.freight24.connect.feature.dashboard.domain.usecase.DashboardUseCase
+import com.freight24.connect.feature.dashboard.domain.usecase.DashboardUseCaseImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

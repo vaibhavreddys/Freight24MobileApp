@@ -73,6 +73,7 @@ fun DashboardScreen(
                     ActiveTripsSection(data.activeTrips)
                     PendingActionsSection(data.pendingActions)
                     QuickActionsSection(
+                        attentionNeeded = data.attentionNeeded,
                         onCreateIndentClick = onCreateIndentClick,
                         onCreateTripClick = onCreateTripClick,
                         onInterestInboxClick = onInterestInboxClick,
@@ -354,6 +355,7 @@ fun ActionCard(
 
 @Composable
 fun QuickActionsSection(
+    attentionNeeded: DashboardDataResponse.AttentionNeeded,
     onCreateIndentClick: () -> Unit,
     onCreateTripClick: () -> Unit,
     onInterestInboxClick: () -> Unit,
@@ -361,28 +363,6 @@ fun QuickActionsSection(
 ) {
     Column {
         SectionHeader("QUICK ACTIONS")
-//        Spacer(modifier = Modifier.height(8.dp))
-//        Row(
-//            modifier = Modifier.fillMaxWidth(),
-//            horizontalArrangement = Arrangement.spacedBy(12.dp)
-//        ) {
-//            QuickActionCard(
-//                modifier = Modifier.weight(1f),
-//                title = "Create Indent",
-//                icon = Icons.Default.Add,
-//                backgroundColor = Color(0xFF0D9488), // Teal green solid
-//                contentColor = Color.White,
-//                onClick = onCreateIndentClick
-//            )
-//            QuickActionCard(
-//                modifier = Modifier.weight(1f),
-//                title = "Create Trip",
-//                icon = Icons.Default.LocalShipping,
-//                backgroundColor = Color.White,
-//                contentColor = Color(0xFF0D9488),
-//                onClick = onCreateTripClick
-//            )
-//        }
         Spacer(modifier = Modifier.height(12.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -419,7 +399,7 @@ fun QuickActionsSection(
                 icon = Icons.Default.Inbox,
                 backgroundColor = Color.White,
                 contentColor = Color(0xFFE11D48), // Pinkish red
-                badgeText = "2",
+                badgeText = attentionNeeded.truckerInterests.toString(),
                 onClick = onInterestInboxClick
             )
             QuickActionCard(

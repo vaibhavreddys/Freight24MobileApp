@@ -18,6 +18,7 @@ import com.freight24.rest.api.TruckApi
 import com.freight24.rest.api.TruckOwnerApi
 import com.freight24.rest.api.DocumentApi
 import com.freight24.rest.api.EmployeesApi
+import com.freight24.rest.api.IndentInterestApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -125,5 +126,12 @@ object ApiModule {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "EmployeesApi")
             .create(EmployeesApi::class.java)
+    }
+
+    @Provides
+    fun providesIndentInterestApi(retrofitFactory: RetrofitFactory): IndentInterestApi {
+        return retrofitFactory
+            .create(BuildConfig.BASE_URL, "IndentInterestApi")
+            .create(IndentInterestApi::class.java)
     }
 }

@@ -6,6 +6,8 @@ import com.freight24.connect.repository.EmployeesRepository
 import com.freight24.connect.repository.EmployeesRepositoryImpl
 import com.freight24.connect.repository.FindTrucksRepository
 import com.freight24.connect.repository.FindTrucksRepositoryImpl
+import com.freight24.connect.repository.InterestInboxRepository
+import com.freight24.connect.repository.InterestInboxRepositoryImpl
 import com.freight24.connect.repository.LocationRepository
 import com.freight24.connect.repository.LocationRepositoryImpl
 import com.freight24.connect.repository.trips.TripHaltingRepository
@@ -72,6 +74,12 @@ interface RepositoryBinderModule {
     fun bindsEmployeesRepository(
         employeesRepository: EmployeesRepositoryImpl
     ): EmployeesRepository
+
+    @Binds
+    @Singleton
+    fun bindsInterestInboxRepository(
+        interestInboxRepository: InterestInboxRepositoryImpl
+    ): InterestInboxRepository
 
 
 }

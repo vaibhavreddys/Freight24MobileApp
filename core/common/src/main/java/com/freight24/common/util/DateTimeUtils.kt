@@ -29,31 +29,27 @@ object DateTimeUtils {
             val cleanTimestamp = timestamp.substringBefore(".")
             val utcDate = supabaseFormat.parse(cleanTimestamp) ?: return "--"
 
-            // Convert UTC time to IST time
-            val istCalendar =
-                Calendar.getInstance(IST_TIMEZONE).apply {
-                    time = utcDate
-                }
+            // Get current time in UTC to avoid double conversion issues
+            val nowUtc = Calendar.getInstance(UTC_TIMEZONE).timeInMillis
+            val diffMillis = nowUtc - utcDate.time
 
-            // Get current time in IST
-            val nowIstCalendar = Calendar.getInstance(IST_TIMEZONE)
-
-            // Calculate difference in seconds
-            val diffMillis = nowIstCalendar.timeInMillis - istCalendar.timeInMillis
             val diffSeconds = diffMillis / 1000
+            val diffMinutes = diffSeconds / 60
+            val diffHours = diffMinutes / 60
+            val diffDays = diffHours / 24
 
             return when {
-                diffSeconds < 60 -> "Just now"
-                diffSeconds < 3600 -> "${diffSeconds / 60} mins ago"
-                diffSeconds < 86400 -> "${diffSeconds / 3600} hours ago"
-                diffSeconds < 172800 -> "Yesterday"
+                diffMinutes < 1 -> "Just now"
+                diffMinutes < 60 -> "${diffMinutes}m ago"
+                diffHours < 24 -> "${diffHours}h ago"
+                diffDays < 7 -> "${diffDays}d ago"
                 else -> {
                     // Create display formatter with current locale
                     val displayFormat =
                         SimpleDateFormat(DISPLAY_PATTERN, Locale.getDefault()).apply {
                             timeZone = IST_TIMEZONE
                         }
-                    displayFormat.format(istCalendar.time)
+                    displayFormat.format(utcDate)
                 }
             }
         } catch (e: Exception) {

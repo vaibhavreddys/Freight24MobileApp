@@ -50,6 +50,7 @@ import com.freight24.rest.response.TruckTypeDto
 import com.freight24.ui.components.FilterSelectionChip
 import kotlinx.serialization.json.Json
 import androidx.core.net.toUri
+import com.freight24.ui.components.rememberCallAction
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -426,35 +427,7 @@ fun SearchResultsContent(data: SearchTruckerResponse.TruckerData?) {
 @Composable
 fun TruckerResultItem(trucker: SearchTruckerResponse.Trucker) {
     var isExpanded by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-
-    val callIntent = remember {
-        Intent(Intent.ACTION_CALL).apply {
-            data = "tel:${trucker.phone}".toUri()
-        }
-    }
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            try {
-                context.startActivity(callIntent)
-            } catch (e: Exception) {
-                Toast.makeText(context, "Cannot make call: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
-            }
-        } else {
-            // Fallback to dialer if permission is denied
-            try {
-                val dialIntent = Intent(Intent.ACTION_DIAL).apply {
-                    data = "tel:${trucker.phone}".toUri()
-                }
-                context.startActivity(dialIntent)
-            } catch (e: Exception) {
-                Toast.makeText(context, "Cannot open dialer: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
+    val makeCall = rememberCallAction(trucker.phone)
 
     Card(
         modifier = Modifier.fillMaxWidth().clickable { isExpanded = !isExpanded },
@@ -512,17 +485,7 @@ fun TruckerResultItem(trucker: SearchTruckerResponse.Trucker) {
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(
-                        onClick = { 
-                            if (ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                                try {
-                                    context.startActivity(callIntent)
-                                } catch (e: Exception) {
-                                    Toast.makeText(context, "Cannot make call: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
-                                }
-                            } else {
-                                permissionLauncher.launch(Manifest.permission.CALL_PHONE)
-                            }
-                        },
+                        onClick = { makeCall() },
                         modifier = Modifier.size(36.dp)
                     ) {
                         Icon(

@@ -14,6 +14,7 @@ import com.freight24.connect.feature.indents.views.IndentDetailsScreen
 import com.freight24.connect.feature.indents.views.IndentSuccessScreen
 import com.freight24.connect.feature.indents.views.ReviewCloneIndentScreen
 import com.freight24.connect.feature.indents.views.ReviewIndentScreen
+import com.freight24.connect.feature.inbox.views.InboxScreen
 import com.freight24.connect.feature.trucks.views.AssignTruckScreen
 import com.freight24.connect.feature.trips.views.CreateTripScreen
 import com.freight24.connect.feature.trips.views.TripDetailsScreen
@@ -30,9 +31,6 @@ import com.freight24.connect.feature.trips.views.LuChargesScreen
 import com.freight24.connect.feature.trips.views.OtherDeductionsScreen
 import com.freight24.connect.feature.trucks.views.ManageTrucksScreen
 import com.freight24.connect.feature.trucks.views.OnboardTruckScreen
-import java.net.URI
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 
 import com.freight24.connect.feature.trucks.views.details.TruckDetailsScreen
 import com.freight24.connect.feature.trucks.views.EditTruckScreen
@@ -114,7 +112,11 @@ fun ConnectNavGraph(
                     navHostController.navigate(ConnectDestination.OnboardTruckOwner.route)
                 },
                 onTruckOwnerClick = { userId ->
-                    navHostController.navigate(ConnectDestination.TruckOwnerProfile.createRoute(userId))
+                    navHostController.navigate(
+                        ConnectDestination.TruckOwnerProfile.createRoute(
+                            userId
+                        )
+                    )
                 },
                 onBackClick = {
                     navHostController.popBackStack()
@@ -127,7 +129,11 @@ fun ConnectNavGraph(
                 onBackClick = { navHostController.popBackStack() },
                 onCloseSuccess = { navHostController.popBackStack() },
                 onViewTruckOwnerProfile = { userId ->
-                    navHostController.navigate(ConnectDestination.TruckOwnerProfile.createRoute(userId)) {
+                    navHostController.navigate(
+                        ConnectDestination.TruckOwnerProfile.createRoute(
+                            userId
+                        )
+                    ) {
                         popUpTo(ConnectDestination.OnboardTruckOwner.route) {
                             inclusive = true
                         }
@@ -158,7 +164,9 @@ fun ConnectNavGraph(
             route = ConnectDestination.TruckDetails.route,
             arguments = ConnectDestination.TruckDetails.arguments
         ) { backStackEntry ->
-            val truckId = backStackEntry.arguments?.getString(ConnectDestination.TruckDetails.TRUCK_ID_ARG) ?: ""
+            val truckId =
+                backStackEntry.arguments?.getString(ConnectDestination.TruckDetails.TRUCK_ID_ARG)
+                    ?: ""
             TruckDetailsScreen(
                 onBackClick = { navHostController.popBackStack() },
                 onEditClick = { id ->
@@ -221,7 +229,7 @@ fun ConnectNavGraph(
             val startTab = tabString?.let { tabId ->
                 ConnectTab.entries.find { it.id == tabId }
             }
-            
+
             HomeScreen(
                 onCreateIndentClick = {
                     navHostController.navigate(ConnectDestination.CreateIndent.route)
@@ -230,7 +238,12 @@ fun ConnectNavGraph(
                     navHostController.navigate(ConnectDestination.IndentDetails.createRoute(indentId))
                 },
                 onCloneClick = { indentId, indentGroupId ->
-                    navHostController.navigate(ConnectDestination.CloneIndent.createRoute(indentId, indentGroupId))
+                    navHostController.navigate(
+                        ConnectDestination.CloneIndent.createRoute(
+                            indentId,
+                            indentGroupId
+                        )
+                    )
                 },
                 onSearchClick = {
                     navHostController.navigate(ConnectDestination.SearchIndents.route)
@@ -264,7 +277,9 @@ fun ConnectNavGraph(
             route = ConnectDestination.TripDetails.route,
             arguments = ConnectDestination.TripDetails.arguments
         ) { backStackEntry ->
-            val tripId = backStackEntry.arguments?.getString(ConnectDestination.TripDetails.TRIP_ID_ARG) ?: ""
+            val tripId =
+                backStackEntry.arguments?.getString(ConnectDestination.TripDetails.TRIP_ID_ARG)
+                    ?: ""
             TripDetailsScreen(
                 navController = navHostController,
                 tripId = tripId,
@@ -279,24 +294,24 @@ fun ConnectNavGraph(
                 },
                 onHaltingClick = { tripId, truckTypeId, loadingDays, unloadingDays, notes ->
                     navHostController.navigate(
-                        ConnectDestination.HaltingCharges.createRoute(tripId, truckTypeId) + 
-                        "?loadingDays=$loadingDays&unloadingDays=$unloadingDays&notes=$notes"
+                        ConnectDestination.HaltingCharges.createRoute(tripId, truckTypeId) +
+                                "?loadingDays=$loadingDays&unloadingDays=$unloadingDays&notes=$notes"
                     )
                 },
                 onLuClick = { loadingAmount, unloadingAmount, loadingSlipUrl, unloadingSlipUrl, loadingId, unloadingId, notes ->
-                navHostController.navigate(
-                    ConnectDestination.LuCharges.createRoute(
-                        tripId = tripId,
-                        loadingAmount = loadingAmount,
-                        unloadingAmount = unloadingAmount,
-                        loadingSlipUrl = loadingSlipUrl,
-                        unloadingSlipUrl = unloadingSlipUrl,
-                        loadingId = loadingId,
-                        unloadingId = unloadingId,
-                        notes = notes
+                    navHostController.navigate(
+                        ConnectDestination.LuCharges.createRoute(
+                            tripId = tripId,
+                            loadingAmount = loadingAmount,
+                            unloadingAmount = unloadingAmount,
+                            loadingSlipUrl = loadingSlipUrl,
+                            unloadingSlipUrl = unloadingSlipUrl,
+                            loadingId = loadingId,
+                            unloadingId = unloadingId,
+                            notes = notes
+                        )
                     )
-                )
-            },
+                },
                 onOtherDeductionsClick = { tripId, amount, notes ->
                     navHostController.navigate(
                         ConnectDestination.OtherDeductions.createRoute(tripId, amount, notes)
@@ -305,10 +320,16 @@ fun ConnectNavGraph(
             )
         }
 
+        composable(ConnectDestination.InterestInbox.route) {
+            InboxScreen(
+                onBackClick = { navHostController.popBackStack() }
+            )
+        }
+
         composable(
             route = ConnectDestination.CommonPdfViewer.route,
             arguments = ConnectDestination.CommonPdfViewer.arguments
-        ) { 
+        ) {
             CommonPdfViewerScreen(
                 onBackClick = { navHostController.popBackStack() }
             )
@@ -318,12 +339,17 @@ fun ConnectNavGraph(
             route = ConnectDestination.LuCharges.route,
             arguments = ConnectDestination.LuCharges.arguments
         ) { backStackEntry ->
-            val tripId = backStackEntry.arguments?.getString(ConnectDestination.LuCharges.TRIP_ID_ARG) ?: ""
+            val tripId =
+                backStackEntry.arguments?.getString(ConnectDestination.LuCharges.TRIP_ID_ARG)
+                    ?: ""
             LuChargesScreen(
                 tripId = tripId,
                 onBackClick = { navHostController.popBackStack() },
                 onSuccess = {
-                    navHostController.previousBackStackEntry?.savedStateHandle?.set("refresh", true)
+                    navHostController.previousBackStackEntry?.savedStateHandle?.set(
+                        "refresh",
+                        true
+                    )
                     navHostController.popBackStack()
                 },
                 onPdfPreview = { title, url, localPath ->
@@ -342,13 +368,24 @@ fun ConnectNavGraph(
         composable(
             route = ConnectDestination.HaltingCharges.route + "?loadingDays={loadingDays}&unloadingDays={unloadingDays}&notes={notes}",
             arguments = ConnectDestination.HaltingCharges.arguments + listOf(
-                androidx.navigation.navArgument("loadingDays") { type = androidx.navigation.NavType.IntType; defaultValue = 0 },
-                androidx.navigation.navArgument("unloadingDays") { type = androidx.navigation.NavType.IntType; defaultValue = 0 },
-                androidx.navigation.navArgument("notes") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = "" }
+                androidx.navigation.navArgument("loadingDays") {
+                    type = androidx.navigation.NavType.IntType; defaultValue = 0
+                },
+                androidx.navigation.navArgument("unloadingDays") {
+                    type = androidx.navigation.NavType.IntType; defaultValue = 0
+                },
+                androidx.navigation.navArgument("notes") {
+                    type = androidx.navigation.NavType.StringType; nullable =
+                    true; defaultValue = ""
+                }
             )
         ) { backStackEntry ->
-            val tripId = backStackEntry.arguments?.getString(ConnectDestination.HaltingCharges.TRIP_ID_ARG) ?: ""
-            val truckTypeId = backStackEntry.arguments?.getString(ConnectDestination.HaltingCharges.TRUCK_TYPE_ID_ARG) ?: ""
+            val tripId =
+                backStackEntry.arguments?.getString(ConnectDestination.HaltingCharges.TRIP_ID_ARG)
+                    ?: ""
+            val truckTypeId =
+                backStackEntry.arguments?.getString(ConnectDestination.HaltingCharges.TRUCK_TYPE_ID_ARG)
+                    ?: ""
             val loadingDays = backStackEntry.arguments?.getInt("loadingDays") ?: 0
             val unloadingDays = backStackEntry.arguments?.getInt("unloadingDays") ?: 0
             val notes = backStackEntry.arguments?.getString("notes") ?: ""
@@ -361,7 +398,10 @@ fun ConnectNavGraph(
                 notes = notes,
                 onBackClick = { navHostController.popBackStack() },
                 onSuccess = {
-                    navHostController.previousBackStackEntry?.savedStateHandle?.set("refresh", true)
+                    navHostController.previousBackStackEntry?.savedStateHandle?.set(
+                        "refresh",
+                        true
+                    )
                     navHostController.popBackStack()
                 }
             )
@@ -371,15 +411,24 @@ fun ConnectNavGraph(
             route = ConnectDestination.OtherDeductions.route,
             arguments = ConnectDestination.OtherDeductions.arguments
         ) { backStackEntry ->
-            val tripId = backStackEntry.arguments?.getString(ConnectDestination.OtherDeductions.TRIP_ID_ARG) ?: ""
-            val amount = backStackEntry.arguments?.getString(ConnectDestination.OtherDeductions.AMOUNT_ARG) ?: "0.0"
-            val notes = backStackEntry.arguments?.getString(ConnectDestination.OtherDeductions.NOTES_ARG) ?: ""
+            val tripId =
+                backStackEntry.arguments?.getString(ConnectDestination.OtherDeductions.TRIP_ID_ARG)
+                    ?: ""
+            val amount =
+                backStackEntry.arguments?.getString(ConnectDestination.OtherDeductions.AMOUNT_ARG)
+                    ?: "0.0"
+            val notes =
+                backStackEntry.arguments?.getString(ConnectDestination.OtherDeductions.NOTES_ARG)
+                    ?: ""
 
             OtherDeductionsScreen(
                 tripId = tripId,
                 onBackClick = { navHostController.popBackStack() },
                 onSuccess = {
-                    navHostController.previousBackStackEntry?.savedStateHandle?.set("refresh", true)
+                    navHostController.previousBackStackEntry?.savedStateHandle?.set(
+                        "refresh",
+                        true
+                    )
                     navHostController.popBackStack()
                 }
             )
@@ -391,10 +440,19 @@ fun ConnectNavGraph(
                     navHostController.popBackStack()
                 },
                 onIndentClick = { indentId ->
-                    navHostController.navigate(ConnectDestination.IndentDetails.createRoute(indentId))
+                    navHostController.navigate(
+                        ConnectDestination.IndentDetails.createRoute(
+                            indentId
+                        )
+                    )
                 },
                 onCloneClick = { indentId, indentGroupId ->
-                    navHostController.navigate(ConnectDestination.CloneIndent.createRoute(indentId, indentGroupId))
+                    navHostController.navigate(
+                        ConnectDestination.CloneIndent.createRoute(
+                            indentId,
+                            indentGroupId
+                        )
+                    )
                 }
             )
         }
@@ -405,7 +463,11 @@ fun ConnectNavGraph(
                     navHostController.popBackStack()
                 },
                 onNavigateToSearch = { searchType ->
-                    navHostController.navigate(ConnectDestination.SearchSelection.createRoute(searchType))
+                    navHostController.navigate(
+                        ConnectDestination.SearchSelection.createRoute(
+                            searchType
+                        )
+                    )
                 },
                 onNavigateToReview = {
                     navHostController.navigate(ConnectDestination.ReviewIndent.route)
@@ -460,7 +522,7 @@ fun ConnectNavGraph(
                 indentId = indentId,
                 onViewIndentClick = {
                     navHostController.navigate(ConnectDestination.Home.route) {
-                         launchSingleTop = true
+                        launchSingleTop = true
                     }
                 },
                 onBackToHomeClick = {
@@ -475,7 +537,9 @@ fun ConnectNavGraph(
             route = ConnectDestination.IndentDetails.route,
             arguments = ConnectDestination.IndentDetails.arguments,
         ) { backStackEntry ->
-            val indentId = backStackEntry.arguments?.getString(ConnectDestination.IndentDetails.INDENT_ID_ARG) ?: ""
+            val indentId =
+                backStackEntry.arguments?.getString(ConnectDestination.IndentDetails.INDENT_ID_ARG)
+                    ?: ""
             IndentDetailsScreen(
                 navController = navHostController,
                 indentId = indentId,
@@ -495,12 +559,17 @@ fun ConnectNavGraph(
             route = ConnectDestination.EditIndent.route,
             arguments = ConnectDestination.EditIndent.arguments,
         ) { backStackEntry ->
-            val indentId = backStackEntry.arguments?.getString(ConnectDestination.EditIndent.INDENT_ID_ARG) ?: ""
+            val indentId =
+                backStackEntry.arguments?.getString(ConnectDestination.EditIndent.INDENT_ID_ARG)
+                    ?: ""
             EditIndentScreen(
                 indentId = indentId,
                 onBackClick = { navHostController.popBackStack() },
                 onSuccess = {
-                    navHostController.previousBackStackEntry?.savedStateHandle?.set("refresh", true)
+                    navHostController.previousBackStackEntry?.savedStateHandle?.set(
+                        "refresh",
+                        true
+                    )
                     navHostController.popBackStack()
                 }
             )
@@ -510,8 +579,12 @@ fun ConnectNavGraph(
             route = ConnectDestination.CloneIndent.route,
             arguments = ConnectDestination.CloneIndent.arguments,
         ) { backStackEntry ->
-            val indentId = backStackEntry.arguments?.getString(ConnectDestination.CloneIndent.INDENT_ID_ARG) ?: ""
-            val indentGroupId = backStackEntry.arguments?.getString(ConnectDestination.CloneIndent.INDENT_GROUP_ID_ARG) ?: ""
+            val indentId =
+                backStackEntry.arguments?.getString(ConnectDestination.CloneIndent.INDENT_ID_ARG)
+                    ?: ""
+            val indentGroupId =
+                backStackEntry.arguments?.getString(ConnectDestination.CloneIndent.INDENT_GROUP_ID_ARG)
+                    ?: ""
             CloneIndentScreen(
                 indentId = indentId,
                 indentGroupId = indentGroupId,
@@ -538,17 +611,31 @@ fun ConnectNavGraph(
             route = ConnectDestination.AssignTruck.route,
             arguments = ConnectDestination.AssignTruck.arguments,
         ) { backStackEntry ->
-            val indentId = backStackEntry.arguments?.getString(ConnectDestination.AssignTruck.INDENT_ID_ARG) ?: ""
+            val indentId =
+                backStackEntry.arguments?.getString(ConnectDestination.AssignTruck.INDENT_ID_ARG)
+                    ?: ""
             AssignTruckScreen(
                 onBackClick = { navHostController.popBackStack() },
                 onTruckSelected = { truckId, truckNumber ->
-                    val fromEditTrip = navHostController.previousBackStackEntry?.destination?.route == ConnectDestination.EditTrip.route
+                    val fromEditTrip =
+                        navHostController.previousBackStackEntry?.destination?.route == ConnectDestination.EditTrip.route
                     if (fromEditTrip) {
-                        navHostController.previousBackStackEntry?.savedStateHandle?.set("selected_truck_id", truckId)
-                        navHostController.previousBackStackEntry?.savedStateHandle?.set("selected_truck_number", truckNumber)
+                        navHostController.previousBackStackEntry?.savedStateHandle?.set(
+                            "selected_truck_id",
+                            truckId
+                        )
+                        navHostController.previousBackStackEntry?.savedStateHandle?.set(
+                            "selected_truck_number",
+                            truckNumber
+                        )
                         navHostController.popBackStack()
                     } else {
-                        navHostController.navigate(ConnectDestination.CreateTrip.createRoute(indentId, truckId))
+                        navHostController.navigate(
+                            ConnectDestination.CreateTrip.createRoute(
+                                indentId,
+                                truckId
+                            )
+                        )
                     }
                 }
             )
@@ -558,16 +645,29 @@ fun ConnectNavGraph(
             route = ConnectDestination.CreateTrip.route,
             arguments = ConnectDestination.CreateTrip.arguments,
         ) { backStackEntry ->
-            val indentId = backStackEntry.arguments?.getString(ConnectDestination.CreateTrip.INDENT_ID_ARG) ?: ""
-            val truckId = backStackEntry.arguments?.getString(ConnectDestination.CreateTrip.TRUCK_ID_ARG) ?: ""
+            val indentId =
+                backStackEntry.arguments?.getString(ConnectDestination.CreateTrip.INDENT_ID_ARG)
+                    ?: ""
+            val truckId =
+                backStackEntry.arguments?.getString(ConnectDestination.CreateTrip.TRUCK_ID_ARG)
+                    ?: ""
             CreateTripScreen(
                 indentId = indentId,
                 truckId = truckId,
                 onBackClick = { navHostController.popBackStack() },
                 onTripCreated = { tripId, truckNumber, origin, destination, driverName, driverPhone ->
-                    val route = ConnectDestination.TripSuccess.createRoute(tripId, truckNumber, origin, destination, driverName, driverPhone)
+                    val route = ConnectDestination.TripSuccess.createRoute(
+                        tripId,
+                        truckNumber,
+                        origin,
+                        destination,
+                        driverName,
+                        driverPhone
+                    )
                     navHostController.navigate(route) {
-                        popUpTo(ConnectDestination.CreateTrip.route) { inclusive = true } // Remove create trip from stack
+                        popUpTo(ConnectDestination.CreateTrip.route) {
+                            inclusive = true
+                        } // Remove create trip from stack
                     }
                 }
             )
@@ -578,12 +678,24 @@ fun ConnectNavGraph(
             arguments = ConnectDestination.TripSuccess.arguments,
         ) { backStackEntry ->
 
-            val tripId = backStackEntry.arguments?.getString(ConnectDestination.TripSuccess.TRIP_ID_ARG) ?: ""
-            val truckNumber = backStackEntry.arguments?.getString(ConnectDestination.TripSuccess.TRUCK_NUMBER_ARG) ?: ""
-            val origin = backStackEntry.arguments?.getString(ConnectDestination.TripSuccess.ORIGIN_ARG) ?: ""
-            val destination = backStackEntry.arguments?.getString(ConnectDestination.TripSuccess.DESTINATION_ARG) ?: ""
-            val driverName = backStackEntry.arguments?.getString(ConnectDestination.TripSuccess.DRIVER_NAME_ARG) ?: ""
-            val driverPhone = backStackEntry.arguments?.getString(ConnectDestination.TripSuccess.DRIVER_PHONE_ARG) ?: ""
+            val tripId =
+                backStackEntry.arguments?.getString(ConnectDestination.TripSuccess.TRIP_ID_ARG)
+                    ?: ""
+            val truckNumber =
+                backStackEntry.arguments?.getString(ConnectDestination.TripSuccess.TRUCK_NUMBER_ARG)
+                    ?: ""
+            val origin =
+                backStackEntry.arguments?.getString(ConnectDestination.TripSuccess.ORIGIN_ARG)
+                    ?: ""
+            val destination =
+                backStackEntry.arguments?.getString(ConnectDestination.TripSuccess.DESTINATION_ARG)
+                    ?: ""
+            val driverName =
+                backStackEntry.arguments?.getString(ConnectDestination.TripSuccess.DRIVER_NAME_ARG)
+                    ?: ""
+            val driverPhone =
+                backStackEntry.arguments?.getString(ConnectDestination.TripSuccess.DRIVER_PHONE_ARG)
+                    ?: ""
 
             TripSuccessScreen(
                 tripId = tripId,
@@ -612,7 +724,10 @@ fun ConnectNavGraph(
             PdfViewerScreen(
                 onBackClick = { navHostController.popBackStack() },
                 onSuccess = {
-                    navHostController.previousBackStackEntry?.savedStateHandle?.set("refresh", true)
+                    navHostController.previousBackStackEntry?.savedStateHandle?.set(
+                        "refresh",
+                        true
+                    )
                     navHostController.popBackStack()
                 }
             )
@@ -622,7 +737,9 @@ fun ConnectNavGraph(
             route = ConnectDestination.EditTrip.route,
             arguments = ConnectDestination.EditTrip.arguments
         ) { backStackEntry ->
-            val tripId = backStackEntry.arguments?.getString(ConnectDestination.EditTrip.TRIP_ID_ARG) ?: ""
+            val tripId =
+                backStackEntry.arguments?.getString(ConnectDestination.EditTrip.TRIP_ID_ARG)
+                    ?: ""
             com.freight24.connect.feature.trips.views.EditTripScreen(
                 navController = navHostController,
                 backStackEntry = backStackEntry,
@@ -632,7 +749,10 @@ fun ConnectNavGraph(
                     navHostController.navigate(ConnectDestination.AssignTruck.createRoute(id))
                 },
                 onSuccess = {
-                    navHostController.previousBackStackEntry?.savedStateHandle?.set("refresh", true)
+                    navHostController.previousBackStackEntry?.savedStateHandle?.set(
+                        "refresh",
+                        true
+                    )
                     navHostController.popBackStack()
                 }
             )
