@@ -1086,7 +1086,7 @@ private fun DocumentList(
                             imageVector = if ((uploadState?.uploadStatus ?: UploadStatus.IDLE) == UploadStatus.ERROR) {
                                 Icons.Default.Refresh
                             } else {
-                                Icons.Default.KeyboardArrowUp
+                                Icons.Default.CloudUpload
                             },
                             contentDescription = "Upload",
                             tint = if ((uploadState?.uploadStatus ?: UploadStatus.IDLE) == UploadStatus.ERROR) {

@@ -105,6 +105,9 @@ internal class ProfileViewModel
         private val _isSaving = MutableStateFlow(false)
         val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
 
+        private val _errorEvent = MutableSharedFlow<String>()
+        val errorEvent = _errorEvent.asSharedFlow()
+
         private val _uploadEvent = MutableSharedFlow<Result<Unit>>()
         val uploadEvent = _uploadEvent.asSharedFlow()
 
@@ -217,35 +220,43 @@ internal class ProfileViewModel
 
         fun saveProfile() {
             val original = originalProfile ?: return
+            if (_isSaving.value) return
 
             viewModelScope.launch(Dispatchers.IO) {
                 _isSaving.value = true
 
-                val request = com.freight24.rest.request.UpdateProfileRequest(
-                    full_name = editableFullName.value,
-                    email = editableEmailId.value,
-                    alt_phones = listOf(editableAlternativePhone.value),
-                    pan_card = editablePanNumber.value,
-                    aadhar_card = editableAadhaarNumber.value,
-                    business_name = editableBusinessName.value,
-                    gst_number = editableGstNumber.value,
-                    is_tds_applicable = original.isTdsApplicable,
-                    account_holder_name = editableAccountHolderName.value,
-                    account_number = editableAccountNumber.value,
-                    ifsc_code = editableIfscCode.value,
-                    upi_id = editableUpiId.value,
-                    bank_name = editableBankName.value,
-                    branch_name = editableBranchName.value,
-                )
+                val targetUserId = original.userId
 
-                val profileSaveResult = updateProfileUseCase.invoke(UpdateProfileParams(original.userId, request))
-                if (profileSaveResult.isFailure) {
-                    _isSaving.value = false
-                    _saveEvent.emit(Result.failure(profileSaveResult.exceptionOrNull() ?: IllegalStateException("Failed to save profile")))
-                    return@launch
+                val hasProfileChanges = hasProfileFieldChanges(original)
+                if (hasProfileChanges) {
+                    val request = com.freight24.rest.request.UpdateProfileRequest(
+                        full_name = editableFullName.value,
+                        email = editableEmailId.value,
+                        alt_phones = listOf(editableAlternativePhone.value),
+                        pan_card = editablePanNumber.value,
+                        aadhar_card = editableAadhaarNumber.value,
+                        business_name = editableBusinessName.value,
+                        gst_number = editableGstNumber.value,
+                        is_tds_applicable = original.isTdsApplicable,
+                        account_holder_name = editableAccountHolderName.value,
+                        account_number = editableAccountNumber.value,
+                        ifsc_code = editableIfscCode.value,
+                        upi_id = editableUpiId.value,
+                        bank_name = editableBankName.value,
+                        branch_name = editableBranchName.value,
+                    )
+
+                    val profileSaveResult = updateProfileUseCase.invoke(UpdateProfileParams(targetUserId, request))
+                    if (profileSaveResult.isFailure) {
+                        _isSaving.value = false
+                        val message = profileSaveResult.exceptionOrNull()?.message ?: "Failed to save profile"
+                        _errorEvent.emit(message)
+                        _saveEvent.emit(Result.failure(IllegalStateException(message)))
+                        return@launch
+                    }
                 }
 
-                val finalSaveRequest = buildFinalSaveRequest(original.userId)
+                val finalSaveRequest = buildFinalSaveRequest(targetUserId)
                 if (finalSaveRequest.files.isNotEmpty()) {
                     val finalSaveResult = finalizeIdentityDocumentsUseCase.invoke(finalSaveRequest)
                     if (finalSaveResult.isFailure) {
@@ -258,9 +269,9 @@ internal class ProfileViewModel
                 }
 
                 _isEditing.value = false
+                fetchProfile(forceRefresh = true)
                 recomputeHasChanges()
                 _saveEvent.emit(Result.success(Unit))
-                fetchProfile(forceRefresh = true)
                 _isSaving.value = false
             }
         }
@@ -303,7 +314,7 @@ internal class ProfileViewModel
                             UpdateIdentityDocumentParams(
                                 docId = currentState.existingDocId,
                                 userId = original.userId,
-                                documentNumber = "DUMMY_DOC_NUMBER",
+                                documentNumber = "SESSION_$sessionId",
                                 file = body,
                             ),
                         )
@@ -312,7 +323,7 @@ internal class ProfileViewModel
                             UploadIdentityDocumentParams(
                                 userId = original.userId,
                                 documentTypeId = currentState.documentTypeId,
-                                documentNumber = "DUMMY_DOC_NUMBER",
+                                documentNumber = "SESSION_$sessionId",
                                 file = body,
                             ),
                         )
@@ -369,28 +380,28 @@ internal class ProfileViewModel
 
         private fun recomputeHasChanges() {
             val original = originalProfile
-            val textChanged = if (original == null) {
-                false
-            } else {
-                editableFullName.value != original.fullName.orEmpty() ||
-                    editableEmailId.value != original.emailId.orEmpty() ||
-                    editablePhoneNo.value != original.phoneNo.orEmpty() ||
-                    editableAadhaarNumber.value != original.aadhaarNumber.orEmpty() ||
-                    editablePanNumber.value != original.panNumber.orEmpty() ||
-                    editableAlternativePhone.value != original.alternativePhoneNo.firstOrNull().orEmpty() ||
-                    editableBusinessName.value != original.businessName.orEmpty() ||
-                    editableGstNumber.value != original.gstNumber.orEmpty() ||
-                    editableAccountHolderName.value != original.bankAccountDetails?.accountHolderName.orEmpty() ||
-                    editableAccountNumber.value != original.bankAccountDetails?.accountNumber.orEmpty() ||
-                    editableIfscCode.value != original.bankAccountDetails?.ifscCode.orEmpty() ||
-                    editableUpiId.value != original.bankAccountDetails?.upiId.orEmpty() ||
-                    editableBankName.value != original.bankAccountDetails?.bankName.orEmpty() ||
-                    editableBranchName.value != original.bankAccountDetails?.branchName.orEmpty()
-            }
+            val textChanged = if (original == null) false else hasProfileFieldChanges(original)
 
             val hasTemporaryUploads = hasTemporaryUploads()
             _hasPendingTemporaryUploads.value = hasTemporaryUploads
             _hasChanges.value = textChanged || hasTemporaryUploads
+        }
+
+        private fun hasProfileFieldChanges(original: Profile): Boolean {
+            return editableFullName.value != original.fullName.orEmpty() ||
+                editableEmailId.value != original.emailId.orEmpty() ||
+                editablePhoneNo.value != original.phoneNo.orEmpty() ||
+                editableAadhaarNumber.value != original.aadhaarNumber.orEmpty() ||
+                editablePanNumber.value != original.panNumber.orEmpty() ||
+                editableAlternativePhone.value != original.alternativePhoneNo.firstOrNull().orEmpty() ||
+                editableBusinessName.value != original.businessName.orEmpty() ||
+                editableGstNumber.value != original.gstNumber.orEmpty() ||
+                editableAccountHolderName.value != original.bankAccountDetails?.accountHolderName.orEmpty() ||
+                editableAccountNumber.value != original.bankAccountDetails?.accountNumber.orEmpty() ||
+                editableIfscCode.value != original.bankAccountDetails?.ifscCode.orEmpty() ||
+                editableUpiId.value != original.bankAccountDetails?.upiId.orEmpty() ||
+                editableBankName.value != original.bankAccountDetails?.bankName.orEmpty() ||
+                editableBranchName.value != original.bankAccountDetails?.branchName.orEmpty()
         }
 
         private fun hasTemporaryUploads(): Boolean {
