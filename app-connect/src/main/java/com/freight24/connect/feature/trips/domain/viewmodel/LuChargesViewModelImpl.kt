@@ -11,7 +11,7 @@ import com.freight24.connect.feature.trips.domain.usecase.SlipUrlSignedDocumentU
 import com.freight24.connect.feature.trips.domain.usecase.UploadLUChargesUseCase
 import com.freight24.connect.feature.trips.domain.usecase.UploadLUChargesUseCaseParams
 import com.freight24.connect.navigation.ConnectDestination
-import com.freight24.connect.utils.FileUtils
+import com.freight24.common.util.FileUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow

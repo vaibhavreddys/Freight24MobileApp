@@ -49,6 +49,7 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.ChatBubble
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.CreditCard
@@ -162,11 +163,22 @@ internal fun ProfileScreen(
     val snackbarHostState = androidx.compose.runtime.remember { androidx.compose.material3.SnackbarHostState() }
 
     androidx.compose.runtime.LaunchedEffect(Unit) {
-        viewModel.uploadEvent.collect { result ->
-            result.onSuccess {
-                snackbarHostState.showSnackbar("Document uploaded successfully")
-            }.onFailure { error ->
-                snackbarHostState.showSnackbar(error.message ?: "Upload failed")
+        launch {
+            viewModel.uploadEvent.collect { result ->
+                result.onSuccess {
+                    snackbarHostState.showSnackbar("Document uploaded successfully")
+                }.onFailure { error ->
+                    snackbarHostState.showSnackbar(error.message ?: "Upload failed")
+                }
+            }
+        }
+        launch {
+            viewModel.saveEvent.collect { result ->
+                result.onSuccess {
+                    snackbarHostState.showSnackbar("Profile saved successfully")
+                }.onFailure { error ->
+                    snackbarHostState.showSnackbar(error.message ?: "Save failed")
+                }
             }
         }
     }
@@ -220,48 +232,57 @@ private fun ProfileMainContent(
     hasChanges: Boolean,
     snackbarHostState: SnackbarHostState,
 ) {
-    val isUploading by viewModel.isUploading.collectAsState()
+    val documentStates by viewModel.documentStates.collectAsState()
+    val hasPendingTemporaryUploads by viewModel.hasPendingTemporaryUploads.collectAsState()
+    val isSaving by viewModel.isSaving.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
     val isVerified = profile.profileVerificationStatus?.lowercase() == "verified"
     val profileStatus = profile.profileVerificationStatus?.lowercase() ?: "incomplete"
-    
+
     var pickingDocumentType by rememberSaveable { mutableStateOf<DocumentType?>(null) }
-    var pickingDocumentId by rememberSaveable { mutableStateOf<String?>(null) }
     var showSourcePicker by rememberSaveable { mutableStateOf(false) }
     var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
+    var pickingUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
+    var isPdfPending by rememberSaveable { mutableStateOf(false) }
+    var showCancelConfirmDialog by rememberSaveable { mutableStateOf(false) }
+
     val sourceSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val selectedUploadStatus = pickingDocumentType
+        ?.let { type -> documentStates[com.freight24.trucker.feature.profile.util.ProfileDocumentTypeIds.fieldKey(type)]?.uploadStatus }
+        ?: UploadStatus.IDLE
 
     val documentPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
+        contract = ActivityResultContracts.OpenDocument(),
     ) { uri ->
-        uri?.let {
-            pickingDocumentType?.let { type ->
-                viewModel.uploadDocument(listOf(it), type, isPdf = true, docId = pickingDocumentId)
-            }
+        if (uri != null) {
+            pickingUris = listOf(uri)
+            isPdfPending = true
+        } else {
+            pickingDocumentType = null
         }
     }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia()
+        contract = ActivityResultContracts.PickMultipleVisualMedia(),
     ) { uris ->
         if (uris.isNotEmpty()) {
-            pickingDocumentType?.let { type ->
-                viewModel.uploadDocument(uris, type, isPdf = false, docId = pickingDocumentId)
-            }
+            pickingUris = uris
+            isPdfPending = false
+        } else {
+            pickingDocumentType = null
         }
     }
 
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture(),
         onResult = { success ->
-            if (success) {
-                tempCameraUri?.let { uri ->
-                    pickingDocumentType?.let { type ->
-                        viewModel.uploadDocument(listOf(uri), type, isPdf = false, docId = pickingDocumentId)
-                    }
-                }
+            if (success && tempCameraUri != null) {
+                pickingUris = listOf(tempCameraUri!!)
+                isPdfPending = false
+            } else {
+                pickingDocumentType = null
             }
             tempCameraUri = null
         },
@@ -300,70 +321,51 @@ private fun ProfileMainContent(
         }
     }
 
-    if (showSourcePicker) {
-        ModalBottomSheet(
-            onDismissRequest = { showSourcePicker = false },
-            sheetState = sourceSheetState,
-        ) {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 24.dp),
-            ) {
-                Text(
-                    text = "Select source",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(16.dp),
-                )
-
-                ListItem(
-                    headlineContent = { Text("Camera") },
-                    leadingContent = {
-                        Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = CircleShape) {
-                            Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.padding(8.dp).size(20.dp))
-                        }
-                    },
-                    modifier = Modifier.clickable {
-                        scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
-                            showSourcePicker = false
-                            startCameraCapture()
-                        }
-                    },
-                )
-                ListItem(
-                    headlineContent = { Text("Gallery (Images)") },
-                    leadingContent = {
-                        Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = CircleShape) {
-                            Icon(Icons.Default.PhotoLibrary, contentDescription = null, modifier = Modifier.padding(8.dp).size(20.dp))
-                        }
-                    },
-                    modifier = Modifier.clickable {
-                        scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
-                            showSourcePicker = false
-                            imagePickerLauncher.launch(
-                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
-                            )
-                        }
-                    },
-                )
-                ListItem(
-                    headlineContent = { Text("Documents (PDF)") },
-                    leadingContent = {
-                        Surface(color = MaterialTheme.colorScheme.tertiaryContainer, shape = CircleShape) {
-                            Icon(Icons.AutoMirrored.Filled.InsertDriveFile, contentDescription = null, modifier = Modifier.padding(8.dp).size(20.dp))
-                        }
-                    },
-                    modifier = Modifier.clickable {
-                        scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
-                            showSourcePicker = false
-                            documentPickerLauncher.launch(arrayOf("application/pdf"))
-                        }
-                    },
-                )
+    com.freight24.ui.components.FileSourcePickerSheet(
+        showSheet = showSourcePicker,
+        onDismissRequest = {
+            showSourcePicker = false
+            pickingDocumentType = null
+        },
+        onCameraClick = {
+            scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
+                showSourcePicker = false
+                startCameraCapture()
             }
-        }
+        },
+        onGalleryClick = {
+            scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
+                showSourcePicker = false
+                imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            }
+        },
+        onDocumentClick = {
+            scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
+                showSourcePicker = false
+                documentPickerLauncher.launch(arrayOf("application/pdf"))
+            }
+        },
+        sheetState = sourceSheetState,
+    )
+
+    if (pickingUris.isNotEmpty()) {
+        com.freight24.ui.components.FileConfirmationSheet(
+            selectedUris = pickingUris,
+            isPdf = isPdfPending,
+            isUploading = selectedUploadStatus == UploadStatus.UPLOADING,
+            uploadButtonText = "Confirm Upload",
+            onUploadClick = {
+                pickingDocumentType?.let { type ->
+                    viewModel.uploadDocument(pickingUris, type, isPdf = isPdfPending)
+                }
+                pickingUris = emptyList()
+                pickingDocumentType = null
+            },
+            onDismiss = {
+                pickingUris = emptyList()
+                pickingDocumentType = null
+            },
+        )
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -374,7 +376,6 @@ private fun ProfileMainContent(
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp, vertical = 20.dp),
         ) {
-            // Profile Header Card
             ProfileHeaderCard(
                 fullName = viewModel.editableFullName.collectAsState().value,
                 partnerId = profile.tagCode.orEmpty(),
@@ -385,7 +386,6 @@ private fun ProfileMainContent(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Information Sections
             ProfileSection(title = "PERSONAL INFORMATION", icon = Icons.Default.Person, false) {
                 ProfileField(
                     label = "FULL NAME",
@@ -416,7 +416,7 @@ private fun ProfileMainContent(
                     label = "PHONE NUMBER",
                     value = viewModel.editablePhoneNo.collectAsState().value,
                     isEditing = isEditing,
-                    isEditable = false, // Phone number is never editable - primary key factor
+                    isEditable = false,
                     showAsLabelOnly = true,
                     leadingIcon = Icons.Default.Call,
                     onLeadingIconClick = {
@@ -471,10 +471,10 @@ private fun ProfileMainContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             ProfileSection(
-                title = "BUSINESS DETAILS", 
-                icon = Icons.Default.Business, 
+                title = "BUSINESS DETAILS",
+                icon = Icons.Default.Business,
                 initiallyExpanded = false,
-                isVerified = profile.documentsVerificationStatus
+                isVerified = profile.documentsVerificationStatus,
             ) {
                 ProfileField(
                     label = "COMPANY NAME",
@@ -505,10 +505,10 @@ private fun ProfileMainContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             ProfileSection(
-                title = "BANKING INFORMATION", 
-                icon = Icons.Default.AccountBalance, 
+                title = "BANKING INFORMATION",
+                icon = Icons.Default.AccountBalance,
                 initiallyExpanded = false,
-                isVerified = profile.bankAccountVerificationStatus
+                isVerified = profile.bankAccountVerificationStatus,
             ) {
                 ProfileField(
                     label = "ACCOUNT HOLDER",
@@ -589,26 +589,25 @@ private fun ProfileMainContent(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Documents Section
             ProfileSection(
-                title = "DOCUMENTS", 
-                icon = Icons.AutoMirrored.Filled.Assignment, 
+                title = "DOCUMENTS",
+                icon = Icons.AutoMirrored.Filled.Assignment,
                 initiallyExpanded = false,
-                isVerified = profile.documentsVerificationStatus
+                isVerified = profile.documentsVerificationStatus,
             ) {
                 DocumentList(
                     documents = profile.documents,
+                    documentStates = documentStates,
                     isEditing = isEditing,
                     onDocumentView = { s3Url ->
                         viewModel.getSignedUrl(s3Url) { signedUrl ->
                             context.startActivity(com.freight24.ui.components.getPdfLaunchIntent(signedUrl, context))
                         }
                     },
-                    onDocumentUpload = { type, docId ->
+                    onDocumentUpload = { type ->
                         pickingDocumentType = type
-                        pickingDocumentId = docId
                         showSourcePicker = true
-                    }
+                    },
                 )
             }
 
@@ -618,19 +617,19 @@ private fun ProfileMainContent(
                 addressLines = listOf(
                     "#42, 4th Floor, 7th Main Road,",
                     "Jakkur, Bengaluru,",
-                    "Karnataka - 560034"
-                )
+                    "Karnataka - 560034",
+                ),
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // App Section
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .padding(vertical = 8.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .padding(vertical = 8.dp),
             ) {
                 Icon(
                     imageVector = Icons.Default.SettingsApplications,
@@ -645,7 +644,7 @@ private fun ProfileMainContent(
                     color = PrimaryGreen,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
 
                 Spacer(modifier = Modifier.width(8.dp))
@@ -654,35 +653,33 @@ private fun ProfileMainContent(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
             ) {
                 ProfileUtilityRow(
                     title = "App Settings",
                     icon = Icons.Default.Settings,
-                    onClick = { /* Navigate to App Settings */ },
+                    onClick = { },
                     iconContainerColor = FreightThemeTokens.colors.settingsColor.copy(alpha = 0.12f),
-                    iconTint = FreightThemeTokens.colors.settingsColor
+                    iconTint = FreightThemeTokens.colors.settingsColor,
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
                 ProfileUtilityRow(
                     title = "Contact Support",
                     icon = Icons.Default.ChatBubble,
-                    onClick = { /* Navigate to Contact Support */ },
+                    onClick = { },
                     subtitle = "Available Mon–Sat, 9am–6pm",
                     iconContainerColor = FreightThemeTokens.colors.infoColor.copy(alpha = 0.12f),
-                    iconTint = FreightThemeTokens.colors.infoColor
+                    iconTint = FreightThemeTokens.colors.infoColor,
                 )
             }
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // Logout Button
             LogoutButton(onLogout = { viewModel.logout() })
 
             Spacer(modifier = Modifier.height(60.dp))
         }
 
-        // Action Buttons at Bottom in Edit Mode
         AnimatedContent(
             targetState = isEditing,
             transitionSpec = { slideInVertically { it } togetherWith slideOutVertically { it } },
@@ -692,48 +689,43 @@ private fun ProfileMainContent(
             if (editing) {
                 EditActions(
                     hasChanges = hasChanges,
+                    isSaving = isSaving,
                     onSave = { viewModel.saveProfile() },
-                    onCancel = { viewModel.cancelEdit() },
+                    onCancel = {
+                        if (hasPendingTemporaryUploads) {
+                            showCancelConfirmDialog = true
+                        } else {
+                            viewModel.cancelEdit()
+                        }
+                    },
                 )
             }
         }
 
-        // Uploading Overlay
-        AnimatedVisibility(
-            visible = isUploading,
-            enter = androidx.compose.animation.fadeIn(),
-            exit = androidx.compose.animation.fadeOut()
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.4f))
-                    .clickable(enabled = false) {},
-                contentAlignment = Alignment.Center
-            ) {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+        if (showCancelConfirmDialog) {
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { showCancelConfirmDialog = false },
+                title = { Text("Discard uploads?") },
+                text = { Text("Uploaded documents will be discarded. Cancel anyway?") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showCancelConfirmDialog = false
+                            viewModel.cancelEdit()
+                        },
                     ) {
-                        CircularProgressIndicator(color = BrandGreen)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Text(
-                            "Processing...",
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium
-                        )
+                        Text("Yes, Cancel")
                     }
-                }
-            }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showCancelConfirmDialog = false }) {
+                        Text("Keep Editing")
+                    }
+                },
+            )
         }
     }
 }
-
 @Composable
 private fun ProfileHeaderCard(
     fullName: String,
@@ -745,7 +737,7 @@ private fun ProfileHeaderCard(
     val isVerified = verificationStatus == "verified"
     val statusColor = when (verificationStatus) {
         "verified" -> BrandGreen
-        "pending" -> Color(0xFFFFA000) // Darker variant of Yellow for better visibility
+        "pending" -> MaterialTheme.colorScheme.tertiary
         else -> MaterialTheme.colorScheme.error 
     }
     val statusIcon = if (isVerified) Icons.Default.CheckCircle else Icons.Default.Warning
@@ -856,7 +848,7 @@ private fun ProfileSection(
             if (isVerified) {
                 VerificationChip("Verified", BrandGreen)
             } else {
-                VerificationChip("Unverified", Color(0xFFFFA000))
+                VerificationChip("Unverified", MaterialTheme.colorScheme.tertiary)
             }
             
             Spacer(modifier = Modifier.width(8.dp))
@@ -1124,33 +1116,29 @@ private fun VerificationChip(text: String, color: Color) {
 @Composable
 private fun DocumentList(
     documents: List<ProfileDocument>,
+    documentStates: Map<String, DocumentUploadState>,
     isEditing: Boolean,
     onDocumentView: (String) -> Unit,
-    onDocumentUpload: (DocumentType, String?) -> Unit,
+    onDocumentUpload: (DocumentType) -> Unit,
 ) {
-    val types =
-        listOf(
-            DocumentType.AADHAAR,
-            DocumentType.PAN,
-            DocumentType.GST_CERTIFICATE,
-            DocumentType.COMPANY_REGISTRATION,
-            DocumentType.TDS_CERTIFICATE,
-            DocumentType.CANCELLED_CHEQUE,
-        )
+    val types = com.freight24.trucker.feature.profile.util.ProfileDocumentTypeIds.editableDocumentTypes
 
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         types.forEachIndexed { index, type ->
+            val fieldKey = com.freight24.trucker.feature.profile.util.ProfileDocumentTypeIds.fieldKey(type)
+            val uploadState = documentStates[fieldKey]
             val doc = documents.find { it.type == type }
+            val existingUrl = uploadState?.existingFileUrl ?: doc?.url
 
             Row(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .clickable { 
+                        .clickable {
                             if (isEditing) {
-                                onDocumentUpload(type, doc?.docId)
-                            } else if (!doc?.url.isNullOrEmpty()) {
-                                onDocumentView(doc!!.url!!)
+                                onDocumentUpload(type)
+                            } else if (!existingUrl.isNullOrEmpty()) {
+                                onDocumentView(existingUrl)
                             }
                         }
                         .padding(horizontal = 20.dp, vertical = 18.dp),
@@ -1170,25 +1158,66 @@ private fun DocumentList(
                     modifier = Modifier.weight(1f),
                     color = MaterialTheme.colorScheme.onSurface,
                 )
+
                 if (isEditing) {
-                    if (doc != null && !doc.url.isNullOrEmpty()) {
-                        StatusBadge(doc.status)
-                        Spacer(modifier = Modifier.width(8.dp))
+                    when (uploadState?.uploadStatus ?: UploadStatus.IDLE) {
+                        UploadStatus.UPLOADING -> {
+                            androidx.compose.material3.LinearProgressIndicator(
+                                modifier = Modifier.width(88.dp),
+                                color = MaterialTheme.colorScheme.primary,
+                                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+
+                        UploadStatus.DONE -> {
+                            PendingSaveBadge()
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+
+                        UploadStatus.ERROR -> {
+                            UploadFailedBadge()
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+
+                        UploadStatus.IDLE -> {
+                            if (!existingUrl.isNullOrEmpty()) {
+                                ExistingStatusBadge(uploadState?.existingVerifyStatus, doc?.status)
+                                Spacer(modifier = Modifier.width(8.dp))
+                            } else {
+                                VerificationChip("Not Uploaded", MaterialTheme.colorScheme.outline)
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+                        }
                     }
-                    Icon(
-                        imageVector = Icons.Default.CloudUpload,
-                        contentDescription = "Upload",
-                        tint = BrandGreen,
-                        modifier = Modifier.size(24.dp)
-                    )
-                } else if (doc != null && !doc.url.isNullOrEmpty()) {
-                    StatusBadge(doc.status)
+
+                    IconButton(
+                        onClick = { onDocumentUpload(type) },
+                        enabled = (uploadState?.uploadStatus ?: UploadStatus.IDLE) != UploadStatus.UPLOADING,
+                    ) {
+                        Icon(
+                            imageVector = if ((uploadState?.uploadStatus ?: UploadStatus.IDLE) == UploadStatus.ERROR) {
+                                Icons.Default.Refresh
+                            } else {
+                                Icons.Default.CloudUpload
+                            },
+                            contentDescription = "Upload",
+                            tint = if ((uploadState?.uploadStatus ?: UploadStatus.IDLE) == UploadStatus.ERROR) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                BrandGreen
+                            },
+                            modifier = Modifier.size(24.dp),
+                        )
+                    }
+                } else if (!existingUrl.isNullOrEmpty()) {
+                    ExistingStatusBadge(uploadState?.existingVerifyStatus, doc?.status)
                     Spacer(modifier = Modifier.width(8.dp))
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                         contentDescription = "View",
                         tint = MaterialTheme.colorScheme.outline,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(20.dp),
                     )
                 } else {
                     VerificationChip("Not Uploaded", MaterialTheme.colorScheme.outline)
@@ -1206,15 +1235,18 @@ private fun DocumentList(
 }
 
 @Composable
-private fun StatusBadge(status: DocumentStatus) {
-    val (text, color) =
-        when (status) {
-            DocumentStatus.VERIFIED -> "Verified" to BrandGreen
-            DocumentStatus.REJECTED -> "Rejected" to MaterialTheme.colorScheme.error
-            DocumentStatus.UPLOADED -> "Verification Pending" to Color(0xFFFFA000)
-            DocumentStatus.PENDING -> "Pending" to MaterialTheme.colorScheme.error
-            DocumentStatus.UNKNOWN -> "N/A" to MaterialTheme.colorScheme.onSurfaceVariant
-        }
+private fun ExistingStatusBadge(existingVerifyStatus: String?, fallbackStatus: DocumentStatus?) {
+    val normalizedStatus = existingVerifyStatus?.lowercase()?.trim()
+    val (text, color) = when {
+        normalizedStatus == "verified" -> "Verified" to BrandGreen
+        normalizedStatus == "rejected" -> "Rejected" to MaterialTheme.colorScheme.error
+        normalizedStatus == "pending" -> "Verification Pending" to MaterialTheme.colorScheme.tertiary
+        fallbackStatus == DocumentStatus.VERIFIED -> "Verified" to BrandGreen
+        fallbackStatus == DocumentStatus.REJECTED -> "Rejected" to MaterialTheme.colorScheme.error
+        fallbackStatus == DocumentStatus.UPLOADED -> "Verification Pending" to MaterialTheme.colorScheme.tertiary
+        fallbackStatus == DocumentStatus.PENDING -> "Pending" to MaterialTheme.colorScheme.tertiary
+        else -> "N/A" to MaterialTheme.colorScheme.onSurfaceVariant
+    }
 
     Surface(
         color = color.copy(alpha = 0.1f),
@@ -1229,6 +1261,42 @@ private fun StatusBadge(status: DocumentStatus) {
         )
     }
 }
+
+@Composable
+private fun PendingSaveBadge() {
+    Surface(
+        color = Color.Transparent,
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+    ) {
+        Text(
+            text = "Pending Save",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+        )
+    }
+}
+
+@Composable
+private fun UploadFailedBadge() {
+    Surface(
+        color = MaterialTheme.colorScheme.errorContainer,
+        shape = RoundedCornerShape(8.dp),
+    ) {
+        Text(
+            text = "Upload Failed",
+            color = MaterialTheme.colorScheme.onErrorContainer,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+        )
+    }
+}
+
+
+
 
 @Composable
 private fun LogoutButton(onLogout: () -> Unit) {
@@ -1255,6 +1323,7 @@ private fun LogoutButton(onLogout: () -> Unit) {
 @Composable
 private fun EditActions(
     hasChanges: Boolean,
+    isSaving: Boolean,
     onSave: () -> Unit,
     onCancel: () -> Unit,
 ) {
@@ -1273,6 +1342,7 @@ private fun EditActions(
         ) {
             OutlinedButton(
                 onClick = onCancel,
+                enabled = !isSaving,
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp),
                 border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(width = 1.dp),
@@ -1281,7 +1351,7 @@ private fun EditActions(
             }
             Button(
                 onClick = onSave,
-                enabled = hasChanges,
+                enabled = hasChanges && !isSaving,
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = BrandGreen),

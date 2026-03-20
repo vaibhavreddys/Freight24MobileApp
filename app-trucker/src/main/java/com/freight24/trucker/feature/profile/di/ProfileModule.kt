@@ -36,4 +36,8 @@ internal abstract class ProfileModule {
     @Binds
     @ViewModelScoped
     abstract fun bindUpdateIdentityDocumentUseCase(impl: com.freight24.trucker.feature.profile.domain.usecase.UpdateIdentityDocumentUseCaseImpl): com.freight24.trucker.feature.profile.domain.usecase.UpdateIdentityDocumentUseCase
+
+    @Binds
+    @ViewModelScoped
+    abstract fun bindFinalizeIdentityDocumentsUseCase(impl: com.freight24.trucker.feature.profile.domain.usecase.FinalizeIdentityDocumentsUseCaseImpl): com.freight24.trucker.feature.profile.domain.usecase.FinalizeIdentityDocumentsUseCase
 }

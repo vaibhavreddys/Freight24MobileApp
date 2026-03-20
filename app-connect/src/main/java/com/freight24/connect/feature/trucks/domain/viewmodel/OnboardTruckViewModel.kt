@@ -27,7 +27,7 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
-import com.freight24.connect.utils.FileUtils
+import com.freight24.common.util.FileUtils
 import javax.inject.Inject
 
 data class TruckType(val id: Int, val name: String)

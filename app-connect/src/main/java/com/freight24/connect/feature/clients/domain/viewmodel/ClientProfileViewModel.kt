@@ -30,7 +30,7 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
 import javax.inject.Inject
-import com.freight24.connect.utils.FileUtils
+import com.freight24.common.util.FileUtils
 
 @HiltViewModel
 class ClientProfileViewModel @Inject constructor(

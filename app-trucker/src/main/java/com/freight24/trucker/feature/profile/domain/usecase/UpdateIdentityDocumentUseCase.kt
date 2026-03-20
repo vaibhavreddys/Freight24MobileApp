@@ -5,7 +5,7 @@ import okhttp3.MultipartBody
 import javax.inject.Inject
 
 interface UpdateIdentityDocumentUseCase {
-    suspend operator fun invoke(params: UpdateIdentityDocumentParams): Result<Boolean>
+    suspend operator fun invoke(params: UpdateIdentityDocumentParams): Result<String>
 }
 
 data class UpdateIdentityDocumentParams(
@@ -18,7 +18,7 @@ data class UpdateIdentityDocumentParams(
 class UpdateIdentityDocumentUseCaseImpl @Inject constructor(
     private val repository: ProfileRepository
 ) : UpdateIdentityDocumentUseCase {
-    override suspend fun invoke(params: UpdateIdentityDocumentParams): Result<Boolean> {
+    override suspend fun invoke(params: UpdateIdentityDocumentParams): Result<String> {
         return repository.updateIdentityDocument(params.docId, params.userId, params.documentNumber, params.file)
     }
 }

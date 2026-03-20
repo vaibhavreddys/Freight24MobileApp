@@ -13,7 +13,7 @@ import com.freight24.connect.feature.trips.domain.usecase.UpdateTruckerUseCase
 import com.freight24.connect.feature.trips.domain.usecase.UpdateTruckerUseCaseDataParams
 import com.freight24.connect.feature.trips.domain.usecase.UploadLrUseCase
 import com.freight24.connect.feature.trips.domain.usecase.UploadLrUseCaseDataParams
-import com.freight24.connect.utils.FileUtils
+import com.freight24.common.util.FileUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow

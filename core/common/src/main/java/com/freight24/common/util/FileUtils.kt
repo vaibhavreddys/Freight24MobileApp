@@ -1,4 +1,4 @@
-package com.freight24.connect.utils
+package com.freight24.common.util
 
 import android.content.Context
 import android.graphics.BitmapFactory
@@ -10,14 +10,13 @@ import java.io.File
 import java.io.FileOutputStream
 
 object FileUtils {
-
     suspend fun getFileFromUri(context: Context, uri: Uri): File? = withContext(Dispatchers.IO) {
         try {
             val inputStream = context.contentResolver.openInputStream(uri)
-            val extension = context.contentResolver.getType(uri)?.let { 
-                if (it.contains("pdf")) "pdf" else "jpg" 
+            val extension = context.contentResolver.getType(uri)?.let {
+                if (it.contains("pdf", ignoreCase = true)) "pdf" else "jpg"
             } ?: "pdf"
-            val file = File(context.cacheDir, "temp_file_$uri.$extension")
+            val file = File(context.cacheDir, "temp_file_${System.currentTimeMillis()}.$extension")
             val outputStream = FileOutputStream(file)
             inputStream?.use { input ->
                 outputStream.use { output ->

@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
-import com.freight24.trucker.utils.FileUtils
+import com.freight24.common.util.FileUtils
 import javax.inject.Inject
 
 
