@@ -41,9 +41,17 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.freight24.rest.response.CityResult
@@ -59,12 +67,33 @@ fun CitySearchField(
     label: String,
     placeholder: String = "Search city...",
     enabled: Boolean = true,
+    selectAllOnFocus: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
+    var fieldValue by remember() { mutableStateOf(TextFieldValue(query)) }
+    var isFocused by remember { mutableStateOf(false) }
+    // ✅ Only syncs when query changes EXTERNALLY (e.g. city selected, field cleared)
+    // During typing: fieldValue.text == query, so this block never fires
+    LaunchedEffect(query) {
+        if (fieldValue.text != query) {
+            fieldValue = TextFieldValue(
+                text = query,
+                selection = if (selectAllOnFocus && isFocused && query.isNotEmpty()) {
+                    TextRange(0, query.length)
+                } else {
+                    TextRange(query.length) // cursor at end
+                }
+            )
+        }
+    }
+
     Column(modifier = modifier) {
         OutlinedTextField(
-            value = query,
-            onValueChange = onQueryChange,
+            value = fieldValue,
+            onValueChange = {
+                fieldValue = it
+                onQueryChange(it.text)
+            },
             label = { Text(label) },
             placeholder = { Text(placeholder, style = MaterialTheme.typography.bodyMedium) },
             enabled = enabled,
@@ -72,7 +101,13 @@ fun CitySearchField(
             keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                 imeAction = ImeAction.Search,
             ),
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .onFocusChanged { state ->
+                    if (selectAllOnFocus && state.isFocused && fieldValue.text.isNotEmpty()) {
+                        fieldValue = fieldValue.copy(selection = TextRange(0, fieldValue.text.length))
+                    }
+                },
             shape = RoundedCornerShape(10.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = MaterialTheme.colorScheme.primary,

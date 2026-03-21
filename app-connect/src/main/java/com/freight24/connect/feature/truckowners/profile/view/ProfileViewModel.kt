@@ -282,7 +282,8 @@ internal class ProfileViewModel
         private fun populateBaseCity(profile: Profile) {
             val baseCityId = profile.baseCityId
             val baseCityName = profile.baseCityName
-            _baseLocation.value = profile.baseLocation?.ifBlank { null } ?: baseCityName
+            val baseLabel = profile.baseLocation?.ifBlank { null } ?: baseCityName
+            _baseLocation.value = baseLabel
             if (baseCityId != null && !baseCityName.isNullOrBlank()) {
                 _baseCity.value = CityResult(
                     type = "CITY",
@@ -291,10 +292,10 @@ internal class ProfileViewModel
                     city = baseCityName,
                     state = profile.baseCityState.orEmpty(),
                 )
-                baseCityQuery.value = baseCityName
+                baseCityQuery.value = baseLabel.orEmpty()
             } else {
                 _baseCity.value = null
-                baseCityQuery.value = ""
+                baseCityQuery.value = baseLabel.orEmpty()
             }
             _baseCitySuggestions.value = emptyList()
         }
@@ -361,7 +362,7 @@ internal class ProfileViewModel
                 _baseCitySuggestions.value = emptyList()
                 _baseLocation.value = null
             }
-            if (_baseCity.value?.city != query) {
+            if (_baseCity.value?.name != query) {
                 _baseCity.value = null
             }
             recomputeHasChanges()
@@ -369,10 +370,10 @@ internal class ProfileViewModel
 
         fun onBaseCitySelected(city: CityResult) {
             _baseCity.value = city
-            baseCityQuery.value = city.city
+            baseCityQuery.value = city.name
             _baseCitySuggestions.value = emptyList()
-            _baseLocation.value = city.city
-            _baseCitySearchSkip.value = city.city
+            _baseLocation.value = city.name
+            _baseCitySearchSkip.value = city.name
             recomputeHasChanges()
         }
 
@@ -510,7 +511,8 @@ internal class ProfileViewModel
                     val targetUserId = original.userId
 
                     val hasProfileChanges = hasProfileFieldChanges(original)
-                    if (hasProfileChanges) {
+                    val hasRouteChanges = hasRouteChanges()
+                    if (hasProfileChanges || hasRouteChanges) {
                         val request = buildSaveRequest(original)
 
                         val profileSaveResult = updateProfileUseCase.invoke(UpdateProfileParams(targetUserId, request))
@@ -564,8 +566,10 @@ internal class ProfileViewModel
         }
 
         private fun buildSaveRequest(original: Profile): com.freight24.rest.request.UpdateProfileRequest {
+            val baseCity = _baseCity.value
             return com.freight24.rest.request.UpdateProfileRequest(
-                baseCityId = _baseCity.value?.id,
+                baseCityId = baseCity?.takeIf { it.type.equals("CITY", ignoreCase = true) }?.id,
+                baseAreaId = baseCity?.takeIf { it.type.equals("AREA", ignoreCase = true) }?.id,
                 full_name = editableFullName.value,
                 email = editableEmailId.value,
                 alt_phones = listOf(editableAlternativePhone.value),

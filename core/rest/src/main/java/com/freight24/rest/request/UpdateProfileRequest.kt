@@ -7,6 +7,8 @@ import kotlinx.serialization.Serializable
 data class UpdateProfileRequest(
     @SerialName("base_city_id")
     val baseCityId: Int? = null,
+    @SerialName("base_area_id")
+    val baseAreaId: Int? = null,
     val full_name: String? = null,
     val email: String? = null,
     val phone: String? = null,

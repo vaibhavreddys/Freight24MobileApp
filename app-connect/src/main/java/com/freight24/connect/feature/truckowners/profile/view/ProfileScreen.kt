@@ -615,6 +615,7 @@ private fun ProfileMainContent(
                             onCitySelected = viewModel::onBaseCitySelected,
                             isLoading = baseCityLoading,
                             label = "Base Location",
+                            selectAllOnFocus = true,
                             modifier = Modifier.fillMaxWidth(),
                         )
                     } else {
