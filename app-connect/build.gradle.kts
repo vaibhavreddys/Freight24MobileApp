@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -11,6 +14,16 @@ plugins {
 kotlin {
     jvmToolchain(17)
 }
+
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        load(FileInputStream(localPropertiesFile))
+    }
+}
+
+// Set the BASE_URL in your "local.properties" file at Freight24MobileApp/local.properties
+val debugBaseUrl = localProperties.getProperty("BASE_URL") ?: "https://backendapi-qhpo.onrender.com/api/v1/"
 
 android {
     namespace = "com.freight24.connect"
@@ -35,7 +48,7 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             isDebuggable = true
-            //buildConfigField("String", "BASE_URL", "\"https://192.168.1.195:3000/api/v1/\"")
+            buildConfigField("String", "BASE_URL", "\"${debugBaseUrl}\"")
         }
         release {
             isMinifyEnabled = false

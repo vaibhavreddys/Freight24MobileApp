@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -10,6 +13,14 @@ plugins {
 kotlin {
     jvmToolchain(17)
 }
+
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        load(FileInputStream(localPropertiesFile))
+    }
+}
+val debugBaseUrl = localProperties.getProperty("BASE_URL") ?: "https://backendapi-qhpo.onrender.com/api/v1/"
 
 android {
     namespace = "com.freight24.trucker"
@@ -33,7 +44,7 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             isDebuggable = true
-            buildConfigField("String", "BASE_URL", "\"https://backendapi-qhpo.onrender.com/api/v1/\"")
+            buildConfigField("String", "BASE_URL", "\"${debugBaseUrl}\"")
         }
         release {
             isMinifyEnabled = false
