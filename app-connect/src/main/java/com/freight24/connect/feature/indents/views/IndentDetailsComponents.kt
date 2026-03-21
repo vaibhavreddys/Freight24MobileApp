@@ -2,13 +2,16 @@ package com.freight24.connect.feature.indents.views
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material.icons.outlined.Payments
+import androidx.compose.material.icons.outlined.People
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -151,6 +154,93 @@ fun IndentDetailItemColumn(
             fontWeight = FontWeight.SemiBold,
             color = valueColor,
         )
+    }
+}
+
+@Composable
+fun IndentMetricsSection(
+    interestCount: Int,
+    suitableTrucks: Int,
+    onInterestClick: () -> Unit = {},
+    onSuitableTrucksClick: () -> Unit = {}
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        MetricCard(
+            modifier = Modifier.weight(1f),
+            icon = Icons.Outlined.People,
+            value = interestCount.toString(),
+            label = "Interest Expressed",
+            iconBackgroundColor = Color(0xFFECFDF5),
+            iconTintColor = GreenBrand,
+            onClick = onInterestClick
+        )
+        MetricCard(
+            modifier = Modifier.weight(1f),
+            icon = Icons.Outlined.LocalShipping,
+            value = suitableTrucks.toString(),
+            label = "Suitable Trucks",
+            iconBackgroundColor = Color(0xFFF0FDF4),
+            iconTintColor = GreenBrand,
+            onClick = onSuitableTrucksClick
+        )
+    }
+}
+
+@Composable
+private fun MetricCard(
+    modifier: Modifier = Modifier,
+    icon: ImageVector,
+    value: String,
+    label: String,
+    iconBackgroundColor: Color,
+    iconTintColor: Color,
+    onClick: (() -> Unit)? = null
+) {
+    Card(
+        modifier = if (onClick != null) modifier.clickable { onClick() } else modifier,
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, BorderLight)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Surface(
+                modifier = Modifier.size(48.dp),
+                shape = CircleShape,
+                color = iconBackgroundColor
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = iconTintColor,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = value,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = TextDark
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = TextGrey,
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }
 

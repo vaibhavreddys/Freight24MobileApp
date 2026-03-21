@@ -13,7 +13,7 @@ data class FindTrucksUseCaseDataParams(
     val truckTypeId: String,
 ): UseCaseParams
 
-internal interface FindTrucksUseCase : UseCase<FindTrucksUseCaseDataParams, TruckerData>
+interface FindTrucksUseCase : UseCase<FindTrucksUseCaseDataParams, TruckerData>
 
 
 class FindTrucksUseCaseImpl @Inject constructor(

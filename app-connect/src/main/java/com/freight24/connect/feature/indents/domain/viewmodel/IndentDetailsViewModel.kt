@@ -2,6 +2,7 @@ package com.freight24.connect.feature.indents.domain.viewmodel
 
 import androidx.compose.runtime.Immutable
 import com.freight24.rest.response.IndentResponse
+import com.freight24.rest.response.TruckerInboxInterestResponse
 import kotlinx.coroutines.flow.StateFlow
 
 interface IndentDetailsViewModel {
@@ -21,7 +22,13 @@ data class IndentDetailsUiState(
     val assignNotes: String = "",
     val isNegotiatedSameAsClient: Boolean = false,
     val isCancelDialogVisible: Boolean = false,
-    val isCanceling: Boolean = false
+    val isCanceling: Boolean = false,
+    val isTruckerSheetVisible: Boolean = false,
+    val isTruckerListLoading: Boolean = false,
+    val truckerList: List<TruckerInboxInterestResponse.TruckerInboxInterestInfo> = emptyList(),
+    val isSuitableTrucksSheetVisible: Boolean = false,
+    val isSuitableTrucksLoading: Boolean = false,
+    val suitableTrucksList: com.freight24.rest.response.SearchTruckerResponse.TruckerData? = null
 )
 
 sealed class IndentDetailsEvent {
@@ -40,4 +47,9 @@ sealed class IndentDetailsEvent {
     object ShowCancelDialog : IndentDetailsEvent()
     object HideCancelDialog : IndentDetailsEvent()
     object ConfirmCancel : IndentDetailsEvent()
+    object ShowTruckerSheet : IndentDetailsEvent()
+    object HideTruckerSheet : IndentDetailsEvent()
+    data class RejectTruckerInterest(val interestId: String) : IndentDetailsEvent()
+    object ShowSuitableTrucksSheet : IndentDetailsEvent()
+    object HideSuitableTrucksSheet : IndentDetailsEvent()
 }

@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.freight24.connect.feature.inbox.domain.viewmodel.InboxEvent
 import com.freight24.connect.feature.inbox.domain.viewmodel.InboxViewModel
 import com.freight24.connect.feature.inbox.domain.viewmodel.InboxViewModelImpl
 import com.freight24.rest.response.IndentInterestInboxResponse
@@ -93,7 +94,16 @@ fun InboxScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(uiState.data) { indentData ->
-                        IndentInterestCard(indentData)
+                        IndentInterestCard(
+                            indentData = indentData,
+                            onRejectInterest = { interestId ->
+                                viewModel.onEvent(
+                                    InboxEvent.RejectInterest(
+                                        interestId = interestId,
+                                    )
+                                )
+                            }
+                        )
                     }
                 }
             }
@@ -102,7 +112,10 @@ fun InboxScreen(
 }
 
 @Composable
-fun IndentInterestCard(indentData: IndentInterestInboxResponse.IndentInterestInboxData) {
+fun IndentInterestCard(
+    indentData: IndentInterestInboxResponse.IndentInterestInboxData,
+    onRejectInterest: (String) -> Unit
+) {
     var isExpanded by remember { mutableStateOf(false) }
 
     Card(
@@ -275,7 +288,7 @@ fun IndentInterestCard(indentData: IndentInterestInboxResponse.IndentInterestInb
                             name = trucker.name,
                             phone = trucker.phone,
                             expressedAt = trucker.expressedAt,
-                            onReject = { /* TODO: Reject interest */ }
+                            onReject = { onRejectInterest(trucker.interestId) }
                         )
                         if (trucker != indentData.truckers.last()) {
                             HorizontalDivider(

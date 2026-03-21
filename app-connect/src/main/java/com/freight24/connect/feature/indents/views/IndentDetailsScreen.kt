@@ -13,15 +13,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.freight24.connect.feature.inbox.views.TruckerCallRow
+import com.freight24.connect.feature.findTrucks.views.SearchResultsContent
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsEvent
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsViewModel
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsViewModelImpl
@@ -139,6 +144,98 @@ fun IndentDetailsScreen(
     }
 
     var menuExpanded by remember { mutableStateOf(false) }
+
+    if (uiState.isTruckerSheetVisible) {
+        val sheetState = rememberModalBottomSheetState()
+        ModalBottomSheet(
+            onDismissRequest = { viewModel.onEvent(IndentDetailsEvent.HideTruckerSheet) },
+            sheetState = sheetState,
+            containerColor = Color.White,
+            dragHandle = { BottomSheetDefaults.DragHandle() }
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp)
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "Interest Expressed",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF0F172A)
+                        )
+                        Text(
+                            text = "${uiState.truckerList.size} truckers have shown interest",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFF64748B)
+                        )
+                    }
+                    IconButton(
+                        onClick = { viewModel.onEvent(IndentDetailsEvent.HideTruckerSheet) },
+                        modifier = Modifier.background(Color(0xFFF1F5F9), CircleShape).size(32.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "Close",
+                            modifier = Modifier.size(18.dp),
+                            tint = Color(0xFF64748B)
+                        )
+                    }
+                }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 0.5.dp, color = Color(0xFFE2E8F0))
+
+                if (uiState.isTruckerListLoading) {
+                    Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                } else if (uiState.truckerList.isEmpty()) {
+                    Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                        Text("No interests found", color = Color.Gray)
+                    }
+                } else {
+                    Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                        uiState.truckerList.forEach { trucker ->
+                            TruckerCallRow(
+                                name = trucker.name,
+                                phone = trucker.phone ?: "",
+                                expressedAt = trucker.expressedAt,
+                                onReject = {
+                                    viewModel.onEvent(IndentDetailsEvent.RejectTruckerInterest(trucker.interestId))
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (uiState.isSuitableTrucksSheetVisible) {
+        val sheetState = rememberModalBottomSheetState()
+        ModalBottomSheet(
+            onDismissRequest = { viewModel.onEvent(IndentDetailsEvent.HideSuitableTrucksSheet) },
+            sheetState = sheetState,
+            containerColor = Color.White,
+            dragHandle = { BottomSheetDefaults.DragHandle() }
+        ) {
+            if (uiState.isSuitableTrucksLoading) {
+                Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                SearchResultsContent(uiState.suitableTrucksList)
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -263,6 +360,21 @@ fun IndentDetailsScreen(
                             indentId = indent.indentCode,
                             onEditClick = null
                         )
+
+                        indent.metrics?.let { metrics ->
+                            if (metrics.interestCount > 0 || metrics.suitableTrucks > 0) {
+                                IndentMetricsSection(
+                                    interestCount = metrics.interestCount,
+                                    suitableTrucks = metrics.suitableTrucks,
+                                    onInterestClick = {
+                                        viewModel.onEvent(IndentDetailsEvent.ShowTruckerSheet)
+                                    },
+                                    onSuitableTrucksClick = {
+                                        viewModel.onEvent(IndentDetailsEvent.ShowSuitableTrucksSheet)
+                                    }
+                                )
+                            }
+                        }
 
                         RouteDetailsSection(
                             originCity = loadingLocation?.let {

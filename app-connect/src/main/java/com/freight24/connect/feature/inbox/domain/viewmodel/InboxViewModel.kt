@@ -12,6 +12,10 @@ data class InboxUiState(
 
 sealed class InboxEvent {
     data object Refresh : InboxEvent()
+    data class RejectInterest(
+        val interestId: String,
+        val remarks: String? = null
+    ) : InboxEvent()
 }
 
 interface InboxViewModel {

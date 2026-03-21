@@ -8,6 +8,12 @@ import com.freight24.connect.feature.indents.domain.usecases.GetIndentByIdUseCas
 import com.freight24.connect.feature.indents.domain.usecases.GetIndentByIdUseCaseParams
 import com.freight24.connect.feature.indents.domain.usecases.CancelIndentUseCase
 import com.freight24.connect.feature.indents.domain.usecases.CancelIndentUseCaseParams
+import com.freight24.connect.feature.indents.domain.usecases.TruckerInterestInboxUseCase
+import com.freight24.connect.feature.indents.domain.usecases.TruckerInterestInboxUseCaseParams
+import com.freight24.connect.feature.inbox.domain.usecase.WithDrawInterestUseCase
+import com.freight24.connect.feature.inbox.domain.usecase.WithDrawInterestUseCaseParams
+import com.freight24.connect.feature.findTrucks.domain.usecases.FindTrucksUseCase
+import com.freight24.connect.feature.findTrucks.domain.usecases.FindTrucksUseCaseDataParams
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +26,10 @@ import javax.inject.Inject
 class IndentDetailsViewModelImpl @Inject constructor(
     private val getIndentByIdUseCase: GetIndentByIdUseCase,
     private val assignIndentUseCase: AssignIndentUseCase,
-    private val cancelIndentUseCase: CancelIndentUseCase
+    private val cancelIndentUseCase: CancelIndentUseCase,
+    private val truckerInterestInboxUseCase: TruckerInterestInboxUseCase,
+    private val withdrawInterestUseCase: WithDrawInterestUseCase,
+    private val findTrucksUseCase: FindTrucksUseCase
 ) : ViewModel(), IndentDetailsViewModel {
 
     private val _uiState = MutableStateFlow(IndentDetailsUiState())
@@ -84,6 +93,100 @@ class IndentDetailsViewModelImpl @Inject constructor(
             }
             is IndentDetailsEvent.ConfirmCancel -> {
                 confirmCancel()
+            }
+            is IndentDetailsEvent.ShowTruckerSheet -> {
+                _uiState.update { it.copy(isTruckerSheetVisible = true) }
+                loadTruckerList()
+            }
+            is IndentDetailsEvent.HideTruckerSheet -> {
+                _uiState.update { it.copy(isTruckerSheetVisible = false) }
+            }
+            is IndentDetailsEvent.RejectTruckerInterest -> {
+                rejectTruckerInterest(event.interestId)
+            }
+            is IndentDetailsEvent.ShowSuitableTrucksSheet -> {
+                _uiState.update { it.copy(isSuitableTrucksSheetVisible = true) }
+                loadSuitableTrucks()
+            }
+            is IndentDetailsEvent.HideSuitableTrucksSheet -> {
+                _uiState.update { it.copy(isSuitableTrucksSheetVisible = false) }
+            }
+        }
+    }
+
+    private fun loadSuitableTrucks() {
+        val indent = _uiState.value.indent ?: return
+        val loadingLocation = indent.indentGroupDetails.indentLocations.find { it.locationType.equals("loading", true)  }
+        val unloadingLocation = indent.indentGroupDetails.indentLocations.find { it.locationType.equals("Unloading", true) }
+        val truckType = indent.indentGroupDetails.truckType
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSuitableTrucksLoading = true, errorMessage = null) }
+            
+            val params = FindTrucksUseCaseDataParams(
+                areaId = loadingLocation?.areaId?.toString(),
+                cityId = loadingLocation?.cityId?.toString(),
+                destinationCityId = unloadingLocation?.cityId?.toString(),
+                truckTypeId = truckType?.id ?: ""
+            )
+
+            val result = findTrucksUseCase(params)
+            if (result.isSuccess) {
+                _uiState.update {
+                    it.copy(
+                        isSuitableTrucksLoading = false,
+                        suitableTrucksList = result.getOrNull()
+                    )
+                }
+            } else {
+                _uiState.update {
+                    it.copy(
+                        isSuitableTrucksLoading = false,
+                        errorMessage = result.exceptionOrNull()?.message ?: "Failed to load suitable trucks"
+                    )
+                }
+            }
+        }
+    }
+
+    private fun loadTruckerList() {
+        val indentId = currentIndentId ?: return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isTruckerListLoading = true, errorMessage = null) }
+            val result = truckerInterestInboxUseCase(TruckerInterestInboxUseCaseParams(indentId))
+            if (result.isSuccess) {
+                _uiState.update {
+                    it.copy(
+                        isTruckerListLoading = false,
+                        truckerList = result.getOrNull()?.data ?: emptyList()
+                    )
+                }
+            } else {
+                _uiState.update {
+                    it.copy(
+                        isTruckerListLoading = false,
+                        errorMessage = result.exceptionOrNull()?.message ?: "Failed to load trucker list"
+                    )
+                }
+            }
+        }
+    }
+
+    private fun rejectTruckerInterest(interestId: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isTruckerListLoading = true, errorMessage = null) }
+            val result = withdrawInterestUseCase(WithDrawInterestUseCaseParams(interestId, null))
+            if (result.isSuccess) {
+                loadTruckerList()
+                // Also refresh indent to update metrics if needed
+                currentIndentId?.let { loadIndent(it) }
+            } else {
+                _uiState.update {
+                    it.copy(
+                        isTruckerListLoading = false,
+                        errorMessage = result.exceptionOrNull()?.message ?: "Failed to reject interest"
+                    )
+                }
             }
         }
     }

@@ -20,7 +20,8 @@ data class IndentResponse(
         val hideCostInfo: Boolean,
         val fleetExecutive: FleetExecutive? = null,
         val indentOwnership: String ?= null,
-        val indentGroupDetails: IndentGroupDetails
+        val indentGroupDetails: IndentGroupDetails,
+        val metrics: Metrics? = null,
     )
 
     @Serializable
@@ -51,6 +52,7 @@ data class IndentResponse(
 
     @Serializable
     data class TruckType(
+        val id: String? = null,
         val bodyType: String,
         val truckType: String,
         val displayName: String
@@ -84,6 +86,13 @@ data class IndentResponse(
         val id: String,
         val name: String,
         val phone: String,
+    )
+
+    @Serializable
+    data class Metrics(
+        val interestCount: Int,
+        val suitableTruckOwners: Int,
+        val suitableTrucks: Int,
     )
 
 }

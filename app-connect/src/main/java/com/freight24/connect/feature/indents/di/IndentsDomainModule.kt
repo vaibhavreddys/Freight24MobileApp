@@ -22,6 +22,8 @@ import com.freight24.connect.feature.indents.domain.usecases.GetTruckTypesUseCas
 import com.freight24.connect.feature.indents.domain.usecases.GetTruckTypesUseCaseImpl
 import com.freight24.connect.feature.indents.domain.usecases.SearchIndentsUseCase
 import com.freight24.connect.feature.indents.domain.usecases.SearchIndentsUseCaseImpl
+import com.freight24.connect.feature.indents.domain.usecases.TruckerInterestInboxUseCase
+import com.freight24.connect.feature.indents.domain.usecases.TruckerInterestInboxUseCaseImpl
 import com.freight24.connect.feature.indents.domain.usecases.UpdateIndentUseCase
 import com.freight24.connect.feature.indents.domain.usecases.UpdateIndentUseCaseImpl
 import dagger.Binds
@@ -67,4 +69,11 @@ abstract class IndentsDomainModule {
 
     @Binds
     abstract fun bindCancelIndentsUseCase(useCaseImpl: CancelIndentUseCaseImpl): CancelIndentUseCase
+
+    @Binds
+    abstract fun bindTruckerInterestInboxUseCase(
+        useCaseImpl: TruckerInterestInboxUseCaseImpl
+    ): TruckerInterestInboxUseCase
+
+
 }

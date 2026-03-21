@@ -12,6 +12,7 @@ data class IndentInterestInboxResponse(
     data class IndentInterestInboxData(
         val indentId: String,
         val indentGroupId: String,
+        val truckerUserId: String,
         val interestCount: Int,
         val load: LoadDetails,
         val truckers: List<Trucker>
