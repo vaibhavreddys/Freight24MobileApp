@@ -7,10 +7,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.freight24.trucker.feature.home.TruckerHomeScreen
-import com.freight24.trucker.feature.login.view.signin.LoginScreen
+import com.freight24.trucker.feature.login.view.signin.NewLoginScreen
 import com.freight24.trucker.feature.login.view.verify.VerifyOtpScreen
 import com.freight24.trucker.feature.trips.view.details.TripDetailsScreen
 import com.freight24.trucker.feature.trucks.view.details.TruckDetailsScreen
+import com.freight24.trucker.feature.trucks.view.onboard.EditTruckScreen
 import com.freight24.trucker.feature.trucks.view.onboard.OnboardTruckScreen
 
 @Composable
@@ -22,19 +23,20 @@ fun TruckerNavGraph(
         navController = navController,
         startDestination = startDestination,
     ) {
-        // 1. Login Screen
-        composable(TruckerDestination.Login.route) {
-            LoginScreen(
-                navController = navController,
+        composable(TruckerDestination.NewLogin.route) {
+            NewLoginScreen(
+                onNavigateToOtpVerify = { phone ->
+                    navController.navigate(TruckerDestination.VerifyOtp.createRoute(phone))
+                }
             )
-            // Replace with your actual LoginScreen composable
-//            LoginScreen()
-//             LoginScreen(
-//                 onNavigateToVerify = { phone ->
-//                     navController.navigate(TruckerDestination.VerifyOtp.createRoute(phone))
-//                 }
-//             )
         }
+//        composable(TruckerDestination.Login.route) {
+//            NewLoginScreen(
+//                onNavigateToOtpVerify = { phone ->
+//                    navController.navigate(TruckerDestination.VerifyOtp.createRoute(phone))
+//                }
+//            )
+//        }
 
         // 2️⃣ Verify OTP
         composable(
@@ -51,7 +53,7 @@ fun TruckerNavGraph(
                 phoneNumber = phone,
                 onLoginSuccess = {
                     navController.navigate(TruckerDestination.Main.route) {
-                        popUpTo(TruckerDestination.Login.route) {
+                        popUpTo(TruckerDestination.NewLogin.route) {
                             inclusive = true
                         }
                     }
@@ -125,7 +127,7 @@ fun TruckerNavGraph(
             route = TruckerDestination.EditTruck.route,
             arguments = listOf(navArgument("truckId") { type = NavType.StringType })
         ) {
-            com.freight24.trucker.feature.trucks.view.onboard.EditTruckScreen(
+            EditTruckScreen(
                 onBackClick = { navController.popBackStack() },
                 onSuccessAction = {
                     navController.popBackStack(TruckerDestination.Main.route, false)

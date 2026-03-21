@@ -24,6 +24,7 @@ gServices = "4.4.4"
 firebaseBom = "34.8.0"
 coilComposeVersion = "3.3.0"
 pdfViewerVersion = "2.3.7"
+uiTextGoogleFonts = "1.10.5"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -68,6 +69,7 @@ firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics
 
 #PDFVIEWER
 pdf-viewer = { group = "io.github.afreakyelf", name = "Pdf-Viewer", version.ref = "pdfViewerVersion"}
+ui-text-google-fonts = { group = "androidx.compose.ui", name = "ui-text-google-fonts", version.ref = "uiTextGoogleFonts" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
