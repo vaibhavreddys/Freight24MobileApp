@@ -2,8 +2,6 @@ package com.freight24.connect.feature.trucks.enums
 
 import androidx.compose.ui.graphics.Color
 import com.freight24.rest.response.SearchTruckResponse
-import com.freight24.rest.utils.isInActive
-import com.freight24.rest.utils.isOnTrip
 
 enum class TruckStatus(val displayText: String, val color: Color) {
     BLACKLISTED("Blacklisted", Color(0xFFFF0000)),
@@ -15,8 +13,8 @@ enum class TruckStatus(val displayText: String, val color: Color) {
         fun from(truck: SearchTruckResponse.Truck): TruckStatus {
             return when {
                 truck.isBlacklisted -> BLACKLISTED
-                truck.isInActive() -> IN_ACTIVE
-                truck.isOnTrip() -> IN_TRANSIT
+                truck.status.lowercase() == "inactive" -> IN_ACTIVE
+                truck.availability.lowercase() == "on_trip" -> IN_TRANSIT
                 else -> AVAILABLE
             }
         }

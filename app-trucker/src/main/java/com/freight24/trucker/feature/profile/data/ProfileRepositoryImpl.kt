@@ -78,4 +78,5 @@ internal class ProfileRepositoryImpl
             val key = data?.temporaryFileKey ?: data?.fileKey
             return key ?: throw IllegalStateException("temporaryFileKey missing in upload response")
         }
+
     }

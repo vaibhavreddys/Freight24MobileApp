@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -54,10 +56,13 @@ import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -119,6 +124,9 @@ import com.freight24.connect.feature.truckowners.profile.util.ProfileDocumentTyp
 import com.freight24.connect.feature.truckowners.profile.util.ProfileFieldValidators
 import com.freight24.connect.feature.truckowners.profile.util.ValidationResult
 import com.freight24.ui.UiState
+import com.freight24.ui.components.AddRouteBottomSheet
+import com.freight24.ui.components.CitySearchField
+import com.freight24.ui.components.RouteChip
 import com.freight24.ui.theme.PrimaryGreen
 import kotlinx.coroutines.launch
 import java.io.File
@@ -143,7 +151,7 @@ private enum class ValidationType {
     ACCOUNT_NUMBER,
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 internal fun ProfileScreen(
     onBackClick: () -> Unit,
@@ -153,6 +161,17 @@ internal fun ProfileScreen(
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val isEditing by viewModel.isEditing.collectAsState()
     val hasChanges by viewModel.hasChanges.collectAsState()
+    val showAddRouteSheet by viewModel.showAddRouteSheet.collectAsState()
+    val fromQuery by viewModel.fromCityQuery.collectAsState()
+    val toQuery by viewModel.toCityQuery.collectAsState()
+    val fromSuggestions by viewModel.fromCitySuggestions.collectAsState()
+    val toSuggestions by viewModel.toCitySuggestions.collectAsState()
+    val fromLoading by viewModel.fromCityLoading.collectAsState()
+    val toLoading by viewModel.toCityLoading.collectAsState()
+    val selectedFromCity by viewModel.selectedFromCity.collectAsState()
+    val selectedToCity by viewModel.selectedToCity.collectAsState()
+    val priority by viewModel.selectedPriority.collectAsState()
+    val routeSheetError by viewModel.routeSheetError.collectAsState()
 
     val snackbarHostState = androidx.compose.runtime.remember { androidx.compose.material3.SnackbarHostState() }
 
@@ -230,13 +249,35 @@ internal fun ProfileScreen(
                     }
                     UiState.Idle -> {}
                 }
+                if (showAddRouteSheet) {
+                    AddRouteBottomSheet(
+                        fromQuery = fromQuery,
+                        onFromQueryChange = viewModel::onFromCityQueryChanged,
+                        fromSuggestions = fromSuggestions,
+                        onFromCitySelected = viewModel::onFromCitySelected,
+                        isFromLoading = fromLoading,
+                        selectedFromCity = selectedFromCity,
+                        isFromPreFilled = selectedFromCity?.id == viewModel.baseCity.value?.id,
+                        toQuery = toQuery,
+                        onToQueryChange = viewModel::onToCityQueryChanged,
+                        toSuggestions = toSuggestions,
+                        onToCitySelected = viewModel::onToCitySelected,
+                        isToLoading = toLoading,
+                        selectedToCity = selectedToCity,
+                        selectedPriority = priority,
+                        onPrioritySelected = { viewModel.selectedPriority.value = it },
+                        onConfirm = viewModel::onStageRouteAdd,
+                        onDismiss = viewModel::dismissAddRouteSheet,
+                        errorMessage = routeSheetError,
+                    )
+                }
             }
         }
     }
 
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun ProfileMainContent(
     profile: Profile,
@@ -248,6 +289,12 @@ private fun ProfileMainContent(
     val documentStates by viewModel.documentStates.collectAsState()
     val hasPendingTemporaryUploads by viewModel.hasPendingTemporaryUploads.collectAsState()
     val isSaving by viewModel.isSaving.collectAsState()
+    val baseCity by viewModel.baseCity.collectAsState()
+    val baseCityQuery by viewModel.baseCityQuery.collectAsState()
+    val baseCitySuggestions by viewModel.baseCitySuggestions.collectAsState()
+    val baseCityLoading by viewModel.baseCitySearchLoading.collectAsState()
+    val baseLocation by viewModel.baseLocation.collectAsState()
+    val visibleRoutes by viewModel.visibleRoutes.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -537,6 +584,120 @@ private fun ProfileMainContent(
                         viewModel.onFieldChanged()
                     },
                 )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 14.dp),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = "Base location",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "BASE LOCATION",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.5.sp,
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(6.dp))
+                    if (isEditing) {
+                        CitySearchField(
+                            query = baseCityQuery,
+                            onQueryChange = viewModel::onBaseCityQueryChanged,
+                            suggestions = baseCitySuggestions,
+                            onCitySelected = viewModel::onBaseCitySelected,
+                            isLoading = baseCityLoading,
+                            label = "Base Location",
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    } else {
+                        val locationLabel = baseLocation?.takeIf { it.isNotBlank() } ?: baseCity?.city
+                        Text(
+                            text = locationLabel ?: "—",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (!locationLabel.isNullOrBlank()) {
+                                MaterialTheme.colorScheme.onSurface
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                        )
+                    }
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 14.dp),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Assignment,
+                            contentDescription = "Preferred routes",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "PREFERRED ROUTES",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.5.sp,
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        visibleRoutes.forEach { route ->
+                            RouteChip(
+                                fromCity = route.sourceCityName,
+                                toCity = route.destCityName,
+                                isStaged = route.isStaged,
+                                onDelete = if (isEditing) {
+                                    { viewModel.onStageRouteDelete(route.id, route.isStaged) }
+                                } else {
+                                    null
+                                },
+                            )
+                        }
+                    }
+                    if (visibleRoutes.isEmpty() && !isEditing) {
+                        Text(
+                            "No preferred routes added",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    if (isEditing) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Start,
+                        ) {
+                            AssistChip(
+                                onClick = viewModel::openAddRouteSheet,
+                                label = { Text("+ Add route", style = MaterialTheme.typography.labelMedium) },
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)),
+                                colors = AssistChipDefaults.assistChipColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f),
+                                    labelColor = MaterialTheme.colorScheme.primary,
+                                ),
+                            )
+                        }
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))

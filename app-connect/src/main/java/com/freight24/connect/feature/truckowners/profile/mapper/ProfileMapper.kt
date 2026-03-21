@@ -2,10 +2,12 @@ package com.freight24.connect.feature.truckowners.profile.mapper
 
 import com.freight24.rest.response.BankAccountDetailsDto
 import com.freight24.rest.response.ProfileDocumentDto
+import com.freight24.rest.response.PreferredRouteDto
 import com.freight24.rest.response.ProfileDto
 import com.freight24.connect.feature.truckowners.profile.domain.BankAccountDetails
 import com.freight24.connect.feature.truckowners.profile.domain.DocumentStatus
 import com.freight24.connect.feature.truckowners.profile.domain.DocumentType
+import com.freight24.connect.feature.truckowners.profile.domain.PreferredRoute
 import com.freight24.connect.feature.truckowners.profile.domain.Profile
 import com.freight24.connect.feature.truckowners.profile.domain.ProfileDocument
 
@@ -13,6 +15,10 @@ fun ProfileDto.toDomain(): Profile =
     Profile(
         id = id,
         userId = userId,
+        baseCityId = baseCityId,
+        baseCityName = baseCityName,
+        baseCityState = baseCityState,
+        baseLocation = baseLocation,
         fullName = fullName,
         emailId = emailId,
         phoneNo = phoneNo,
@@ -30,6 +36,7 @@ fun ProfileDto.toDomain(): Profile =
         bankAccountVerificationStatus = bankAccountVerificationStatus ?: false,
         documentsVerificationStatus = documentsVerificationStatus ?: false,
         profileVerificationStatus = profileVerificationStatus,
+        preferredRoutes = preferredRoutes?.mapNotNull { it.toDomain() }.orEmpty(),
     )
 
 fun BankAccountDetailsDto.toDomain(): BankAccountDetails =
@@ -68,3 +75,16 @@ private fun String.toDocumentType(): DocumentType =
         this.contains("CANCELLED", ignoreCase = true) || this.contains("CHEQUE", ignoreCase = true) -> DocumentType.CANCELLED_CHEQUE
         else -> DocumentType.UNKNOWN
     }
+
+private fun PreferredRouteDto.toDomain(): PreferredRoute? {
+    val fromCity = sourceCity ?: return null
+    val toCity = destinationCity ?: return null
+    return PreferredRoute(
+        id = id,
+        priority = priority,
+        sourceCityId = fromCity.id,
+        sourceCityName = fromCity.name,
+        destCityId = toCity.id,
+        destCityName = toCity.name,
+    )
+}

@@ -25,7 +25,6 @@ import com.freight24.connect.feature.trucks.domain.viewmodel.AssignTruckEvent
 import com.freight24.connect.feature.trucks.domain.viewmodel.AssignTruckViewModel
 import com.freight24.connect.feature.trucks.enums.TruckStatus
 import com.freight24.rest.response.SearchTruckResponse
-import com.freight24.rest.utils.isEnabled
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -148,7 +147,9 @@ fun TruckItem(
     truck: SearchTruckResponse.Truck,
     onSelect: () -> Unit
 ) {
-    val isEnabled = truck.isEnabled()
+    val isEnabled = !truck.isBlacklisted &&
+        truck.availability.lowercase() != "on_trip" &&
+        truck.status.lowercase() != "inactive"
     val statusText = TruckStatus.from(truck).displayText
     val statusColor = if (isEnabled) Color(0xFF22C55E) else Color(0xFFEF4444)
     val buttonColor = if (isEnabled) Color(0xFF22C55E) else Color(0xFFE2E8F0)

@@ -12,10 +12,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,6 +44,7 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Check
@@ -65,6 +68,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -102,6 +107,9 @@ import com.freight24.connect.feature.truckowners.profile.domain.DocumentStatus
 import com.freight24.connect.feature.truckowners.profile.domain.DocumentType
 import com.freight24.connect.feature.truckowners.profile.util.ProfileFieldValidators
 import com.freight24.connect.feature.truckowners.profile.util.ValidationResult
+import com.freight24.ui.components.AddRouteBottomSheet
+import com.freight24.ui.components.CitySearchField
+import com.freight24.ui.components.RouteChip
 import com.freight24.ui.theme.FreightThemeTokens
 import com.freight24.ui.theme.PrimaryGreen
 
@@ -142,6 +150,22 @@ fun OnboardTruckOwnerScreen(
     val upiId by viewModel.upiId.collectAsState()
     val bankName by viewModel.bankName.collectAsState()
     val branchName by viewModel.branchName.collectAsState()
+    val baseCity by viewModel.baseCity.collectAsState()
+    val baseCityQuery by viewModel.baseCityQuery.collectAsState()
+    val baseCitySuggestions by viewModel.baseCitySuggestions.collectAsState()
+    val baseCityLoading by viewModel.baseCitySearchLoading.collectAsState()
+    val fromCityQuery by viewModel.fromCityQuery.collectAsState()
+    val toCityQuery by viewModel.toCityQuery.collectAsState()
+    val fromCitySuggestions by viewModel.fromCitySuggestions.collectAsState()
+    val toCitySuggestions by viewModel.toCitySuggestions.collectAsState()
+    val fromCityLoading by viewModel.fromCityLoading.collectAsState()
+    val toCityLoading by viewModel.toCityLoading.collectAsState()
+    val visibleRoutes by viewModel.visibleRoutes.collectAsState()
+    val showAddRouteSheet by viewModel.showAddRouteSheet.collectAsState()
+    val routeSheetError by viewModel.routeSheetError.collectAsState()
+    val selectedFromCity by viewModel.selectedFromCity.collectAsState()
+    val selectedToCity by viewModel.selectedToCity.collectAsState()
+    val selectedPriority by viewModel.selectedPriority.collectAsState()
     val isSaving by viewModel.isSaving.collectAsState()
     val createdTruckOwner by viewModel.createdTruckOwner.collectAsState()
 
@@ -306,6 +330,70 @@ fun OnboardTruckOwnerScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 ProfileSection(
+                    title = "BASE LOCATION",
+                    icon = Icons.Default.LocationOn,
+                    initiallyExpanded = true,
+                ) {
+                    CitySearchField(
+                        query = baseCityQuery,
+                        onQueryChange = viewModel::onBaseCityQueryChanged,
+                        suggestions = baseCitySuggestions,
+                        onCitySelected = viewModel::onBaseCitySelected,
+                        isLoading = baseCityLoading,
+                        label = "Base Location",
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                ProfileSection(
+                    title = "PREFERRED ROUTES",
+                    icon = Icons.AutoMirrored.Filled.Assignment,
+                    initiallyExpanded = true,
+                ) {
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        visibleRoutes.forEach { route ->
+                            RouteChip(
+                                fromCity = route.sourceCityName,
+                                toCity = route.destCityName,
+                                isStaged = route.isStaged,
+                                onDelete = { viewModel.onStageRouteDelete(route.id, route.isStaged) },
+                            )
+                        }
+                    }
+                    if (visibleRoutes.isEmpty()) {
+                        Text(
+                            "Add the routes you regularly cover",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 6.dp),
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Start,
+                    ) {
+                        AssistChip(
+                            onClick = viewModel::openAddRouteSheet,
+                            label = { Text("+ Add route", style = MaterialTheme.typography.labelMedium) },
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f),
+                                labelColor = MaterialTheme.colorScheme.primary,
+                            ),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)),
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                ProfileSection(
                     title = "BANKING INFORMATION",
                     icon = Icons.Default.AccountBalance,
                     initiallyExpanded = true,
@@ -401,6 +489,29 @@ fun OnboardTruckOwnerScreen(
                 }
             }
         }
+    }
+
+    if (showAddRouteSheet) {
+        AddRouteBottomSheet(
+            fromQuery = fromCityQuery,
+            onFromQueryChange = viewModel::onFromCityQueryChanged,
+            fromSuggestions = fromCitySuggestions,
+            onFromCitySelected = viewModel::onFromCitySelected,
+            isFromLoading = fromCityLoading,
+            selectedFromCity = selectedFromCity,
+            isFromPreFilled = selectedFromCity?.id == baseCity?.id,
+            toQuery = toCityQuery,
+            onToQueryChange = viewModel::onToCityQueryChanged,
+            toSuggestions = toCitySuggestions,
+            onToCitySelected = viewModel::onToCitySelected,
+            isToLoading = toCityLoading,
+            selectedToCity = selectedToCity,
+            selectedPriority = selectedPriority,
+            onPrioritySelected = { viewModel.selectedPriority.value = it },
+            onConfirm = viewModel::onStageRouteAdd,
+            onDismiss = viewModel::dismissAddRouteSheet,
+            errorMessage = routeSheetError,
+        )
     }
 
     createdTruckOwner?.let { created ->

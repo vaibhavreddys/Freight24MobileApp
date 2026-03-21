@@ -6,6 +6,10 @@ package com.freight24.trucker.feature.profile.domain
 data class Profile(
     val id: String,
     val userId: String,
+    val baseCityId: Int?,
+    val baseCityName: String?,
+    val baseCityState: String?,
+    val baseLocation: String?,
     val fullName: String?,
     val emailId: String?,
     val phoneNo: String?,
@@ -21,6 +25,7 @@ data class Profile(
     val bankAccountVerificationStatus: Boolean,
     val documentsVerificationStatus: Boolean,
     val profileVerificationStatus: String?,
+    val preferredRoutes: List<PreferredRoute>,
 )
 
 data class BankAccountDetails(
@@ -60,3 +65,11 @@ enum class DocumentStatus(val displayText: String) {
     UNKNOWN("Unknown"),
 }
 
+data class PreferredRoute(
+    val id: String,
+    val priority: Int,
+    val sourceCityId: Int?,
+    val sourceCityName: String?,
+    val destCityId: Int?,
+    val destCityName: String?,
+)

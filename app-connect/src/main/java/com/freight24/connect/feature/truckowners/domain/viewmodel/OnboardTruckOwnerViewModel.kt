@@ -6,24 +6,57 @@ import androidx.lifecycle.viewModelScope
 import com.freight24.connect.feature.trucks.domain.usecases.GetTruckOwnersUseCase
 import com.freight24.connect.feature.truckowners.domain.usecases.CreateTruckOwnerParams
 import com.freight24.connect.feature.truckowners.domain.usecases.CreateTruckOwnerUseCase
+import com.freight24.connect.feature.truckowners.profile.domain.PreferredRoute
 import com.freight24.connect.feature.truckowners.profile.util.ProfileFieldValidators
 import com.freight24.connect.feature.truckowners.profile.util.ValidationResult
+import com.freight24.connect.repository.LocationRepository
+import com.freight24.rest.response.CityResult
 import com.freight24.rest.response.TruckOwnerDto
+import com.freight24.rest.request.PreferredRouteEntry
 import com.freight24.rest.request.UpdateProfileRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.util.UUID
 import javax.inject.Inject
+
+internal data class StagedRoute(
+    val tempId: String,
+    val sourceCityId: Int,
+    val sourceCityName: String,
+    val destCityId: Int,
+    val destCityName: String,
+    val priority: Int,
+)
+
+internal data class DisplayRoute(
+    val id: String,
+    val sourceCityId: Int,
+    val sourceCityName: String,
+    val destCityId: Int,
+    val destCityName: String,
+    val priority: Int,
+    val isStaged: Boolean,
+)
 
 @HiltViewModel
 class OnboardTruckOwnerViewModel @Inject constructor(
     private val createTruckOwnerUseCase: CreateTruckOwnerUseCase,
-    private val getTruckOwnersUseCase: GetTruckOwnersUseCase
+    private val getTruckOwnersUseCase: GetTruckOwnersUseCase,
+    private val locationRepository: LocationRepository,
 ) : ViewModel() {
     private companion object {
         const val TAG = "OnboardTruckOwnerVM"
@@ -45,8 +78,77 @@ class OnboardTruckOwnerViewModel @Inject constructor(
     val bankName = MutableStateFlow("")
     val branchName = MutableStateFlow("")
 
+    private val _baseCity = MutableStateFlow<CityResult?>(null)
+    val baseCity: StateFlow<CityResult?> = _baseCity.asStateFlow()
+    val baseCityQuery = MutableStateFlow("")
+    private val _baseCitySuggestions = MutableStateFlow<List<CityResult>>(emptyList())
+    val baseCitySuggestions: StateFlow<List<CityResult>> = _baseCitySuggestions.asStateFlow()
+    private val _baseCitySearchLoading = MutableStateFlow(false)
+    val baseCitySearchLoading: StateFlow<Boolean> = _baseCitySearchLoading.asStateFlow()
+    private val _baseLocation = MutableStateFlow<String?>(null)
+    val baseLocation: StateFlow<String?> = _baseLocation.asStateFlow()
+    private val _baseCitySearchSkip = MutableStateFlow<String?>(null)
+
+    private val _committedRoutes = MutableStateFlow<List<PreferredRoute>>(emptyList())
+    private val _routesToAdd = MutableStateFlow<List<StagedRoute>>(emptyList())
+    private val _routeIdsToDelete = MutableStateFlow<Set<String>>(emptySet())
+    internal val visibleRoutes: StateFlow<List<DisplayRoute>> =
+        combine(_committedRoutes, _routesToAdd, _routeIdsToDelete) { committed, toAdd, toDelete ->
+            committed.filter { it.id !in toDelete }.mapNotNull {
+                val sourceCityId = it.sourceCityId ?: return@mapNotNull null
+                val sourceCityName = it.sourceCityName ?: return@mapNotNull null
+                val destCityId = it.destCityId ?: return@mapNotNull null
+                val destCityName = it.destCityName ?: return@mapNotNull null
+                DisplayRoute(
+                    id = it.id,
+                    sourceCityId = sourceCityId,
+                    sourceCityName = sourceCityName,
+                    destCityId = destCityId,
+                    destCityName = destCityName,
+                    priority = it.priority,
+                    isStaged = false,
+                )
+            } + toAdd.map {
+                DisplayRoute(
+                    id = it.tempId,
+                    sourceCityId = it.sourceCityId,
+                    sourceCityName = it.sourceCityName,
+                    destCityId = it.destCityId,
+                    destCityName = it.destCityName,
+                    priority = it.priority,
+                    isStaged = true,
+                )
+            }
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    private val _showAddRouteSheet = MutableStateFlow(false)
+    val showAddRouteSheet: StateFlow<Boolean> = _showAddRouteSheet.asStateFlow()
+    val fromCityQuery = MutableStateFlow("")
+    val toCityQuery = MutableStateFlow("")
+    private val _fromCitySuggestions = MutableStateFlow<List<CityResult>>(emptyList())
+    val fromCitySuggestions: StateFlow<List<CityResult>> = _fromCitySuggestions.asStateFlow()
+    private val _toCitySuggestions = MutableStateFlow<List<CityResult>>(emptyList())
+    val toCitySuggestions: StateFlow<List<CityResult>> = _toCitySuggestions.asStateFlow()
+    private val _fromCityLoading = MutableStateFlow(false)
+    val fromCityLoading: StateFlow<Boolean> = _fromCityLoading.asStateFlow()
+    private val _toCityLoading = MutableStateFlow(false)
+    val toCityLoading: StateFlow<Boolean> = _toCityLoading.asStateFlow()
+    private val _selectedFromCity = MutableStateFlow<CityResult?>(null)
+    val selectedFromCity: StateFlow<CityResult?> = _selectedFromCity.asStateFlow()
+    private val _selectedToCity = MutableStateFlow<CityResult?>(null)
+    val selectedToCity: StateFlow<CityResult?> = _selectedToCity.asStateFlow()
+    val selectedPriority = MutableStateFlow("High")
+    private val _routeSheetError = MutableStateFlow<String?>(null)
+    val routeSheetError: StateFlow<String?> = _routeSheetError.asStateFlow()
+    private val _fromCitySearchSkip = MutableStateFlow<String?>(null)
+    private val _toCitySearchSkip = MutableStateFlow<String?>(null)
+
     private val _isSaving = MutableStateFlow(false)
     val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
+
+    init {
+        initCitySearchDebounce()
+    }
 
     private val _messageEvent = MutableSharedFlow<String>()
     val messageEvent: SharedFlow<String> = _messageEvent.asSharedFlow()
@@ -153,6 +255,192 @@ class OnboardTruckOwnerViewModel @Inject constructor(
         branchName.value = filtered
     }
 
+    fun onBaseCityQueryChanged(query: String) {
+        baseCityQuery.value = query
+        if (query.isBlank()) {
+            _baseCitySuggestions.value = emptyList()
+            _baseLocation.value = null
+        }
+        if (_baseCity.value?.city != query) {
+            _baseCity.value = null
+        }
+    }
+
+    fun onBaseCitySelected(city: CityResult) {
+        _baseCity.value = city
+        baseCityQuery.value = city.city
+        _baseCitySuggestions.value = emptyList()
+        _baseLocation.value = city.city
+        _baseCitySearchSkip.value = city.city
+    }
+
+    fun openAddRouteSheet() {
+        _selectedFromCity.value = _baseCity.value
+        fromCityQuery.value = _baseCity.value?.city.orEmpty()
+        _selectedToCity.value = null
+        toCityQuery.value = ""
+        _fromCitySuggestions.value = emptyList()
+        _toCitySuggestions.value = emptyList()
+        selectedPriority.value = "High"
+        _routeSheetError.value = null
+        _showAddRouteSheet.value = true
+    }
+
+    fun dismissAddRouteSheet() {
+        _showAddRouteSheet.value = false
+        _routeSheetError.value = null
+    }
+
+    fun onFromCityQueryChanged(query: String) {
+        fromCityQuery.value = query
+        if (query.isBlank()) {
+            _fromCitySuggestions.value = emptyList()
+        }
+        if (_selectedFromCity.value?.city != query) {
+            _selectedFromCity.value = null
+        }
+    }
+
+    fun onToCityQueryChanged(query: String) {
+        toCityQuery.value = query
+        if (query.isBlank()) {
+            _toCitySuggestions.value = emptyList()
+        }
+        if (_selectedToCity.value?.city != query) {
+            _selectedToCity.value = null
+        }
+    }
+
+    fun onFromCitySelected(city: CityResult) {
+        _selectedFromCity.value = city
+        fromCityQuery.value = city.city
+        _fromCitySuggestions.value = emptyList()
+        _fromCitySearchSkip.value = city.city
+    }
+
+    fun onToCitySelected(city: CityResult) {
+        _selectedToCity.value = city
+        toCityQuery.value = city.city
+        _toCitySuggestions.value = emptyList()
+        _toCitySearchSkip.value = city.city
+    }
+
+    fun onStageRouteAdd() {
+        _routeSheetError.value = null
+        val from = _selectedFromCity.value ?: return
+        val to = _selectedToCity.value ?: return
+        if (visibleRoutes.value.any { it.sourceCityId == from.id && it.destCityId == to.id }) {
+            _routeSheetError.value = "This route is already in your list"
+            return
+        }
+        _routesToAdd.value = _routesToAdd.value + StagedRoute(
+            tempId = UUID.randomUUID().toString(),
+            sourceCityId = from.id,
+            sourceCityName = from.city,
+            destCityId = to.id,
+            destCityName = to.city,
+            priority = selectedPriority.value.toPriorityInt(),
+        )
+        _showAddRouteSheet.value = false
+    }
+
+    fun onStageRouteDelete(displayRouteId: String, isStaged: Boolean) {
+        if (isStaged) {
+            _routesToAdd.value = _routesToAdd.value.filter { it.tempId != displayRouteId }
+        } else {
+            _routeIdsToDelete.value = _routeIdsToDelete.value + displayRouteId
+        }
+    }
+
+    fun discardRouteChanges() {
+        resetRouteStaging()
+        _routeSheetError.value = null
+        _showAddRouteSheet.value = false
+    }
+
+    private fun initCitySearchDebounce() {
+        listOf(
+            baseCityQuery to "base",
+            fromCityQuery to "from",
+            toCityQuery to "to",
+        ).forEach { (queryFlow, target) ->
+            viewModelScope.launch {
+                queryFlow
+                    .debounce(400L)
+                    .map { it.trim() }
+                    .filter { it.length >= 2 }
+                    .distinctUntilChanged()
+                    .collect { query ->
+                        if (shouldSkipSearch(target, query)) return@collect
+                        fetchCitySuggestions(query, target)
+                    }
+            }
+        }
+    }
+
+    private fun fetchCitySuggestions(query: String, target: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val loading = when (target) {
+                "base" -> _baseCitySearchLoading
+                "from" -> _fromCityLoading
+                else -> _toCityLoading
+            }
+            loading.value = true
+            val type = if (target == "base") null else "CITY"
+            locationRepository.searchCities(query, type)
+                .onSuccess { results ->
+                    when (target) {
+                        "base" -> _baseCitySuggestions.value = results
+                        "from" -> _fromCitySuggestions.value = results
+                        else -> _toCitySuggestions.value = results
+                    }
+                }
+            loading.value = false
+        }
+    }
+
+    private fun shouldSkipSearch(target: String, query: String): Boolean {
+        val skipFlow = when (target) {
+            "base" -> _baseCitySearchSkip
+            "from" -> _fromCitySearchSkip
+            else -> _toCitySearchSkip
+        }
+        val skipValue = skipFlow.value
+        return if (skipValue != null && skipValue == query) {
+            skipFlow.value = null
+            true
+        } else {
+            false
+        }
+    }
+
+    private fun resetRouteStaging() {
+        _routesToAdd.value = emptyList()
+        _routeIdsToDelete.value = emptySet()
+    }
+
+    private fun gatherPreferredRouteEntries(): List<PreferredRouteEntry> {
+        val activeCommits = _committedRoutes.value.filter { it.id !in _routeIdsToDelete.value }
+        return activeCommits.mapNotNull { it.toEntry() } + _routesToAdd.value.map { it.toEntry() }
+    }
+
+    private fun PreferredRoute.toEntry(): PreferredRouteEntry? {
+        val sourceId = sourceCityId ?: return null
+        val destId = destCityId ?: return null
+        return PreferredRouteEntry(
+            sourceCityId = sourceId,
+            destinationCityId = destId,
+            priority = priority,
+        )
+    }
+
+    private fun StagedRoute.toEntry(): PreferredRouteEntry =
+        PreferredRouteEntry(
+            sourceCityId = sourceCityId,
+            destinationCityId = destCityId,
+            priority = priority,
+        )
+
     fun hasChanges(): Boolean {
         return fullName.value.isNotBlank() ||
             email.value.isNotBlank() ||
@@ -194,6 +482,7 @@ class OnboardTruckOwnerViewModel @Inject constructor(
             val normalizedPhone = phone.value.trim()
             val normalizedAltPhone = alternativePhone.value.trim()
             val request = UpdateProfileRequest(
+                baseCityId = _baseCity.value?.id,
                 full_name = fullName.value.trim(),
                 email = email.value.trim().ifBlank { null },
                 phone = if (normalizedPhone.length == 10) "+91$normalizedPhone" else normalizedPhone,
@@ -208,7 +497,8 @@ class OnboardTruckOwnerViewModel @Inject constructor(
                 ifsc_code = ifscCode.value.trim().uppercase().ifBlank { null },
                 upi_id = upiId.value.trim().lowercase().ifBlank { null },
                 bank_name = bankName.value.trim().ifBlank { null },
-                branch_name = branchName.value.trim().ifBlank { null }
+                branch_name = branchName.value.trim().ifBlank { null },
+                preferredRoutes = gatherPreferredRouteEntries(),
             )
 
             createTruckOwnerUseCase(CreateTruckOwnerParams(request))
@@ -319,6 +609,13 @@ class OnboardTruckOwnerViewModel @Inject constructor(
         if (value.count { it == '@' } > 1) return false
         return Regex("^[a-z0-9._-]*(@[a-z0-9.]*)?$").matches(value)
     }
+
+    private fun String.toPriorityInt(): Int =
+        when (this) {
+            "High" -> 1
+            "Medium" -> 2
+            else -> 3
+        }
 
     private suspend fun resolveCreatedTruckOwner(phoneNumber: String): TruckOwnerDto? {
         val normalized = phoneNumber.trim()

@@ -5,10 +5,15 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.freight24.common.util.FileUtils
+import com.freight24.rest.repository.LocationRepository
+import com.freight24.rest.response.CityResult
+import com.freight24.rest.request.PreferredRouteEntry
+import com.freight24.trucker.feature.profile.domain.PreferredRoute
 import com.freight24.rest.request.FinalSaveFileRequest
 import com.freight24.rest.request.FinalSaveRequest
 import com.freight24.trucker.feature.profile.domain.DocumentType
 import com.freight24.trucker.feature.profile.domain.Profile
+import com.freight24.trucker.feature.profile.domain.ProfileRepository
 import com.freight24.trucker.feature.profile.domain.usecase.FetchProfileUseCase
 import com.freight24.trucker.feature.profile.domain.usecase.FinalizeIdentityDocumentsUseCase
 import com.freight24.trucker.feature.profile.domain.usecase.UpdateIdentityDocumentParams
@@ -24,12 +29,20 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.util.UUID
 import javax.inject.Inject
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -52,6 +65,26 @@ internal data class DocumentUploadState(
     val uploadStatus: UploadStatus = UploadStatus.IDLE,
 )
 
+internal data class StagedRoute(
+    val tempId: String,
+    val sourceCityId: Int,
+    val sourceCityName: String,
+    val destCityId: Int,
+    val destCityName: String,
+    val priority: Int,
+)
+
+internal data class DisplayRoute(
+    val id: String,
+    val sourceCityId: Int,
+    val sourceCityName: String,
+    val destCityId: Int,
+    val destCityName: String,
+    val priority: Int,
+    val isStaged: Boolean,
+)
+
+@OptIn(FlowPreview::class)
 @HiltViewModel
 internal class ProfileViewModel
     @Inject
@@ -62,6 +95,8 @@ internal class ProfileViewModel
         private val updateIdentityDocumentUseCase: UpdateIdentityDocumentUseCase,
         private val finalizeIdentityDocumentsUseCase: FinalizeIdentityDocumentsUseCase,
         private val getProfileSignedUrlUseCase: com.freight24.trucker.feature.profile.domain.usecase.GetProfileSignedUrlUseCase,
+        private val profileRepository: ProfileRepository,
+        private val locationRepository: LocationRepository,
         private val sessionManager: com.freight24.auth.SessionManager,
         @param:ApplicationContext private val context: Context,
     ) : ViewModel() {
@@ -93,6 +128,71 @@ internal class ProfileViewModel
         val editableBankName = MutableStateFlow("")
         val editableBranchName = MutableStateFlow("")
 
+        private val _baseCity = MutableStateFlow<CityResult?>(null)
+        val baseCity: StateFlow<CityResult?> = _baseCity.asStateFlow()
+        val baseCityQuery = MutableStateFlow("")
+        private val _baseCitySuggestions = MutableStateFlow<List<CityResult>>(emptyList())
+        val baseCitySuggestions: StateFlow<List<CityResult>> = _baseCitySuggestions.asStateFlow()
+        private val _baseCitySearchLoading = MutableStateFlow(false)
+        val baseCitySearchLoading: StateFlow<Boolean> = _baseCitySearchLoading.asStateFlow()
+        private val _baseLocation = MutableStateFlow<String?>(null)
+        val baseLocation: StateFlow<String?> = _baseLocation.asStateFlow()
+        private val _baseCitySearchSkip = MutableStateFlow<String?>(null)
+
+        private val _committedRoutes = MutableStateFlow<List<PreferredRoute>>(emptyList())
+        private val _routesToAdd = MutableStateFlow<List<StagedRoute>>(emptyList())
+        private val _routeIdsToDelete = MutableStateFlow<Set<String>>(emptySet())
+        internal val visibleRoutes: StateFlow<List<DisplayRoute>> =
+            combine(_committedRoutes, _routesToAdd, _routeIdsToDelete) { committed, toAdd, toDelete ->
+                committed.filter { it.id !in toDelete }.mapNotNull {
+                    val sourceCityId = it.sourceCityId ?: return@mapNotNull null
+                    val sourceCityName = it.sourceCityName ?: return@mapNotNull null
+                    val destCityId = it.destCityId ?: return@mapNotNull null
+                    val destCityName = it.destCityName ?: return@mapNotNull null
+                    DisplayRoute(
+                        id = it.id,
+                        sourceCityId = sourceCityId,
+                        sourceCityName = sourceCityName,
+                        destCityId = destCityId,
+                        destCityName = destCityName,
+                        priority = it.priority,
+                        isStaged = false,
+                    )
+                } + toAdd.map {
+                    DisplayRoute(
+                        id = it.tempId,
+                        sourceCityId = it.sourceCityId,
+                        sourceCityName = it.sourceCityName,
+                        destCityId = it.destCityId,
+                        destCityName = it.destCityName,
+                        priority = it.priority,
+                        isStaged = true,
+                    )
+                }
+            }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+        private val _showAddRouteSheet = MutableStateFlow(false)
+        val showAddRouteSheet: StateFlow<Boolean> = _showAddRouteSheet.asStateFlow()
+        val fromCityQuery = MutableStateFlow("")
+        val toCityQuery = MutableStateFlow("")
+        private val _fromCitySuggestions = MutableStateFlow<List<CityResult>>(emptyList())
+        val fromCitySuggestions: StateFlow<List<CityResult>> = _fromCitySuggestions.asStateFlow()
+        private val _toCitySuggestions = MutableStateFlow<List<CityResult>>(emptyList())
+        val toCitySuggestions: StateFlow<List<CityResult>> = _toCitySuggestions.asStateFlow()
+        private val _fromCityLoading = MutableStateFlow(false)
+        val fromCityLoading: StateFlow<Boolean> = _fromCityLoading.asStateFlow()
+        private val _toCityLoading = MutableStateFlow(false)
+        val toCityLoading: StateFlow<Boolean> = _toCityLoading.asStateFlow()
+        private val _selectedFromCity = MutableStateFlow<CityResult?>(null)
+        val selectedFromCity: StateFlow<CityResult?> = _selectedFromCity.asStateFlow()
+        private val _selectedToCity = MutableStateFlow<CityResult?>(null)
+        val selectedToCity: StateFlow<CityResult?> = _selectedToCity.asStateFlow()
+        val selectedPriority = MutableStateFlow("High")
+        private val _routeSheetError = MutableStateFlow<String?>(null)
+        val routeSheetError: StateFlow<String?> = _routeSheetError.asStateFlow()
+        private val _fromCitySearchSkip = MutableStateFlow<String?>(null)
+        private val _toCitySearchSkip = MutableStateFlow<String?>(null)
+
         private val _documentStates = MutableStateFlow<Map<String, DocumentUploadState>>(emptyMap())
         val documentStates: StateFlow<Map<String, DocumentUploadState>> = _documentStates.asStateFlow()
 
@@ -115,6 +215,7 @@ internal class ProfileViewModel
         val saveEvent = _saveEvent.asSharedFlow()
 
         init {
+            initCitySearchDebounce()
             fetchProfile()
         }
 
@@ -131,6 +232,9 @@ internal class ProfileViewModel
                         originalProfile = profile
                         populateEditableFields(profile)
                         initializeDocumentStates(profile, preserveTemporary = _isEditing.value)
+                        populateBaseCity(profile)
+                        _committedRoutes.value = profile.preferredRoutes
+                        resetRouteStaging()
                         _uiState.value = UiState.Success(profile)
                         recomputeHasChanges()
                     }
@@ -187,6 +291,194 @@ internal class ProfileViewModel
             _hasPendingTemporaryUploads.value = hasTemporaryUploads()
         }
 
+        private fun populateBaseCity(profile: Profile) {
+            val baseCityId = profile.baseCityId
+            val baseCityName = profile.baseCityName
+            _baseLocation.value = profile.baseLocation?.ifBlank { null } ?: baseCityName
+            if (baseCityId != null && !baseCityName.isNullOrBlank()) {
+                _baseCity.value = CityResult(
+                    type = "CITY",
+                    id = baseCityId,
+                    name = baseCityName,
+                    city = baseCityName,
+                    state = profile.baseCityState.orEmpty(),
+                )
+                baseCityQuery.value = baseCityName
+            } else {
+                _baseCity.value = null
+                baseCityQuery.value = ""
+            }
+            _baseCitySuggestions.value = emptyList()
+        }
+
+        private fun initCitySearchDebounce() {
+            listOf(
+                baseCityQuery to "base",
+                fromCityQuery to "from",
+                toCityQuery to "to",
+            ).forEach { (queryFlow, target) ->
+                viewModelScope.launch {
+                    queryFlow
+                        .debounce(400L)
+                        .map { it.trim() }
+                        .filter { it.length >= 2 }
+                        .distinctUntilChanged()
+                        .collect { query ->
+                            if (shouldSkipSearch(target, query)) return@collect
+                            fetchCitySuggestions(query, target)
+                        }
+                }
+            }
+        }
+
+        private fun fetchCitySuggestions(query: String, target: String) {
+            viewModelScope.launch(Dispatchers.IO) {
+                val loading = when (target) {
+                    "base" -> _baseCitySearchLoading
+                    "from" -> _fromCityLoading
+                    else -> _toCityLoading
+                }
+                loading.value = true
+                val type = if (target == "base") null else "CITY"
+                locationRepository.searchCities(query, type)
+                    .onSuccess { results ->
+                        when (target) {
+                            "base" -> _baseCitySuggestions.value = results
+                            "from" -> _fromCitySuggestions.value = results
+                            else -> _toCitySuggestions.value = results
+                        }
+                    }
+                loading.value = false
+            }
+        }
+
+        private fun shouldSkipSearch(target: String, query: String): Boolean {
+            val skipFlow = when (target) {
+                "base" -> _baseCitySearchSkip
+                "from" -> _fromCitySearchSkip
+                else -> _toCitySearchSkip
+            }
+            val skipValue = skipFlow.value
+            return if (skipValue != null && skipValue == query) {
+                skipFlow.value = null
+                true
+            } else {
+                false
+            }
+        }
+
+        fun onBaseCityQueryChanged(query: String) {
+            baseCityQuery.value = query
+            if (query.isBlank()) {
+                _baseCitySuggestions.value = emptyList()
+                _baseLocation.value = null
+            }
+            if (_baseCity.value?.city != query) {
+                _baseCity.value = null
+            }
+            recomputeHasChanges()
+        }
+
+        fun onBaseCitySelected(city: CityResult) {
+            _baseCity.value = city
+            baseCityQuery.value = city.city
+            _baseCitySuggestions.value = emptyList()
+            _baseLocation.value = city.city
+            _baseCitySearchSkip.value = city.city
+            recomputeHasChanges()
+        }
+
+        fun openAddRouteSheet() {
+            _selectedFromCity.value = _baseCity.value
+            fromCityQuery.value = _baseCity.value?.city.orEmpty()
+            _selectedToCity.value = null
+            toCityQuery.value = ""
+            _fromCitySuggestions.value = emptyList()
+            _toCitySuggestions.value = emptyList()
+            selectedPriority.value = "High"
+            _routeSheetError.value = null
+            _showAddRouteSheet.value = true
+        }
+
+        fun dismissAddRouteSheet() {
+            _showAddRouteSheet.value = false
+            _routeSheetError.value = null
+        }
+
+        fun onFromCityQueryChanged(query: String) {
+            fromCityQuery.value = query
+            if (query.isBlank()) {
+                _fromCitySuggestions.value = emptyList()
+            }
+            if (_selectedFromCity.value?.city != query) {
+                _selectedFromCity.value = null
+            }
+        }
+
+        fun onToCityQueryChanged(query: String) {
+            toCityQuery.value = query
+            if (query.isBlank()) {
+                _toCitySuggestions.value = emptyList()
+            }
+            if (_selectedToCity.value?.city != query) {
+                _selectedToCity.value = null
+            }
+        }
+
+        fun onFromCitySelected(city: CityResult) {
+            _selectedFromCity.value = city
+            fromCityQuery.value = city.city
+            _fromCitySuggestions.value = emptyList()
+            _fromCitySearchSkip.value = city.city
+        }
+
+        fun onToCitySelected(city: CityResult) {
+            _selectedToCity.value = city
+            toCityQuery.value = city.city
+            _toCitySuggestions.value = emptyList()
+            _toCitySearchSkip.value = city.city
+        }
+
+        fun onStageRouteAdd() {
+            _routeSheetError.value = null
+            val from = _selectedFromCity.value ?: return
+            val to = _selectedToCity.value ?: return
+            if (visibleRoutes.value.any { it.sourceCityId == from.id && it.destCityId == to.id }) {
+                _routeSheetError.value = "This route is already in your list"
+                return
+            }
+            _routesToAdd.value = _routesToAdd.value + StagedRoute(
+                tempId = UUID.randomUUID().toString(),
+                sourceCityId = from.id,
+                sourceCityName = from.city,
+                destCityId = to.id,
+                destCityName = to.city,
+                priority = selectedPriority.value.toPriorityInt(),
+            )
+            _showAddRouteSheet.value = false
+            recomputeHasChanges()
+        }
+
+        fun onStageRouteDelete(displayRouteId: String, isStaged: Boolean) {
+            if (isStaged) {
+                _routesToAdd.value = _routesToAdd.value.filter { it.tempId != displayRouteId }
+            } else {
+                _routeIdsToDelete.value = _routeIdsToDelete.value + displayRouteId
+            }
+            recomputeHasChanges()
+        }
+
+        fun discardRouteChanges() {
+            resetRouteStaging()
+            _routeSheetError.value = null
+            _showAddRouteSheet.value = false
+        }
+
+        private fun resetRouteStaging() {
+            _routesToAdd.value = emptyList()
+            _routeIdsToDelete.value = emptySet()
+        }
+
         fun toggleEditMode() {
             if (_isEditing.value) {
                 cancelEdit()
@@ -205,7 +497,9 @@ internal class ProfileViewModel
             originalProfile?.let {
                 populateEditableFields(it)
                 initializeDocumentStates(it, preserveTemporary = false)
+                populateBaseCity(it)
             }
+            discardRouteChanges()
             recomputeHasChanges()
         }
 
@@ -224,55 +518,45 @@ internal class ProfileViewModel
 
             viewModelScope.launch(Dispatchers.IO) {
                 _isSaving.value = true
+                try {
+                    val targetUserId = original.userId
 
-                val targetUserId = original.userId
+                    val hasProfileChanges = hasProfileFieldChanges(original)
+                    if (hasProfileChanges) {
+                        val request = buildSaveRequest(original)
 
-                val hasProfileChanges = hasProfileFieldChanges(original)
-                if (hasProfileChanges) {
-                    val request = com.freight24.rest.request.UpdateProfileRequest(
-                        full_name = editableFullName.value,
-                        email = editableEmailId.value,
-                        alt_phones = listOf(editableAlternativePhone.value),
-                        pan_card = editablePanNumber.value,
-                        aadhar_card = editableAadhaarNumber.value,
-                        business_name = editableBusinessName.value,
-                        gst_number = editableGstNumber.value,
-                        is_tds_applicable = original.isTdsApplicable,
-                        account_holder_name = editableAccountHolderName.value,
-                        account_number = editableAccountNumber.value,
-                        ifsc_code = editableIfscCode.value,
-                        upi_id = editableUpiId.value,
-                        bank_name = editableBankName.value,
-                        branch_name = editableBranchName.value,
-                    )
-
-                    val profileSaveResult = updateProfileUseCase.invoke(UpdateProfileParams(targetUserId, request))
-                    if (profileSaveResult.isFailure) {
-                        _isSaving.value = false
-                        val message = profileSaveResult.exceptionOrNull()?.message ?: "Failed to save profile"
-                        _errorEvent.emit(message)
-                        _saveEvent.emit(Result.failure(IllegalStateException(message)))
-                        return@launch
+                        val profileSaveResult = updateProfileUseCase.invoke(UpdateProfileParams(targetUserId, request))
+                        if (profileSaveResult.isFailure) {
+                            val message = profileSaveResult.exceptionOrNull()?.message ?: "Failed to save profile"
+                            _errorEvent.emit(message)
+                            _saveEvent.emit(Result.failure(IllegalStateException(message)))
+                            return@launch
+                        }
                     }
-                }
 
-                val finalSaveRequest = buildFinalSaveRequest(targetUserId)
-                if (finalSaveRequest.files.isNotEmpty()) {
-                    val finalSaveResult = finalizeIdentityDocumentsUseCase.invoke(finalSaveRequest)
-                    if (finalSaveResult.isFailure) {
-                        _isSaving.value = false
-                        _saveEvent.emit(Result.failure(finalSaveResult.exceptionOrNull() ?: IllegalStateException("Failed to finalize documents")))
-                        recomputeHasChanges()
-                        return@launch
+                    val finalSaveRequest = buildFinalSaveRequest(targetUserId)
+                    if (finalSaveRequest.files.isNotEmpty()) {
+                        val finalSaveResult = finalizeIdentityDocumentsUseCase.invoke(finalSaveRequest)
+                        if (finalSaveResult.isFailure) {
+                            val message = finalSaveResult.exceptionOrNull()?.message ?: "Failed to finalize documents"
+                            _saveEvent.emit(Result.failure(IllegalStateException(message)))
+                            recomputeHasChanges()
+                            return@launch
+                        }
+                        clearTemporaryFileKeys()
                     }
-                    clearTemporaryFileKeys()
-                }
 
-                _isEditing.value = false
-                fetchProfile(forceRefresh = true)
-                recomputeHasChanges()
-                _saveEvent.emit(Result.success(Unit))
-                _isSaving.value = false
+                    _isEditing.value = false
+                    fetchProfile(forceRefresh = true)
+                    recomputeHasChanges()
+                    _saveEvent.emit(Result.success(Unit))
+                } catch (e: Exception) {
+                    val message = e.message ?: "Save failed"
+                    _errorEvent.emit(message)
+                    _saveEvent.emit(Result.failure(e))
+                } finally {
+                    _isSaving.value = false
+                }
             }
         }
 
@@ -286,9 +570,52 @@ internal class ProfileViewModel
                             temporaryKey = doc.temporaryFileKey!!,
                             document_type_id = doc.documentTypeId,
                         )
-                    },
+                },
             )
         }
+
+        private fun buildSaveRequest(original: Profile): com.freight24.rest.request.UpdateProfileRequest {
+            return com.freight24.rest.request.UpdateProfileRequest(
+                baseCityId = _baseCity.value?.id,
+                full_name = editableFullName.value,
+                email = editableEmailId.value,
+                alt_phones = listOf(editableAlternativePhone.value),
+                pan_card = editablePanNumber.value,
+                aadhar_card = editableAadhaarNumber.value,
+                business_name = editableBusinessName.value,
+                gst_number = editableGstNumber.value,
+                is_tds_applicable = original.isTdsApplicable,
+                account_holder_name = editableAccountHolderName.value,
+                account_number = editableAccountNumber.value,
+                ifsc_code = editableIfscCode.value,
+                upi_id = editableUpiId.value,
+                bank_name = editableBankName.value,
+                branch_name = editableBranchName.value,
+                preferredRoutes = gatherPreferredRouteEntries(),
+            )
+        }
+
+        private fun gatherPreferredRouteEntries(): List<PreferredRouteEntry> {
+            val activeCommits = _committedRoutes.value.filter { it.id !in _routeIdsToDelete.value }
+            return activeCommits.mapNotNull { it.toEntry() } + _routesToAdd.value.map { it.toEntry() }
+        }
+
+        private fun PreferredRoute.toEntry(): PreferredRouteEntry? {
+            val sourceId = sourceCityId ?: return null
+            val destId = destCityId ?: return null
+            return PreferredRouteEntry(
+                sourceCityId = sourceId,
+                destinationCityId = destId,
+                priority = priority,
+            )
+        }
+
+        private fun StagedRoute.toEntry(): PreferredRouteEntry =
+            PreferredRouteEntry(
+                sourceCityId = sourceCityId,
+                destinationCityId = destCityId,
+                priority = priority,
+            )
 
         fun uploadDocument(uris: List<Uri>, type: DocumentType, isPdf: Boolean) {
             if (uris.isEmpty()) return
@@ -383,8 +710,9 @@ internal class ProfileViewModel
             val textChanged = if (original == null) false else hasProfileFieldChanges(original)
 
             val hasTemporaryUploads = hasTemporaryUploads()
+            val routeChanges = hasRouteChanges()
             _hasPendingTemporaryUploads.value = hasTemporaryUploads
-            _hasChanges.value = textChanged || hasTemporaryUploads
+            _hasChanges.value = textChanged || hasTemporaryUploads || routeChanges
         }
 
         private fun hasProfileFieldChanges(original: Profile): Boolean {
@@ -401,11 +729,16 @@ internal class ProfileViewModel
                 editableIfscCode.value != original.bankAccountDetails?.ifscCode.orEmpty() ||
                 editableUpiId.value != original.bankAccountDetails?.upiId.orEmpty() ||
                 editableBankName.value != original.bankAccountDetails?.bankName.orEmpty() ||
-                editableBranchName.value != original.bankAccountDetails?.branchName.orEmpty()
+                editableBranchName.value != original.bankAccountDetails?.branchName.orEmpty() ||
+                _baseCity.value?.id != original.baseCityId
         }
 
         private fun hasTemporaryUploads(): Boolean {
             return _documentStates.value.values.any { !it.temporaryFileKey.isNullOrBlank() }
+        }
+
+        private fun hasRouteChanges(): Boolean {
+            return _routesToAdd.value.isNotEmpty() || _routeIdsToDelete.value.isNotEmpty()
         }
 
         fun getSignedUrl(s3Url: String, onUrlReady: (String) -> Unit) {
@@ -429,5 +762,17 @@ internal class ProfileViewModel
 
         fun retry() {
             fetchProfile()
+        }
+
+        private fun String.toPriorityInt(): Int =
+            when (this) {
+                "High" -> 1
+                "Medium" -> 2
+                else -> 3
+            }
+
+        private fun Throwable?.isRouteNotFound(): Boolean {
+            val http = this as? com.freight24.network.error.NetworkException.HttpException ?: return false
+            return http.code == 404 && http.errorBody?.contains("Route not found", ignoreCase = true) == true
         }
     }

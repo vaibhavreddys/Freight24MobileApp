@@ -7,6 +7,7 @@ import com.freight24.rest.response.ProfileResponse
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.POST
@@ -64,4 +65,5 @@ interface ProfileApi {
     suspend fun finalizeIdentityDocuments(
         @Body request: FinalSaveRequest
     ): Response<BaseResponse>
+
 }

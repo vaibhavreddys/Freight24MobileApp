@@ -13,6 +13,14 @@ data class ProfileResponse(
 data class ProfileDto(
     val id: String,
     val userId: String,
+    @SerialName("base_city_id")
+    val baseCityId: Int? = null,
+    @SerialName("base_city_name")
+    val baseCityName: String? = null,
+    @SerialName("base_city_state")
+    val baseCityState: String? = null,
+    @SerialName("baseLocation")
+    val baseLocation: String? = null,
     val fullName: String?,
     val emailId: String?,
     val phoneNo: String?,
@@ -39,6 +47,7 @@ data class ProfileDto(
     val bankAccountVerificationStatus: Boolean? = null,
     val documentsVerificationStatus: Boolean? = null,
     val profileVerificationStatus: String? = null,
+    val preferredRoutes: List<PreferredRouteDto>? = null,
 )
 
 @Serializable
@@ -57,4 +66,19 @@ data class ProfileDocumentDto(
     val documentType: String?,
     val url: String?,
     val status: String?,
+)
+
+@Serializable
+data class PreferredRouteDto(
+    val id: String,
+    val priority: Int,
+    val source: String? = null,
+    val sourceCity: PreferredRouteCityDto? = null,
+    val destinationCity: PreferredRouteCityDto? = null,
+)
+
+@Serializable
+data class PreferredRouteCityDto(
+    val id: Int,
+    val name: String?,
 )

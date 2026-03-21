@@ -1,9 +1,12 @@
 package com.freight24.rest.request
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class UpdateProfileRequest(
+    @SerialName("base_city_id")
+    val baseCityId: Int? = null,
     val full_name: String? = null,
     val email: String? = null,
     val phone: String? = null,
@@ -18,5 +21,7 @@ data class UpdateProfileRequest(
     val ifsc_code: String? = null,
     val upi_id: String? = null,
     val bank_name: String? = null,
-    val branch_name: String? = null
+    val branch_name: String? = null,
+    @SerialName("preferred_routes")
+    val preferredRoutes: List<PreferredRouteEntry>? = null,
 )

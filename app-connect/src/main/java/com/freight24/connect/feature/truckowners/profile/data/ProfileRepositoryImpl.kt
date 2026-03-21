@@ -37,7 +37,6 @@ internal class ProfileRepositoryImpl
             }.map { it.success }
         }
 
-
         override suspend fun uploadIdentityDocument(userId: String, documentTypeId: Int, documentNumber: String, file: okhttp3.MultipartBody.Part): Result<String> {
             return safeCallProvider.safeApiCall(ioDispatcher) {
                 val documentNumberBody = documentNumber.toRequestBody("text/plain".toMediaTypeOrNull())
@@ -72,4 +71,5 @@ internal class ProfileRepositoryImpl
             val key = data?.temporaryFileKey ?: data?.fileKey
             return key ?: throw IllegalStateException("temporaryFileKey missing in upload response")
         }
+
     }

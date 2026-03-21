@@ -2,6 +2,7 @@ package com.freight24.trucker.di
 
 import com.freight24.network.RetrofitFactory
 import com.freight24.network.di.DefaultNetwork
+import com.freight24.rest.api.LocationApi
 import com.freight24.rest.api.IndentsApi
 import com.freight24.rest.api.ProfileApi
 import com.freight24.rest.api.TripApi
@@ -51,6 +52,13 @@ object ApiModule {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "TruckerProfileService")
             .create(ProfileApi::class.java)
+    }
+
+    @Provides
+    fun providesLocationApi(retrofitFactory: RetrofitFactory): LocationApi {
+        return retrofitFactory
+            .create(BuildConfig.BASE_URL, "TruckerLocationService")
+            .create(LocationApi::class.java)
     }
 
     @Provides

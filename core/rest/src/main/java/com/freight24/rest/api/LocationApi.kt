@@ -1,5 +1,6 @@
 package com.freight24.rest.api
 
+import com.freight24.rest.response.LocationSearchResponse
 import com.freight24.rest.response.LocationResponse
 import retrofit2.Response
 import retrofit2.http.GET
@@ -10,4 +11,10 @@ interface LocationApi {
     suspend fun searchLocations(
         @Query("q") query: String,
     ): Response<LocationResponse>
+
+    @GET("locations/search")
+    suspend fun searchCities(
+        @Query("q") query: String,
+        @Query("type") type: String? = null,
+    ): Response<LocationSearchResponse>
 }
