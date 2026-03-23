@@ -19,13 +19,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.freight24.connect.feature.dashboard.domain.viewmodel.DashboardEvent
 import com.freight24.connect.feature.dashboard.domain.viewmodel.DashboardViewModel
 import com.freight24.connect.feature.dashboard.domain.viewmodel.DashboardViewModelImpl
+import com.freight24.connect.feature.trips.domain.usecase.TripTypes
 import com.freight24.rest.response.DashboardDataResponse
 
 @Composable
@@ -35,7 +35,12 @@ fun DashboardScreen(
     onCreateIndentClick: () -> Unit = {},
     onCreateTripClick: () -> Unit = {},
     onInterestInboxClick: () -> Unit = {},
-    onActiveTripsClick: () -> Unit = {}
+    onActiveTripsClick: () -> Unit = {},
+    onTripFilterClick: (TripTypes) -> Unit = {},
+    onOpenIndentsClick: () -> Unit = {},
+    onActiveAssignedClick: () -> Unit = {},
+    onActiveLoadingClick: () -> Unit = {},
+    onActiveInTransitClick: () -> Unit = {}
 ) {
     val uiState = viewModel.uiState
     val scrollState = rememberScrollState()
@@ -68,10 +73,25 @@ fun DashboardScreen(
                         .padding(horizontal = 16.dp, vertical = 20.dp),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    AttentionNeededSection(data.attentionNeeded)
-                    IndentPulseSection(data.indentPulse)
-                    ActiveTripsSection(data.activeTrips)
-                    PendingActionsSection(data.pendingActions)
+                    AttentionNeededSection(
+                        attentionNeeded = data.attentionNeeded,
+                        onTripFilterClick = onTripFilterClick,
+                        onInterestInboxClick = onInterestInboxClick
+                    )
+                    IndentPulseSection(
+                        indentPulse = data.indentPulse,
+                        onOpenClick = onOpenIndentsClick
+                    )
+                    ActiveTripsSection(
+                        activeTrips = data.activeTrips,
+                        onAssignedClick = onActiveAssignedClick,
+                        onLoadingClick = onActiveLoadingClick,
+                        onInTransitClick = onActiveInTransitClick
+                    )
+                    PendingActionsSection(
+                        pendingActions = data.pendingActions,
+                        onTripFilterClick = onTripFilterClick
+                    )
                     QuickActionsSection(
                         attentionNeeded = data.attentionNeeded,
                         onCreateIndentClick = onCreateIndentClick,
@@ -87,7 +107,11 @@ fun DashboardScreen(
 }
 
 @Composable
-fun AttentionNeededSection(attentionNeeded: DashboardDataResponse.AttentionNeeded) {
+fun AttentionNeededSection(
+    attentionNeeded: DashboardDataResponse.AttentionNeeded,
+    onTripFilterClick: (TripTypes) -> Unit,
+    onInterestInboxClick: () -> Unit,
+) {
     Column {
         SectionHeader("ATTENTION NEEDED")
         Spacer(modifier = Modifier.height(8.dp))
@@ -101,7 +125,8 @@ fun AttentionNeededSection(attentionNeeded: DashboardDataResponse.AttentionNeede
                 title = "Trucker\nInterests",
                 value = "${attentionNeeded.truckerInterests} New Leads",
                 backgroundColor = Color(0xFFEAFBF3),
-                valueColor = Color(0xFF047857)
+                valueColor = Color(0xFF047857),
+                onClick = onInterestInboxClick
             )
             // Waiting for LR Card
             AttentionCard(
@@ -109,7 +134,8 @@ fun AttentionNeededSection(attentionNeeded: DashboardDataResponse.AttentionNeede
                 title = "Waiting for LR",
                 value = "${attentionNeeded.waitingForLR} Pending",
                 backgroundColor = Color(0xFFFFF7ED),
-                valueColor = Color(0xFFEA580C)
+                valueColor = Color(0xFFEA580C),
+                onClick = { onTripFilterClick(TripTypes.LR_NOT_UPLOADED) }
             )
             // Payment Enquiry (Mocked for UI)
             AttentionCard(
@@ -129,11 +155,12 @@ fun AttentionCard(
     title: String,
     value: String,
     backgroundColor: Color,
-    valueColor: Color
+    valueColor: Color,
+    onClick: () -> Unit = {}
 ) {
 
     Card(
-        modifier = modifier,
+        modifier = modifier.clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
         border = BorderStroke(1.dp, Color(0xFFF1F5F9)),
@@ -161,7 +188,10 @@ fun AttentionCard(
 }
 
 @Composable
-fun IndentPulseSection(indentPulse: DashboardDataResponse.IndentPulse) {
+fun IndentPulseSection(
+    indentPulse: DashboardDataResponse.IndentPulse,
+    onOpenClick: () -> Unit = {}
+) {
     Column {
         SectionHeader("INDENT PULSE")
         Spacer(modifier = Modifier.height(8.dp))
@@ -171,15 +201,21 @@ fun IndentPulseSection(indentPulse: DashboardDataResponse.IndentPulse) {
         ) {
             PulseCard(modifier = Modifier.weight(1f), title = "TOTAL", count = indentPulse.total.toString(), color = Color(0xFF1E293B))
             PulseCard(modifier = Modifier.weight(1f), title = "CLOSED", count = indentPulse.closed.toString(), color = Color(0xFF16A34A))
-            PulseCard(modifier = Modifier.weight(1f), title = "OPEN", count = indentPulse.open.toString(), color = Color(0xFF2563EB))
+            PulseCard(modifier = Modifier.weight(1f), title = "OPEN", count = indentPulse.open.toString(), color = Color(0xFF2563EB), onClick = onOpenClick)
         }
     }
 }
 
 @Composable
-fun PulseCard(modifier: Modifier = Modifier, title: String, count: String, color: Color) {
+fun PulseCard(
+    modifier: Modifier = Modifier,
+    title: String,
+    count: String,
+    color: Color,
+    onClick: () -> Unit = {}
+) {
     Card(
-        modifier = modifier,
+        modifier = modifier.clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         border = BorderStroke(1.dp, Color(0xFFF1F5F9)),
@@ -207,7 +243,12 @@ fun PulseCard(modifier: Modifier = Modifier, title: String, count: String, color
 }
 
 @Composable
-fun ActiveTripsSection(activeTrips: DashboardDataResponse.ActiveTrips) {
+fun ActiveTripsSection(
+    activeTrips: DashboardDataResponse.ActiveTrips,
+    onAssignedClick: () -> Unit = {},
+    onLoadingClick: () -> Unit = {},
+    onInTransitClick: () -> Unit = {}
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -238,16 +279,27 @@ fun ActiveTripsSection(activeTrips: DashboardDataResponse.ActiveTrips) {
             // Progress Bars
             val safeTotal = if (activeTrips.total > 0) activeTrips.total.toFloat() else 1f
             
-            TripProgressRow("ASSIGNED", "${activeTrips.assigned} TRIP", activeTrips.assigned / safeTotal, Color(0xFF14B8A6))
-            TripProgressRow("LOADING", "${activeTrips.loading} TRIP", activeTrips.loading / safeTotal, Color(0xFFF97316))
-            TripProgressRow("IN-TRANSIT", "${activeTrips.inTransit} TRIPS", activeTrips.inTransit / safeTotal, Color(0xFF10B981))
+            TripProgressRow("ASSIGNED", "${activeTrips.assigned} TRIP", activeTrips.assigned / safeTotal, Color(0xFF14B8A6), onAssignedClick)
+            TripProgressRow("LOADING", "${activeTrips.loading} TRIP", activeTrips.loading / safeTotal, Color(0xFFF97316), onLoadingClick)
+            TripProgressRow("IN-TRANSIT", "${activeTrips.inTransit} TRIPS", activeTrips.inTransit / safeTotal, Color(0xFF10B981), onInTransitClick)
         }
     }
 }
 
 @Composable
-fun TripProgressRow(label: String, countText: String, progress: Float, color: Color) {
-    Column(modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)) {
+fun TripProgressRow(
+    label: String,
+    countText: String,
+    progress: Float,
+    color: Color,
+    onClick: () -> Unit = {}
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(bottom = 16.dp)
+    ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
@@ -276,7 +328,10 @@ fun TripProgressRow(label: String, countText: String, progress: Float, color: Co
 }
 
 @Composable
-fun PendingActionsSection(pendingActions: DashboardDataResponse.PendingActions) {
+fun PendingActionsSection(
+    pendingActions: DashboardDataResponse.PendingActions,
+    onTripFilterClick: (com.freight24.connect.feature.trips.domain.usecase.TripTypes) -> Unit
+) {
     Column {
         SectionHeader("PENDING ACTIONS")
         Spacer(modifier = Modifier.height(8.dp))
@@ -287,7 +342,8 @@ fun PendingActionsSection(pendingActions: DashboardDataResponse.PendingActions) 
                 iconTintColor = Color(0xFF15803D),
                 title = "LR waiting for review",
                 subtitle = "${pendingActions.lrReviews} documents pending",
-                badgeColor = Color(0xFF10B981)
+                badgeColor = Color(0xFF10B981),
+                onClick = { onTripFilterClick(TripTypes.LR_PENDING_REVIEW) }
             )
             ActionCard(
                 icon = Icons.Default.VerticalSplit, // A box icon placeholder
@@ -295,7 +351,8 @@ fun PendingActionsSection(pendingActions: DashboardDataResponse.PendingActions) 
                 iconTintColor = Color(0xFFB91C1C),
                 title = "POD Follow-up",
                 subtitle = "${pendingActions.podFollowUp} action required",
-                badgeColor = Color(0xFFEF4444)
+                badgeColor = Color(0xFFEF4444),
+                onClick = { onTripFilterClick(TripTypes.WAITING_FOR_POD) }
             )
         }
     }
@@ -308,10 +365,11 @@ fun ActionCard(
     iconTintColor: Color,
     title: String,
     subtitle: String,
-    badgeColor: Color
+    badgeColor: Color,
+    onClick: () -> Unit = {}
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         border = BorderStroke(1.dp, Color(0xFFF1F5F9))

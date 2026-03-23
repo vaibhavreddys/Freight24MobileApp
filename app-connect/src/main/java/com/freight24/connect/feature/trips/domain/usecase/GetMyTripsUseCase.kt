@@ -9,7 +9,10 @@ import javax.inject.Inject
 enum class TripTypes(val filter: String, val displayText: String) {
     ONGOING("ONGOING", "ONGOING"),
     IN_TRANSIT("IN_TRANSIT", "IN-TRANSIT"),
-    COMPLETED("COMPLETED", "COMPLETED");
+    COMPLETED("COMPLETED", "COMPLETED"),
+    LR_NOT_UPLOADED("LR_NOT_UPLOADED", "Upload LR Pending"),
+    LR_PENDING_REVIEW("LR_PENDING_REVIEW", "Review LR"),
+    WAITING_FOR_POD("WAITING_FOR_POD", "POD Pending");
 }
 
 data class GetMyTripsUseCaseDataParams(
@@ -18,7 +21,7 @@ data class GetMyTripsUseCaseDataParams(
     val limit: Int?,
 ): UseCaseParams
 
-internal interface GetMyTripsUseCase : UseCase<GetMyTripsUseCaseDataParams, MyTripsDataResponse>
+interface GetMyTripsUseCase : UseCase<GetMyTripsUseCaseDataParams, MyTripsDataResponse>
 
 
 class GetMyTripsUseCaseImpl @Inject constructor(

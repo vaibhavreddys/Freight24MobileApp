@@ -9,18 +9,27 @@ sealed class ConnectDestination(val route: String) {
 
     data object Login : ConnectDestination("login")
 
-    data object Home : ConnectDestination("home?tab={tab}") {
+    data object Home : ConnectDestination("home?tab={tab}&filter={filter}") {
         const val TAB_ARG = "tab"
+        const val FILTER_ARG = "filter"
         override val arguments = listOf(
             navArgument(TAB_ARG) {
                 type = NavType.StringType
                 nullable = true
                 defaultValue = null
+            },
+            navArgument(FILTER_ARG) {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
             }
         )
-        
-        fun createRoute(tab: String? = null): String {
-            return if (tab != null) "home?tab=$tab" else "home"
+
+        fun createRoute(tab: String? = null, filter: String? = null): String {
+            val params = mutableListOf<String>()
+            tab?.let { params.add("$TAB_ARG=$it") }
+            filter?.let { params.add("$FILTER_ARG=$it") }
+            return "home" + if (params.isNotEmpty()) "?" + params.joinToString("&") else ""
         }
     }
 
@@ -273,6 +282,14 @@ sealed class ConnectDestination(val route: String) {
     }
 
     data object InterestInbox : ConnectDestination("interest_inbox")
+
+    data object FilteredTrips : ConnectDestination("filtered_trips/{filterType}") {
+        const val FILTER_TYPE_ARG = "filterType"
+        override val arguments = listOf(
+            navArgument(FILTER_TYPE_ARG) { type = NavType.StringType }
+        )
+        fun createRoute(filterType: String) = "filtered_trips/$filterType"
+    }
 
     data object FindTrucks : ConnectDestination("find_trucks")
     data object ManageTrucks : ConnectDestination("manage_trucks")

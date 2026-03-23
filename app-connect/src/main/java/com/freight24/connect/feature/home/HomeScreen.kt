@@ -26,6 +26,7 @@ import com.freight24.connect.feature.trips.views.TripsScreen
 import com.freight24.connect.feature.findTrucks.views.FindTrucksScreen
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.freight24.connect.feature.trips.domain.usecase.TripTypes
 import com.freight24.connect.navigation.ConnectDestination
 import com.freight24.ui.components.AppTopBar
 import com.freight24.ui.components.FreightBottomNavScaffold
@@ -41,15 +42,21 @@ fun HomeScreen(
     onManageClients: () -> Unit,
     onManageTruckOwners: () -> Unit,
     startTab: ConnectTab? = null,
+    startFilter: com.freight24.connect.feature.trips.domain.usecase.TripTypes? = null,
     onLogout: () -> Unit,
     navController: NavController,
     moreViewModel: MoreViewModel = hiltViewModel()
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(startTab ?: ConnectTab.Home) }
+    var selectedFilter by rememberSaveable { mutableStateOf(startFilter) }
     var showMoreSheet by rememberSaveable { mutableStateOf(false) }
     
     LaunchedEffect(startTab) {
         startTab?.let { selectedTab = it }
+    }
+
+    LaunchedEffect(startFilter) {
+        startFilter?.let { selectedFilter = it }
     }
 
     FreightBottomNavScaffold(
@@ -93,7 +100,25 @@ fun HomeScreen(
                     onCreateIndentClick = onCreateIndentClick,
                     onCreateTripClick = { navController.navigate(ConnectDestination.CreateTrip.route) },
                     onInterestInboxClick = { navController.navigate(ConnectDestination.InterestInbox.route) },
-                    onActiveTripsClick = { selectedTab = ConnectTab.Trips }
+                    onActiveTripsClick = { selectedTab = ConnectTab.Trips },
+                    onTripFilterClick = { filterType ->
+                        navController.navigate(
+                            ConnectDestination.FilteredTrips.createRoute(filterType.name)
+                        )
+                    },
+                    onOpenIndentsClick = { selectedTab = ConnectTab.Indents },
+                    onActiveAssignedClick = { 
+                        selectedFilter = TripTypes.ONGOING
+                        selectedTab = ConnectTab.Trips 
+                    },
+                    onActiveLoadingClick = { 
+                        selectedFilter = TripTypes.ONGOING
+                        selectedTab = ConnectTab.Trips 
+                    },
+                    onActiveInTransitClick = {
+                        selectedFilter = TripTypes.IN_TRANSIT
+                        selectedTab = ConnectTab.Trips
+                    }
                 )
                 ConnectTab.Indents -> IndentsScreen(
                     onIndentClick = { indentId ->
@@ -107,7 +132,8 @@ fun HomeScreen(
                 )
                 ConnectTab.Trips -> TripsScreen(
                     paddingValues = paddingValues,
-                    onTripClick = onTripClick
+                    onTripClick = onTripClick,
+                    initialFilter = selectedFilter
                 )
                 ConnectTab.Trucks -> FindTrucksScreen(
                     paddingValues = paddingValues,

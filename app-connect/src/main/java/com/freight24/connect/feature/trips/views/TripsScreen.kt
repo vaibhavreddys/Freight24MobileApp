@@ -26,9 +26,16 @@ import com.freight24.connect.feature.trips.views.components.TripCard
 fun TripsScreen(
     paddingValues: PaddingValues,
     onTripClick: (String) -> Unit = {},
+    initialFilter: TripTypes? = null,
     viewModel: TripsListViewModel = hiltViewModel<TripsListViewModelImpl>()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    androidx.compose.runtime.LaunchedEffect(initialFilter) {
+        initialFilter?.let {
+            viewModel.onEvent(TripsListEvent.SelectFilter(it))
+        }
+    }
 
     Column(
         modifier = Modifier

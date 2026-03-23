@@ -226,8 +226,12 @@ fun ConnectNavGraph(
             arguments = ConnectDestination.Home.arguments
         ) { backStackEntry ->
             val tabString = backStackEntry.arguments?.getString(ConnectDestination.Home.TAB_ARG)
+            val filterString = backStackEntry.arguments?.getString(ConnectDestination.Home.FILTER_ARG)
             val startTab = tabString?.let { tabId ->
                 ConnectTab.entries.find { it.id == tabId }
+            }
+            val startFilter = filterString?.let { filterId ->
+                com.freight24.connect.feature.trips.domain.usecase.TripTypes.entries.find { it.name == filterId }
             }
 
             HomeScreen(
@@ -261,6 +265,7 @@ fun ConnectNavGraph(
                     navHostController.navigate(ConnectDestination.ManageTruckOwners.route)
                 },
                 startTab = startTab,
+                startFilter = startFilter,
                 onLogout = {
                     navHostController.navigate(ConnectDestination.Login.route) {
                         popUpTo(ConnectDestination.Home.route) {
@@ -323,6 +328,18 @@ fun ConnectNavGraph(
         composable(ConnectDestination.InterestInbox.route) {
             InboxScreen(
                 onBackClick = { navHostController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = ConnectDestination.FilteredTrips.route,
+            arguments = ConnectDestination.FilteredTrips.arguments
+        ) {
+            com.freight24.connect.feature.trips.views.FilteredTripsScreen(
+                onBackClick = { navHostController.popBackStack() },
+                onTripClick = { tripId ->
+                    navHostController.navigate(ConnectDestination.TripDetails.createRoute(tripId))
+                }
             )
         }
 
