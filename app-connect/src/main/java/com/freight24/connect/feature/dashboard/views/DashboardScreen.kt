@@ -35,7 +35,7 @@ fun DashboardScreen(
     onCreateIndentClick: () -> Unit = {},
     onCreateTripClick: () -> Unit = {},
     onInterestInboxClick: () -> Unit = {},
-    onActiveTripsClick: () -> Unit = {},
+    onVerificationRequestsClick: () -> Unit = {},
     onTripFilterClick: (TripTypes) -> Unit = {},
     onOpenIndentsClick: () -> Unit = {},
     onActiveAssignedClick: () -> Unit = {},
@@ -97,7 +97,7 @@ fun DashboardScreen(
                         onCreateIndentClick = onCreateIndentClick,
                         onCreateTripClick = onCreateTripClick,
                         onInterestInboxClick = onInterestInboxClick,
-                        onActiveTripsClick = onActiveTripsClick
+                        onVerificationRequestsClick = onVerificationRequestsClick
                     )
                     Spacer(modifier = Modifier.height(20.dp))
                 }
@@ -417,7 +417,7 @@ fun QuickActionsSection(
     onCreateIndentClick: () -> Unit,
     onCreateTripClick: () -> Unit,
     onInterestInboxClick: () -> Unit,
-    onActiveTripsClick: () -> Unit
+    onVerificationRequestsClick: () -> Unit
 ) {
     Column {
         SectionHeader("QUICK ACTIONS")
@@ -462,11 +462,11 @@ fun QuickActionsSection(
             )
             QuickActionCard(
                 modifier = Modifier.weight(1f),
-                title = "Active Trips",
-                icon = Icons.Default.LocationOn,
+                title = "Verification Requests",
+                icon = Icons.Default.Shield,
                 backgroundColor = Color.White,
                 contentColor = Color(0xFF0D9488),
-                onClick = onActiveTripsClick
+                onClick = onVerificationRequestsClick
             )
         }
     }
@@ -554,4 +554,3 @@ fun SectionHeader(title: String) {
         modifier = Modifier.padding(vertical = 8.dp)
     )
 }
-

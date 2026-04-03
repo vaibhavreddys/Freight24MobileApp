@@ -175,6 +175,8 @@ sealed class ConnectDestination(val route: String) {
         fun createRoute(tripId: String) = "trip_details/$tripId"
     }
 
+    data object VerificationRequests : ConnectDestination("verification_requests")
+
     data object EditTrip : ConnectDestination("edit_trip/{tripId}") {
         const val TRIP_ID_ARG = "tripId"
         override val arguments = listOf(

@@ -19,6 +19,7 @@ import com.freight24.connect.feature.trucks.views.AssignTruckScreen
 import com.freight24.connect.feature.trips.views.CreateTripScreen
 import com.freight24.connect.feature.trips.views.TripDetailsScreen
 import com.freight24.connect.feature.trips.views.TripSuccessScreen
+import com.freight24.connect.feature.verificationrequests.views.VerificationRequestsScreen
 import com.freight24.connect.feature.indents.views.SearchIndentsScreen
 import com.freight24.connect.feature.indents.views.SearchSelectionScreen
 import com.freight24.connect.feature.indents.views.SearchType
@@ -322,6 +323,12 @@ fun ConnectNavGraph(
                         ConnectDestination.OtherDeductions.createRoute(tripId, amount, notes)
                     )
                 }
+            )
+        }
+
+        composable(ConnectDestination.VerificationRequests.route) {
+            VerificationRequestsScreen(
+                onBackClick = { navHostController.popBackStack() }
             )
         }
 

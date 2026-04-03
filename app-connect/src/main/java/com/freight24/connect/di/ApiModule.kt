@@ -11,6 +11,7 @@ import com.freight24.rest.api.LocationApi
 import com.freight24.rest.api.LoginConnectApi
 import com.freight24.rest.api.NotificationServiceApi
 import com.freight24.rest.api.ProfileApi
+import com.freight24.rest.api.VerificationApi
 import com.freight24.rest.api.TripApi
 import com.freight24.rest.api.TripHaltingApi
 import com.freight24.rest.api.TripLUChargesApi
@@ -77,6 +78,13 @@ object ApiModule {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "TripApi")
             .create(TripApi::class.java)
+    }
+
+    @Provides
+    fun providesVerificationApi(retrofitFactory: RetrofitFactory): VerificationApi {
+        return retrofitFactory
+            .create(BuildConfig.BASE_URL, "VerificationApi")
+            .create(VerificationApi::class.java)
     }
 
     @Provides

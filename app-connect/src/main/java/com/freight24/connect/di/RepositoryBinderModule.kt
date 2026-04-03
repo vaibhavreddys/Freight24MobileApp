@@ -20,6 +20,8 @@ import com.freight24.connect.repository.trips.TripLUChargesRepository
 import com.freight24.connect.repository.trips.TripLUChargesRepositoryImpl
 import com.freight24.connect.repository.TruckOwnerRepository
 import com.freight24.connect.repository.TruckOwnerRepositoryImpl
+import com.freight24.connect.repository.verificationrequests.VerificationRequestsRepository
+import com.freight24.connect.repository.verificationrequests.VerificationRequestsRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -80,6 +82,12 @@ interface RepositoryBinderModule {
     fun bindsInterestInboxRepository(
         interestInboxRepository: InterestInboxRepositoryImpl
     ): InterestInboxRepository
+
+    @Binds
+    @Singleton
+    fun bindsVerificationRequestsRepository(
+        verificationRequestsRepositoryImpl: VerificationRequestsRepositoryImpl,
+    ): VerificationRequestsRepository
 
 
 }

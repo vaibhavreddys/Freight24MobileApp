@@ -100,7 +100,9 @@ fun HomeScreen(
                     onCreateIndentClick = onCreateIndentClick,
                     onCreateTripClick = { navController.navigate(ConnectDestination.CreateTrip.route) },
                     onInterestInboxClick = { navController.navigate(ConnectDestination.InterestInbox.route) },
-                    onActiveTripsClick = { selectedTab = ConnectTab.Trips },
+                    onVerificationRequestsClick = {
+                        navController.navigate(ConnectDestination.VerificationRequests.route)
+                    },
                     onTripFilterClick = { filterType ->
                         navController.navigate(
                             ConnectDestination.FilteredTrips.createRoute(filterType.name)
