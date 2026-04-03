@@ -25,6 +25,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -33,6 +35,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -46,6 +50,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,6 +71,7 @@ import com.freight24.ui.components.FilterSelectionChip
 import com.freight24.ui.components.DocumentLinkChip
 import com.freight24.ui.components.RouteIndicatorWithCities
 import com.freight24.ui.components.getPdfLaunchIntent
+import com.freight24.ui.theme.FreightThemeTokens
 import java.text.DateFormat
 import java.util.Date
 import java.util.Locale
@@ -83,6 +89,8 @@ fun VerificationRequestsScreen(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     var selectedRequestData by remember { mutableStateOf<VerificationRequest?>(null) }
+    var remarks by rememberSaveable { mutableStateOf("") }
+    var remarksError by rememberSaveable { mutableStateOf<String?>(null) }
 
     LaunchedEffect(uiState.selectedTab, uiState.selectedStatus) {
         if (uiState.selectedTab != VerificationRequestTab.TRIPS) {
@@ -206,16 +214,27 @@ fun VerificationRequestsScreen(
     }
 
     if (selectedRequestData != null) {
+        val activeRequest = selectedRequestData!!
         ModalBottomSheet(
             onDismissRequest = {
                 selectedRequestData = null
+                remarks = ""
+                remarksError = null
             },
             sheetState = sheetState,
             dragHandle = { androidx.compose.material3.BottomSheetDefaults.DragHandle() },
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
-            VerificationRequestDetailSheet(
-                request = selectedRequestData!!,
+            TripVerificationRequestDetailSheet(
+                request = activeRequest,
+                remarks = remarks,
+                remarksError = remarksError,
+                onRemarksChange = {
+                    remarks = it
+                    if (remarksError != null) {
+                        remarksError = null
+                    }
+                },
                 onDocumentClick = { document ->
                     openVerificationDocument(
                         context = context,
@@ -223,11 +242,25 @@ fun VerificationRequestsScreen(
                         document = document,
                     )
                 },
+                onApproveClick = {
+                    // Dummy action until the backend approves/rejects verification requests.
+                    remarksError = null
+                },
+                onRejectClick = {
+                    if (remarks.isBlank()) {
+                        remarksError = "Remarks are required when rejecting a request."
+                    } else {
+                        // Dummy action until the backend approves/rejects verification requests.
+                        remarksError = null
+                    }
+                },
                 onClose = {
                     scope.launch {
                         sheetState.hide()
                     }.invokeOnCompletion {
                         selectedRequestData = null
+                        remarks = ""
+                        remarksError = null
                     }
                 }
             )
@@ -347,7 +380,7 @@ private fun VerificationRequestCard(
                 verticalAlignment = Alignment.Top,
             ) {
                 Surface(
-                    color = MaterialTheme.colorScheme.primaryContainer,
+                    color = MaterialTheme.colorScheme.primary,
                     shape = RoundedCornerShape(12.dp),
                 ) {
                     Box(
@@ -357,7 +390,7 @@ private fun VerificationRequestCard(
                         Icon(
                             imageVector = Icons.Default.Description,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            tint = MaterialTheme.colorScheme.onPrimary,
                         )
                     }
                 }
@@ -388,9 +421,14 @@ private fun VerificationRequestCard(
 }
 
 @Composable
-private fun VerificationRequestDetailSheet(
+private fun TripVerificationRequestDetailSheet(
     request: VerificationRequest,
+    remarks: String,
+    remarksError: String?,
+    onRemarksChange: (String) -> Unit,
     onDocumentClick: (VerificationRequestDocument) -> Unit,
+    onApproveClick: () -> Unit,
+    onRejectClick: () -> Unit,
     onClose: () -> Unit,
 ) {
     Column(
@@ -465,9 +503,40 @@ private fun VerificationRequestDetailSheet(
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        // Add Remarks Input Field here
+        SectionLabel(text = "Remarks")
+        Spacer(modifier = Modifier.height(10.dp))
 
-        // Add Approve or Reject buttons here
+        RemarksField(
+            remarks = remarks,
+            remarksError = remarksError,
+            onRemarksChange = onRemarksChange,
+        )
+
+        Spacer(modifier = Modifier.height(18.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            ActionButton(
+                modifier = Modifier.weight(1f),
+                text = "Reject",
+                icon = Icons.Default.Close,
+                containerColor = MaterialTheme.colorScheme.errorContainer,
+                contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.24f)),
+                onClick = onRejectClick,
+            )
+            ActionButton(
+                modifier = Modifier.weight(1f),
+                text = "Approve",
+                icon = Icons.Default.CheckCircle,
+                containerColor = FreightThemeTokens.colors.successColor,
+                contentColor = FreightThemeTokens.colors.onSuccessColor,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)),
+                onClick = onApproveClick,
+            )
+        }
 
         Spacer(modifier = Modifier.height(20.dp))
     }
@@ -569,18 +638,18 @@ private fun DocumentRow(
             modifier = Modifier.padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-                Surface(
-                    modifier = Modifier.size(46.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Default.Description,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        )
-                    }
+            Surface(
+                modifier = Modifier.size(46.dp),
+                shape = RoundedCornerShape(14.dp),
+                color = MaterialTheme.colorScheme.primary,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.Description,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                    )
+                }
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -614,6 +683,87 @@ private fun DocumentRow(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun RemarksField(
+    remarks: String,
+    remarksError: String?,
+    onRemarksChange: (String) -> Unit,
+) {
+    Column {
+        OutlinedTextField(
+            value = remarks,
+            onValueChange = onRemarksChange,
+            modifier = Modifier.fillMaxWidth(),
+            minLines = 2,
+            maxLines = 3,
+            placeholder = {
+                Text("Add remarks for approval or rejection...")
+            },
+            textStyle = MaterialTheme.typography.bodyMedium,
+            shape = RoundedCornerShape(18.dp),
+            isError = remarksError != null,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                errorBorderColor = MaterialTheme.colorScheme.error,
+                cursorColor = MaterialTheme.colorScheme.primary,
+                focusedLeadingIconColor = MaterialTheme.colorScheme.primary,
+                unfocusedLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                focusedLabelColor = MaterialTheme.colorScheme.primary,
+                unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            ),
+        )
+        if (remarksError != null) {
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = remarksError,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                fontWeight = FontWeight.Medium,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ActionButton(
+    modifier: Modifier = Modifier,
+    text: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    containerColor: androidx.compose.ui.graphics.Color,
+    contentColor: androidx.compose.ui.graphics.Color,
+    border: BorderStroke? = null,
+    onClick: () -> Unit,
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        color = containerColor,
+        border = border,
+    ) {
+        Row(
+            modifier = Modifier
+                .clickable(onClick = onClick)
+                .padding(horizontal = 14.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = contentColor,
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = contentColor,
+            )
         }
     }
 }
