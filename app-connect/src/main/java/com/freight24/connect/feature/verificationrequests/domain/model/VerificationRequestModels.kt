@@ -17,11 +17,24 @@ enum class VerificationRequestStatus(
 ) {
     PENDING("PENDING", "Pending"),
     IN_REVIEW("IN_REVIEW", "In Review"),
+    APPROVED("APPROVED", "Approved"),
+    REJECTED("REJECTED", "Rejected"),
     COMPLETED("COMPLETED", "Completed");
 
     companion object {
         fun fromApiValue(value: String?): VerificationRequestStatus? {
             return entries.firstOrNull { it.apiValue.equals(value, ignoreCase = true) }
+        }
+
+        fun filterValues(tabType: String): List<VerificationRequestStatus> {
+            return when (tabType) {
+                "TRIPS" -> listOf(
+                    PENDING, COMPLETED
+                )
+                else -> listOf(
+                    PENDING, IN_REVIEW, COMPLETED
+                )
+            }
         }
     }
 }
@@ -57,5 +70,6 @@ data class VerificationRequest(
     val destination: VerificationRequestLocation?,
     val documents: List<VerificationRequestDocument>,
     val status: VerificationRequestStatus,
+    val resolutionNotes: String? = null,
     val updatedAt: String,
 )

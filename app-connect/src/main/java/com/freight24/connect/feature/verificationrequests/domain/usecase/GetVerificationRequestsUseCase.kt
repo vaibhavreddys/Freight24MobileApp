@@ -58,6 +58,7 @@ class GetVerificationRequestsUseCaseImpl @Inject constructor(
             destination = destination?.toDomain(),
             documents = orderedDocuments,
             status = VerificationRequestStatus.fromApiValue(status) ?: VerificationRequestStatus.PENDING,
+            resolutionNotes = resolutionNotes,
             updatedAt = updatedAt,
         )
     }

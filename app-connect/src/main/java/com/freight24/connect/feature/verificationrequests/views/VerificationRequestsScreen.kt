@@ -24,12 +24,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,6 +47,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -54,6 +58,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -91,6 +96,26 @@ fun VerificationRequestsScreen(
     var selectedRequestData by remember { mutableStateOf<VerificationRequest?>(null) }
     var remarks by rememberSaveable { mutableStateOf("") }
     var remarksError by rememberSaveable { mutableStateOf<String?>(null) }
+    val clearSelectedRequest = {
+        viewModel.onEvent(VerificationRequestsEvent.ClearActionState)
+        selectedRequestData = null
+        remarks = ""
+        remarksError = null
+    }
+
+    LaunchedEffect(uiState.actionCompletedAt) {
+        if (uiState.actionCompletedAt != null) {
+            remarks = ""
+            remarksError = null
+            if (selectedRequestData != null) {
+                scope.launch {
+                    sheetState.hide()
+                }.invokeOnCompletion {
+                    selectedRequestData = null
+                }
+            }
+        }
+    }
 
     LaunchedEffect(uiState.selectedTab, uiState.selectedStatus) {
         if (uiState.selectedTab != VerificationRequestTab.TRIPS) {
@@ -134,80 +159,87 @@ fun VerificationRequestsScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             VerificationTabs(
                 selectedTab = uiState.selectedTab,
                 onTabSelected = { viewModel.onEvent(VerificationRequestsEvent.SelectTab(it)) }
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
             VerificationStatusFilters(
+                tabType = uiState.selectedTab.name,
                 selectedStatus = uiState.selectedStatus,
                 onStatusSelected = { viewModel.onEvent(VerificationRequestsEvent.SelectStatus(it)) }
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            Box(
+            PullToRefreshBox(
+                isRefreshing = uiState.isRefreshing,
+                onRefresh = { viewModel.onEvent(VerificationRequestsEvent.Refresh) },
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
             ) {
-                when (uiState.selectedTab) {
-                    VerificationRequestTab.TRIPS -> {
-                        when {
-                            uiState.isLoading && uiState.visibleTrips.isEmpty() -> {
-                                androidx.compose.material3.CircularProgressIndicator(
-                                    modifier = Modifier.align(Alignment.Center)
-                                )
-                            }
-
-                            uiState.errorMessage != null && uiState.visibleTrips.isEmpty() -> {
-                                VerificationErrorState(
-                                    message = uiState.errorMessage.orEmpty(),
-                                    onRetry = { viewModel.onEvent(VerificationRequestsEvent.Refresh) },
-                                    modifier = Modifier.align(Alignment.Center)
-                                )
-                            }
-
-                            uiState.visibleTrips.isEmpty() -> {
-                                VerificationEmptyState(
-                                    message = "No verification requests found.",
-                                    modifier = Modifier.align(Alignment.Center)
-                                )
-                            }
-
-                            else -> {
-                                LazyColumn(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                                ) {
-                                    items(uiState.visibleTrips, key = { it.id }) { request ->
-                                        VerificationRequestCard(
-                                            request = request,
-                                            onClick = {
-                                                selectedRequestData = request
-                                            }
-                                        )
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    when (uiState.selectedTab) {
+                        VerificationRequestTab.TRIPS -> {
+                            if (uiState.isLoading && uiState.visibleTrips.isEmpty()) {
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = 96.dp),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        CircularProgressIndicator()
                                     }
+                                }
+                            } else if (uiState.errorMessage != null && uiState.visibleTrips.isEmpty()) {
+                                item {
+                                    VerificationErrorState(
+                                        message = uiState.errorMessage.orEmpty(),
+                                        onRetry = { viewModel.onEvent(VerificationRequestsEvent.Refresh) },
+                                        modifier = Modifier.fillMaxWidth(),
+                                    )
+                                }
+                            } else if (uiState.visibleTrips.isEmpty()) {
+                                item {
+                                    VerificationEmptyState(
+                                        message = "No verification requests found.",
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = 96.dp),
+                                    )
+                                }
+                            } else {
+                                items(uiState.visibleTrips, key = { it.id }) { request ->
+                                    VerificationRequestCard(
+                                        request = request,
+                                        onClick = {
+                                            viewModel.onEvent(VerificationRequestsEvent.ClearActionState)
+                                            selectedRequestData = request
+                                        }
+                                    )
                                 }
                             }
                         }
-                    }
 
-                    else -> {
-                        VerificationEmptyState(
-                            message = "This tab will be wired when the backend is ready.",
-                            modifier = Modifier.align(Alignment.Center)
-                        )
+                        else -> {
+                            item {
+                                VerificationEmptyState(
+                                    message = "This tab will be wired when the backend is ready.",
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 96.dp),
+                                )
+                            }
+                        }
                     }
-                }
-
-                if (uiState.isLoading && uiState.visibleTrips.isNotEmpty()) {
-                    androidx.compose.material3.CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.TopCenter).padding(top = 16.dp)
-                    )
                 }
             }
         }
@@ -215,11 +247,10 @@ fun VerificationRequestsScreen(
 
     if (selectedRequestData != null) {
         val activeRequest = selectedRequestData!!
+        val isCompletedView = uiState.selectedStatus == VerificationRequestStatus.COMPLETED
         ModalBottomSheet(
             onDismissRequest = {
-                selectedRequestData = null
-                remarks = ""
-                remarksError = null
+                clearSelectedRequest()
             },
             sheetState = sheetState,
             dragHandle = { androidx.compose.material3.BottomSheetDefaults.DragHandle() },
@@ -242,27 +273,42 @@ fun VerificationRequestsScreen(
                         document = document,
                     )
                 },
+                resolutionNotes = activeRequest.resolutionNotes,
                 onApproveClick = {
-                    // Dummy action until the backend approves/rejects verification requests.
-                    remarksError = null
+                    viewModel.onEvent(
+                        VerificationRequestsEvent.UpdateTripStatus(
+                            request = activeRequest,
+                            status = VerificationRequestStatus.APPROVED,
+                            resolutionNotes = remarks.takeUnless { it.isBlank() },
+                        )
+                    )
                 },
                 onRejectClick = {
                     if (remarks.isBlank()) {
                         remarksError = "Remarks are required when rejecting a request."
                     } else {
-                        // Dummy action until the backend approves/rejects verification requests.
-                        remarksError = null
+                        viewModel.onEvent(
+                            VerificationRequestsEvent.UpdateTripStatus(
+                                request = activeRequest,
+                                status = VerificationRequestStatus.REJECTED,
+                                resolutionNotes = remarks,
+                            )
+                        )
                     }
                 },
                 onClose = {
                     scope.launch {
                         sheetState.hide()
                     }.invokeOnCompletion {
-                        selectedRequestData = null
-                        remarks = ""
-                        remarksError = null
+                        clearSelectedRequest()
                     }
-                }
+                },
+                actionErrorMessage = uiState.actionErrorMessage,
+                isApproveLoading = uiState.actionInProgressRequestId == activeRequest.id &&
+                    uiState.actionInProgressStatus == VerificationRequestStatus.APPROVED,
+                isRejectLoading = uiState.actionInProgressRequestId == activeRequest.id &&
+                    uiState.actionInProgressStatus == VerificationRequestStatus.REJECTED,
+                isCompletedView = isCompletedView,
             )
         }
     }
@@ -284,7 +330,7 @@ private fun VerificationTabs(
             val isSelected = tab == selectedTab
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.clickable { onTabSelected(tab) }
+                modifier = Modifier.padding(horizontal = 2.dp).clickable { onTabSelected(tab) }
             ) {
                 Text(
                     text = tab.title,
@@ -309,6 +355,7 @@ private fun VerificationTabs(
 
 @Composable
 private fun VerificationStatusFilters(
+    tabType: String,
     selectedStatus: VerificationRequestStatus,
     onStatusSelected: (VerificationRequestStatus) -> Unit,
 ) {
@@ -318,7 +365,7 @@ private fun VerificationStatusFilters(
             .padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        VerificationRequestStatus.entries.forEach { status ->
+        VerificationRequestStatus.filterValues(tabType).forEach { status ->
             FilterSelectionChip(
                 label = status.displayText,
                 isSelected = selectedStatus == status,
@@ -335,6 +382,18 @@ private fun VerificationRequestCard(
 ) {
     val relativeTime = remember(request.updatedAt) { formatRelativeTime(request.updatedAt) }
     val primaryDocument = request.documents.firstOrNull()
+    val isCompleted = request.status == VerificationRequestStatus.APPROVED ||
+        request.status == VerificationRequestStatus.REJECTED
+    val iconContainerColor = when (request.status) {
+        VerificationRequestStatus.REJECTED -> MaterialTheme.colorScheme.errorContainer
+        VerificationRequestStatus.APPROVED -> Color.Transparent
+        else -> MaterialTheme.colorScheme.primaryContainer
+    }
+    val iconTint = when (request.status) {
+        VerificationRequestStatus.REJECTED -> MaterialTheme.colorScheme.onErrorContainer
+        VerificationRequestStatus.APPROVED -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.onPrimaryContainer
+    }
 
     Card(
         modifier = Modifier
@@ -352,12 +411,18 @@ private fun VerificationRequestCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = request.tripCode,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = request.tripCode,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        if (isCompleted) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            CompletedStatusMark(status = request.status)
+                        }
+                    }
                 }
                 Surface(
                     color = MaterialTheme.colorScheme.secondaryContainer,
@@ -366,7 +431,7 @@ private fun VerificationRequestCard(
                     Text(
                         text = relativeTime,
                         style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Normal,
                         color = MaterialTheme.colorScheme.onSecondaryContainer,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                     )
@@ -380,7 +445,7 @@ private fun VerificationRequestCard(
                 verticalAlignment = Alignment.Top,
             ) {
                 Surface(
-                    color = MaterialTheme.colorScheme.primary,
+                    color = iconContainerColor,
                     shape = RoundedCornerShape(12.dp),
                 ) {
                     Box(
@@ -390,7 +455,7 @@ private fun VerificationRequestCard(
                         Icon(
                             imageVector = Icons.Default.Description,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimary,
+                            tint = iconTint,
                         )
                     }
                 }
@@ -400,14 +465,14 @@ private fun VerificationRequestCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = request.truckRegistrationNumber,
-                        style = MaterialTheme.typography.headlineSmall,
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = "${request.origin.displayLabel()} → ${request.destination.displayLabel()}",
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -425,11 +490,16 @@ private fun TripVerificationRequestDetailSheet(
     request: VerificationRequest,
     remarks: String,
     remarksError: String?,
+    resolutionNotes: String?,
     onRemarksChange: (String) -> Unit,
     onDocumentClick: (VerificationRequestDocument) -> Unit,
     onApproveClick: () -> Unit,
     onRejectClick: () -> Unit,
     onClose: () -> Unit,
+    actionErrorMessage: String?,
+    isApproveLoading: Boolean,
+    isRejectLoading: Boolean,
+    isCompletedView: Boolean,
 ) {
     Column(
         modifier = Modifier
@@ -454,6 +524,10 @@ private fun TripVerificationRequestDetailSheet(
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                if (isCompletedView) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    StatusBannerChip(status = request.status)
+                }
             }
 
             TextButton(onClick = onClose) {
@@ -506,36 +580,64 @@ private fun TripVerificationRequestDetailSheet(
         SectionLabel(text = "Remarks")
         Spacer(modifier = Modifier.height(10.dp))
 
-        RemarksField(
-            remarks = remarks,
-            remarksError = remarksError,
-            onRemarksChange = onRemarksChange,
-        )
-
-        Spacer(modifier = Modifier.height(18.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            ActionButton(
-                modifier = Modifier.weight(1f),
-                text = "Reject",
-                icon = Icons.Default.Close,
-                containerColor = MaterialTheme.colorScheme.errorContainer,
-                contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.24f)),
-                onClick = onRejectClick,
+        if (isCompletedView) {
+            RemarksField(
+                remarks = resolutionNotes.orEmpty(),
+                remarksError = null,
+                enabled = false,
+                onRemarksChange = onRemarksChange,
             )
-            ActionButton(
-                modifier = Modifier.weight(1f),
-                text = "Approve",
-                icon = Icons.Default.CheckCircle,
-                containerColor = FreightThemeTokens.colors.successColor,
-                contentColor = FreightThemeTokens.colors.onSuccessColor,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)),
-                onClick = onApproveClick,
+        } else {
+            RemarksField(
+                remarks = remarks,
+                remarksError = remarksError,
+                enabled = true,
+                onRemarksChange = onRemarksChange,
             )
+
+            if (actionErrorMessage != null) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Surface(
+                    color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.65f),
+                    shape = RoundedCornerShape(14.dp),
+                ) {
+                    Text(
+                        text = actionErrorMessage,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                ActionButton(
+                    modifier = Modifier.weight(1f),
+                    text = "Reject",
+                    icon = Icons.Default.Close,
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.24f)),
+                    isLoading = isRejectLoading,
+                    onClick = onRejectClick,
+                )
+                ActionButton(
+                    modifier = Modifier.weight(1f),
+                    text = "Approve",
+                    icon = Icons.Default.CheckCircle,
+                    containerColor = FreightThemeTokens.colors.successColor,
+                    contentColor = FreightThemeTokens.colors.onSuccessColor,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)),
+                    isLoading = isApproveLoading,
+                    onClick = onApproveClick,
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -601,24 +703,69 @@ private fun SectionLabel(text: String) {
 }
 
 @Composable
-private fun DetailItem(
-    label: String,
-    value: String,
-) {
-    Column {
+private fun StatusBannerChip(status: VerificationRequestStatus) {
+    val (containerColor, contentColor) = when (status) {
+        VerificationRequestStatus.REJECTED -> {
+            MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.onErrorContainer
+        }
+        VerificationRequestStatus.APPROVED -> {
+            MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
+        }
+        else -> {
+            MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
+        }
+    }
+
+    Surface(
+        color = containerColor,
+        shape = RoundedCornerShape(999.dp),
+    ) {
         Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = FontWeight.Medium,
+            text = status.displayText.uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            color = contentColor,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
         )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = if (value.isBlank()) "N/A" else value,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontWeight = FontWeight.SemiBold,
-        )
+    }
+}
+
+@Composable
+private fun CompletedStatusMark(status: VerificationRequestStatus) {
+    val isRejected = status == VerificationRequestStatus.REJECTED
+    val containerColor = if (isRejected) {
+        MaterialTheme.colorScheme.errorContainer
+    } else {
+        MaterialTheme.colorScheme.primaryContainer
+    }
+    val contentColor = if (isRejected) {
+        MaterialTheme.colorScheme.onErrorContainer
+    } else {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    }
+
+    Surface(
+        color = containerColor,
+        shape = RoundedCornerShape(999.dp),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = if (isRejected) Icons.Default.Close else Icons.Default.Check,
+                contentDescription = null,
+                tint = contentColor,
+                modifier = Modifier.size(14.dp),
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = if (isRejected) "Rejected" else "Approved",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = contentColor,
+            )
+        }
     }
 }
 
@@ -691,6 +838,7 @@ private fun DocumentRow(
 private fun RemarksField(
     remarks: String,
     remarksError: String?,
+    enabled: Boolean,
     onRemarksChange: (String) -> Unit,
 ) {
     Column {
@@ -698,10 +846,11 @@ private fun RemarksField(
             value = remarks,
             onValueChange = onRemarksChange,
             modifier = Modifier.fillMaxWidth(),
+            enabled = enabled,
             minLines = 2,
             maxLines = 3,
             placeholder = {
-                Text("Add remarks for approval or rejection...")
+                Text(if (enabled) "Add remarks for approval or rejection..." else "No remarks provided")
             },
             textStyle = MaterialTheme.typography.bodyMedium,
             shape = RoundedCornerShape(18.dp),
@@ -715,6 +864,10 @@ private fun RemarksField(
                 unfocusedLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 focusedLabelColor = MaterialTheme.colorScheme.primary,
                 unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledBorderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f),
+                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
             ),
         )
         if (remarksError != null) {
@@ -736,35 +889,44 @@ private fun ActionButton(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     containerColor: androidx.compose.ui.graphics.Color,
     contentColor: androidx.compose.ui.graphics.Color,
+    isLoading: Boolean,
     border: BorderStroke? = null,
     onClick: () -> Unit,
 ) {
-    Surface(
+    Button(
         modifier = modifier,
+        onClick = onClick,
+        enabled = !isLoading,
         shape = RoundedCornerShape(16.dp),
-        color = containerColor,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = containerColor,
+            contentColor = contentColor,
+            disabledContainerColor = containerColor.copy(alpha = 0.65f),
+            disabledContentColor = contentColor.copy(alpha = 0.75f),
+        ),
         border = border,
+        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 14.dp),
     ) {
-        Row(
-            modifier = Modifier
-                .clickable(onClick = onClick)
-                .padding(horizontal = 14.dp, vertical = 14.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(16.dp),
+                strokeWidth = 2.dp,
+                color = contentColor,
+            )
+        } else {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = contentColor,
             )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color = contentColor,
-            )
         }
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.Bold,
+            color = contentColor,
+        )
     }
 }
 

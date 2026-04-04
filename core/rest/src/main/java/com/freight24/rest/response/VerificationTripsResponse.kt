@@ -20,6 +20,7 @@ data class VerificationTripDto(
     @SerialName("old_snapshot") val oldSnapshot: VerificationSnapshotDto? = null,
     @SerialName("new_snapshot") val newSnapshot: VerificationSnapshotDto? = null,
     @SerialName("status") val status: String,
+    @SerialName("resolution_notes") val resolutionNotes: String? = null,
     @SerialName("updated_at") val updatedAt: String,
 )
 

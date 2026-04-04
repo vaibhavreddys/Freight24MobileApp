@@ -4,6 +4,8 @@ import com.freight24.connect.feature.verificationrequests.domain.usecase.GetVeri
 import com.freight24.connect.feature.verificationrequests.domain.usecase.GetVerificationRequestsUseCaseImpl
 import com.freight24.connect.feature.verificationrequests.domain.usecase.GetVerificationSignedUrlUseCase
 import com.freight24.connect.feature.verificationrequests.domain.usecase.GetVerificationSignedUrlUseCaseImpl
+import com.freight24.connect.feature.verificationrequests.domain.usecase.UpdateVerificationRequestStatusUseCase
+import com.freight24.connect.feature.verificationrequests.domain.usecase.UpdateVerificationRequestStatusUseCaseImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -21,4 +23,9 @@ abstract class VerificationRequestsDomainModule {
     abstract fun bindGetVerificationSignedUrlUseCase(
         useCaseImpl: GetVerificationSignedUrlUseCaseImpl
     ): GetVerificationSignedUrlUseCase
+
+    @Binds
+    abstract fun bindUpdateVerificationRequestStatusUseCase(
+        useCaseImpl: UpdateVerificationRequestStatusUseCaseImpl
+    ): UpdateVerificationRequestStatusUseCase
 }

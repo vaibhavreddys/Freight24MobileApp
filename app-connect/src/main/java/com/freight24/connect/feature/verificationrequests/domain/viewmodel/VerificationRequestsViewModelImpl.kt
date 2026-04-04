@@ -6,6 +6,9 @@ import com.freight24.connect.feature.verificationrequests.domain.model.Verificat
 import com.freight24.connect.feature.verificationrequests.domain.model.VerificationRequestTab
 import com.freight24.connect.feature.verificationrequests.domain.usecase.GetVerificationRequestsUseCase
 import com.freight24.connect.feature.verificationrequests.domain.usecase.GetVerificationSignedUrlUseCase
+import com.freight24.connect.feature.verificationrequests.domain.usecase.UpdateVerificationRequestStatusUseCase
+import com.freight24.connect.feature.verificationrequests.domain.usecase.UpdateVerificationRequestStatusUseCaseParams
+import com.freight24.connect.feature.verificationrequests.domain.model.VerificationRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,6 +21,7 @@ import javax.inject.Inject
 internal class VerificationRequestsViewModelImpl @Inject constructor(
     private val getVerificationRequestsUseCase: GetVerificationRequestsUseCase,
     private val getVerificationSignedUrlUseCase: GetVerificationSignedUrlUseCase,
+    private val updateVerificationRequestStatusUseCase: UpdateVerificationRequestStatusUseCase,
 ) : ViewModel(), VerificationRequestsViewModel {
 
     private val _uiState = MutableStateFlow(VerificationRequestsUiState())
@@ -51,6 +55,22 @@ internal class VerificationRequestsViewModelImpl @Inject constructor(
             }
 
             VerificationRequestsEvent.Refresh -> refreshCurrentSelection()
+
+            VerificationRequestsEvent.ClearActionState -> {
+                _uiState.update {
+                    it.copy(
+                        actionErrorMessage = null,
+                        actionInProgressRequestId = null,
+                        actionInProgressStatus = null,
+                    )
+                }
+            }
+
+            is VerificationRequestsEvent.UpdateTripStatus -> updateTripStatus(
+                request = event.request,
+                status = event.status,
+                resolutionNotes = event.resolutionNotes,
+            )
         }
     }
 
@@ -63,9 +83,11 @@ internal class VerificationRequestsViewModelImpl @Inject constructor(
 
     private fun refreshCurrentSelection() {
         when (_uiState.value.selectedStatus) {
-            VerificationRequestStatus.COMPLETED -> fetchCompletedTrips(forceRefresh = true)
+            VerificationRequestStatus.COMPLETED -> fetchCompletedTrips(forceRefresh = true, isRefreshing = true)
             VerificationRequestStatus.PENDING,
-            VerificationRequestStatus.IN_REVIEW -> fetchTrips(forceRefresh = true)
+            VerificationRequestStatus.IN_REVIEW -> fetchTrips(forceRefresh = true, isRefreshing = true)
+            VerificationRequestStatus.APPROVED,
+            VerificationRequestStatus.REJECTED -> fetchCompletedTrips(forceRefresh = true, isRefreshing = true)
         }
     }
 
@@ -81,24 +103,40 @@ internal class VerificationRequestsViewModelImpl @Inject constructor(
                 if (!_uiState.value.loadedDefaultTrips) {
                     fetchTrips()
                 }
+            VerificationRequestStatus.APPROVED,
+            VerificationRequestStatus.REJECTED ->
+                if (!_uiState.value.loadedCompletedTrips) {
+                    fetchCompletedTrips()
+                }
         }
     }
 
-    private fun fetchTrips(forceRefresh: Boolean = false) {
+    private fun fetchTrips(forceRefresh: Boolean = false, isRefreshing: Boolean = false) {
         if (_uiState.value.loadingStatus == VerificationRequestStatus.PENDING || _uiState.value.loadingStatus == VerificationRequestStatus.IN_REVIEW) return
+        if (_uiState.value.actionInProgressRequestId != null) return
 
         viewModelScope.launch {
             val currentStatus = _uiState.value.selectedStatus
-            _uiState.update { it.copy(isLoading = true, loadingStatus = currentStatus, errorMessage = null) }
+            _uiState.update {
+                it.copy(
+                    isLoading = !isRefreshing,
+                    isRefreshing = isRefreshing,
+                    loadingStatus = currentStatus,
+                    errorMessage = null,
+                    actionErrorMessage = null,
+                )
+            }
             getVerificationRequestsUseCase(null)
                 .onSuccess { requests ->
                     _uiState.update { state ->
                         state.copy(
                             isLoading = false,
+                            isRefreshing = false,
                             loadingStatus = null,
                             defaultTrips = requests,
                             loadedDefaultTrips = true,
-                            errorMessage = null
+                            errorMessage = null,
+                            actionErrorMessage = null,
                         )
                     }
                 }
@@ -106,6 +144,7 @@ internal class VerificationRequestsViewModelImpl @Inject constructor(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
+                            isRefreshing = false,
                             loadingStatus = null,
                             errorMessage = error.message ?: "Failed to load verification requests",
                         )
@@ -114,20 +153,31 @@ internal class VerificationRequestsViewModelImpl @Inject constructor(
         }
     }
 
-    private fun fetchCompletedTrips(forceRefresh: Boolean = false) {
+    private fun fetchCompletedTrips(forceRefresh: Boolean = false, isRefreshing: Boolean = false) {
         if (_uiState.value.loadingStatus == VerificationRequestStatus.COMPLETED && !forceRefresh) return
+        if (_uiState.value.actionInProgressRequestId != null) return
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, loadingStatus = VerificationRequestStatus.COMPLETED, errorMessage = null) }
+            _uiState.update {
+                it.copy(
+                    isLoading = !isRefreshing,
+                    isRefreshing = isRefreshing,
+                    loadingStatus = VerificationRequestStatus.COMPLETED,
+                    errorMessage = null,
+                    actionErrorMessage = null,
+                )
+            }
             getVerificationRequestsUseCase(VerificationRequestStatus.COMPLETED)
                 .onSuccess { requests ->
                     _uiState.update { state ->
                         state.copy(
                             isLoading = false,
+                            isRefreshing = false,
                             loadingStatus = null,
                             completedTrips = requests,
                             loadedCompletedTrips = true,
-                            errorMessage = null
+                            errorMessage = null,
+                            actionErrorMessage = null,
                         )
                     }
                 }
@@ -135,11 +185,69 @@ internal class VerificationRequestsViewModelImpl @Inject constructor(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
+                            isRefreshing = false,
                             loadingStatus = null,
                             errorMessage = error.message ?: "Failed to load verification requests",
                         )
                     }
                 }
+        }
+    }
+
+    private fun updateTripStatus(
+        request: VerificationRequest,
+        status: VerificationRequestStatus,
+        resolutionNotes: String?,
+    ) {
+        if (_uiState.value.actionInProgressRequestId != null) return
+
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    actionInProgressRequestId = request.id,
+                    actionInProgressStatus = status,
+                    actionErrorMessage = null,
+                    errorMessage = null,
+                )
+            }
+
+            updateVerificationRequestStatusUseCase(
+                UpdateVerificationRequestStatusUseCaseParams(
+                    id = request.id,
+                    status = status,
+                    resolutionNotes = resolutionNotes,
+                )
+            ).fold(
+                onSuccess = {
+                    val updatedRequest = request.copy(
+                        status = status,
+                        resolutionNotes = resolutionNotes?.takeUnless { it.isBlank() },
+                    )
+                    _uiState.update { state ->
+                        state.copy(
+                            defaultTrips = state.defaultTrips.filterNot { it.id == request.id },
+                            completedTrips = state.completedTrips
+                                .filterNot { it.id == request.id }
+                                .let { existing ->
+                                    listOf(updatedRequest) + existing
+                                },
+                            actionInProgressRequestId = null,
+                            actionInProgressStatus = null,
+                            actionCompletedAt = System.currentTimeMillis(),
+                            actionErrorMessage = null,
+                        )
+                    }
+                },
+                onFailure = { error ->
+                    _uiState.update {
+                        it.copy(
+                            actionInProgressRequestId = null,
+                            actionInProgressStatus = null,
+                            actionErrorMessage = error.message ?: "Failed to update verification request",
+                        )
+                    }
+                },
+            )
         }
     }
 }
