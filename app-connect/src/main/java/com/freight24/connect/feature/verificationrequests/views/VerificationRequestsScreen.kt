@@ -64,6 +64,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.freight24.connect.feature.verificationrequests.domain.model.TruckDetailChange
+import com.freight24.connect.feature.verificationrequests.domain.model.TruckVerificationRequest
 import com.freight24.connect.feature.verificationrequests.domain.model.VerificationRequest
 import com.freight24.connect.feature.verificationrequests.domain.model.VerificationRequestDocument
 import com.freight24.connect.feature.verificationrequests.domain.model.VerificationRequestLocation
@@ -82,6 +84,7 @@ import java.util.Date
 import java.util.Locale
 import java.time.OffsetDateTime
 import kotlinx.coroutines.launch
+import androidx.compose.material.icons.filled.LocalShipping
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -94,11 +97,13 @@ fun VerificationRequestsScreen(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     var selectedRequestData by remember { mutableStateOf<VerificationRequest?>(null) }
+    var selectedTruckData by remember { mutableStateOf<TruckVerificationRequest?>(null) }
     var remarks by rememberSaveable { mutableStateOf("") }
     var remarksError by rememberSaveable { mutableStateOf<String?>(null) }
     val clearSelectedRequest = {
         viewModel.onEvent(VerificationRequestsEvent.ClearActionState)
         selectedRequestData = null
+        selectedTruckData = null
         remarks = ""
         remarksError = null
     }
@@ -114,6 +119,13 @@ fun VerificationRequestsScreen(
                     selectedRequestData = null
                 }
             }
+            if (selectedTruckData != null) {
+                scope.launch {
+                    sheetState.hide()
+                }.invokeOnCompletion {
+                    selectedTruckData = null
+                }
+            }
         }
     }
 
@@ -124,6 +136,15 @@ fun VerificationRequestsScreen(
             selectedRequestData?.let {
                 if (!uiState.visibleTrips.contains(it)) {
                     selectedRequestData = null
+                }
+            }
+        }
+        if (uiState.selectedTab != VerificationRequestTab.TRUCKS) {
+            selectedTruckData = null
+        } else {
+            selectedTruckData?.let {
+                if (!uiState.visibleTrucks.contains(it)) {
+                    selectedTruckData = null
                 }
             }
         }
@@ -229,6 +250,48 @@ fun VerificationRequestsScreen(
                             }
                         }
 
+                        VerificationRequestTab.TRUCKS -> {
+                            if (uiState.isLoading && uiState.visibleTrucks.isEmpty()) {
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = 96.dp),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        CircularProgressIndicator()
+                                    }
+                                }
+                            } else if (uiState.errorMessage != null && uiState.visibleTrucks.isEmpty()) {
+                                item {
+                                    VerificationErrorState(
+                                        message = uiState.errorMessage.orEmpty(),
+                                        onRetry = { viewModel.onEvent(VerificationRequestsEvent.Refresh) },
+                                        modifier = Modifier.fillMaxWidth(),
+                                    )
+                                }
+                            } else if (uiState.visibleTrucks.isEmpty()) {
+                                item {
+                                    VerificationEmptyState(
+                                        message = "No truck verification requests found.",
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = 96.dp),
+                                    )
+                                }
+                            } else {
+                                items(uiState.visibleTrucks, key = { it.id }) { truck ->
+                                    TruckVerificationRequestCard(
+                                        request = truck,
+                                        onClick = {
+                                            viewModel.onEvent(VerificationRequestsEvent.ClearActionState)
+                                            selectedTruckData = truck
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
                         else -> {
                             item {
                                 VerificationEmptyState(
@@ -307,6 +370,74 @@ fun VerificationRequestsScreen(
                 isApproveLoading = uiState.actionInProgressRequestId == activeRequest.id &&
                     uiState.actionInProgressStatus == VerificationRequestStatus.APPROVED,
                 isRejectLoading = uiState.actionInProgressRequestId == activeRequest.id &&
+                    uiState.actionInProgressStatus == VerificationRequestStatus.REJECTED,
+                isCompletedView = isCompletedView,
+            )
+        }
+    }
+
+    if (selectedTruckData != null) {
+        val activeTruck = selectedTruckData!!
+        val isCompletedView = uiState.selectedStatus == VerificationRequestStatus.COMPLETED
+        ModalBottomSheet(
+            onDismissRequest = {
+                clearSelectedRequest()
+            },
+            sheetState = sheetState,
+            dragHandle = { androidx.compose.material3.BottomSheetDefaults.DragHandle() },
+            containerColor = MaterialTheme.colorScheme.surface,
+        ) {
+            TruckVerificationRequestDetailSheet(
+                request = activeTruck,
+                remarks = remarks,
+                remarksError = remarksError,
+                onRemarksChange = {
+                    remarks = it
+                    if (remarksError != null) {
+                        remarksError = null
+                    }
+                },
+                onDocumentClick = { document ->
+                    openVerificationDocument(
+                        context = context,
+                        viewModel = viewModel,
+                        document = document,
+                    )
+                },
+                resolutionNotes = activeTruck.resolutionNotes,
+                onApproveClick = {
+                    viewModel.onEvent(
+                        VerificationRequestsEvent.UpdateTruckStatus(
+                            request = activeTruck,
+                            status = VerificationRequestStatus.APPROVED,
+                            resolutionNotes = remarks.takeUnless { it.isBlank() },
+                        )
+                    )
+                },
+                onRejectClick = {
+                    if (remarks.isBlank()) {
+                        remarksError = "Remarks are required when rejecting a request."
+                    } else {
+                        viewModel.onEvent(
+                            VerificationRequestsEvent.UpdateTruckStatus(
+                                request = activeTruck,
+                                status = VerificationRequestStatus.REJECTED,
+                                resolutionNotes = remarks,
+                            )
+                        )
+                    }
+                },
+                onClose = {
+                    scope.launch {
+                        sheetState.hide()
+                    }.invokeOnCompletion {
+                        clearSelectedRequest()
+                    }
+                },
+                actionErrorMessage = uiState.actionErrorMessage,
+                isApproveLoading = uiState.actionInProgressRequestId == activeTruck.id &&
+                    uiState.actionInProgressStatus == VerificationRequestStatus.APPROVED,
+                isRejectLoading = uiState.actionInProgressRequestId == activeTruck.id &&
                     uiState.actionInProgressStatus == VerificationRequestStatus.REJECTED,
                 isCompletedView = isCompletedView,
             )
@@ -927,6 +1058,384 @@ private fun ActionButton(
             fontWeight = FontWeight.Bold,
             color = contentColor,
         )
+    }
+}
+
+@Composable
+private fun TruckVerificationRequestCard(
+    request: TruckVerificationRequest,
+    onClick: () -> Unit,
+) {
+    val relativeTime = remember(request.updatedAt) { formatRelativeTime(request.updatedAt) }
+    val isCompleted = request.status == VerificationRequestStatus.APPROVED ||
+        request.status == VerificationRequestStatus.REJECTED
+    val changedLabels = buildChangedSummaryLabels(request)
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text(
+                        text = request.registrationNumber,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    if (isCompleted) {
+                        CompletedStatusChip(status = request.status)
+                    }
+                }
+                Surface(
+                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f),
+                    shape = RoundedCornerShape(999.dp),
+                ) {
+                    Text(
+                        text = relativeTime,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Surface(
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                    shape = RoundedCornerShape(10.dp),
+                ) {
+                    Box(
+                        modifier = Modifier.size(36.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocalShipping,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                if (changedLabels.isNotEmpty()) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        changedLabels.forEach { label ->
+                            ChangedFieldChip(label = label)
+                        }
+                    }
+                } else {
+                    Text(
+                        text = "Verification changes",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CompletedStatusChip(status: VerificationRequestStatus) {
+    val isRejected = status == VerificationRequestStatus.REJECTED
+    val containerColor = if (isRejected) {
+        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.7f)
+    } else {
+        FreightThemeTokens.colors.successColor.copy(alpha = 0.15f)
+    }
+    val contentColor = if (isRejected) {
+        MaterialTheme.colorScheme.onErrorContainer
+    } else {
+        FreightThemeTokens.colors.successColor
+    }
+
+    Surface(
+        color = containerColor,
+        shape = RoundedCornerShape(999.dp),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Icon(
+                imageVector = if (isRejected) Icons.Default.Close else Icons.Default.Check,
+                contentDescription = null,
+                tint = contentColor,
+                modifier = Modifier.size(12.dp),
+            )
+            Text(
+                text = if (isRejected) "Rejected" else "Approved",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = contentColor,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ChangedFieldChip(label: String) {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        shape = RoundedCornerShape(999.dp),
+        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+        )
+    }
+}
+
+private fun buildChangedSummaryLabels(request: TruckVerificationRequest): List<String> {
+    return buildList {
+        request.changedDocuments.forEach { doc ->
+            add(displayDocumentName(doc.displayName, false))
+        }
+        request.changedTruckDetails.forEach { change ->
+            add(formatFieldName(change.displayFieldName))
+        }
+    }
+}
+
+private fun formatFieldName(fieldName: String): String {
+    return fieldName.replace('_', ' ').replace('-', ' ')
+        .trim()
+        .split(' ')
+        .joinToString(" ") { word ->
+            word.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+        }
+        .ifBlank { fieldName }
+}
+
+@Composable
+private fun TruckVerificationRequestDetailSheet(
+    request: TruckVerificationRequest,
+    remarks: String,
+    remarksError: String?,
+    resolutionNotes: String?,
+    onRemarksChange: (String) -> Unit,
+    onDocumentClick: (VerificationRequestDocument) -> Unit,
+    onApproveClick: () -> Unit,
+    onRejectClick: () -> Unit,
+    onClose: () -> Unit,
+    actionErrorMessage: String?,
+    isApproveLoading: Boolean,
+    isRejectLoading: Boolean,
+    isCompletedView: Boolean,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 12.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = request.registrationNumber,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                StatusBannerChip(status = request.status)
+            }
+
+            TextButton(onClick = onClose) {
+                Text("Close")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        Spacer(modifier = Modifier.height(18.dp))
+
+        if (request.changedTruckDetails.isNotEmpty()) {
+            SectionLabel(text = "Changed Details")
+            Spacer(modifier = Modifier.height(10.dp))
+
+            request.changedTruckDetails.forEach { change ->
+                TruckDetailChangeRow(change = change)
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+        }
+
+        if (request.changedDocuments.isNotEmpty()) {
+            SectionLabel(text = "Documents")
+            Spacer(modifier = Modifier.height(10.dp))
+
+            request.changedDocuments.forEach { document ->
+                DocumentRow(
+                    document = document,
+                    onClick = onDocumentClick,
+                    uploadDate = formatDisplayDate(request.updatedAt),
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+        }
+
+        if (request.changedTruckDetails.isEmpty() && request.changedDocuments.isEmpty()) {
+            EmptySheetNote(text = "No changes to display.")
+        }
+
+        Spacer(modifier = Modifier.height(18.dp))
+
+        SectionLabel(text = "Remarks")
+        Spacer(modifier = Modifier.height(10.dp))
+
+        if (isCompletedView) {
+            RemarksField(
+                remarks = resolutionNotes.orEmpty(),
+                remarksError = null,
+                enabled = false,
+                onRemarksChange = onRemarksChange,
+            )
+        } else {
+            RemarksField(
+                remarks = remarks,
+                remarksError = remarksError,
+                enabled = true,
+                onRemarksChange = onRemarksChange,
+            )
+
+            if (actionErrorMessage != null) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Surface(
+                    color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.65f),
+                    shape = RoundedCornerShape(14.dp),
+                ) {
+                    Text(
+                        text = actionErrorMessage,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                ActionButton(
+                    modifier = Modifier.weight(1f),
+                    text = "Reject",
+                    icon = Icons.Default.Close,
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.24f)),
+                    isLoading = isRejectLoading,
+                    onClick = onRejectClick,
+                )
+                ActionButton(
+                    modifier = Modifier.weight(1f),
+                    text = "Approve",
+                    icon = Icons.Default.CheckCircle,
+                    containerColor = FreightThemeTokens.colors.successColor,
+                    contentColor = FreightThemeTokens.colors.onSuccessColor,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)),
+                    isLoading = isApproveLoading,
+                    onClick = onApproveClick,
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+    }
+}
+
+@Composable
+private fun TruckDetailChangeRow(change: TruckDetailChange) {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Text(
+                text = formatFieldName(change.displayFieldName),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Before",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = change.beforeValue?.takeUnless { it.isBlank() } ?: "N/A",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "After",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = change.afterValue?.takeUnless { it.isBlank() } ?: "N/A",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+            }
+        }
     }
 }
 

@@ -3,6 +3,7 @@ package com.freight24.rest.api
 import com.freight24.rest.request.UpdateVerificationRequestStatusRequest
 import com.freight24.rest.response.BaseResponse
 import com.freight24.rest.response.VerificationTripsResponse
+import com.freight24.rest.response.VerificationTrucksResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -16,8 +17,19 @@ interface VerificationApi {
         @Query("status") status: String? = null,
     ): Response<VerificationTripsResponse>
 
+    @GET("verifications/trucks")
+    suspend fun getVerificationTrucks(
+        @Query("status") status: String? = null,
+    ): Response<VerificationTrucksResponse>
+
     @PATCH("verifications/trips/{id}")
     suspend fun updateVerificationRequestStatus(
+        @Path("id") id: String,
+        @Body request: UpdateVerificationRequestStatusRequest,
+    ): Response<BaseResponse>
+
+    @PATCH("verifications/trucks/{id}")
+    suspend fun updateTruckVerificationStatus(
         @Path("id") id: String,
         @Body request: UpdateVerificationRequestStatusRequest,
     ): Response<BaseResponse>

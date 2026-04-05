@@ -28,6 +28,20 @@ class VerificationRequestsRepositoryImpl @Inject constructor(
             }
         }
 
+    override suspend fun getVerificationTrucks(status: String?): Result<com.freight24.rest.response.VerificationTrucksResponse> =
+        withContext(ioDispatcher) {
+            try {
+                val response = verificationApi.getVerificationTrucks(status)
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!)
+                } else {
+                    Result.failure(Exception(response.message()))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
     override suspend fun updateVerificationRequestStatus(
         id: String,
         status: String,
@@ -36,6 +50,30 @@ class VerificationRequestsRepositoryImpl @Inject constructor(
         withContext(ioDispatcher) {
             try {
                 val response = verificationApi.updateVerificationRequestStatus(
+                    id = id,
+                    request = UpdateVerificationRequestStatusRequest(
+                        status = status,
+                        resolutionNotes = resolutionNotes,
+                    ),
+                )
+                if (response.isSuccessful) {
+                    Result.success(Unit)
+                } else {
+                    Result.failure(Exception(response.message()))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    override suspend fun updateTruckVerificationStatus(
+        id: String,
+        status: String,
+        resolutionNotes: String?,
+    ): Result<Unit> =
+        withContext(ioDispatcher) {
+            try {
+                val response = verificationApi.updateTruckVerificationStatus(
                     id = id,
                     request = UpdateVerificationRequestStatusRequest(
                         status = status,

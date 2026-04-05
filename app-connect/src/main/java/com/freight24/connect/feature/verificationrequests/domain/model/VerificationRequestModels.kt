@@ -73,3 +73,22 @@ data class VerificationRequest(
     val resolutionNotes: String? = null,
     val updatedAt: String,
 )
+
+data class TruckDetailChange(
+    val fieldName: String,
+    val displayFieldName: String,
+    val beforeValue: String?,
+    val afterValue: String?,
+)
+
+data class TruckVerificationRequest(
+    val id: String,
+    val referenceId: String,
+    val registrationNumber: String,
+    val changedFields: List<String>,
+    val changedDocuments: List<VerificationRequestDocument>,
+    val changedTruckDetails: List<TruckDetailChange>,
+    val status: VerificationRequestStatus,
+    val resolutionNotes: String? = null,
+    val updatedAt: String,
+)

@@ -1,5 +1,6 @@
 package com.freight24.connect.feature.verificationrequests.domain.viewmodel
 
+import com.freight24.connect.feature.verificationrequests.domain.model.TruckVerificationRequest
 import com.freight24.connect.feature.verificationrequests.domain.model.VerificationRequest
 import com.freight24.connect.feature.verificationrequests.domain.model.VerificationRequestStatus
 import com.freight24.connect.feature.verificationrequests.domain.model.VerificationRequestTab
@@ -14,12 +15,16 @@ data class VerificationRequestsUiState(
     val selectedStatus: VerificationRequestStatus = VerificationRequestStatus.PENDING,
     val defaultTrips: List<VerificationRequest> = emptyList(),
     val completedTrips: List<VerificationRequest> = emptyList(),
+    val defaultTrucks: List<TruckVerificationRequest> = emptyList(),
+    val completedTrucks: List<TruckVerificationRequest> = emptyList(),
     val loadingStatus: VerificationRequestStatus? = null,
     val actionInProgressRequestId: String? = null,
     val actionInProgressStatus: VerificationRequestStatus? = null,
     val actionCompletedAt: Long? = null,
     val loadedDefaultTrips: Boolean = false,
     val loadedCompletedTrips: Boolean = false,
+    val loadedDefaultTrucks: Boolean = false,
+    val loadedCompletedTrucks: Boolean = false,
 ) {
     val visibleTrips: List<VerificationRequest>
         get() = when (selectedStatus) {
@@ -28,6 +33,14 @@ data class VerificationRequestsUiState(
             VerificationRequestStatus.REJECTED -> completedTrips.filter { it.status == selectedStatus }
             VerificationRequestStatus.PENDING,
             VerificationRequestStatus.IN_REVIEW -> defaultTrips.filter { it.status == selectedStatus }
+        }
+
+    val visibleTrucks: List<TruckVerificationRequest>
+        get() = when (selectedStatus) {
+            VerificationRequestStatus.COMPLETED -> completedTrucks
+            VerificationRequestStatus.PENDING,
+            VerificationRequestStatus.IN_REVIEW -> defaultTrucks.filter { it.status == selectedStatus }
+            else -> emptyList()
         }
 }
 
@@ -38,6 +51,11 @@ sealed class VerificationRequestsEvent {
     data object ClearActionState : VerificationRequestsEvent()
     data class UpdateTripStatus(
         val request: VerificationRequest,
+        val status: VerificationRequestStatus,
+        val resolutionNotes: String?,
+    ) : VerificationRequestsEvent()
+    data class UpdateTruckStatus(
+        val request: TruckVerificationRequest,
         val status: VerificationRequestStatus,
         val resolutionNotes: String?,
     ) : VerificationRequestsEvent()
