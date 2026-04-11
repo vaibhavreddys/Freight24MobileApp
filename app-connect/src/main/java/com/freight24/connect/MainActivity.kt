@@ -4,6 +4,9 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.navigation.compose.rememberNavController
 import com.freight24.auth.SessionManager
@@ -26,6 +29,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             Freight24Theme {
                 val navController = rememberNavController()
+                val isLoggedIn by sessionManager.isLoggedIn.collectAsState(initial = sessionManager.isSessionValid())
 
                 val startDestination =
                     remember {
@@ -35,6 +39,15 @@ class MainActivity : ComponentActivity() {
                             ConnectDestination.Login.route
                         }
                     }
+                LaunchedEffect(isLoggedIn) {
+                    if (!isLoggedIn) {
+                        // Clear backstack and redirect to login on 401 or manual logout
+                        navController.navigate(ConnectDestination.Login.route) {
+                            popUpTo(0) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                }
                 ConnectNavGraph(
                     navHostController = navController,
                     startDestination = startDestination,
