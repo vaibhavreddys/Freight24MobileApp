@@ -1,5 +1,6 @@
 package com.freight24.connect.navigation
 
+import android.net.Uri
 import androidx.navigation.NamedNavArgument
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
@@ -9,7 +10,21 @@ sealed class ConnectDestination(val route: String) {
 
     data object Login : ConnectDestination("login")
 
-    data object Home : ConnectDestination("home?tab={tab}&filter={filter}") {
+    data object NewLogin : ConnectDestination("new_login_route")
+
+    data object NewOtp : ConnectDestination("new_otp_route/{phone}") {
+        const val PHONE_ARG = "phone"
+        override val arguments =
+            listOf(
+                navArgument(PHONE_ARG) {
+                    type = NavType.StringType
+                },
+            )
+
+        fun createRoute(phone: String): String = "new_otp_route/${Uri.encode(phone)}"
+    }
+
+    data object Home : ConnectDestination("dashboard_route?tab={tab}") {
         const val TAB_ARG = "tab"
         const val FILTER_ARG = "filter"
         override val arguments = listOf(
@@ -24,12 +39,9 @@ sealed class ConnectDestination(val route: String) {
                 defaultValue = null
             }
         )
-
-        fun createRoute(tab: String? = null, filter: String? = null): String {
-            val params = mutableListOf<String>()
-            tab?.let { params.add("$TAB_ARG=$it") }
-            filter?.let { params.add("$FILTER_ARG=$it") }
-            return "home" + if (params.isNotEmpty()) "?" + params.joinToString("&") else ""
+        
+        fun createRoute(tab: String? = null): String {
+            return if (tab != null) "dashboard_route?tab=$tab" else "dashboard_route"
         }
     }
 
