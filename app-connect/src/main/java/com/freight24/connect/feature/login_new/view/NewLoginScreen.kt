@@ -52,6 +52,10 @@ import android.widget.Toast
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import com.google.common.io.Files.append
 
 private val loginGradient =
     Brush.verticalGradient(
@@ -131,17 +135,26 @@ fun NewLoginScreen(onOtpRequested: (String) -> Unit) {
                         Spacer(modifier = Modifier.height(24.dp))
 
                         Text(
-                            text = "Welcome to Freight24",
-                            fontSize = 28.sp,
+                            text = buildAnnotatedString {
+                                append("Welcome to FREIGHT")
+                                withStyle(
+                                    style = SpanStyle(
+                                        color = MaterialTheme.colorScheme.primary,
+                                        fontSize = 36.sp
+                                    )
+                                ) {
+                                    append("24")
+                                }
+                            },
+                            fontSize = 28.sp,  // Base size for "Welcome to FREIGHT"
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF12212B),
                             textAlign = TextAlign.Center,
                         )
 
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
-                            text = "India's trusted logistics platform",
+                            text = "Log in to your dashboard to manage shipments and fleet operations",
                             fontSize = 16.sp,
                             color = Color(0xFF4B5563),
                             textAlign = TextAlign.Center,

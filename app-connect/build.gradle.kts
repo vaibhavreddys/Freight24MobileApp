@@ -49,6 +49,7 @@ android {
             applicationIdSuffix = ".debug"
             isDebuggable = true
             buildConfigField("String", "BASE_URL", "\"${debugBaseUrl}\"")
+            buildConfigField(type = "Boolean", "FEATURE_NEW_LOGIN", true.toString())
         }
         release {
             isMinifyEnabled = false

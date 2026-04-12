@@ -32,20 +32,23 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val isLoggedIn by sessionManager.isLoggedIn.collectAsState(initial = sessionManager.isSessionValid())
 
+                val loginRoute = if (BuildConfig.FEATURE_NEW_LOGIN) {
+                    ConnectDestination.NewLogin.route
+                } else {
+                    ConnectDestination.Login.route
+                }
                 val startDestination =
                     remember {
                         if (sessionManager.isSessionValid()) {
                             ConnectDestination.Home.route
-                        } else if (BuildConfig.FEATURE_NEW_LOGIN) {
-                            ConnectDestination.NewLogin.route
                         } else {
-                            ConnectDestination.Login.route
+                            loginRoute
                         }
                     }
                 LaunchedEffect(isLoggedIn) {
                     if (!isLoggedIn) {
                         // Clear backstack and redirect to login on 401 or manual logout
-                        navController.navigate(ConnectDestination.Login.route) {
+                        navController.navigate(loginRoute) {
                             popUpTo(0) { inclusive = true }
                             launchSingleTop = true
                         }
