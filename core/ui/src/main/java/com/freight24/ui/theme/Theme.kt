@@ -13,6 +13,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -60,6 +61,10 @@ private val LightExtendedColors =
         settingsColor = SettingsPurpleLight,
         onSuccessColor = SuccessOnColor,
         dialogScrimColor = DialogScrimLight,
+        surfaceGray = Color(0xFFF3F3F3),
+        borderOverlay = Color(0xFFF1F5F9),
+        surfaceSuccessLight = Color(0xFFECFDF5),
+        surfaceSuccessLighter = Color(0xFFF0FDF4),
     )
 
 private val DarkExtendedColors =
@@ -70,6 +75,10 @@ private val DarkExtendedColors =
         settingsColor = SettingsPurpleDark,
         onSuccessColor = SuccessOnColor,
         dialogScrimColor = DialogScrimDark,
+        surfaceGray = Color(0xFF374151),
+        borderOverlay = Color(0xFF374151),
+        surfaceSuccessLight = Color(0xFF064E3B),
+        surfaceSuccessLighter = Color(0xFFECFDF5),
     )
 
 @Composable

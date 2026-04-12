@@ -28,13 +28,14 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.CircleShape
 import com.freight24.ui.components.VisibilityChip
+import com.freight24.ui.theme.FreightThemeTokens
 import java.text.NumberFormat
 import java.util.Locale
 
-private val TextGrey = Color(0xFF64748B)
-private val TextDark = Color(0xFF0F172A)
-private val BorderLight = Color(0xFFF1F5F9)
-private val GreenBrand = Color(0xFF10B981)
+private val TextGrey @Composable get() = MaterialTheme.colorScheme.onSurfaceVariant
+private val TextDark @Composable get() = MaterialTheme.colorScheme.onSurface
+private val BorderLight @Composable get() = FreightThemeTokens.colors.borderOverlay
+private val GreenBrand @Composable get() = MaterialTheme.colorScheme.primary
 
 @Composable
 fun IndentDetailSection(
@@ -47,7 +48,7 @@ fun IndentDetailSection(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, BorderLight),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -59,7 +60,7 @@ fun IndentDetailSection(
                     val hasBg = title == "GENERAL INFO"
                     Box(
                         modifier = if (hasBg) Modifier
-                            .background(Color(0xFFF1F5F9), CircleShape)
+                            .background(BorderLight, CircleShape)
                             .padding(4.dp) else Modifier,
                         contentAlignment = Alignment.Center
                     ) {
@@ -91,7 +92,7 @@ fun IndentDetailSection(
                         onClick = onEditClick,
                         modifier = Modifier
                             .size(32.dp)
-                            .background(Color(0xFFECFDF5), CircleShape)
+                            .background(FreightThemeTokens.colors.surfaceSuccessLight, CircleShape)
                     ) {
                         Icon(
                             Icons.Default.Edit,
@@ -173,7 +174,7 @@ fun IndentMetricsSection(
             icon = Icons.Outlined.People,
             value = interestCount.toString(),
             label = "Interest Expressed",
-            iconBackgroundColor = Color(0xFFECFDF5),
+            iconBackgroundColor = FreightThemeTokens.colors.surfaceSuccessLight,
             iconTintColor = GreenBrand,
             onClick = onInterestClick
         )
@@ -182,7 +183,7 @@ fun IndentMetricsSection(
             icon = Icons.Outlined.LocalShipping,
             value = suitableTrucks.toString(),
             label = "Suitable Trucks",
-            iconBackgroundColor = Color(0xFFF0FDF4),
+            iconBackgroundColor = FreightThemeTokens.colors.surfaceSuccessLighter,
             iconTintColor = GreenBrand,
             onClick = onSuitableTrucksClick
         )
@@ -203,7 +204,7 @@ private fun MetricCard(
         modifier = if (onClick != null) modifier.clickable { onClick() } else modifier,
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, BorderLight)
     ) {
         Column(
@@ -320,7 +321,7 @@ fun RouteDetailsSection(
             Box(
                 modifier = Modifier
                     .size(8.dp)
-                    .background(Color(0xFFEF4444), CircleShape)
+                    .background(MaterialTheme.colorScheme.secondary, CircleShape)
             )
             Column {
                 Text(
@@ -383,7 +384,7 @@ fun FinancialDetailsSection(
 
         HorizontalDivider(
             thickness = 0.5.dp,
-            color = Color(0xFFe2e8f0),
+            color = BorderLight,
         )
 
         Row(
@@ -456,7 +457,7 @@ fun SpecificationsSection(
                 Text(
                     text = truckType,
                     style = MaterialTheme.typography.labelMedium,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                 )
             }
@@ -497,7 +498,7 @@ fun RemarksSection(
 ) {
     if (remarks.isNotEmpty()) {
         IndentDetailSection(
-            image = Icons.Default.Info, // Or another icon
+            image = Icons.Default.Info,
             title = "REMARKS",
             onEditClick = onEditClick
         ) {
@@ -505,7 +506,7 @@ fun RemarksSection(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        color = Color(0xFFF3F3F3),
+                        color = FreightThemeTokens.colors.surfaceGray,
                         shape = RoundedCornerShape(8.dp)
                     )
                     .padding(16.dp)
@@ -514,7 +515,7 @@ fun RemarksSection(
                     text = remarks,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Start
                 )
             }

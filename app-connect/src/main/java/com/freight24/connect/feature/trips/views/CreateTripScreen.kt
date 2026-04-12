@@ -194,12 +194,13 @@ fun IndentInfoCard(uiState: CreateTripUiState) {
                             .background(colorScheme.primary, androidx.compose.foundation.shape.CircleShape)
                     )
                     // Dotted Line
+                    val dottedLineColor = colorScheme.surfaceVariant
                     Canvas(modifier = Modifier
                         .width(2.dp)
                         .weight(1f)
                         .padding(vertical = 4.dp)) {
                         drawLine(
-                            color = Color.LightGray,
+                            color = dottedLineColor,
                             start = Offset(0f, 0f),
                             end = Offset(0f, size.height),
                             pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f),
