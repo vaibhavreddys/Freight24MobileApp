@@ -1,5 +1,6 @@
 package com.freight24.connect.feature.home
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -57,6 +58,14 @@ fun HomeScreen(
 
     LaunchedEffect(startFilter) {
         startFilter?.let { selectedFilter = it }
+    }
+
+    BackHandler(enabled = showMoreSheet) {
+        showMoreSheet = false
+    }
+
+    BackHandler(enabled = !showMoreSheet && selectedTab != ConnectTab.Home) {
+        selectedTab = ConnectTab.Home
     }
 
     FreightBottomNavScaffold(
