@@ -118,13 +118,13 @@ fun HomeScreen(
                         )
                     },
                     onOpenIndentsClick = { selectedTab = ConnectTab.Indents },
-                    onActiveAssignedClick = { 
+                    onActiveAssignedClick = {
                         selectedFilter = TripTypes.ONGOING
-                        selectedTab = ConnectTab.Trips 
+                        selectedTab = ConnectTab.Trips
                     },
-                    onActiveLoadingClick = { 
+                    onActiveLoadingClick = {
                         selectedFilter = TripTypes.ONGOING
-                        selectedTab = ConnectTab.Trips 
+                        selectedTab = ConnectTab.Trips
                     },
                     onActiveInTransitClick = {
                         selectedFilter = TripTypes.IN_TRANSIT

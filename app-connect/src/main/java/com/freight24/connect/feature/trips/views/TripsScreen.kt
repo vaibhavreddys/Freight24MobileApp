@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -37,47 +38,79 @@ fun TripsScreen(
         }
     }
 
-    Column(
+    PullToRefreshBox(
+        isRefreshing = uiState.isLoading,
+        onRefresh = { viewModel.onEvent(TripsListEvent.Refresh) },
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)
     ) {
-        // Filter Chips
-        LazyRow(
-            contentPadding = PaddingValues(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = 16.dp)
         ) {
-            items(TripTypes.entries) { type ->
-                TripFilterChip(
-                    text = type.displayText,
-                    isSelected = uiState.selectedFilter == type,
-                    onClick = { viewModel.onEvent(TripsListEvent.SelectFilter(type)) }
-                )
+            item {
+                LazyRow(
+                    contentPadding = PaddingValues(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    items(TripTypes.entries) { type ->
+                        TripFilterChip(
+                            text = type.displayText,
+                            isSelected = uiState.selectedFilter == type,
+                            onClick = { viewModel.onEvent(TripsListEvent.SelectFilter(type)) }
+                        )
+                    }
+                }
             }
-        }
 
-        if (uiState.isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        } else if (uiState.errorMessage != null) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = uiState.errorMessage ?: "Unknown error", color = Color.Red)
-            }
-        } else if (uiState.trips.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = "No trips found", color = Color.Gray)
-            }
-        } else {
-            LazyColumn(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(uiState.trips) { trip ->
-                   TripCard(
-                        trip = trip,
-                        onClick = { onTripClick(trip.id) }
-                    )
+            when {
+                uiState.isLoading && uiState.trips.isEmpty() -> {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillParentMaxSize()
+                                .padding(top = 96.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+                }
+
+                uiState.errorMessage != null && uiState.trips.isEmpty() -> {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillParentMaxSize()
+                                .padding(top = 96.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(text = uiState.errorMessage ?: "Unknown error", color = Color.Red)
+                        }
+                    }
+                }
+
+                uiState.trips.isEmpty() -> {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillParentMaxSize()
+                                .padding(top = 96.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(text = "No trips found", color = Color.Gray)
+                        }
+                    }
+                }
+
+                else -> {
+                    items(uiState.trips) { trip ->
+                        TripCard(
+                            trip = trip,
+                            onClick = { onTripClick(trip.id) }
+                        )
+                    }
                 }
             }
         }

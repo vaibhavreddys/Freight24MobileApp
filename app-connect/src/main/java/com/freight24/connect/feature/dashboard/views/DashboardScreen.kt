@@ -11,6 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,66 +41,73 @@ fun DashboardScreen(
     onOpenIndentsClick: () -> Unit = {},
     onActiveAssignedClick: () -> Unit = {},
     onActiveLoadingClick: () -> Unit = {},
-    onActiveInTransitClick: () -> Unit = {}
+    onActiveInTransitClick: () -> Unit = {},
+    onRefresh: () -> Unit = { viewModel.onEvent(DashboardEvent.Refresh) }
 ) {
     val uiState = viewModel.uiState
     val scrollState = rememberScrollState()
 
-    Box(
+    PullToRefreshBox(
+        isRefreshing = uiState.isLoading,
+        onRefresh = onRefresh,
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)
             .background(Color(0xFFF8FAFC))
     ) {
-        if (uiState.isLoading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-        } else if (uiState.error != null) {
-            Column(
-                modifier = Modifier.align(Alignment.Center),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(uiState.error, color = MaterialTheme.colorScheme.error)
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(onClick = { viewModel.onEvent(DashboardEvent.Retry) }) {
-                    Text("Retry")
-                }
-            }
-        } else {
-            uiState.data?.let { data ->
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            if (uiState.isLoading && uiState.data == null) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            } else if (uiState.error != null && uiState.data == null) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(scrollState)
-                        .padding(horizontal = 16.dp, vertical = 20.dp),
-                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                    modifier = Modifier.align(Alignment.Center),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    AttentionNeededSection(
-                        attentionNeeded = data.attentionNeeded,
-                        onTripFilterClick = onTripFilterClick,
-                        onInterestInboxClick = onInterestInboxClick
-                    )
-                    IndentPulseSection(
-                        indentPulse = data.indentPulse,
-                        onOpenClick = onOpenIndentsClick
-                    )
-                    ActiveTripsSection(
-                        activeTrips = data.activeTrips,
-                        onAssignedClick = onActiveAssignedClick,
-                        onLoadingClick = onActiveLoadingClick,
-                        onInTransitClick = onActiveInTransitClick
-                    )
-                    PendingActionsSection(
-                        pendingActions = data.pendingActions,
-                        onTripFilterClick = onTripFilterClick
-                    )
-                    QuickActionsSection(
-                        attentionNeeded = data.attentionNeeded,
-                        onCreateIndentClick = onCreateIndentClick,
-                        onCreateTripClick = onCreateTripClick,
-                        onInterestInboxClick = onInterestInboxClick,
-                        onVerificationRequestsClick = onVerificationRequestsClick
-                    )
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Text(uiState.error, color = MaterialTheme.colorScheme.error)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(onClick = { viewModel.onEvent(DashboardEvent.Retry) }) {
+                        Text("Retry")
+                    }
+                }
+            } else {
+                uiState.data?.let { data ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(scrollState)
+                            .padding(horizontal = 16.dp, vertical = 20.dp),
+                        verticalArrangement = Arrangement.spacedBy(24.dp)
+                    ) {
+                        AttentionNeededSection(
+                            attentionNeeded = data.attentionNeeded,
+                            onTripFilterClick = onTripFilterClick,
+                            onInterestInboxClick = onInterestInboxClick
+                        )
+                        IndentPulseSection(
+                            indentPulse = data.indentPulse,
+                            onOpenClick = onOpenIndentsClick
+                        )
+                        ActiveTripsSection(
+                            activeTrips = data.activeTrips,
+                            onAssignedClick = onActiveAssignedClick,
+                            onLoadingClick = onActiveLoadingClick,
+                            onInTransitClick = onActiveInTransitClick
+                        )
+                        PendingActionsSection(
+                            pendingActions = data.pendingActions,
+                            onTripFilterClick = onTripFilterClick
+                        )
+                        QuickActionsSection(
+                            attentionNeeded = data.attentionNeeded,
+                            onCreateIndentClick = onCreateIndentClick,
+                            onCreateTripClick = onCreateTripClick,
+                            onInterestInboxClick = onInterestInboxClick,
+                            onVerificationRequestsClick = onVerificationRequestsClick
+                        )
+                        Spacer(modifier = Modifier.height(20.dp))
+                    }
                 }
             }
         }

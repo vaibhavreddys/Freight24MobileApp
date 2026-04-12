@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -50,14 +51,20 @@ fun IndentsScreen(
     val viewModel: IndentsListViewModel = hiltViewModel<IndentsListViewModelImpl>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    IndentsContent(
-        uiState = uiState,
-        onEvent = viewModel::onEvent,
-        onIndentClick = onIndentClick,
-        onCloneClick = onCloneClick,
-        onSearchClick = onSearchClick,
-        modifier = modifier,
-    )
+    PullToRefreshBox(
+        isRefreshing = uiState.isLoading,
+        onRefresh = { viewModel.onEvent(IndentsListEvent.RefreshIndents) },
+        modifier = modifier.fillMaxSize(),
+    ) {
+        IndentsContent(
+            uiState = uiState,
+            onEvent = viewModel::onEvent,
+            onIndentClick = onIndentClick,
+            onCloneClick = onCloneClick,
+            onSearchClick = onSearchClick,
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
 
 }
 
@@ -70,43 +77,42 @@ fun IndentsContent(
     onSearchClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-    ) {
-        // Tab Switcher
-        IndentTabSwitcher(
-            selectedTab = uiState.selectedTab,
-            onTabSelected = { onEvent(IndentsListEvent.SelectTab(it)) },
-            modifier = Modifier.padding(16.dp)
-        )
-
-        if (uiState.selectedTab == IndentTab.ALL) {
-            SearchBarTrigger(
-                onClick = onSearchClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 16.dp)
-            )
-        }
-
-        if (uiState.isLoading && uiState.indents.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
-            }
-        } else if (uiState.errorMessage != null && uiState.indents.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(text = uiState.errorMessage)
-            }
-        } else {
-            IndentsList(
-                indents = uiState.indents,
+    Box(modifier = modifier) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Tab Switcher
+            IndentTabSwitcher(
                 selectedTab = uiState.selectedTab,
-                onIndentClick = onIndentClick,
-                onCloneClick = onCloneClick,
-                modifier = Modifier.fillMaxSize()
+                onTabSelected = { onEvent(IndentsListEvent.SelectTab(it)) },
+                modifier = Modifier.padding(16.dp)
             )
+
+            if (uiState.selectedTab == IndentTab.ALL) {
+                SearchBarTrigger(
+                    onClick = onSearchClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 16.dp)
+                )
+            }
+
+            if (uiState.isLoading && uiState.indents.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else if (uiState.errorMessage != null && uiState.indents.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(text = uiState.errorMessage)
+                }
+            } else {
+                IndentsList(
+                    indents = uiState.indents,
+                    selectedTab = uiState.selectedTab,
+                    onIndentClick = onIndentClick,
+                    onCloneClick = onCloneClick,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
     }
 }
