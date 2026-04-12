@@ -1,5 +1,6 @@
 package com.freight24.connect.navigation
 
+import android.net.Uri
 import androidx.navigation.NamedNavArgument
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
@@ -9,7 +10,21 @@ sealed class ConnectDestination(val route: String) {
 
     data object Login : ConnectDestination("login")
 
-    data object Home : ConnectDestination("home?tab={tab}") {
+    data object NewLogin : ConnectDestination("new_login_route")
+
+    data object NewOtp : ConnectDestination("new_otp_route/{phone}") {
+        const val PHONE_ARG = "phone"
+        override val arguments =
+            listOf(
+                navArgument(PHONE_ARG) {
+                    type = NavType.StringType
+                },
+            )
+
+        fun createRoute(phone: String): String = "new_otp_route/${Uri.encode(phone)}"
+    }
+
+    data object Home : ConnectDestination("dashboard_route?tab={tab}") {
         const val TAB_ARG = "tab"
         override val arguments = listOf(
             navArgument(TAB_ARG) {
@@ -20,7 +35,7 @@ sealed class ConnectDestination(val route: String) {
         )
         
         fun createRoute(tab: String? = null): String {
-            return if (tab != null) "home?tab=$tab" else "home"
+            return if (tab != null) "dashboard_route?tab=$tab" else "dashboard_route"
         }
     }
 

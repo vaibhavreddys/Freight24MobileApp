@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.remember
 import androidx.navigation.compose.rememberNavController
+import com.freight24.connect.BuildConfig
 import com.freight24.auth.SessionManager
 import com.freight24.connect.navigation.ConnectDestination
 import com.freight24.connect.navigation.ConnectNavGraph
@@ -31,6 +32,8 @@ class MainActivity : ComponentActivity() {
                     remember {
                         if (sessionManager.isSessionValid()) {
                             ConnectDestination.Home.route
+                        } else if (BuildConfig.FEATURE_NEW_LOGIN) {
+                            ConnectDestination.NewLogin.route
                         } else {
                             ConnectDestination.Login.route
                         }

@@ -27,6 +27,19 @@ class SessionManager
                 return@runBlocking authDataStore.authToken.first() != null
             }
 
+        /**
+         * Persists a fresh session after OTP verification succeeds.
+         * The new login A/B flow writes through SessionManager so the app keeps
+         * one public session API even though the underlying storage is encrypted DataStore.
+         */
+        suspend fun saveSession(
+            token: String,
+            phone: String,
+            userId: String,
+        ) {
+            authDataStore.saveAuthData(token, phone, userId)
+        }
+
         suspend fun logout() {
             authDataStore.clearAuthData()
         }

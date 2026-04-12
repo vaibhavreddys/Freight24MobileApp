@@ -4,9 +4,11 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import coil3.Uri
+import com.freight24.connect.BuildConfig
 import com.freight24.connect.enum.ConnectTab
 import com.freight24.connect.feature.home.HomeScreen
+import com.freight24.connect.feature.login_new.view.NewLoginScreen
+import com.freight24.connect.feature.login_new.view.NewOtpScreen
 import com.freight24.connect.feature.indents.views.CloneIndentScreen
 import com.freight24.connect.feature.indents.views.CreateIndentScreen
 import com.freight24.connect.feature.indents.views.EditIndentScreen
@@ -46,8 +48,20 @@ import com.freight24.connect.feature.truckowners.profile.view.ProfileScreen
 @Composable
 fun ConnectNavGraph(
     navHostController: NavHostController,
-    startDestination: String = ConnectDestination.Login.route,
+    startDestination: String =
+        if (BuildConfig.FEATURE_NEW_LOGIN) {
+            ConnectDestination.NewLogin.route
+        } else {
+            ConnectDestination.Login.route
+        },
 ) {
+    val authStartDestination =
+        if (BuildConfig.FEATURE_NEW_LOGIN) {
+            ConnectDestination.NewLogin.route
+        } else {
+            ConnectDestination.Login.route
+        }
+
     NavHost(
         navController = navHostController,
         startDestination = startDestination,
@@ -180,6 +194,43 @@ fun ConnectNavGraph(
             )
         }
 
+        composable(ConnectDestination.NewLogin.route) {
+            NewLoginScreen(
+                onOtpRequested = { phoneNumber ->
+                    navHostController.navigate(ConnectDestination.NewOtp.createRoute(phoneNumber))
+                },
+            )
+        }
+
+        composable(
+            route = ConnectDestination.NewOtp.route,
+            arguments = ConnectDestination.NewOtp.arguments,
+        ) { backStackEntry ->
+            val phoneNumber =
+                backStackEntry
+                    .arguments
+                    ?.getString(ConnectDestination.NewOtp.PHONE_ARG)
+                    .orEmpty()
+
+            NewOtpScreen(
+                phoneNumber = phoneNumber,
+                onBackClick = {
+                    navHostController.popBackStack()
+                },
+                onLoginSuccess = {
+                    navHostController.navigate(ConnectDestination.Home.route) {
+                        popUpTo(ConnectDestination.NewLogin.route) {
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                    }
+                },
+                onWrongNumberClick = {
+                    navHostController.popBackStack()
+                },
+            )
+        }
+
         composable(ConnectDestination.Login.route) {
             LoginScreen(onVerify = { phoneNumber ->
                 navHostController.navigate(
@@ -249,7 +300,7 @@ fun ConnectNavGraph(
                 },
                 startTab = startTab,
                 onLogout = {
-                    navHostController.navigate(ConnectDestination.Login.route) {
+                    navHostController.navigate(authStartDestination) {
                         popUpTo(ConnectDestination.Home.route) {
                             inclusive = true
                         }
