@@ -36,6 +36,7 @@ fun InboxScreen(
     viewModel: InboxViewModel = hiltViewModel<InboxViewModelImpl>()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val colorScheme = MaterialTheme.colorScheme
 
     Scaffold(
         topBar = {
@@ -46,14 +47,14 @@ fun InboxScreen(
                         if (uiState.totalIndents > 0) {
                             Spacer(Modifier.width(8.dp))
                             Surface(
-                                color = Color(0xFFFEE2E2),
+                                color = colorScheme.errorContainer,
                                 shape = CircleShape,
                                 modifier = Modifier.size(24.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Text(
                                         text = uiState.totalIndents.toString(),
-                                        color = Color(0xFFEF4444),
+                                        color = colorScheme.error,
                                         style = MaterialTheme.typography.labelSmall,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -67,10 +68,10 @@ fun InboxScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = colorScheme.surface)
             )
         },
-        containerColor = Color(0xFFF8FAFC)
+        containerColor = colorScheme.background
     ) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues).fillMaxSize()) {
             if (uiState.isLoading) {
@@ -78,7 +79,7 @@ fun InboxScreen(
             } else if (uiState.errorMessage != null) {
                 Text(
                     text = uiState.errorMessage!!,
-                    color = Color.Red,
+                    color = colorScheme.error,
                     modifier = Modifier.align(Alignment.Center).padding(16.dp)
                 )
             } else if (uiState.data.isEmpty()) {
@@ -86,7 +87,7 @@ fun InboxScreen(
                     text = "No interests found",
                     modifier = Modifier.align(Alignment.Center),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray
+                    color = colorScheme.onSurfaceVariant
                 )
             } else {
                 LazyColumn(
@@ -116,12 +117,13 @@ fun IndentInterestCard(
     indentData: IndentInterestInboxResponse.IndentInterestInboxData,
     onRejectInterest: (String) -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     var isExpanded by remember { mutableStateOf(false) }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         border = CardDefaults.outlinedCardBorder()
     ) {
@@ -140,29 +142,29 @@ fun IndentInterestCard(
                     Text(
                         text = "#${indentData.load.indentCode}",
                         style = MaterialTheme.typography.labelMedium,
-                        color = Color(0xFF64748B),
+                        color = colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium
                     )
                     Text(
                         text = "  •  ",
                         style = MaterialTheme.typography.labelMedium,
-                        color = Color(0xFF94A3B8)
+                        color = colorScheme.onSurfaceVariant
                     )
                     Text(
                         text = indentData.load.client.name,
                         style = MaterialTheme.typography.labelMedium,
-                        color = Color(0xFF0F172A),
+                        color = colorScheme.onSurface,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = "  •  ",
                         style = MaterialTheme.typography.labelMedium,
-                        color = Color(0xFF94A3B8)
+                        color = colorScheme.onSurfaceVariant
                     )
                     Text(
                         text = indentData.load.client.tagCode,
                         style = MaterialTheme.typography.labelMedium,
-                        color = Color(0xFF64748B),
+                        color = colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -172,23 +174,23 @@ fun IndentInterestCard(
                 // Route
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.size(8.dp).background(Color(0xFF22C55E), CircleShape))
+                        Box(Modifier.size(8.dp).background(colorScheme.primary, CircleShape))
                         Spacer(Modifier.width(12.dp))
                         Text(
                             text = indentData.load.loading.city ?: "N/A",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF0F172A)
+                            color = colorScheme.onSurface
                         )
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.size(8.dp).background(Color(0xFFEF4444), CircleShape))
+                        Box(Modifier.size(8.dp).background(colorScheme.secondary, CircleShape))
                         Spacer(Modifier.width(12.dp))
                         Text(
                             text = indentData.load.unloading.city ?: "N/A",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF0F172A)
+                            color = colorScheme.onSurface
                         )
                     }
                 }
@@ -200,14 +202,14 @@ fun IndentInterestCard(
                     Icon(
                         Icons.Outlined.LocalShipping,
                         contentDescription = null,
-                        tint = Color(0xFF64748B),
+                        tint = colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
                         text = "${indentData.load.truck.displayName} • ${indentData.load.weight} MT • ${indentData.load.material}",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF64748B),
+                        color = colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -222,13 +224,13 @@ fun IndentInterestCard(
                     Text(
                         text = "CLIENT: ",
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFF64748B)
+                        color = colorScheme.onSurfaceVariant
                     )
                     Text(
                         text = "₹${indentData.load.pricing.clientCost ?: "0"}",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF0F172A)
+                        color = colorScheme.onSurface
                     )
                     
                     if (!indentData.load.pricing.negotiatedCost.isNullOrBlank()) {
@@ -236,19 +238,19 @@ fun IndentInterestCard(
                         Text(
                             text = "NEG: ",
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFF64748B)
+                            color = colorScheme.onSurfaceVariant
                         )
                         Text(
                             text = "₹${indentData.load.pricing.negotiatedCost}",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF0F172A)
+                            color = colorScheme.onSurface
                         )
                     }
                 }
 
                 Spacer(Modifier.height(16.dp))
-                HorizontalDivider(color = Color(0xFFF1F5F9))
+                HorizontalDivider(color = colorScheme.outlineVariant)
                 Spacer(Modifier.height(12.dp))
 
                 // Interest Summary
@@ -261,7 +263,7 @@ fun IndentInterestCard(
                         Icon(
                             Icons.Outlined.People,
                             contentDescription = null,
-                            tint = Color(0xFF10B981),
+                            tint = colorScheme.primary,
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(Modifier.width(8.dp))
@@ -269,20 +271,20 @@ fun IndentInterestCard(
                             text = "${indentData.interestCount} Interests Expressed",
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF0F172A)
+                            color = colorScheme.onSurface
                         )
                     }
                     Icon(
                         imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                         contentDescription = null,
-                        tint = Color(0xFF94A3B8)
+                        tint = colorScheme.onSurfaceVariant
                     )
                 }
             }
 
             AnimatedVisibility(visible = isExpanded) {
                 Column {
-                    HorizontalDivider(color = Color(0xFFF1F5F9))
+                    HorizontalDivider(color = colorScheme.outlineVariant)
                     indentData.truckers.forEach { trucker ->
                         TruckerCallRow(
                             name = trucker.name,
@@ -293,7 +295,7 @@ fun IndentInterestCard(
                         if (trucker != indentData.truckers.last()) {
                             HorizontalDivider(
                                 modifier = Modifier.padding(start = 66.dp),
-                                color = Color(0xFFF1F5F9),
+                                color = colorScheme.outlineVariant,
                                 thickness = 0.5.dp
                             )
                         }

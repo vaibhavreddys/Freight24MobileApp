@@ -473,7 +473,7 @@ fun OnboardTruckOwnerScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.35f)),
+                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)),
                     contentAlignment = Alignment.Center,
                 ) {
                     Card(shape = RoundedCornerShape(16.dp)) {
@@ -787,7 +787,7 @@ private fun DocumentPlaceholderList() {
 private fun StatusBadge(status: DocumentStatus) {
     val (text, color) = when (status) {
         DocumentStatus.VERIFIED -> "Verified" to BrandGreen
-        DocumentStatus.UPLOADED -> "Verification Pending" to Color(0xFFFFA000)
+        DocumentStatus.UPLOADED -> "Verification Pending" to FreightThemeTokens.colors.warningColor
         DocumentStatus.REJECTED -> "Rejected" to MaterialTheme.colorScheme.error
         DocumentStatus.PENDING -> "Pending" to MaterialTheme.colorScheme.error
         DocumentStatus.UNKNOWN -> "N/A" to MaterialTheme.colorScheme.onSurfaceVariant
@@ -1184,7 +1184,7 @@ private fun TruckOwnerOnboardedDialog(
                                 text = "Done",
                                 onClick = onDone,
                                 modifier = Modifier.weight(1f),
-                                containerColor = Color.Transparent,
+                                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0f),
                                 contentColor = colorScheme.onSurface.copy(alpha = 0.65f),
                                 borderColor = colorScheme.outline.copy(alpha = 0.5f),
                                 filled = false,

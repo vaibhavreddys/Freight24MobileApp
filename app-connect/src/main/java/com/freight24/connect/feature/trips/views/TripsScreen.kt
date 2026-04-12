@@ -31,6 +31,7 @@ fun TripsScreen(
     viewModel: TripsListViewModel = hiltViewModel<TripsListViewModelImpl>()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val colorScheme = MaterialTheme.colorScheme
 
     androidx.compose.runtime.LaunchedEffect(initialFilter) {
         initialFilter?.let {
@@ -64,7 +65,7 @@ fun TripsScreen(
                 }
             }
 
-            when {
+                when {
                 uiState.isLoading && uiState.trips.isEmpty() -> {
                     item {
                         Box(
@@ -83,10 +84,10 @@ fun TripsScreen(
                         Box(
                             modifier = Modifier
                                 .fillParentMaxSize()
-                                .padding(top = 96.dp),
+                            .padding(top = 96.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = uiState.errorMessage ?: "Unknown error", color = Color.Red)
+                            Text(text = uiState.errorMessage ?: "Unknown error", color = colorScheme.error)
                         }
                     }
                 }
@@ -96,10 +97,10 @@ fun TripsScreen(
                         Box(
                             modifier = Modifier
                                 .fillParentMaxSize()
-                                .padding(top = 96.dp),
+                            .padding(top = 96.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = "No trips found", color = Color.Gray)
+                            Text(text = "No trips found", color = colorScheme.onSurfaceVariant)
                         }
                     }
                 }
@@ -126,7 +127,7 @@ fun TripFilterChip(
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(24.dp),
-        color = if (isSelected) Color(0xFF10B981) else Color.White,
+        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
         modifier = Modifier.height(32.dp)
     ) {
         Box(
@@ -137,7 +138,7 @@ fun TripFilterChip(
                 text = text,
                 style = MaterialTheme.typography.labelLarge.copy(
                     fontWeight = FontWeight.Bold,
-                    color = if (isSelected) Color.White else Color.Gray,
+                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 12.sp
                 )
             )

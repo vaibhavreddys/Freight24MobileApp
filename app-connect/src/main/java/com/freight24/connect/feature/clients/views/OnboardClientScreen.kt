@@ -149,11 +149,11 @@ private data class MissingRequiredField(
     val branchId: Int? = null,
 )
 
-private enum class ContactSection(val title: String, val dotColor: Color) {
-    PAYMENT("PAYMENT", Color(0xFF1D9E75)),
-    TRAFFIC("TRAFFIC", Color(0xFF185FA5)),
-    POD("POD", Color(0xFF854F0B)),
-    TRACKING("TRACKING", Color(0xFF534AB7)),
+private enum class ContactSection(val title: String) {
+    PAYMENT("PAYMENT"),
+    TRAFFIC("TRAFFIC"),
+    POD("POD"),
+    TRACKING("TRACKING"),
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -802,7 +802,7 @@ private fun TeamContactBlock(
             modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 14.dp, end = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(modifier = Modifier.size(8.dp).background(contactSection.dotColor, CircleShape))
+            Box(modifier = Modifier.size(8.dp).background(contactSectionColor(contactSection), CircleShape))
             Spacer(modifier = Modifier.width(9.dp))
             Text(
                 text = contactSection.title,
@@ -841,6 +841,17 @@ private fun TeamContactBlock(
             fieldType = ClientFieldType.PHONE,
             onValueChange = onPhoneChange,
         )
+    }
+}
+
+@Composable
+private fun contactSectionColor(contactSection: ContactSection): Color {
+    val colors = FreightThemeTokens.colors
+    return when (contactSection) {
+        ContactSection.PAYMENT -> colors.successColor
+        ContactSection.TRAFFIC -> colors.infoColor
+        ContactSection.POD -> colors.warningColor
+        ContactSection.TRACKING -> MaterialTheme.colorScheme.tertiary
     }
 }
 
@@ -1010,7 +1021,7 @@ private fun FloatingActions(
                 shape = RoundedCornerShape(14.dp),
                 border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = Color.Transparent,
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0f),
                     contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 ),
             ) {
@@ -1169,7 +1180,7 @@ private fun EntityOnboardedDialog(
                             text = "Done",
                             onClick = onDone,
                             modifier = Modifier.weight(1f),
-                            containerColor = Color.Transparent,
+                            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0f),
                             contentColor = colorScheme.onSurface.copy(alpha = 0.65f),
                             borderColor = colorScheme.outline.copy(alpha = 0.5f),
                             filled = false,

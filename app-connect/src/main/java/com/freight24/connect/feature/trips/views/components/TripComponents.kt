@@ -27,9 +27,10 @@ fun TripCard(
     trip: TripDataResponse,
     onClick: (() -> Unit)? = null
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         modifier = Modifier
             .fillMaxWidth()
@@ -52,7 +53,7 @@ fun TripCard(
                 Text(
                     text = trip.tripCode,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    color = colorScheme.onSurfaceVariant
                 )
                 StatusBadge(status = trip.truckerStatus)
             }
@@ -66,7 +67,7 @@ fun TripCard(
                     imageVector = Icons.Default.LocalShipping,
                     contentDescription = null,
                     modifier = Modifier.size(16.dp),
-                    tint = Color.Gray
+                    tint = colorScheme.onSurfaceVariant
                 )
 
                 Spacer(modifier = Modifier.width(8.dp))
@@ -83,7 +84,7 @@ fun TripCard(
                     style = MaterialTheme.typography.bodySmall.copy(
                         fontSize = 16.sp
                     ),
-                    color = Color.Gray,
+                    color = colorScheme.onSurfaceVariant,
                 )
 
                 Spacer(modifier = Modifier.width(4.dp))
@@ -91,7 +92,7 @@ fun TripCard(
                 Text(
                     text = "${trip.truck.truckType.displayName} • ${trip.indentDetails.loadWeight} MT • ${trip.indentDetails.material}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray,
+                    color = colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -101,7 +102,7 @@ fun TripCard(
 
             // Route
             Row(verticalAlignment = Alignment.CenterVertically) {
-                RouteDot(color = Color(0xFF10B981)) // Green for start
+                RouteDot(color = colorScheme.primary)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = trip.loadingLocation.city ?: trip.loadingLocation.area ?: "Unknown",
@@ -113,10 +114,10 @@ fun TripCard(
                     .padding(start = 3.dp)
                     .width(2.dp)
                     .height(12.dp)
-                    .background(Color(0xFFE5E7EB))
+                    .background(colorScheme.outlineVariant)
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
-                RouteDot(color = Color(0xFFEF4444)) // Red for end
+                RouteDot(color = colorScheme.secondary)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = trip.unLoadingLocation.city ?: trip.unLoadingLocation.area ?: "Unknown",
@@ -131,7 +132,7 @@ fun TripCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(0.5.dp)
-                    .background(color = Color(0xFFF3F4F6))
+                    .background(colorScheme.outlineVariant)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -151,7 +152,7 @@ fun TripCard(
                     modifier = Modifier
                         .width(0.5.dp)
                         .height(22.dp)
-                        .background(color = Color(0xFFF3F4F6))
+                        .background(colorScheme.outlineVariant)
                 )
 
                 FinancialItem(
@@ -167,7 +168,7 @@ fun TripCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        color = Color(0xFFF8FAFC)
+                        color = colorScheme.surfaceVariant
                     )
                     .padding(
                         horizontal = 16.dp,
@@ -179,12 +180,12 @@ fun TripCard(
                 Text(
                     text = trip.client.name.uppercase(),
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                    color = Color.Gray
+                    color = colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = trip.createdAt.toDate(),
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                    color = Color.Gray
+                    color = colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -193,12 +194,13 @@ fun TripCard(
 
 @Composable
 fun StatusBadge(status: String) {
+    val colorScheme = MaterialTheme.colorScheme
     val (color, ticketColor, text) = when (status) {
-        "ASSIGNED" -> Triple(Color(0xFFF3E8FF), Color(0xFF8024CF), "ASSIGNED")
-        "IN_TRANSIT" -> Triple(Color(0xFFDCFCE7), Color(0xFF16A34A), "IN-TRANSIT")
-        "LOADING" -> Triple(Color(0xFFFEF3C7), Color(0xFFD97706), "LOADING")
-        "UNLOADING" -> Triple(Color(0xFFDCFCE7), Color(0xFF16A34A), "UNLOADING")
-        else -> Triple(Color(0xFFF3F4F6), Color.Gray, status)
+        "ASSIGNED" -> Triple(colorScheme.primaryContainer, colorScheme.primary, "ASSIGNED")
+        "IN_TRANSIT" -> Triple(colorScheme.tertiaryContainer, colorScheme.tertiary, "IN-TRANSIT")
+        "LOADING" -> Triple(colorScheme.secondaryContainer, colorScheme.secondary, "LOADING")
+        "UNLOADING" -> Triple(colorScheme.primaryContainer, colorScheme.primary, "UNLOADING")
+        else -> Triple(colorScheme.surfaceVariant, colorScheme.onSurfaceVariant, status)
     }
 
     Surface(
@@ -225,7 +227,7 @@ fun RouteDot(color: Color) {
             .size(8.dp)
             .background(color, CircleShape)
             .padding(1.dp)
-            .background(Color.White, CircleShape)
+            .background(MaterialTheme.colorScheme.surface, CircleShape)
             .background(color, CircleShape)
     )
 }
@@ -237,13 +239,13 @@ fun FinancialItem(icon: ImageVector, amount: String) {
             imageVector = icon,
             contentDescription = null,
             modifier = Modifier.size(16.dp),
-            tint = Color.Gray
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(modifier = Modifier.width(4.dp))
         Text(
             text = "₹${formatAmount(amount)}",
             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-            color = Color.Black
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }

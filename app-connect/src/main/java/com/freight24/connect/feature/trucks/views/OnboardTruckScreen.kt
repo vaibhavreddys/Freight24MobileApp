@@ -54,6 +54,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -94,6 +95,7 @@ import com.freight24.rest.response.AddTruckDto
 import com.freight24.ui.UiState
 import com.freight24.ui.components.AppDropdown
 import com.freight24.ui.components.DashedUploadCard
+import com.freight24.ui.theme.FreightThemeTokens
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -111,6 +113,8 @@ fun OnboardTruckScreen(
     val currentStep by viewModel.currentStep.collectAsState()
     val isStep1Valid by viewModel.isStep1Valid.collectAsState()
     val isStep2Valid by viewModel.isStep2Valid.collectAsState()
+    val colorScheme = MaterialTheme.colorScheme
+    val extendedColors = FreightThemeTokens.colors
 
     val context = LocalContext.current
 
@@ -149,7 +153,7 @@ fun OnboardTruckScreen(
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp)
                             .padding(bottom = 24.dp),
-                    color = Color.Transparent,
+                    color = colorScheme.surface.copy(alpha = 0f),
                 ) {
                     if (currentStep == 1) {
                         Button(
@@ -335,6 +339,7 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
                 .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        val extendedColors = FreightThemeTokens.colors
         // Truck Owner Input Field
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Box {
@@ -353,7 +358,7 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
                             Icon(
                                 imageVector = Icons.Default.Search,
                                 contentDescription = null,
-                                tint = Color(0xFF00C853) // Green as requested
+                                tint = extendedColors.successColor
                             )
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -361,8 +366,8 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
                         singleLine = true,
                         colors = if (selectedTruckOwner != null) {
                             OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFF00C853),
-                                unfocusedBorderColor = Color(0xFF00C853)
+                                focusedBorderColor = extendedColors.successColor,
+                                unfocusedBorderColor = extendedColors.successColor
                             )
                         } else {
                             OutlinedTextFieldDefaults.colors()
@@ -401,7 +406,7 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
                                             focusManager.clearFocus()
                                         },
                                         colors = ListItemDefaults.colors(
-                                            containerColor = Color.Transparent
+                                            containerColor = colorScheme.surface.copy(alpha = 0f)
                                         )
                                     )
                                     if (owner != truckOwnerSuggestions.last()) {

@@ -37,6 +37,7 @@ fun HaltingChargesScreen(
     viewModel: HaltingChargesViewModel = hiltViewModel<HaltingChargesViewModelImpl>()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val colorScheme = MaterialTheme.colorScheme
 
     LaunchedEffect(truckTypeId) {
         viewModel.onEvent(HaltingChargesEvent.LoadHaltingRate(truckTypeId, initialLoadingDays, initialUnloadingDays, notes))
@@ -57,7 +58,7 @@ fun HaltingChargesScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFF8FAFC))
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = colorScheme.surface)
             )
         },
         bottomBar = {
@@ -70,18 +71,18 @@ fun HaltingChargesScreen(
                     onClick = { viewModel.onEvent(HaltingChargesEvent.SubmitHaltingCharges(tripId)) },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                    colors = ButtonDefaults.buttonColors(containerColor = colorScheme.primary),
                     enabled = !uiState.isUpdating && uiState.hasChanges
                 ) {
                     if (uiState.isUpdating) {
-                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                        CircularProgressIndicator(color = colorScheme.onPrimary, modifier = Modifier.size(24.dp))
                     } else {
                         Text("Update Halting Charges", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     }
                 }
             }
         },
-        containerColor = Color(0xFFF8FAFC)
+        containerColor = colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
@@ -93,9 +94,9 @@ fun HaltingChargesScreen(
         ) {
             // Info Message
             Surface(
-                color = Color(0xFFECFDF5),
+                color = colorScheme.primaryContainer,
                 shape = RoundedCornerShape(8.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.2f)),
+                border = androidx.compose.foundation.BorderStroke(1.dp, colorScheme.primary.copy(alpha = 0.2f)),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
@@ -105,21 +106,21 @@ fun HaltingChargesScreen(
                     Icon(
                         imageVector = Icons.Default.Info,
                         contentDescription = null,
-                        tint = Color(0xFF10B981),
+                        tint = colorScheme.primary,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = "Halting charges are subject to verification by the logistics manager. Please provide accurate details and supporting documents.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF334155)
+                        color = colorScheme.onSurfaceVariant
                     )
                 }
             }
 
             // Halting Days Section
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -150,22 +151,22 @@ fun HaltingChargesScreen(
                 Text("Charge Breakdown", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(12.dp))
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column {
                         BreakdownItem("Daily Halting Rate", "₹${uiState.dailyRate}")
-                        Divider(color = Color(0xFFF1F5F9))
+                        HorizontalDivider(color = colorScheme.outlineVariant)
                         BreakdownItem("Total Days", "${uiState.loadingDays + uiState.unloadingDays} Days")
-                        Divider(color = Color(0xFFF1F5F9))
-                        Surface(color = Color(0xFFF8FAFC)) {
+                        HorizontalDivider(color = colorScheme.outlineVariant)
+                        Surface(color = colorScheme.surfaceVariant) {
                             Row(
                                 modifier = Modifier.fillMaxWidth().padding(16.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("Total Halting Charge", color = Color(0xFF10B981), fontWeight = FontWeight.Bold)
-                                Text("₹${(uiState.loadingDays + uiState.unloadingDays) * uiState.dailyRate}", color = Color(0xFF10B981), fontWeight = FontWeight.ExtraBold)
+                                Text("Total Halting Charge", color = colorScheme.primary, fontWeight = FontWeight.Bold)
+                                Text("₹${(uiState.loadingDays + uiState.unloadingDays) * uiState.dailyRate}", color = colorScheme.primary, fontWeight = FontWeight.ExtraBold)
                             }
                         }
                     }
@@ -183,10 +184,10 @@ fun HaltingChargesScreen(
                     placeholder = { Text("Add any additional notes or details here...", style = MaterialTheme.typography.bodyMedium) },
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White,
-                        focusedBorderColor = Color(0xFFE2E8F0),
-                        unfocusedBorderColor = Color(0xFFE2E8F0)
+                        focusedContainerColor = colorScheme.surface,
+                        unfocusedContainerColor = colorScheme.surface,
+                        focusedBorderColor = colorScheme.outlineVariant,
+                        unfocusedBorderColor = colorScheme.outlineVariant
                     )
                 )
             }
@@ -206,13 +207,13 @@ fun DayCounterRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF64748B))
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(
                 onClick = onDecrement,
-                modifier = Modifier.size(36.dp).background(Color(0xFFF1F5F9), RoundedCornerShape(8.dp))
+                modifier = Modifier.size(36.dp).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
             ) {
-                Icon(Icons.Default.Remove, contentDescription = null, tint = Color(0xFF10B981), modifier = Modifier.size(18.dp))
+                Icon(Icons.Default.Remove, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
             }
             Text(
                 text = count.toString(),
@@ -222,9 +223,9 @@ fun DayCounterRow(
             )
             IconButton(
                 onClick = onIncrement,
-                modifier = Modifier.size(36.dp).background(Color(0xFF10B981), RoundedCornerShape(8.dp))
+                modifier = Modifier.size(36.dp).background(MaterialTheme.colorScheme.primary, RoundedCornerShape(8.dp))
             ) {
-                Icon(Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(18.dp))
             }
         }
     }
@@ -236,7 +237,7 @@ fun BreakdownItem(label: String, value: String) {
         modifier = Modifier.fillMaxWidth().padding(16.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = Color(0xFF64748B))
-        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
+        Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
     }
 }

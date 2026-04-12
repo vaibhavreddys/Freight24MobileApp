@@ -33,6 +33,7 @@ import com.freight24.connect.feature.trips.domain.viewmodel.LuChargesEvent
 import com.freight24.connect.feature.trips.domain.viewmodel.LuChargesViewModel
 import com.freight24.connect.feature.trips.domain.viewmodel.LuChargesViewModelImpl
 import com.freight24.connect.feature.trips.domain.viewmodel.LuDocType
+import com.freight24.ui.theme.FreightThemeTokens
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,6 +47,8 @@ fun LuChargesScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
+    val colorScheme = MaterialTheme.colorScheme
+    val extendedColors = FreightThemeTokens.colors
 
     LaunchedEffect(uiState.shouldNavigateBack) {
         if (uiState.shouldNavigateBack) {
@@ -97,7 +100,7 @@ fun LuChargesScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = colorScheme.surface)
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -109,11 +112,11 @@ fun LuChargesScreen(
                     .padding(16.dp)
                     .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                colors = ButtonDefaults.buttonColors(containerColor = extendedColors.successColor),
                 enabled = !uiState.isSubmitting && uiState.hasChanges
             ) {
                 if (uiState.isSubmitting) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                    CircularProgressIndicator(color = colorScheme.onPrimary, modifier = Modifier.size(24.dp))
                 } else {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(20.dp))
@@ -123,7 +126,7 @@ fun LuChargesScreen(
                 }
             }
         },
-        containerColor = Color(0xFFF8FAFC)
+        containerColor = colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
@@ -135,7 +138,7 @@ fun LuChargesScreen(
         ) {
             // Info Message
             Surface(
-                color = Color(0xFFECFDF5),
+                color = extendedColors.successColor.copy(alpha = 0.12f),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Row(
@@ -145,14 +148,14 @@ fun LuChargesScreen(
                     Icon(
                         Icons.Default.Info,
                         contentDescription = null,
-                        tint = Color(0xFF10B981),
+                        tint = extendedColors.successColor,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = "All submitted charges and documents are subject to administrative verification and internal audit. Please ensure all details are accurate.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF065F46),
+                        color = extendedColors.successColor,
                         lineHeight = 18.sp
                     )
                 }
@@ -160,7 +163,7 @@ fun LuChargesScreen(
 
             // Amounts Section
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -203,7 +206,7 @@ fun LuChargesScreen(
                             "Notes",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF64748B)
+                            color = colorScheme.onSurfaceVariant
                         )
                         OutlinedTextField(
                             value = uiState.notes,
@@ -211,11 +214,11 @@ fun LuChargesScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(120.dp),
-                            placeholder = { Text("Enter any additional details or remarks here...", color = Color(0xFF94A3B8)) },
+                            placeholder = { Text("Enter any additional details or remarks here...", color = colorScheme.onSurfaceVariant) },
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFF10B981),
-                                unfocusedBorderColor = Color(0xFFE2E8F0)
+                                focusedBorderColor = extendedColors.successColor,
+                                unfocusedBorderColor = colorScheme.outlineVariant
                             )
                         )
                     }
@@ -224,7 +227,7 @@ fun LuChargesScreen(
 
             // Documents Section
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -236,7 +239,7 @@ fun LuChargesScreen(
                         "Supporting Documents",
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
-                        color = Color(0xFF1E293B)
+                        color = colorScheme.onSurface
                     )
 
                     if (uiState.loadingDocument != null || uiState.loadingSlipUrl != null) {
@@ -277,7 +280,7 @@ fun LuChargesScreen(
                             .height(100.dp)
                             .border(
                                 width = 1.dp,
-                                color = Color(0xFFCBD5E1),
+                                color = colorScheme.outlineVariant,
                                 shape = RoundedCornerShape(12.dp)
                             )
                             .clip(RoundedCornerShape(12.dp))
@@ -288,13 +291,13 @@ fun LuChargesScreen(
                             Icon(
                                 Icons.Default.Upload,
                                 contentDescription = null,
-                                tint = Color(0xFF94A3B8),
+                                tint = colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(32.dp)
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
                                 "Tap to upload proof",
-                                color = Color(0xFF64748B),
+                                color = colorScheme.onSurfaceVariant,
                                 fontSize = 14.sp
                             )
                         }
@@ -309,7 +312,7 @@ fun LuChargesScreen(
         ModalBottomSheet(
             onDismissRequest = { viewModel.onEvent(LuChargesEvent.OnDismissSheet) },
             sheetState = rememberModalBottomSheetState(),
-            containerColor = Color.White
+            containerColor = colorScheme.surface
         ) {
             Column(
                 modifier = Modifier
@@ -321,7 +324,7 @@ fun LuChargesScreen(
                     "Select Document Type",
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
-                    color = Color(0xFF1E293B),
+                    color = colorScheme.onSurface,
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center
                 )
@@ -346,7 +349,7 @@ fun LuChargesScreen(
                         .fillMaxWidth()
                         .height(56.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981))
+                    colors = ButtonDefaults.buttonColors(containerColor = extendedColors.successColor)
                 ) {
                     Text("Select", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
@@ -362,12 +365,12 @@ fun LuChargesScreen(
             text = { Text("Choose how you want to pick the document proof.") },
             confirmButton = {
                 TextButton(onClick = { imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }) {
-                    Text("Images", color = Color(0xFF10B981))
+                    Text("Images", color = extendedColors.successColor)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { pdfPickerLauncher.launch("application/pdf") }) {
-                    Text("PDF", color = Color(0xFF10B981))
+                    Text("PDF", color = extendedColors.successColor)
                 }
             }
         )
@@ -380,26 +383,28 @@ fun LuAmountInput(
     value: String,
     onValueChange: (String) -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+    val extendedColors = FreightThemeTokens.colors
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             label,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold,
-            color = Color(0xFF64748B)
+            color = colorScheme.onSurfaceVariant
         )
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier.fillMaxWidth(),
             leadingIcon = {
-                Text("₹", color = Color(0xFF64748B), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text("₹", color = colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold, fontSize = 18.sp)
             },
-            placeholder = { Text("0.00", color = Color(0xFF94A3B8)) },
+            placeholder = { Text("0.00", color = colorScheme.onSurfaceVariant) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color(0xFF10B981),
-                unfocusedBorderColor = Color(0xFFE2E8F0)
+                focusedBorderColor = extendedColors.successColor,
+                unfocusedBorderColor = colorScheme.outlineVariant
             ),
             singleLine = true
         )
@@ -414,10 +419,12 @@ fun DocumentItem(
     onDelete: () -> Unit,
     onPreview: () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+    val extendedColors = FreightThemeTokens.colors
     Surface(
         onClick = onPreview,
         shape = RoundedCornerShape(12.dp),
-        color = Color(0xFFF1F5F9),
+        color = colorScheme.surfaceVariant,
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -428,7 +435,7 @@ fun DocumentItem(
         ) {
             Surface(
                 shape = RoundedCornerShape(8.dp),
-                color = Color.White,
+                color = colorScheme.surface,
                 modifier = Modifier.size(40.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
@@ -437,7 +444,7 @@ fun DocumentItem(
                                       else if (file?.extension == "pdf") Icons.Outlined.PictureAsPdf 
                                       else Icons.Outlined.Image,
                         contentDescription = null,
-                        tint = if (remoteUrl != null) Color(0xFF10B981) else Color(0xFF94A3B8),
+                        tint = if (remoteUrl != null) extendedColors.successColor else colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -450,17 +457,17 @@ fun DocumentItem(
                     text = if (remoteUrl != null) "$label (Existing)" else "${label}_${file?.name?.takeLast(8)}",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF1E293B)
+                    color = colorScheme.onSurface
                 )
                 Text(
                     text = if (remoteUrl != null) "Uploaded on server" else "${(file?.length() ?: 0) / 1024} KB",
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color(0xFF64748B)
+                    color = colorScheme.onSurfaceVariant
                 )
             }
             
             IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color(0xFFEF4444), modifier = Modifier.size(20.dp))
+                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = colorScheme.error, modifier = Modifier.size(20.dp))
             }
         }
     }
@@ -472,11 +479,13 @@ fun DocTypeSelectionItem(
     selected: Boolean,
     onClick: () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+    val extendedColors = FreightThemeTokens.colors
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(16.dp),
-        color = if (selected) Color(0xFFECFDF5) else Color(0xFFF8FAFC),
-        border = if (selected) border(1.dp, Color(0xFF10B981)) else null
+        color = if (selected) extendedColors.successColor.copy(alpha = 0.12f) else colorScheme.background,
+        border = if (selected) border(1.dp, extendedColors.successColor) else null
     ) {
         Row(
             modifier = Modifier
@@ -486,14 +495,14 @@ fun DocTypeSelectionItem(
         ) {
             Surface(
                 shape = CircleShape,
-                color = Color.White,
+                color = colorScheme.surface,
                 modifier = Modifier.size(48.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
-                        tint = Color(0xFF10B981),
+                        tint = extendedColors.successColor,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -505,14 +514,14 @@ fun DocTypeSelectionItem(
                 text = title,
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
-                color = Color(0xFF1E293B),
+                color = colorScheme.onSurface,
                 modifier = Modifier.weight(1f)
             )
             
             RadioButton(
                 selected = selected,
                 onClick = onClick,
-                colors = RadioButtonDefaults.colors(selectedColor = Color(0xFF10B981))
+                colors = RadioButtonDefaults.colors(selectedColor = extendedColors.successColor)
             )
         }
     }

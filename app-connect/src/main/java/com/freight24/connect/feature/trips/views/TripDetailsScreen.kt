@@ -28,6 +28,7 @@ import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,6 +64,7 @@ fun TripDetailsScreen(
     viewModel: TripDetailsViewModel = hiltViewModel<TripDetailsViewModelImpl>()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val colorScheme = MaterialTheme.colorScheme
     var menuExpanded by remember { mutableStateOf(false) }
     var showConfirmationDialog by remember { mutableStateOf(false) }
     var showSelectionDialog by remember { mutableStateOf(false) }
@@ -117,15 +119,15 @@ fun TripDetailsScreen(
                         showConfirmationDialog = false
                     }
                 ) {
-                    Text("Confirm", color = Color(0xFF10B981))
+                    Text("Confirm", color = colorScheme.primary)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showConfirmationDialog = false }) {
-                    Text("Cancel", color = Color.Gray)
+                    Text("Cancel", color = colorScheme.onSurfaceVariant)
                 }
             },
-            containerColor = Color.White,
+            containerColor = colorScheme.surface,
             shape = RoundedCornerShape(12.dp)
         )
     }
@@ -156,10 +158,10 @@ fun TripDetailsScreen(
                 Button(
                     onClick = { viewModel.onEvent(TripDetailsEvent.ConfirmCancelTrip) },
                     enabled = !uiState.isCanceling && uiState.cancelReason.isNotBlank(),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE11D48))
+                    colors = ButtonDefaults.buttonColors(containerColor = colorScheme.error)
                 ) {
                     if (uiState.isCanceling) {
-                        CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Color.White, strokeWidth = 2.dp)
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), color = colorScheme.onError, strokeWidth = 2.dp)
                         Spacer(Modifier.width(8.dp))
                     }
                     Text("Confirm Cancel")
@@ -167,10 +169,10 @@ fun TripDetailsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.onEvent(TripDetailsEvent.HideCancelDialog) }) {
-                    Text("No", color = Color.Gray)
+                    Text("No", color = colorScheme.onSurfaceVariant)
                 }
             },
-            containerColor = Color.White,
+            containerColor = colorScheme.surface,
             shape = RoundedCornerShape(12.dp)
         )
     }
@@ -186,7 +188,7 @@ fun TripDetailsScreen(
                     Text("OK", color = MaterialTheme.colorScheme.primary)
                 }
             },
-            containerColor = Color.White,
+            containerColor = colorScheme.surface,
             shape = RoundedCornerShape(12.dp)
         )
     }
@@ -216,7 +218,7 @@ fun TripDetailsScreen(
                     Text("PDF", color = MaterialTheme.colorScheme.primary)
                 }
             },
-            containerColor = Color.White,
+            containerColor = colorScheme.surface,
             shape = RoundedCornerShape(12.dp)
         )
     }
@@ -228,8 +230,8 @@ fun TripDetailsScreen(
                 viewModel.onEvent(TripDetailsEvent.OnClearSelection)
             },
             sheetState = sheetState,
-            containerColor = Color.White
-        ) {
+                containerColor = colorScheme.surface
+            ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -249,7 +251,7 @@ fun TripDetailsScreen(
                         imageVector = Icons.Outlined.Description,
                         contentDescription = null,
                         modifier = Modifier.size(64.dp),
-                        tint = Color.Red
+                        tint = colorScheme.error
                     )
                     Text(text = "PDF Document", style = MaterialTheme.typography.bodyMedium)
                 } else {
@@ -281,13 +283,13 @@ fun TripDetailsScreen(
                     },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                    colors = ButtonDefaults.buttonColors(containerColor = colorScheme.primary),
                     enabled = !uiState.isUploading
                 ) {
                     if (uiState.isUploading) {
-                        CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White)
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), color = colorScheme.onPrimary)
                     } else {
-                        Text("Upload", color = Color.White, fontWeight = FontWeight.Bold)
+                        Text("Upload", color = colorScheme.onPrimary, fontWeight = FontWeight.Bold)
                     }
                 }
                 
@@ -313,12 +315,12 @@ fun TripDetailsScreen(
                         DropdownMenu(
                             expanded = menuExpanded,
                             onDismissRequest = { menuExpanded = false },
-                            modifier = Modifier.background(Color.White)
+                            modifier = Modifier.background(colorScheme.surface)
                         ) {
                             DropdownMenuItem(
                                 text = { Text("Edit") },
                                 leadingIcon = {
-                                    Icon(Icons.Outlined.BorderColor, contentDescription = "Edit", tint = Color.Gray)
+                                    Icon(Icons.Outlined.BorderColor, contentDescription = "Edit", tint = colorScheme.onSurfaceVariant)
                                 },
                                 onClick = {
                                     menuExpanded = false
@@ -326,9 +328,9 @@ fun TripDetailsScreen(
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Cancel", color = Color(0xFFE11D48)) },
+                                text = { Text("Cancel", color = colorScheme.error) },
                                 leadingIcon = {
-                                    Icon(Icons.Outlined.Delete, contentDescription = "Cancel Trip", tint = Color(0xFFE11D48))
+                                    Icon(Icons.Outlined.Delete, contentDescription = "Cancel Trip", tint = colorScheme.error)
                                 },
                                 onClick = {
                                     menuExpanded = false
@@ -338,7 +340,7 @@ fun TripDetailsScreen(
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = colorScheme.surface)
             )
         },
         bottomBar = {
@@ -356,7 +358,7 @@ fun TripDetailsScreen(
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shadowElevation = 8.dp,
-                    color = Color.White
+                    color = colorScheme.onPrimary
                 ) {
                     Button(
                         onClick = {
@@ -373,10 +375,10 @@ fun TripDetailsScreen(
                             .padding(16.dp),
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (nextStatus == "UPLOAD_LR") MaterialTheme.colorScheme.primary else Color(0xFF10B981)
+                            containerColor = if (nextStatus == "UPLOAD_LR") colorScheme.primary else colorScheme.primary
                         )
                     ) {
-                        Text(buttonText, color = Color.White, fontWeight = FontWeight.Bold)
+                        Text(buttonText, color = colorScheme.onPrimary, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -386,7 +388,7 @@ fun TripDetailsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .background(Color(0xFFF1F5F9))
+                .background(colorScheme.background)
         ) {
             when {
                 uiState.isLoading -> {
@@ -395,7 +397,7 @@ fun TripDetailsScreen(
                 uiState.errorMessage != null -> {
                     Text(
                         text = uiState.errorMessage ?: "Unknown error",
-                        color = Color.Red,
+                        color = colorScheme.error,
                         modifier = Modifier.align(Alignment.Center)
                     )
                 }
@@ -444,8 +446,8 @@ fun TripDetailsContent(
         ExpandableSection(
             title = "Documents",
             icon = Icons.Outlined.Description,
-            iconBg = Color(0xFFEFF6FF),
-            iconTint = Color(0xFF3B82F6)
+            iconBg = colorScheme.primaryContainer,
+            iconTint = colorScheme.primary
         ) {
             TripDocumentsSection(
                 truckerStatus = trip.truckerStatus,
@@ -459,8 +461,8 @@ fun TripDetailsContent(
         ExpandableSection(
             title = "Charges & Deductions",
             icon = Icons.Outlined.AccountBalanceWallet,
-            iconBg = Color(0xFFECFDF5),
-            iconTint = Color(0xFF10B981)
+            iconBg = colorScheme.primaryContainer,
+            iconTint = colorScheme.primary
         ) {
             ChargesAndDeductionsContent(
                 financials = trip.financials,
@@ -482,8 +484,8 @@ fun TripDetailsContent(
         ExpandableSection(
             title = "Payment Breakdown",
             icon = Icons.Outlined.Payments,
-            iconBg = Color(0xFFECFDF5),
-            iconTint = Color(0xFF10B981)
+            iconBg = colorScheme.primaryContainer,
+            iconTint = colorScheme.primary
         ) {
             PaymentBreakdownContent(trip.financials)
         }
@@ -554,8 +556,8 @@ fun DocumentCard(
 
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
+        border = androidx.compose.foundation.BorderStroke(1.dp, colorScheme.outlineVariant),
         modifier = Modifier.fillMaxWidth(),
         onClick = {
             onCardClick()
@@ -567,14 +569,14 @@ fun DocumentCard(
         ) {
             Surface(
                 shape = RoundedCornerShape(8.dp),
-                color = Color(0xFFEFF6FF),
+                color = colorScheme.primaryContainer,
                 modifier = Modifier.size(40.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = Icons.Outlined.Description,
                         contentDescription = null,
-                        tint = Color(0xFF3B82F6),
+                        tint = colorScheme.primary,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -585,14 +587,14 @@ fun DocumentCard(
                     text = title,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E293B)
+                    color = colorScheme.onSurface
                 )
                 
                 if (doc == null) {
                     Text(
                         text = "Not Available",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xFFEF4444)
+                        color = colorScheme.error
                     )
                 }
             }
@@ -611,10 +613,10 @@ fun DocumentCard(
                     enabled = isUploadEnabled,
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFECFDF5),
-                        contentColor = Color(0xFF10B981),
-                        disabledContainerColor = Color(0xFFECFDF5).copy(alpha = 0.5f),
-                        disabledContentColor = Color(0xFF10B981).copy(alpha = 0.5f)
+                        containerColor = colorScheme.primaryContainer,
+                        contentColor = colorScheme.primary,
+                        disabledContainerColor = colorScheme.primaryContainer.copy(alpha = 0.5f),
+                        disabledContentColor = colorScheme.primary.copy(alpha = 0.5f)
                     ),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
                     modifier = Modifier.height(32.dp)
@@ -635,10 +637,10 @@ fun DocumentCard(
 @Composable
 fun StatusBadgeSmall(status: String) {
     val (color, ticketColor) = when (status.lowercase()) {
-        "verified", "approved" -> Color(0xFFDCFCE7) to Color(0xFF16A34A)
-        "pending" -> Color(0xFFFEF3C7) to Color(0xFFD97706)
-        "rejected" -> Color(0xFFFEE2E2) to Color(0xFFDC2626)
-        else -> Color(0xFFF3F4FB) to Color.Gray
+        "verified", "approved" -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.primary
+        "pending" -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.tertiary
+        "rejected" -> MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.error
+        else -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     Surface(
@@ -657,15 +659,15 @@ fun StatusBadgeSmall(status: String) {
 fun ExpandableSection(
     title: String,
     icon: ImageVector,
-    iconBg: Color = Color(0xFFF1F5F9),
-    iconTint: Color = Color(0xFF3B82F6),
+    iconBg: Color = MaterialTheme.colorScheme.surfaceVariant,
+    iconTint: Color = MaterialTheme.colorScheme.primary,
     content: @Composable () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column {
@@ -695,7 +697,7 @@ fun ExpandableSection(
                 Icon(
                     imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                     contentDescription = null,
-                    tint = Color.Gray
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             
@@ -762,21 +764,21 @@ fun ChargesSubRow(
         Text(
             text = label, 
             style = MaterialTheme.typography.bodyMedium, 
-            color = Color(0xFF475569)
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = (if (isDeduction) "- " else "") + "₹${formatAmount(amount.toString())}",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
-                color = if (isDeduction) Color.Red else Color(0xFF1E293B)
+                color = if (isDeduction) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.width(8.dp))
             Icon(
                 imageVector = Icons.Outlined.ChevronRight,
                 contentDescription = null,
                 modifier = Modifier.size(20.dp),
-                tint = Color(0xFF3B82F6)
+                tint = MaterialTheme.colorScheme.primary
             )
         }
     }
@@ -832,15 +834,15 @@ fun PaymentBreakdownContent(financials: TripDataResponse.FinanceDetails?) {
         PaymentDetailRow("Platform Fee", financials.platformFee.amount, isDeduction = true)
         PaymentDetailRow("TDS", financials.tds.amount, isDeduction = true)
         
-        Divider(color = Color(0xFFF1F5F9), modifier = Modifier.padding(vertical = 4.dp))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 4.dp))
         
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Net Payable", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
-            Text("₹${formatAmount(financials.netPayable.toString())}", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = Color(0xFF10B981))
+            Text("Net Payable", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            Text("₹${formatAmount(financials.netPayable.toString())}", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
         }
 
         Row(
@@ -848,8 +850,8 @@ fun PaymentBreakdownContent(financials: TripDataResponse.FinanceDetails?) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Paid Amount", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
-            Text("₹${formatAmount(financials.totalPaidAmount.toString())}", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = Color(0xFF1E293B))
+            Text("Paid Amount", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            Text("₹${formatAmount(financials.totalPaidAmount.toString())}", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
         }
 
         Spacer(modifier = Modifier.height(4.dp))
@@ -857,7 +859,7 @@ fun PaymentBreakdownContent(financials: TripDataResponse.FinanceDetails?) {
         // Balance Due Box
         val balanceDue = financials.netPayable - financials.totalPaidAmount
         Surface(
-            color = Color(0xFFFFF7ED),
+            color = MaterialTheme.colorScheme.tertiaryContainer,
             shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -869,13 +871,13 @@ fun PaymentBreakdownContent(financials: TripDataResponse.FinanceDetails?) {
                 Text(
                     "Balance Due", 
                     fontWeight = FontWeight.Bold, 
-                    color = Color(0xFF7C2D12),
+                    color = MaterialTheme.colorScheme.tertiary,
                     style = MaterialTheme.typography.bodyLarge
                 )
                 Text(
                     "₹${formatAmount(balanceDue.toString())}", 
                     fontWeight = FontWeight.Bold, 
-                    color = Color(0xFFEA580C),
+                    color = MaterialTheme.colorScheme.tertiary,
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
@@ -898,7 +900,7 @@ fun PaymentDetailRow(
             Text(
                 text = headerName, 
                 style = MaterialTheme.typography.bodySmall, 
-                color = Color(0xFF64748B),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 4.dp)
             )
@@ -913,13 +915,13 @@ fun PaymentDetailRow(
                 Text(
                     text = label, 
                     style = MaterialTheme.typography.bodyMedium, 
-                    color = Color(0xFF64748B)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 if (!detailText.isNullOrBlank()) {
                     Text(
                         text = detailText,
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFF94A3B8),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 11.sp
                     )
                 }
@@ -933,9 +935,9 @@ fun PaymentDetailRow(
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
                 color = when {
-                    isDeduction -> Color.Red
-                    isAddition && amount > 0 -> Color(0xFF10B981)
-                    else -> Color(0xFF1E293B)
+                    isDeduction -> MaterialTheme.colorScheme.error
+                    isAddition && amount > 0 -> MaterialTheme.colorScheme.primary
+                    else -> MaterialTheme.colorScheme.onSurface
                 }
             )
         }
@@ -974,13 +976,13 @@ fun TimelineItemRow(
                 modifier = Modifier
                     .size(12.dp)
                     .background(
-                        color = if (item.isCompleted) Color(0xFF10B981) else Color(0xFFE2E8F0),
+                        color = if (item.isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
                         shape = CircleShape
                     )
                     .then(
                         if (item.isCurrent && !item.isCompleted) {
-                            Modifier.background(Color.White, CircleShape)
-                                .then(Modifier.size(12.dp).background(Color(0xFF10B981), CircleShape))
+                            Modifier.background(MaterialTheme.colorScheme.surface, CircleShape)
+                                .then(Modifier.size(12.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
                         } else Modifier
                     )
             )
@@ -991,7 +993,7 @@ fun TimelineItemRow(
                         .width(2.dp)
                         .height(60.dp)
                         .background(
-                            if (item.isCompleted) Color(0xFF10B981) else Color(0xFFE2E8F0)
+                            if (item.isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
                         )
                 )
             }
@@ -1004,7 +1006,7 @@ fun TimelineItemRow(
                 text = mapStatusToTitle(item.statusType),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
-                color = if (item.isCompleted || item.isCurrent) Color(0xFF1E293B) else Color(0xFF94A3B8)
+                color = if (item.isCompleted || item.isCurrent) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
             )
             
             val subText = if (item.isCurrent && !item.isCompleted) {
@@ -1023,7 +1025,7 @@ fun TimelineItemRow(
                 Text(
                     text = subText,
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (item.isCurrent && !item.isCompleted) Color(0xFF10B981) else Color(0xFF64748B)
+                    color = if (item.isCurrent && !item.isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }

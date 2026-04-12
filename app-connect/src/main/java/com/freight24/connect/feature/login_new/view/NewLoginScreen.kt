@@ -48,6 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.connect.feature.login_new.viewmodel.NewLoginViewModel
 import com.freight24.ui.UiState
 import com.freight24.ui.theme.Freight24Theme
+import com.freight24.ui.theme.FreightThemeTokens
 import android.widget.Toast
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -56,11 +57,6 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import com.google.common.io.Files.append
-
-private val loginGradient =
-    Brush.verticalGradient(
-        colors = listOf(Color(0xFF4FD1C5), Color(0xFFA7F3D0)),
-    )
 
 private val cardShape = RoundedCornerShape(32.dp)
 
@@ -87,13 +83,20 @@ fun NewLoginScreen(onOtpRequested: (String) -> Unit) {
     }
 
     Freight24Theme {
+        val colorScheme = MaterialTheme.colorScheme
+        val extendedColors = FreightThemeTokens.colors
+        val loginGradient =
+            Brush.verticalGradient(
+                colors = listOf(colorScheme.primary, extendedColors.infoColor),
+            )
+
         Scaffold(modifier = Modifier.fillMaxSize()) { contentPadding ->
             Box(
                 modifier =
                     Modifier
                         .fillMaxSize()
                         .padding(contentPadding)
-                        .background(Color(0xFFF7FAF9)),
+                        .background(colorScheme.background),
             ) {
                 // Gradient Header Background
                 Box(
@@ -121,13 +124,13 @@ fun NewLoginScreen(onOtpRequested: (String) -> Unit) {
                             modifier =
                                 Modifier
                                     .size(92.dp)
-                                    .background(Color(0xFF1D4E89), RoundedCornerShape(28.dp)),
+                                    .background(colorScheme.primary, RoundedCornerShape(28.dp)),
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.LocalShipping,
                                 contentDescription = "Freight24 Logo",
-                                tint = Color.White,
+                                tint = colorScheme.onPrimary,
                                 modifier = Modifier.size(48.dp),
                             )
                         }
@@ -156,7 +159,7 @@ fun NewLoginScreen(onOtpRequested: (String) -> Unit) {
                         Text(
                             text = "Log in to your dashboard to manage shipments and fleet operations",
                             fontSize = 16.sp,
-                            color = Color(0xFF4B5563),
+                            color = colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
                         )
                     }
@@ -166,11 +169,11 @@ fun NewLoginScreen(onOtpRequested: (String) -> Unit) {
                     // Login Card
                     Card(
                         modifier =
-                            Modifier
+                        Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 24.dp),
                         shape = RoundedCornerShape(32.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
                         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
                     ) {
                         Column(
@@ -187,14 +190,13 @@ fun NewLoginScreen(onOtpRequested: (String) -> Unit) {
                                 modifier =
                                     Modifier
                                         .fillMaxWidth()
-                                        // FIX #1: Disable autofill highlight by using transparent background
-                                        .background(Color.Transparent),
+                                        .background(colorScheme.surface),
                                 singleLine = true,
                                 shape = RoundedCornerShape(16.dp),
                                 placeholder = {
                                     Text(
                                         text = "98765 43210",
-                                        color = Color(0xFF9CA3AF),
+                                        color = colorScheme.onSurfaceVariant,
                                     )
                                 },
                                 leadingIcon = {
@@ -206,7 +208,7 @@ fun NewLoginScreen(onOtpRequested: (String) -> Unit) {
                                 prefix = {
                                     Text(
                                         text = "+91",
-                                        color = Color(0xFF111827), // FIX #2: Dark color for visibility
+                                        color = colorScheme.onSurface,
                                         fontWeight = FontWeight.SemiBold,
                                         modifier = Modifier.padding(end = 4.dp)
                                     )
@@ -220,17 +222,16 @@ fun NewLoginScreen(onOtpRequested: (String) -> Unit) {
                                 visualTransformation = IndianPhoneVisualTransformation(),
                                 colors =
                                     OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = Color(0xFF27AE60),
-                                        unfocusedBorderColor = Color(0xFFD1D5DB),
-                                        focusedPrefixColor = Color(0xFF111827), // FIX #2
-                                        unfocusedPrefixColor = Color(0xFF111827), // FIX #2
-                                        focusedTextColor = Color(0xFF111827), // FIX #2: Dark text
-                                        unfocusedTextColor = Color(0xFF111827), // FIX #2: Dark text
-                                        focusedPlaceholderColor = Color(0xFF9CA3AF),
-                                        unfocusedPlaceholderColor = Color(0xFF9CA3AF),
-                                        // FIX #1: Disable autofill yellow background
-                                        focusedContainerColor = Color.White,
-                                        unfocusedContainerColor = Color.White,
+                                        focusedBorderColor = colorScheme.primary,
+                                        unfocusedBorderColor = colorScheme.outlineVariant,
+                                        focusedPrefixColor = colorScheme.onSurface,
+                                        unfocusedPrefixColor = colorScheme.onSurface,
+                                        focusedTextColor = colorScheme.onSurface,
+                                        unfocusedTextColor = colorScheme.onSurface,
+                                        focusedPlaceholderColor = colorScheme.onSurfaceVariant,
+                                        unfocusedPlaceholderColor = colorScheme.onSurfaceVariant,
+                                        focusedContainerColor = colorScheme.surface,
+                                        unfocusedContainerColor = colorScheme.surface,
                                     ),
                             )
 
@@ -248,13 +249,13 @@ fun NewLoginScreen(onOtpRequested: (String) -> Unit) {
                                     ButtonDefaults.buttonColors(
                                         containerColor =
                                             if (isPhoneValid && uiState !is UiState.Loading) {
-                                                Color(0xFF27AE60)
+                                                colorScheme.primary
                                             } else {
-                                                Color(0xFF9CA3AF)
+                                                colorScheme.surfaceVariant
                                             },
-                                        contentColor = Color.White,
-                                        disabledContainerColor = Color(0xFFD1D5DB),
-                                        disabledContentColor = Color.White,
+                                        contentColor = colorScheme.onPrimary,
+                                        disabledContainerColor = colorScheme.surfaceVariant,
+                                        disabledContentColor = colorScheme.onSurfaceVariant,
                                     ),
                                 shape = RoundedCornerShape(28.dp),
                                 elevation =
@@ -266,7 +267,7 @@ fun NewLoginScreen(onOtpRequested: (String) -> Unit) {
                                 if (uiState is UiState.Loading) {
                                     CircularProgressIndicator(
                                         modifier = Modifier.size(22.dp),
-                                        color = Color.White,
+                                        color = colorScheme.onPrimary,
                                         strokeWidth = 2.5.dp,
                                     )
                                     Spacer(modifier = Modifier.width(12.dp))
@@ -292,7 +293,7 @@ fun NewLoginScreen(onOtpRequested: (String) -> Unit) {
                     Text(
                         text = "Terms of Service & Privacy Policy",
                         fontSize = 14.sp,
-                        color = Color(0xFF9CA3AF),
+                        color = colorScheme.onSurfaceVariant,
                         modifier =
                             Modifier
                                 .fillMaxWidth()

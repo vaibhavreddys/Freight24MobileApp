@@ -22,6 +22,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.freight24.connect.feature.trips.domain.viewmodel.PdfViewerEvent
 import com.freight24.connect.feature.trips.domain.viewmodel.PdfViewerViewModel
 import com.freight24.ui.components.PdfRendererView
+import com.freight24.ui.theme.FreightThemeTokens
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,6 +33,8 @@ internal fun PdfViewerScreen(
     viewModel: PdfViewerViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val colorScheme = MaterialTheme.colorScheme
+    val extendedColors = FreightThemeTokens.colors
     
     // Navigate back when approval/rejection is successful
     LaunchedEffect(uiState.shouldNavigateBack) {
@@ -55,7 +58,7 @@ internal fun PdfViewerScreen(
                         Text(
                             "Approved",
                             modifier = Modifier.padding(end = 16.dp),
-                            color = Color(0xFF16A34A),
+                            color = extendedColors.successColor,
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold
                         )
@@ -63,13 +66,13 @@ internal fun PdfViewerScreen(
                         Text(
                             "Rejected",
                             modifier = Modifier.padding(end = 16.dp),
-                            color = Color(0xFFDC2626),
+                            color = colorScheme.error,
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = colorScheme.surface)
             )
         },
         floatingActionButton = {
@@ -81,8 +84,8 @@ internal fun PdfViewerScreen(
                     // Reject FAB
                     FloatingActionButton(
                         onClick = { viewModel.onEvent(PdfViewerEvent.ShowRejectDialog) },
-                        containerColor = Color(0xFFDC2626),
-                        contentColor = Color.White
+                        containerColor = colorScheme.error,
+                        contentColor = colorScheme.onError
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 16.dp),
@@ -97,8 +100,8 @@ internal fun PdfViewerScreen(
                     // Approve FAB
                     FloatingActionButton(
                         onClick = { viewModel.onEvent(PdfViewerEvent.ShowApproveDialog) },
-                        containerColor = Color(0xFF16A34A),
-                        contentColor = Color.White
+                        containerColor = extendedColors.successColor,
+                        contentColor = colorScheme.onPrimary
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 16.dp),
@@ -113,7 +116,7 @@ internal fun PdfViewerScreen(
             }
         },
         floatingActionButtonPosition = FabPosition.End,
-        containerColor = Color.White
+        containerColor = colorScheme.background
     ) { padding ->
         Box(
             modifier = Modifier
@@ -127,7 +130,7 @@ internal fun PdfViewerScreen(
                 }
                 uiState.errorMessage != null -> {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(uiState.errorMessage!!, color = Color.Red)
+                        Text(uiState.errorMessage!!, color = colorScheme.error)
                         Button(onClick = { viewModel.onEvent(PdfViewerEvent.LoadPdf) }) {
                             Text("Retry")
                         }
@@ -215,7 +218,7 @@ fun RemarksDialog(
                 if (isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(18.dp),
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onPrimary,
                         strokeWidth = 2.dp
                     )
                     Spacer(Modifier.width(8.dp))

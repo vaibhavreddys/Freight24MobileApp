@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Route
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -30,6 +31,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.connect.feature.trips.domain.viewmodel.CreateTripEvent
 import com.freight24.connect.feature.trips.domain.viewmodel.CreateTripUiState
 import com.freight24.connect.feature.trips.domain.viewmodel.CreateTripViewModel
+import com.freight24.ui.theme.FreightThemeTokens
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,6 +44,8 @@ internal fun CreateTripScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val colorScheme = colorScheme
+    val extendedColors = com.freight24.ui.theme.FreightThemeTokens.colors
 
     LaunchedEffect(uiState.snackbarMessage) {
         uiState.snackbarMessage?.let {
@@ -79,7 +83,7 @@ internal fun CreateTripScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = colorScheme.surface)
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -92,22 +96,22 @@ internal fun CreateTripScreen(
                     .height(50.dp),
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF00C853),
-                    contentColor = Color.White
+                    containerColor = colorScheme.primary,
+                    contentColor = colorScheme.onPrimary
                 ),
                 enabled = !uiState.isCreating && !uiState.isLoading
             ) {
                 if (uiState.isCreating) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(24.dp).padding(end = 8.dp),
-                        color = Color.White,
+                        color = colorScheme.onPrimary,
                         strokeWidth = 2.dp
                     )
                 }
                 Text("CREATE TRIP", fontWeight = FontWeight.Bold, fontSize = 16.sp)
             }
         },
-        containerColor = Color(0xFFF5F5F5)
+        containerColor = colorScheme.background
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -121,7 +125,7 @@ internal fun CreateTripScreen(
                     modifier = Modifier.align(Alignment.Center).padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(text = uiState.errorMessage!!, color = Color.Red)
+                    Text(text = uiState.errorMessage!!, color = colorScheme.error)
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(onClick = { viewModel.onEvent(CreateTripEvent.LoadData(indentId, truckId)) }) {
                         Text("Retry")
@@ -153,9 +157,10 @@ internal fun CreateTripScreen(
 fun IndentInfoCard(uiState: CreateTripUiState) {
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
+        val extendedColors = FreightThemeTokens.colors
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
@@ -163,14 +168,14 @@ fun IndentInfoCard(uiState: CreateTripUiState) {
                 Icon(
                     Icons.Default.Route, // Or similar info icon
                     contentDescription = "Info",
-                    tint = Color.Gray,
+                    tint = colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     "ROUTE DETAILS",
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.Gray,
+                    color = colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -186,7 +191,7 @@ fun IndentInfoCard(uiState: CreateTripUiState) {
                     Box(
                         modifier = Modifier
                             .size(10.dp)
-                            .background(Color(0xFF00C853), androidx.compose.foundation.shape.CircleShape)
+                            .background(colorScheme.primary, androidx.compose.foundation.shape.CircleShape)
                     )
                     // Dotted Line
                     Canvas(modifier = Modifier
@@ -205,7 +210,7 @@ fun IndentInfoCard(uiState: CreateTripUiState) {
                     Box(
                         modifier = Modifier
                             .size(10.dp)
-                            .background(Color(0xFFFF5252), androidx.compose.foundation.shape.CircleShape)
+                            .background(colorScheme.secondary, androidx.compose.foundation.shape.CircleShape)
                     )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
@@ -218,7 +223,7 @@ fun IndentInfoCard(uiState: CreateTripUiState) {
                         Text(
                             "ORIGIN",
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color.Gray,
+                            color = colorScheme.onSurfaceVariant,
                             fontSize = 10.sp
                         )
                         Text(
@@ -232,7 +237,7 @@ fun IndentInfoCard(uiState: CreateTripUiState) {
                         Text(
                             "DESTINATION",
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color.Gray,
+                            color = colorScheme.onSurfaceVariant,
                             fontSize = 10.sp
                         )
                         Text(
@@ -244,20 +249,20 @@ fun IndentInfoCard(uiState: CreateTripUiState) {
                 }
             }
 
-            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp), color = Color(0xFFEEEEEE))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp), color = colorScheme.outlineVariant)
 
             // Details Grid
             val groupDetails = uiState.indent?.indentGroupDetails
             Row(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("CLIENT", style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontSize = 10.sp)
+                    Text("CLIENT", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant, fontSize = 10.sp)
                     Text(
                         groupDetails?.clientProfile?.companyName ?: groupDetails?.clientProfile?.fullName ?: "N/A",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    Text("CLIENT COST", style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontSize = 10.sp)
+                    Text("CLIENT COST", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant, fontSize = 10.sp)
                     Text(
                         "₹${formatCurrency(groupDetails?.clientTripCost)}",
                         style = MaterialTheme.typography.titleMedium,
@@ -265,19 +270,19 @@ fun IndentInfoCard(uiState: CreateTripUiState) {
                     )
                 }
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("MATERIAL TYPE", style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontSize = 10.sp)
+                    Text("MATERIAL TYPE", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant, fontSize = 10.sp)
                     Text(
                         groupDetails?.material ?: "N/A",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    Text("NEGOTIATED COST", style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontSize = 10.sp)
+                    Text("NEGOTIATED COST", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant, fontSize = 10.sp)
                     Text(
                         "₹${formatCurrency(uiState.indent?.negotiatedTripCost)}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF00C853)
+                        color = extendedColors.successColor
                     )
                 }
             }
@@ -289,19 +294,20 @@ fun IndentInfoCard(uiState: CreateTripUiState) {
 fun SelectedTruckCard(uiState: CreateTripUiState) {
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
+        val extendedColors = FreightThemeTokens.colors
         Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.LocalShipping, contentDescription = "Truck", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.LocalShipping, contentDescription = "Truck", tint = colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("SELECTED TRUCK", style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontWeight = FontWeight.Bold)
+                Text("SELECTED TRUCK", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
             }
             Spacer(modifier = Modifier.height(12.dp))
 
             Surface(
-                color = Color(0xFFE8F5E9), // Light Green bg
+                color = extendedColors.successColor.copy(alpha = 0.12f),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -311,22 +317,22 @@ fun SelectedTruckCard(uiState: CreateTripUiState) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("TRUCK NUMBER", style = MaterialTheme.typography.labelSmall, color = Color(0xFF2E7D32), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        Text("TRUCK NUMBER", style = MaterialTheme.typography.labelSmall, color = extendedColors.successColor, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                         Text(
                             uiState.truck?.registrationNumber ?: "",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF003300)
+                            color = colorScheme.onSurface
                         )
                     }
                     Surface(
-                        color = Color(0xFF00C853),
+                        color = extendedColors.successColor,
                         shape = RoundedCornerShape(4.dp)
                     ) {
                         Text(
                             uiState.truck?.displayName ?: uiState.truck?.bodyType ?: "Truck", // Using truckType or displayName if available
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            color = Color.White,
+                            color = colorScheme.onPrimary,
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -344,31 +350,31 @@ internal fun DriverDetailsCard(
 ) {
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Person, contentDescription = "Driver", tint = Color.Gray, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.Person, contentDescription = "Driver", tint = colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("DRIVER DETAILS", style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontWeight = FontWeight.Bold)
+                Text("DRIVER DETAILS", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
             }
             Spacer(modifier = Modifier.height(16.dp))
 
             // Driver Phone
-            Text("Driver Phone", style = MaterialTheme.typography.labelMedium, color = Color.Gray, fontWeight = FontWeight.SemiBold)
+            Text("Driver Phone", style = MaterialTheme.typography.labelMedium, color = colorScheme.onSurfaceVariant, fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(4.dp))
             OutlinedTextField(
                 value = uiState.driverPhone,
                 onValueChange = { viewModel.onEvent(CreateTripEvent.UpdateDriverPhone(it)) },
-                placeholder = { Text("Enter phone number", color = Color.LightGray) },
-                leadingIcon = { Icon(Icons.Default.Call, contentDescription = null, tint = Color.Gray) },
+                placeholder = { Text("Enter phone number", color = colorScheme.onSurfaceVariant) },
+                leadingIcon = { Icon(Icons.Default.Call, contentDescription = null, tint = colorScheme.onSurfaceVariant) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedContainerColor = Color(0xFFF9F9F9),
-                    focusedContainerColor = Color.White,
-                    unfocusedBorderColor = Color(0xFFEEEEEE)
+                    unfocusedContainerColor = colorScheme.surfaceVariant,
+                    focusedContainerColor = colorScheme.surface,
+                    unfocusedBorderColor = colorScheme.outlineVariant
                 ),
                 shape = RoundedCornerShape(8.dp)
             )
@@ -376,19 +382,19 @@ internal fun DriverDetailsCard(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Driver Name
-            Text("Driver Name", style = MaterialTheme.typography.labelMedium, color = Color.Gray, fontWeight = FontWeight.SemiBold)
+            Text("Driver Name", style = MaterialTheme.typography.labelMedium, color = colorScheme.onSurfaceVariant, fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.height(4.dp))
             OutlinedTextField(
                 value = uiState.driverName,
                 onValueChange = { viewModel.onEvent(CreateTripEvent.UpdateDriverName(it)) },
-                placeholder = { Text("Enter driver name", color = Color.LightGray) },
-                leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = Color.Gray) },
+                placeholder = { Text("Enter driver name", color = colorScheme.onSurfaceVariant) },
+                leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = colorScheme.onSurfaceVariant) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedContainerColor = Color(0xFFF9F9F9),
-                    focusedContainerColor = Color.White,
-                    unfocusedBorderColor = Color(0xFFEEEEEE)
+                    unfocusedContainerColor = colorScheme.surfaceVariant,
+                    focusedContainerColor = colorScheme.surface,
+                    unfocusedBorderColor = colorScheme.outlineVariant
                 ),
                 shape = RoundedCornerShape(8.dp)
             )

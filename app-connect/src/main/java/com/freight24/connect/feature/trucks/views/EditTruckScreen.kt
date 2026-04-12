@@ -144,7 +144,7 @@ fun EditTruckScreen(
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp)
                             .padding(top = 12.dp, bottom = 24.dp),
-                    color = Color.Transparent,
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0f),
                 ) {
                     if (currentStep == 1) {
                         Button(

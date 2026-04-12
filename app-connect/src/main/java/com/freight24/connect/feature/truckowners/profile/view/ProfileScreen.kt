@@ -127,13 +127,9 @@ import com.freight24.ui.UiState
 import com.freight24.ui.components.AddRouteBottomSheet
 import com.freight24.ui.components.CitySearchField
 import com.freight24.ui.components.RouteChip
-import com.freight24.ui.theme.PrimaryGreen
+import com.freight24.ui.theme.FreightThemeTokens
 import kotlinx.coroutines.launch
 import java.io.File
-
-// Define theme-aware colors or use MaterialTheme directly
-// For BrandGreen, we can keep it as a constant for branding, but text colors should adapt
-private val BrandGreen = PrimaryGreen
 
 /**
  * Enum representing the type of validation for profile fields.
@@ -200,7 +196,7 @@ internal fun ProfileScreen(
     ) {
         androidx.compose.material3.Scaffold(
             snackbarHost = { androidx.compose.material3.SnackbarHost(hostState = snackbarHostState) },
-            containerColor = Color.Transparent,
+            containerColor = MaterialTheme.colorScheme.background,
             topBar = {
                 TopAppBar(
                     title = {
@@ -232,7 +228,7 @@ internal fun ProfileScreen(
                 when (val state = uiState) {
                     is UiState.Loading -> {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(strokeWidth = 3.dp, color = BrandGreen)
+                            CircularProgressIndicator(strokeWidth = 3.dp, color = MaterialTheme.colorScheme.primary)
                         }
                     }
                     is UiState.Error -> {
@@ -871,10 +867,11 @@ private fun ProfileHeaderCard(
     role: String,
     verificationStatus: String,
 ) {
+    val warningColor = FreightThemeTokens.colors.warningColor
     val isVerified = verificationStatus == "verified"
     val statusColor = when (verificationStatus) {
-        "verified" -> BrandGreen
-        "pending" -> Color(0xFFFFA000) // Darker variant of Yellow for better visibility
+        "verified" -> MaterialTheme.colorScheme.primary
+        "pending" -> warningColor
         else -> MaterialTheme.colorScheme.error 
     }
     val statusIcon = if (isVerified) Icons.Default.CheckCircle else Icons.Default.Warning
@@ -898,13 +895,13 @@ private fun ProfileHeaderCard(
                         Modifier
                             .size(80.dp)
                             .clip(CircleShape)
-                            .background(BrandGreen.copy(alpha = 0.1f)),
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         text = initials,
                         style = MaterialTheme.typography.headlineLarge,
-                        color = BrandGreen,
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold,
                     )
                 }
@@ -956,7 +953,7 @@ private fun ProfileSection(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     var isExpanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
-
+    val warningColor = FreightThemeTokens.colors.warningColor
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -966,33 +963,33 @@ private fun ProfileSection(
                 .clickable { isExpanded = !isExpanded }
                 .padding(vertical = 8.dp),
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = BrandGreen,
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(18.dp),
             )
             Spacer(modifier = Modifier.width(10.dp))
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelLarge,
-                color = BrandGreen,
+                color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp,
                 modifier = Modifier.weight(1f)
             )
             
             if (isVerified) {
-                VerificationChip("Verified", BrandGreen)
+                VerificationChip("Verified", MaterialTheme.colorScheme.primary)
             } else {
-                VerificationChip("Unverified", Color(0xFFFFA000))
+                VerificationChip("Unverified", warningColor)
             }
             
             Spacer(modifier = Modifier.width(8.dp))
             Icon(
                 imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                 contentDescription = if (isExpanded) "Collapse" else "Expand",
-                tint = BrandGreen
+                tint = MaterialTheme.colorScheme.primary
             )
         }
 
@@ -1207,7 +1204,7 @@ private fun ProfileField(
                     },
                     colors =
                         OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = if (validationError != null) MaterialTheme.colorScheme.error else BrandGreen,
+                            focusedBorderColor = if (validationError != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                             unfocusedBorderColor = if (validationError != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outlineVariant,
                             errorBorderColor = MaterialTheme.colorScheme.error,
                             errorLabelColor = MaterialTheme.colorScheme.error,
@@ -1342,7 +1339,7 @@ private fun DocumentList(
                             tint = if ((uploadState?.uploadStatus ?: UploadStatus.IDLE) == UploadStatus.ERROR) {
                                 MaterialTheme.colorScheme.error
                             } else {
-                                BrandGreen
+                                MaterialTheme.colorScheme.primary
                             },
                             modifier = Modifier.size(24.dp),
                         )
@@ -1375,10 +1372,10 @@ private fun DocumentList(
 private fun ExistingStatusBadge(existingVerifyStatus: String?, fallbackStatus: DocumentStatus?) {
     val normalizedStatus = existingVerifyStatus?.lowercase()?.trim()
     val (text, color) = when {
-        normalizedStatus == "verified" -> "Verified" to BrandGreen
+        normalizedStatus == "verified" -> "Verified" to MaterialTheme.colorScheme.primary
         normalizedStatus == "rejected" -> "Rejected" to MaterialTheme.colorScheme.error
         normalizedStatus == "pending" -> "Verification Pending" to MaterialTheme.colorScheme.tertiary
-        fallbackStatus == DocumentStatus.VERIFIED -> "Verified" to BrandGreen
+        fallbackStatus == DocumentStatus.VERIFIED -> "Verified" to MaterialTheme.colorScheme.primary
         fallbackStatus == DocumentStatus.REJECTED -> "Rejected" to MaterialTheme.colorScheme.error
         fallbackStatus == DocumentStatus.UPLOADED -> "Verification Pending" to MaterialTheme.colorScheme.tertiary
         fallbackStatus == DocumentStatus.PENDING -> "Pending" to MaterialTheme.colorScheme.tertiary
@@ -1402,7 +1399,7 @@ private fun ExistingStatusBadge(existingVerifyStatus: String?, fallbackStatus: D
 @Composable
 private fun PendingSaveBadge() {
     Surface(
-        color = Color.Transparent,
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0f),
         shape = RoundedCornerShape(8.dp),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
     ) {
@@ -1466,7 +1463,7 @@ private fun EditActions(
                 enabled = hasChanges && !isSaving,
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = BrandGreen),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
             ) {
                 if (isSaving) {
                     CircularProgressIndicator(
@@ -1500,7 +1497,7 @@ private fun ProfileErrorState(
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             color = MaterialTheme.colorScheme.onBackground,
         )
-        TextButton(onClick = onRetry, colors = ButtonDefaults.textButtonColors(contentColor = BrandGreen)) {
+        TextButton(onClick = onRetry, colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)) {
             Text("Retry", fontWeight = FontWeight.Bold)
         }
     }

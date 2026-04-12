@@ -24,6 +24,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.connect.feature.trucks.domain.viewmodel.AssignTruckEvent
 import com.freight24.connect.feature.trucks.domain.viewmodel.AssignTruckViewModel
 import com.freight24.connect.feature.trucks.enums.TruckStatus
+import com.freight24.ui.theme.FreightThemeTokens
 import com.freight24.rest.response.SearchTruckResponse
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,6 +35,8 @@ fun AssignTruckScreen(
     viewModel: AssignTruckViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val colorScheme = MaterialTheme.colorScheme
+    val extendedColors = FreightThemeTokens.colors
 
     Scaffold(
         topBar = {
@@ -44,10 +47,10 @@ fun AssignTruckScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = colorScheme.surface)
             )
         },
-        containerColor = Color(0xFFF5F5F5) // Light gray background
+        containerColor = colorScheme.background
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -61,28 +64,28 @@ fun AssignTruckScreen(
                 onValueChange = { viewModel.onEvent(AssignTruckEvent.UpdateQuery(it)) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White, RoundedCornerShape(12.dp)),
+                    .background(colorScheme.surface, RoundedCornerShape(12.dp)),
                 placeholder = { 
                     Text(
                         "Enter vehicle no. (e.g. KA01AB1234)",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xFF94A3B8)
+                        color = colorScheme.onSurfaceVariant
                     ) 
                 },
                 leadingIcon = { 
                     Icon(
                         Icons.Default.Search, 
                         contentDescription = "Search", 
-                        tint = Color(0xFF94A3B8)
+                        tint = colorScheme.onSurfaceVariant
                     ) 
                 },
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
-                    focusedBorderColor = Color(0xFFE2E8F0),
-                    unfocusedBorderColor = Color(0xFFE2E8F0),
-                    disabledBorderColor = Color(0xFFF1F5F9)
+                    focusedContainerColor = colorScheme.surface,
+                    unfocusedContainerColor = colorScheme.surface,
+                    focusedBorderColor = colorScheme.outlineVariant,
+                    unfocusedBorderColor = colorScheme.outlineVariant,
+                    disabledBorderColor = colorScheme.surfaceVariant
                 ),
                 singleLine = true
             )
@@ -99,12 +102,12 @@ fun AssignTruckScreen(
                     Text(
                         "SEARCH RESULTS",
                         style = MaterialTheme.typography.labelMedium,
-                        color = Color(0xFF64748B),
+                        color = colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Bold
                     )
                     Surface(
                         shape = RoundedCornerShape(8.dp),
-                        color = Color(0xFFE2E8F0)
+                        color = colorScheme.surfaceVariant
                     ) {
                         Text(
                             "${uiState.trucks.size} TRUCKS FOUND",
@@ -112,7 +115,7 @@ fun AssignTruckScreen(
                             style = MaterialTheme.typography.labelSmall,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF475569)
+                            color = colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -126,7 +129,7 @@ fun AssignTruckScreen(
                 }
             } else if (uiState.errorMessage != null) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(uiState.errorMessage!!, color = Color.Red)
+                    Text(uiState.errorMessage!!, color = colorScheme.error)
                 }
             } else {
                 LazyColumn(
@@ -151,14 +154,16 @@ fun TruckItem(
         truck.availability.lowercase() != "on_trip" &&
         truck.status.lowercase() != "inactive"
     val statusText = TruckStatus.from(truck).displayText
-    val statusColor = if (isEnabled) Color(0xFF22C55E) else Color(0xFFEF4444)
-    val buttonColor = if (isEnabled) Color(0xFF22C55E) else Color(0xFFE2E8F0)
-    val buttonContentColor = if (isEnabled) Color.White else Color(0xFF94A3B8)
+    val colorScheme = MaterialTheme.colorScheme
+    val extendedColors = FreightThemeTokens.colors
+    val statusColor = if (isEnabled) extendedColors.successColor else colorScheme.error
+    val buttonColor = if (isEnabled) extendedColors.successColor else colorScheme.surfaceVariant
+    val buttonContentColor = if (isEnabled) colorScheme.onPrimary else colorScheme.onSurfaceVariant
 
     Card(
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF1F5F9)),
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
+        border = androidx.compose.foundation.BorderStroke(1.dp, colorScheme.outlineVariant),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -170,14 +175,14 @@ fun TruckItem(
             // Truck Icon Box
             Surface(
                 shape = RoundedCornerShape(12.dp),
-                color = Color(0xFFF8FAFC),
+                color = colorScheme.surfaceVariant,
                 modifier = Modifier.size(48.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         Icons.Default.LocalShipping,
                         contentDescription = "Truck",
-                        tint = Color(0xFF64748B),
+                        tint = colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -192,13 +197,13 @@ fun TruckItem(
                         text = truck.registrationNumber,
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF1E293B)
+                        color = colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = truck.owner.tagCode,
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color(0xFF94A3B8)
+                        color = colorScheme.onSurfaceVariant
                     )
                 }
                 
@@ -207,13 +212,13 @@ fun TruckItem(
                 Text(
                     text = truck.displayName,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF64748B)
+                    color = colorScheme.onSurfaceVariant
                 )
                 
                 Text(
                     text = "Owner: ${truck.owner.name}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF64748B)
+                    color = colorScheme.onSurfaceVariant
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))

@@ -102,7 +102,7 @@ fun EditIndentScreen(
                 if (uiState.isSubmitting) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(20.dp).padding(end = 8.dp),
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onPrimary,
                         strokeWidth = 2.dp,
                     )
                 }

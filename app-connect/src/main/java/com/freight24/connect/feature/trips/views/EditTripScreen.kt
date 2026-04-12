@@ -17,6 +17,7 @@ import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,6 +31,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.connect.feature.trips.domain.viewmodel.EditTripEvent
 import com.freight24.connect.feature.trips.domain.viewmodel.EditTripViewModel
 import com.freight24.connect.feature.trips.domain.viewmodel.EditTripViewModelImpl
+import com.freight24.ui.theme.FreightThemeTokens
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,6 +46,8 @@ fun EditTripScreen(
     viewModel: EditTripViewModel = hiltViewModel<EditTripViewModelImpl>()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val colorScheme = MaterialTheme.colorScheme
+    val extendedColors = FreightThemeTokens.colors
     var isOptionalExpanded by remember { mutableStateOf(true) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -92,13 +96,13 @@ fun EditTripScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = colorScheme.surface)
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             Surface(
-                color = Color.White,
+                color = colorScheme.surface,
                 tonalElevation = 8.dp,
                 shadowElevation = 8.dp,
                 modifier = Modifier.fillMaxWidth()
@@ -110,11 +114,11 @@ fun EditTripScreen(
                             .fillMaxWidth()
                             .height(56.dp),
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF22C55E)), // Green as requested
+                        colors = ButtonDefaults.buttonColors(containerColor = extendedColors.successColor),
                         enabled = !uiState.isSaving && uiState.hasChanges
                     ) {
                         if (uiState.isSaving) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.White)
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = colorScheme.onPrimary)
                         } else {
                             Text(
                                 "Save Changes",
@@ -126,7 +130,7 @@ fun EditTripScreen(
                 }
             }
         },
-        containerColor = Color(0xFFF8FAFC)
+        containerColor = colorScheme.background
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             if (uiState.isLoading) {
@@ -142,7 +146,7 @@ fun EditTripScreen(
                     // Trip ID Card
                     Card(
                         shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
@@ -154,7 +158,7 @@ fun EditTripScreen(
                             Text(
                                 "Trip ID",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Color(0xFF64748B)
+                                color = colorScheme.onSurfaceVariant
                             )
 
                             Text(
@@ -162,7 +166,7 @@ fun EditTripScreen(
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.End,
-                                color = Color(0xFF1E293B),
+                                color = colorScheme.onSurface,
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -172,8 +176,8 @@ fun EditTripScreen(
                     val isTruckUpdated = uiState.truckNumber != uiState.initialTruckNumber
                     Card(
                         shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        border = if (isTruckUpdated) androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF22C55E)) else null,
+                        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
+                        border = if (isTruckUpdated) androidx.compose.foundation.BorderStroke(1.dp, extendedColors.successColor) else null,
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
@@ -195,14 +199,14 @@ fun EditTripScreen(
                         ) {
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = if (isTruckUpdated) Color(0xFFDCFCE7) else Color(0xFFF1F5F9),
+                                color = if (isTruckUpdated) extendedColors.successColor.copy(alpha = 0.12f) else colorScheme.surfaceVariant,
                                 modifier = Modifier.size(40.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
                                         Icons.Default.LocalShipping,
                                         contentDescription = null,
-                                        tint = if (isTruckUpdated) Color(0xFF22C55E) else Color(0xFF64748B),
+                                        tint = if (isTruckUpdated) extendedColors.successColor else colorScheme.onSurfaceVariant,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
@@ -213,19 +217,19 @@ fun EditTripScreen(
                                     Text(
                                         "Truck Number",
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = Color(0xFF94A3B8)
+                                        color = colorScheme.onSurfaceVariant
                                     )
                                     if (isTruckUpdated) {
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Surface(
-                                            color = Color(0xFFF0FDF4),
+                                            color = extendedColors.successColor.copy(alpha = 0.12f),
                                             shape = RoundedCornerShape(4.dp)
                                         ) {
                                             Text(
                                                 "Updated",
                                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                                 style = MaterialTheme.typography.labelSmall,
-                                                color = Color(0xFF22C55E),
+                                                color = extendedColors.successColor,
                                                 fontWeight = FontWeight.Bold
                                             )
                                         }
@@ -235,7 +239,7 @@ fun EditTripScreen(
                                     uiState.truckNumber,
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (isTruckUpdated) Color(0xFF22C55E) else Color(0xFF1E293B)
+                                    color = if (isTruckUpdated) extendedColors.successColor else colorScheme.onSurface
                                 )
                                 if (isTruckUpdated) {
                                     Text(
@@ -243,14 +247,14 @@ fun EditTripScreen(
                                         style = MaterialTheme.typography.bodySmall.copy(
                                             textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough
                                         ),
-                                        color = Color(0xFF94A3B8)
+                                        color = colorScheme.onSurfaceVariant
                                     )
                                 }
                             }
                             Icon(
                                 Icons.Default.ChevronRight,
                                 contentDescription = null,
-                                tint = Color(0xFF94A3B8)
+                                tint = colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -258,7 +262,7 @@ fun EditTripScreen(
                     // Basic Details Section
                     Card(
                         shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -266,7 +270,7 @@ fun EditTripScreen(
                                 "Driver Details",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF1E293B)
+                                color = colorScheme.onSurface
                             )
 
                             DetailInputField(
@@ -288,7 +292,7 @@ fun EditTripScreen(
                     // Optional Details Section
                     Card(
                         shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
@@ -302,12 +306,12 @@ fun EditTripScreen(
                                     "Cost Details",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF1E293B)
+                                    color = colorScheme.onSurface
                                 )
                                 Icon(
                                     if (isOptionalExpanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
                                     contentDescription = null,
-                                    tint = Color(0xFF64748B)
+                                    tint = colorScheme.onSurfaceVariant
                                 )
                             }
 
@@ -359,15 +363,13 @@ fun EditTripScreen(
                                             checked = uiState.luIncluded,
                                             onCheckedChange = { viewModel.onEvent(EditTripEvent.ToggleLuIncluded) },
                                             colors = CheckboxDefaults.colors(
-                                                checkedColor = Color(
-                                                    0xFF22C55E
-                                                )
-                                            ) // Green as requested
+                                                checkedColor = extendedColors.successColor
+                                            )
                                         )
                                         Text(
                                             "Loading & Unloading Charges Included",
                                             style = MaterialTheme.typography.bodyMedium,
-                                            color = Color(0xFF475569)
+                                            color = colorScheme.onSurfaceVariant
                                         )
                                     }
                                 }
@@ -393,7 +395,7 @@ fun DetailInputField(
         Text(
             label,
             style = MaterialTheme.typography.labelMedium,
-            color = Color(0xFF64748B)
+            color = colorScheme.onSurfaceVariant
         )
         OutlinedTextField(
             value = value,
@@ -401,13 +403,13 @@ fun DetailInputField(
             modifier = modifier.fillMaxWidth(),
             shape = RoundedCornerShape(8.dp),
             leadingIcon = {
-                Icon(leadingIcon, contentDescription = null, tint = Color(0xFF94A3B8), modifier = Modifier.size(20.dp))
+                Icon(leadingIcon, contentDescription = null, tint = colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
             },
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color(0xFFE2E8F0),
-                unfocusedBorderColor = Color(0xFFE2E8F0),
-                focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White
+                focusedBorderColor = colorScheme.outlineVariant,
+                unfocusedBorderColor = colorScheme.outlineVariant,
+                focusedContainerColor = colorScheme.surface,
+                unfocusedContainerColor = colorScheme.surface
             ),
             singleLine = singleLine
         )

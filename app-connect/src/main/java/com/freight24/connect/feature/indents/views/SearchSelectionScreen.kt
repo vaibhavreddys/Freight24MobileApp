@@ -64,6 +64,7 @@ fun SearchSelectionScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val focusRequester = remember { FocusRequester() }
+    val colorScheme = MaterialTheme.colorScheme
 
     val (title, hint) =
         when (searchType) {
@@ -85,7 +86,7 @@ fun SearchSelectionScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = colorScheme.surface)
             )
         },
     ) { paddingValues ->
@@ -100,7 +101,7 @@ fun SearchSelectionScreen(
                 modifier = Modifier.padding(start = 16.dp, top = 16.dp),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF22C55E)
+                color = colorScheme.primary
             )
             
             OutlinedTextField(
@@ -108,7 +109,7 @@ fun SearchSelectionScreen(
                 onValueChange = { newQuery ->
                     viewModel.onEvent(SearchSelectionEvent.OnQueryChange(newQuery, searchType))
                 },
-                placeholder = { Text("Type to search...", color = Color(0xFF94A3B8)) },
+                placeholder = { Text("Type to search...", color = colorScheme.onSurfaceVariant) },
                 modifier =
                     Modifier
                         .fillMaxWidth()
@@ -117,13 +118,13 @@ fun SearchSelectionScreen(
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
                 trailingIcon = {
-                    Icon(Icons.Default.Search, contentDescription = null, tint = Color(0xFF94A3B8))
+                    Icon(Icons.Default.Search, contentDescription = null, tint = colorScheme.onSurfaceVariant)
                 },
                 colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF22C55E),
-                    unfocusedBorderColor = Color(0xFFCBD5E1),
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White
+                    focusedBorderColor = colorScheme.primary,
+                    unfocusedBorderColor = colorScheme.outlineVariant,
+                    focusedContainerColor = colorScheme.surface,
+                    unfocusedContainerColor = colorScheme.surface
                 )
             )
 
@@ -147,7 +148,7 @@ fun SearchSelectionScreen(
                                 text = "Type at least 3 characters to search",
                                 modifier = Modifier.padding(16.dp),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Color.Gray,
+                                color = colorScheme.onSurfaceVariant,
                             )
                         }
                     } else if (uiState.results.isEmpty()) {
@@ -156,7 +157,7 @@ fun SearchSelectionScreen(
                                 text = "No results found",
                                 modifier = Modifier.padding(16.dp),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = Color.Gray,
+                                color = colorScheme.onSurfaceVariant,
                             )
                         }
                     } else {
@@ -208,11 +209,11 @@ private fun LocationListItem(
         supportingContent = {
             if (location.type.equals("area", true)) {
                 location.city?.let {
-                    Text(it, style = MaterialTheme.typography.bodySmall, color = Color(0xFF64748B))
+                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else {
                 location.state?.let {
-                    Text(it, style = MaterialTheme.typography.bodySmall, color = Color(0xFF64748B))
+                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         },
@@ -236,7 +237,7 @@ private fun ClientListItem(
                 Text(
                     text = client.tagCode,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF64748B)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 

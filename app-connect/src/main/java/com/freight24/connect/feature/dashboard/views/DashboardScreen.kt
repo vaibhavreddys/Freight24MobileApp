@@ -45,6 +45,7 @@ fun DashboardScreen(
     onRefresh: () -> Unit = { viewModel.onEvent(DashboardEvent.Refresh) }
 ) {
     val uiState = viewModel.uiState
+    val colorScheme = MaterialTheme.colorScheme
     val scrollState = rememberScrollState()
 
     PullToRefreshBox(
@@ -53,7 +54,7 @@ fun DashboardScreen(
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)
-            .background(Color(0xFFF8FAFC))
+            .background(colorScheme.background)
     ) {
         Box(
             modifier = Modifier.fillMaxSize()
@@ -120,6 +121,7 @@ fun AttentionNeededSection(
     onTripFilterClick: (TripTypes) -> Unit,
     onInterestInboxClick: () -> Unit,
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Column {
         SectionHeader("ATTENTION NEEDED")
         Spacer(modifier = Modifier.height(8.dp))
@@ -132,8 +134,8 @@ fun AttentionNeededSection(
                 modifier = Modifier.weight(1f),
                 title = "Trucker\nInterests",
                 value = "${attentionNeeded.truckerInterests} New Leads",
-                backgroundColor = Color(0xFFEAFBF3),
-                valueColor = Color(0xFF047857),
+                backgroundColor = colorScheme.primaryContainer,
+                valueColor = colorScheme.primary,
                 onClick = onInterestInboxClick
             )
             // Waiting for LR Card
@@ -141,8 +143,8 @@ fun AttentionNeededSection(
                 modifier = Modifier.weight(1f),
                 title = "Waiting for LR",
                 value = "${attentionNeeded.waitingForLR} Pending",
-                backgroundColor = Color(0xFFFFF7ED),
-                valueColor = Color(0xFFEA580C),
+                backgroundColor = colorScheme.tertiaryContainer,
+                valueColor = colorScheme.tertiary,
                 onClick = { onTripFilterClick(TripTypes.LR_NOT_UPLOADED) }
             )
             // Payment Enquiry (Mocked for UI)
@@ -150,8 +152,8 @@ fun AttentionNeededSection(
                 modifier = Modifier.weight(1f),
                 title = "Payment\nEnquiry",
                 value = "1 Urgent",
-                backgroundColor = Color(0xFFFEF2F2),
-                valueColor = Color(0xFFDC2626)
+                backgroundColor = colorScheme.errorContainer,
+                valueColor = colorScheme.error
             )
         }
     }
@@ -171,7 +173,7 @@ fun AttentionCard(
         modifier = modifier.clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
-        border = BorderStroke(1.dp, Color(0xFFF1F5F9)),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
@@ -181,7 +183,7 @@ fun AttentionCard(
             Text(
                 title,
                 style = MaterialTheme.typography.labelMedium,
-                color = Color(0xFF334155),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 lineHeight = 16.sp
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -207,9 +209,9 @@ fun IndentPulseSection(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            PulseCard(modifier = Modifier.weight(1f), title = "TOTAL", count = indentPulse.total.toString(), color = Color(0xFF1E293B))
-            PulseCard(modifier = Modifier.weight(1f), title = "CLOSED", count = indentPulse.closed.toString(), color = Color(0xFF16A34A))
-            PulseCard(modifier = Modifier.weight(1f), title = "OPEN", count = indentPulse.open.toString(), color = Color(0xFF2563EB), onClick = onOpenClick)
+            PulseCard(modifier = Modifier.weight(1f), title = "TOTAL", count = indentPulse.total.toString(), color = MaterialTheme.colorScheme.onSurface)
+            PulseCard(modifier = Modifier.weight(1f), title = "CLOSED", count = indentPulse.closed.toString(), color = MaterialTheme.colorScheme.primary)
+            PulseCard(modifier = Modifier.weight(1f), title = "OPEN", count = indentPulse.open.toString(), color = MaterialTheme.colorScheme.tertiary, onClick = onOpenClick)
         }
     }
 }
@@ -225,8 +227,8 @@ fun PulseCard(
     Card(
         modifier = modifier.clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(1.dp, Color(0xFFF1F5F9)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
@@ -236,7 +238,7 @@ fun PulseCard(
             Text(
                 title,
                 style = MaterialTheme.typography.labelMedium,
-                color = Color(0xFF64748B),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.SemiBold
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -260,8 +262,8 @@ fun ActiveTripsSection(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(1.dp, Color(0xFFF1F5F9))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row(
@@ -273,13 +275,13 @@ fun ActiveTripsSection(
                     "Active Trips",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF0F172A)
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     "${activeTrips.total} Total",
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF047857)
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
             Spacer(modifier = Modifier.height(24.dp))
@@ -287,9 +289,9 @@ fun ActiveTripsSection(
             // Progress Bars
             val safeTotal = if (activeTrips.total > 0) activeTrips.total.toFloat() else 1f
             
-            TripProgressRow("ASSIGNED", "${activeTrips.assigned} TRIP", activeTrips.assigned / safeTotal, Color(0xFF14B8A6), onAssignedClick)
-            TripProgressRow("LOADING", "${activeTrips.loading} TRIP", activeTrips.loading / safeTotal, Color(0xFFF97316), onLoadingClick)
-            TripProgressRow("IN-TRANSIT", "${activeTrips.inTransit} TRIPS", activeTrips.inTransit / safeTotal, Color(0xFF10B981), onInTransitClick)
+            TripProgressRow("ASSIGNED", "${activeTrips.assigned} TRIP", activeTrips.assigned / safeTotal, MaterialTheme.colorScheme.primary, onAssignedClick)
+            TripProgressRow("LOADING", "${activeTrips.loading} TRIP", activeTrips.loading / safeTotal, MaterialTheme.colorScheme.tertiary, onLoadingClick)
+            TripProgressRow("IN-TRANSIT", "${activeTrips.inTransit} TRIPS", activeTrips.inTransit / safeTotal, MaterialTheme.colorScheme.secondary, onInTransitClick)
         }
     }
 }
@@ -315,13 +317,13 @@ fun TripProgressRow(
             Text(
                 label,
                 style = MaterialTheme.typography.labelSmall,
-                color = Color(0xFF475569),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.SemiBold
             )
             Text(
                 countText,
                 style = MaterialTheme.typography.labelSmall,
-                color = Color(0xFF475569),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Medium
             )
         }
@@ -330,7 +332,7 @@ fun TripProgressRow(
             progress = { progress },
             modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)),
             color = color,
-            trackColor = Color(0xFFF1F5F9),
+            trackColor = MaterialTheme.colorScheme.outlineVariant,
         )
     }
 }
@@ -346,20 +348,20 @@ fun PendingActionsSection(
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             ActionCard(
                 icon = Icons.Default.Description,
-                iconBackgroundColor = Color(0xFFDCFCE7),
-                iconTintColor = Color(0xFF15803D),
+                iconBackgroundColor = MaterialTheme.colorScheme.primaryContainer,
+                iconTintColor = MaterialTheme.colorScheme.primary,
                 title = "LR waiting for review",
                 subtitle = "${pendingActions.lrReviews} documents pending",
-                badgeColor = Color(0xFF10B981),
+                badgeColor = MaterialTheme.colorScheme.primary,
                 onClick = { onTripFilterClick(TripTypes.LR_PENDING_REVIEW) }
             )
             ActionCard(
                 icon = Icons.Default.VerticalSplit, // A box icon placeholder
-                iconBackgroundColor = Color(0xFFFEE2E2),
-                iconTintColor = Color(0xFFB91C1C),
+                iconBackgroundColor = MaterialTheme.colorScheme.errorContainer,
+                iconTintColor = MaterialTheme.colorScheme.error,
                 title = "POD Follow-up",
                 subtitle = "${pendingActions.podFollowUp} action required",
-                badgeColor = Color(0xFFEF4444),
+                badgeColor = MaterialTheme.colorScheme.error,
                 onClick = { onTripFilterClick(TripTypes.WAITING_FOR_POD) }
             )
         }
@@ -379,8 +381,8 @@ fun ActionCard(
     Card(
         modifier = Modifier.fillMaxWidth().clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(1.dp, Color(0xFFF1F5F9))
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Row(
             modifier = Modifier.padding(16.dp).fillMaxWidth(),
@@ -397,24 +399,24 @@ fun ActionCard(
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color(0xFF1E293B)
-                )
-                Text(
-                    subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF64748B)
-                )
+            Text(
+                title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             }
             Spacer(modifier = Modifier.width(8.dp))
             Box(
                 modifier = Modifier.size(6.dp).background(badgeColor, CircleShape)
             )
             Spacer(modifier = Modifier.width(12.dp))
-            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = Color(0xFF94A3B8))
+            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -438,19 +440,19 @@ fun QuickActionsSection(
                 modifier = Modifier.weight(1f),
                 title = "Create Indent",
                 icon = Icons.Default.Add,
-                backgroundColor = Color.Transparent,
+                backgroundColor = null,
                 backgroundBrush = Brush.linearGradient(
-                    colors = listOf(Color(0xFF10B981), Color(0xFF0D9488))
+                    colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)
                 ),
-                contentColor = Color.White,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
                 onClick = onCreateIndentClick
             )
             QuickActionCard(
                 modifier = Modifier.weight(1f),
                 title = "Create Trip",
                 icon = Icons.Default.LocalShipping,
-                backgroundColor = Color.White,
-                contentColor = Color(0xFF0D9488),
+                backgroundColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.primary,
                 onClick = onCreateTripClick
             )
         }
@@ -463,8 +465,8 @@ fun QuickActionsSection(
                 modifier = Modifier.weight(1f),
                 title = "Interest Inbox",
                 icon = Icons.Default.Inbox,
-                backgroundColor = Color.White,
-                contentColor = Color(0xFFE11D48), // Pinkish red
+                backgroundColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.secondary,
                 badgeText = attentionNeeded.truckerInterests.toString(),
                 onClick = onInterestInboxClick
             )
@@ -472,8 +474,8 @@ fun QuickActionsSection(
                 modifier = Modifier.weight(1f),
                 title = "Verification Requests",
                 icon = Icons.Default.Shield,
-                backgroundColor = Color.White,
-                contentColor = Color(0xFF0D9488),
+                backgroundColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.primary,
                 onClick = onVerificationRequestsClick
             )
         }
@@ -485,21 +487,21 @@ fun QuickActionCard(
     modifier: Modifier = Modifier,
     title: String,
     icon: ImageVector,
-    backgroundColor: Color = Color.Transparent,
+    backgroundColor: Color? = null,
     backgroundBrush: Brush? = null,
     contentColor: Color,
     badgeText: String? = null,
     onClick: () -> Unit
 ) {
     Box(modifier = modifier) {
-        Card(
-            modifier = Modifier.fillMaxWidth().clickable { onClick() },
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = if (backgroundBrush != null) Color.Transparent else backgroundColor
-            ),
-            border = if (backgroundColor == Color.White) BorderStroke(1.dp, Color(0xFFE2E8F0)) else null
-        ) {
+            Card(
+                modifier = Modifier.fillMaxWidth().clickable { onClick() },
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (backgroundBrush != null) MaterialTheme.colorScheme.surface.copy(alpha = 0f) else backgroundColor ?: MaterialTheme.colorScheme.surface
+                ),
+            border = if (backgroundColor == MaterialTheme.colorScheme.surface) BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant) else null
+            ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -511,7 +513,7 @@ fun QuickActionCard(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Surface(
-                        color = if (backgroundColor == Color.White) Color(0xFFF1F5F9) else Color(0x33FFFFFF),
+                        color = if (backgroundColor == MaterialTheme.colorScheme.surface) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.12f),
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.size(48.dp)
                     ) {
@@ -536,12 +538,12 @@ fun QuickActionCard(
                     .size(24.dp)
                     .align(Alignment.TopEnd)
                     .offset(x = 6.dp, y = (-6).dp)
-                    .background(Color(0xFFEF4444), CircleShape)
+                    .background(MaterialTheme.colorScheme.error, CircleShape)
                     .padding(horizontal = 6.dp, vertical = 2.dp)
             ) {
                 Text(
                     badgeText,
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.onError,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.align(Alignment.Center)
@@ -556,7 +558,7 @@ fun SectionHeader(title: String) {
     Text(
         title,
         style = MaterialTheme.typography.labelMedium,
-        color = Color(0xFF64748B),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         fontWeight = FontWeight.SemiBold,
         letterSpacing = 1.sp,
         modifier = Modifier.padding(vertical = 8.dp)

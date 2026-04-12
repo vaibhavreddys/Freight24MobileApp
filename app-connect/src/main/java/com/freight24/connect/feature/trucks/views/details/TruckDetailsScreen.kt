@@ -45,6 +45,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -103,6 +104,7 @@ internal fun TruckDetailsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val isUploading by viewModel.isUploading.collectAsState()
+    val colorScheme = MaterialTheme.colorScheme
 
     LaunchedEffect(Unit) {
         viewModel.uploadSuccess.collect {
@@ -250,7 +252,7 @@ internal fun TruckDetailsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-                color = Color.Transparent
+                color = colorScheme.surface.copy(alpha = 0f)
             ) {
                 Button(
                     onClick = {
@@ -312,14 +314,14 @@ internal fun TruckDetailsScreen(
 
                         if (isUploading) {
                             Surface(
-                                color = Color.Black.copy(alpha = 0.5f),
+                                color = colorScheme.onSurface.copy(alpha = 0.5f),
                                 modifier = Modifier.fillMaxSize()
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        CircularProgressIndicator(color = Color.White)
+                                        CircularProgressIndicator(color = colorScheme.onPrimary)
                                         Spacer(Modifier.height(16.dp))
-                                        Text("Uploading Document...", color = Color.White)
+                                        Text("Uploading Document...", color = colorScheme.onPrimary)
                                     }
                                 }
                             }
@@ -506,8 +508,8 @@ private fun DocumentItem(
         DocumentStatus.Uploaded(
             id = doc!!.url!!,
             label = statusText,
-            backgroundColor = Color.Transparent, // Not used when chip is hidden
-            textColor = Color.Transparent,
+            backgroundColor = colorScheme.surface.copy(alpha = 0f), // Not used when chip is hidden
+            textColor = colorScheme.surface.copy(alpha = 0f),
             canReupload = statusText == "REJECTED" || statusText == "NOT UPLOADED"
         )
     } else {

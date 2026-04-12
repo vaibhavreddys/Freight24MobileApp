@@ -63,6 +63,7 @@ fun SearchIndentsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val focusRequester = remember { FocusRequester() }
+    val colorScheme = MaterialTheme.colorScheme
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
@@ -78,11 +79,11 @@ fun SearchIndentsScreen(
                         placeholder = { Text("Search by Client or Indent ID") },
                         singleLine = true,
                         colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            disabledContainerColor = Color.Transparent,
+                            focusedContainerColor = colorScheme.surface,
+                            unfocusedContainerColor = colorScheme.surface,
+                            disabledContainerColor = colorScheme.surface,
                             focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = MaterialTheme.colorScheme.surface.copy(alpha = 0f),
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
@@ -92,12 +93,12 @@ fun SearchIndentsScreen(
                             onSearch = { viewModel.onEvent(SearchIndentsEvent.PerformSearch) }
                         ),
                         leadingIcon = {
-                             Icon(Icons.Default.Search, contentDescription = "Search")
+                             Icon(Icons.Default.Search, contentDescription = "Search", tint = colorScheme.onSurfaceVariant)
                         },
                         trailingIcon = {
                             if (uiState.query.isNotEmpty()) {
                                 IconButton(onClick = { viewModel.onEvent(SearchIndentsEvent.UpdateQuery("")) }) {
-                                    Icon(Icons.Default.Close, contentDescription = "Clear")
+                                    Icon(Icons.Default.Close, contentDescription = "Clear", tint = colorScheme.onSurfaceVariant)
                                 }
                             }
                         }
@@ -130,6 +131,7 @@ fun SearchIndentsContent(
     onFilterChange: (SearchIndentsEvent.UpdateFilters) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Column(modifier = modifier.fillMaxSize()) {
         // Filters
         LazyRow(
@@ -202,7 +204,7 @@ fun SearchIndentsContent(
                     text = "No indents found",
                     modifier = Modifier.align(Alignment.Center),
                     style = MaterialTheme.typography.bodyLarge,
-                    color = Color.Gray
+                    color = colorScheme.onSurfaceVariant
                 )
             } else {
                 LazyColumn(

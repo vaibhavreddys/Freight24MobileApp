@@ -41,10 +41,11 @@ fun MoreBottomSheet(
     onLogout: () -> Unit
 ) {
     val isDark = isSystemInDarkTheme()
-    val brandGreen = Color(0xFF16A34A)
-    val softGreen = if (isDark) Color(0xFF1E2722) else Color(0xFFF1FDF6)
-    val tileStroke = if (isDark) Color(0xFF2C3530) else Color(0xFFD1FAE5)
-    val iconContainerColor = if (isDark) Color(0xFF2C3530) else Color(0xFFDCFCE7)
+    val colorScheme = MaterialTheme.colorScheme
+    val brandGreen = colorScheme.primary
+    val softGreen = colorScheme.surfaceVariant
+    val tileStroke = colorScheme.outlineVariant
+    val iconContainerColor = colorScheme.primaryContainer
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -53,7 +54,7 @@ fun MoreBottomSheet(
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
             )
         },
-        containerColor = if (isDark) MaterialTheme.colorScheme.surface else Color(0xFFF9FAFB),
+        containerColor = colorScheme.surface,
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         tonalElevation = 0.dp
     ) {
@@ -96,9 +97,9 @@ fun MoreBottomSheet(
                         containerColor = softGreen,
                         border = BorderStroke(1.dp, tileStroke),
                         contentPadding = tileContentPadding,
-                        iconContainerColor = if (isDark) iconContainerColor else Color(0xFFE0F2FE),
-                        iconTint = Color(0xFF0284C7),
-                        textColor = if (isDark) Color.White else Color(0xFF374151)
+                        iconContainerColor = colorScheme.primaryContainer,
+                        iconTint = colorScheme.primary,
+                        textColor = colorScheme.onSurface
                     )
                     QuickActionCard(
                         title = "Manage\nTrucks",
@@ -113,7 +114,7 @@ fun MoreBottomSheet(
                         contentPadding = tileContentPadding,
                         iconContainerColor = iconContainerColor,
                         iconTint = brandGreen,
-                        textColor = if (isDark) Color.White else Color(0xFF374151)
+                        textColor = colorScheme.onSurface
                     )
                     QuickActionCard(
                         title = "Manage\nTruck Owners",
@@ -126,9 +127,9 @@ fun MoreBottomSheet(
                         containerColor = softGreen,
                         border = BorderStroke(1.dp, tileStroke),
                         contentPadding = tileContentPadding,
-                        iconContainerColor = if (isDark) iconContainerColor else Color(0xFFFEF3C7),
-                        iconTint = Color(0xFFD97706),
-                        textColor = if (isDark) Color.White else Color(0xFF374151)
+                        iconContainerColor = colorScheme.tertiaryContainer,
+                        iconTint = colorScheme.tertiary,
+                        textColor = colorScheme.onSurface
                     )
                 }
             }
@@ -156,10 +157,10 @@ fun MoreBottomSheet(
                         onLogout()
                         onDismiss()
                     },
-                    iconContainerColor = Color(0x18FF4D6D),
-                    iconContainerBorder = BorderStroke(1.dp, Color(0x33FF4D6D)),
-                    iconTint = Color(0xFFFF4D6D),
-                    textColor = Color(0xFFFF4D6D)
+                    iconContainerColor = colorScheme.errorContainer,
+                    iconContainerBorder = BorderStroke(1.dp, colorScheme.error.copy(alpha = 0.2f)),
+                    iconTint = colorScheme.error,
+                    textColor = colorScheme.error
                 )
             }
         }

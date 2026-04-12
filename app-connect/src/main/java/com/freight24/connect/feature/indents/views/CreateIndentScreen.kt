@@ -402,18 +402,18 @@ fun LocationAutoComplete(
                 searchResults.forEach { location ->
                     DropdownMenuItem(
                         text = {
-                            Column {
-                                Text(location.name, style = MaterialTheme.typography.bodyLarge)
-                                if (location.type.equals("area", true)) {
-                                    location.city?.let {
-                                        Text(it, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                                    Column {
+                                        Text(location.name, style = MaterialTheme.typography.bodyLarge)
+                                        if (location.type.equals("area", true)) {
+                                            location.city?.let {
+                                        Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                            }
+                                        } else {
+                                            location.state?.let {
+                                        Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                            }
+                                        }
                                     }
-                                } else {
-                                    location.state?.let {
-                                        Text(it, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                                    }
-                                }
-                            }
                         },
                         onClick = {
                             onSelect(location)

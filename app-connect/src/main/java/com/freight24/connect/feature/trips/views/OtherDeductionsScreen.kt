@@ -36,6 +36,7 @@ fun OtherDeductionsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val colorScheme = MaterialTheme.colorScheme
 
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
@@ -58,7 +59,7 @@ fun OtherDeductionsScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = colorScheme.surface)
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -70,11 +71,11 @@ fun OtherDeductionsScreen(
                     .padding(16.dp)
                     .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                colors = ButtonDefaults.buttonColors(containerColor = colorScheme.primary),
                 enabled = !uiState.isLoading && uiState.hasChanges
             ) {
                 if (uiState.isLoading) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                    CircularProgressIndicator(color = colorScheme.onPrimary, modifier = Modifier.size(24.dp))
                 } else {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(20.dp))
@@ -84,7 +85,7 @@ fun OtherDeductionsScreen(
                 }
             }
         },
-        containerColor = Color(0xFFF8FAFC)
+        containerColor = colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
@@ -96,9 +97,9 @@ fun OtherDeductionsScreen(
         ) {
             // NOTE box
             Surface(
-                color = Color(0xFFECFDF5),
+                color = colorScheme.primaryContainer,
                 shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth().border(1.dp, Color(0xFFD1FAE5), RoundedCornerShape(12.dp))
+                modifier = Modifier.fillMaxWidth().border(1.dp, colorScheme.primary.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),
@@ -107,21 +108,21 @@ fun OtherDeductionsScreen(
                     Icon(
                         Icons.Default.Info,
                         contentDescription = null,
-                        tint = Color(0xFF10B981),
+                        tint = colorScheme.primary,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Column {
                         Text(
                             "NOTE",
-                            color = Color(0xFF10B981),
+                            color = colorScheme.primary,
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             "These are miscellaneous deductions subject to approval by the finance department. Please provide accurate details.",
-                            color = Color(0xFF1F2937),
+                            color = colorScheme.onSurface,
                             fontSize = 14.sp,
                             lineHeight = 20.sp
                         )
@@ -135,7 +136,7 @@ fun OtherDeductionsScreen(
                     "Deduction Amount",
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
-                    color = Color(0xFF1F2937)
+                    color = colorScheme.onSurface
                 )
                 OutlinedTextField(
                     value = uiState.amount,
@@ -143,15 +144,15 @@ fun OtherDeductionsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     placeholder = { Text("0.00") },
                     leadingIcon = {
-                        Text("₹", color = Color(0xFF10B981), fontWeight = FontWeight.Bold)
+                        Text("₹", color = colorScheme.primary, fontWeight = FontWeight.Bold)
                     },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF10B981),
-                        unfocusedBorderColor = Color(0xFFE2E8F0),
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White
+                        focusedBorderColor = colorScheme.primary,
+                        unfocusedBorderColor = colorScheme.outlineVariant,
+                        focusedContainerColor = colorScheme.surface,
+                        unfocusedContainerColor = colorScheme.surface
                     ),
                     singleLine = true
                 )
@@ -163,7 +164,7 @@ fun OtherDeductionsScreen(
                     "Reason for Deduction",
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
-                    color = Color(0xFF1F2937)
+                    color = colorScheme.onSurface
                 )
                 OutlinedTextField(
                     value = uiState.notes,
@@ -172,15 +173,15 @@ fun OtherDeductionsScreen(
                     placeholder = { 
                         Text(
                             "Enter the specific reason or notes for this deduction...",
-                            color = Color(0xFF94A3B8)
+                            color = colorScheme.onSurfaceVariant
                         ) 
                     },
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Color(0xFF10B981),
-                        unfocusedBorderColor = Color(0xFFE2E8F0),
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White
+                        focusedBorderColor = colorScheme.primary,
+                        unfocusedBorderColor = colorScheme.outlineVariant,
+                        focusedContainerColor = colorScheme.surface,
+                        unfocusedContainerColor = colorScheme.surface
                     ),
                     minLines = 4
                 )

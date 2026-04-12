@@ -30,6 +30,7 @@ import com.freight24.connect.feature.findTrucks.views.SearchResultsContent
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsEvent
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsViewModel
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsViewModelImpl
+import com.freight24.ui.theme.FreightThemeTokens
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,6 +43,8 @@ fun IndentDetailsScreen(
     viewModel: IndentDetailsViewModel = hiltViewModel<IndentDetailsViewModelImpl>()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val colorScheme = MaterialTheme.colorScheme
+    val extendedColors = FreightThemeTokens.colors
     val refreshTrigger = navController.currentBackStackEntry
         ?.savedStateHandle
         ?.getStateFlow("refresh", false)
@@ -99,7 +102,7 @@ fun IndentDetailsScreen(
                     if (uiState.isAssigning) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp).padding(end = 8.dp),
-                            color = Color.White,
+                            color = colorScheme.onPrimary,
                             strokeWidth = 2.dp
                         )
                     }
@@ -120,17 +123,17 @@ fun IndentDetailsScreen(
             title = { Text("Cancel Indent") },
             text = { Text("Are you sure you want to cancel this indent?") },
             confirmButton = {
-                Button(
-                    onClick = { viewModel.onEvent(IndentDetailsEvent.ConfirmCancel) },
-                    enabled = !uiState.isCanceling,
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE11D48))
-                ) {
-                    if (uiState.isCanceling) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp).padding(end = 8.dp),
-                            color = Color.White,
-                            strokeWidth = 2.dp
-                        )
+                    Button(
+                        onClick = { viewModel.onEvent(IndentDetailsEvent.ConfirmCancel) },
+                        enabled = !uiState.isCanceling,
+                        colors = ButtonDefaults.buttonColors(containerColor = colorScheme.error)
+                    ) {
+                        if (uiState.isCanceling) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp).padding(end = 8.dp),
+                                color = colorScheme.onError,
+                                strokeWidth = 2.dp
+                            )
                     }
                     Text("Yes, Cancel")
                 }
@@ -147,12 +150,12 @@ fun IndentDetailsScreen(
 
     if (uiState.isTruckerSheetVisible) {
         val sheetState = rememberModalBottomSheetState()
-        ModalBottomSheet(
-            onDismissRequest = { viewModel.onEvent(IndentDetailsEvent.HideTruckerSheet) },
-            sheetState = sheetState,
-            containerColor = Color.White,
-            dragHandle = { BottomSheetDefaults.DragHandle() }
-        ) {
+            ModalBottomSheet(
+                onDismissRequest = { viewModel.onEvent(IndentDetailsEvent.HideTruckerSheet) },
+                sheetState = sheetState,
+            containerColor = colorScheme.surface,
+                dragHandle = { BottomSheetDefaults.DragHandle() }
+            ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -170,28 +173,28 @@ fun IndentDetailsScreen(
                             text = "Interest Expressed",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF0F172A)
+                            color = colorScheme.onSurface
                         )
                         Text(
                             text = "${uiState.truckerList.size} truckers have shown interest",
                             style = MaterialTheme.typography.bodySmall,
-                            color = Color(0xFF64748B)
+                            color = colorScheme.onSurfaceVariant
                         )
                     }
                     IconButton(
                         onClick = { viewModel.onEvent(IndentDetailsEvent.HideTruckerSheet) },
-                        modifier = Modifier.background(Color(0xFFF1F5F9), CircleShape).size(32.dp)
+                        modifier = Modifier.background(colorScheme.surfaceVariant, CircleShape).size(32.dp)
                     ) {
                         Icon(
                             Icons.Default.Close,
                             contentDescription = "Close",
                             modifier = Modifier.size(18.dp),
-                            tint = Color(0xFF64748B)
+                            tint = colorScheme.onSurfaceVariant
                         )
                     }
                 }
 
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 0.5.dp, color = Color(0xFFE2E8F0))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), thickness = 0.5.dp, color = colorScheme.outlineVariant)
 
                 if (uiState.isTruckerListLoading) {
                     Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
@@ -199,7 +202,7 @@ fun IndentDetailsScreen(
                     }
                 } else if (uiState.truckerList.isEmpty()) {
                     Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-                        Text("No interests found", color = Color.Gray)
+                        Text("No interests found", color = colorScheme.onSurfaceVariant)
                     }
                 } else {
                     Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
@@ -221,12 +224,12 @@ fun IndentDetailsScreen(
 
     if (uiState.isSuitableTrucksSheetVisible) {
         val sheetState = rememberModalBottomSheetState()
-        ModalBottomSheet(
-            onDismissRequest = { viewModel.onEvent(IndentDetailsEvent.HideSuitableTrucksSheet) },
-            sheetState = sheetState,
-            containerColor = Color.White,
-            dragHandle = { BottomSheetDefaults.DragHandle() }
-        ) {
+            ModalBottomSheet(
+                onDismissRequest = { viewModel.onEvent(IndentDetailsEvent.HideSuitableTrucksSheet) },
+                sheetState = sheetState,
+            containerColor = colorScheme.surface,
+                dragHandle = { BottomSheetDefaults.DragHandle() }
+            ) {
             if (uiState.isSuitableTrucksLoading) {
                 Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
@@ -243,14 +246,14 @@ fun IndentDetailsScreen(
             TopAppBar(
                 title = { Text("Indent Details") },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color.Black
-                        )
-                    }
-                },
+                        IconButton(onClick = onBackClick) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                            tint = colorScheme.onSurface
+                            )
+                        }
+                    },
                 actions = {
                     uiState.indent?.let { indent ->
                         if (
@@ -258,20 +261,20 @@ fun IndentDetailsScreen(
                             || indent.status.equals("READY_FOR_ASSIGNMENT", true)
                         ) {
                             IconButton(onClick = { menuExpanded = true }) {
-                                Icon(Icons.Default.MoreVert, contentDescription = "More options", tint = Color.Black)
+                                Icon(Icons.Default.MoreVert, contentDescription = "More options", tint = colorScheme.onSurface)
                             }
                             DropdownMenu(
                                 expanded = menuExpanded,
                                 onDismissRequest = { menuExpanded = false },
-                                modifier = Modifier.background(Color.White)
+                                modifier = Modifier.background(colorScheme.surface)
                             ) {
                                 DropdownMenuItem(
-                                    text = { Text("Cancel Indent", color = Color(0xFFE11D48)) },
+                                    text = { Text("Cancel Indent", color = colorScheme.error) },
                                     leadingIcon = {
                                         Icon(
                                             Icons.Outlined.Delete,
                                             contentDescription = "Cancel Indent",
-                                            tint = Color(0xFFE11D48)
+                                            tint = colorScheme.error
                                         )
                                     },
                                     onClick = {
@@ -283,7 +286,7 @@ fun IndentDetailsScreen(
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = colorScheme.surface)
             )
         },
         bottomBar = {
@@ -295,17 +298,17 @@ fun IndentDetailsScreen(
                         Button(
                             onClick = { viewModel.onEvent(IndentDetailsEvent.ShowAssignDialog) },
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981))
+                            colors = ButtonDefaults.buttonColors(containerColor = extendedColors.successColor)
                         ) {
-                            Text("Ready for Assignment", color = Color.White)
+                            Text("Ready for Assignment", color = colorScheme.onPrimary)
                         }
                     } else if (indent.status.equals("READY_FOR_ASSIGNMENT", true)) {
                         Button(
                             onClick = { onCreateTripClick(indentId) },
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981))
+                            colors = ButtonDefaults.buttonColors(containerColor = extendedColors.successColor)
                         ) {
-                            Text("Create trip", color = Color.White)
+                            Text("Create trip", color = colorScheme.onPrimary)
                         }
                     } else if (!indent.status.equals("CANCELLED", true)) {
                         Button(
@@ -334,7 +337,7 @@ fun IndentDetailsScreen(
                         modifier = Modifier.align(Alignment.Center).padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(text = uiState.errorMessage ?: "Unknown Error", color = Color.Red)
+                        Text(text = uiState.errorMessage ?: "Unknown Error", color = colorScheme.error)
                         Spacer(modifier = Modifier.height(8.dp))
                         Button(onClick = { viewModel.onEvent(IndentDetailsEvent.Refresh) }) {
                             Text("Retry")

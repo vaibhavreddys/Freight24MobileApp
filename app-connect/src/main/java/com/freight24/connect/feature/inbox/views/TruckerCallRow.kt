@@ -26,11 +26,6 @@ import androidx.compose.ui.unit.sp
 import com.freight24.common.util.DateTimeUtils
 import com.freight24.ui.components.rememberCallAction
 
-private val GreenBrand = Color(0xFF10B981)
-private val RedClose = Color(0xFFEF4444)
-private val TextDark = Color(0xFF0F172A)
-private val TextGrey = Color(0xFF64748B)
-
 @Composable
 fun TruckerCallRow(
     name: String,
@@ -39,6 +34,7 @@ fun TruckerCallRow(
     onReject: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     val makeCall = rememberCallAction(phone)
     val relativeTime = remember(expressedAt) { DateTimeUtils.formatRelativeTime(expressedAt) }
 
@@ -52,14 +48,14 @@ fun TruckerCallRow(
         Box(
             modifier = Modifier
                 .size(40.dp)
-                .background(Color(0xFFE2E8F0), CircleShape),
+                .background(colorScheme.surfaceVariant, CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = name.firstOrNull()?.uppercaseChar()?.toString() ?: "?",
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
-                color = TextDark
+                color = colorScheme.onSurface
             )
         }
 
@@ -70,12 +66,12 @@ fun TruckerCallRow(
                 text = name,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
-                color = TextDark
+                color = colorScheme.onSurface
             )
             Text(
                 text = "Interested $relativeTime",
                 style = MaterialTheme.typography.labelSmall,
-                color = TextGrey
+                color = colorScheme.onSurfaceVariant
             )
         }
 
@@ -85,18 +81,18 @@ fun TruckerCallRow(
         Button(
             onClick = { makeCall() },
             shape = RoundedCornerShape(8.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = GreenBrand),
+            colors = ButtonDefaults.buttonColors(containerColor = colorScheme.primary),
             modifier = Modifier.height(36.dp),
             contentPadding = PaddingValues(horizontal = 12.dp)
         ) {
             Icon(
                 Icons.Outlined.Call,
                 contentDescription = "Call",
-                tint = Color.White,
+                tint = colorScheme.onPrimary,
                 modifier = Modifier.size(16.dp)
             )
             Spacer(Modifier.width(6.dp))
-            Text("Call", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Text("Call", color = colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
         }
 
         if (onReject != null) {
@@ -104,14 +100,14 @@ fun TruckerCallRow(
             Surface(
                 onClick = onReject,
                 shape = RoundedCornerShape(8.dp),
-                color = Color(0xFFFEF2F2),
+                color = colorScheme.errorContainer,
                 modifier = Modifier.size(36.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         Icons.Default.Close,
                         contentDescription = "Reject",
-                        tint = RedClose,
+                        tint = colorScheme.error,
                         modifier = Modifier.size(18.dp)
                     )
                 }

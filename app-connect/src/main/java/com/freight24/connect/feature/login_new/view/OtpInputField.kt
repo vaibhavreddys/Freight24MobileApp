@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.freight24.ui.theme.FreightThemeTokens
 
 @Composable
 fun OtpInputField(
@@ -43,6 +44,7 @@ fun OtpInputField(
     onOtpChange: (String) -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
+    val extendedColors = FreightThemeTokens.colors
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
     val shakeOffset = remember { Animatable(0f) }
@@ -90,12 +92,12 @@ fun OtpInputField(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
             singleLine = true,
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                disabledContainerColor = Color.Transparent,
-                cursorColor = Color.Transparent,
+                focusedContainerColor = colors.surface.copy(alpha = 0f),
+                unfocusedContainerColor = colors.surface.copy(alpha = 0f),
+                focusedIndicatorColor = colors.surface.copy(alpha = 0f),
+                unfocusedIndicatorColor = colors.surface.copy(alpha = 0f),
+                disabledContainerColor = colors.surface.copy(alpha = 0f),
+                cursorColor = colors.primary,
             ),
         )
     }
@@ -129,18 +131,18 @@ fun OtpInputField(
                         .size(48.dp)
                         .background(
                             when {
-                                isFilled -> Color(0xFFFFFFFF)
-                                isActive -> Color(0xFFE6FFFA)
-                                else -> Color(0xFFE5E7EB)
+                                isFilled -> colors.surface
+                                isActive -> extendedColors.successColor.copy(alpha = 0.12f)
+                                else -> colors.surfaceVariant
                             },
                             CircleShape
                         )
                         .border(
                             width = if (isActive) 2.dp else if (isFilled) 1.dp else 0.dp,
                             color = when {
-                                isActive -> Color(0xFF38B2AC)
-                                isFilled -> Color(0xFFD1D5DB)
-                                else -> Color.Transparent
+                                isActive -> extendedColors.successColor
+                                isFilled -> colors.outlineVariant
+                                else -> colors.surface.copy(alpha = 0f)
                             },
                             shape = CircleShape
                         ),
@@ -151,14 +153,14 @@ fun OtpInputField(
                             text = char,
                             fontSize = 22.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF111827)
+                            color = colors.onSurface
                         )
                     } else {
                         Box(
                             modifier = Modifier
                                 .size(if (isActive) 8.dp else 6.dp)
                                 .background(
-                                    if (isActive) Color(0xFF38B2AC) else Color(0xFF9CA3AF),
+                                    if (isActive) extendedColors.successColor else colors.onSurfaceVariant,
                                     CircleShape
                                 )
                         )

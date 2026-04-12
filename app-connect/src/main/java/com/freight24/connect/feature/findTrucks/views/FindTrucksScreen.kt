@@ -61,6 +61,7 @@ fun FindTrucksScreen(
     viewModel: FindTrucksViewModel = hiltViewModel<FindTrucksViewModelImpl>()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val colorScheme = MaterialTheme.colorScheme
     val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
 
@@ -105,7 +106,7 @@ fun FindTrucksScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                 border = CardDefaults.outlinedCardBorder()
             ) {
@@ -113,16 +114,16 @@ fun FindTrucksScreen(
                     LocationItem(
                         label = "Loading Point",
                         location = uiState.loadingLocation,
-                        iconColor = Color(0xFF22C55E),
+                        iconColor = colorScheme.primary,
                         onClick = { onNavigateToSearch(SearchType.LOCATION_FROM.name) }
                     )
                     
-                    HorizontalDivider(color = Color(0xFFE2E8F0))
+                    HorizontalDivider(color = colorScheme.outlineVariant)
                     
                     LocationItem(
                         label = "Unloading Point",
                         location = uiState.unloadingLocation,
-                        iconColor = Color(0xFFEF4444),
+                        iconColor = colorScheme.secondary,
                         isOptional = true,
                         onClick = { onNavigateToSearch(SearchType.LOCATION_TO.name) }
                     )
@@ -135,7 +136,7 @@ fun FindTrucksScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
                 border = CardDefaults.outlinedCardBorder()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -155,13 +156,13 @@ fun FindTrucksScreen(
                             if (uiState.selectedTruckType != null) {
                                 Text(
                                     uiState.selectedTruckType?.displayName ?: "",
-                                    color = Color(0xFF22C55E),
+                                    color = colorScheme.primary,
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                             } else {
                                 Text(
                                     "Select truck type",
-                                    color = Color(0xFF64748B),
+                                    color = colorScheme.onSurfaceVariant,
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                             }
@@ -172,7 +173,7 @@ fun FindTrucksScreen(
                                     Icon(
                                         Icons.Default.Close,
                                         contentDescription = "Clear",
-                                        tint = Color(0xFF94A3B8),
+                                        tint = colorScheme.onSurfaceVariant,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
@@ -180,7 +181,7 @@ fun FindTrucksScreen(
                             Icon(
                                 if (isTruckSectionExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                                 contentDescription = null,
-                                tint = Color(0xFF94A3B8)
+                                tint = colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -205,15 +206,15 @@ fun FindTrucksScreen(
                     .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF22C55E),
-                    disabledContainerColor = Color(0xFFCBD5E1)
+                    containerColor = colorScheme.primary,
+                    disabledContainerColor = colorScheme.surfaceVariant
                 ),
                 enabled = uiState.loadingLocation != null && uiState.selectedTruckType != null && !uiState.isSearching
             ) {
                 if (uiState.isSearching) {
-                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                    CircularProgressIndicator(color = colorScheme.onPrimary, modifier = Modifier.size(24.dp))
                 } else {
-                    Text("Search Trucks", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text("Search Trucks", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = colorScheme.onPrimary)
                 }
             }
         }
@@ -223,7 +224,7 @@ fun FindTrucksScreen(
             ModalBottomSheet(
                 onDismissRequest = { viewModel.onEvent(FindTrucksEvent.DismissResults) },
                 sheetState = sheetState,
-                containerColor = Color.White,
+                containerColor = colorScheme.surface,
                 dragHandle = { BottomSheetDefaults.DragHandle() }
             ) {
                 SearchResultsContent(uiState.searchResults)
@@ -253,6 +254,7 @@ fun LocationItem(
     isOptional: Boolean = false,
     onClick: () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -264,7 +266,7 @@ fun LocationItem(
         Surface(
             modifier = Modifier.size(40.dp),
             shape = CircleShape,
-            color = iconColor.copy(alpha = 0.1f)
+            color = iconColor.copy(alpha = 0.12f)
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
@@ -281,13 +283,13 @@ fun LocationItem(
                 Text(
                     label,
                     style = MaterialTheme.typography.labelMedium,
-                    color = Color(0xFF64748B)
+                    color = colorScheme.onSurfaceVariant
                 )
                 if (isOptional) {
                     Text(
                         " • Optional",
                         style = MaterialTheme.typography.labelMedium,
-                        color = Color(0xFF94A3B8)
+                        color = colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
                     )
                 }
             }
@@ -295,7 +297,7 @@ fun LocationItem(
                 text = location?.name ?: "Tap to select",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = if (location != null) FontWeight.Bold else FontWeight.Medium,
-                color = if (location != null) Color(0xFF0F172A) else Color(0xFF94A3B8)
+                color = if (location != null) colorScheme.onSurface else colorScheme.onSurfaceVariant
             )
 
             if (location != null) {
@@ -303,7 +305,7 @@ fun LocationItem(
                 Text(
                     locationName,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF64748B)
+                    color = colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -311,7 +313,7 @@ fun LocationItem(
         Icon(
             Icons.Default.Search,
             contentDescription = null,
-            tint = Color(0xFFCBD5E1),
+            tint = colorScheme.outlineVariant,
             modifier = Modifier.size(24.dp)
         )
     }
@@ -344,11 +346,12 @@ fun TruckCategorySection(
     selectedId: String?,
     onSelect: (TruckTypeDto) -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             title,
             style = MaterialTheme.typography.labelMedium,
-            color = Color(0xFF64748B),
+            color = colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.SemiBold
         )
         FlowRow(
@@ -369,6 +372,7 @@ fun TruckCategorySection(
 
 @Composable
 fun SearchResultsContent(data: SearchTruckerResponse.TruckerData?) {
+    val colorScheme = MaterialTheme.colorScheme
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -384,17 +388,17 @@ fun SearchResultsContent(data: SearchTruckerResponse.TruckerData?) {
                 "Search Results",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF0F172A)
+                color = colorScheme.onSurface
             )
             Surface(
-                color = Color(0xFFDCFCE7),
+                color = colorScheme.primaryContainer,
                 shape = RoundedCornerShape(20.dp)
             ) {
                 Text(
                     "${data?.totalOwners ?: 0} TRUCKERS FOUND",
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color(0xFF15803D),
+                    color = colorScheme.primary,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -407,10 +411,10 @@ fun SearchResultsContent(data: SearchTruckerResponse.TruckerData?) {
                         Icons.Default.Search,
                         contentDescription = null,
                         modifier = Modifier.size(48.dp),
-                        tint = Color(0xFFCBD5E1)
+                        tint = colorScheme.outlineVariant
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    Text("No trucks found for this criteria", color = Color(0xFF64748B))
+                    Text("No trucks found for this criteria", color = colorScheme.onSurfaceVariant)
                 }
             }
         } else {
@@ -426,14 +430,15 @@ fun SearchResultsContent(data: SearchTruckerResponse.TruckerData?) {
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TruckerResultItem(trucker: SearchTruckerResponse.Trucker) {
+    val colorScheme = MaterialTheme.colorScheme
     var isExpanded by remember { mutableStateOf(false) }
     val makeCall = rememberCallAction(trucker.phone)
 
     Card(
         modifier = Modifier.fillMaxWidth().clickable { isExpanded = !isExpanded },
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
+        border = BorderStroke(1.dp, colorScheme.outlineVariant)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(
@@ -449,11 +454,11 @@ fun TruckerResultItem(trucker: SearchTruckerResponse.Trucker) {
                             trucker.name,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = Color(0xFF0F172A)
+                            color = colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Surface(
-                            color = Color(0xFFFFF7ED),
+                            color = colorScheme.tertiaryContainer,
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Row(
@@ -463,7 +468,7 @@ fun TruckerResultItem(trucker: SearchTruckerResponse.Trucker) {
                                 Icon(
                                     Icons.Outlined.WorkspacePremium,
                                     contentDescription = null,
-                                    tint = Color(0xFFC2410C),
+                                    tint = colorScheme.tertiary,
                                     modifier = Modifier.size(14.dp)
                                 )
                                 Spacer(modifier = Modifier.width(2.dp))
@@ -471,7 +476,7 @@ fun TruckerResultItem(trucker: SearchTruckerResponse.Trucker) {
                                     trucker.score,
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFFC2410C)
+                                    color = colorScheme.tertiary
                                 )
                             }
                         }
@@ -480,7 +485,7 @@ fun TruckerResultItem(trucker: SearchTruckerResponse.Trucker) {
                     Text(
                         "${trucker.trucks.size} ${if (trucker.trucks.size == 1) "truck" else "trucks"}",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xFF64748B)
+                        color = colorScheme.onSurfaceVariant
                     )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -491,13 +496,13 @@ fun TruckerResultItem(trucker: SearchTruckerResponse.Trucker) {
                         Icon(
                             Icons.Outlined.Call,
                             contentDescription = "Call",
-                            tint = Color(0xFF16A34A),
+                            tint = colorScheme.primary,
                             modifier = Modifier.size(20.dp)
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Surface(
-                        color = Color(0xFFF1F5F9),
+                        color = colorScheme.surfaceVariant,
                         shape = CircleShape,
                         modifier = Modifier.size(36.dp)
                     ) {
@@ -505,7 +510,7 @@ fun TruckerResultItem(trucker: SearchTruckerResponse.Trucker) {
                             Icon(
                                 if (isExpanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
                                 contentDescription = "Expand",
-                                tint = Color(0xFF1E293B),
+                                tint = colorScheme.onSurface,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -514,7 +519,7 @@ fun TruckerResultItem(trucker: SearchTruckerResponse.Trucker) {
             }
 
             if (isExpanded) {
-                HorizontalDivider(color = Color(0xFFE2E8F0))
+                HorizontalDivider(color = colorScheme.outlineVariant)
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
                 ) {
@@ -527,15 +532,15 @@ fun TruckerResultItem(trucker: SearchTruckerResponse.Trucker) {
                         ) {
                             Surface(
                                 shape = RoundedCornerShape(12.dp),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE2E8F0)),
-                                color = Color.White,
+                                border = androidx.compose.foundation.BorderStroke(1.dp, colorScheme.outlineVariant),
+                                color = colorScheme.surface,
                                 modifier = Modifier.size(48.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
                                         Icons.Outlined.LocalShipping,
                                         contentDescription = null,
-                                        tint = Color(0xFF475569),
+                                        tint = colorScheme.onSurfaceVariant,
                                         modifier = Modifier.size(24.dp)
                                     )
                                 }
@@ -549,11 +554,11 @@ fun TruckerResultItem(trucker: SearchTruckerResponse.Trucker) {
                                         truck.registrationNumber,
                                         style = MaterialTheme.typography.titleMedium,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF0F172A)
+                                        color = colorScheme.onSurface
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Surface(
-                                        color = Color(0xFFDCFCE7),
+                                        color = colorScheme.primaryContainer,
                                         shape = RoundedCornerShape(12.dp)
                                     ) {
                                         Row(
@@ -563,7 +568,7 @@ fun TruckerResultItem(trucker: SearchTruckerResponse.Trucker) {
                                             Icon(
                                                 Icons.Outlined.WorkspacePremium,
                                                 contentDescription = null,
-                                                tint = Color(0xFF16A34A),
+                                                tint = colorScheme.primary,
                                                 modifier = Modifier.size(14.dp)
                                             )
                                             Spacer(modifier = Modifier.width(2.dp))
@@ -571,7 +576,7 @@ fun TruckerResultItem(trucker: SearchTruckerResponse.Trucker) {
                                                 truck.score,
                                                 style = MaterialTheme.typography.labelMedium,
                                                 fontWeight = FontWeight.Bold,
-                                                color = Color(0xFF16A34A)
+                                                color = colorScheme.primary
                                             )
                                         }
                                     }
@@ -585,14 +590,14 @@ fun TruckerResultItem(trucker: SearchTruckerResponse.Trucker) {
                                     ) {
                                         truck.matchReasons.forEach { reason ->
                                             Surface(
-                                                color = Color(0xFFDCFCE7),
+                                                color = colorScheme.primaryContainer,
                                                 shape = RoundedCornerShape(8.dp)
                                             ) {
                                                 Text(
                                                     reason,
                                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                                                     style = MaterialTheme.typography.labelMedium,
-                                                    color = Color(0xFF16A34A),
+                                                    color = colorScheme.primary,
                                                     fontWeight = FontWeight.Medium
                                                 )
                                             }
@@ -607,13 +612,13 @@ fun TruckerResultItem(trucker: SearchTruckerResponse.Trucker) {
                                 Icon(
                                     Icons.Default.ChevronRight,
                                     contentDescription = null,
-                                    tint = Color(0xFF16A34A)
+                                    tint = colorScheme.primary
                                 )
                             }
                         }
                         if (index < trucker.trucks.size - 1) {
                             HorizontalDivider(
-                                color = Color(0xFFE2E8F0), 
+                                color = colorScheme.outlineVariant,
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                             )
                         }

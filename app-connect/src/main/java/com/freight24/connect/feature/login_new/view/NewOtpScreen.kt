@@ -36,6 +36,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.activity.compose.BackHandler
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -54,16 +55,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.connect.feature.login_new.viewmodel.NewOtpViewModel
 import com.freight24.ui.UiState
 import com.freight24.ui.theme.Freight24Theme
+import com.freight24.ui.theme.FreightThemeTokens
 
 // Gradients matching the Login Screen
-private val headerGradient = Brush.verticalGradient(
-    colors = listOf(Color(0xFF4FD1C5), Color(0xFFA7F3D0))
-)
-
-private val buttonGradient = Brush.horizontalGradient(
-    colors = listOf(Color(0xFF2FBD6C), Color(0xFF51D37C))
-)
-
 @Composable
 fun NewOtpScreen(
     phoneNumber: String,
@@ -106,6 +100,15 @@ fun NewOtpScreen(
     }
 
     Freight24Theme {
+        val colorScheme = MaterialTheme.colorScheme
+        val extendedColors = FreightThemeTokens.colors
+        val headerGradient = Brush.verticalGradient(
+            colors = listOf(colorScheme.primary, extendedColors.infoColor)
+        )
+        val buttonGradient = Brush.horizontalGradient(
+            colors = listOf(colorScheme.primary, extendedColors.successColor)
+        )
+
         Scaffold(
             modifier = Modifier
                 .fillMaxSize()
@@ -115,7 +118,7 @@ fun NewOtpScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(contentPadding)
-                    .background(Color(0xFFF3F4F6)),
+                    .background(colorScheme.background),
             ) {
                 Column(
                     modifier = Modifier
@@ -140,7 +143,7 @@ fun NewOtpScreen(
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(32.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
                             elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
                         ) {
                             Column(
@@ -154,7 +157,7 @@ fun NewOtpScreen(
                                     text = "Verify Phone Number",
                                     fontSize = 24.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF111827)
+                                    color = colorScheme.onSurface
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -162,13 +165,13 @@ fun NewOtpScreen(
                                 Text(
                                     text = "Enter the 6-digit code sent to",
                                     fontSize = 14.sp,
-                                    color = Color(0xFF6B7280)
+                                    color = colorScheme.onSurfaceVariant
                                 )
                                 Text(
                                     text = "+91 ${formatPhoneDisplay(phoneNumber)}",
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.SemiBold,
-                                    color = Color(0xFF111827)
+                                    color = colorScheme.onSurface
                                 )
                                 Spacer(modifier = Modifier.height(8.dp))
 
@@ -181,13 +184,13 @@ fun NewOtpScreen(
                                         Icon(
                                             imageVector = Icons.Filled.Edit,
                                             contentDescription = null,
-                                            tint = Color(0xFF0F7A42),
+                                            tint = extendedColors.successColor,
                                             modifier = Modifier.size(16.dp)
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text(
                                             text = "Wrong number?",
-                                            color = Color(0xFF0F7A42),
+                                            color = extendedColors.successColor,
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.SemiBold
                                         )
@@ -210,20 +213,20 @@ fun NewOtpScreen(
                                 // Timer Badge
                                 Box(
                                     modifier = Modifier
-                                        .background(Color(0xFFFEF2F2), RoundedCornerShape(18.dp))
+                                        .background(colorScheme.errorContainer, RoundedCornerShape(18.dp))
                                         .padding(horizontal = 16.dp, vertical = 8.dp)
                                 ) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Icon(
                                             imageVector = Icons.Filled.Timer,
                                             contentDescription = null,
-                                            tint = Color(0xFFDC2626),
+                                            tint = colorScheme.error,
                                             modifier = Modifier.size(16.dp)
                                         )
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Text(
                                             text = verificationSecondsRemaining.toMmSs(),
-                                            color = Color(0xFFDC2626),
+                                            color = colorScheme.error,
                                             fontSize = 15.sp,
                                             fontWeight = FontWeight.Bold
                                         )
@@ -239,12 +242,12 @@ fun NewOtpScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(56.dp)
-                                        .background(buttonGradient, RoundedCornerShape(28.dp)),
+                                    .background(buttonGradient, RoundedCornerShape(28.dp)),
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = Color.Transparent,
-                                        contentColor = Color.White,
-                                        disabledContainerColor = Color.Transparent,
-                                        disabledContentColor = Color.White.copy(alpha = 0.7f)
+                                        containerColor = colorScheme.surface.copy(alpha = 0f),
+                                        contentColor = colorScheme.onPrimary,
+                                        disabledContainerColor = colorScheme.surface.copy(alpha = 0f),
+                                        disabledContentColor = colorScheme.onPrimary.copy(alpha = 0.7f)
                                     ),
                                     shape = RoundedCornerShape(28.dp),
                                     elevation = ButtonDefaults.buttonElevation(
@@ -270,13 +273,13 @@ fun NewOtpScreen(
                                         Icon(
                                             imageVector = Icons.Filled.Refresh,
                                             contentDescription = null,
-                                            tint = if (isResendEnabled) Color(0xFF0F7A42) else Color(0xFF9CA3AF),
+                                            tint = if (isResendEnabled) extendedColors.successColor else colorScheme.onSurfaceVariant,
                                             modifier = Modifier.size(16.dp)
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text(
                                             text = if (isResendEnabled) "Resend OTP" else "Resend OTP in ${resendSecondsRemaining}s",
-                                            color = if (isResendEnabled) Color(0xFF0F7A42) else Color(0xFF9CA3AF),
+                                            color = if (isResendEnabled) extendedColors.successColor else colorScheme.onSurfaceVariant,
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.Medium
                                         )
@@ -297,7 +300,7 @@ fun NewOtpScreen(
                     ) {
                         Text(
                             text = "Having trouble with verification?",
-                            color = Color(0xFF4B5563),
+                            color = colorScheme.onSurfaceVariant,
                             fontSize = 14.sp
                         )
                         Spacer(modifier = Modifier.height(12.dp))
@@ -305,7 +308,7 @@ fun NewOtpScreen(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(Color(0xFFFFFFFF), RoundedCornerShape(16.dp))
+                                .background(colorScheme.surface, RoundedCornerShape(16.dp))
                                 .clickable { dialSupport(context) }
                                 .padding(horizontal = 16.dp, vertical = 14.dp)
                         ) {
@@ -313,13 +316,13 @@ fun NewOtpScreen(
                                 Box(
                                     modifier = Modifier
                                         .size(36.dp)
-                                        .background(Color(0xFFECFDF5), CircleShape),
+                                        .background(extendedColors.successColor.copy(alpha = 0.12f), CircleShape),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = Icons.Filled.LocalPhone,
                                         contentDescription = null,
-                                        tint = Color(0xFF0F7A42),
+                                        tint = extendedColors.successColor,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
@@ -328,12 +331,12 @@ fun NewOtpScreen(
                                     Text(
                                         text = "CALL SUPPORT",
                                         fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF1F2937),
+                                        color = colorScheme.onSurface,
                                         fontSize = 14.sp
                                     )
                                     Text(
                                         text = "Instant help",
-                                        color = Color(0xFF6B7280),
+                                        color = colorScheme.onSurfaceVariant,
                                         fontSize = 12.sp
                                     )
                                 }

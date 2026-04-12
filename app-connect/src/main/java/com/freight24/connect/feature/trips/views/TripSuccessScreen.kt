@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.freight24.ui.theme.FreightThemeTokens
 
 @Composable
 fun TripSuccessScreen(
@@ -29,8 +30,11 @@ fun TripSuccessScreen(
     onGoToTripsClick: () -> Unit,
     onBackToDashboardClick: () -> Unit
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+    val extendedColors = FreightThemeTokens.colors
+
     Surface(
-        color = Color.White,
+        color = colorScheme.background,
         modifier = Modifier.fillMaxSize()
     ) {
         Column(
@@ -49,19 +53,19 @@ fun TripSuccessScreen(
             Box(
                 modifier = Modifier
                     .size(80.dp)
-                    .background(Color(0xFFE8F5E9), CircleShape),
+                    .background(extendedColors.successColor.copy(alpha = 0.12f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Box(
                     modifier = Modifier
                         .size(48.dp)
-                        .background(Color(0xFF00C853), CircleShape),
+                        .background(extendedColors.successColor, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         Icons.Default.Check,
                         contentDescription = "Success",
-                        tint = Color.White,
+                        tint = colorScheme.onPrimary,
                         modifier = Modifier.size(32.dp)
                     )
                 }
@@ -73,7 +77,7 @@ fun TripSuccessScreen(
                 "Trip Created Successfully!",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = Color.Black
+                color = colorScheme.onBackground
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -81,7 +85,7 @@ fun TripSuccessScreen(
             Text(
                 "Your trip has been initiated and assigned.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray
+                color = colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -89,7 +93,7 @@ fun TripSuccessScreen(
             // Trip Details Card
             Card(
                 shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF9F9F9)),
+                colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -102,16 +106,16 @@ fun TripSuccessScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column {
-                            Text("TRIP ID", style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text("TRIP ID", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                             Text(
                                 "#$tripId",
                                 style = MaterialTheme.typography.titleMedium,
-                                color = Color(0xFF00C853),
+                                color = extendedColors.successColor,
                                 fontWeight = FontWeight.Bold
                             )
                         }
                         Column(horizontalAlignment = Alignment.End) {
-                            Text("TRUCK NUMBER", style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text("TRUCK NUMBER", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                             Text(
                                 truckNumber,
                                 style = MaterialTheme.typography.titleMedium,
@@ -122,7 +126,7 @@ fun TripSuccessScreen(
 
                     HorizontalDivider(
                         modifier = Modifier.padding(vertical = 16.dp),
-                        color = Color(0xFFEEEEEE)
+                        color = colorScheme.outlineVariant
                     )
 
                     // Route
@@ -135,25 +139,25 @@ fun TripSuccessScreen(
                             Box(
                                 modifier = Modifier
                                     .size(8.dp)
-                                    .background(Color(0xFF00C853), CircleShape)
+                                    .background(extendedColors.successColor, CircleShape)
                             )
                             // Line
                             Box(
                                 modifier = Modifier
                                     .width(2.dp)
                                     .weight(1f)
-                                    .background(Color(0xFFE0E0E0)) // Solid or dashed line
+                                    .background(colorScheme.outlineVariant)
                             )
                             // Destination Dot
                             Box(
                                 modifier = Modifier
                                     .size(8.dp)
-                                    .background(Color(0xFFFF5252), CircleShape)
+                                    .background(colorScheme.error, CircleShape)
                             )
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text("ROUTE", style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text("ROUTE", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 "$origin to $destination",
@@ -168,10 +172,10 @@ fun TripSuccessScreen(
                     // Driver
                     if(driverName.isNotEmpty()) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Person, contentDescription = "Driver", tint = Color.Gray, modifier = Modifier.size(20.dp))
+                            Icon(Icons.Default.Person, contentDescription = "Driver", tint = colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
-                                Text("DRIVER", style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                Text("DRIVER", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                                 Text(
                                     driverName,
                                     style = MaterialTheme.typography.bodyMedium,
@@ -184,10 +188,10 @@ fun TripSuccessScreen(
                     }
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Call, contentDescription = "DriverPhone", tint = Color.Gray, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Default.Call, contentDescription = "DriverPhone", tint = colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text("DRIVER PH0NE", style = MaterialTheme.typography.labelSmall, color = Color.Gray, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text("DRIVER PH0NE", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                             Text(
                                 driverPhone,
                                 style = MaterialTheme.typography.bodyMedium,
@@ -209,8 +213,8 @@ fun TripSuccessScreen(
                     .height(50.dp),
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF00C853),
-                    contentColor = Color.White
+                    containerColor = extendedColors.successColor,
+                    contentColor = colorScheme.onPrimary
                 )
             ) {
                 Text("GO TO TRIPS", fontWeight = FontWeight.Bold)
@@ -225,9 +229,9 @@ fun TripSuccessScreen(
                     .height(50.dp),
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = Color.Gray
+                    contentColor = colorScheme.onSurfaceVariant
                 ),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE0E0E0))
+                border = androidx.compose.foundation.BorderStroke(1.dp, colorScheme.outlineVariant)
             ) {
                 Text("BACK TO DASHBOARD", fontWeight = FontWeight.Bold)
             }

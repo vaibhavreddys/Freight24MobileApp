@@ -105,7 +105,7 @@ fun ReviewIndentScreen(
                 if (uiState.isSubmitting) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(20.dp).padding(end = 8.dp),
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onPrimary,
                         strokeWidth = 2.dp,
                     )
                 }
@@ -126,7 +126,7 @@ fun ReviewIndentScreen(
             Text(
                 text = "Please review the indent details before finalizing",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             // General Info Section

@@ -517,7 +517,7 @@ private fun VerificationRequestCard(
         request.status == VerificationRequestStatus.REJECTED
     val iconContainerColor = when (request.status) {
         VerificationRequestStatus.REJECTED -> MaterialTheme.colorScheme.errorContainer
-        VerificationRequestStatus.APPROVED -> Color.Transparent
+        VerificationRequestStatus.APPROVED -> MaterialTheme.colorScheme.surface.copy(alpha = 0f)
         else -> MaterialTheme.colorScheme.primaryContainer
     }
     val iconTint = when (request.status) {

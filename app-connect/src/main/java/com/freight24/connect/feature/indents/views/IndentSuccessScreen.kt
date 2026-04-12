@@ -22,6 +22,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -44,6 +45,7 @@ import com.freight24.connect.feature.indents.domain.viewmodel.IndentsViewModel
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsViewModelImpl
 import com.freight24.connect.navigation.ConnectDestination
 import com.freight24.connect.enum.ConnectTab
+import com.freight24.ui.theme.FreightThemeTokens
 
 @Composable
 fun IndentSuccessScreen(
@@ -52,6 +54,8 @@ fun IndentSuccessScreen(
     onViewIndentClick: () -> Unit,
     onBackToHomeClick: () -> Unit,
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+    val extendedColors = FreightThemeTokens.colors
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     
     // Check for CreateIndent backstack entry
@@ -133,11 +137,12 @@ fun IndentSuccessComponent(
     onViewIndentClick: () -> Unit,
     onBackToHomeClick: () -> Unit,
 ) {
-
+    val colorScheme = MaterialTheme.colorScheme
+    val extendedColors = FreightThemeTokens.colors
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(colorScheme.background)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -149,9 +154,9 @@ fun IndentSuccessComponent(
 
         Box(
             modifier = Modifier
-                .size(80.dp)
-                .background(
-                    color = Color(0xFF4CAF50).copy(alpha = 0.1f),
+                    .size(80.dp)
+                    .background(
+                    color = extendedColors.successColor.copy(alpha = 0.1f),
                     shape = CircleShape
                 ),
             contentAlignment = Alignment.Center
@@ -160,7 +165,7 @@ fun IndentSuccessComponent(
                 modifier = Modifier
                     .size(56.dp)
                     .background(
-                        color = Color(0xFF4CAF50),
+                        color = extendedColors.successColor,
                         shape = CircleShape
                     ),
                 contentAlignment = Alignment.Center
@@ -168,7 +173,7 @@ fun IndentSuccessComponent(
                 Icon(
                     imageVector = Icons.Default.Check,
                     contentDescription = "Success",
-                    tint = Color.White,
+                    tint = colorScheme.onPrimary,
                     modifier = Modifier.size(32.dp)
                 )
             }
@@ -182,7 +187,7 @@ fun IndentSuccessComponent(
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
-            color = Color(0xFF1a1a1a)
+            color = colorScheme.onBackground
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -192,7 +197,7 @@ fun IndentSuccessComponent(
             text = "Your indent has been registered and is now\nactive for sourcing.",
             style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
-            color = Color.Gray,
+            color = colorScheme.onSurfaceVariant,
             lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.5
         )
 
@@ -203,7 +208,7 @@ fun IndentSuccessComponent(
             modifier = Modifier.fillMaxWidth(),
             elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
             colors = CardDefaults.cardColors(
-                containerColor = Color(0xFFF8F9FA)
+                containerColor = colorScheme.surface
             ),
             shape = RoundedCornerShape(12.dp)
         ) {
@@ -218,14 +223,14 @@ fun IndentSuccessComponent(
                 DetailRow(
                     label = "Indent Id",
                     value = "#$indentId",
-                    valueColor = Color(0xFF1a1a1a)
+                    valueColor = colorScheme.onSurface
                 )
 
                 // Route
                 DetailRow(
                     label = "ROUTE",
                     value = "$fromLocation → $toLocation",
-                    valueColor = Color(0xFF1a1a1a)
+                    valueColor = colorScheme.onSurface
                 )
 
                 // Truck Type
@@ -237,7 +242,7 @@ fun IndentSuccessComponent(
                     Text(
                         text = "TRUCK TYPE",
                         style = MaterialTheme.typography.labelMedium,
-                        color = Color.Gray,
+                        color = colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium
                     )
 
@@ -248,14 +253,14 @@ fun IndentSuccessComponent(
                         Icon(
                             imageVector = Icons.Default.LocalShipping,
                             contentDescription = null,
-                            tint = Color(0xFF1976D2),
+                            tint = extendedColors.infoColor,
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
                             text = truckType,
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF1a1a1a)
+                            color = colorScheme.onSurface
                         )
                     }
                 }
@@ -263,13 +268,13 @@ fun IndentSuccessComponent(
                 DetailRow(
                     label = "WEIGHT",
                     value = "$weight MT",
-                    valueColor = Color(0xFF1a1a1a)
+                    valueColor = colorScheme.onSurface
                 )
 
                 DetailRow(
                     label = "MATERIAL",
                     value = material,
-                    valueColor = Color(0xFF1a1a1a)
+                    valueColor = colorScheme.onSurface
                 )
             }
         }
@@ -322,7 +327,7 @@ fun IndentSuccessComponent(
 private fun DetailRow(
     label: String,
     value: String,
-    valueColor: Color = Color.Black
+    valueColor: Color = MaterialTheme.colorScheme.onSurface
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -332,7 +337,7 @@ private fun DetailRow(
         Text(
             text = label,
             style = MaterialTheme.typography.labelMedium,
-            color = Color.Gray,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Medium
         )
         Text(

@@ -40,6 +40,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -77,6 +78,7 @@ import com.freight24.ui.R
 import com.freight24.ui.UiState
 import com.freight24.ui.theme.FreightThemeTokens
 import kotlinx.coroutines.delay
+import kotlin.math.abs
 
 private enum class OwnerSection(val title: String) {
     ACTIVE("Active"),
@@ -308,7 +310,7 @@ private fun SearchField(
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
             )
         },
-        colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+        colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
             unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
             focusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
@@ -331,11 +333,11 @@ private fun FilterChip(
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(24.dp),
-        color = if (isSelected) successColor else MaterialTheme.colorScheme.surface,
-        border = BorderStroke(
-            width = 0.5.dp,
-            color = if (isSelected) Color.Transparent else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
-        ),
+            color = if (isSelected) successColor else MaterialTheme.colorScheme.surface,
+            border = BorderStroke(
+                width = 0.5.dp,
+            color = if (isSelected) MaterialTheme.colorScheme.surface.copy(alpha = 0f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+            ),
         modifier = Modifier.height(32.dp)
     ) {
         Box(
@@ -743,7 +745,7 @@ private fun avatarPaletteFor(
             Color(0xFFFAECE7) to Color(0xFF993C1D)
         )
     val hash = owner.full_name.trim().ifBlank { owner.id }.hashCode()
-    return palettes[kotlin.math.abs(hash) % palettes.size]
+    return palettes[abs(hash) % palettes.size]
 }
 
 private fun String.initials(): String =

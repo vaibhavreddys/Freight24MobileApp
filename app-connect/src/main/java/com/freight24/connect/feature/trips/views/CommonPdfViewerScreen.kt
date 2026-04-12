@@ -8,12 +8,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.Uri
@@ -29,6 +29,7 @@ fun CommonPdfViewerScreen(
     viewModel: CommonPdfViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val colorScheme = MaterialTheme.colorScheme
 
     Scaffold(
         topBar = {
@@ -39,10 +40,10 @@ fun CommonPdfViewerScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = colorScheme.surface)
             )
         },
-        containerColor = Color.White
+        containerColor = colorScheme.background
     ) { padding ->
         Box(
             modifier = Modifier
@@ -56,7 +57,7 @@ fun CommonPdfViewerScreen(
                 }
                 uiState.errorMessage != null -> {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(uiState.errorMessage!!, color = Color.Red, modifier = Modifier.padding(16.dp))
+                        Text(uiState.errorMessage!!, color = colorScheme.error, modifier = Modifier.padding(16.dp))
                         Button(onClick = { viewModel.retry() }) {
                             Text("Retry")
                         }

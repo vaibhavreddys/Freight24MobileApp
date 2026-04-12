@@ -203,7 +203,7 @@ fun ClientProfileScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .background(Color.Black.copy(alpha = 0.35f)),
+                                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)),
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Card(
@@ -709,7 +709,7 @@ private fun ProfileHeaderCard(
 ) {
     val normalizedStatus = status.lowercase()
     val isActive = normalizedStatus == "active"
-    val chipColor = if (isActive) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error
+    val chipColor = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -1148,7 +1148,7 @@ private fun ExistingStatusBadge(existingVerifyStatus: String?, fallbackStatus: S
 @Composable
 private fun PendingSaveBadge() {
     Surface(
-        color = Color.Transparent,
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0f),
         shape = RoundedCornerShape(8.dp),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
     ) {

@@ -77,6 +77,7 @@ fun IndentsContent(
     onSearchClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Box(modifier = modifier) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Tab Switcher
@@ -98,11 +99,11 @@ fun IndentsContent(
 
             if (uiState.isLoading && uiState.indents.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(color = colorScheme.primary)
                 }
             } else if (uiState.errorMessage != null && uiState.indents.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = uiState.errorMessage)
+                    Text(text = uiState.errorMessage, color = colorScheme.error)
                 }
             } else {
                 IndentsList(
@@ -125,7 +126,7 @@ fun SearchBarTrigger(
     Box(
         modifier = modifier
             .height(48.dp)
-            .background(Color(0xFFF1F5F9), RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
             .clickable { onClick() }
             .padding(horizontal = 12.dp),
         contentAlignment = Alignment.CenterStart
@@ -134,13 +135,13 @@ fun SearchBarTrigger(
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = "Search",
-                tint = Color.Gray
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Search by Client or Indent ID",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -184,11 +185,11 @@ fun TabButton(
     Button(
         onClick = onClick,
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (isSelected) Color(0xFF1D4ED8) else Color.White,
-            contentColor = if (isSelected) Color.White else Color.Gray
+            containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+            contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
         ),
         shape = RoundedCornerShape(24.dp),
-        border = if (!isSelected) BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)) else null,
+        border = if (!isSelected) BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant) else null,
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         modifier = modifier.height(40.dp)
     ) {
@@ -247,7 +248,7 @@ fun IndentCard(
             .padding(horizontal = 16.dp, vertical = 4.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
@@ -289,7 +290,7 @@ fun IndentCard(
                 Text(
                     text = "45m ago", // TODO: Dynamic formatting
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.LightGray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -301,7 +302,7 @@ fun IndentCard(
                     imageVector = Icons.Outlined.LocalShipping,
                     contentDescription = null,
                     modifier = Modifier.size(14.dp),
-                    tint = Color.Gray
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 val truckDisplay = indent.indentGroupDetails.truckType?.displayName ?: "N/A"
@@ -310,7 +311,7 @@ fun IndentCard(
                 Text(
                     text = "$truckDisplay • $weightDisplay • $materialDisplay",
                     style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                    color = Color.DarkGray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -323,28 +324,28 @@ fun IndentCard(
                 Text(
                     text = "CLIENT: ",
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                    color = Color.LightGray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = formatCurrency(indent.indentGroupDetails.clientTripCost),
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, fontSize = 13.sp),
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
                     text = "NEG: ",
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                    color = Color.LightGray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = formatCurrency(indent.negotiatedTripCost),
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, fontSize = 13.sp),
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
             Spacer(modifier = Modifier.height(10.dp))
-            Divider(color = Color(0xFFF1F5F9), thickness = 1.dp)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Spacer(modifier = Modifier.height(10.dp))
 
             // Row 4: Client Info & Call Button
@@ -358,13 +359,13 @@ fun IndentCard(
                         imageVector = Icons.Default.Person,
                         contentDescription = null,
                         modifier = Modifier.size(16.dp),
-                        tint = Color.LightGray
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = clientProfile?.fullName ?: clientProfile?.companyName ?: "Unknown",
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium, fontSize = 13.sp),
-                        color = Color.DarkGray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
@@ -379,8 +380,8 @@ fun IndentCard(
                     },
                     shape = RoundedCornerShape(8.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFEFF6FF), // Very light blue
-                        contentColor = Color(0xFF1D4ED8) // Primary blue
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.primary
                     ),
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
                     modifier = Modifier.height(32.dp)
@@ -422,7 +423,7 @@ fun AllIndentCard(
             .padding(horizontal = 16.dp, vertical = 4.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
@@ -439,7 +440,7 @@ fun AllIndentCard(
                         imageVector = Icons.Outlined.LocalShipping,
                         contentDescription = null,
                         modifier = Modifier.size(20.dp),
-                        tint = Color(0xFF22C55E)
+                        tint = MaterialTheme.colorScheme.primary
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
@@ -453,7 +454,7 @@ fun AllIndentCard(
                         Text(
                             text = indent.indentCode.orEmpty(),
                             style = MaterialTheme.typography.labelSmall,
-                            color = Color.Gray,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 11.sp
                         )
                     }
@@ -463,7 +464,7 @@ fun AllIndentCard(
                 Text(
                     text = "45m ago", // TODO: Dynamic formatting
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.LightGray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -502,7 +503,7 @@ fun AllIndentCard(
                     imageVector = Icons.Outlined.LocalShipping,
                     contentDescription = null,
                     modifier = Modifier.size(14.dp),
-                    tint = Color.Gray
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 val truckDisplay = indent.indentGroupDetails.truckType?.displayName ?: "N/A"
@@ -511,7 +512,7 @@ fun AllIndentCard(
                 Text(
                     text = "$truckDisplay | $weightDisplay | $materialDisplay",
                     style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                    color = Color.DarkGray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -524,28 +525,28 @@ fun AllIndentCard(
                 Text(
                     text = "CLIENT: ",
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                    color = Color.LightGray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = formatCurrency(indent.indentGroupDetails.clientTripCost),
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, fontSize = 13.sp),
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Text(
                     text = "NEG: ",
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                    color = Color.LightGray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = formatCurrency(indent.negotiatedTripCost),
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, fontSize = 13.sp),
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
             Spacer(modifier = Modifier.height(10.dp))
-            Divider(color = Color(0xFFF1F5F9), thickness = 1.dp)
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Spacer(modifier = Modifier.height(10.dp))
 
             // Row 5: Client Name & Clone Button
@@ -559,13 +560,13 @@ fun AllIndentCard(
                         imageVector = Icons.Default.Person,
                         contentDescription = null,
                         modifier = Modifier.size(16.dp),
-                        tint = Color.LightGray
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = fleetExecutive?.name ?: "Unknown",
                         style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium, fontSize = 13.sp),
-                        color = Color.DarkGray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
@@ -574,8 +575,8 @@ fun AllIndentCard(
                         onClick = onCloneClick,
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFE8F5E9), // Light green
-                            contentColor = Color(0xFF22C55E) // Green
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.primary
                         ),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
                         modifier = Modifier.height(32.dp)
@@ -606,7 +607,7 @@ fun RouteDot(isStart: Boolean) {
         modifier = Modifier
             .size(8.dp)
             .background(
-                color = if (isStart) Color(0xFF22C55E) else Color(0xFFEF4444),
+                color = if (isStart) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
                 shape = CircleShape
             )
     )
@@ -619,7 +620,7 @@ fun RouteVerticalLine() {
             .padding(start = 3.dp) // center under 8dp dot
             .width(2.dp)
             .height(12.dp)
-            .background(Color(0xFFE2E8F0))
+            .background(MaterialTheme.colorScheme.outlineVariant)
     )
 }
 
@@ -640,7 +641,7 @@ fun CostColumn(
                 fontSize = 10.sp,
                 letterSpacing = 0.5.sp
             ),
-            color = Color.LightGray
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
             text = value,
@@ -648,7 +649,7 @@ fun CostColumn(
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp
             ),
-            color = Color(0xFF0F172A)
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }

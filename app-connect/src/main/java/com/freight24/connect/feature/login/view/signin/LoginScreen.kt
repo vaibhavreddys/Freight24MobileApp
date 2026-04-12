@@ -35,13 +35,13 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.ui.UiState
 import com.freight24.ui.theme.Freight24Theme
-import com.freight24.ui.theme.PrimaryGreen
 
 @Composable
 fun LoginScreen(onVerify: (String) -> Unit) {
     val viewModel: LoginViewModel = hiltViewModel()
     val phoneNumber by viewModel.phoneNumber.collectAsState()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val colorScheme = MaterialTheme.colorScheme
 
     LaunchedEffect(uiState) {
         if (uiState is UiState.Success) {
@@ -65,7 +65,7 @@ fun LoginScreen(onVerify: (String) -> Unit) {
                         text = "Freight24",
                         fontSize = 40.sp,
                         fontWeight = FontWeight.Bold,
-                        color = PrimaryGreen,
+                        color = colorScheme.primary,
                         modifier = Modifier.padding(bottom = 80.dp),
                     )
 
@@ -108,9 +108,9 @@ fun LoginScreen(onVerify: (String) -> Unit) {
                             Modifier
                                 .fillMaxWidth()
                                 .height(50.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
+                        colors = ButtonDefaults.buttonColors(containerColor = colorScheme.primary),
                     ) {
-                        Text("Send OTP", color = Color.White, fontSize = 16.sp)
+                        Text("Send OTP", color = colorScheme.onPrimary, fontSize = 16.sp)
                     }
 
                     Spacer(modifier = Modifier.weight(1f))

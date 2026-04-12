@@ -27,6 +27,7 @@ fun FilteredTripsScreen(
     viewModel: TripsListViewModel = hiltViewModel<FilteredTripsViewModelImpl>()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val colorScheme = MaterialTheme.colorScheme
 
     Scaffold(
         topBar = {
@@ -47,11 +48,11 @@ fun FilteredTripsScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White
+                    containerColor = colorScheme.surface
                 )
             )
         },
-        containerColor = Color(0xFFF8FAFC)
+        containerColor = colorScheme.background
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -69,7 +70,7 @@ fun FilteredTripsScreen(
             } else if (uiState.trips.isEmpty()) {
                 Text(
                     text = "No trips found",
-                    color = Color.Gray,
+                    color = colorScheme.onSurfaceVariant,
                     modifier = Modifier.align(Alignment.Center)
                 )
             } else {
