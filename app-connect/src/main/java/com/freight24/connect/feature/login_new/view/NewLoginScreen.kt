@@ -1,11 +1,16 @@
 package com.freight24.connect.feature.login_new.view
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -16,24 +21,31 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocalShipping
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -41,6 +53,7 @@ import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -50,15 +63,11 @@ import com.freight24.ui.UiState
 import com.freight24.ui.theme.Freight24Theme
 import com.freight24.ui.theme.FreightThemeTokens
 import android.widget.Toast
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.withStyle
-import com.google.common.io.Files.append
+import androidx.compose.runtime.mutableStateOf
 
 private val cardShape = RoundedCornerShape(32.dp)
+
+private const val sendOtpButtonAutoClickAfter = 2000
 
 @Composable
 fun NewLoginScreen(onOtpRequested: (String) -> Unit) {
@@ -67,6 +76,37 @@ fun NewLoginScreen(onOtpRequested: (String) -> Unit) {
     val isPhoneValid by viewModel.isPhoneValid.collectAsStateWithLifecycle()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val fillProgress = remember { Animatable(0f) }
+
+    LaunchedEffect(isPhoneValid) {
+        if (isPhoneValid) {
+            focusManager.clearFocus()
+            keyboardController?.hide()
+        }
+    }
+
+    // Initialize to current state to prevent triggering on screen recreation/back navigation
+    var wasPreviouslyValid = remember { mutableStateOf(isPhoneValid) }
+
+    LaunchedEffect(isPhoneValid) {
+        // Only trigger on the transition from invalid -> valid
+        if (isPhoneValid && !wasPreviouslyValid.value && uiState !is UiState.Loading) {
+            fillProgress.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = sendOtpButtonAutoClickAfter)
+            )
+            // Guard against race conditions if user manually clicks during animation
+            if (uiState !is UiState.Loading) {
+                viewModel.onSendOtpClick()
+            }
+        } else if (!isPhoneValid) {
+            fillProgress.snapTo(0f)
+        }
+        // Update state to track the edge transition
+        wasPreviouslyValid.value = isPhoneValid
+    }
 
     LaunchedEffect(uiState) {
         when (val state = uiState) {
@@ -159,7 +199,7 @@ fun NewLoginScreen(onOtpRequested: (String) -> Unit) {
                         Text(
                             text = "Log in to your dashboard to manage shipments and fleet operations",
                             fontSize = 16.sp,
-                            color = colorScheme.onSurfaceVariant,
+                            color = colorScheme.surface,
                             textAlign = TextAlign.Center,
                         )
                     }
@@ -237,50 +277,39 @@ fun NewLoginScreen(onOtpRequested: (String) -> Unit) {
 
                             Spacer(modifier = Modifier.height(24.dp))
 
-                            // Send OTP Button
-                            Button(
-                                onClick = viewModel::onSendOtpClick,
-                                enabled = isPhoneValid && uiState !is UiState.Loading,
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .height(56.dp),
-                                colors =
-                                    ButtonDefaults.buttonColors(
-                                        containerColor =
-                                            if (isPhoneValid && uiState !is UiState.Loading) {
-                                                colorScheme.primary
-                                            } else {
-                                                colorScheme.surfaceVariant
-                                            },
-                                        contentColor = colorScheme.onPrimary,
-                                        disabledContainerColor = colorScheme.surfaceVariant,
-                                        disabledContentColor = colorScheme.onSurfaceVariant,
-                                    ),
-                                shape = RoundedCornerShape(28.dp),
-                                elevation =
-                                    ButtonDefaults.buttonElevation(
-                                        defaultElevation = 4.dp,
-                                        pressedElevation = 8.dp,
-                                    ),
+                            // Send OTP Button (Outline -> Fill Animation)
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(56.dp)
+                                    .clip(RoundedCornerShape(28.dp))
+                                    .background(Color.Transparent)
+                                    .border(
+                                        width = 1.5.dp,
+                                        color = if (isPhoneValid && uiState !is UiState.Loading) colorScheme.primary else colorScheme.outlineVariant,
+                                        shape = RoundedCornerShape(28.dp)
+                                    )
+                                    .clickable(
+                                        enabled = isPhoneValid && uiState !is UiState.Loading,
+                                        onClick = { viewModel.onSendOtpClick() }
+                                    )
                             ) {
-                                if (uiState is UiState.Loading) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(22.dp),
-                                        color = colorScheme.onPrimary,
-                                        strokeWidth = 2.5.dp,
-                                    )
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Text(
-                                        text = "Sending...",
-                                        fontSize = 18.sp,
-                                        fontWeight = FontWeight.Bold,
-                                    )
-                                } else {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth(fillProgress.value)
+                                        .fillMaxHeight()
+                                        .background(colorScheme.primary)
+                                )
+
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center
+                                ) {
                                     Text(
                                         text = "Send OTP",
                                         fontSize = 18.sp,
                                         fontWeight = FontWeight.Bold,
+                                        color = colorScheme.onSurface
                                     )
                                 }
                             }

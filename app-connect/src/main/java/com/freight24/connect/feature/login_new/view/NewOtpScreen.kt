@@ -249,11 +249,7 @@ fun NewOtpScreen(
                                         disabledContainerColor = colorScheme.surface.copy(alpha = 0f),
                                         disabledContentColor = colorScheme.onPrimary.copy(alpha = 0.7f)
                                     ),
-                                    shape = RoundedCornerShape(28.dp),
-                                    elevation = ButtonDefaults.buttonElevation(
-                                        defaultElevation = 4.dp,
-                                        pressedElevation = 8.dp
-                                    )
+                                    shape = RoundedCornerShape(28.dp)
                                 ) {
                                     Text(
                                         text = if (uiState is UiState.Loading) "VERIFYING..." else "VERIFY & PROCEED",
