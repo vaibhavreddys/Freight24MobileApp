@@ -13,10 +13,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.connect.R
 import com.freight24.connect.enum.ConnectTab
 import com.freight24.connect.feature.dashboard.views.DashboardScreen
@@ -48,6 +50,7 @@ fun HomeScreen(
     navController: NavController,
     moreViewModel: MoreViewModel = hiltViewModel()
 ) {
+    val employeeInfo by moreViewModel.employeeInfo.collectAsStateWithLifecycle()
     var selectedTab by rememberSaveable { mutableStateOf(startTab ?: ConnectTab.Home) }
     var selectedFilter by rememberSaveable { mutableStateOf(startFilter) }
     var showMoreSheet by rememberSaveable { mutableStateOf(false) }
@@ -160,6 +163,8 @@ fun HomeScreen(
 
     if (showMoreSheet) {
         MoreBottomSheet(
+            employeeName = employeeInfo.fullName,
+            employeeRole = employeeInfo.designation,
             onDismiss = { showMoreSheet = false },
             onManageClients = { onManageClients() },
             onManageTrucks = { onManageTrucks() },

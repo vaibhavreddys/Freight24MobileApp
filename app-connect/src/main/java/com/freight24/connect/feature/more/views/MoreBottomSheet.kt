@@ -32,6 +32,8 @@ import com.freight24.ui.components.SectionContainer
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MoreBottomSheet(
+    employeeName: String,
+    employeeRole: String,
     onDismiss: () -> Unit,
     onManageClients: () -> Unit,
     onManageTrucks: () -> Unit,
@@ -66,8 +68,8 @@ fun MoreBottomSheet(
 
             // Profile Header
             ProfileHeader(
-                name = "Alex Mercer", // TODO: Get from ViewModel/Context
-                role = "Logistics Coordinator", // TODO: Get from ViewModel/Context
+                name = employeeName,
+                role = employeeRole,
                 onProfileClick = {
                     onMyProfile()
                     onDismiss()

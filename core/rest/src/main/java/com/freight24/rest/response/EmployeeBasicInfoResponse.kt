@@ -1,0 +1,19 @@
+package com.freight24.rest.response
+
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class EmployeeBasicInfoResponse(
+    val success: Boolean,
+    val message: String,
+    val data: EmployeeBasicInfo,
+)
+
+@Serializable
+data class EmployeeBasicInfo(
+    @SerialName("user_id") val userId: String,
+    @SerialName("full_name") val fullName: String,
+    @SerialName("designation") val designation: String,
+    @SerialName("status") val status: String,
+)

@@ -91,6 +91,15 @@ internal class CreateTripViewModel @Inject constructor(
     }
 
     private fun loadData(indentId: String, truckId: String) {
+        if (indentId.isEmpty() || indentId == "{indentId}" || truckId.isEmpty() || truckId == "{truckId}") {
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    errorMessage = "Invalid indent or truck selected"
+                )
+            }
+            return
+        }
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 

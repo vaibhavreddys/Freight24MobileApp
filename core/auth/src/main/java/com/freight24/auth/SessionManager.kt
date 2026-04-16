@@ -28,6 +28,14 @@ class SessionManager
             }
 
         /**
+         * Get the stored user ID synchronously.
+         */
+        fun getUserId(): String? =
+            runBlocking {
+                return@runBlocking authDataStore.userId.first()
+            }
+
+        /**
          * Persists a fresh session after OTP verification succeeds.
          * The new login A/B flow writes through SessionManager so the app keeps
          * one public session API even though the underlying storage is encrypted DataStore.
