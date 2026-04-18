@@ -38,6 +38,7 @@ data class TripDocumentDto(
     val document_type: String,
     val original_filename: String? = null,
     val verification_status: String,
+    val verification_remarks: String? = null,
     val uploaded_at: String? = null,
     val pod_type: String? = null,
     val pod_status: String? = null,

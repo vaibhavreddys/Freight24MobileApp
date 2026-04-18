@@ -348,7 +348,7 @@ fun VerificationRequestsScreen(
                 },
                 onRejectClick = {
                     if (remarks.isBlank()) {
-                        remarksError = "Remarks are required when rejecting a request."
+                        remarksError = "Remarks are mandatory for rejecting a request."
                     } else {
                         viewModel.onEvent(
                             VerificationRequestsEvent.UpdateTripStatus(
@@ -416,7 +416,7 @@ fun VerificationRequestsScreen(
                 },
                 onRejectClick = {
                     if (remarks.isBlank()) {
-                        remarksError = "Remarks are required when rejecting a request."
+                        remarksError = "Remarks are mandatory for rejecting a request."
                     } else {
                         viewModel.onEvent(
                             VerificationRequestsEvent.UpdateTruckStatus(

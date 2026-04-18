@@ -71,6 +71,7 @@ fun TripDocumentDto.toDomain(): TripDocument {
         documentType = document_type,
         originalFilename = original_filename,
         verificationStatus = verification_status,
+        verificationRemarks = verification_remarks,
         uploadedAt = uploaded_at,
         podType = pod_type,
         podStatus = pod_status,

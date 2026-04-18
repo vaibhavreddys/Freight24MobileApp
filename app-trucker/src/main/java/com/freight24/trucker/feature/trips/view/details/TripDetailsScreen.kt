@@ -9,6 +9,12 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -71,6 +77,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -299,6 +306,7 @@ internal fun TripDetailsScreen(
                 val rawStatus = trip.status.uppercase().replace(" ", "_")
                 val lrDoc = trip.tripDocuments.find { it.documentType.lowercase() == "lr" }
                 val lrStatus = lrDoc?.verificationStatus?.lowercase()
+                val lrRemarks = lrDoc?.verificationRemarks
 
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
@@ -335,7 +343,10 @@ internal fun TripDetailsScreen(
                                         Text("Update Trip Status to UNLOADED")
                                     }
                                 } else if (lrStatus == "rejected") {
-                                    ErrorBanner(text = "LR document was rejected. Upload new one to proceed.")
+                                    val lrRemarksText = if (!lrRemarks.isNullOrEmpty()) ".\nReason: $lrRemarks" else ", upload again."
+                                    ErrorBanner(
+                                        text = "LR document was rejected$lrRemarksText"
+                                    )
                                 } else {
                                     InfoBanner(text = "Trip status can be changed to \"UNLOADED\" after LR is verified.")
                                 }
@@ -453,6 +464,18 @@ fun InfoBanner(text: String) {
 
 @Composable
 fun ErrorBanner(text: String) {
+    // Create infinite transition for continuous animation
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse transition")
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.5f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(600, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulse scale"
+    )
+
     Surface(
         color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f),
         shape = RoundedCornerShape(8.dp),
@@ -466,7 +489,12 @@ fun ErrorBanner(text: String) {
                 Icons.Default.Info,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.error,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier
+                    .size(20.dp)
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                    }
             )
             Spacer(Modifier.width(12.dp))
             Text(

@@ -49,6 +49,7 @@ data class TripDocument(
     val documentType: String,
     val originalFilename: String? = null,
     val verificationStatus: String,
+    val verificationRemarks: String? = null,
     val uploadedAt: String? = null,
     val podType: String? = null,
     val podStatus: String? = null,
