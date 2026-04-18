@@ -1,5 +1,6 @@
 package com.freight24.trucker.feature.home
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -41,6 +42,11 @@ fun TruckerHomeScreen(navController: NavHostController) {
     // 👇 HOIST SCROLL STATE
     val loadBoardListState = rememberLazyListState()
     val tripsListState = rememberLazyListState()
+
+
+    BackHandler(selectedTab != TruckerTab.Loads) {
+        selectedTab = TruckerTab.Loads
+    }
 
     FreightBottomNavScaffold(
         items = TruckerTab.entries,
