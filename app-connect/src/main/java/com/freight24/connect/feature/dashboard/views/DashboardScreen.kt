@@ -102,6 +102,7 @@ fun DashboardScreen(
                         )
                         QuickActionsSection(
                             attentionNeeded = data.attentionNeeded,
+                            pendingActions = data.pendingActions,
                             onCreateIndentClick = onCreateIndentClick,
                             onCreateTripClick = onCreateTripClick,
                             onInterestInboxClick = onInterestInboxClick,
@@ -141,7 +142,7 @@ fun AttentionNeededSection(
             // Waiting for LR Card
             AttentionCard(
                 modifier = Modifier.weight(1f),
-                title = "Waiting for LR",
+                title = "LR upload pending",
                 value = "${attentionNeeded.waitingForLR} Pending",
                 backgroundColor = colorScheme.tertiaryContainer,
                 valueColor = colorScheme.tertiary,
@@ -424,6 +425,7 @@ fun ActionCard(
 @Composable
 fun QuickActionsSection(
     attentionNeeded: DashboardDataResponse.AttentionNeeded,
+    pendingActions: DashboardDataResponse.PendingActions,
     onCreateIndentClick: () -> Unit,
     onCreateTripClick: () -> Unit,
     onInterestInboxClick: () -> Unit,
@@ -476,6 +478,7 @@ fun QuickActionsSection(
                 icon = Icons.Default.Shield,
                 backgroundColor = MaterialTheme.colorScheme.surface,
                 contentColor = MaterialTheme.colorScheme.primary,
+                badgeText = pendingActions.verificationRequests.toString(),
                 onClick = onVerificationRequestsClick
             )
         }

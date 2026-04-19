@@ -27,11 +27,12 @@ data class DashboardDataResponse(
         val closed: Int,
         val readyForAssignment: Int,
     )
-    @Serializable
-    data class PendingActions(
-        val lrReviews: Int,
-        val podFollowUp: Int,
-    )
+@Serializable
+data class PendingActions(
+    val lrReviews: Int,
+    val podFollowUp: Int,
+    val verificationRequests: Int,
+)
 
     @Serializable
     data class AttentionNeeded(
