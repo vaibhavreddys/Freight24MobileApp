@@ -2,6 +2,7 @@ package com.freight24.trucker.di
 
 import com.freight24.network.RetrofitFactory
 import com.freight24.network.di.DefaultNetwork
+import com.freight24.rest.api.AuthSessionApi
 import com.freight24.rest.api.LocationApi
 import com.freight24.rest.api.IndentsApi
 import com.freight24.rest.api.ProfileApi
@@ -24,6 +25,15 @@ object ApiModule {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "TruckerLoginService")
             .create(TruckerLoginApi::class.java)
+    }
+
+    @Provides
+    fun providesAuthSessionApi(
+        @DefaultNetwork retrofitFactory: RetrofitFactory,
+    ): AuthSessionApi {
+        return retrofitFactory
+            .create(BuildConfig.BASE_URL, "AuthSessionApi")
+            .create(AuthSessionApi::class.java)
     }
 
     @Provides

@@ -40,7 +40,11 @@ import com.freight24.ui.theme.AppTypography
 import com.freight24.ui.theme.Freight24Theme
 
 @Composable
-internal fun LoginScreen(navController: NavHostController) {
+internal fun LoginScreen(
+    navController: NavHostController,
+    sessionExpiredMessage: String? = null,
+    onSessionExpiredMessageShown: () -> Unit = {},
+) {
     val viewModel: LoginViewModel = hiltViewModel()
     val phoneNumber by viewModel.phoneNumber.collectAsState()
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -64,6 +68,12 @@ internal fun LoginScreen(navController: NavHostController) {
 
     // Request to send notifications
     val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(sessionExpiredMessage) {
+        sessionExpiredMessage?.let { message ->
+            snackbarHostState.showSnackbar(message = message, duration = SnackbarDuration.Long)
+            onSessionExpiredMessageShown()
+        }
+    }
 
     var notificationPermissionGranted by remember {
         mutableStateOf(Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU)

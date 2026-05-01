@@ -1,8 +1,9 @@
 package com.freight24.rest.request
 
 import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-
+@Serializable
 data class RegisterDeviceRequest(
     @SerialName("fcm_token")
     val deviceToken: String,
@@ -11,7 +12,7 @@ data class RegisterDeviceRequest(
     @SerialName("app_variant")
     val appVariant: String = "QA",
     @SerialName("device_id")
-    val deviceId: String = "1893488-244-344",
+    val deviceId: String,
     @SerialName("device_model")
     val deviceModel: String = "Pixel8",
     @SerialName("os_version")

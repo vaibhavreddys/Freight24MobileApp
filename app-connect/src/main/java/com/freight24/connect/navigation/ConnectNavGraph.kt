@@ -53,6 +53,8 @@ fun ConnectNavGraph(
         } else {
             ConnectDestination.Login.route
         },
+    sessionExpiredMessage: String? = null,
+    onSessionExpiredMessageShown: () -> Unit = {},
 ) {
     val authStartDestination =
         if (BuildConfig.FEATURE_NEW_LOGIN) {
@@ -205,6 +207,8 @@ fun ConnectNavGraph(
 
         composable(ConnectDestination.NewLogin.route) {
             NewLoginScreen(
+                sessionExpiredMessage = sessionExpiredMessage,
+                onSessionExpiredMessageShown = onSessionExpiredMessageShown,
                 onOtpRequested = { phoneNumber ->
                     navHostController.navigate(ConnectDestination.NewOtp.createRoute(phoneNumber))
                 },
@@ -241,11 +245,15 @@ fun ConnectNavGraph(
         }
 
         composable(ConnectDestination.Login.route) {
-            LoginScreen(onVerify = { phoneNumber ->
-                navHostController.navigate(
-                    ConnectDestination.VerifyOtp.createRoute(phoneNumber),
-                )
-            })
+            LoginScreen(
+                sessionExpiredMessage = sessionExpiredMessage,
+                onSessionExpiredMessageShown = onSessionExpiredMessageShown,
+                onVerify = { phoneNumber ->
+                    navHostController.navigate(
+                        ConnectDestination.VerifyOtp.createRoute(phoneNumber),
+                    )
+                },
+            )
         }
 
         composable(

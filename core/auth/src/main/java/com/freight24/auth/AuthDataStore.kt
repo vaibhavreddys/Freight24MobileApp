@@ -7,12 +7,15 @@ import android.util.Base64
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.security.KeyStore
+import java.util.UUID
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
@@ -30,13 +33,19 @@ val Context.authDataStore: DataStore<Preferences> by preferencesDataStore(name =
 @Singleton
 class AuthDataStore
     @Inject
-    constructor(
+        constructor(
         @param:ApplicationContext private val context: Context,
     ) {
         companion object {
             private val TOKEN_KEY = stringPreferencesKey("encrypted_token")
+            private val REFRESH_TOKEN_KEY = stringPreferencesKey("encrypted_refresh_token")
             private val PHONE_KEY = stringPreferencesKey("encrypted_phone")
             private val USER_ID_KEY = stringPreferencesKey("encrypted_user_id")
+            private val INSTALLATION_ID_KEY = stringPreferencesKey("encrypted_installation_id")
+            private val ACCESS_TOKEN_EXPIRES_AT_KEY = longPreferencesKey("access_token_expires_at")
+            private val REFRESH_TOKEN_EXPIRES_AT_KEY = longPreferencesKey("refresh_token_expires_at")
+            private val REFRESH_SESSION_ID_KEY = stringPreferencesKey("encrypted_refresh_session_id")
+            private val REFRESH_FAMILY_ID_KEY = stringPreferencesKey("encrypted_refresh_family_id")
         }
 
         private val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
@@ -62,7 +71,7 @@ class AuthDataStore
             return keyGenerator.generateKey()
         }
 
-        private suspend fun encrypt(data: String): String {
+        private fun encrypt(data: String): String {
             val cipher = Cipher.getInstance(TRANSFORMATION)
             cipher.init(Cipher.ENCRYPT_MODE, getOrCreateSecretKey())
             val iv = cipher.iv
@@ -95,6 +104,11 @@ class AuthDataStore
                 prefs[TOKEN_KEY]?.let { decrypt(it) }
             }
 
+        val refreshToken: Flow<String?> =
+            context.authDataStore.data.map { prefs ->
+                prefs[REFRESH_TOKEN_KEY]?.let { decrypt(it) }
+            }
+
         val phoneNumber: Flow<String?> =
             context.authDataStore.data.map { prefs ->
                 prefs[PHONE_KEY]?.let { decrypt(it) }
@@ -105,21 +119,108 @@ class AuthDataStore
                 prefs[USER_ID_KEY]?.let { decrypt(it) }
             }
 
+        val installationId: Flow<String?> =
+            context.authDataStore.data.map { prefs ->
+                prefs[INSTALLATION_ID_KEY]?.let { decrypt(it) }
+            }
+
+        val accessTokenExpiresAt: Flow<Long?> =
+            context.authDataStore.data.map { prefs ->
+                prefs[ACCESS_TOKEN_EXPIRES_AT_KEY]
+            }
+
+        val refreshTokenExpiresAt: Flow<Long?> =
+            context.authDataStore.data.map { prefs ->
+                prefs[REFRESH_TOKEN_EXPIRES_AT_KEY]
+            }
+
+        val refreshSessionId: Flow<String?> =
+            context.authDataStore.data.map { prefs ->
+                prefs[REFRESH_SESSION_ID_KEY]?.let { decrypt(it) }
+            }
+
+        val refreshFamilyId: Flow<String?> =
+            context.authDataStore.data.map { prefs ->
+                prefs[REFRESH_FAMILY_ID_KEY]?.let { decrypt(it) }
+            }
+
+        suspend fun ensureInstallationId(): String {
+            val existingInstallationId =
+                context.authDataStore.data.first()[INSTALLATION_ID_KEY]?.let { decrypt(it) }
+
+            if (!existingInstallationId.isNullOrBlank()) {
+                return existingInstallationId
+            }
+
+            val generatedInstallationId = UUID.randomUUID().toString()
+            context.authDataStore.edit { prefs ->
+                prefs[INSTALLATION_ID_KEY] = encrypt(generatedInstallationId)
+            }
+            return generatedInstallationId
+        }
+
         suspend fun saveAuthData(
             token: String,
             phone: String,
             userId: String,
+            installationId: String? = null,
+            refreshToken: String? = null,
+            accessTokenExpiresAtMillis: Long? = null,
+            refreshTokenExpiresAtMillis: Long? = null,
+            refreshSessionId: String? = null,
+            refreshFamilyId: String? = null,
         ) {
             context.authDataStore.edit { prefs ->
                 prefs[TOKEN_KEY] = encrypt(token)
                 prefs[PHONE_KEY] = encrypt(phone)
                 prefs[USER_ID_KEY] = encrypt(userId)
+
+                if (!refreshToken.isNullOrBlank()) {
+                    prefs[REFRESH_TOKEN_KEY] = encrypt(refreshToken)
+                } else {
+                    prefs.remove(REFRESH_TOKEN_KEY)
+                }
+
+                if (!installationId.isNullOrBlank()) {
+                    prefs[INSTALLATION_ID_KEY] = encrypt(installationId)
+                }
+
+                if (accessTokenExpiresAtMillis != null) {
+                    prefs[ACCESS_TOKEN_EXPIRES_AT_KEY] = accessTokenExpiresAtMillis
+                } else {
+                    prefs.remove(ACCESS_TOKEN_EXPIRES_AT_KEY)
+                }
+
+                if (refreshTokenExpiresAtMillis != null) {
+                    prefs[REFRESH_TOKEN_EXPIRES_AT_KEY] = refreshTokenExpiresAtMillis
+                } else {
+                    prefs.remove(REFRESH_TOKEN_EXPIRES_AT_KEY)
+                }
+
+                if (!refreshSessionId.isNullOrBlank()) {
+                    prefs[REFRESH_SESSION_ID_KEY] = encrypt(refreshSessionId)
+                } else {
+                    prefs.remove(REFRESH_SESSION_ID_KEY)
+                }
+
+                if (!refreshFamilyId.isNullOrBlank()) {
+                    prefs[REFRESH_FAMILY_ID_KEY] = encrypt(refreshFamilyId)
+                } else {
+                    prefs.remove(REFRESH_FAMILY_ID_KEY)
+                }
             }
         }
 
         suspend fun clearAuthData() {
-            context.authDataStore.edit { it.clear() }
-            // Optional: Delete the key from Keystore if you want full wipe
-            // if (keyStore.containsAlias(KEYSTORE_ALIAS)) keyStore.deleteEntry(KEYSTORE_ALIAS)
+            context.authDataStore.edit { prefs ->
+                prefs.remove(TOKEN_KEY)
+                prefs.remove(REFRESH_TOKEN_KEY)
+                prefs.remove(PHONE_KEY)
+                prefs.remove(USER_ID_KEY)
+                prefs.remove(ACCESS_TOKEN_EXPIRES_AT_KEY)
+                prefs.remove(REFRESH_TOKEN_EXPIRES_AT_KEY)
+                prefs.remove(REFRESH_SESSION_ID_KEY)
+                prefs.remove(REFRESH_FAMILY_ID_KEY)
+            }
         }
     }

@@ -89,10 +89,12 @@ internal class NewOtpViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = UiState.Loading
             try {
+                val installationId = sessionManager.ensureInstallationId()
                 val response = loginConnectApi.verifyOtp(
                     VerifyOtpRequest(
                         phone_number = "$FULL_PHONE_PREFIX$phoneNumber",
                         otp = _otp.value,
+                        installation_id = installationId,
                     )
                 )
 
@@ -104,7 +106,7 @@ internal class NewOtpViewModel @Inject constructor(
                 }
 
                 val data = response.data
-                val token = data?.token.orEmpty()
+                val token = data?.access_token ?: data?.token.orEmpty()
                 val userId = data?.user?.id.orEmpty()
 
                 if (token.isBlank() || userId.isBlank()) {
@@ -112,11 +114,20 @@ internal class NewOtpViewModel @Inject constructor(
                     return@launch
                 }
 
-                sessionManager.saveSession(
-                    token = token,
-                    phone = "$FULL_PHONE_PREFIX$phoneNumber",
-                    userId = userId,
-                )
+                if (data != null) {
+                    sessionManager.saveSession(
+                        phone = "$FULL_PHONE_PREFIX$phoneNumber",
+                        userId = userId,
+                        authData = data,
+                        installationId = installationId,
+                    )
+                } else {
+                    sessionManager.saveSession(
+                        token = token,
+                        phone = "$FULL_PHONE_PREFIX$phoneNumber",
+                        userId = userId,
+                    )
+                }
 
                 _uiState.value = UiState.Success(token)
                 refreshActionState()

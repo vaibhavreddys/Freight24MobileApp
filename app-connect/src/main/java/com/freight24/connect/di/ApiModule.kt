@@ -5,6 +5,7 @@ import com.freight24.connect.BuildConfig
 import com.freight24.network.RetrofitFactory
 import com.freight24.network.di.DefaultNetwork
 import com.freight24.rest.api.ClientApi
+import com.freight24.rest.api.AuthSessionApi
 import com.freight24.rest.api.FindTrucksApi
 import com.freight24.rest.api.IndentsApi
 import com.freight24.rest.api.LocationApi
@@ -43,6 +44,15 @@ object ApiModule {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "NotificationServiceApi")
             .create(NotificationServiceApi::class.java)
+    }
+
+    @Provides
+    fun providesAuthSessionApi(
+        @DefaultNetwork retrofitFactory: RetrofitFactory,
+    ): AuthSessionApi {
+        return retrofitFactory
+            .create(BuildConfig.BASE_URL, "AuthSessionApi")
+            .create(AuthSessionApi::class.java)
     }
 
     @Provides

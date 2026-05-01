@@ -17,11 +17,14 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,11 +40,16 @@ import com.freight24.ui.UiState
 import com.freight24.ui.theme.Freight24Theme
 
 @Composable
-fun LoginScreen(onVerify: (String) -> Unit) {
+fun LoginScreen(
+    sessionExpiredMessage: String? = null,
+    onSessionExpiredMessageShown: () -> Unit = {},
+    onVerify: (String) -> Unit,
+) {
     val viewModel: LoginViewModel = hiltViewModel()
     val phoneNumber by viewModel.phoneNumber.collectAsState()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val colorScheme = MaterialTheme.colorScheme
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(uiState) {
         if (uiState is UiState.Success) {
@@ -49,8 +57,18 @@ fun LoginScreen(onVerify: (String) -> Unit) {
         }
     }
 
+    LaunchedEffect(sessionExpiredMessage) {
+        sessionExpiredMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            onSessionExpiredMessageShown()
+        }
+    }
+
     Freight24Theme {
-        Scaffold(modifier = Modifier.fillMaxSize()) { contentPadding ->
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+        ) { contentPadding ->
             Box(modifier = Modifier.padding(contentPadding).fillMaxSize()) {
                 Column(
                     modifier =

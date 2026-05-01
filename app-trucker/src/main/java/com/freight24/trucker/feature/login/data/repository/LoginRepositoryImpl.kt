@@ -1,6 +1,7 @@
 package com.freight24.trucker.feature.login.data.repository
 
 import com.freight24.common.di.IoDispatcher
+import com.freight24.auth.SessionManager
 import com.freight24.rest.api.TruckerLoginApi
 import com.freight24.rest.request.OtpRequest
 import com.freight24.rest.request.VerifyOtpRequest
@@ -13,6 +14,7 @@ internal class LoginRepositoryImpl
     @Inject
     constructor(
         private val loginApi: TruckerLoginApi,
+        private val sessionManager: SessionManager,
         @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) : LoginRepository {
         override suspend fun requestOtp(phoneNumber: String): LoginResponse {
@@ -26,11 +28,13 @@ internal class LoginRepositoryImpl
             otp: String,
         ): LoginResponse {
             return withContext(ioDispatcher) {
+                val installationId = sessionManager.ensureInstallationId()
                 loginApi.verifyOtp(
                     VerifyOtpRequest(
                         phone_number = phoneNumber,
                         otp = otp,
                         role_id = 2,
+                        installation_id = installationId,
                     ),
                 )
             }

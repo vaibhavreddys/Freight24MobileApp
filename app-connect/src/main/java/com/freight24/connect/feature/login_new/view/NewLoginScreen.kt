@@ -28,6 +28,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -70,7 +72,11 @@ private val cardShape = RoundedCornerShape(32.dp)
 private const val sendOtpButtonAutoClickAfter = 2000
 
 @Composable
-fun NewLoginScreen(onOtpRequested: (String) -> Unit) {
+fun NewLoginScreen(
+    sessionExpiredMessage: String? = null,
+    onSessionExpiredMessageShown: () -> Unit = {},
+    onOtpRequested: (String) -> Unit,
+) {
     val viewModel: NewLoginViewModel = hiltViewModel()
     val phoneNumber by viewModel.phoneNumber.collectAsState()
     val isPhoneValid by viewModel.isPhoneValid.collectAsStateWithLifecycle()
@@ -79,6 +85,7 @@ fun NewLoginScreen(onOtpRequested: (String) -> Unit) {
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val fillProgress = remember { Animatable(0f) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(isPhoneValid) {
         if (isPhoneValid) {
@@ -122,6 +129,13 @@ fun NewLoginScreen(onOtpRequested: (String) -> Unit) {
         }
     }
 
+    LaunchedEffect(sessionExpiredMessage) {
+        sessionExpiredMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            onSessionExpiredMessageShown()
+        }
+    }
+
     Freight24Theme {
         val colorScheme = MaterialTheme.colorScheme
         val extendedColors = FreightThemeTokens.colors
@@ -130,7 +144,10 @@ fun NewLoginScreen(onOtpRequested: (String) -> Unit) {
                 colors = listOf(colorScheme.primary, extendedColors.infoColor),
             )
 
-        Scaffold(modifier = Modifier.fillMaxSize()) { contentPadding ->
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+        ) { contentPadding ->
             Box(
                 modifier =
                     Modifier

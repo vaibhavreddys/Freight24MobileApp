@@ -22,6 +22,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":core:rest"))
     implementation(project(":core:network"))
 
     implementation(libs.hilt.android)

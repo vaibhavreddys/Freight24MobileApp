@@ -4,10 +4,17 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.freight24.connect.BuildConfig
 import com.freight24.auth.SessionManager
@@ -30,34 +37,71 @@ class MainActivity : ComponentActivity() {
         setContent {
             Freight24Theme {
                 val navController = rememberNavController()
-                val isLoggedIn by sessionManager.isLoggedIn.collectAsState(initial = sessionManager.isSessionValid())
+                val isLoggedIn by sessionManager.isLoggedIn.collectAsState(initial = false)
+                val lastRefreshError by sessionManager.lastRefreshError.collectAsState(initial = null)
+                var isBootstrapped by remember { mutableStateOf(false) }
+                var isAuthenticated by remember { mutableStateOf(false) }
+                var sessionExpiredMessage by remember { mutableStateOf<String?>(null) }
 
                 val loginRoute = if (BuildConfig.FEATURE_NEW_LOGIN) {
                     ConnectDestination.NewLogin.route
                 } else {
                     ConnectDestination.Login.route
                 }
-                val startDestination =
-                    remember {
-                        if (sessionManager.isSessionValid()) {
-                            ConnectDestination.Home.route
-                        } else {
-                            loginRoute
-                        }
+
+                LaunchedEffect(Unit) {
+                    val authenticated = sessionManager.bootstrapSession()
+                    if (!authenticated) {
+                        sessionExpiredMessage =
+                            sessionManager.consumeLastRefreshError()
+                                ?: "Session expired, please sign in again"
                     }
-                LaunchedEffect(isLoggedIn) {
-                    if (!isLoggedIn) {
-                        // Clear backstack and redirect to login on 401 or manual logout
-                        navController.navigate(loginRoute) {
-                            popUpTo(0) { inclusive = true }
-                            launchSingleTop = true
-                        }
+                    isAuthenticated = authenticated
+                    isBootstrapped = true
+                }
+
+                LaunchedEffect(isBootstrapped, isLoggedIn, lastRefreshError) {
+                    if (isBootstrapped && !isLoggedIn && sessionExpiredMessage == null && !lastRefreshError.isNullOrBlank()) {
+                        sessionExpiredMessage = lastRefreshError
+                        sessionManager.consumeLastRefreshError()
                     }
                 }
-                ConnectNavGraph(
-                    navHostController = navController,
-                    startDestination = startDestination,
-                )
+
+                Box(modifier = Modifier.fillMaxSize()) {
+                    if (!isBootstrapped) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    } else {
+                        val startDestination =
+                            remember(isAuthenticated) {
+                                if (isAuthenticated) {
+                                    ConnectDestination.Home.route
+                                } else {
+                                    loginRoute
+                                }
+                            }
+
+                        LaunchedEffect(isLoggedIn, isBootstrapped) {
+                            if (isBootstrapped && !isLoggedIn) {
+                                navController.navigate(loginRoute) {
+                                    popUpTo(0) { inclusive = true }
+                                    launchSingleTop = true
+                                }
+                            }
+                        }
+
+                        ConnectNavGraph(
+                            navHostController = navController,
+                            startDestination = startDestination,
+                            sessionExpiredMessage = sessionExpiredMessage,
+                            onSessionExpiredMessageShown = { sessionExpiredMessage = null },
+                        )
+                    }
+                }
             }
         }
     }

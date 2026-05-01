@@ -1,9 +1,24 @@
 package com.freight24.auth
 
+import com.freight24.rest.api.AuthSessionApi
+import com.freight24.rest.request.LogoutRequest
+import com.freight24.rest.request.RefreshSessionRequest
+import com.freight24.rest.response.AuthData
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -12,19 +27,37 @@ class SessionManager
     @Inject
     constructor(
         private val authDataStore: AuthDataStore,
+        private val authSessionApi: AuthSessionApi,
     ) {
+        private val sessionScope = CoroutineScope(Job() + Dispatchers.IO)
+        private val refreshMutex = Mutex()
+        private var proactiveRefreshJob: Job? = null
+
+        private val _lastRefreshError = MutableStateFlow<String?>(null)
+        val lastRefreshError = _lastRefreshError.asStateFlow()
+
+        fun consumeLastRefreshError(): String? {
+            val message = _lastRefreshError.value
+            _lastRefreshError.value = null
+            return message
+        }
+
         /**
          * Flow of logged in state.
          */
-        val isLoggedIn: Flow<Boolean> = authDataStore.authToken.map { it != null }
+        val isLoggedIn: Flow<Boolean> =
+            combine(authDataStore.authToken, authDataStore.refreshToken) { token, refreshToken ->
+                !token.isNullOrBlank() || !refreshToken.isNullOrBlank()
+            }.distinctUntilChanged()
 
         /**
-         * Synchronous session check.
          * Safe to call from MainActivity during startup.
          */
         fun isSessionValid(): Boolean =
             runBlocking {
-                return@runBlocking authDataStore.authToken.first() != null
+                val token = authDataStore.authToken.first()
+                val refreshToken = authDataStore.refreshToken.first()
+                !token.isNullOrBlank() || !refreshToken.isNullOrBlank()
             }
 
         /**
@@ -35,20 +68,188 @@ class SessionManager
                 return@runBlocking authDataStore.userId.first()
             }
 
-        /**
-         * Persists a fresh session after OTP verification succeeds.
-         * The new login A/B flow writes through SessionManager so the app keeps
-         * one public session API even though the underlying storage is encrypted DataStore.
-         */
+        suspend fun ensureInstallationId(): String = authDataStore.ensureInstallationId()
+
         suspend fun saveSession(
             token: String,
             phone: String,
             userId: String,
         ) {
-            authDataStore.saveAuthData(token, phone, userId)
+            val authData = AuthData(token = token)
+            saveSession(
+                phone = phone,
+                userId = userId,
+                authData = authData,
+                installationId = authDataStore.ensureInstallationId(),
+            )
+        }
+
+        suspend fun saveSession(
+            phone: String,
+            userId: String,
+            authData: AuthData,
+            installationId: String? = null,
+        ) {
+            val accessToken = authData.access_token ?: authData.token.orEmpty()
+            require(accessToken.isNotBlank()) { "Access token missing from auth response" }
+
+            val now = System.currentTimeMillis()
+            val accessTokenExpiresAtMillis = authData.expires_in?.let { now + TimeUnit.SECONDS.toMillis(it.toLong()) }
+            val refreshTokenExpiresAtMillis = authData.refresh_expires_in?.let { now + TimeUnit.SECONDS.toMillis(it.toLong()) }
+            val resolvedInstallationId = installationId ?: authDataStore.ensureInstallationId()
+
+            authDataStore.saveAuthData(
+                token = accessToken,
+                phone = phone,
+                userId = userId,
+                installationId = resolvedInstallationId,
+                refreshToken = authData.refresh_token,
+                accessTokenExpiresAtMillis = accessTokenExpiresAtMillis,
+                refreshTokenExpiresAtMillis = refreshTokenExpiresAtMillis,
+                refreshSessionId = authData.refresh_session_id,
+                refreshFamilyId = authData.refresh_family_id,
+            )
+
+            _lastRefreshError.value = null
+            scheduleProactiveRefresh()
+        }
+
+        suspend fun bootstrapSession(): Boolean {
+            authDataStore.ensureInstallationId()
+            return refreshIfNeeded(forceRefresh = false)
+        }
+
+        suspend fun refreshSession(): Boolean {
+            return refreshIfNeeded(forceRefresh = true)
         }
 
         suspend fun logout() {
+            val refreshToken = authDataStore.refreshToken.first().orEmpty()
+            val installationId = authDataStore.ensureInstallationId()
+
+            if (refreshToken.isNotBlank()) {
+                try {
+                    authSessionApi.logout(
+                        LogoutRequest(
+                            refreshToken = refreshToken,
+                            installationId = installationId,
+                        ),
+                    )
+                } catch (_: Exception) {
+                    // Logout should still clear local state even if the backend call fails.
+                }
+            }
+
+            clearLocalSession()
+        }
+
+        private suspend fun refreshIfNeeded(forceRefresh: Boolean): Boolean =
+            refreshMutex.withLock {
+                val now = System.currentTimeMillis()
+                val accessToken = authDataStore.authToken.first().orEmpty()
+                val refreshToken = authDataStore.refreshToken.first().orEmpty()
+                val accessTokenExpiresAt = authDataStore.accessTokenExpiresAt.first()
+
+                val accessTokenValid =
+                    accessToken.isNotBlank() &&
+                        (accessTokenExpiresAt == null || accessTokenExpiresAt > now)
+
+                if (refreshToken.isBlank()) {
+                    if (!accessTokenValid) {
+                        _lastRefreshError.value = "Session expired, please sign in again"
+                        clearLocalSession()
+                        return false
+                    }
+                    return true
+                }
+
+                val refreshBufferMs = TimeUnit.MINUTES.toMillis(5)
+                val shouldRefresh =
+                    forceRefresh ||
+                        accessTokenExpiresAt == null ||
+                        (accessTokenExpiresAt - now) <= refreshBufferMs
+
+                if (!shouldRefresh) {
+                    scheduleProactiveRefresh()
+                    return true
+                }
+
+                val installationId = authDataStore.ensureInstallationId()
+                return try {
+                    val response =
+                        authSessionApi.refreshSession(
+                            RefreshSessionRequest(
+                                refreshToken = refreshToken,
+                                installationId = installationId,
+                            ),
+                        )
+                    val data = response.data
+                    if (response.success && data != null) {
+                        val phone = authDataStore.phoneNumber.first().orEmpty()
+                        val userId = authDataStore.userId.first().orEmpty()
+
+                        if (phone.isNotBlank() && userId.isNotBlank()) {
+                            saveSession(
+                                phone = phone,
+                                userId = userId,
+                                authData = data,
+                                installationId = installationId,
+                            )
+                            true
+                        } else {
+                            if (!accessTokenValid) {
+                                _lastRefreshError.value = "Session expired, please sign in again"
+                                clearLocalSession()
+                                false
+                            } else {
+                                scheduleProactiveRefresh()
+                                true
+                            }
+                        }
+                    } else {
+                        if (!accessTokenValid) {
+                            _lastRefreshError.value = "Session expired, please sign in again"
+                            clearLocalSession()
+                            false
+                        } else {
+                            true
+                        }
+                    }
+                } catch (throwable: Exception) {
+                    if (!accessTokenValid) {
+                        _lastRefreshError.value = "Session expired, please sign in again"
+                        clearLocalSession()
+                        false
+                    } else {
+                        true
+                    }
+                }
+            }
+
+        private fun scheduleProactiveRefresh() {
+            proactiveRefreshJob?.cancel()
+            proactiveRefreshJob =
+                sessionScope.launch {
+                    val refreshToken = authDataStore.refreshToken.first().orEmpty()
+                    val accessTokenExpiresAt = authDataStore.accessTokenExpiresAt.first()
+
+                    if (refreshToken.isBlank() || accessTokenExpiresAt == null) {
+                        return@launch
+                    }
+
+                    val refreshBufferMs = TimeUnit.MINUTES.toMillis(5)
+                    val delayMs = (accessTokenExpiresAt - System.currentTimeMillis() - refreshBufferMs).coerceAtLeast(0L)
+                    if (delayMs > 0L) {
+                        delay(delayMs)
+                    }
+
+                    refreshSession()
+                }
+        }
+
+        private suspend fun clearLocalSession() {
+            proactiveRefreshJob?.cancel()
+            proactiveRefreshJob = null
             authDataStore.clearAuthData()
         }
     }

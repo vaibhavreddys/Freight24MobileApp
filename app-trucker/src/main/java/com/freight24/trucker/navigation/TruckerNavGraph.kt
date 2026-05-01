@@ -17,6 +17,8 @@ import com.freight24.trucker.feature.trucks.view.onboard.OnboardTruckScreen
 fun TruckerNavGraph(
     navController: NavHostController,
     startDestination: String,
+    sessionExpiredMessage: String? = null,
+    onSessionExpiredMessageShown: () -> Unit = {},
 ) {
     NavHost(
         navController = navController,
@@ -26,6 +28,8 @@ fun TruckerNavGraph(
         composable(TruckerDestination.Login.route) {
             LoginScreen(
                 navController = navController,
+                sessionExpiredMessage = sessionExpiredMessage,
+                onSessionExpiredMessageShown = onSessionExpiredMessageShown,
             )
             // Replace with your actual LoginScreen composable
 //            LoginScreen()

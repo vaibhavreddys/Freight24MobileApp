@@ -12,9 +12,15 @@ data class LoginResponse(
 @Serializable
 data class AuthData(
     val token: String? = null,
+    val access_token: String? = null,
+    val refresh_token: String? = null,
     val user: User? = null,
     val token_type: String? = null,
     val expires_in: Int? = null,
+    val refresh_expires_in: Int? = null,
+    val refresh_expires_at: String? = null,
+    val refresh_session_id: String? = null,
+    val refresh_family_id: String? = null,
     val otp_code: String? = null,
 )
 

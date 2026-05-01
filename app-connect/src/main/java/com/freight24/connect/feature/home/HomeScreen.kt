@@ -35,7 +35,7 @@ import com.freight24.ui.components.AppTopBar
 import com.freight24.ui.components.FreightBottomNavScaffold
 
 @Composable
-fun HomeScreen(
+internal fun HomeScreen(
     onCreateIndentClick: () -> Unit,
     onIndentClick: (String) -> Unit,
     onCloneClick: (String, String) -> Unit,
@@ -48,12 +48,17 @@ fun HomeScreen(
     startFilter: com.freight24.connect.feature.trips.domain.usecase.TripTypes? = null,
     onLogout: () -> Unit,
     navController: NavController,
-    moreViewModel: MoreViewModel = hiltViewModel()
+    moreViewModel: MoreViewModel = hiltViewModel(),
+    homeViewModel: HomeViewModel = hiltViewModel(),
 ) {
     val employeeInfo by moreViewModel.employeeInfo.collectAsStateWithLifecycle()
     var selectedTab by rememberSaveable { mutableStateOf(startTab ?: ConnectTab.Home) }
     var selectedFilter by rememberSaveable { mutableStateOf(startFilter) }
     var showMoreSheet by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        homeViewModel.registerDevice()
+    }
     
     LaunchedEffect(startTab) {
         startTab?.let { selectedTab = it }
