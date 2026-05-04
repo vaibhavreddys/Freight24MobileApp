@@ -52,9 +52,7 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(Unit) {
                     val authenticated = sessionManager.bootstrapSession()
                     if (!authenticated) {
-                        sessionExpiredMessage =
-                            sessionManager.consumeLastRefreshError()
-                                ?: "Session expired, please sign in again"
+                        sessionExpiredMessage = sessionManager.consumeLastRefreshError()
                     }
                     isAuthenticated = authenticated
                     isBootstrapped = true

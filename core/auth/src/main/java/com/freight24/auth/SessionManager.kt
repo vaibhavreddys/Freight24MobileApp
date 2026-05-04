@@ -149,6 +149,13 @@ class SessionManager
                 val accessToken = authDataStore.authToken.first().orEmpty()
                 val refreshToken = authDataStore.refreshToken.first().orEmpty()
                 val accessTokenExpiresAt = authDataStore.accessTokenExpiresAt.first()
+                val hadPersistedSession =
+                    accessToken.isNotBlank() ||
+                        refreshToken.isNotBlank() ||
+                        authDataStore.phoneNumber.first().orEmpty().isNotBlank() ||
+                        authDataStore.userId.first().orEmpty().isNotBlank() ||
+                        accessTokenExpiresAt != null ||
+                        authDataStore.refreshTokenExpiresAt.first() != null
 
                 val accessTokenValid =
                     accessToken.isNotBlank() &&
@@ -156,7 +163,9 @@ class SessionManager
 
                 if (refreshToken.isBlank()) {
                     if (!accessTokenValid) {
-                        _lastRefreshError.value = "Session expired, please sign in again"
+                        if (hadPersistedSession) {
+                            _lastRefreshError.value = "Session expired, please sign in again"
+                        }
                         clearLocalSession()
                         return false
                     }
