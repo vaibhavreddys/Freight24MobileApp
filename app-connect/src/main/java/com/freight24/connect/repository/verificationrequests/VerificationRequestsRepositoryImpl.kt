@@ -42,6 +42,34 @@ class VerificationRequestsRepositoryImpl @Inject constructor(
             }
         }
 
+    override suspend fun getVerificationTruckOwners(status: String?): Result<com.freight24.rest.response.VerificationTruckOwnersResponse> =
+        withContext(ioDispatcher) {
+            try {
+                val response = verificationApi.getVerificationTruckOwners(status)
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!)
+                } else {
+                    Result.failure(Exception(response.message()))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    override suspend fun getVerificationClients(status: String?): Result<com.freight24.rest.response.VerificationClientsResponse> =
+        withContext(ioDispatcher) {
+            try {
+                val response = verificationApi.getVerificationClients(status)
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!)
+                } else {
+                    Result.failure(Exception(response.message()))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
     override suspend fun updateVerificationRequestStatus(
         id: String,
         status: String,
@@ -74,6 +102,54 @@ class VerificationRequestsRepositoryImpl @Inject constructor(
         withContext(ioDispatcher) {
             try {
                 val response = verificationApi.updateTruckVerificationStatus(
+                    id = id,
+                    request = UpdateVerificationRequestStatusRequest(
+                        status = status,
+                        resolutionNotes = resolutionNotes,
+                    ),
+                )
+                if (response.isSuccessful) {
+                    Result.success(Unit)
+                } else {
+                    Result.failure(Exception(response.message()))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    override suspend fun updateTruckOwnerVerificationStatus(
+        id: String,
+        status: String,
+        resolutionNotes: String?,
+    ): Result<Unit> =
+        withContext(ioDispatcher) {
+            try {
+                val response = verificationApi.updateTruckOwnerVerificationStatus(
+                    id = id,
+                    request = UpdateVerificationRequestStatusRequest(
+                        status = status,
+                        resolutionNotes = resolutionNotes,
+                    ),
+                )
+                if (response.isSuccessful) {
+                    Result.success(Unit)
+                } else {
+                    Result.failure(Exception(response.message()))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    override suspend fun updateClientVerificationStatus(
+        id: String,
+        status: String,
+        resolutionNotes: String?,
+    ): Result<Unit> =
+        withContext(ioDispatcher) {
+            try {
+                val response = verificationApi.updateClientVerificationStatus(
                     id = id,
                     request = UpdateVerificationRequestStatusRequest(
                         status = status,

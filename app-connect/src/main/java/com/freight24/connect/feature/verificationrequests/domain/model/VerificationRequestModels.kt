@@ -92,3 +92,34 @@ data class TruckVerificationRequest(
     val resolutionNotes: String? = null,
     val updatedAt: String,
 )
+
+data class BusinessProfileChange(
+    val fieldName: String,
+    val displayFieldName: String,
+    val beforeValue: String?,
+    val afterValue: String?,
+)
+
+data class TruckOwnerVerificationRequest(
+    val id: String,
+    val referenceId: String,
+    val fullName: String,
+    val phone: String?,
+    val changedFields: List<String>,
+    val changedBusinessProfile: List<BusinessProfileChange>,
+    val status: VerificationRequestStatus,
+    val resolutionNotes: String? = null,
+    val updatedAt: String,
+)
+
+data class ClientVerificationRequest(
+    val id: String,
+    val referenceId: String,
+    val fullName: String,
+    val companyName: String,
+    val changedFields: List<String>,
+    val changedBusinessProfile: List<BusinessProfileChange>,
+    val status: VerificationRequestStatus,
+    val resolutionNotes: String? = null,
+    val updatedAt: String,
+)

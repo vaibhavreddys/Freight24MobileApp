@@ -2,11 +2,19 @@ package com.freight24.connect.feature.verificationrequests.domain.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.freight24.connect.feature.verificationrequests.domain.model.ClientVerificationRequest
+import com.freight24.connect.feature.verificationrequests.domain.model.TruckOwnerVerificationRequest
 import com.freight24.connect.feature.verificationrequests.domain.model.VerificationRequestStatus
 import com.freight24.connect.feature.verificationrequests.domain.model.VerificationRequestTab
+import com.freight24.connect.feature.verificationrequests.domain.usecase.GetVerificationClientRequestsUseCase
 import com.freight24.connect.feature.verificationrequests.domain.usecase.GetVerificationRequestsUseCase
 import com.freight24.connect.feature.verificationrequests.domain.usecase.GetVerificationSignedUrlUseCase
+import com.freight24.connect.feature.verificationrequests.domain.usecase.GetVerificationTruckOwnerRequestsUseCase
 import com.freight24.connect.feature.verificationrequests.domain.usecase.GetVerificationTruckRequestsUseCase
+import com.freight24.connect.feature.verificationrequests.domain.usecase.UpdateClientVerificationStatusUseCase
+import com.freight24.connect.feature.verificationrequests.domain.usecase.UpdateClientVerificationStatusUseCaseParams
+import com.freight24.connect.feature.verificationrequests.domain.usecase.UpdateTruckOwnerVerificationStatusUseCase
+import com.freight24.connect.feature.verificationrequests.domain.usecase.UpdateTruckOwnerVerificationStatusUseCaseParams
 import com.freight24.connect.feature.verificationrequests.domain.usecase.UpdateTruckVerificationStatusUseCase
 import com.freight24.connect.feature.verificationrequests.domain.usecase.UpdateTruckVerificationStatusUseCaseParams
 import com.freight24.connect.feature.verificationrequests.domain.usecase.UpdateVerificationRequestStatusUseCase
@@ -25,9 +33,13 @@ import javax.inject.Inject
 internal class VerificationRequestsViewModelImpl @Inject constructor(
     private val getVerificationRequestsUseCase: GetVerificationRequestsUseCase,
     private val getVerificationTruckRequestsUseCase: GetVerificationTruckRequestsUseCase,
+    private val getVerificationTruckOwnerRequestsUseCase: GetVerificationTruckOwnerRequestsUseCase,
+    private val getVerificationClientRequestsUseCase: GetVerificationClientRequestsUseCase,
     private val getVerificationSignedUrlUseCase: GetVerificationSignedUrlUseCase,
     private val updateVerificationRequestStatusUseCase: UpdateVerificationRequestStatusUseCase,
     private val updateTruckVerificationStatusUseCase: UpdateTruckVerificationStatusUseCase,
+    private val updateTruckOwnerVerificationStatusUseCase: UpdateTruckOwnerVerificationStatusUseCase,
+    private val updateClientVerificationStatusUseCase: UpdateClientVerificationStatusUseCase,
 ) : ViewModel(), VerificationRequestsViewModel {
 
     private val _uiState = MutableStateFlow(VerificationRequestsUiState())
@@ -44,7 +56,8 @@ internal class VerificationRequestsViewModelImpl @Inject constructor(
                 when (event.tab) {
                     VerificationRequestTab.TRIPS -> ensureTripsLoaded()
                     VerificationRequestTab.TRUCKS -> ensureTrucksLoaded()
-                    else -> Unit
+                    VerificationRequestTab.TRUCK_OWNERS -> ensureTruckOwnersLoaded()
+                    VerificationRequestTab.CLIENTS -> ensureClientsLoaded()
                 }
             }
 
@@ -54,7 +67,8 @@ internal class VerificationRequestsViewModelImpl @Inject constructor(
                 when (_uiState.value.selectedTab) {
                     VerificationRequestTab.TRIPS -> handleStatusChangeForTrips(previousStatus, event.status)
                     VerificationRequestTab.TRUCKS -> handleStatusChangeForTrucks(previousStatus, event.status)
-                    else -> Unit
+                    VerificationRequestTab.TRUCK_OWNERS -> handleStatusChangeForTruckOwners(previousStatus, event.status)
+                    VerificationRequestTab.CLIENTS -> handleStatusChangeForClients(previousStatus, event.status)
                 }
             }
 
@@ -77,6 +91,18 @@ internal class VerificationRequestsViewModelImpl @Inject constructor(
             )
 
             is VerificationRequestsEvent.UpdateTruckStatus -> updateTruckStatus(
+                request = event.request,
+                status = event.status,
+                resolutionNotes = event.resolutionNotes,
+            )
+
+            is VerificationRequestsEvent.UpdateTruckOwnerStatus -> updateTruckOwnerStatus(
+                request = event.request,
+                status = event.status,
+                resolutionNotes = event.resolutionNotes,
+            )
+
+            is VerificationRequestsEvent.UpdateClientStatus -> updateClientStatus(
                 request = event.request,
                 status = event.status,
                 resolutionNotes = event.resolutionNotes,
@@ -121,11 +147,42 @@ internal class VerificationRequestsViewModelImpl @Inject constructor(
         }
     }
 
+    private fun handleStatusChangeForTruckOwners(
+        previousStatus: VerificationRequestStatus,
+        newStatus: VerificationRequestStatus,
+    ) {
+        if (newStatus == VerificationRequestStatus.COMPLETED && !_uiState.value.loadedCompletedTruckOwners) {
+            fetchCompletedTruckOwners()
+        } else if (
+            previousStatus == VerificationRequestStatus.COMPLETED &&
+            newStatus != VerificationRequestStatus.COMPLETED &&
+            !_uiState.value.loadedDefaultTruckOwners
+        ) {
+            fetchTruckOwners()
+        }
+    }
+
+    private fun handleStatusChangeForClients(
+        previousStatus: VerificationRequestStatus,
+        newStatus: VerificationRequestStatus,
+    ) {
+        if (newStatus == VerificationRequestStatus.COMPLETED && !_uiState.value.loadedCompletedClients) {
+            fetchCompletedClients()
+        } else if (
+            previousStatus == VerificationRequestStatus.COMPLETED &&
+            newStatus != VerificationRequestStatus.COMPLETED &&
+            !_uiState.value.loadedDefaultClients
+        ) {
+            fetchClients()
+        }
+    }
+
     private fun refreshCurrentSelection() {
         when (_uiState.value.selectedTab) {
             VerificationRequestTab.TRIPS -> refreshTrips()
             VerificationRequestTab.TRUCKS -> refreshTrucks()
-            else -> Unit
+            VerificationRequestTab.TRUCK_OWNERS -> refreshTruckOwners()
+            VerificationRequestTab.CLIENTS -> refreshClients()
         }
     }
 
@@ -144,6 +201,24 @@ internal class VerificationRequestsViewModelImpl @Inject constructor(
             VerificationRequestStatus.COMPLETED -> fetchCompletedTrucks(forceRefresh = true, isRefreshing = true)
             VerificationRequestStatus.PENDING,
             VerificationRequestStatus.IN_REVIEW -> fetchTrucks(forceRefresh = true, isRefreshing = true)
+            else -> Unit
+        }
+    }
+
+    private fun refreshTruckOwners() {
+        when (_uiState.value.selectedStatus) {
+            VerificationRequestStatus.COMPLETED -> fetchCompletedTruckOwners(forceRefresh = true, isRefreshing = true)
+            VerificationRequestStatus.PENDING,
+            VerificationRequestStatus.IN_REVIEW -> fetchTruckOwners(forceRefresh = true, isRefreshing = true)
+            else -> Unit
+        }
+    }
+
+    private fun refreshClients() {
+        when (_uiState.value.selectedStatus) {
+            VerificationRequestStatus.COMPLETED -> fetchCompletedClients(forceRefresh = true, isRefreshing = true)
+            VerificationRequestStatus.PENDING,
+            VerificationRequestStatus.IN_REVIEW -> fetchClients(forceRefresh = true, isRefreshing = true)
             else -> Unit
         }
     }
@@ -179,6 +254,38 @@ internal class VerificationRequestsViewModelImpl @Inject constructor(
             VerificationRequestStatus.IN_REVIEW ->
                 if (!_uiState.value.loadedDefaultTrucks) {
                     fetchTrucks()
+                }
+            else -> Unit
+        }
+    }
+
+    private fun ensureTruckOwnersLoaded() {
+        when (_uiState.value.selectedStatus) {
+            VerificationRequestStatus.COMPLETED ->
+                if (!_uiState.value.loadedCompletedTruckOwners) {
+                    fetchCompletedTruckOwners()
+                }
+
+            VerificationRequestStatus.PENDING,
+            VerificationRequestStatus.IN_REVIEW ->
+                if (!_uiState.value.loadedDefaultTruckOwners) {
+                    fetchTruckOwners()
+                }
+            else -> Unit
+        }
+    }
+
+    private fun ensureClientsLoaded() {
+        when (_uiState.value.selectedStatus) {
+            VerificationRequestStatus.COMPLETED ->
+                if (!_uiState.value.loadedCompletedClients) {
+                    fetchCompletedClients()
+                }
+
+            VerificationRequestStatus.PENDING,
+            VerificationRequestStatus.IN_REVIEW ->
+                if (!_uiState.value.loadedDefaultClients) {
+                    fetchClients()
                 }
             else -> Unit
         }
@@ -350,6 +457,172 @@ internal class VerificationRequestsViewModelImpl @Inject constructor(
         }
     }
 
+    private fun fetchTruckOwners(forceRefresh: Boolean = false, isRefreshing: Boolean = false) {
+        if ((_uiState.value.loadingStatus == VerificationRequestStatus.PENDING || _uiState.value.loadingStatus == VerificationRequestStatus.IN_REVIEW) && !forceRefresh) return
+        if (_uiState.value.actionInProgressRequestId != null) return
+
+        viewModelScope.launch {
+            val currentStatus = _uiState.value.selectedStatus
+            _uiState.update {
+                it.copy(
+                    isLoading = !isRefreshing,
+                    isRefreshing = isRefreshing,
+                    loadingStatus = currentStatus,
+                    errorMessage = null,
+                    actionErrorMessage = null,
+                )
+            }
+            getVerificationTruckOwnerRequestsUseCase(null)
+                .onSuccess { requests ->
+                    _uiState.update { state ->
+                        state.copy(
+                            isLoading = false,
+                            isRefreshing = false,
+                            loadingStatus = null,
+                            defaultTruckOwners = requests,
+                            loadedDefaultTruckOwners = true,
+                            errorMessage = null,
+                            actionErrorMessage = null,
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            isRefreshing = false,
+                            loadingStatus = null,
+                            errorMessage = error.message ?: "Failed to load truck owner verification requests",
+                        )
+                    }
+                }
+        }
+    }
+
+    private fun fetchCompletedTruckOwners(forceRefresh: Boolean = false, isRefreshing: Boolean = false) {
+        if (_uiState.value.loadingStatus == VerificationRequestStatus.COMPLETED && !forceRefresh) return
+        if (_uiState.value.actionInProgressRequestId != null) return
+
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isLoading = !isRefreshing,
+                    isRefreshing = isRefreshing,
+                    loadingStatus = VerificationRequestStatus.COMPLETED,
+                    errorMessage = null,
+                    actionErrorMessage = null,
+                )
+            }
+            getVerificationTruckOwnerRequestsUseCase(VerificationRequestStatus.COMPLETED)
+                .onSuccess { requests ->
+                    _uiState.update { state ->
+                        state.copy(
+                            isLoading = false,
+                            isRefreshing = false,
+                            loadingStatus = null,
+                            completedTruckOwners = requests,
+                            loadedCompletedTruckOwners = true,
+                            errorMessage = null,
+                            actionErrorMessage = null,
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            isRefreshing = false,
+                            loadingStatus = null,
+                            errorMessage = error.message ?: "Failed to load truck owner verification requests",
+                        )
+                    }
+                }
+        }
+    }
+
+    private fun fetchClients(forceRefresh: Boolean = false, isRefreshing: Boolean = false) {
+        if ((_uiState.value.loadingStatus == VerificationRequestStatus.PENDING || _uiState.value.loadingStatus == VerificationRequestStatus.IN_REVIEW) && !forceRefresh) return
+        if (_uiState.value.actionInProgressRequestId != null) return
+
+        viewModelScope.launch {
+            val currentStatus = _uiState.value.selectedStatus
+            _uiState.update {
+                it.copy(
+                    isLoading = !isRefreshing,
+                    isRefreshing = isRefreshing,
+                    loadingStatus = currentStatus,
+                    errorMessage = null,
+                    actionErrorMessage = null,
+                )
+            }
+            getVerificationClientRequestsUseCase(null)
+                .onSuccess { requests ->
+                    _uiState.update { state ->
+                        state.copy(
+                            isLoading = false,
+                            isRefreshing = false,
+                            loadingStatus = null,
+                            defaultClients = requests,
+                            loadedDefaultClients = true,
+                            errorMessage = null,
+                            actionErrorMessage = null,
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            isRefreshing = false,
+                            loadingStatus = null,
+                            errorMessage = error.message ?: "Failed to load client verification requests",
+                        )
+                    }
+                }
+        }
+    }
+
+    private fun fetchCompletedClients(forceRefresh: Boolean = false, isRefreshing: Boolean = false) {
+        if (_uiState.value.loadingStatus == VerificationRequestStatus.COMPLETED && !forceRefresh) return
+        if (_uiState.value.actionInProgressRequestId != null) return
+
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    isLoading = !isRefreshing,
+                    isRefreshing = isRefreshing,
+                    loadingStatus = VerificationRequestStatus.COMPLETED,
+                    errorMessage = null,
+                    actionErrorMessage = null,
+                )
+            }
+            getVerificationClientRequestsUseCase(VerificationRequestStatus.COMPLETED)
+                .onSuccess { requests ->
+                    _uiState.update { state ->
+                        state.copy(
+                            isLoading = false,
+                            isRefreshing = false,
+                            loadingStatus = null,
+                            completedClients = requests,
+                            loadedCompletedClients = true,
+                            errorMessage = null,
+                            actionErrorMessage = null,
+                        )
+                    }
+                }
+                .onFailure { error ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            isRefreshing = false,
+                            loadingStatus = null,
+                            errorMessage = error.message ?: "Failed to load client verification requests",
+                        )
+                    }
+                }
+        }
+    }
+
     private fun updateTripStatus(
         request: VerificationRequest,
         status: VerificationRequestStatus,
@@ -457,6 +730,116 @@ internal class VerificationRequestsViewModelImpl @Inject constructor(
                             actionInProgressRequestId = null,
                             actionInProgressStatus = null,
                             actionErrorMessage = error.message ?: "Failed to update truck verification request",
+                        )
+                    }
+                },
+            )
+        }
+    }
+
+    private fun updateTruckOwnerStatus(
+        request: TruckOwnerVerificationRequest,
+        status: VerificationRequestStatus,
+        resolutionNotes: String?,
+    ) {
+        if (_uiState.value.actionInProgressRequestId != null) return
+
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    actionInProgressRequestId = request.id,
+                    actionInProgressStatus = status,
+                    actionErrorMessage = null,
+                    errorMessage = null,
+                )
+            }
+
+            updateTruckOwnerVerificationStatusUseCase(
+                UpdateTruckOwnerVerificationStatusUseCaseParams(
+                    id = request.id,
+                    status = status.apiValue,
+                    resolutionNotes = resolutionNotes,
+                )
+            ).fold(
+                onSuccess = {
+                    val updatedRequest = request.copy(
+                        status = status,
+                        resolutionNotes = resolutionNotes?.takeUnless { it.isBlank() },
+                    )
+                    _uiState.update { state ->
+                        state.copy(
+                            defaultTruckOwners = state.defaultTruckOwners.filterNot { it.id == request.id },
+                            completedTruckOwners = state.completedTruckOwners
+                                .filterNot { it.id == request.id }
+                                .let { existing -> listOf(updatedRequest) + existing },
+                            actionInProgressRequestId = null,
+                            actionInProgressStatus = null,
+                            actionCompletedAt = System.currentTimeMillis(),
+                            actionErrorMessage = null,
+                        )
+                    }
+                },
+                onFailure = { error ->
+                    _uiState.update {
+                        it.copy(
+                            actionInProgressRequestId = null,
+                            actionInProgressStatus = null,
+                            actionErrorMessage = error.message ?: "Failed to update truck owner verification request",
+                        )
+                    }
+                },
+            )
+        }
+    }
+
+    private fun updateClientStatus(
+        request: ClientVerificationRequest,
+        status: VerificationRequestStatus,
+        resolutionNotes: String?,
+    ) {
+        if (_uiState.value.actionInProgressRequestId != null) return
+
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    actionInProgressRequestId = request.id,
+                    actionInProgressStatus = status,
+                    actionErrorMessage = null,
+                    errorMessage = null,
+                )
+            }
+
+            updateClientVerificationStatusUseCase(
+                UpdateClientVerificationStatusUseCaseParams(
+                    id = request.id,
+                    status = status.apiValue,
+                    resolutionNotes = resolutionNotes,
+                )
+            ).fold(
+                onSuccess = {
+                    val updatedRequest = request.copy(
+                        status = status,
+                        resolutionNotes = resolutionNotes?.takeUnless { it.isBlank() },
+                    )
+                    _uiState.update { state ->
+                        state.copy(
+                            defaultClients = state.defaultClients.filterNot { it.id == request.id },
+                            completedClients = state.completedClients
+                                .filterNot { it.id == request.id }
+                                .let { existing -> listOf(updatedRequest) + existing },
+                            actionInProgressRequestId = null,
+                            actionInProgressStatus = null,
+                            actionCompletedAt = System.currentTimeMillis(),
+                            actionErrorMessage = null,
+                        )
+                    }
+                },
+                onFailure = { error ->
+                    _uiState.update {
+                        it.copy(
+                            actionInProgressRequestId = null,
+                            actionInProgressStatus = null,
+                            actionErrorMessage = error.message ?: "Failed to update client verification request",
                         )
                     }
                 },

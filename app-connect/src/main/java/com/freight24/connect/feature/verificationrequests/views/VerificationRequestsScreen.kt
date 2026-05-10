@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Business
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -85,6 +86,10 @@ import java.util.Locale
 import java.time.OffsetDateTime
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.filled.LocalShipping
+import androidx.compose.material.icons.filled.Person
+import com.freight24.connect.feature.verificationrequests.domain.model.BusinessProfileChange
+import com.freight24.connect.feature.verificationrequests.domain.model.ClientVerificationRequest
+import com.freight24.connect.feature.verificationrequests.domain.model.TruckOwnerVerificationRequest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,12 +103,16 @@ fun VerificationRequestsScreen(
     val scope = rememberCoroutineScope()
     var selectedRequestData by remember { mutableStateOf<VerificationRequest?>(null) }
     var selectedTruckData by remember { mutableStateOf<TruckVerificationRequest?>(null) }
+    var selectedTruckOwnerData by remember { mutableStateOf<TruckOwnerVerificationRequest?>(null) }
+    var selectedClientData by remember { mutableStateOf<ClientVerificationRequest?>(null) }
     var remarks by rememberSaveable { mutableStateOf("") }
     var remarksError by rememberSaveable { mutableStateOf<String?>(null) }
     val clearSelectedRequest = {
         viewModel.onEvent(VerificationRequestsEvent.ClearActionState)
         selectedRequestData = null
         selectedTruckData = null
+        selectedTruckOwnerData = null
+        selectedClientData = null
         remarks = ""
         remarksError = null
     }
@@ -126,6 +135,20 @@ fun VerificationRequestsScreen(
                     selectedTruckData = null
                 }
             }
+            if (selectedTruckOwnerData != null) {
+                scope.launch {
+                    sheetState.hide()
+                }.invokeOnCompletion {
+                    selectedTruckOwnerData = null
+                }
+            }
+            if (selectedClientData != null) {
+                scope.launch {
+                    sheetState.hide()
+                }.invokeOnCompletion {
+                    selectedClientData = null
+                }
+            }
         }
     }
 
@@ -145,6 +168,24 @@ fun VerificationRequestsScreen(
             selectedTruckData?.let {
                 if (!uiState.visibleTrucks.contains(it)) {
                     selectedTruckData = null
+                }
+            }
+        }
+        if (uiState.selectedTab != VerificationRequestTab.TRUCK_OWNERS) {
+            selectedTruckOwnerData = null
+        } else {
+            selectedTruckOwnerData?.let {
+                if (!uiState.visibleTruckOwners.contains(it)) {
+                    selectedTruckOwnerData = null
+                }
+            }
+        }
+        if (uiState.selectedTab != VerificationRequestTab.CLIENTS) {
+            selectedClientData = null
+        } else {
+            selectedClientData?.let {
+                if (!uiState.visibleClients.contains(it)) {
+                    selectedClientData = null
                 }
             }
         }
@@ -292,14 +333,97 @@ fun VerificationRequestsScreen(
                             }
                         }
 
-                        else -> {
-                            item {
-                                VerificationEmptyState(
-                                    message = "This tab will be wired when the backend is ready.",
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 96.dp),
-                                )
+                        VerificationRequestTab.TRUCK_OWNERS -> {
+                            if (uiState.isLoading && uiState.visibleTruckOwners.isEmpty()) {
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = 96.dp),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        CircularProgressIndicator()
+                                    }
+                                }
+                            } else if (uiState.errorMessage != null && uiState.visibleTruckOwners.isEmpty()) {
+                                item {
+                                    VerificationErrorState(
+                                        message = uiState.errorMessage.orEmpty(),
+                                        onRetry = { viewModel.onEvent(VerificationRequestsEvent.Refresh) },
+                                        modifier = Modifier.fillMaxWidth(),
+                                    )
+                                }
+                            } else if (uiState.visibleTruckOwners.isEmpty()) {
+                                item {
+                                    VerificationEmptyState(
+                                        message = "No truck owner verification requests found.",
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = 96.dp),
+                                    )
+                                }
+                            } else {
+                                items(uiState.visibleTruckOwners, key = { it.id }) { owner ->
+                                    BusinessVerificationRequestCard(
+                                        title = owner.fullName,
+                                        subtitle = owner.phone.orEmpty().ifBlank { "Phone unavailable" },
+                                        updatedAt = owner.updatedAt,
+                                        status = owner.status,
+                                        icon = Icons.Default.Person,
+                                        changedLabels = owner.changedBusinessProfile.map { formatFieldName(it.displayFieldName) },
+                                        onClick = {
+                                            viewModel.onEvent(VerificationRequestsEvent.ClearActionState)
+                                            selectedTruckOwnerData = owner
+                                        },
+                                    )
+                                }
+                            }
+                        }
+
+                        VerificationRequestTab.CLIENTS -> {
+                            if (uiState.isLoading && uiState.visibleClients.isEmpty()) {
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = 96.dp),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        CircularProgressIndicator()
+                                    }
+                                }
+                            } else if (uiState.errorMessage != null && uiState.visibleClients.isEmpty()) {
+                                item {
+                                    VerificationErrorState(
+                                        message = uiState.errorMessage.orEmpty(),
+                                        onRetry = { viewModel.onEvent(VerificationRequestsEvent.Refresh) },
+                                        modifier = Modifier.fillMaxWidth(),
+                                    )
+                                }
+                            } else if (uiState.visibleClients.isEmpty()) {
+                                item {
+                                    VerificationEmptyState(
+                                        message = "No client verification requests found.",
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = 96.dp),
+                                    )
+                                }
+                            } else {
+                                items(uiState.visibleClients, key = { it.id }) { client ->
+                                    BusinessVerificationRequestCard(
+                                        title = client.companyName,
+                                        subtitle = client.fullName,
+                                        updatedAt = client.updatedAt,
+                                        status = client.status,
+                                        icon = Icons.Default.Business,
+                                        changedLabels = client.changedBusinessProfile.map { formatFieldName(it.displayFieldName) },
+                                        onClick = {
+                                            viewModel.onEvent(VerificationRequestsEvent.ClearActionState)
+                                            selectedClientData = client
+                                        },
+                                    )
+                                }
                             }
                         }
                     }
@@ -438,6 +562,130 @@ fun VerificationRequestsScreen(
                 isApproveLoading = uiState.actionInProgressRequestId == activeTruck.id &&
                     uiState.actionInProgressStatus == VerificationRequestStatus.APPROVED,
                 isRejectLoading = uiState.actionInProgressRequestId == activeTruck.id &&
+                    uiState.actionInProgressStatus == VerificationRequestStatus.REJECTED,
+                isCompletedView = isCompletedView,
+            )
+        }
+    }
+
+    if (selectedTruckOwnerData != null) {
+        val activeOwner = selectedTruckOwnerData!!
+        val isCompletedView = uiState.selectedStatus == VerificationRequestStatus.COMPLETED
+        ModalBottomSheet(
+            onDismissRequest = { clearSelectedRequest() },
+            sheetState = sheetState,
+            dragHandle = { androidx.compose.material3.BottomSheetDefaults.DragHandle() },
+            containerColor = MaterialTheme.colorScheme.surface,
+        ) {
+            BusinessProfileVerificationDetailSheet(
+                title = activeOwner.fullName,
+                subtitle = activeOwner.phone.orEmpty().ifBlank { "Truck Owner" },
+                status = activeOwner.status,
+                changes = activeOwner.changedBusinessProfile,
+                remarks = remarks,
+                remarksError = remarksError,
+                resolutionNotes = activeOwner.resolutionNotes,
+                onRemarksChange = {
+                    remarks = it
+                    if (remarksError != null) {
+                        remarksError = null
+                    }
+                },
+                onApproveClick = {
+                    viewModel.onEvent(
+                        VerificationRequestsEvent.UpdateTruckOwnerStatus(
+                            request = activeOwner,
+                            status = VerificationRequestStatus.APPROVED,
+                            resolutionNotes = remarks.takeUnless { it.isBlank() },
+                        )
+                    )
+                },
+                onRejectClick = {
+                    if (remarks.isBlank()) {
+                        remarksError = "Remarks are mandatory for rejecting a request."
+                    } else {
+                        viewModel.onEvent(
+                            VerificationRequestsEvent.UpdateTruckOwnerStatus(
+                                request = activeOwner,
+                                status = VerificationRequestStatus.REJECTED,
+                                resolutionNotes = remarks,
+                            )
+                        )
+                    }
+                },
+                onClose = {
+                    scope.launch {
+                        sheetState.hide()
+                    }.invokeOnCompletion {
+                        clearSelectedRequest()
+                    }
+                },
+                actionErrorMessage = uiState.actionErrorMessage,
+                isApproveLoading = uiState.actionInProgressRequestId == activeOwner.id &&
+                    uiState.actionInProgressStatus == VerificationRequestStatus.APPROVED,
+                isRejectLoading = uiState.actionInProgressRequestId == activeOwner.id &&
+                    uiState.actionInProgressStatus == VerificationRequestStatus.REJECTED,
+                isCompletedView = isCompletedView,
+            )
+        }
+    }
+
+    if (selectedClientData != null) {
+        val activeClient = selectedClientData!!
+        val isCompletedView = uiState.selectedStatus == VerificationRequestStatus.COMPLETED
+        ModalBottomSheet(
+            onDismissRequest = { clearSelectedRequest() },
+            sheetState = sheetState,
+            dragHandle = { androidx.compose.material3.BottomSheetDefaults.DragHandle() },
+            containerColor = MaterialTheme.colorScheme.surface,
+        ) {
+            BusinessProfileVerificationDetailSheet(
+                title = activeClient.companyName,
+                subtitle = activeClient.fullName,
+                status = activeClient.status,
+                changes = activeClient.changedBusinessProfile,
+                remarks = remarks,
+                remarksError = remarksError,
+                resolutionNotes = activeClient.resolutionNotes,
+                onRemarksChange = {
+                    remarks = it
+                    if (remarksError != null) {
+                        remarksError = null
+                    }
+                },
+                onApproveClick = {
+                    viewModel.onEvent(
+                        VerificationRequestsEvent.UpdateClientStatus(
+                            request = activeClient,
+                            status = VerificationRequestStatus.APPROVED,
+                            resolutionNotes = remarks.takeUnless { it.isBlank() },
+                        )
+                    )
+                },
+                onRejectClick = {
+                    if (remarks.isBlank()) {
+                        remarksError = "Remarks are mandatory for rejecting a request."
+                    } else {
+                        viewModel.onEvent(
+                            VerificationRequestsEvent.UpdateClientStatus(
+                                request = activeClient,
+                                status = VerificationRequestStatus.REJECTED,
+                                resolutionNotes = remarks,
+                            )
+                        )
+                    }
+                },
+                onClose = {
+                    scope.launch {
+                        sheetState.hide()
+                    }.invokeOnCompletion {
+                        clearSelectedRequest()
+                    }
+                },
+                actionErrorMessage = uiState.actionErrorMessage,
+                isApproveLoading = uiState.actionInProgressRequestId == activeClient.id &&
+                    uiState.actionInProgressStatus == VerificationRequestStatus.APPROVED,
+                isRejectLoading = uiState.actionInProgressRequestId == activeClient.id &&
                     uiState.actionInProgressStatus == VerificationRequestStatus.REJECTED,
                 isCompletedView = isCompletedView,
             )
@@ -1227,6 +1475,265 @@ private fun buildChangedSummaryLabels(request: TruckVerificationRequest): List<S
             add(formatFieldName(change.displayFieldName))
         }
     }
+}
+
+@Composable
+private fun BusinessVerificationRequestCard(
+    title: String,
+    subtitle: String,
+    updatedAt: String,
+    status: VerificationRequestStatus,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    changedLabels: List<String>,
+    onClick: () -> Unit,
+) {
+    val relativeTime = remember(updatedAt) { formatRelativeTime(updatedAt) }
+    val isCompleted = status == VerificationRequestStatus.APPROVED ||
+        status == VerificationRequestStatus.REJECTED
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    if (isCompleted) {
+                        CompletedStatusChip(status = status)
+                    }
+                }
+                Surface(
+                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f),
+                    shape = RoundedCornerShape(999.dp),
+                ) {
+                    Text(
+                        text = relativeTime,
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Surface(
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                    shape = RoundedCornerShape(10.dp),
+                ) {
+                    Box(
+                        modifier = Modifier.size(36.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    if (changedLabels.isNotEmpty()) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            changedLabels.take(3).forEach { label ->
+                                ChangedFieldChip(label = label)
+                            }
+                        }
+                    } else {
+                        Text(
+                            text = "Business profile changes",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun BusinessProfileVerificationDetailSheet(
+    title: String,
+    subtitle: String,
+    status: VerificationRequestStatus,
+    changes: List<BusinessProfileChange>,
+    remarks: String,
+    remarksError: String?,
+    resolutionNotes: String?,
+    onRemarksChange: (String) -> Unit,
+    onApproveClick: () -> Unit,
+    onRejectClick: () -> Unit,
+    onClose: () -> Unit,
+    actionErrorMessage: String?,
+    isApproveLoading: Boolean,
+    isRejectLoading: Boolean,
+    isCompletedView: Boolean,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 12.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                StatusBannerChip(status = status)
+            }
+
+            TextButton(onClick = onClose) {
+                Text("Close")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        Spacer(modifier = Modifier.height(18.dp))
+
+        SectionLabel(text = "Changed Business Profile")
+        Spacer(modifier = Modifier.height(10.dp))
+
+        if (changes.isEmpty()) {
+            EmptySheetNote(text = "No business profile changes to display.")
+        } else {
+            changes.forEach { change ->
+                BusinessProfileChangeRow(change = change)
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+        }
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        SectionLabel(text = "Remarks")
+        Spacer(modifier = Modifier.height(10.dp))
+
+        if (isCompletedView) {
+            RemarksField(
+                remarks = resolutionNotes.orEmpty(),
+                remarksError = null,
+                enabled = false,
+                onRemarksChange = onRemarksChange,
+            )
+        } else {
+            RemarksField(
+                remarks = remarks,
+                remarksError = remarksError,
+                enabled = true,
+                onRemarksChange = onRemarksChange,
+            )
+
+            if (actionErrorMessage != null) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Surface(
+                    color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.65f),
+                    shape = RoundedCornerShape(14.dp),
+                ) {
+                    Text(
+                        text = actionErrorMessage,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                ActionButton(
+                    modifier = Modifier.weight(1f),
+                    text = "Reject",
+                    icon = Icons.Default.Close,
+                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.24f)),
+                    isLoading = isRejectLoading,
+                    onClick = onRejectClick,
+                )
+                ActionButton(
+                    modifier = Modifier.weight(1f),
+                    text = "Approve",
+                    icon = Icons.Default.CheckCircle,
+                    containerColor = FreightThemeTokens.colors.successColor,
+                    contentColor = FreightThemeTokens.colors.onSuccessColor,
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)),
+                    isLoading = isApproveLoading,
+                    onClick = onApproveClick,
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+    }
+}
+
+@Composable
+private fun BusinessProfileChangeRow(change: BusinessProfileChange) {
+    TruckDetailChangeRow(
+        change = TruckDetailChange(
+            fieldName = change.fieldName,
+            displayFieldName = change.displayFieldName,
+            beforeValue = change.beforeValue,
+            afterValue = change.afterValue,
+        )
+    )
 }
 
 private fun formatFieldName(fieldName: String): String {
