@@ -7,6 +7,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -87,6 +89,10 @@ import java.time.OffsetDateTime
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextAlign
 import com.freight24.connect.feature.verificationrequests.domain.model.BusinessProfileChange
 import com.freight24.connect.feature.verificationrequests.domain.model.ClientVerificationRequest
 import com.freight24.connect.feature.verificationrequests.domain.model.TruckOwnerVerificationRequest
@@ -191,7 +197,7 @@ fun VerificationRequestsScreen(
         }
     }
 
-    androidx.compose.material3.Scaffold(
+    Scaffold(
         topBar = {
             TopAppBar(
                 title = {
@@ -440,7 +446,7 @@ fun VerificationRequestsScreen(
                 clearSelectedRequest()
             },
             sheetState = sheetState,
-            dragHandle = { androidx.compose.material3.BottomSheetDefaults.DragHandle() },
+            dragHandle = { BottomSheetDefaults.DragHandle() },
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
             TripVerificationRequestDetailSheet(
@@ -508,7 +514,7 @@ fun VerificationRequestsScreen(
                 clearSelectedRequest()
             },
             sheetState = sheetState,
-            dragHandle = { androidx.compose.material3.BottomSheetDefaults.DragHandle() },
+            dragHandle = { BottomSheetDefaults.DragHandle() },
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
             TruckVerificationRequestDetailSheet(
@@ -574,7 +580,7 @@ fun VerificationRequestsScreen(
         ModalBottomSheet(
             onDismissRequest = { clearSelectedRequest() },
             sheetState = sheetState,
-            dragHandle = { androidx.compose.material3.BottomSheetDefaults.DragHandle() },
+            dragHandle = { BottomSheetDefaults.DragHandle() },
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
             BusinessProfileVerificationDetailSheet(
@@ -636,7 +642,7 @@ fun VerificationRequestsScreen(
         ModalBottomSheet(
             onDismissRequest = { clearSelectedRequest() },
             sheetState = sheetState,
-            dragHandle = { androidx.compose.material3.BottomSheetDefaults.DragHandle() },
+            dragHandle = { BottomSheetDefaults.DragHandle() },
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
             BusinessProfileVerificationDetailSheet(
@@ -702,20 +708,26 @@ private fun VerificationTabs(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.Bottom,
     ) {
         VerificationRequestTab.entries.forEach { tab ->
             val isSelected = tab == selectedTab
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(horizontal = 2.dp).clickable { onTabSelected(tab) }
+                modifier = Modifier
+                    .weight(1f) // Keeps equal space distribution
+                    .clickable { onTabSelected(tab) }
+                    .padding(horizontal = 4.dp)
             ) {
                 Text(
                     text = tab.title,
-                    style = MaterialTheme.typography.titleMedium,
+                    // labelLarge (14sp) or bodyMedium is ideal for tab labels
+                    style = MaterialTheme.typography.labelLarge,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                     color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    softWrap = false,
+                    textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Box(
@@ -1265,9 +1277,9 @@ private fun RemarksField(
 private fun ActionButton(
     modifier: Modifier = Modifier,
     text: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    containerColor: androidx.compose.ui.graphics.Color,
-    contentColor: androidx.compose.ui.graphics.Color,
+    icon: ImageVector,
+    containerColor: Color,
+    contentColor: Color,
     isLoading: Boolean,
     border: BorderStroke? = null,
     onClick: () -> Unit,
@@ -1483,7 +1495,7 @@ private fun BusinessVerificationRequestCard(
     subtitle: String,
     updatedAt: String,
     status: VerificationRequestStatus,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     changedLabels: List<String>,
     onClick: () -> Unit,
 ) {
