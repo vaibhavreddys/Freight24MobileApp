@@ -15,6 +15,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +39,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Numbers
@@ -77,6 +80,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -93,6 +97,7 @@ import com.freight24.rest.response.AddTruckDto
 import com.freight24.ui.UiState
 import com.freight24.ui.components.AppDropdown
 import com.freight24.ui.components.DashedUploadCard
+import com.freight24.ui.components.getPdfLaunchIntent
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -429,11 +434,15 @@ private fun DocumentsStep(viewModel: EditTruckViewModel) {
     val rcFile by viewModel.rcCardFile.collectAsState()
     val fcFile by viewModel.fcCertificateFile.collectAsState()
     val insuranceFile by viewModel.insuranceFile.collectAsState()
- 
+
     val existingRcStatus by viewModel.existingRcStatus.collectAsState()
     val existingFcStatus by viewModel.existingFcStatus.collectAsState()
     val existingInsuranceStatus by viewModel.existingInsuranceStatus.collectAsState()
- 
+
+    val existingRcUrl by viewModel.existingRcUrl.collectAsState()
+    val existingFcUrl by viewModel.existingFcUrl.collectAsState()
+    val existingInsuranceUrl by viewModel.existingInsuranceUrl.collectAsState()
+
     var pendingUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
     var isPdfPending by remember { mutableStateOf(false) }
     var showSourcePicker by remember { mutableStateOf(false) }
@@ -573,56 +582,249 @@ private fun DocumentsStep(viewModel: EditTruckViewModel) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        DashedUploadCard(
+        DocumentUploadSection(
             title = "Registration Certificate",
-            subtitle = "Camera, JPG or PDF",
             label = "Required",
-            isUploaded = rcFile != null || existingRcStatus != null,
-            statusText = when {
-                rcFile != null -> "Ready to Upload"
-                existingRcStatus != null -> "Existing Document (${existingRcStatus?.lowercase()?.replaceFirstChar { it.uppercase() }})"
-                else -> "Pending Selection"
-            },
+            subtitle = "Camera, JPG or PDF",
+            icon = Icons.Default.FileUpload,
+            newFile = rcFile,
+            existingUrl = existingRcUrl,
+            existingStatus = existingRcStatus,
             onUploadClick = {
                 currentTargetPrefix = "RC"
                 showSourcePicker = true
             },
+            onViewClick = { url ->
+                viewModel.fetchSignedUrl(url) { signedUrl ->
+                    context.startActivity(getPdfLaunchIntent(signedUrl, context))
+                }
+            },
         )
 
-        DashedUploadCard(
+        DocumentUploadSection(
             title = "Insurance Policy",
-            subtitle = "Camera, JPG or PDF",
             label = "Optional",
-            isUploaded = insuranceFile != null || existingInsuranceStatus != null,
-            statusText = when {
-                insuranceFile != null -> "Ready to Upload"
-                existingInsuranceStatus != null -> "Existing Document (${existingInsuranceStatus?.lowercase()?.replaceFirstChar { it.uppercase() }})"
-                else -> null
-            },
+            subtitle = "Camera, JPG or PDF",
             icon = Icons.Default.Shield,
+            newFile = insuranceFile,
+            existingUrl = existingInsuranceUrl,
+            existingStatus = existingInsuranceStatus,
             onUploadClick = {
                 currentTargetPrefix = "INSURANCE"
                 showSourcePicker = true
             },
+            onViewClick = { url ->
+                viewModel.fetchSignedUrl(url) { signedUrl ->
+                    context.startActivity(getPdfLaunchIntent(signedUrl, context))
+                }
+            },
         )
 
-        DashedUploadCard(
+        DocumentUploadSection(
             title = "Fitness Certificate",
-            subtitle = "Camera, JPG or PDF",
             label = "Optional",
-            isUploaded = fcFile != null || existingFcStatus != null,
-            statusText = when {
-                fcFile != null -> "Ready to Upload"
-                existingFcStatus != null -> "Existing Document (${existingFcStatus?.lowercase()?.replaceFirstChar { it.uppercase() }})"
-                else -> null
-            },
+            subtitle = "Camera, JPG or PDF",
             icon = Icons.AutoMirrored.Filled.Assignment,
+            newFile = fcFile,
+            existingUrl = existingFcUrl,
+            existingStatus = existingFcStatus,
             onUploadClick = {
                 currentTargetPrefix = "FC"
                 showSourcePicker = true
             },
+            onViewClick = { url ->
+                viewModel.fetchSignedUrl(url) { signedUrl ->
+                    context.startActivity(getPdfLaunchIntent(signedUrl, context))
+                }
+            },
         )
     }
+}
+
+@Composable
+private fun DocumentUploadSection(
+    title: String,
+    label: String?,
+    subtitle: String,
+    icon: ImageVector,
+    newFile: File?,
+    existingUrl: String?,
+    existingStatus: String?,
+    onUploadClick: () -> Unit,
+    onViewClick: (String) -> Unit,
+) {
+    val hasExisting = existingUrl != null && existingStatus != null
+
+    if (hasExisting) {
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                )
+                if (label != null) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        shape = RoundedCornerShape(4.dp),
+                    ) {
+                        Text(
+                            text = label,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            fontSize = 10.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                ViewDocumentCard(
+                    title = title,
+                    status = existingStatus,
+                    onClick = { onViewClick(existingUrl) },
+                    modifier = Modifier.weight(1f),
+                )
+                UploadActionCard(
+                    hasFile = newFile != null,
+                    subtitle = subtitle,
+                    onClick = onUploadClick,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            if (newFile != null) {
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "● Status: Ready to Upload",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+        }
+    } else {
+        DashedUploadCard(
+            title = title,
+            subtitle = subtitle,
+            label = label,
+            icon = icon,
+            isUploaded = newFile != null,
+            statusText = when {
+                newFile != null -> "Ready to Upload"
+                else -> "Pending Selection"
+            },
+            onUploadClick = onUploadClick,
+        )
+    }
+}
+
+@Composable
+private fun ViewDocumentCard(
+    title: String,
+    status: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Box(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Surface(
+                    color = MaterialTheme.colorScheme.onSurface,
+                    shape = CircleShape,
+                    modifier = Modifier.size(40.dp),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "Click To View",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = "Verification " + status.uppercase(),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun UploadActionCard(
+    hasFile: Boolean,
+    subtitle: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Box(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    shape = CircleShape,
+                    modifier = Modifier.size(40.dp),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = if (hasFile) Icons.Default.CheckCircle else Icons.Default.FileUpload,
+                            contentDescription = null,
+                            tint = if (hasFile) Color(0xFF2E7D32) else MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = if (hasFile) "File Selected" else "Tap to Upload",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+private fun documentStatusColor(status: String): Color = when (status.uppercase()) {
+    "VERIFIED", "COMPLETED" -> Color(0xFF2E7D32)
+    "PENDING" -> Color(0xFFEF6C00)
+    "REJECTED" -> Color(0xFFC62828)
+    else -> Color(0xFF757575)
 }
 
 private fun createTempImageUri(context: Context): Uri {

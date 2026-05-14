@@ -8,6 +8,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.SavedStateHandle
 import com.freight24.rest.response.AddTruckDto
 import com.freight24.trucker.feature.trucks.domain.usecase.FetchTruckDetailUseCase
+import com.freight24.trucker.feature.trucks.domain.usecase.GetGenericSignedUrlParams
+import com.freight24.trucker.feature.trucks.domain.usecase.GetGenericSignedUrlUseCase
 import com.freight24.trucker.feature.trucks.domain.usecase.UpdateTruckParams
 import com.freight24.trucker.feature.trucks.domain.usecase.UpdateTruckUseCase
 import com.freight24.ui.UiState
@@ -35,6 +37,7 @@ internal class EditTruckViewModel
         private val fetchTruckDetailUseCase: FetchTruckDetailUseCase,
         private val updateTruckUseCase: UpdateTruckUseCase,
         private val checkTruckAvailabilityUseCase: com.freight24.trucker.feature.trucks.domain.usecase.CheckTruckAvailabilityUseCase,
+        private val getGenericSignedUrlUseCase: GetGenericSignedUrlUseCase,
     ) : ViewModel() {
         private val truckId = savedStateHandle.get<String>("truckId") ?: ""
  
@@ -68,6 +71,11 @@ internal class EditTruckViewModel
         val existingRcStatus = MutableStateFlow<String?>(null)
         val existingFcStatus = MutableStateFlow<String?>(null)
         val existingInsuranceStatus = MutableStateFlow<String?>(null)
+
+        // Existing Doc URLs (for viewing)
+        val existingRcUrl = MutableStateFlow<String?>(null)
+        val existingFcUrl = MutableStateFlow<String?>(null)
+        val existingInsuranceUrl = MutableStateFlow<String?>(null)
 
         // File State
         val rcCardFile = MutableStateFlow<File?>(null)
@@ -186,9 +194,16 @@ internal class EditTruckViewModel
                         year.value = truckDetail.year ?: ""
                         selectedTruckType.value = truckTypes.find { it.name == truckDetail.truckType }
                         
-                        existingRcStatus.value = truckDetail.rcCard?.status
-                        existingFcStatus.value = truckDetail.fcCertificate?.status
-                        existingInsuranceStatus.value = truckDetail.insurance?.status
+                        val rcUrl = if (!truckDetail.rcCard?.url.isNullOrEmpty()) truckDetail.rcCard?.url else null
+                        val fcUrl = if (!truckDetail.fcCertificate?.url.isNullOrEmpty()) truckDetail.fcCertificate?.url else null
+                        val insUrl = if (!truckDetail.insurance?.url.isNullOrEmpty()) truckDetail.insurance?.url else null
+                        existingRcUrl.value = rcUrl
+                        existingFcUrl.value = fcUrl
+                        existingInsuranceUrl.value = insUrl
+
+                        existingRcStatus.value = if (rcUrl != null) truckDetail.rcCard?.status else null
+                        existingFcStatus.value = if (fcUrl != null) truckDetail.fcCertificate?.status else null
+                        existingInsuranceStatus.value = if (insUrl != null) truckDetail.insurance?.status else null
  
                         initialData.value = InitialData(
                             registrationNumber = truckDetail.registrationNumber,
@@ -250,6 +265,14 @@ internal class EditTruckViewModel
                 } catch (e: Exception) {
                     Log.e(TAG, "Error processing file", e)
                 }
+            }
+        }
+
+        fun fetchSignedUrl(s3Url: String, onUrlReady: (String) -> Unit) {
+            viewModelScope.launch {
+                getGenericSignedUrlUseCase(GetGenericSignedUrlParams(s3Url))
+                    .onSuccess { url -> onUrlReady(url) }
+                    .onFailure { Log.e(TAG, "Failed to fetch signed URL", it) }
             }
         }
 
@@ -369,6 +392,9 @@ internal class EditTruckViewModel
             existingRcStatus.value = null
             existingFcStatus.value = null
             existingInsuranceStatus.value = null
+            existingRcUrl.value = null
+            existingFcUrl.value = null
+            existingInsuranceUrl.value = null
             initialData.value = null
             _registrationError.value = null
         }
