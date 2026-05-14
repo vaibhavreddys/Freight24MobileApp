@@ -36,7 +36,20 @@ internal class LoginRepositoryImpl
                         role_id = 2,
                         installation_id = installationId,
                     ),
-                )
+                ).also { response ->
+                    val data = response.data
+                    val accessToken = data?.access_token ?: data?.token
+                    val userId = data?.user?.id
+
+                    if (response.success && data != null && !accessToken.isNullOrBlank() && !userId.isNullOrBlank()) {
+                        sessionManager.saveSession(
+                            phone = phoneNumber,
+                            userId = userId,
+                            authData = data,
+                            installationId = installationId,
+                        )
+                    }
+                }
             }
         }
     }
