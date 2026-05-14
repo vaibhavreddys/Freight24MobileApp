@@ -125,6 +125,7 @@ import com.freight24.trucker.feature.profile.domain.Profile
 import com.freight24.trucker.feature.profile.domain.ProfileDocument
 import com.freight24.trucker.feature.profile.util.ProfileFieldValidators
 import com.freight24.trucker.feature.profile.util.ValidationResult
+import com.freight24.trucker.ui.components.rememberCallAction
 import com.freight24.ui.UiState
 import com.freight24.ui.components.AddRouteBottomSheet
 import com.freight24.ui.components.CitySearchField
@@ -286,6 +287,8 @@ private fun ProfileMainContent(
 
     val isVerified = profile.profileVerificationStatus?.lowercase() == "verified"
     val profileStatus = profile.profileVerificationStatus?.lowercase() ?: "incomplete"
+    val supportPhone = "+919620111667"
+    val makeCall = rememberCallAction(supportPhone)
 
     var pickingDocumentType by rememberSaveable { mutableStateOf<DocumentType?>(null) }
     var showSourcePicker by rememberSaveable { mutableStateOf(false) }
@@ -774,11 +777,11 @@ private fun ProfileMainContent(
 
             Spacer(modifier = Modifier.height(24.dp))
             PODAddressCard(
-                companyName = "Freight24 Private Limited",
+                companyName = "Freight24",
                 addressLines = listOf(
-                    "#42, 4th Floor, 7th Main Road,",
-                    "Jakkur, Bengaluru,",
-                    "Karnataka - 560034",
+                    "4th Floor, #3, Srirampur Cross Road,",
+                    "Jakkuru, Bengaluru,",
+                    "Karnataka - 560064",
                 ),
             )
 
@@ -827,8 +830,8 @@ private fun ProfileMainContent(
                 ProfileUtilityRow(
                     title = "Contact Support",
                     icon = Icons.Default.ChatBubble,
-                    onClick = { },
-                    subtitle = "Available Mon–Sat, 9am–6pm",
+                    onClick = { makeCall() },
+//                    subtitle = "Available Mon–Sat, 9am–6pm",
                     iconContainerColor = FreightThemeTokens.colors.infoColor.copy(alpha = 0.12f),
                     iconTint = FreightThemeTokens.colors.infoColor,
                 )
