@@ -49,7 +49,7 @@ fun DashboardScreen(
     val scrollState = rememberScrollState()
 
     PullToRefreshBox(
-        isRefreshing = uiState.isLoading,
+        isRefreshing = uiState.isRefreshing,
         onRefresh = onRefresh,
         modifier = Modifier
             .fillMaxSize()

@@ -20,29 +20,35 @@ class DashboardViewModelImpl @Inject constructor(
         private set
 
     init {
-        loadData()
+        loadData(isRefresh = false)
     }
 
     override fun onEvent(event: DashboardEvent) {
         when (event) {
-            is DashboardEvent.Retry,
-            is DashboardEvent.Refresh -> loadData()
+            is DashboardEvent.Retry -> loadData(isRefresh = false)
+            is DashboardEvent.Refresh -> loadData(isRefresh = true)
         }
     }
 
-    private fun loadData() {
+    private fun loadData(isRefresh: Boolean) {
         viewModelScope.launch {
-            uiState = uiState.copy(isLoading = true, error = null)
+            uiState = uiState.copy(
+                isLoading = !isRefresh,
+                isRefreshing = isRefresh,
+                error = null
+            )
             dashboardUseCase(EmptyUseCaseParams).fold(
                 onSuccess = { data ->
                     uiState = uiState.copy(
                         isLoading = false,
+                        isRefreshing = false,
                         data = data
                     )
                 },
                 onFailure = { error ->
                     uiState = uiState.copy(
                         isLoading = false,
+                        isRefreshing = false,
                         error = error.localizedMessage ?: "Failed to load dashboard data"
                     )
                 }

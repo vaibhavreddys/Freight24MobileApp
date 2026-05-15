@@ -9,6 +9,7 @@ interface DashboardViewModel {
 
 data class DashboardUiState(
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
     val data: DashboardDataResponse.DashboardData? = null,
     val error: String? = null
 )
