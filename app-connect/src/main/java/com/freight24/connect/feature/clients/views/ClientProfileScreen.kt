@@ -12,6 +12,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,7 +49,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -372,24 +377,31 @@ private fun ClientProfileContent(
                 onLeadingIconClick = { launchDialer(context, phone) },
                 keyboardType = KeyboardType.Phone,
                 capitalization = KeyboardCapitalization.None,
+                isPhoneNumber = true,
                 onValueChange = {
                     viewModel.editablePhone.value = it
                     viewModel.onFieldChanged()
                 },
             )
             DividerLine()
-            ProfileField(
-                label = "ALT PHONES",
-                value = client.alt_phones?.joinToString(", ").orEmpty(),
-                isEditing = false,
-                isEditable = false,
-                leadingIcon = Icons.Default.Call,
-                onLeadingIconClick = {
-                    launchDialer(context, client.alt_phones?.firstOrNull().orEmpty())
-                },
-                placeholder = "Not added",
-            )
-            DividerLine()
+            val altPhones = client.alt_phones
+                ?.filter { it.isNotBlank() && it != "[]" }
+                .orEmpty()
+            if (altPhones.isNotEmpty()) {
+                ProfileField(
+                    label = "ALT PHONES",
+                    value = altPhones.joinToString(", "),
+                    isEditing = false,
+                    isEditable = false,
+                    leadingIcon = Icons.Default.Call,
+                    onLeadingIconClick = {
+                        launchDialer(context, altPhones.first())
+                    },
+                    placeholder = "Not added",
+                    isPhoneNumber = true,
+                )
+                DividerLine()
+            }
             ProfileField(
                 label = "PAN NUMBER",
                 value = panCard,
@@ -575,127 +587,382 @@ private fun BranchesSectionContent(
         return
     }
 
+    val successColor = FreightThemeTokens.colors.successColor
+
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         branches.forEachIndexed { index, branch ->
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)),
             ) {
-                Column(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+                Column(modifier = Modifier.fillMaxWidth().padding(18.dp)) {
+                    // Branch header
                     Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 10.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Business,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Branch ${index + 1}",
-                            style = MaterialTheme.typography.labelLarge,
+                            text = branch.branchName.ifBlank { "Unnamed Branch" },
+                            style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary,
+                            color = MaterialTheme.colorScheme.onSurface,
                         )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .background(successColor, CircleShape),
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Branch ${index + 1}",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = successColor,
+                            )
+                        }
                     }
-                    DividerLine()
 
-                    ProfileField(
-                        label = "BRANCH NAME",
-                        value = branch.branchName,
+                    if (branch.branchAddress.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(14.dp),
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = branch.branchAddress,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Operations (POD) sub-card
+                    BranchContactSubCard(
+                        icon = Icons.Default.Inventory,
+                        title = "OPERATIONS (POD)",
+                        contactNameLabel = "CONTACT NAME",
+                        contactNameValue = branch.podContactName,
+                        contactNumberLabel = "MOBILE NUMBER",
+                        contactNumberValue = branch.podContactNumber,
                         isEditing = isEditing,
-                        leadingIcon = Icons.Default.Business,
-                        onValueChange = { onBranchNameChanged(branch.id, it) },
+                        onNameChange = { onPodContactNameChanged(branch.id, it) },
+                        onNumberChange = { onPodContactNumberChanged(branch.id, it.filter(Char::isDigit).take(15)) },
+                        successColor = successColor,
                     )
-                    DividerLine()
-                    ProfileField(
-                        label = "BRANCH ADDRESS",
-                        value = branch.branchAddress,
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Finance & Payment sub-card
+                    BranchContactSubCard(
+                        icon = Icons.Default.CreditCard,
+                        title = "FINANCE & PAYMENT",
+                        contactNameLabel = "CONTACT NAME",
+                        contactNameValue = branch.paymentContactName,
+                        contactNumberLabel = "MOBILE NUMBER",
+                        contactNumberValue = branch.paymentContactNumber,
                         isEditing = isEditing,
-                        leadingIcon = Icons.Default.LocationOn,
-                        onValueChange = { onBranchAddressChanged(branch.id, it) },
+                        onNameChange = { onPaymentContactNameChanged(branch.id, it) },
+                        onNumberChange = { onPaymentContactNumberChanged(branch.id, it.filter(Char::isDigit).take(15)) },
+                        successColor = successColor,
                     )
-                    DividerLine()
-                    ProfileField(
-                        label = "POD CONTACT NAME",
-                        value = branch.podContactName,
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Logistics & Tracking sub-card
+                    BranchLogisticsTrackingSubCard(
+                        trafficName = branch.trafficContactName,
+                        trafficNumber = branch.trafficContactNumber,
+                        trackingName = branch.trackingContactName,
+                        trackingNumber = branch.trackingContactNumber,
                         isEditing = isEditing,
-                        leadingIcon = Icons.Default.Person,
-                        onValueChange = { onPodContactNameChanged(branch.id, it) },
-                    )
-                    DividerLine()
-                    ProfileField(
-                        label = "POD CONTACT NUMBER",
-                        value = branch.podContactNumber,
-                        isEditing = isEditing,
-                        leadingIcon = Icons.Default.Call,
-                        keyboardType = KeyboardType.Phone,
-                        capitalization = KeyboardCapitalization.None,
-                        onValueChange = { onPodContactNumberChanged(branch.id, it.filter(Char::isDigit).take(15)) },
-                    )
-                    DividerLine()
-                    ProfileField(
-                        label = "PAYMENT CONTACT NAME",
-                        value = branch.paymentContactName,
-                        isEditing = isEditing,
-                        leadingIcon = Icons.Default.Person,
-                        onValueChange = { onPaymentContactNameChanged(branch.id, it) },
-                    )
-                    DividerLine()
-                    ProfileField(
-                        label = "PAYMENT CONTACT NUMBER",
-                        value = branch.paymentContactNumber,
-                        isEditing = isEditing,
-                        leadingIcon = Icons.Default.Call,
-                        keyboardType = KeyboardType.Phone,
-                        capitalization = KeyboardCapitalization.None,
-                        onValueChange = { onPaymentContactNumberChanged(branch.id, it.filter(Char::isDigit).take(15)) },
-                    )
-                    DividerLine()
-                    ProfileField(
-                        label = "TRAFFIC CONTACT NAME",
-                        value = branch.trafficContactName,
-                        isEditing = isEditing,
-                        leadingIcon = Icons.Default.Person,
-                        onValueChange = { onTrafficContactNameChanged(branch.id, it) },
-                    )
-                    DividerLine()
-                    ProfileField(
-                        label = "TRAFFIC CONTACT NUMBER",
-                        value = branch.trafficContactNumber,
-                        isEditing = isEditing,
-                        leadingIcon = Icons.Default.Call,
-                        keyboardType = KeyboardType.Phone,
-                        capitalization = KeyboardCapitalization.None,
-                        onValueChange = { onTrafficContactNumberChanged(branch.id, it.filter(Char::isDigit).take(15)) },
-                    )
-                    DividerLine()
-                    ProfileField(
-                        label = "TRACKING CONTACT NAME",
-                        value = branch.trackingContactName,
-                        isEditing = isEditing,
-                        leadingIcon = Icons.Default.Person,
-                        onValueChange = { onTrackingContactNameChanged(branch.id, it) },
-                    )
-                    DividerLine()
-                    ProfileField(
-                        label = "TRACKING CONTACT NUMBER",
-                        value = branch.trackingContactNumber,
-                        isEditing = isEditing,
-                        leadingIcon = Icons.Default.Call,
-                        keyboardType = KeyboardType.Phone,
-                        capitalization = KeyboardCapitalization.None,
-                        onValueChange = { onTrackingContactNumberChanged(branch.id, it.filter(Char::isDigit).take(15)) },
+                        onTrafficNameChange = { onTrafficContactNameChanged(branch.id, it) },
+                        onTrafficNumberChange = { onTrafficContactNumberChanged(branch.id, it.filter(Char::isDigit).take(15)) },
+                        onTrackingNameChange = { onTrackingContactNameChanged(branch.id, it) },
+                        onTrackingNumberChange = { onTrackingContactNumberChanged(branch.id, it.filter(Char::isDigit).take(15)) },
+                        successColor = successColor,
                     )
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun BranchContactSubCard(
+    icon: ImageVector,
+    title: String,
+    contactNameLabel: String,
+    contactNameValue: String,
+    contactNumberLabel: String,
+    contactNumberValue: String,
+    isEditing: Boolean,
+    onNameChange: (String) -> Unit,
+    onNumberChange: (String) -> Unit,
+    successColor: Color,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
+    ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(16.dp),
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                BranchContactField(
+                    modifier = Modifier.weight(1f),
+                    label = contactNameLabel,
+                    value = contactNameValue,
+                    isEditing = isEditing,
+                    onValueChange = onNameChange,
+                )
+                BranchContactField(
+                    modifier = Modifier.weight(1f),
+                    label = contactNumberLabel,
+                    value = contactNumberValue,
+                    isEditing = isEditing,
+                    isPhoneNumber = true,
+                    onValueChange = onNumberChange,
+                    successColor = successColor,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BranchLogisticsTrackingSubCard(
+    trafficName: String,
+    trafficNumber: String,
+    trackingName: String,
+    trackingNumber: String,
+    isEditing: Boolean,
+    onTrafficNameChange: (String) -> Unit,
+    onTrafficNumberChange: (String) -> Unit,
+    onTrackingNameChange: (String) -> Unit,
+    onTrackingNumberChange: (String) -> Unit,
+    successColor: Color,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
+    ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(14.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.LocalShipping,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(16.dp),
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "LOGISTICS & TRACKING",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Traffic row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                BranchContactField(
+                    modifier = Modifier.weight(1f),
+                    label = "TRAFFIC NAME",
+                    value = trafficName,
+                    isEditing = isEditing,
+                    onValueChange = onTrafficNameChange,
+                )
+                BranchContactField(
+                    modifier = Modifier.weight(1f),
+                    label = "TRAFFIC NUM",
+                    value = trafficNumber,
+                    isEditing = isEditing,
+                    isPhoneNumber = true,
+                    onValueChange = onTrafficNumberChange,
+                    successColor = successColor,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                thickness = 1.dp,
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Tracking row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                BranchContactField(
+                    modifier = Modifier.weight(1f),
+                    label = "TRACKING NAME",
+                    value = trackingName,
+                    isEditing = isEditing,
+                    onValueChange = onTrackingNameChange,
+                )
+                BranchContactField(
+                    modifier = Modifier.weight(1f),
+                    label = "TRACKING NUM",
+                    value = trackingNumber,
+                    isEditing = isEditing,
+                    isPhoneNumber = true,
+                    onValueChange = onTrackingNumberChange,
+                    successColor = successColor,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BranchContactField(
+    modifier: Modifier = Modifier,
+    label: String,
+    value: String,
+    isEditing: Boolean,
+    isPhoneNumber: Boolean = false,
+    onValueChange: (String) -> Unit = {},
+    successColor: Color = Color.Unspecified,
+) {
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
+    var showPhoneMenu by remember { mutableStateOf(false) }
+
+    Column(modifier = modifier) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        if (isEditing) {
+            OutlinedTextField(
+                value = value,
+                onValueChange = onValueChange,
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                shape = RoundedCornerShape(10.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = if (isPhoneNumber) successColor else MaterialTheme.colorScheme.primary,
+                ),
+                textStyle = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (isPhoneNumber && value.isNotBlank()) successColor else MaterialTheme.colorScheme.onSurface,
+                ),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = if (isPhoneNumber) KeyboardType.Phone else KeyboardType.Text,
+                    capitalization = KeyboardCapitalization.None,
+                ),
+            )
+        } else {
+            val displayValue = value.ifBlank { "—" }
+            val isPhoneValid = isPhoneNumber && value.isNotBlank()
+            Row(
+                modifier = Modifier
+                    .then(
+                        if (isPhoneValid) {
+                            Modifier.pointerInput(Unit) {
+                                detectTapGestures(
+                                    onLongPress = { showPhoneMenu = true },
+                                )
+                            }
+                        } else {
+                            Modifier
+                        },
+                    ),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = displayValue,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (isPhoneValid) successColor else MaterialTheme.colorScheme.onSurface,
+                )
+            }
+        }
+    }
+
+    if (showPhoneMenu && value.isNotBlank()) {
+        AlertDialog(
+            onDismissRequest = { showPhoneMenu = false },
+            title = { Text("Phone Options") },
+            text = {
+                Column {
+                    TextButton(
+                        onClick = {
+                            showPhoneMenu = false
+                            launchDialer(context, value)
+                        },
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Call, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Call")
+                        }
+                    }
+                    TextButton(
+                        onClick = {
+                            showPhoneMenu = false
+                            clipboardManager.setText(AnnotatedString(value))
+                        },
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Copy Number")
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showPhoneMenu = false }) {
+                    Text("Cancel")
+                }
+            },
+        )
     }
 }
 
@@ -836,7 +1103,12 @@ private fun ProfileField(
     keyboardType: KeyboardType = KeyboardType.Text,
     capitalization: KeyboardCapitalization = KeyboardCapitalization.Words,
     placeholder: String = "Not added",
+    isPhoneNumber: Boolean = false,
 ) {
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
+    var showPhoneMenu by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -883,13 +1155,69 @@ private fun ProfileField(
                 ),
             )
         } else {
-            Text(
-                text = value.ifBlank { placeholder },
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = if (value.isBlank()) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurface,
-            )
+            val displayValue = value.ifBlank { placeholder }
+            val isPhoneValid = isPhoneNumber && value.isNotBlank()
+            Row(
+                modifier = Modifier
+                    .then(
+                        if (isPhoneValid && !isEditing) {
+                            Modifier.pointerInput(Unit) {
+                                detectTapGestures(onLongPress = { showPhoneMenu = true })
+                            }
+                        } else {
+                            Modifier
+                        },
+                    ),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = displayValue,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (value.isBlank()) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurface,
+                )
+            }
         }
+    }
+
+    if (showPhoneMenu && value.isNotBlank()) {
+        AlertDialog(
+            onDismissRequest = { showPhoneMenu = false },
+            title = { Text("Phone Options") },
+            text = {
+                Column {
+                    TextButton(
+                        onClick = {
+                            showPhoneMenu = false
+                            launchDialer(context, value)
+                        },
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Call, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Call")
+                        }
+                    }
+                    TextButton(
+                        onClick = {
+                            showPhoneMenu = false
+                            clipboardManager.setText(AnnotatedString(value))
+                        },
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Copy Number")
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showPhoneMenu = false }) {
+                    Text("Cancel")
+                }
+            },
+        )
     }
 }
 
