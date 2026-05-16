@@ -6,6 +6,7 @@ package com.freight24.connect.feature.truckowners.profile.domain
 data class Profile(
     val id: String,
     val userId: String,
+    val status: String?,
     val baseCityId: Int?,
     val baseCityName: String?,
     val baseCityState: String?,

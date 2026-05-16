@@ -15,6 +15,7 @@ fun ProfileDto.toDomain(): Profile =
     Profile(
         id = id,
         userId = userId,
+        status = status,
         baseCityId = baseCityId,
         baseCityName = baseCityName,
         baseCityState = baseCityState,

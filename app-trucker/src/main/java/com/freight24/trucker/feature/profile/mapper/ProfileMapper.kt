@@ -36,6 +36,7 @@ fun ProfileDto.toDomain(): Profile =
         bankAccountVerificationStatus = bankAccountVerificationStatus ?: false,
         documentsVerificationStatus = documentsVerificationStatus ?: false,
         profileVerificationStatus = profileVerificationStatus,
+        status = status,
         preferredRoutes = preferredRoutes?.mapNotNull { it.toDomain() }.orEmpty(),
     )
 

@@ -5,6 +5,7 @@ import com.freight24.network.provider.SafeCallProvider
 import com.freight24.rest.api.ProfileApi
 import com.freight24.rest.api.TruckOwnerApi
 import com.freight24.rest.request.FinalSaveRequest
+import com.freight24.rest.request.UpdateTruckOwnerStatusRequest
 import com.freight24.rest.response.IdentityDocumentUploadResponse
 import com.freight24.connect.feature.truckowners.profile.domain.Profile
 import com.freight24.connect.feature.truckowners.profile.domain.ProfileRepository
@@ -34,6 +35,12 @@ internal class ProfileRepositoryImpl
         override suspend fun updateProfile(id: String, request: com.freight24.rest.request.UpdateProfileRequest): Result<Boolean> {
             return safeCallProvider.safeApiCall(ioDispatcher) {
                 api.updateProfile(id, request)
+            }.map { it.success }
+        }
+
+        override suspend fun updateTruckOwnerStatus(userId: String, status: String): Result<Boolean> {
+            return safeCallProvider.safeApiCall(ioDispatcher) {
+                truckOwnerApi.updateTruckOwnerStatus(userId, UpdateTruckOwnerStatusRequest(status))
             }.map { it.success }
         }
 

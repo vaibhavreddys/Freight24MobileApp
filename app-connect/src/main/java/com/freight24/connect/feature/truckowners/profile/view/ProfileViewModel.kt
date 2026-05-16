@@ -21,6 +21,8 @@ import com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateId
 import com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateIdentityDocumentUseCase
 import com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateProfileParams
 import com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateProfileUseCase
+import com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateTruckOwnerStatusParams
+import com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateTruckOwnerStatusUseCase
 import com.freight24.connect.feature.truckowners.profile.domain.usecase.UploadIdentityDocumentParams
 import com.freight24.connect.feature.truckowners.profile.domain.usecase.UploadIdentityDocumentUseCase
 import com.freight24.connect.feature.truckowners.profile.util.ProfileDocumentTypeIds
@@ -80,6 +82,7 @@ internal class ProfileViewModel
         savedStateHandle: SavedStateHandle,
         private val fetchProfileUseCase: FetchProfileUseCase,
         private val updateProfileUseCase: UpdateProfileUseCase,
+        private val updateTruckOwnerStatusUseCase: UpdateTruckOwnerStatusUseCase,
         private val uploadIdentityDocumentUseCase: UploadIdentityDocumentUseCase,
         private val updateIdentityDocumentUseCase: UpdateIdentityDocumentUseCase,
         private val finalizeIdentityDocumentsUseCase: FinalizeIdentityDocumentsUseCase,
@@ -194,6 +197,12 @@ internal class ProfileViewModel
         private val _isSaving = MutableStateFlow(false)
         val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
 
+        private val _isAccountActive = MutableStateFlow(true)
+        val isAccountActive: StateFlow<Boolean> = _isAccountActive.asStateFlow()
+
+        private val _isTogglingStatus = MutableStateFlow(false)
+        val isTogglingStatus: StateFlow<Boolean> = _isTogglingStatus.asStateFlow()
+
         private val _errorEvent = MutableSharedFlow<String>()
         val errorEvent = _errorEvent.asSharedFlow()
 
@@ -249,6 +258,7 @@ internal class ProfileViewModel
             editableUpiId.value = profile.bankAccountDetails?.upiId.orEmpty()
             editableBankName.value = profile.bankAccountDetails?.bankName.orEmpty()
             editableBranchName.value = profile.bankAccountDetails?.branchName.orEmpty()
+            _isAccountActive.value = profile.status?.lowercase() == "active"
         }
 
         private fun initializeDocumentStates(profile: Profile, preserveTemporary: Boolean) {
@@ -764,6 +774,30 @@ internal class ProfileViewModel
 
         fun retry() {
             fetchProfile()
+        }
+
+        fun toggleAccountStatus() {
+            val original = originalProfile ?: return
+            if (_isTogglingStatus.value) return
+
+            viewModelScope.launch(Dispatchers.IO) {
+                _isTogglingStatus.value = true
+                val newStatus = if (_isAccountActive.value) "inactive" else "active"
+
+                updateTruckOwnerStatusUseCase.invoke(
+                    UpdateTruckOwnerStatusParams(original.userId, newStatus)
+                ).onSuccess {
+                    _isAccountActive.value = newStatus == "active"
+                    val current = _uiState.value
+                    if (current is UiState.Success) {
+                        _uiState.value = UiState.Success(current.data.copy(status = newStatus))
+                    }
+                }.onFailure { error ->
+                    _errorEvent.emit(error.message ?: "Failed to update account status")
+                }
+
+                _isTogglingStatus.value = false
+            }
         }
 
         private fun String.toPriorityInt(): Int =

@@ -13,6 +13,7 @@ data class ProfileResponse(
 data class ProfileDto(
     val id: String,
     val userId: String,
+    val status: String?,
     @SerialName("base_city_id")
     val baseCityId: Int? = null,
     @SerialName("base_city_name")

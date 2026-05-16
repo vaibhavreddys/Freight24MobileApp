@@ -25,6 +25,7 @@ data class Profile(
     val bankAccountVerificationStatus: Boolean,
     val documentsVerificationStatus: Boolean,
     val profileVerificationStatus: String?,
+    val status: String?,
     val preferredRoutes: List<PreferredRoute>,
 )
 

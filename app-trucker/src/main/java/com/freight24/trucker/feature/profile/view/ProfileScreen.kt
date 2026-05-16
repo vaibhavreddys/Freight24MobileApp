@@ -431,6 +431,7 @@ private fun ProfileMainContent(
                 initials = viewModel.getUserInitials(),
                 role = "Truck Owner",
                 verificationStatus = profileStatus,
+                status = profile.status.orEmpty(),
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -897,14 +898,20 @@ private fun ProfileHeaderCard(
     initials: String,
     role: String,
     verificationStatus: String,
+    status: String,
 ) {
     val isVerified = verificationStatus == "verified"
-    val statusColor = when (verificationStatus) {
+    val verificationColor = when (verificationStatus) {
         "verified" -> BrandGreen
         "pending" -> MaterialTheme.colorScheme.tertiary
         else -> MaterialTheme.colorScheme.error 
     }
     val statusIcon = if (isVerified) Icons.Default.CheckCircle else Icons.Default.Warning
+
+    val normalizedStatus = status.lowercase()
+    val isActive = normalizedStatus == "active"
+    val chipColor = if (isActive) BrandGreen else MaterialTheme.colorScheme.error
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -938,7 +945,7 @@ private fun ProfileHeaderCard(
                 Icon(
                     imageVector = statusIcon,
                     contentDescription = verificationStatus,
-                    tint = statusColor,
+                    tint = verificationColor,
                     modifier =
                         Modifier
                             .size(22.dp)
@@ -970,6 +977,12 @@ private fun ProfileHeaderCard(
                 )
             }
 
+            Spacer(modifier = Modifier.width(12.dp))
+
+            VerificationChip(
+                text = if (isActive) "Active" else "Inactive",
+                color = chipColor,
+            )
         }
     }
 }

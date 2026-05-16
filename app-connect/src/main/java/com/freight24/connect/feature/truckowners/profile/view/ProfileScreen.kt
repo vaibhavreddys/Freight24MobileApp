@@ -124,6 +124,7 @@ import com.freight24.connect.feature.truckowners.profile.util.ProfileDocumentTyp
 import com.freight24.connect.feature.truckowners.profile.util.ProfileFieldValidators
 import com.freight24.connect.feature.truckowners.profile.util.ValidationResult
 import com.freight24.ui.UiState
+import com.freight24.ui.components.AccountStatusCard
 import com.freight24.ui.components.AddRouteBottomSheet
 import com.freight24.ui.components.CitySearchField
 import com.freight24.ui.components.RouteChip
@@ -295,7 +296,7 @@ private fun ProfileMainContent(
     val scope = rememberCoroutineScope()
 
     val isVerified = profile.profileVerificationStatus?.lowercase() == "verified"
-    val profileStatus = profile.profileVerificationStatus?.lowercase() ?: "incomplete"
+    val profileStatus = profile.status?.lowercase() ?: "inactive"
 
     var pickingDocumentType by rememberSaveable { mutableStateOf<DocumentType?>(null) }
     var showSourcePicker by rememberSaveable { mutableStateOf(false) }
@@ -461,9 +462,21 @@ private fun ProfileMainContent(
                 initials = viewModel.getUserInitials(),
                 role = "Truck Owner",
                 verificationStatus = profileStatus,
+                status = profile.status.orEmpty(),
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (isEditing) {
+                AccountStatusCard(
+                    isActive = viewModel.isAccountActive.collectAsState().value,
+                    isToggling = viewModel.isTogglingStatus.collectAsState().value,
+                    onToggle = { viewModel.toggleAccountStatus() },
+                )
+                Spacer(modifier = Modifier.height(32.dp))
+            } else {
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             // Information Sections
             ProfileSection(title = "PERSONAL INFORMATION", icon = Icons.Default.Person, true) {
@@ -866,15 +879,21 @@ private fun ProfileHeaderCard(
     initials: String,
     role: String,
     verificationStatus: String,
+    status: String,
 ) {
     val warningColor = FreightThemeTokens.colors.warningColor
-    val isVerified = verificationStatus == "verified"
+    val isVerified = verificationStatus == "verified" || verificationStatus == "active"
     val statusColor = when (verificationStatus) {
-        "verified" -> MaterialTheme.colorScheme.primary
+        "active", "verified" -> MaterialTheme.colorScheme.primary
         "pending" -> warningColor
         else -> MaterialTheme.colorScheme.error 
     }
     val statusIcon = if (isVerified) Icons.Default.CheckCircle else Icons.Default.Warning
+
+    val normalizedStatus = status.lowercase()
+    val isActive = normalizedStatus == "active"
+    val chipColor = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -940,6 +959,12 @@ private fun ProfileHeaderCard(
                 )
             }
 
+            Spacer(modifier = Modifier.width(12.dp))
+
+            VerificationChip(
+                text = if (isActive) "Active" else "Inactive",
+                color = chipColor,
+            )
         }
     }
 }
