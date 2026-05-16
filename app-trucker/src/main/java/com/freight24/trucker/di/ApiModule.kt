@@ -1,6 +1,7 @@
 package com.freight24.trucker.di
 
 import com.freight24.network.RetrofitFactory
+import com.freight24.network.di.AuthenticatedNetwork
 import com.freight24.network.di.DefaultNetwork
 import com.freight24.rest.api.AuthSessionApi
 import com.freight24.rest.api.LocationApi
@@ -37,42 +38,54 @@ object ApiModule {
     }
 
     @Provides
-    fun providesLoadApi(retrofitFactory: RetrofitFactory): IndentsApi {
+    fun providesLoadApi(
+        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
+    ): IndentsApi {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "TruckerLoadsService")
             .create(IndentsApi::class.java)
     }
 
     @Provides
-    fun providesTripsApi(retrofitFactory: RetrofitFactory): TripApi {
+    fun providesTripsApi(
+        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
+    ): TripApi {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "TruckerTripsService")
             .create(TripApi::class.java)
     }
 
     @Provides
-    fun providesTruckApi(retrofitFactory: RetrofitFactory): TruckApi {
+    fun providesTruckApi(
+        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
+    ): TruckApi {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "TruckerTrucksService")
             .create(TruckApi::class.java)
     }
 
     @Provides
-    fun providesProfileApi(retrofitFactory: RetrofitFactory): ProfileApi {
+    fun providesProfileApi(
+        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
+    ): ProfileApi {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "TruckerProfileService")
             .create(ProfileApi::class.java)
     }
 
     @Provides
-    fun providesLocationApi(retrofitFactory: RetrofitFactory): LocationApi {
+    fun providesLocationApi(
+        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
+    ): LocationApi {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "TruckerLocationService")
             .create(LocationApi::class.java)
     }
 
     @Provides
-    fun providesDocumentApi(retrofitFactory: RetrofitFactory): com.freight24.rest.api.DocumentApi {
+    fun providesDocumentApi(
+        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
+    ): com.freight24.rest.api.DocumentApi {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "TruckerDocumentService")
             .create(com.freight24.rest.api.DocumentApi::class.java)

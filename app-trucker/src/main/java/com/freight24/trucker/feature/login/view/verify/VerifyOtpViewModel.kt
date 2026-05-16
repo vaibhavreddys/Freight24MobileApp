@@ -116,10 +116,14 @@ internal class VerifyOtpViewModel
                     onSuccess = { verifyOtpResult ->
                         when (verifyOtpResult) {
                             is VerifyOtpResult.Error -> {
+                                _uiState.value = UiState.Error(verifyOtpResult.message)
                             }
                             is VerifyOtpResult.InvalidOtp -> {
+                                _uiState.value = UiState.Error(verifyOtpResult.message)
+                                triggerShake()
                             }
                             is VerifyOtpResult.OtpExpired -> {
+                                _uiState.value = UiState.Error(verifyOtpResult.message)
                             }
                             is VerifyOtpResult.Success -> {
                                 _uiState.value = UiState.Success(verifyOtpResult.token)

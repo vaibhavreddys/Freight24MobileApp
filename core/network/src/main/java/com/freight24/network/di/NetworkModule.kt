@@ -56,6 +56,7 @@ object NetworkModule {
         )
 
     @Provides
+    @AuthenticatedNetwork
     fun providesAuthenticatedOkHttpClient(
         config: NetworkConfig,
         authNetworkConfig: AuthNetworkConfig,
@@ -70,8 +71,9 @@ object NetworkModule {
     }
 
     @Provides
+    @AuthenticatedNetwork
     fun providesAuthenticatedRetrofitFactory(
-        okHttpClient: OkHttpClient,
+        @AuthenticatedNetwork okHttpClient: OkHttpClient,
         config: NetworkConfig,
         json: Json
     ): RetrofitFactory =

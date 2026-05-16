@@ -11,18 +11,17 @@ import javax.inject.Singleton
 class AuthInterceptor
     @Inject
     constructor(
+        private val sessionManager: SessionManager,
         private val tokenManager: TokenManager,
     ) : Interceptor {
         override fun intercept(chain: Interceptor.Chain): Response {
             val originalRequest = chain.request()
 
-            // 1. Get the current token synchronously
             val token =
                 runBlocking {
                     tokenManager.authToken.first()
                 }
 
-            // 2. Add Authorization header if token exists
             val requestBuilder = originalRequest.newBuilder()
             if (!token.isNullOrBlank()) {
                 requestBuilder.header("Authorization", "Bearer $token")
@@ -30,10 +29,28 @@ class AuthInterceptor
 
             val response = chain.proceed(requestBuilder.build())
 
-            // 3. Handle 401 Unauthorized
             if (response.code == 401) {
+                val refreshed =
+                    runBlocking {
+                        sessionManager.refreshSession()
+                    }
+
+                if (refreshed) {
+                    val newToken =
+                        runBlocking {
+                            tokenManager.authToken.first()
+                        }
+
+                    if (!newToken.isNullOrBlank()) {
+                        val retryRequest =
+                            originalRequest.newBuilder()
+                                .header("Authorization", "Bearer $newToken")
+                                .build()
+                        return chain.proceed(retryRequest)
+                    }
+                }
+
                 runBlocking {
-                    // Clear token
                     tokenManager.clearAuth()
                 }
             }

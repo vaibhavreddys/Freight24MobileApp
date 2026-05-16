@@ -3,6 +3,7 @@ package com.freight24.connect.di
 import android.util.Log
 import com.freight24.connect.BuildConfig
 import com.freight24.network.RetrofitFactory
+import com.freight24.network.di.AuthenticatedNetwork
 import com.freight24.network.di.DefaultNetwork
 import com.freight24.rest.api.ClientApi
 import com.freight24.rest.api.AuthSessionApi
@@ -40,13 +41,6 @@ object ApiModule {
     }
 
     @Provides
-    fun providesNotificationServiceApi(retrofitFactory: RetrofitFactory): NotificationServiceApi {
-        return retrofitFactory
-            .create(BuildConfig.BASE_URL, "NotificationServiceApi")
-            .create(NotificationServiceApi::class.java)
-    }
-
-    @Provides
     fun providesAuthSessionApi(
         @DefaultNetwork retrofitFactory: RetrofitFactory,
     ): AuthSessionApi {
@@ -56,100 +50,137 @@ object ApiModule {
     }
 
     @Provides
-    fun providesIndentsApi(retrofitFactory: RetrofitFactory): IndentsApi {
+    fun providesIndentsApi(
+        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
+    ): IndentsApi {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "IndentsApi")
             .create(IndentsApi::class.java)
     }
 
     @Provides
-    fun providesLocationsApi(retrofitFactory: RetrofitFactory): LocationApi {
+    fun providesLocationsApi(
+        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
+    ): LocationApi {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "LocationApi")
             .create(LocationApi::class.java)
     }
 
     @Provides
-    fun providesClientApi(retrofitFactory: RetrofitFactory): ClientApi {
+    fun providesClientApi(
+        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
+    ): ClientApi {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "ClientApi")
             .create(ClientApi::class.java)
     }
 
     @Provides
-    fun providesTruckApi(retrofitFactory: RetrofitFactory): TruckApi {
+    fun providesTruckApi(
+        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
+    ): TruckApi {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "TruckApi")
             .create(TruckApi::class.java)
     }
 
     @Provides
-    fun providesTripApi(retrofitFactory: RetrofitFactory): TripApi {
+    fun providesTripApi(
+        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
+    ): TripApi {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "TripApi")
             .create(TripApi::class.java)
     }
 
     @Provides
-    fun providesVerificationApi(retrofitFactory: RetrofitFactory): VerificationApi {
+    fun providesVerificationApi(
+        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
+    ): VerificationApi {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "VerificationApi")
             .create(VerificationApi::class.java)
     }
 
     @Provides
-    fun providesTripHaltingApi(retrofitFactory: RetrofitFactory): TripHaltingApi {
+    fun providesTripHaltingApi(
+        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
+    ): TripHaltingApi {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "TripHaltingApi")
             .create(TripHaltingApi::class.java)
     }
 
     @Provides
-    fun providesTripChargesApi(retrofitFactory: RetrofitFactory): TripLUChargesApi {
+    fun providesTripChargesApi(
+        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
+    ): TripLUChargesApi {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "TripHaltingApi")
             .create(TripLUChargesApi::class.java)
     }
 
     @Provides
-    fun providesTruckOwnerApi(retrofitFactory: RetrofitFactory): TruckOwnerApi {
+    fun providesTruckOwnerApi(
+        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
+    ): TruckOwnerApi {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "TruckOwnerApi")
             .create(TruckOwnerApi::class.java)
     }
 
     @Provides
-    fun providesProfileApi(retrofitFactory: RetrofitFactory): ProfileApi {
+    fun providesProfileApi(
+        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
+    ): ProfileApi {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "TruckOwnerProfileApi")
             .create(ProfileApi::class.java)
     }
 
     @Provides
-    fun providesDocumentApi(retrofitFactory: RetrofitFactory): DocumentApi {
+    fun providesDocumentApi(
+        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
+    ): DocumentApi {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "TruckOwnerDocumentApi")
             .create(DocumentApi::class.java)
     }
 
     @Provides
-    fun providesFindTrucksApi(retrofitFactory: RetrofitFactory): FindTrucksApi {
+    fun providesFindTrucksApi(
+        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
+    ): FindTrucksApi {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "FindTrucksApi")
             .create(FindTrucksApi::class.java)
     }
 
     @Provides
-    fun providesEmployeesApi(retrofitFactory: RetrofitFactory): EmployeesApi {
+    fun providesEmployeesApi(
+        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
+    ): EmployeesApi {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "EmployeesApi")
             .create(EmployeesApi::class.java)
     }
 
     @Provides
-    fun providesIndentInterestApi(retrofitFactory: RetrofitFactory): IndentInterestApi {
+    fun providesIndentInterestApi(
+        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
+    ): IndentInterestApi {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "IndentInterestApi")
             .create(IndentInterestApi::class.java)
+    }
+
+    @Provides
+    fun providesNotificationServiceApi(
+        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
+    ): NotificationServiceApi {
+        return retrofitFactory
+            .create(BuildConfig.BASE_URL, "NotificationServiceApi")
+            .create(NotificationServiceApi::class.java)
     }
 }
