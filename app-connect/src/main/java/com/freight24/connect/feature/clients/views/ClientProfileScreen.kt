@@ -900,69 +900,54 @@ private fun BranchContactField(
         } else {
             val displayValue = value.ifBlank { "—" }
             val isPhoneValid = isPhoneNumber && value.isNotBlank()
-            Row(
-                modifier = Modifier
-                    .then(
-                        if (isPhoneValid) {
-                            Modifier.pointerInput(Unit) {
-                                detectTapGestures(
-                                    onLongPress = { showPhoneMenu = true },
-                                )
-                            }
-                        } else {
-                            Modifier
-                        },
-                    ),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = displayValue,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (isPhoneValid) successColor else MaterialTheme.colorScheme.onSurface,
-                )
-            }
-        }
-    }
+            Box {
+                Row(
+                    modifier = Modifier
+                        .then(
+                            if (isPhoneValid) {
+                                Modifier.pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onLongPress = { showPhoneMenu = true },
+                                    )
+                                }
+                            } else {
+                                Modifier
+                            },
+                        ),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = displayValue,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (isPhoneValid) successColor else MaterialTheme.colorScheme.onSurface,
+                    )
+                }
 
-    if (showPhoneMenu && value.isNotBlank()) {
-        AlertDialog(
-            onDismissRequest = { showPhoneMenu = false },
-            title = { Text("Phone Options") },
-            text = {
-                Column {
-                    TextButton(
+                DropdownMenu(
+                    expanded = showPhoneMenu,
+                    onDismissRequest = { showPhoneMenu = false },
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Call") },
+                        leadingIcon = { Icon(Icons.Default.Call, contentDescription = null) },
                         onClick = {
                             showPhoneMenu = false
                             launchDialer(context, value)
                         },
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Call, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Call")
-                        }
-                    }
-                    TextButton(
+                    )
+                    HorizontalDivider()
+                    DropdownMenuItem(
+                        text = { Text("Copy Number") },
+                        leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
                         onClick = {
                             showPhoneMenu = false
                             clipboardManager.setText(AnnotatedString(value))
                         },
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Copy Number")
-                        }
-                    }
+                    )
                 }
-            },
-            confirmButton = {
-                TextButton(onClick = { showPhoneMenu = false }) {
-                    Text("Cancel")
-                }
-            },
-        )
+            }
+        }
     }
 }
 
@@ -1157,67 +1142,52 @@ private fun ProfileField(
         } else {
             val displayValue = value.ifBlank { placeholder }
             val isPhoneValid = isPhoneNumber && value.isNotBlank()
-            Row(
-                modifier = Modifier
-                    .then(
-                        if (isPhoneValid && !isEditing) {
-                            Modifier.pointerInput(Unit) {
-                                detectTapGestures(onLongPress = { showPhoneMenu = true })
-                            }
-                        } else {
-                            Modifier
-                        },
-                    ),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = displayValue,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (value.isBlank()) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurface,
-                )
-            }
-        }
-    }
+            Box {
+                Row(
+                    modifier = Modifier
+                        .then(
+                            if (isPhoneValid && !isEditing) {
+                                Modifier.pointerInput(Unit) {
+                                    detectTapGestures(onLongPress = { showPhoneMenu = true })
+                                }
+                            } else {
+                                Modifier
+                            },
+                        ),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = displayValue,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (value.isBlank()) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurface,
+                    )
+                }
 
-    if (showPhoneMenu && value.isNotBlank()) {
-        AlertDialog(
-            onDismissRequest = { showPhoneMenu = false },
-            title = { Text("Phone Options") },
-            text = {
-                Column {
-                    TextButton(
+                DropdownMenu(
+                    expanded = showPhoneMenu,
+                    onDismissRequest = { showPhoneMenu = false },
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Call") },
+                        leadingIcon = { Icon(Icons.Default.Call, contentDescription = null) },
                         onClick = {
                             showPhoneMenu = false
                             launchDialer(context, value)
                         },
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Call, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Call")
-                        }
-                    }
-                    TextButton(
+                    )
+                    HorizontalDivider()
+                    DropdownMenuItem(
+                        text = { Text("Copy Number") },
+                        leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
                         onClick = {
                             showPhoneMenu = false
                             clipboardManager.setText(AnnotatedString(value))
                         },
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Copy Number")
-                        }
-                    }
+                    )
                 }
-            },
-            confirmButton = {
-                TextButton(onClick = { showPhoneMenu = false }) {
-                    Text("Cancel")
-                }
-            },
-        )
+            }
+        }
     }
 }
 
