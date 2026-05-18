@@ -22,6 +22,7 @@ import com.freight24.rest.api.TruckOwnerApi
 import com.freight24.rest.api.DocumentApi
 import com.freight24.rest.api.EmployeesApi
 import com.freight24.rest.api.IndentInterestApi
+import com.freight24.rest.api.AdhocTruckApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -182,5 +183,14 @@ object ApiModule {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "NotificationServiceApi")
             .create(NotificationServiceApi::class.java)
+    }
+
+    @Provides
+    fun providesAdhocTruckApi(
+        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
+    ): AdhocTruckApi {
+        return retrofitFactory
+            .create(BuildConfig.BASE_URL, "AdhocTruckApi")
+            .create(AdhocTruckApi::class.java)
     }
 }

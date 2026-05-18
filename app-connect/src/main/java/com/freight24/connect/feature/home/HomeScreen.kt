@@ -41,6 +41,7 @@ internal fun HomeScreen(
     onManageTrucks: () -> Unit,
     onManageClients: () -> Unit,
     onManageTruckOwners: () -> Unit,
+    onQuickAdhocTruckClick: () -> Unit = {},
     startTab: ConnectTab? = null,
     startFilter: com.freight24.connect.feature.trips.domain.usecase.TripTypes? = null,
     onLogout: () -> Unit,
@@ -105,7 +106,7 @@ internal fun HomeScreen(
                 ConnectTab.Home -> DashboardScreen(
                     paddingValues = paddingValues,
                     onCreateIndentClick = onCreateIndentClick,
-                    onCreateTripClick = { navController.navigate(ConnectDestination.CreateTrip.route) },
+                    onCreateTripClick = onQuickAdhocTruckClick,
                     onInterestInboxClick = { navController.navigate(ConnectDestination.InterestInbox.route) },
                     onVerificationRequestsClick = { tripCount, truckCount, truckOwnerCount, clientCount ->
                         navController.navigate(

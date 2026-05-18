@@ -44,6 +44,7 @@ import com.freight24.connect.feature.truckowners.views.ManageTruckOwnersScreen
 import com.freight24.connect.feature.truckowners.views.OnboardTruckOwnerScreen
 import com.freight24.connect.feature.truckowners.profile.view.ProfileScreen
 import com.freight24.connect.feature.more.views.MoreScreen
+import com.freight24.connect.feature.adhocTruck.views.QuickAdhocTruckScreen
 
 @Composable
 fun ConnectNavGraph(
@@ -176,6 +177,13 @@ fun ConnectNavGraph(
                         launchSingleTop = true
                     }
                 },
+            )
+        }
+
+        composable(ConnectDestination.QuickAdhocTruck.route) {
+            QuickAdhocTruckScreen(
+                onBackClick = { navHostController.popBackStack() },
+                onSuccess = { navHostController.popBackStack() },
             )
         }
 
@@ -343,6 +351,9 @@ fun ConnectNavGraph(
                 },
                 onManageTruckOwners = {
                     navHostController.navigate(ConnectDestination.ManageTruckOwners.route)
+                },
+                onQuickAdhocTruckClick = {
+                    navHostController.navigate(ConnectDestination.QuickAdhocTruck.route)
                 },
                 startTab = startTab,
                 startFilter = startFilter,

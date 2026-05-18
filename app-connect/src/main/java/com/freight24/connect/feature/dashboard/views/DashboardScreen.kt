@@ -451,7 +451,7 @@ fun QuickActionsSection(
             )
             QuickActionCard(
                 modifier = Modifier.weight(1f),
-                title = "Create Trip",
+                title = "Adhoc Truck",
                 icon = Icons.Default.LocalShipping,
                 backgroundColor = MaterialTheme.colorScheme.surface,
                 contentColor = MaterialTheme.colorScheme.primary,

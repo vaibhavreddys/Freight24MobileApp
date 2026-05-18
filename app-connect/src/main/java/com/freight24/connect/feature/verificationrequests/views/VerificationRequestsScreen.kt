@@ -100,6 +100,8 @@ import kotlinx.coroutines.launch
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Route
+import androidx.compose.material.icons.filled.TripOrigin
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.minimumInteractiveComponentSize
@@ -763,7 +765,7 @@ private fun VerificationTabs(
                 onClick = { onTabSelected(tab) },
                 icon = {
                     TabWithBadge(
-                        icon = tabIcons[tab] ?: Icons.Default.Description,
+                        icon = tabIcons[tab] ?: Icons.Filled.Route,
                         count = count,
                         isSelected = isSelected,
                         onClick = { onTabSelected(tab) }

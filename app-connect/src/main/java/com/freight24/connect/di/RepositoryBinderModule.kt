@@ -22,6 +22,8 @@ import com.freight24.connect.repository.TruckOwnerRepository
 import com.freight24.connect.repository.TruckOwnerRepositoryImpl
 import com.freight24.connect.repository.verificationrequests.VerificationRequestsRepository
 import com.freight24.connect.repository.verificationrequests.VerificationRequestsRepositoryImpl
+import com.freight24.connect.repository.AdhocTruckRepository
+import com.freight24.connect.repository.AdhocTruckRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -89,5 +91,9 @@ interface RepositoryBinderModule {
         verificationRequestsRepositoryImpl: VerificationRequestsRepositoryImpl,
     ): VerificationRequestsRepository
 
-
+    @Binds
+    @Singleton
+    fun bindsAdhocTruckRepository(
+        adhocTruckRepositoryImpl: AdhocTruckRepositoryImpl,
+    ): AdhocTruckRepository
 }
