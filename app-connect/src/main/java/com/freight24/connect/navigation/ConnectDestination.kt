@@ -187,7 +187,20 @@ sealed class ConnectDestination(val route: String) {
         fun createRoute(tripId: String) = "trip_details/$tripId"
     }
 
-    data object VerificationRequests : ConnectDestination("verification_requests")
+    data object VerificationRequests : ConnectDestination("verification_requests?tripCount={tripCount}&truckCount={truckCount}&truckOwnerCount={truckOwnerCount}&clientCount={clientCount}") {
+        const val TRIP_COUNT_ARG = "tripCount"
+        const val TRUCK_COUNT_ARG = "truckCount"
+        const val TRUCK_OWNER_COUNT_ARG = "truckOwnerCount"
+        const val CLIENT_COUNT_ARG = "clientCount"
+        override val arguments = listOf(
+            navArgument(TRIP_COUNT_ARG) { type = NavType.StringType; defaultValue = "0" },
+            navArgument(TRUCK_COUNT_ARG) { type = NavType.StringType; defaultValue = "0" },
+            navArgument(TRUCK_OWNER_COUNT_ARG) { type = NavType.StringType; defaultValue = "0" },
+            navArgument(CLIENT_COUNT_ARG) { type = NavType.StringType; defaultValue = "0" },
+        )
+        fun createRoute(tripCount: Int, truckCount: Int, truckOwnerCount: Int, clientCount: Int) =
+            "verification_requests?tripCount=$tripCount&truckCount=$truckCount&truckOwnerCount=$truckOwnerCount&clientCount=$clientCount"
+    }
 
     data object EditTrip : ConnectDestination("edit_trip/{tripId}") {
         const val TRIP_ID_ARG = "tripId"

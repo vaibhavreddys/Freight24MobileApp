@@ -36,7 +36,7 @@ fun DashboardScreen(
     onCreateIndentClick: () -> Unit = {},
     onCreateTripClick: () -> Unit = {},
     onInterestInboxClick: () -> Unit = {},
-    onVerificationRequestsClick: () -> Unit = {},
+    onVerificationRequestsClick: (Int, Int, Int, Int) -> Unit = { _, _, _, _ -> },
     onTripFilterClick: (TripTypes) -> Unit = {},
     onOpenIndentsClick: () -> Unit = {},
     onActiveAssignedClick: () -> Unit = {},
@@ -106,7 +106,7 @@ fun DashboardScreen(
                             onCreateIndentClick = onCreateIndentClick,
                             onCreateTripClick = onCreateTripClick,
                             onInterestInboxClick = onInterestInboxClick,
-                            onVerificationRequestsClick = onVerificationRequestsClick
+                            onVerificationRequestsClick = onVerificationRequestsClick,
                         )
                         Spacer(modifier = Modifier.height(20.dp))
                     }
@@ -429,7 +429,7 @@ fun QuickActionsSection(
     onCreateIndentClick: () -> Unit,
     onCreateTripClick: () -> Unit,
     onInterestInboxClick: () -> Unit,
-    onVerificationRequestsClick: () -> Unit
+    onVerificationRequestsClick: (Int, Int, Int, Int) -> Unit,
 ) {
     Column {
         SectionHeader("QUICK ACTIONS")
@@ -478,8 +478,15 @@ fun QuickActionsSection(
                 icon = Icons.Default.Shield,
                 backgroundColor = MaterialTheme.colorScheme.surface,
                 contentColor = MaterialTheme.colorScheme.primary,
-                badgeText = pendingActions.verificationRequests.toString(),
-                onClick = onVerificationRequestsClick
+                badgeText = pendingActions.verificationRequests.total.toString(),
+                onClick = {
+                    onVerificationRequestsClick(
+                        pendingActions.verificationRequests.tripVerificationRequests,
+                        pendingActions.verificationRequests.truckVerificationRequests,
+                        pendingActions.verificationRequests.truckOwnerVerificationRequests,
+                        pendingActions.verificationRequests.clientVerificationRequests,
+                    )
+                }
             )
         }
     }

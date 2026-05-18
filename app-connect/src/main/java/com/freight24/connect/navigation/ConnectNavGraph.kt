@@ -405,9 +405,20 @@ fun ConnectNavGraph(
             )
         }
 
-        composable(ConnectDestination.VerificationRequests.route) {
+        composable(
+            route = ConnectDestination.VerificationRequests.route,
+            arguments = ConnectDestination.VerificationRequests.arguments,
+        ) { backStackEntry ->
+            val tripCount = backStackEntry.arguments?.getString(ConnectDestination.VerificationRequests.TRIP_COUNT_ARG)?.toIntOrNull() ?: 0
+            val truckCount = backStackEntry.arguments?.getString(ConnectDestination.VerificationRequests.TRUCK_COUNT_ARG)?.toIntOrNull() ?: 0
+            val truckOwnerCount = backStackEntry.arguments?.getString(ConnectDestination.VerificationRequests.TRUCK_OWNER_COUNT_ARG)?.toIntOrNull() ?: 0
+            val clientCount = backStackEntry.arguments?.getString(ConnectDestination.VerificationRequests.CLIENT_COUNT_ARG)?.toIntOrNull() ?: 0
             VerificationRequestsScreen(
-                onBackClick = { navHostController.popBackStack() }
+                onBackClick = { navHostController.popBackStack() },
+                tripCount = tripCount,
+                truckCount = truckCount,
+                truckOwnerCount = truckOwnerCount,
+                clientCount = clientCount,
             )
         }
 

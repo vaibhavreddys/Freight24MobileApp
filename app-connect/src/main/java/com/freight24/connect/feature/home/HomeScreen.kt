@@ -107,8 +107,12 @@ internal fun HomeScreen(
                     onCreateIndentClick = onCreateIndentClick,
                     onCreateTripClick = { navController.navigate(ConnectDestination.CreateTrip.route) },
                     onInterestInboxClick = { navController.navigate(ConnectDestination.InterestInbox.route) },
-                    onVerificationRequestsClick = {
-                        navController.navigate(ConnectDestination.VerificationRequests.route)
+                    onVerificationRequestsClick = { tripCount, truckCount, truckOwnerCount, clientCount ->
+                        navController.navigate(
+                            ConnectDestination.VerificationRequests.createRoute(
+                                tripCount, truckCount, truckOwnerCount, clientCount
+                            )
+                        )
                     },
                     onTripFilterClick = { filterType ->
                         navController.navigate(

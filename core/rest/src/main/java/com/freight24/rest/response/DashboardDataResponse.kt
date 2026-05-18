@@ -31,8 +31,19 @@ data class DashboardDataResponse(
 data class PendingActions(
     val lrReviews: Int,
     val podFollowUp: Int,
-    val verificationRequests: Int,
+    val verificationRequests: VerificationRequests,
 )
+
+@Serializable
+data class VerificationRequests(
+    val tripVerificationRequests: Int,
+    val truckVerificationRequests: Int,
+    val clientVerificationRequests: Int,
+    val truckOwnerVerificationRequests: Int,
+) {
+    val total: Int
+        get() = tripVerificationRequests + truckVerificationRequests + clientVerificationRequests + truckOwnerVerificationRequests
+}
 
     @Serializable
     data class AttentionNeeded(

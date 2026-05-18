@@ -65,8 +65,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import com.freight24.connect.feature.verificationrequests.domain.model.TruckDetailChange
 import com.freight24.connect.feature.verificationrequests.domain.model.TruckVerificationRequest
 import com.freight24.connect.feature.verificationrequests.domain.model.VerificationRequest
@@ -88,6 +95,7 @@ import java.util.Locale
 import java.time.OffsetDateTime
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.filled.LocalShipping
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Scaffold
@@ -102,6 +110,10 @@ import com.freight24.connect.feature.verificationrequests.domain.model.TruckOwne
 fun VerificationRequestsScreen(
     onBackClick: () -> Unit,
     viewModel: VerificationRequestsViewModel = hiltViewModel<VerificationRequestsViewModelImpl>(),
+    tripCount: Int = 0,
+    truckCount: Int = 0,
+    truckOwnerCount: Int = 0,
+    clientCount: Int = 0,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -230,7 +242,11 @@ fun VerificationRequestsScreen(
             Spacer(modifier = Modifier.height(8.dp))
             VerificationTabs(
                 selectedTab = uiState.selectedTab,
-                onTabSelected = { viewModel.onEvent(VerificationRequestsEvent.SelectTab(it)) }
+                onTabSelected = { viewModel.onEvent(VerificationRequestsEvent.SelectTab(it)) },
+                tripCount = tripCount,
+                truckCount = truckCount,
+                truckOwnerCount = truckOwnerCount,
+                clientCount = clientCount,
             )
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -703,43 +719,73 @@ fun VerificationRequestsScreen(
 private fun VerificationTabs(
     selectedTab: VerificationRequestTab,
     onTabSelected: (VerificationRequestTab) -> Unit,
+    tripCount: Int,
+    truckCount: Int,
+    truckOwnerCount: Int,
+    clientCount: Int,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.Bottom,
+    val counts = mapOf(
+        VerificationRequestTab.TRIPS to tripCount,
+        VerificationRequestTab.TRUCKS to truckCount,
+        VerificationRequestTab.TRUCK_OWNERS to truckOwnerCount,
+        VerificationRequestTab.CLIENTS to clientCount,
+    )
+    val tabIcons = mapOf(
+        VerificationRequestTab.TRIPS to Icons.Default.LocalShipping,
+        VerificationRequestTab.TRUCKS to Icons.Default.LocalShipping,
+        VerificationRequestTab.TRUCK_OWNERS to Icons.Default.People,
+        VerificationRequestTab.CLIENTS to Icons.Default.Business,
+    )
+
+    ScrollableTabRow(
+        selectedTabIndex = selectedTab.ordinal,
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.primary,
+        edgePadding = 16.dp,
+        indicator = { tabPositions ->
+            TabRowDefaults.SecondaryIndicator(
+                modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab.ordinal]),
+                color = MaterialTheme.colorScheme.primary,
+            )
+        },
     ) {
         VerificationRequestTab.entries.forEach { tab ->
             val isSelected = tab == selectedTab
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .weight(1f) // Keeps equal space distribution
-                    .clickable { onTabSelected(tab) }
-                    .padding(horizontal = 4.dp)
-            ) {
-                Text(
-                    text = tab.title,
-                    // labelLarge (14sp) or bodyMedium is ideal for tab labels
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                    color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    softWrap = false,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Box(
-                    modifier = Modifier
-                        .width(48.dp)
-                        .height(2.dp)
-                        .background(
-                            if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
-                            RoundedCornerShape(50)
+            val count = counts[tab] ?: 0
+            Tab(
+                selected = isSelected,
+                onClick = { onTabSelected(tab) },
+                icon = {
+                    Icon(
+                        imageVector = tabIcons[tab] ?: Icons.Default.Description,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                },
+                text = {
+                    BadgedBox(
+                        badge = {
+                            if (count > 0) {
+                                Badge(
+                                    containerColor = MaterialTheme.colorScheme.error,
+                                    contentColor = MaterialTheme.colorScheme.onError,
+                                ) {
+                                    Text(
+                                        text = count.toString(),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                }
+                            }
+                        },
+                    ) {
+                        Text(
+                            text = tab.title,
+                            maxLines = 1,
                         )
-                )
-            }
+                    }
+                },
+            )
         }
     }
 }
