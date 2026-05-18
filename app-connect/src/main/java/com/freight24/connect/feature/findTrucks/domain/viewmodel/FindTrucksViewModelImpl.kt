@@ -57,8 +57,19 @@ internal class FindTrucksViewModelImpl @Inject constructor(
             is FindTrucksEvent.SelectUnloadingLocation -> {
                 _uiState.update { it.copy(unloadingLocation = event.location) }
             }
-            is FindTrucksEvent.SelectTruckType -> {
-                _uiState.update { it.copy(selectedTruckType = event.truckType) }
+            is FindTrucksEvent.ToggleTruckType -> {
+                _uiState.update { state ->
+                    val current = state.selectedTruckTypes
+                    val updated = if (current.contains(event.truckType)) {
+                        current - event.truckType
+                    } else {
+                        current + event.truckType
+                    }
+                    state.copy(selectedTruckTypes = updated)
+                }
+            }
+            is FindTrucksEvent.ClearTruckTypes -> {
+                _uiState.update { it.copy(selectedTruckTypes = emptySet()) }
             }
             is FindTrucksEvent.SearchTrucks -> searchTrucks()
             is FindTrucksEvent.DismissResults -> {
@@ -76,8 +87,8 @@ internal class FindTrucksViewModelImpl @Inject constructor(
             _uiState.update { it.copy(error = "Please select a loading location") }
             return
         }
-        if (state.selectedTruckType == null) {
-            _uiState.update { it.copy(error = "Please select a truck type") }
+        if (state.selectedTruckTypes.isEmpty()) {
+            _uiState.update { it.copy(error = "Please select at least one truck type") }
             return
         }
 
@@ -87,11 +98,13 @@ internal class FindTrucksViewModelImpl @Inject constructor(
             val (areaId, cityId) = getAreaCityId(state.loadingLocation)
             val (_, destinationCityId) = getAreaCityId(state.unloadingLocation)
 
+            val truckTypeIds = state.selectedTruckTypes.joinToString(",") { it.id }
+
             val params = FindTrucksUseCaseDataParams(
                 areaId = areaId,
                 cityId = cityId,
                 destinationCityId = destinationCityId,
-                truckTypeId = state.selectedTruckType.id
+                truckTypeIds = truckTypeIds
             )
 
             val result = findTrucksUseCase.invoke(params)

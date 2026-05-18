@@ -10,7 +10,7 @@ data class FindTrucksUseCaseDataParams(
     val areaId: String?,
     val cityId: String?,
     val destinationCityId: String?,
-    val truckTypeId: String,
+    val truckTypeIds: String,
 ): UseCaseParams
 
 interface FindTrucksUseCase : UseCase<FindTrucksUseCaseDataParams, TruckerData>
@@ -25,7 +25,7 @@ class FindTrucksUseCaseImpl @Inject constructor(
             params.areaId,
             params.cityId,
             params.destinationCityId,
-            params.truckTypeId
+            params.truckTypeIds
         )
     }
 }

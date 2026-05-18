@@ -127,7 +127,7 @@ class IndentDetailsViewModelImpl @Inject constructor(
                 areaId = loadingLocation?.areaId?.toString(),
                 cityId = loadingLocation?.cityId?.toString(),
                 destinationCityId = unloadingLocation?.cityId?.toString(),
-                truckTypeId = truckType?.id ?: ""
+                truckTypeIds = truckType?.id ?: ""
             )
 
             val result = findTrucksUseCase(params)

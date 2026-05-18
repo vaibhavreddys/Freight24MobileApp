@@ -10,7 +10,7 @@ data class FindTrucksUiState(
     val loadingLocation: LocationDto? = null,
     val unloadingLocation: LocationDto? = null,
     val truckTypes: TruckCategoryDto? = null,
-    val selectedTruckType: TruckTypeDto? = null,
+    val selectedTruckTypes: Set<TruckTypeDto> = emptySet(),
     val isLoadingTruckTypes: Boolean = false,
     val isSearching: Boolean = false,
     val searchResults: TruckerData? = null,
@@ -21,7 +21,8 @@ data class FindTrucksUiState(
 sealed class FindTrucksEvent {
     data class SelectLoadingLocation(val location: LocationDto) : FindTrucksEvent()
     data class SelectUnloadingLocation(val location: LocationDto) : FindTrucksEvent()
-    data class SelectTruckType(val truckType: TruckTypeDto) : FindTrucksEvent()
+    data class ToggleTruckType(val truckType: TruckTypeDto) : FindTrucksEvent()
+    data object ClearTruckTypes : FindTrucksEvent()
     data object SearchTrucks : FindTrucksEvent()
     data object DismissResults : FindTrucksEvent()
     data object ClearError : FindTrucksEvent()

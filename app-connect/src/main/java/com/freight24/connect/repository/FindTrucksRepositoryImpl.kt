@@ -17,7 +17,7 @@ class FindTrucksRepositoryImpl@Inject constructor(
         areaId: String?,
         cityId: String?,
         destinationCityId: String?,
-        truckTypeId: String
+        truckTypeIds: String
     ): Result<TruckerData> = withContext(ioDispatcher) {
         try {
             if(areaId == null && cityId == null) {
@@ -30,7 +30,7 @@ class FindTrucksRepositoryImpl@Inject constructor(
                 areaId = areaId,
                 cityId = cityId,
                 destinationCityId = destinationCityId,
-                truckTypeId = truckTypeId
+                truckTypeIds = truckTypeIds
             )
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!.data)

@@ -10,6 +10,6 @@ interface FindTrucksRepository {
         areaId: String?,
         cityId: String?,
         destinationCityId: String?,
-        truckTypeId: String,
+        truckTypeIds: String,
     ): Result<TruckerData>
 }

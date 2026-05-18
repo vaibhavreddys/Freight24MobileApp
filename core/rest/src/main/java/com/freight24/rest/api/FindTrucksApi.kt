@@ -12,7 +12,7 @@ interface FindTrucksApi {
         @Query("sourceAreaId") areaId: String?,
         @Query("sourceCityId") cityId: String?,
         @Query("destinationCityId") destinationCityId: String?,
-        @Query("truckTypeId") truckTypeId: String,
+        @Query("truckTypeId") truckTypeIds: String,
     ): Response<SearchTruckerResponse>
 
 }

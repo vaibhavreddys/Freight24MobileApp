@@ -153,23 +153,29 @@ fun FindTrucksScreen(
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
-                            if (uiState.selectedTruckType != null) {
+                            if (uiState.selectedTruckTypes.isNotEmpty()) {
+                                val names = uiState.selectedTruckTypes.joinToString(", ") { it.displayName }
+                                val label = if (uiState.selectedTruckTypes.size > 2) {
+                                    "${uiState.selectedTruckTypes.take(2).joinToString(", ") { it.displayName }} (+${uiState.selectedTruckTypes.size - 2})"
+                                } else {
+                                    names
+                                }
                                 Text(
-                                    uiState.selectedTruckType?.displayName ?: "",
+                                    label,
                                     color = colorScheme.primary,
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                             } else {
                                 Text(
-                                    "Select truck type",
+                                    "Select truck types",
                                     color = colorScheme.onSurfaceVariant,
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                             }
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            if (uiState.selectedTruckType != null) {
-                                IconButton(onClick = { /* Handle clear if needed, but in this UI its just selection */ }) {
+                            if (uiState.selectedTruckTypes.isNotEmpty()) {
+                                IconButton(onClick = { viewModel.onEvent(FindTrucksEvent.ClearTruckTypes) }) {
                                     Icon(
                                         Icons.Default.Close,
                                         contentDescription = "Clear",
@@ -190,8 +196,8 @@ fun FindTrucksScreen(
                         Spacer(modifier = Modifier.height(16.dp))
                         TruckTypeChips(
                             truckTypes = uiState.truckTypes!!,
-                            selectedId = uiState.selectedTruckType?.id,
-                            onSelect = { viewModel.onEvent(FindTrucksEvent.SelectTruckType(it)) }
+                            selectedIds = uiState.selectedTruckTypes.map { it.id }.toSet(),
+                            onToggle = { viewModel.onEvent(FindTrucksEvent.ToggleTruckType(it)) }
                         )
                     }
                 }
@@ -209,7 +215,7 @@ fun FindTrucksScreen(
                     containerColor = colorScheme.primary,
                     disabledContainerColor = colorScheme.surfaceVariant
                 ),
-                enabled = uiState.loadingLocation != null && uiState.selectedTruckType != null && !uiState.isSearching
+                enabled = uiState.loadingLocation != null && uiState.selectedTruckTypes.isNotEmpty() && !uiState.isSearching
             ) {
                 if (uiState.isSearching) {
                     CircularProgressIndicator(color = colorScheme.onPrimary, modifier = Modifier.size(24.dp))
@@ -322,18 +328,18 @@ fun LocationItem(
 @Composable
 fun TruckTypeChips(
     truckTypes: TruckCategoryDto,
-    selectedId: String?,
-    onSelect: (TruckTypeDto) -> Unit
+    selectedIds: Set<String>,
+    onToggle: (TruckTypeDto) -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (truckTypes.open.isNotEmpty()) {
-            TruckCategorySection("Open", truckTypes.open, selectedId, onSelect)
+            TruckCategorySection("Open", truckTypes.open, selectedIds, onToggle)
         }
         if (truckTypes.closed.isNotEmpty()) {
-            TruckCategorySection("Closed", truckTypes.closed, selectedId, onSelect)
+            TruckCategorySection("Closed", truckTypes.closed, selectedIds, onToggle)
         }
         if (truckTypes.trailer.isNotEmpty()) {
-            TruckCategorySection("Trailer", truckTypes.trailer, selectedId, onSelect)
+            TruckCategorySection("Trailer", truckTypes.trailer, selectedIds, onToggle)
         }
     }
 }
@@ -343,8 +349,8 @@ fun TruckTypeChips(
 fun TruckCategorySection(
     title: String,
     types: List<TruckTypeDto>,
-    selectedId: String?,
-    onSelect: (TruckTypeDto) -> Unit
+    selectedIds: Set<String>,
+    onToggle: (TruckTypeDto) -> Unit
 ) {
     val colorScheme = MaterialTheme.colorScheme
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -362,8 +368,8 @@ fun TruckCategorySection(
             types.forEach { truck ->
                 FilterSelectionChip(
                     label = truck.displayName,
-                    isSelected = selectedId == truck.id,
-                    onClick = { onSelect(truck) }
+                    isSelected = selectedIds.contains(truck.id),
+                    onClick = { onToggle(truck) }
                 )
             }
         }
