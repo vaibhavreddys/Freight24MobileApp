@@ -98,7 +98,7 @@ fun MoreScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             // Quick Actions Section
-            SectionContainer(title = "Quick Actions") {
+            SectionContainer(title = "Fleet & Partners") {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
