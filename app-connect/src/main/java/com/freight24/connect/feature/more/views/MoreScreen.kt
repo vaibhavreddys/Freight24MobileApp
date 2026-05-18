@@ -15,8 +15,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.AcUnit
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.LocalShipping
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.PeopleAlt
+import androidx.compose.material.icons.filled.PeopleOutline
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -83,6 +87,7 @@ fun MoreScreen(
                 .padding(bottom = 32.dp),
         ) {
 
+            Spacer(modifier = Modifier.height(12.dp))
             // Profile Header
             ProfileHeader(
                 name = employeeInfo.fullName,
@@ -128,14 +133,14 @@ fun MoreScreen(
                     )
                     QuickActionCard(
                         title = "Manage\nTruck Owners",
-                        icon = Icons.Default.Group,
+                        icon = Icons.Default.PeopleAlt,
                         onClick = onManageTruckOwners,
                         modifier = Modifier.weight(1f),
                         containerColor = softGreen,
                         border = BorderStroke(1.dp, tileStroke),
                         contentPadding = tileContentPadding,
-                        iconContainerColor = colorScheme.tertiaryContainer,
-                        iconTint = colorScheme.tertiary,
+                        iconContainerColor = iconContainerColor,
+                        iconTint = brandGreen,
                         textColor = colorScheme.onSurface,
                     )
                 }
