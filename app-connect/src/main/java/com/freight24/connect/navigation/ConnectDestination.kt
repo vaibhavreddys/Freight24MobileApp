@@ -339,6 +339,8 @@ sealed class ConnectDestination(val route: String) {
     data object ManageTruckOwners : ConnectDestination("manage_truck_owners")
     data object OnboardTruckOwner : ConnectDestination("onboard_truck_owner")
 
+    data object More : ConnectDestination("more")
+
     data object TruckOwnerProfile : ConnectDestination("truck_owner_profile/{userId}") {
         const val USER_ID_ARG = "userId"
         override val arguments = listOf(

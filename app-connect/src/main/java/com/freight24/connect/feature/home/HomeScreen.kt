@@ -18,13 +18,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.connect.R
 import com.freight24.connect.enum.ConnectTab
 import com.freight24.connect.feature.dashboard.views.DashboardScreen
 import com.freight24.connect.feature.indents.views.IndentsScreen
-import com.freight24.connect.feature.more.MoreViewModel
-import com.freight24.connect.feature.more.views.MoreBottomSheet
 import com.freight24.connect.feature.trips.views.TripsScreen
 import com.freight24.connect.feature.findTrucks.views.FindTrucksScreen
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -48,13 +45,10 @@ internal fun HomeScreen(
     startFilter: com.freight24.connect.feature.trips.domain.usecase.TripTypes? = null,
     onLogout: () -> Unit,
     navController: NavController,
-    moreViewModel: MoreViewModel = hiltViewModel(),
     homeViewModel: HomeViewModel = hiltViewModel(),
 ) {
-    val employeeInfo by moreViewModel.employeeInfo.collectAsStateWithLifecycle()
     var selectedTab by rememberSaveable { mutableStateOf(startTab ?: ConnectTab.Home) }
     var selectedFilter by rememberSaveable { mutableStateOf(startFilter) }
-    var showMoreSheet by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         homeViewModel.registerDevice()
@@ -68,11 +62,7 @@ internal fun HomeScreen(
         startFilter?.let { selectedFilter = it }
     }
 
-    BackHandler(enabled = showMoreSheet) {
-        showMoreSheet = false
-    }
-
-    BackHandler(enabled = !showMoreSheet && selectedTab != ConnectTab.Home) {
+    BackHandler(enabled = selectedTab != ConnectTab.Home) {
         selectedTab = ConnectTab.Home
     }
 
@@ -81,7 +71,7 @@ internal fun HomeScreen(
         selectedItem = selectedTab,
         onItemSelected = {
             if (it == ConnectTab.More) {
-                showMoreSheet = true
+                navController.navigate(ConnectDestination.More.route)
             } else {
                 selectedTab = it
             }
@@ -164,22 +154,5 @@ internal fun HomeScreen(
                 ConnectTab.More -> Spacer(Modifier.padding(paddingValues))
             }
         }
-    }
-
-    if (showMoreSheet) {
-        MoreBottomSheet(
-            employeeName = employeeInfo.fullName,
-            employeeRole = employeeInfo.designation,
-            onDismiss = { showMoreSheet = false },
-            onManageClients = { onManageClients() },
-            onManageTrucks = { onManageTrucks() },
-            onManageTruckOwners = { onManageTruckOwners() },
-            onMyProfile = { /* TODO: Navigate to Profile */ },
-            onSettings = { /* TODO: Navigate to Settings */ },
-            onLogout = {
-                moreViewModel.logout()
-                onLogout()
-            }
-        )
     }
 }
