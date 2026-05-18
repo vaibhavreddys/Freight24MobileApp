@@ -45,7 +45,7 @@ class AssignTruckViewModel @Inject constructor(
                 _uiState.update { it.copy(query = event.query) }
                 // Debounce search
                 searchJob?.cancel()
-                if (event.query.isNotBlank()) {
+                if (event.query.length >= 3) {
                     searchJob = viewModelScope.launch {
                         delay(500) // 500ms debounce
                         performSearch(event.query)
@@ -56,7 +56,7 @@ class AssignTruckViewModel @Inject constructor(
             }
             is AssignTruckEvent.Search -> {
                 searchJob?.cancel()
-                if (_uiState.value.query.isNotBlank()) {
+                if (_uiState.value.query.length >= 3) {
                      performSearch(_uiState.value.query)
                 }
             }
