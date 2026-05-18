@@ -28,21 +28,21 @@ data class AuthData(
 data class User(
     val id: String,
     val tag_code: String,
-    val phone: String,
-    val active_role: String? = null, // ← NEW: active_role as String
-    val roles: List<String> = emptyList(), // ← CHANGED: List<String> instead of List<Role>
+    val phone: String? = null,
+    val active_role: String? = null,
+    val roles: List<String> = emptyList(),
     val profile: Profile? = null,
     val created_at: String? = null,
 )
 
 @Serializable
 data class Profile(
-    val id: String ?= null,
+    val id: String? = null,
     val user_id: String,
     val full_name: String?,
     val email: String? = null,
-    val phone: String,
-    val alt_phones: List<String>? = null, // ← Was null, now List or null
+    val phone: String? = null,
+    val alt_phones: List<String>? = null,
     val pan_card: String? = null,
     val aadhar_card: String? = null,
     val business_name: String? = null,
@@ -50,7 +50,6 @@ data class Profile(
     val created_at: String? = null,
     val updated_at: String? = null,
     val created_by: String? = null,
-    val updated_by: String? = null,
     val status: String? = null,
     val is_tds_applicable: Boolean = false,
 )

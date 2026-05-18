@@ -8,15 +8,15 @@ data class RegisterDeviceRequest(
     @SerialName("fcm_token")
     val deviceToken: String,
     @SerialName("platform")
-    val platform: String = "android",
+    val platform: String,
     @SerialName("app_variant")
-    val appVariant: String = "QA",
+    val appVariant: String,
     @SerialName("device_id")
     val deviceId: String,
     @SerialName("device_model")
-    val deviceModel: String = "Pixel8",
+    val deviceModel: String,
     @SerialName("os_version")
-    val osVersion: String = "32",
+    val osVersion: String,
     @SerialName("app_version")
-    val appVersion: String = "1.0",
+    val appVersion: String,
 )
