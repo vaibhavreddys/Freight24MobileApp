@@ -10,6 +10,7 @@ import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -59,6 +60,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -132,6 +134,10 @@ fun VerificationRequestsScreen(
     var selectedClientData by remember { mutableStateOf<ClientVerificationRequest?>(null) }
     var remarks by rememberSaveable { mutableStateOf("") }
     var remarksError by rememberSaveable { mutableStateOf<String?>(null) }
+    var currentTripCount by remember { mutableIntStateOf(tripCount) }
+    var currentTruckCount by remember { mutableIntStateOf(truckCount) }
+    var currentTruckOwnerCount by remember { mutableIntStateOf(truckOwnerCount) }
+    var currentClientCount by remember { mutableIntStateOf(clientCount) }
     val clearSelectedRequest = {
         viewModel.onEvent(VerificationRequestsEvent.ClearActionState)
         selectedRequestData = null
@@ -144,6 +150,12 @@ fun VerificationRequestsScreen(
 
     LaunchedEffect(uiState.actionCompletedAt) {
         if (uiState.actionCompletedAt != null) {
+            when {
+                selectedRequestData != null -> currentTripCount = (currentTripCount - 1).coerceAtLeast(0)
+                selectedTruckData != null -> currentTruckCount = (currentTruckCount - 1).coerceAtLeast(0)
+                selectedTruckOwnerData != null -> currentTruckOwnerCount = (currentTruckOwnerCount - 1).coerceAtLeast(0)
+                selectedClientData != null -> currentClientCount = (currentClientCount - 1).coerceAtLeast(0)
+            }
             remarks = ""
             remarksError = null
             if (selectedRequestData != null) {
@@ -250,10 +262,10 @@ fun VerificationRequestsScreen(
             VerificationTabs(
                 selectedTab = uiState.selectedTab,
                 onTabSelected = { viewModel.onEvent(VerificationRequestsEvent.SelectTab(it)) },
-                tripCount = tripCount,
-                truckCount = truckCount,
-                truckOwnerCount = truckOwnerCount,
-                clientCount = clientCount,
+                tripCount = currentTripCount,
+                truckCount = currentTruckCount,
+                truckOwnerCount = currentTruckOwnerCount,
+                clientCount = currentClientCount,
             )
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -491,10 +503,12 @@ fun VerificationRequestsScreen(
                 },
                 resolutionNotes = activeRequest.resolutionNotes,
                 onApproveClick = {
+                    val isLR = activeRequest.documents.any { it.name.trim().lowercase() == "lr" }
+                    val status = if (isLR) VerificationRequestStatus.VERIFIED else VerificationRequestStatus.APPROVED
                     viewModel.onEvent(
                         VerificationRequestsEvent.UpdateTripStatus(
                             request = activeRequest,
-                            status = VerificationRequestStatus.APPROVED,
+                            status = status,
                             resolutionNotes = remarks.takeUnless { it.isBlank() },
                         )
                     )
@@ -521,7 +535,8 @@ fun VerificationRequestsScreen(
                 },
                 actionErrorMessage = uiState.actionErrorMessage,
                 isApproveLoading = uiState.actionInProgressRequestId == activeRequest.id &&
-                    uiState.actionInProgressStatus == VerificationRequestStatus.APPROVED,
+                    (uiState.actionInProgressStatus == VerificationRequestStatus.APPROVED ||
+                     uiState.actionInProgressStatus == VerificationRequestStatus.VERIFIED),
                 isRejectLoading = uiState.actionInProgressRequestId == activeRequest.id &&
                     uiState.actionInProgressStatus == VerificationRequestStatus.REJECTED,
                 isCompletedView = isCompletedView,
@@ -990,6 +1005,7 @@ private fun TripVerificationRequestDetailSheet(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp, vertical = 12.dp)
     ) {
         Row(
@@ -1717,6 +1733,7 @@ private fun BusinessProfileVerificationDetailSheet(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp, vertical = 12.dp)
     ) {
         Row(
@@ -1872,6 +1889,7 @@ private fun TruckVerificationRequestDetailSheet(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp, vertical = 12.dp)
     ) {
         Row(

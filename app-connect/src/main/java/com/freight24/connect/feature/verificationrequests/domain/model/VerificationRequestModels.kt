@@ -18,6 +18,7 @@ enum class VerificationRequestStatus(
     PENDING("PENDING", "Pending"),
     IN_REVIEW("IN_REVIEW", "In Review"),
     APPROVED("APPROVED", "Approved"),
+    VERIFIED("VERIFIED", "Verified"),
     REJECTED("REJECTED", "Rejected"),
     COMPLETED("COMPLETED", "Completed");
 

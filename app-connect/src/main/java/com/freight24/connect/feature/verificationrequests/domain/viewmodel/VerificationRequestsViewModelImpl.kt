@@ -192,7 +192,8 @@ internal class VerificationRequestsViewModelImpl @Inject constructor(
             VerificationRequestStatus.PENDING,
             VerificationRequestStatus.IN_REVIEW -> fetchTrips(forceRefresh = true, isRefreshing = true)
             VerificationRequestStatus.APPROVED,
-            VerificationRequestStatus.REJECTED -> fetchCompletedTrips(forceRefresh = true, isRefreshing = true)
+            VerificationRequestStatus.REJECTED,
+            VerificationRequestStatus.VERIFIED -> fetchCompletedTrips(forceRefresh = true, isRefreshing = true)
         }
     }
 
@@ -236,7 +237,8 @@ internal class VerificationRequestsViewModelImpl @Inject constructor(
                     fetchTrips()
                 }
             VerificationRequestStatus.APPROVED,
-            VerificationRequestStatus.REJECTED ->
+            VerificationRequestStatus.REJECTED,
+            VerificationRequestStatus.VERIFIED ->
                 if (!_uiState.value.loadedCompletedTrips) {
                     fetchCompletedTrips()
                 }

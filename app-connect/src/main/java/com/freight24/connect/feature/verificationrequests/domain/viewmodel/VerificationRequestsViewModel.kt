@@ -40,7 +40,8 @@ data class VerificationRequestsUiState(
         get() = when (selectedStatus) {
             VerificationRequestStatus.COMPLETED -> completedTrips
             VerificationRequestStatus.APPROVED,
-            VerificationRequestStatus.REJECTED -> completedTrips.filter { it.status == selectedStatus }
+            VerificationRequestStatus.REJECTED,
+            VerificationRequestStatus.VERIFIED -> completedTrips.filter { it.status == selectedStatus }
             VerificationRequestStatus.PENDING,
             VerificationRequestStatus.IN_REVIEW -> defaultTrips.filter { it.status == selectedStatus }
         }
