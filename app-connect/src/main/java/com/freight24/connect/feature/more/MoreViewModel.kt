@@ -15,6 +15,7 @@ import javax.inject.Inject
 data class EmployeeBasicInfoState(
     val fullName: String = "",
     val designation: String = "",
+    val tagCode: String = "",
     val isLoading: Boolean = false,
     val error: String? = null
 )
@@ -46,6 +47,7 @@ class MoreViewModel @Inject constructor(
                             _employeeInfo.value = EmployeeBasicInfoState(
                                 fullName = basicInfo.fullName,
                                 designation = basicInfo.designation,
+                                tagCode = basicInfo.tagCode,
                                 isLoading = false
                             )
                         },

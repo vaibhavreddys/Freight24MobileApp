@@ -92,6 +92,7 @@ fun MoreScreen(
             ProfileHeader(
                 name = employeeInfo.fullName,
                 role = employeeInfo.designation,
+                tagCode = employeeInfo.tagCode,
                 onProfileClick = onMyProfile,
             )
 
