@@ -5,6 +5,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -27,6 +29,7 @@ import com.freight24.connect.feature.trips.views.components.TripCard
 fun TripsScreen(
     paddingValues: PaddingValues,
     onTripClick: (String) -> Unit = {},
+    onSearchClick: () -> Unit = {},
     initialFilter: TripTypes? = null,
     viewModel: TripsListViewModel = hiltViewModel<TripsListViewModelImpl>()
 ) {
@@ -51,15 +54,27 @@ fun TripsScreen(
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
             item {
-                LazyRow(
-                    contentPadding = PaddingValues(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    items(TripTypes.entries) { type ->
-                        TripFilterChip(
-                            text = type.displayText,
-                            isSelected = uiState.selectedFilter == type,
-                            onClick = { viewModel.onEvent(TripsListEvent.SelectFilter(type)) }
+                    LazyRow(
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(TripTypes.entries) { type ->
+                            TripFilterChip(
+                                text = type.displayText,
+                                isSelected = uiState.selectedFilter == type,
+                                onClick = { viewModel.onEvent(TripsListEvent.SelectFilter(type)) }
+                            )
+                        }
+                    }
+                    IconButton(onClick = onSearchClick) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search trips",
+                            tint = MaterialTheme.colorScheme.primary,
                         )
                     }
                 }

@@ -38,6 +38,7 @@ internal fun HomeScreen(
     onCloneClick: (String, String) -> Unit,
     onSearchClick: () -> Unit = {},
     onTripClick: (String) -> Unit,
+    onTripSearchClick: () -> Unit = {},
     onManageTrucks: () -> Unit,
     onManageClients: () -> Unit,
     onManageTruckOwners: () -> Unit,
@@ -147,6 +148,7 @@ internal fun HomeScreen(
                 ConnectTab.Trips -> TripsScreen(
                     paddingValues = paddingValues,
                     onTripClick = onTripClick,
+                    onSearchClick = onTripSearchClick,
                     initialFilter = selectedFilter
                 )
                 ConnectTab.Trucks -> FindTrucksScreen(

@@ -352,6 +352,8 @@ sealed class ConnectDestination(val route: String) {
     data object ManageTruckOwners : ConnectDestination("manage_truck_owners")
     data object OnboardTruckOwner : ConnectDestination("onboard_truck_owner")
 
+    data object TripSearch : ConnectDestination("trip_search")
+
     data object More : ConnectDestination("more")
 
     data object QuickAdhocTruck : ConnectDestination("quick_adhoc_truck")

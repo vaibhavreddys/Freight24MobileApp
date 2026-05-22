@@ -13,6 +13,7 @@ import com.freight24.rest.response.MyTripsDataResponse
 import com.freight24.rest.response.SignedDocument
 import com.freight24.rest.response.TripDetailDataResponse
 import com.freight24.rest.response.TripResponse
+import com.freight24.rest.response.TripSearchResponse
 import com.freight24.rest.response.UpdateOtherDeductionsResponse
 import com.freight24.rest.response.UpdateTripResponse
 import com.freight24.rest.response.UploadedDataResponse
@@ -58,6 +59,12 @@ interface TripApi {
         @Query("page") page: Int = 1,
         @Query("limit") limit: Int = 200,
     ): Response<MyTripsDataResponse>
+
+    @GET("employee/trips/search")
+    suspend fun searchTrips(
+        @Query("q") query: String,
+        @Query("scope") scope: String = "my",
+    ): Response<TripSearchResponse>
 
     @GET("employee/trips/{tripId}")
     suspend fun getEmpTripDetails(

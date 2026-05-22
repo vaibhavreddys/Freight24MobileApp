@@ -20,6 +20,7 @@ import com.freight24.connect.feature.inbox.views.InboxScreen
 import com.freight24.connect.feature.trucks.views.AssignTruckScreen
 import com.freight24.connect.feature.trips.views.CreateTripScreen
 import com.freight24.connect.feature.trips.views.TripDetailsScreen
+import com.freight24.connect.feature.trips.views.TripSearchScreen
 import com.freight24.connect.feature.trips.views.TripSuccessScreen
 import com.freight24.connect.feature.verificationrequests.views.VerificationRequestsScreen
 import com.freight24.connect.feature.indents.views.SearchIndentsScreen
@@ -158,6 +159,15 @@ fun ConnectNavGraph(
                         }
                     }
                 },
+            )
+        }
+
+        composable(ConnectDestination.TripSearch.route) {
+            TripSearchScreen(
+                onTripClick = { tripId ->
+                    navHostController.navigate(ConnectDestination.TripDetails.createRoute(tripId))
+                },
+                onBackClick = { navHostController.popBackStack() },
             )
         }
 
@@ -342,6 +352,9 @@ fun ConnectNavGraph(
                 },
                 onTripClick = { tripId ->
                     navHostController.navigate(ConnectDestination.TripDetails.createRoute(tripId))
+                },
+                onTripSearchClick = {
+                    navHostController.navigate(ConnectDestination.TripSearch.route)
                 },
                 onManageTrucks = {
                     navHostController.navigate(ConnectDestination.ManageTrucks.route)

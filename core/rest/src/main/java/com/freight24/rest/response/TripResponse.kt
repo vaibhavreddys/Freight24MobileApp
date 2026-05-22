@@ -24,9 +24,9 @@ data class TripDto(
 
 @Serializable
 data class TripLocationDto(
-    val city: String?,
-    val area: String?,
-    val address: String?,
+    val city: String? = null,
+    val area: String? = null,
+    val address: String? = null,
 )
 
 @Serializable
