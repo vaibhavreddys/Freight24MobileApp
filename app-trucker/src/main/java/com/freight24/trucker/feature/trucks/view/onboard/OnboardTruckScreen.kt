@@ -68,6 +68,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -125,6 +126,11 @@ internal fun OnboardTruckScreen(
     }
 
     if (uiState is UiState.Success) {
+        BackHandler {
+            viewModel.resetState()
+            navController.previousBackStackEntry?.savedStateHandle?.set("refresh_trucks", true)
+            onSuccessAction()
+        }
         OnboardSuccessScreen(
             truck = (uiState as UiState.Success<AddTruckDto>).data,
             onViewFleet = {

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -55,6 +56,7 @@ internal fun TrucksScreen(
     val uiState by viewModel.uiState.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val selectedFilter by viewModel.selectedFilter.collectAsState()
+    val listState = rememberLazyListState()
 
     // Observe refresh signal from result of onboarding
     val refreshSignal =
@@ -67,6 +69,7 @@ internal fun TrucksScreen(
             Log.d("TrucksScreen", "Refresh signal received, refreshing list")
             viewModel.onRefresh()
             navController.currentBackStackEntry?.savedStateHandle?.remove<Boolean>("refresh_trucks")
+            listState.scrollToItem(0)
         }
     }
 
@@ -107,6 +110,7 @@ internal fun TrucksScreen(
                     }
                     is UiState.Success -> {
                         LazyColumn(
+                            state = listState,
                             contentPadding = PaddingValues(16.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                             modifier = Modifier.fillMaxSize(),

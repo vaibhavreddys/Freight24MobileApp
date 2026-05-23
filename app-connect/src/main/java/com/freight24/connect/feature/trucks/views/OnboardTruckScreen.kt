@@ -63,6 +63,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -119,10 +120,16 @@ fun OnboardTruckScreen(
     val context = LocalContext.current
 
     if (uiState is UiState.Success) {
+        BackHandler {
+            viewModel.resetState()
+            navController.previousBackStackEntry?.savedStateHandle?.set("refresh_trucks", true)
+            onSuccessAction()
+        }
         OnboardSuccessScreen(
             truck = (uiState as UiState.Success<AddTruckDto>).data,
             onViewFleet = {
                 viewModel.resetState()
+                navController.previousBackStackEntry?.savedStateHandle?.set("refresh_trucks", true)
                 onSuccessAction()
             },
             onAddAnother = { viewModel.resetState() },
