@@ -4,6 +4,7 @@ import com.freight24.common.model.StatusEvent
 import com.freight24.common.model.Trip
 import com.freight24.common.model.TripDetail
 import com.freight24.common.model.TripDocument
+import com.freight24.common.model.TripFinancials
 import com.freight24.common.model.TripLocation
 import com.freight24.common.util.DateTimeUtils
 import com.freight24.common.util.NameFormatter
@@ -11,6 +12,7 @@ import com.freight24.rest.response.StatusEventDto
 import com.freight24.rest.response.TripDetailDto
 import com.freight24.rest.response.TripDocumentDto
 import com.freight24.rest.response.TripDto
+import com.freight24.rest.response.TripFinancialsDto
 import com.freight24.rest.response.TripLocationDto
 
 fun TripDto.toDomain(): Trip {
@@ -28,19 +30,44 @@ fun TripDto.toDomain(): Trip {
 }
 
 fun TripDetailDto.toDomain(): TripDetail {
+    val mappedFinancials = financials?.toDomain()
     return TripDetail(
         id = id,
         tripCode = trip_code,
         registrationNumber = registration_number,
         truckType = NameFormatter.shortenTruckName(truck_type),
         createdAt = DateTimeUtils.formatRelativeTime(created_at),
-        tripCost = trucker_trip_cost,
-        advanceAmount = advance_amount,
+        tripCost = mappedFinancials?.truckerTripCost ?: trucker_trip_cost,
+        advanceAmount = mappedFinancials?.advancePaidAmount ?: advance_amount,
         status = NameFormatter.formatTripStatusMessage(trucker_status),
         origin = origin.toDomain(),
         destination = destination.toDomain(),
         statusEvents = status_events.map { it.toDomain() },
         tripDocuments = trip_documents.map { it.toDomain() },
+        financials = mappedFinancials,
+    )
+}
+
+fun TripFinancialsDto.toDomain(): TripFinancials {
+    return TripFinancials(
+        clientTripCost = client_trip_cost,
+        truckerTripCost = trucker_trip_cost,
+        balanceAmount = balance_amount,
+        platformFeeAmount = platform_fee_amount,
+        tdsAmount = tds_amount,
+        tdsApplicable = tds_applicable,
+        otherDeductions = other_deductions,
+        deductionRemarks = deduction_remarks,
+        truckerNetAmount = trucker_net_amount,
+        haltingAmount = halting_amount,
+        luAmountTotal = lu_amount_total,
+        luAmountReimbursable = lu_amount_reimbursable,
+        luIncluded = lu_included,
+        advancePaid = advance_paid,
+        advancePaidAmount = advance_paid_amount,
+        balancePaid = balance_paid,
+        balancePaidAmount = balance_paid_amount,
+        totalDeductions = total_deductions,
     )
 }
 
@@ -62,6 +89,8 @@ fun StatusEventDto.toDomain(): StatusEvent {
         eventBy = event_by,
         eventAt = event_at,
         details = details,
+        oldStatus = old_status,
+        newStatus = new_status,
     )
 }
 

@@ -49,6 +49,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -378,7 +379,6 @@ internal fun TripDetailsScreen(
                     TripDetailsContent(
                         trip = state.data,
                         uploadStatus = uploadStatus,
-                        onNavigateToPayments = { onNavigateToPayments(state.data.id) },
                         onUploadClick = { showSourcePicker = true },
                         onViewClick = { documentId ->
                             viewModel.fetchSignedUrl(documentId) { url ->
@@ -514,24 +514,10 @@ fun StatusSelectionContent(
     // This component is no longer used in the streamlined flow but kept for potential future use or until fully deprecated
 }
 
-fun extractStage(details: String): String? {
-    return when {
-        details.contains("PAID", ignoreCase = true) -> "PAID"
-        details.contains("INVOICED", ignoreCase = true) -> "INVOICED"
-        details.contains("UNLOADED", ignoreCase = true) -> "UNLOADED"
-        details.contains("IN_TRANSIT", ignoreCase = true)
-                || details.contains("IN-TRANSIT", ignoreCase = true) -> "IN_TRANSIT"
-        details.contains("LOADING", ignoreCase = true) -> "LOADING"
-        details.contains("ASSIGNED", ignoreCase = true) -> "ASSIGNED"
-        else -> null
-    }
-}
-
 @Composable
 internal fun TripDetailsContent(
     trip: TripDetail,
     uploadStatus: UploadStatus,
-    onNavigateToPayments: () -> Unit,
     onUploadClick: () -> Unit,
     onViewClick: (String) -> Unit
 ) {
@@ -675,13 +661,18 @@ internal fun TripDetailsContent(
         ExpandableDetailCard(
             title = "Payments",
             icon = Icons.Default.Payments,
-            modifier = Modifier.clickable { onNavigateToPayments() }
         ) {
-            Text(
-                text = "Payment details placeholder showing cost ₹${trip.tripCost.toInt()} and advance ₹${trip.advanceAmount.toInt()}",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            val financials = trip.financials
+            if (financials != null) {
+                PaymentsContent(financials = financials)
+            } else {
+                Text(
+                    text = "Payment details not available",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(16.dp),
+                )
+            }
         }
 
         // Trip Timeline Card
@@ -691,15 +682,15 @@ internal fun TripDetailsContent(
         ) {
             val stages = listOf("ASSIGNED", "LOADING", "IN_TRANSIT", "UNLOADED", "INVOICED", "PAID")
 
-            val completedStages = trip.statusEvents
-                .mapNotNull { extractStage(it.details) }
-                .distinct()
+            val filteredEvents = trip.statusEvents
+                .filter { !it.details.isNullOrBlank() }
+                .filter { it.oldStatus != it.newStatus }
 
-            val currentStageIndex =
-                completedStages.maxOfOrNull { stages.indexOf(it) } ?: -1
+            val completedStatuses = filteredEvents.map { it.newStatus }.distinct()
+            val currentStageIndex = completedStatuses.maxOfOrNull { stages.indexOf(it) } ?: -1
 
             val timelineItems = stages.mapIndexed { index, stage ->
-
+                val matchingEvent = filteredEvents.firstOrNull { it.newStatus == stage }
                 val isCompleted = index < currentStageIndex
                 val isCurrent = index == currentStageIndex
 
@@ -716,12 +707,8 @@ internal fun TripDetailsContent(
                     },
 
                     time = when (index) {
-                        0 -> trip.createdAt // For first stage, show trip creation time
-                        else -> trip.statusEvents
-                            .firstOrNull { extractStage(it.details) == stage }
-                            ?.eventAt
-                            ?.let { DateTimeUtils.formatRelativeTime(it) }
-                            ?: " "
+                        0 -> trip.createdAt
+                        else -> matchingEvent?.eventAt?.let { DateTimeUtils.formatRelativeTime(it) } ?: " "
                     },
 
                     status = when {
@@ -733,5 +720,134 @@ internal fun TripDetailsContent(
             }
             TimelineView(items = timelineItems)
         }
+    }
+}
+
+@Composable
+private fun PaymentsContent(financials: com.freight24.common.model.TripFinancials) {
+    Column(
+        modifier = Modifier.padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        PaymentDetailRow("Trip Cost", financials.truckerTripCost)
+
+        if (financials.haltingAmount > 0) {
+            PaymentDetailRow("Halting Charges", financials.haltingAmount, isAddition = true)
+        }
+
+        if (financials.luAmountTotal > 0) {
+            PaymentDetailRow("Loading/Unloading", financials.luAmountTotal, isAddition = true)
+        }
+
+        if (financials.otherDeductions > 0) {
+            PaymentDetailRow("Other Deductions", financials.otherDeductions, isDeduction = true)
+        }
+
+        if (financials.advancePaidAmount > 0) {
+            PaymentDetailRow("Advance Paid", financials.advancePaidAmount, isDeduction = true)
+        }
+
+        PaymentDetailRow("Platform Fee", financials.platformFeeAmount, isDeduction = true)
+        PaymentDetailRow("TDS", financials.tdsAmount, isDeduction = true)
+
+        if (financials.totalDeductions > 0) {
+            PaymentDetailRow("Total Deductions", financials.totalDeductions, isDeduction = true, bold = true)
+        }
+
+        HorizontalDivider(
+            color = MaterialTheme.colorScheme.outlineVariant,
+            modifier = Modifier.padding(vertical = 4.dp)
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Net Amount",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = "₹${formatAmount(financials.truckerNetAmount.toString())}",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+
+        if (financials.balanceAmount > 0) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Surface(
+                color = MaterialTheme.colorScheme.tertiaryContainer,
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Balance Due",
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        text = "₹${formatAmount(financials.balanceAmount.toString())}",
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.tertiary,
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PaymentDetailRow(
+    label: String,
+    amount: Double,
+    isDeduction: Boolean = false,
+    isAddition: Boolean = false,
+    bold: Boolean = false,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal,
+        )
+        Text(
+            text = when {
+                isDeduction -> "- ₹${formatAmount(amount.toString())}"
+                isAddition && amount > 0 -> "+ ₹${formatAmount(amount.toString())}"
+                else -> "₹${formatAmount(amount.toString())}"
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal,
+            color = when {
+                isDeduction -> MaterialTheme.colorScheme.error
+                isAddition && amount > 0 -> MaterialTheme.colorScheme.primary
+                else -> MaterialTheme.colorScheme.onSurface
+            }
+        )
+    }
+}
+
+private fun formatAmount(amount: String): String {
+    return try {
+        "%,.0f".format(amount.toDouble())
+    } catch (e: Exception) {
+        amount
     }
 }

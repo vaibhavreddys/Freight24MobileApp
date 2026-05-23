@@ -25,6 +25,28 @@ data class TripDetail(
     val status: String,
     val statusEvents: List<StatusEvent>,
     val tripDocuments: List<TripDocument>,
+    val financials: TripFinancials? = null,
+)
+
+data class TripFinancials(
+    val clientTripCost: Double = 0.0,
+    val truckerTripCost: Double = 0.0,
+    val balanceAmount: Double = 0.0,
+    val platformFeeAmount: Double = 0.0,
+    val tdsAmount: Double = 0.0,
+    val tdsApplicable: Boolean = false,
+    val otherDeductions: Double = 0.0,
+    val deductionRemarks: String? = null,
+    val truckerNetAmount: Double = 0.0,
+    val haltingAmount: Double = 0.0,
+    val luAmountTotal: Double = 0.0,
+    val luAmountReimbursable: Double = 0.0,
+    val luIncluded: Boolean? = null,
+    val advancePaid: Boolean = false,
+    val advancePaidAmount: Double = 0.0,
+    val balancePaid: Boolean = false,
+    val balancePaidAmount: Double = 0.0,
+    val totalDeductions: Double = 0.0,
 )
 
 data class TripLocation(
@@ -41,7 +63,9 @@ data class StatusEvent(
     val eventType: String,
     val eventBy: String,
     val eventAt: String,
-    val details: String,
+    val details: String? = null,
+    val oldStatus: String? = null,
+    val newStatus: String? = null,
 )
 
 data class TripDocument(
