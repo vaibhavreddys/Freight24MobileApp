@@ -95,6 +95,14 @@ internal class OnboardTruckViewModel
 
         val truckTypes =
             listOf(
+                TruckType(15, "20 Feet Closed"),
+                TruckType(16, "22 Feet Closed"),
+                TruckType(17, "24 Feet Closed"),
+                TruckType(10, "32 Feet Single Axle"),
+                TruckType(11, "32 Feet Single Axle High Cube"),
+                TruckType(12, "32 Feet Multi Axle"),
+                TruckType(13, "32 Feet Multi Axle High Cube"),
+                TruckType(14, "32 Feet Triple Axle"),
                 TruckType(1, "17 Feet Open"),
                 TruckType(2, "20 Feet Open"),
                 TruckType(3, "22 Feet Open"),
@@ -103,15 +111,7 @@ internal class OnboardTruckViewModel
                 TruckType(6, "12 Whl Open"),
                 TruckType(7, "14 Whl Open"),
                 TruckType(8, "16 Whl Open"),
-                TruckType(9, "18 Whl Open"),
-                TruckType(10, "32 Feet Single Axle"),
-                TruckType(11, "32 Feet Single Axle High Cube"),
-                TruckType(12, "32 Feet Multi Axle"),
-                TruckType(13, "32 Feet Multi Axle High Cube"),
-                TruckType(14, "32 Feet Triple Axle"),
-                TruckType(15, "20 Feet Closed"),
-                TruckType(16, "22 Feet Closed"),
-                TruckType(17, "24 Feet Closed"),
+                TruckType(9, "18 Whl Open")
             )
 
         fun nextStep() {
