@@ -793,13 +793,13 @@ private fun PaymentsContent(financials: com.freight24.common.model.TripFinancial
                     Text(
                         text = "Balance Due",
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.tertiary,
+                        color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Text(
                         text = "₹${formatAmount(financials.balanceAmount.toString())}",
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.tertiary,
+                        color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.bodyLarge
                     )
                 }

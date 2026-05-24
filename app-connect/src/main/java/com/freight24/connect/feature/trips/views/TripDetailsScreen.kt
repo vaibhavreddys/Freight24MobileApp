@@ -871,13 +871,13 @@ fun PaymentBreakdownContent(financials: TripDataResponse.FinanceDetails?) {
                 Text(
                     "Balance Due", 
                     fontWeight = FontWeight.Bold, 
-                    color = MaterialTheme.colorScheme.tertiary,
+                    color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodyLarge
                 )
                 Text(
                     "₹${formatAmount(balanceDue.toString())}", 
                     fontWeight = FontWeight.Bold, 
-                    color = MaterialTheme.colorScheme.tertiary,
+                    color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodyLarge
                 )
             }
