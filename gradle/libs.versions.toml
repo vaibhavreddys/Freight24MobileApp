@@ -24,6 +24,7 @@ gServices = "4.4.4"
 firebaseBom = "34.8.0"
 coilComposeVersion = "3.3.0"
 pdfViewerVersion = "2.3.7"
+exifinterface = "1.3.6"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -68,6 +69,7 @@ firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics
 
 #PDFVIEWER
 pdf-viewer = { group = "io.github.afreakyelf", name = "Pdf-Viewer", version.ref = "pdfViewerVersion"}
+androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version.ref = "exifinterface" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
