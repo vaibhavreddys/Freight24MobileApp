@@ -27,77 +27,77 @@ fun CreateIndentContentPreview() {
     )
 }
 
-@Preview(showBackground = true, name = "Location AutoComplete")
-@Composable
-fun LocationAutoCompletePreview() {
-    LocationAutoComplete(
-        label = "From Location",
-        query = "Mum",
-        onQueryChange = {},
-        searchResults =
-            listOf(
-                LocationDto("1", "Mumbai", "Mumbai", "Maharashtra"),
-                LocationDto("2", "Mumbai Port", "Mumbai", "Maharashtra"),
-            ),
-        onSelect = {},
-    )
-}
+//@Preview(showBackground = true, name = "Location AutoComplete")
+//@Composable
+//fun LocationAutoCompletePreview() {
+//    LocationAutoComplete(
+//        label = "From Location",
+//        query = "Mum",
+//        onQueryChange = {},
+//        searchResults =
+//            listOf(
+//                LocationDto("1", "Mumbai", "Mumbai", "Maharashtra"),
+//                LocationDto("2", "Mumbai Port", "Mumbai", "Maharashtra"),
+//            ),
+//        onSelect = {},
+//    )
+//}
 
-@Preview(showBackground = true, name = "Client AutoComplete")
-@Composable
-fun ClientAutoCompletePreview() {
-    ClientAutoComplete(
-        label = "Client Name",
-        query = "Tata",
-        onQueryChange = {},
-        searchResults =
-            listOf(
-                ClientDto(
-                    "1",
-                    "12234",
-                    "Tata Steel",
-                    "F23-1233",
-                    "9035892114",
-                    "Active",
-                    fullName = "Nihansh"
-                ),
-                ClientDto(
-                    "2",
-                    "12234",
-                    "Tata Motors",
-                    "F23-1233",
-                    "9035892114",
-                    "Active",
-                    fullName = "Nihansh"
-                ),
-            ),
-        onSelect = {},
-    )
-}
-
-@Preview(showBackground = true, name = "Truck Type Selection")
-@Composable
-fun TruckTypeSelectionPreview() {
-    TruckTypeSelection(
-        truckTypes = mockTruckTypes(),
-        selectedTruckType = mockTruckTypes().open.first(),
-        onSelect = {},
-    )
-}
-
-@Preview(showBackground = true, name = "Optional Fields Expanded")
-@Composable
-fun OptionalFieldsSectionPreview() {
-    OptionalFieldsSection(
-        uiState =
-            CreateIndentUiState(
-                clientCost = "25000",
-                negotiatedCost = "24000",
-                remarks = "Urgent delivery",
-            ),
-        onEvent = {},
-    )
-}
+//@Preview(showBackground = true, name = "Client AutoComplete")
+//@Composable
+//fun ClientAutoCompletePreview() {
+//    ClientAutoComplete(
+//        label = "Client Name",
+//        query = "Tata",
+//        onQueryChange = {},
+//        searchResults =
+//            listOf(
+//                ClientDto(
+//                    "1",
+//                    "12234",
+//                    "Tata Steel",
+//                    "F23-1233",
+//                    "9035892114",
+//                    "Active",
+//                    fullName = "Nihansh"
+//                ),
+//                ClientDto(
+//                    "2",
+//                    "12234",
+//                    "Tata Motors",
+//                    "F23-1233",
+//                    "9035892114",
+//                    "Active",
+//                    fullName = "Nihansh"
+//                ),
+//            ),
+//        onSelect = {},
+//    )
+//}
+//
+//@Preview(showBackground = true, name = "Truck Type Selection")
+//@Composable
+//fun TruckTypeSelectionPreview() {
+//    TruckTypeSelection(
+//        truckTypes = mockTruckTypes(),
+//        selectedTruckType = mockTruckTypes().open.first(),
+//        onSelect = {},
+//    )
+//}
+//
+//@Preview(showBackground = true, name = "Optional Fields Expanded")
+//@Composable
+//fun OptionalFieldsSectionPreview() {
+//    OptionalFieldsSection(
+//        uiState =
+//            CreateIndentUiState(
+//                clientCost = "25000",
+//                negotiatedCost = "24000",
+//                remarks = "Urgent delivery",
+//            ),
+//        onEvent = {},
+//    )
+//}
 
 private fun mockTruckTypes() =
     TruckCategoryDto(
