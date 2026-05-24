@@ -19,10 +19,16 @@ data class LuChargesUiState(
     val error: String? = null,
     val shouldNavigateBack: Boolean = false,
     val navigateToSignedUrl: String? = null,
-    val showDocTypeSheet: Boolean = false,
-    val showFilePicker: Boolean = false,
+    val showSourcePicker: Boolean = false,
+    val showFileConfirmation: Boolean = false,
+    val selectedUris: List<Uri> = emptyList(),
+    val isPdf: Boolean = false,
     val selectedDocType: LuDocType? = null,
-    
+    val loadingProcessing: Boolean = false,
+    val unloadingProcessing: Boolean = false,
+    val loadingShowReupload: Boolean = false,
+    val unloadingShowReupload: Boolean = false,
+
     // Initial values for comparison
     val initialLoadingAmount: String = "",
     val initialUnloadingAmount: String = "",
@@ -34,13 +40,14 @@ sealed class LuChargesEvent {
     data class OnLoadingAmountChange(val value: String) : LuChargesEvent()
     data class OnUnloadingAmountChange(val value: String) : LuChargesEvent()
     data class OnNotesChange(val value: String) : LuChargesEvent()
-    data object OnUploadClick : LuChargesEvent()
-    data class OnDocTypeSelected(val type: LuDocType) : LuChargesEvent()
+    data class OnShowSourcePicker(val docType: LuDocType) : LuChargesEvent()
     data class OnFilePicked(val uris: List<Uri>, val isPdf: Boolean) : LuChargesEvent()
+    data object OnConfirmUpload : LuChargesEvent()
+    data object OnClearSelection : LuChargesEvent()
     data class OnDeleteDoc(val type: LuDocType) : LuChargesEvent()
     data class OnRemoteDocClick(val docType: String) : LuChargesEvent()
     data object OnSubmit : LuChargesEvent()
-    data object OnDismissSheet : LuChargesEvent()
+    data object OnDismissSourcePicker : LuChargesEvent()
     data object OnSignedUrlConsumed : LuChargesEvent()
 }
 

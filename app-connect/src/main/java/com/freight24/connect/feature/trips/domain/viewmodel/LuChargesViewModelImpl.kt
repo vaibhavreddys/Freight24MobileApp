@@ -11,9 +11,12 @@ import com.freight24.connect.feature.trips.domain.usecase.SlipUrlSignedDocumentU
 import com.freight24.connect.feature.trips.domain.usecase.UploadLUChargesUseCase
 import com.freight24.connect.feature.trips.domain.usecase.UploadLUChargesUseCaseParams
 import com.freight24.connect.navigation.ConnectDestination
+import android.util.Log
 import com.freight24.common.util.FileUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.io.File
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -67,37 +70,89 @@ internal class LuChargesViewModelImpl @Inject constructor(
             is LuChargesEvent.OnLoadingAmountChange -> _uiState.update { it.copy(loadingAmount = event.value).updateChanges() }
             is LuChargesEvent.OnUnloadingAmountChange -> _uiState.update { it.copy(unloadingAmount = event.value).updateChanges() }
             is LuChargesEvent.OnNotesChange -> _uiState.update { it.copy(notes = event.value).updateChanges() }
-            LuChargesEvent.OnUploadClick -> _uiState.update { it.copy(showDocTypeSheet = true) }
-            is LuChargesEvent.OnDocTypeSelected -> _uiState.update { 
-                it.copy(selectedDocType = event.type, showDocTypeSheet = false, showFilePicker = true) 
+            is LuChargesEvent.OnShowSourcePicker -> _uiState.update {
+                it.copy(showSourcePicker = true, selectedDocType = event.docType)
             }
-            is LuChargesEvent.OnFilePicked -> handleFilePicked(event.uris, event.isPdf)
-            is LuChargesEvent.OnRemoteDocClick -> handleRemoteDocClick(event.docType)
+            is LuChargesEvent.OnFilePicked -> _uiState.update {
+                it.copy(showSourcePicker = false, showFileConfirmation = true, selectedUris = event.uris, isPdf = event.isPdf)
+            }
+            LuChargesEvent.OnConfirmUpload -> handleFileProcessing()
+            LuChargesEvent.OnClearSelection -> _uiState.update {
+                it.copy(showFileConfirmation = false, selectedUris = emptyList(), selectedDocType = null)
+            }
             is LuChargesEvent.OnDeleteDoc -> {
                 when (event.type) {
-                    LuDocType.LOADING -> _uiState.update { it.copy(loadingDocument = null, loadingSlipUrl = null, loadingId = null).updateChanges() }
-                    LuDocType.UNLOADING -> _uiState.update { it.copy(unloadingDocument = null, unloadingSlipUrl = null, unloadingId = null).updateChanges() }
+                    LuDocType.LOADING -> _uiState.update {
+                        it.copy(
+                            loadingDocument = null, loadingSlipUrl = null, loadingId = null,
+                            loadingShowReupload = true
+                        ).updateChanges()
+                    }
+                    LuDocType.UNLOADING -> _uiState.update {
+                        it.copy(
+                            unloadingDocument = null, unloadingSlipUrl = null, unloadingId = null,
+                            unloadingShowReupload = true
+                        ).updateChanges()
+                    }
                 }
             }
+            is LuChargesEvent.OnRemoteDocClick -> handleRemoteDocClick(event.docType)
             LuChargesEvent.OnSubmit -> submitCharges()
-            LuChargesEvent.OnDismissSheet -> _uiState.update { it.copy(showDocTypeSheet = false, showFilePicker = false) }
+            LuChargesEvent.OnDismissSourcePicker -> _uiState.update { it.copy(showSourcePicker = false) }
             LuChargesEvent.OnSignedUrlConsumed -> _uiState.update { it.copy(navigateToSignedUrl = null) }
         }
     }
 
-    private fun handleFilePicked(uris: List<Uri>, isPdf: Boolean) {
-        viewModelScope.launch {
-            val file = if (isPdf) {
-                FileUtils.getFileFromUri(context, uris.first())
+    private fun handleFileProcessing() {
+        val state = _uiState.value
+        val docType = state.selectedDocType ?: return
+
+        _uiState.update {
+            it.copy(
+                showFileConfirmation = false,
+                loadingProcessing = docType == LuDocType.LOADING,
+                unloadingProcessing = docType == LuDocType.UNLOADING,
+            )
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val file: File? = if (state.isPdf) {
+                val uri = state.selectedUris.firstOrNull() ?: run {
+                    _uiState.update { it.copy(loadingProcessing = false, unloadingProcessing = false) }
+                    return@launch
+                }
+                FileUtils.getFileFromUri(context, uri)
             } else {
-                FileUtils.convertImageToPdf(context, uris)
+                if (state.selectedUris.isEmpty()) {
+                    _uiState.update { it.copy(loadingProcessing = false, unloadingProcessing = false) }
+                    return@launch
+                }
+                FileUtils.convertImageToPdf(context, state.selectedUris)
             }
-            
+
+            if (file != null) {
+                val sizeKb = file.length() / 1024
+                val sizeMb = sizeKb / 1024.0
+                Log.d("LuCharges", "Converted ${if (docType == LuDocType.LOADING) "loading" else "unloading"} file: ${file.name}, size=${file.length()} bytes (${sizeKb} KB / ${"%.1f".format(sizeMb)} MB)")
+            }
+
             _uiState.update { currentState ->
-                currentState.copy(
-                    showFilePicker = false,
-                    loadingDocument = if (currentState.selectedDocType == LuDocType.LOADING) file else currentState.loadingDocument,
-                    unloadingDocument = if (currentState.selectedDocType == LuDocType.UNLOADING) file else currentState.unloadingDocument
+                val updated = when (docType) {
+                    LuDocType.LOADING -> currentState.copy(
+                        loadingDocument = file,
+                        loadingShowReupload = false,
+                        loadingProcessing = false,
+                    )
+                    LuDocType.UNLOADING -> currentState.copy(
+                        unloadingDocument = file,
+                        unloadingShowReupload = false,
+                        unloadingProcessing = false,
+                    )
+                }
+                updated.copy(
+                    showFileConfirmation = false,
+                    selectedUris = emptyList(),
+                    selectedDocType = null,
                 ).updateChanges()
             }
         }

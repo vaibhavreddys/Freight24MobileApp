@@ -5,9 +5,11 @@ import android.webkit.MimeTypeMap
 import com.freight24.common.di.IoDispatcher
 import com.freight24.connect.feature.trips.domain.model.LuChargeRequest
 import com.freight24.rest.api.TripLUChargesApi
+import com.freight24.rest.response.BaseResponse
 import com.freight24.rest.response.SignedDocument
 import com.freight24.rest.response.UpdatedLUResponse
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.serialization.json.Json
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -47,7 +49,14 @@ class TripLUChargesRepositoryImpl @Inject constructor(
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body()!!)
             } else {
-                Result.failure(Exception(response.message()))
+                val errorMsg = try {
+                    response.errorBody()?.string()?.let { body ->
+                        Json { ignoreUnknownKeys = true }.decodeFromString<BaseResponse>(body).message
+                    }?.takeIf { it.isNotBlank() } ?: response.message()
+                } catch (e: Exception) {
+                    response.message()
+                }
+                Result.failure(Exception(errorMsg))
             }
 
         } catch (e: Exception) {
