@@ -232,7 +232,7 @@ fun CreateIndentContent(
             containerColor = Color.Transparent,
             topBar = {
                 TopAppBar(
-                    title = { Text("Indent") },
+                    title = { Text("Create Indent") },
                     navigationIcon = {
                         IconButton(onClick = onBackClick) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")

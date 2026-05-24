@@ -462,7 +462,7 @@ fun AllIndentCard(
                 
                 // Posted time
                 Text(
-                    text = "45m ago", // TODO: Dynamic formatting
+                    text = "45m ago(hardcoded)", // TODO: Dynamic formatting
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -605,7 +605,7 @@ fun AllIndentCard(
 fun RouteDot(isStart: Boolean) {
     Box(
         modifier = Modifier
-            .size(8.dp)
+            .size(12.dp)
             .background(
                 color = if (isStart) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
                 shape = CircleShape
@@ -618,7 +618,7 @@ fun RouteVerticalLine() {
     Box(
         modifier = Modifier
             .padding(start = 3.dp) // center under 8dp dot
-            .width(2.dp)
+            .width(4.dp)
             .height(12.dp)
             .background(MaterialTheme.colorScheme.outlineVariant)
     )

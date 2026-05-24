@@ -1,41 +1,53 @@
 package com.freight24.connect.feature.indents.views
 
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Route
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.People
 import androidx.compose.material.icons.outlined.Tune
-import androidx.compose.material3.*
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.shape.CircleShape
 import com.freight24.ui.components.VisibilityChip
-import com.freight24.ui.theme.FreightThemeTokens
 import java.text.NumberFormat
 import java.util.Locale
-
-private val TextGrey @Composable get() = MaterialTheme.colorScheme.onSurfaceVariant
-private val TextDark @Composable get() = MaterialTheme.colorScheme.onSurface
-private val BorderLight @Composable get() = FreightThemeTokens.colors.borderOverlay
-private val GreenBrand @Composable get() = MaterialTheme.colorScheme.primary
 
 @Composable
 fun IndentDetailSection(
@@ -44,69 +56,79 @@ fun IndentDetailSection(
     onEditClick: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, BorderLight),
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainer),
+        border = BorderStroke(1.dp, colorScheme.outlineVariant),
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (image != null) {
-                    val hasBg = title == "GENERAL INFO"
-                    Box(
-                        modifier = if (hasBg) Modifier
-                            .background(BorderLight, CircleShape)
-                            .padding(4.dp) else Modifier,
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Image(
-                            image,
-                            contentDescription = null,
-                            colorFilter = ColorFilter.tint(
-                                color = TextGrey,
-                                blendMode = BlendMode.SrcIn
-                            ),
-                            modifier = Modifier.size(if (hasBg) 14.dp else 18.dp)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            colorScheme.primaryContainer.copy(alpha = 0.42f),
+                            colorScheme.surfaceContainer,
+                            colorScheme.surfaceContainerHigh
                         )
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-
-                Text(
-                    text = title.uppercase(),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = TextGrey,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.5.sp
+                    )
                 )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (image != null) {
+                        Surface(
+                            modifier = Modifier.size(28.dp),
+                            shape = CircleShape,
+                            color = colorScheme.primaryContainer,
+                            contentColor = colorScheme.onPrimaryContainer
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = image,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
 
-                Spacer(modifier = Modifier.weight(1f))
+                    Text(
+                        text = title.uppercase(),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.2.sp,
+                        modifier = Modifier.weight(1f)
+                    )
 
-                if (onEditClick != null) {
-                    IconButton(
-                        onClick = onEditClick,
-                        modifier = Modifier
-                            .size(32.dp)
-                            .background(FreightThemeTokens.colors.surfaceSuccessLight, CircleShape)
-                    ) {
-                        Icon(
-                            Icons.Default.Edit,
-                            contentDescription = "Edit",
-                            tint = GreenBrand,
-                            modifier = Modifier.size(16.dp),
-                        )
+                    if (onEditClick != null) {
+                        FilledTonalIconButton(
+                            onClick = onEditClick,
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Edit $title",
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
                     }
                 }
+
+                content()
             }
-
-            Spacer(Modifier.height(16.dp))
-
-            content()
         }
     }
 }
@@ -115,21 +137,20 @@ fun IndentDetailSection(
 fun IndentDetailItem(
     label: String,
     value: String,
-    valueColor: Color = TextDark,
+    valueColor: Color = MaterialTheme.colorScheme.onSurface,
 ) {
-    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-        Text(
-            text = label.uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            color = TextGrey,
-        )
-
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        DetailLabel(text = label, modifier = Modifier.weight(0.9f))
         Text(
             text = value,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.SemiBold,
             color = valueColor,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1.1f),
             textAlign = TextAlign.End
         )
     }
@@ -139,20 +160,18 @@ fun IndentDetailItem(
 fun IndentDetailItemColumn(
     label: String,
     value: String,
-    valueColor: Color = TextDark,
+    valueColor: Color = MaterialTheme.colorScheme.onSurface,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier) {
-        Text(
-            text = label.uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            color = TextGrey,
-        )
-        Spacer(Modifier.height(4.dp))
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        DetailLabel(text = label)
         Text(
             text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
             color = valueColor,
         )
     }
@@ -167,15 +186,13 @@ fun IndentMetricsSection(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         MetricCard(
             modifier = Modifier.weight(1f),
             icon = Icons.Outlined.People,
             value = interestCount.toString(),
             label = "Interest Expressed",
-            iconBackgroundColor = FreightThemeTokens.colors.surfaceSuccessLight,
-            iconTintColor = GreenBrand,
             onClick = onInterestClick
         )
         MetricCard(
@@ -183,8 +200,6 @@ fun IndentMetricsSection(
             icon = Icons.Outlined.LocalShipping,
             value = suitableTrucks.toString(),
             label = "Suitable Trucks",
-            iconBackgroundColor = FreightThemeTokens.colors.surfaceSuccessLighter,
-            iconTintColor = GreenBrand,
             onClick = onSuitableTrucksClick
         )
     }
@@ -196,49 +211,48 @@ private fun MetricCard(
     icon: ImageVector,
     value: String,
     label: String,
-    iconBackgroundColor: Color,
-    iconTintColor: Color,
     onClick: (() -> Unit)? = null
 ) {
+    val colorScheme = MaterialTheme.colorScheme
+
     Card(
         modifier = if (onClick != null) modifier.clickable { onClick() } else modifier,
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(18.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, BorderLight)
+        colors = CardDefaults.cardColors(containerColor = colorScheme.secondaryContainer),
+        border = BorderStroke(1.dp, colorScheme.outlineVariant)
     ) {
         Column(
             modifier = Modifier
-                .padding(16.dp)
+                .padding(12.dp)
                 .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Surface(
-                modifier = Modifier.size(48.dp),
+                modifier = Modifier.size(36.dp),
                 shape = CircleShape,
-                color = iconBackgroundColor
+                color = colorScheme.surface.copy(alpha = 0.72f),
+                contentColor = colorScheme.onSecondaryContainer
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
-                        tint = iconTintColor,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = value,
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
-                color = TextDark
+                color = colorScheme.onSecondaryContainer
             )
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
-                color = TextGrey,
+                color = colorScheme.onSecondaryContainer.copy(alpha = 0.72f),
                 textAlign = TextAlign.Center
             )
         }
@@ -257,21 +271,37 @@ fun GeneralInfoSection(
         title = "GENERAL INFO",
         onEditClick = onEditClick,
     ) {
-        if(indentId == null) {
-            IndentDetailItem(label = "INDENT TYPE", value = "New Indent")
-        } else {
-            IndentDetailItem(label = "INDENT ID", value = "#${indentId}")
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            if (indentId == null) {
+                IndentDetailItem(label = "INDENT TYPE", value = "New Indent")
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    DetailLabel(text = "INDENT ID")
+                    Text(
+                        text = "#$indentId",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                IndentDetailItemColumn(
+                    label = "CLIENT NAME",
+                    value = clientName,
+                    modifier = Modifier.weight(1f)
+                )
+                IndentDetailItemColumn(
+                    label = "TAG CODE",
+                    value = tagCode?.takeIf { it.isNotBlank() } ?: "Not specified",
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
-
-        IndentDetailItem(
-            label = "CLIENT NAME",
-            value = clientName
-        )
-
-        IndentDetailItem(
-            label = "TAG CODE",
-            value = tagCode ?: "Not specified"
-        )
     }
 }
 
@@ -282,59 +312,21 @@ fun RouteDetailsSection(
     onEditClick: (() -> Unit)? = null
 ) {
     IndentDetailSection(
-        image = Icons.Default.LocationOn,
+        image = Icons.Default.Route,
         title = "ROUTE DETAILS",
         onEditClick = onEditClick,
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(8.dp)
-                    .background(GreenBrand, CircleShape)
-            )
-            Column {
-                Text(
-                    text = "ORIGIN CITY",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TextGrey,
-                )
-                Text(
-                    text = originCity,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = TextDark
-                )
-            }
-        }
-
-        Spacer(Modifier.height(16.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(8.dp)
-                    .background(MaterialTheme.colorScheme.secondary, CircleShape)
-            )
-            Column {
-                Text(
-                    text = "DESTINATION CITY",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TextGrey,
-                )
-                Text(
-                    text = destinationCity,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = TextDark
-                )
+            RouteTimeline()
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                RoutePoint(label = "ORIGIN CITY", value = originCity)
+                RoutePoint(label = "DESTINATION CITY", value = destinationCity)
             }
         }
     }
@@ -347,63 +339,42 @@ fun FinancialDetailsSection(
     hideCost: Boolean,
     onEditClick: (() -> Unit)? = null
 ) {
-    val formatInr = { amount: String ->
-        val number = amount.replace(",", "").toDoubleOrNull()
-        if (number != null) {
-            val format = NumberFormat.getCurrencyInstance(Locale("en", "IN"))
-            format.maximumFractionDigits = 0
-            format.format(number).replace("₹", "₹ ")
-        } else {
-            "₹ $amount"
-        }
-    }
-
     IndentDetailSection(
         image = Icons.Outlined.Payments,
         title = "FINANCIAL DETAILS",
         onEditClick = onEditClick
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(32.dp),
-        ) {
-            IndentDetailItemColumn(
-                label = "CLIENT COST",
-                value = formatInr(clientCost),
-                modifier = Modifier.weight(1f)
+        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                CostTile(
+                    label = "CLIENT COST",
+                    value = formatInr(clientCost),
+                    modifier = Modifier.weight(1f)
+                )
+                CostTile(
+                    label = "NEGOTIATED COST",
+                    value = formatInr(negotiatedCost),
+                    emphasized = true,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            HorizontalDivider(
+                thickness = 1.dp,
+                color = MaterialTheme.colorScheme.outlineVariant,
             )
 
-            IndentDetailItemColumn(
-                label = "NEGOTIATED COST",
-                value = formatInr(negotiatedCost),
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        HorizontalDivider(
-            thickness = 0.5.dp,
-            color = BorderLight,
-        )
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = "COST VISIBILITY",
-                style = MaterialTheme.typography.labelSmall,
-                color = TextGrey,
-            )
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            VisibilityChip(
-                isVisible = !hideCost
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                DetailLabel(text = "COST VISIBILITY")
+                Spacer(modifier = Modifier.weight(1f))
+                VisibilityChip(isVisible = !hideCost)
+            }
         }
     }
 }
@@ -423,70 +394,79 @@ fun SpecificationsSection(
         title = "SPECIFICATIONS",
         onEditClick = onEditClick,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(32.dp),
-        ) {
-            IndentDetailItemColumn(
-                label = "WEIGHT (MT)",
-                value = weight,
-                modifier = Modifier.weight(1f)
-            )
-
-            IndentDetailItemColumn(
-                label = "MATERIAL TYPE",
-                value = materialType,
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        Spacer(Modifier.height(20.dp))
-
-        Text(
-            text = "VEHICLE TYPE",
-            style = MaterialTheme.typography.labelSmall,
-            color = TextGrey,
-        )
-        Spacer(Modifier.height(6.dp))
-
-        if (truckType != null) {
-            Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = GreenBrand,
+        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Text(
-                    text = truckType,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                SpecificationTile(
+                    label = "WEIGHT (MT)",
+                    value = weight,
+                    modifier = Modifier.weight(1f)
+                )
+                SpecificationTile(
+                    label = "MATERIAL TYPE",
+                    value = materialType,
+                    modifier = Modifier.weight(1f)
                 )
             }
-        } else {
-            Text(
-                text = "Not selected",
-                style = MaterialTheme.typography.bodyMedium,
-                color = TextDark
-            )
-        }
 
-        Spacer(Modifier.height(20.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                DetailLabel(text = "VEHICLE TYPE")
+                if (truckType != null) {
+                    AssistChip(
+                        onClick = {},
+                        label = {
+                            Text(
+                                text = truckType,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Outlined.LocalShipping,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        },
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            labelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            leadingIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        ),
+                        border = AssistChipDefaults.assistChipBorder(
+                            enabled = true,
+                            borderColor = MaterialTheme.colorScheme.outlineVariant
+                        )
+                    )
+                } else {
+                    Text(
+                        text = "Not selected",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(32.dp),
-        ) {
-            IndentDetailItemColumn(
-                label = "TAT",
-                value = if (tatRequired) "$tatHours hrs" else "No",
-                valueColor = if (tatRequired) TextDark else TextGrey,
-                modifier = Modifier.weight(1f)
-            )
-            IndentDetailItemColumn(
-                label = "TARPAULIN",
-                value = if (tarpaulinRequired) "Yes" else "No",
-                valueColor = if (tarpaulinRequired) GreenBrand else TextGrey,
-                modifier = Modifier.weight(1f)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                SpecificationTile(
+                    label = "TAT",
+                    value = if (tatRequired) "$tatHours hrs" else "No",
+                    subdued = !tatRequired,
+                    modifier = Modifier.weight(1f)
+                )
+                SpecificationTile(
+                    label = "TARPAULIN",
+                    value = if (tarpaulinRequired) "Yes" else "No",
+                    emphasized = tarpaulinRequired,
+                    subdued = !tarpaulinRequired,
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
     }
 }
@@ -502,23 +482,172 @@ fun RemarksSection(
             title = "REMARKS",
             onEditClick = onEditClick
         ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        color = FreightThemeTokens.colors.surfaceGray,
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                    .padding(16.dp)
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
             ) {
                 Text(
                     text = remarks,
                     style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Start
+                    modifier = Modifier.padding(12.dp)
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun DetailLabel(
+    text: String,
+    modifier: Modifier = Modifier
+) {
+    Text(
+        text = text.uppercase(),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        fontWeight = FontWeight.Bold,
+        letterSpacing = 1.sp,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun RouteTimeline() {
+    val colorScheme = MaterialTheme.colorScheme
+
+    Column(
+        modifier = Modifier.padding(top = 2.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        RouteDot(isStart = true)
+        Box(
+            modifier = Modifier
+                .height(64.dp)
+                .width(4.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(colorScheme.outlineVariant)
+        )
+        RouteDot(isStart = false)
+    }
+}
+
+@Composable
+private fun TimelineDot(
+    containerColor: Color,
+    dotColor: Color
+) {
+    Surface(
+        modifier = Modifier.size(28.dp),
+        shape = CircleShape,
+        color = containerColor
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .size(12.dp)
+                    .background(dotColor, CircleShape)
+            )
+        }
+    }
+}
+
+@Composable
+private fun RoutePoint(
+    label: String,
+    value: String
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        DetailLabel(text = label)
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+@Composable
+private fun CostTile(
+    label: String,
+    value: String,
+    emphasized: Boolean = false,
+    modifier: Modifier = Modifier
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    val containerColor = if (emphasized) colorScheme.surfaceContainerHighest else colorScheme.surfaceContainerHighest
+    val contentColor = if (emphasized) colorScheme.primary else colorScheme.onSurface
+
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        color = containerColor,
+        border = BorderStroke(1.dp, colorScheme.outlineVariant)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            DetailLabel(text = label)
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = contentColor
+            )
+        }
+    }
+}
+
+@Composable
+private fun SpecificationTile(
+    label: String,
+    value: String,
+    emphasized: Boolean = false,
+    subdued: Boolean = false,
+    modifier: Modifier = Modifier
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    val containerColor = if (emphasized) colorScheme.tertiaryContainer else colorScheme.surfaceContainerHighest
+    val valueColor = when {
+        emphasized -> colorScheme.onTertiaryContainer
+        subdued -> colorScheme.onSurfaceVariant
+        else -> colorScheme.onSurface
+    }
+
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        color = containerColor,
+        border = BorderStroke(1.dp, colorScheme.outlineVariant)
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            DetailLabel(text = label)
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                color = valueColor
+            )
+        }
+    }
+}
+
+private fun formatInr(amount: String): String {
+    val number = amount.replace(",", "").toDoubleOrNull()
+    return if (number != null) {
+        val format = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("en-IN"))
+        format.maximumFractionDigits = 0
+        format.format(number).replace("₹", "₹ ")
+    } else {
+        "₹ $amount"
     }
 }

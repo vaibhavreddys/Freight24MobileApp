@@ -19,7 +19,6 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -30,7 +29,6 @@ import com.freight24.connect.feature.findTrucks.views.SearchResultsContent
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsEvent
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsViewModel
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsViewModelImpl
-import com.freight24.ui.theme.FreightThemeTokens
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,7 +42,6 @@ fun IndentDetailsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val colorScheme = MaterialTheme.colorScheme
-    val extendedColors = FreightThemeTokens.colors
     val refreshTrigger = navController.currentBackStackEntry
         ?.savedStateHandle
         ?.getStateFlow("refresh", false)
@@ -292,23 +289,29 @@ fun IndentDetailsScreen(
         bottomBar = {
             uiState.indent?.let { indent ->
                 Box(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp)
+                    modifier = Modifier.fillMaxWidth().padding(12.dp)
                 ) {
                     if (indent.status.equals("open", true)) {
                         Button(
                             onClick = { viewModel.onEvent(IndentDetailsEvent.ShowAssignDialog) },
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = extendedColors.successColor)
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = colorScheme.primary,
+                                contentColor = colorScheme.onPrimary
+                            )
                         ) {
-                            Text("Ready for Assignment", color = colorScheme.onPrimary)
+                            Text("Ready for Assignment")
                         }
                     } else if (indent.status.equals("READY_FOR_ASSIGNMENT", true)) {
                         Button(
                             onClick = { onCreateTripClick(indentId) },
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = extendedColors.successColor)
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = colorScheme.primary,
+                                contentColor = colorScheme.onPrimary
+                            )
                         ) {
-                            Text("Create trip", color = colorScheme.onPrimary)
+                            Text("Create trip")
                         }
                     } else if (!indent.status.equals("CANCELLED", true)) {
                         Button(
@@ -354,8 +357,8 @@ fun IndentDetailsScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                            .padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         GeneralInfoSection(
                             clientName = groupDetails.clientProfile?.companyName ?: groupDetails.clientProfile?.fullName ?: "Unknown",
