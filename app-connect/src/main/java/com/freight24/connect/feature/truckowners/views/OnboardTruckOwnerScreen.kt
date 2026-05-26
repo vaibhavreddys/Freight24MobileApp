@@ -168,6 +168,8 @@ fun OnboardTruckOwnerScreen(
     val selectedPriority by viewModel.selectedPriority.collectAsState()
     val isSaving by viewModel.isSaving.collectAsState()
     val createdTruckOwner by viewModel.createdTruckOwner.collectAsState()
+    val panDuplicateError by viewModel.panDuplicateError.collectAsState()
+    val gstDuplicateError by viewModel.gstDuplicateError.collectAsState()
 
     val canSubmit = viewModel.canSubmit()
     val submitBlockReason = viewModel.submitBlockReason()
@@ -283,7 +285,16 @@ fun OnboardTruckOwnerScreen(
                         validationType = InputValidationType.PAN,
                         required = true,
                         onValueChange = viewModel::onPanChanged,
+                        onFocusLost = viewModel::onPanFocusLost,
                     )
+                    panDuplicateError?.let { error ->
+                        Text(
+                            text = error,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp),
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -306,7 +317,16 @@ fun OnboardTruckOwnerScreen(
                         leadingIcon = Icons.Default.Badge,
                         validationType = InputValidationType.GST,
                         onValueChange = viewModel::onGstChanged,
+                        onFocusLost = viewModel::onGstFocusLost,
                     )
+                    gstDuplicateError?.let { error ->
+                        Text(
+                            text = error,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp),
+                        )
+                    }
                     DividerLine()
                     Row(
                         modifier = Modifier
@@ -601,6 +621,7 @@ private fun ProfileField(
     required: Boolean = false,
     validationType: InputValidationType = InputValidationType.NONE,
     onValueChange: (String) -> Unit,
+    onFocusLost: (() -> Unit)? = null,
 ) {
     var hasLostFocusOnce by rememberSaveable { mutableStateOf(false) }
     var isFocused by remember { mutableStateOf(false) }
@@ -644,6 +665,7 @@ private fun ProfileField(
                 .onFocusChanged { state ->
                     if (isFocused && !state.isFocused) {
                         hasLostFocusOnce = true
+                        onFocusLost?.invoke()
                     }
                     isFocused = state.isFocused
                 },

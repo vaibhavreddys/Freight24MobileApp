@@ -18,6 +18,7 @@ import com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateId
 import com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateIdentityDocumentUseCase
 import com.freight24.connect.feature.truckowners.profile.domain.usecase.UploadIdentityDocumentParams
 import com.freight24.connect.feature.truckowners.profile.domain.usecase.UploadIdentityDocumentUseCase
+import com.freight24.rest.api.ClientApi
 import com.freight24.rest.request.ClientBranchUpdateRequest
 import com.freight24.rest.request.FinalSaveFileRequest
 import com.freight24.rest.request.FinalSaveRequest
@@ -55,6 +56,7 @@ class ClientProfileViewModel
         private val updateIdentityDocumentUseCase: UpdateIdentityDocumentUseCase,
         private val finalizeIdentityDocumentsUseCase: FinalizeIdentityDocumentsUseCase,
         private val getProfileSignedUrlUseCase: GetProfileSignedUrlUseCase,
+        private val clientApi: ClientApi,
         @param:ApplicationContext private val context: Context,
     ) : ViewModel() {
 
@@ -89,6 +91,12 @@ class ClientProfileViewModel
         val saveEvent: SharedFlow<String> = _saveEvent.asSharedFlow()
 
         private var originalClient: ClientProfileDto? = null
+
+        private val _panDuplicateError = MutableStateFlow<String?>(null)
+        val panDuplicateError: StateFlow<String?> = _panDuplicateError.asStateFlow()
+
+        private val _gstDuplicateError = MutableStateFlow<String?>(null)
+        val gstDuplicateError: StateFlow<String?> = _gstDuplicateError.asStateFlow()
 
         val editableFullName = MutableStateFlow("")
         val editableEmail = MutableStateFlow("")
@@ -180,7 +188,43 @@ class ClientProfileViewModel
             recomputeHasChanges()
         }
 
+        fun onPanFocusLost() {
+            val pan = editablePanCard.value.trim().uppercase()
+            if (pan.length != 10) return
+            val original = originalClient
+            if (original != null && pan == original.pan_card.orEmpty().trim().uppercase()) return
+            viewModelScope.launch(Dispatchers.IO) {
+                val response = clientApi.checkClientField("pan_card", pan, excludeId = userId)
+                if (response.isSuccessful && response.body()?.exists == true) {
+                    _panDuplicateError.value = "PAN already registered with another client"
+                } else if (response.isSuccessful) {
+                    _panDuplicateError.value = null
+                }
+            }
+        }
+
+        fun onGstFocusLost() {
+            val gst = editableGstNumber.value.trim().uppercase()
+            if (gst.length != 15) return
+            val original = originalClient
+            if (original != null && gst == original.gst_number.orEmpty().trim().uppercase()) return
+            viewModelScope.launch(Dispatchers.IO) {
+                val response = clientApi.checkClientField("gst_number", gst, excludeId = userId)
+                if (response.isSuccessful && response.body()?.exists == true) {
+                    _gstDuplicateError.value = "GST already registered with another client"
+                } else if (response.isSuccessful) {
+                    _gstDuplicateError.value = null
+                }
+            }
+        }
+
+        fun clearFocusErrors() {
+            _panDuplicateError.value = null
+            _gstDuplicateError.value = null
+        }
+
         fun cancelEdit() {
+            clearFocusErrors()
             _isEditing.value = false
             originalClient?.let {
                 populateEditableFields(it)

@@ -10,6 +10,7 @@ import com.freight24.connect.feature.truckowners.profile.domain.PreferredRoute
 import com.freight24.connect.feature.truckowners.profile.util.ProfileFieldValidators
 import com.freight24.connect.feature.truckowners.profile.util.ValidationResult
 import com.freight24.connect.repository.LocationRepository
+import com.freight24.rest.api.TruckOwnerApi
 import com.freight24.rest.response.CityResult
 import com.freight24.rest.response.TruckOwnerDto
 import com.freight24.rest.request.PreferredRouteEntry
@@ -57,6 +58,7 @@ class OnboardTruckOwnerViewModel @Inject constructor(
     private val createTruckOwnerUseCase: CreateTruckOwnerUseCase,
     private val getTruckOwnersUseCase: GetTruckOwnersUseCase,
     private val locationRepository: LocationRepository,
+    private val truckOwnerApi: TruckOwnerApi,
 ) : ViewModel() {
     private companion object {
         const val TAG = "OnboardTruckOwnerVM"
@@ -156,6 +158,15 @@ class OnboardTruckOwnerViewModel @Inject constructor(
     private val _createdTruckOwner = MutableStateFlow<CreatedTruckOwnerState?>(null)
     val createdTruckOwner: StateFlow<CreatedTruckOwnerState?> = _createdTruckOwner.asStateFlow()
 
+    private val _panDuplicateError = MutableStateFlow<String?>(null)
+    val panDuplicateError: StateFlow<String?> = _panDuplicateError.asStateFlow()
+
+    private val _gstDuplicateError = MutableStateFlow<String?>(null)
+    val gstDuplicateError: StateFlow<String?> = _gstDuplicateError.asStateFlow()
+
+    private val _saveAttempted = MutableStateFlow(false)
+    val saveAttempted: StateFlow<Boolean> = _saveAttempted.asStateFlow()
+
     fun onFullNameChanged(input: String) {
         val filtered = input.filter { it.isLetter() || it == ' ' || it == '.' }
             .replace(Regex("\\s+"), " ")
@@ -192,6 +203,18 @@ class OnboardTruckOwnerViewModel @Inject constructor(
         if (isPanPrefix(candidate)) {
             panCard.value = candidate
         }
+        _panDuplicateError.value = null
+    }
+
+    fun onPanFocusLost() {
+        val pan = panCard.value.trim().uppercase()
+        if (pan.length != 10) return
+        viewModelScope.launch(Dispatchers.IO) {
+            val response = truckOwnerApi.checkTruckOwnerField("pan_card", pan)
+            if (response.isSuccessful && response.body()?.exists == true) {
+                _panDuplicateError.value = "PAN already registered with another truck owner"
+            }
+        }
     }
 
     fun onBusinessNameChanged(input: String) {
@@ -206,6 +229,18 @@ class OnboardTruckOwnerViewModel @Inject constructor(
         val candidate = input.uppercase().filter { it.isLetterOrDigit() }.take(15)
         if (isGstPrefix(candidate)) {
             gstNumber.value = candidate
+        }
+        _gstDuplicateError.value = null
+    }
+
+    fun onGstFocusLost() {
+        val gst = gstNumber.value.trim().uppercase()
+        if (gst.length != 15) return
+        viewModelScope.launch(Dispatchers.IO) {
+            val response = truckOwnerApi.checkTruckOwnerField("gst_number", gst)
+            if (response.isSuccessful && response.body()?.exists == true) {
+                _gstDuplicateError.value = "GST already registered with another truck owner"
+            }
         }
     }
 
@@ -468,6 +503,7 @@ class OnboardTruckOwnerViewModel @Inject constructor(
 
     fun submit() {
         if (_isSaving.value) return
+        _saveAttempted.value = true
 
         val error = mandatoryValidationError()
         if (error != null) {
@@ -553,18 +589,12 @@ class OnboardTruckOwnerViewModel @Inject constructor(
             }
         }
 
-        if (accountNumber.value.isNotBlank()) {
-            when (val result = ProfileFieldValidators.validateAccountNumber(accountNumber.value.trim())) {
-                is ValidationResult.Error -> return result.message
-                ValidationResult.Success -> Unit
-            }
+        if (panCard.value.trim().length == 10 && _panDuplicateError.value != null) {
+            return "PAN already registered with another truck owner"
         }
 
-        if (ifscCode.value.isNotBlank()) {
-            when (val result = ProfileFieldValidators.validateIfsc(ifscCode.value.trim())) {
-                is ValidationResult.Error -> return result.message
-                ValidationResult.Success -> Unit
-            }
+        if (gstNumber.value.trim().length == 15 && _gstDuplicateError.value != null) {
+            return "GST already registered with another truck owner"
         }
 
         return null

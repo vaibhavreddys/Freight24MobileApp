@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.freight24.common.util.FileUtils
+import com.freight24.rest.api.TruckOwnerApi
 import com.freight24.rest.repository.LocationRepository
 import com.freight24.rest.response.CityResult
 import com.freight24.rest.request.PreferredRouteEntry
@@ -98,6 +99,7 @@ internal class ProfileViewModel
         private val profileRepository: ProfileRepository,
         private val locationRepository: LocationRepository,
         private val sessionManager: com.freight24.auth.SessionManager,
+        private val truckOwnerApi: TruckOwnerApi,
         @param:ApplicationContext private val context: Context,
     ) : ViewModel() {
         val sessionId: String = UUID.randomUUID().toString()
@@ -207,6 +209,12 @@ internal class ProfileViewModel
 
         private val _errorEvent = MutableSharedFlow<String>()
         val errorEvent = _errorEvent.asSharedFlow()
+
+        private val _panDuplicateError = MutableStateFlow<String?>(null)
+        val panDuplicateError: StateFlow<String?> = _panDuplicateError.asStateFlow()
+
+        private val _gstDuplicateError = MutableStateFlow<String?>(null)
+        val gstDuplicateError: StateFlow<String?> = _gstDuplicateError.asStateFlow()
 
         private val _uploadEvent = MutableSharedFlow<Result<Unit>>()
         val uploadEvent = _uploadEvent.asSharedFlow()
@@ -493,7 +501,45 @@ internal class ProfileViewModel
             recomputeHasChanges()
         }
 
+        fun onPanFocusLost() {
+            val pan = editablePanNumber.value.trim().uppercase()
+            if (pan.length != 10) return
+            val original = originalProfile
+            if (original != null && pan == original.panNumber.orEmpty().trim().uppercase()) return
+            val excludeId = original?.userId ?: return
+            viewModelScope.launch(Dispatchers.IO) {
+                val response = truckOwnerApi.checkTruckOwnerField("pan_card", pan, excludeId = excludeId)
+                if (response.isSuccessful && response.body()?.exists == true) {
+                    _panDuplicateError.value = "PAN already registered with another truck owner"
+                } else if (response.isSuccessful) {
+                    _panDuplicateError.value = null
+                }
+            }
+        }
+
+        fun onGstFocusLost() {
+            val gst = editableGstNumber.value.trim().uppercase()
+            if (gst.length != 15) return
+            val original = originalProfile
+            if (original != null && gst == original.gstNumber.orEmpty().trim().uppercase()) return
+            val excludeId = original?.userId ?: return
+            viewModelScope.launch(Dispatchers.IO) {
+                val response = truckOwnerApi.checkTruckOwnerField("gst_number", gst, excludeId = excludeId)
+                if (response.isSuccessful && response.body()?.exists == true) {
+                    _gstDuplicateError.value = "GST already registered with another truck owner"
+                } else if (response.isSuccessful) {
+                    _gstDuplicateError.value = null
+                }
+            }
+        }
+
+        fun clearFocusErrors() {
+            _panDuplicateError.value = null
+            _gstDuplicateError.value = null
+        }
+
         fun cancelEdit() {
+            clearFocusErrors()
             _isEditing.value = false
             originalProfile?.let {
                 populateEditableFields(it)

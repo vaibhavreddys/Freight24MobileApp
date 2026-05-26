@@ -86,6 +86,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -176,6 +177,8 @@ fun OnboardClientScreen(
     val branches by viewModel.branches.collectAsState()
     val isSaving by viewModel.isSaving.collectAsState()
     val createdClient by viewModel.createdClient.collectAsState()
+    val panDuplicateError by viewModel.panDuplicateError.collectAsState()
+    val gstDuplicateError by viewModel.gstDuplicateError.collectAsState()
 
     val aadhaarFile by viewModel.aadhaarFile.collectAsState()
     val panFile by viewModel.panFile.collectAsState()
@@ -390,8 +393,9 @@ fun OnboardClientScreen(
                                 icon = Icons.Default.Badge,
                                 required = true,
                                 fieldType = ClientFieldType.PAN,
-                                errorMessage = if (saveAttempted && panNumber.isBlank()) "PAN Number is required" else null,
+                                errorMessage = if (saveAttempted && panNumber.isBlank()) "PAN Number is required" else panDuplicateError,
                                 onValueChange = viewModel::onPanNumberChanged,
+                                onFocusLost = viewModel::onPanFocusLost,
                             )
                             InternalDivider()
                             FormField(
@@ -416,8 +420,9 @@ fun OnboardClientScreen(
                                 icon = Icons.Default.Badge,
                                 required = true,
                                 fieldType = ClientFieldType.GST,
-                                errorMessage = if (saveAttempted && gstNumber.isBlank()) "GST Number is required" else null,
+                                errorMessage = if (saveAttempted && gstNumber.isBlank()) "GST Number is required" else gstDuplicateError,
                                 onValueChange = viewModel::onGstNumberChanged,
+                                onFocusLost = viewModel::onGstFocusLost,
                             )
                         }
                     }
@@ -864,6 +869,7 @@ private fun FormField(
     fieldType: ClientFieldType,
     errorMessage: String? = null,
     onValueChange: (String) -> Unit,
+    onFocusLost: (() -> Unit)? = null,
 ) {
     val successColor = FreightThemeTokens.colors.successColor
     val monospace = fieldType == ClientFieldType.GST || fieldType == ClientFieldType.PAN
@@ -871,13 +877,20 @@ private fun FormField(
 
     Column(modifier = Modifier.fillMaxWidth()) {
         TextLabelRow(label = label, icon = icon, required = required)
+        var isFocused by remember { mutableStateOf(false) }
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = if (errorMessage != null) 0.dp else 13.dp)
-                .then(if (isMultiline) Modifier.heightIn(min = 80.dp) else Modifier),
+                .then(if (isMultiline) Modifier.heightIn(min = 80.dp) else Modifier)
+                .onFocusChanged { state ->
+                    if (isFocused && !state.isFocused) {
+                        onFocusLost?.invoke()
+                    }
+                    isFocused = state.isFocused
+                },
             singleLine = !isMultiline,
             minLines = if (isMultiline) 3 else 1,
             maxLines = if (isMultiline) Int.MAX_VALUE else 1,

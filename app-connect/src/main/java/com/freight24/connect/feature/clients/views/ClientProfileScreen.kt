@@ -47,6 +47,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
@@ -85,6 +86,8 @@ fun ClientProfileScreen(
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val isEditing by viewModel.isEditing.collectAsState()
     val hasChanges by viewModel.hasChanges.collectAsState()
+    val panDuplicateError by viewModel.panDuplicateError.collectAsState()
+    val gstDuplicateError by viewModel.gstDuplicateError.collectAsState()
     val hasPendingTemporaryUploads by viewModel.hasPendingTemporaryUploads.collectAsState()
     val isSaving by viewModel.isSaving.collectAsState()
     var showCancelConfirmDialog by rememberSaveable { mutableStateOf(false) }
@@ -202,6 +205,8 @@ fun ClientProfileScreen(
                             client = state.data,
                             isEditing = isEditing,
                             viewModel = viewModel,
+                            panDuplicateError = panDuplicateError,
+                            gstDuplicateError = gstDuplicateError,
                         )
 
                         if (isSaving) {
@@ -241,6 +246,8 @@ private fun ClientProfileContent(
     client: ClientProfileDto,
     isEditing: Boolean,
     viewModel: ClientProfileViewModel,
+    panDuplicateError: String?,
+    gstDuplicateError: String?,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -413,6 +420,8 @@ private fun ClientProfileContent(
                     viewModel.editablePanCard.value = it.uppercase()
                     viewModel.onFieldChanged()
                 },
+                onFocusLost = viewModel::onPanFocusLost,
+                duplicateError = panDuplicateError,
             )
             DividerLine()
             ProfileField(
@@ -458,6 +467,8 @@ private fun ClientProfileContent(
                     viewModel.editableGstNumber.value = it.uppercase()
                     viewModel.onFieldChanged()
                 },
+                onFocusLost = viewModel::onGstFocusLost,
+                duplicateError = gstDuplicateError,
             )
         }
 
@@ -1089,6 +1100,8 @@ private fun ProfileField(
     capitalization: KeyboardCapitalization = KeyboardCapitalization.Words,
     placeholder: String = "Not added",
     isPhoneNumber: Boolean = false,
+    onFocusLost: (() -> Unit)? = null,
+    duplicateError: String? = null,
 ) {
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
@@ -1125,10 +1138,18 @@ private fun ProfileField(
         }
         Spacer(modifier = Modifier.height(6.dp))
         if (isEditing && isEditable) {
+            var isFocused by remember { mutableStateOf(false) }
             OutlinedTextField(
                 value = value,
                 onValueChange = onValueChange,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged { state ->
+                        if (isFocused && !state.isFocused) {
+                            onFocusLost?.invoke()
+                        }
+                        isFocused = state.isFocused
+                    },
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
@@ -1138,6 +1159,15 @@ private fun ProfileField(
                     keyboardType = keyboardType,
                     capitalization = capitalization,
                 ),
+                supportingText = if (duplicateError != null) {
+                    {
+                        Text(
+                            text = duplicateError,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                } else null,
             )
         } else {
             val displayValue = value.ifBlank { placeholder }

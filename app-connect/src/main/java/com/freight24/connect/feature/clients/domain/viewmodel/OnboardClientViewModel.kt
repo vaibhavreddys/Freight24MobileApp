@@ -9,6 +9,7 @@ import com.freight24.connect.feature.truckowners.profile.domain.usecase.UploadId
 import com.freight24.connect.feature.truckowners.profile.domain.usecase.UploadIdentityDocumentUseCase
 import com.freight24.connect.feature.truckowners.profile.util.ProfileFieldValidators
 import com.freight24.connect.feature.truckowners.profile.util.ValidationResult
+import com.freight24.rest.api.ClientApi
 import com.freight24.rest.request.ClientBranchRequest
 import com.freight24.rest.request.UpdateClientRequest
 import com.freight24.rest.response.ClientDto
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -36,6 +38,7 @@ class OnboardClientViewModel @Inject constructor(
     private val createClientUseCase: CreateClientUseCase,
     private val getClientsUseCase: GetClientsUseCase,
     private val uploadIdentityDocumentUseCase: UploadIdentityDocumentUseCase,
+    private val clientApi: ClientApi,
 ) : ViewModel() {
 
     val fullName = MutableStateFlow("")
@@ -61,6 +64,15 @@ class OnboardClientViewModel @Inject constructor(
     private val _createdClient = MutableStateFlow<CreatedClientState?>(null)
     val createdClient: StateFlow<CreatedClientState?> = _createdClient.asStateFlow()
 
+    private val _panDuplicateError = MutableStateFlow<String?>(null)
+    val panDuplicateError: StateFlow<String?> = _panDuplicateError.asStateFlow()
+
+    private val _gstDuplicateError = MutableStateFlow<String?>(null)
+    val gstDuplicateError: StateFlow<String?> = _gstDuplicateError.asStateFlow()
+
+    private val _saveAttempted = MutableStateFlow(false)
+    val saveAttempted: StateFlow<Boolean> = _saveAttempted.asStateFlow()
+
     fun onFullNameChanged(input: String) {
         fullName.value = sanitizePersonName(input)
     }
@@ -72,6 +84,18 @@ class OnboardClientViewModel @Inject constructor(
     fun onPanNumberChanged(input: String) {
         val candidate = input.uppercase().filter(Char::isLetterOrDigit).take(10)
         if (isPanPrefix(candidate)) panNumber.value = candidate
+        _panDuplicateError.value = null
+    }
+
+    fun onPanFocusLost() {
+        val pan = panNumber.value.trim().uppercase()
+        if (pan.length != 10) return
+        viewModelScope.launch(Dispatchers.IO) {
+            val response = clientApi.checkClientField("pan_card", pan)
+            if (response.isSuccessful && response.body()?.exists == true) {
+                _panDuplicateError.value = "PAN already registered with another client"
+            }
+        }
     }
 
     fun onEmailChanged(input: String) {
@@ -88,6 +112,18 @@ class OnboardClientViewModel @Inject constructor(
     fun onGstNumberChanged(input: String) {
         val candidate = input.uppercase().filter(Char::isLetterOrDigit).take(15)
         if (isGstPrefix(candidate)) gstNumber.value = candidate
+        _gstDuplicateError.value = null
+    }
+
+    fun onGstFocusLost() {
+        val gst = gstNumber.value.trim().uppercase()
+        if (gst.length != 15) return
+        viewModelScope.launch(Dispatchers.IO) {
+            val response = clientApi.checkClientField("gst_number", gst)
+            if (response.isSuccessful && response.body()?.exists == true) {
+                _gstDuplicateError.value = "GST already registered with another client"
+            }
+        }
     }
 
     fun addBranch() {
@@ -211,6 +247,11 @@ class OnboardClientViewModel @Inject constructor(
 
     fun submitBlockReason(): String? = requiredValidationMessage()
 
+    fun clearDuplicateErrors() {
+        _panDuplicateError.value = null
+        _gstDuplicateError.value = null
+    }
+
     fun validationMessage(): String? {
         requiredValidationMessage()?.let { return it }
 
@@ -237,6 +278,7 @@ class OnboardClientViewModel @Inject constructor(
 
     fun submit() {
         if (_isSaving.value) return
+        _saveAttempted.value = true
         val blockReason = validationMessage()
         if (blockReason != null) {
             viewModelScope.launch { _messageEvent.emit(blockReason) }
@@ -362,6 +404,14 @@ class OnboardClientViewModel @Inject constructor(
         }
 
         if (branches.value.isEmpty()) return "At least one branch is required"
+
+        if (panNumber.value.trim().length == 10 && _panDuplicateError.value != null) {
+            return "PAN already registered with another client"
+        }
+
+        if (gstNumber.value.trim().length == 15 && _gstDuplicateError.value != null) {
+            return "GST already registered with another client"
+        }
 
         branches.value.forEachIndexed { index, branch ->
             if (branch.branchName.trim().isBlank()) return "Branch ${index + 1}: Branch Name is required"

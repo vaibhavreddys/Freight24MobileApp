@@ -1,5 +1,6 @@
 package com.freight24.rest.api
 
+import com.freight24.rest.response.CheckFieldResponse
 import com.freight24.rest.response.TruckOwnerResponse
 import com.freight24.rest.response.ProfileResponse
 import com.freight24.rest.response.BaseResponse
@@ -38,4 +39,11 @@ interface TruckOwnerApi {
         @Path("userId") userId: String,
         @Body request: UpdateTruckOwnerStatusRequest
     ): Response<BaseResponse>
+
+    @GET("truck-owners/check-field")
+    suspend fun checkTruckOwnerField(
+        @Query("field") field: String,
+        @Query("value") value: String,
+        @Query("exclude_id") excludeId: String? = null,
+    ): Response<CheckFieldResponse>
 }

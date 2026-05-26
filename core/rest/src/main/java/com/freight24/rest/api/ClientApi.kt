@@ -2,6 +2,7 @@ package com.freight24.rest.api
 
 import com.freight24.rest.request.UpdateClientRequest
 import com.freight24.rest.response.BaseResponse
+import com.freight24.rest.response.CheckFieldResponse
 import com.freight24.rest.response.ClientListResponse
 import com.freight24.rest.response.ClientProfileResponse
 import com.freight24.rest.response.ClientResponse
@@ -37,4 +38,11 @@ interface ClientApi {
         @Path("userId") userId: String,
         @Body request: UpdateClientRequest,
     ): Response<ClientProfileResponse>
+
+    @GET("client/check-field")
+    suspend fun checkClientField(
+        @Query("field") field: String,
+        @Query("value") value: String,
+        @Query("exclude_id") excludeId: String? = null,
+    ): Response<CheckFieldResponse>
 }

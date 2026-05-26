@@ -9,6 +9,7 @@ import com.freight24.rest.api.IndentsApi
 import com.freight24.rest.api.ProfileApi
 import com.freight24.rest.api.TripApi
 import com.freight24.rest.api.TruckApi
+import com.freight24.rest.api.TruckOwnerApi
 import com.freight24.rest.api.TruckerLoginApi
 import com.freight24.trucker.BuildConfig
 import dagger.Module
@@ -89,5 +90,14 @@ object ApiModule {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "TruckerDocumentService")
             .create(com.freight24.rest.api.DocumentApi::class.java)
+    }
+
+    @Provides
+    fun providesTruckOwnerApi(
+        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
+    ): TruckOwnerApi {
+        return retrofitFactory
+            .create(BuildConfig.BASE_URL, "TruckOwnerApi")
+            .create(TruckOwnerApi::class.java)
     }
 }

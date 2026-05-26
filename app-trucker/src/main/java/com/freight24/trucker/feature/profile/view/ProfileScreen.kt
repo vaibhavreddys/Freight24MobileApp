@@ -103,6 +103,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -167,6 +168,8 @@ internal fun ProfileScreen(
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val isEditing by viewModel.isEditing.collectAsState()
     val hasChanges by viewModel.hasChanges.collectAsState()
+    val panDuplicateError by viewModel.panDuplicateError.collectAsState()
+    val gstDuplicateError by viewModel.gstDuplicateError.collectAsState()
     val showAddRouteSheet by viewModel.showAddRouteSheet.collectAsState()
     val fromQuery by viewModel.fromCityQuery.collectAsState()
     val toQuery by viewModel.toCityQuery.collectAsState()
@@ -230,6 +233,8 @@ internal fun ProfileScreen(
                             profile = state.data,
                             viewModel = viewModel,
                             isEditing = isEditing,
+                            panDuplicateError = panDuplicateError,
+                            gstDuplicateError = gstDuplicateError,
                             hasChanges = hasChanges,
                             snackbarHostState = snackbarHostState,
                         )
@@ -268,8 +273,10 @@ internal fun ProfileScreen(
 @Composable
 private fun ProfileMainContent(
     profile: Profile,
-    viewModel: ProfileViewModel,
     isEditing: Boolean,
+    viewModel: ProfileViewModel,
+    panDuplicateError: String?,
+    gstDuplicateError: String?,
     hasChanges: Boolean,
     snackbarHostState: SnackbarHostState,
 ) {
@@ -515,6 +522,8 @@ private fun ProfileMainContent(
                         viewModel.editablePanNumber.value = it.uppercase()
                         viewModel.onFieldChanged()
                     },
+                    onFocusLost = viewModel::onPanFocusLost,
+                    duplicateError = panDuplicateError,
                 )
             }
 
@@ -549,6 +558,8 @@ private fun ProfileMainContent(
                         viewModel.editableGstNumber.value = it
                         viewModel.onFieldChanged()
                     },
+                    onFocusLost = viewModel::onGstFocusLost,
+                    duplicateError = gstDuplicateError,
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
                 Column(
@@ -1071,6 +1082,8 @@ private fun ProfileField(
     isSensitive: Boolean = false,
     validationType: ValidationType = ValidationType.NONE,
     showAsLabelOnly: Boolean = false,
+    onFocusLost: (() -> Unit)? = null,
+    duplicateError: String? = null,
 ) {
     // State for validation error
     var validationError by rememberSaveable { mutableStateOf<String?>(null) }
@@ -1179,6 +1192,8 @@ private fun ProfileField(
                     imeAction = ImeAction.Next
                 )
 
+                var isFocused by remember { mutableStateOf(false) }
+
                 val visualTransformation = when (validationType) {
                     ValidationType.AADHAAR -> VisualTransformation { text ->
                         val transformed = ProfileFieldValidators.formatAadhaar(text.text)
@@ -1220,22 +1235,30 @@ private fun ProfileField(
                 OutlinedTextField(
                     value = value,
                     onValueChange = handleValueChange,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .onFocusChanged { state ->
+                            if (isFocused && !state.isFocused) {
+                                onFocusLost?.invoke()
+                            }
+                            isFocused = state.isFocused
+                        },
                     textStyle = MaterialTheme.typography.bodyLarge,
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
                     isError = validationError != null,
                     keyboardOptions = keyboardOptions,
                     visualTransformation = visualTransformation,
-                    supportingText = if (validationError != null) {
-                        {
+                    supportingText = {
+                        val errorText = validationError ?: duplicateError
+                        if (errorText != null) {
                             Text(
-                                text = validationError!!,
+                                text = errorText,
                                 color = MaterialTheme.colorScheme.error,
                                 style = MaterialTheme.typography.bodySmall
                             )
                         }
-                    } else null,
+                    },
                     placeholder = when (validationType) {
                         ValidationType.AADHAAR -> { { Text("1234 5678 9012") } }
                         ValidationType.PAN -> { { Text("ABCDE1234F") } }
