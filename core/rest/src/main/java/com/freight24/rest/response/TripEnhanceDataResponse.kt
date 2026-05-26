@@ -157,10 +157,16 @@ data class TripDataResponse(
     )
 
     @Serializable
+    data class UserRef(
+        val id: String? = null,
+        val name: String? = null,
+    )
+
+    @Serializable
     data class Timeline(
         val isCurrent: Boolean,
         val updatedAt: String? = null,
-        val updatedBy: String? = null,
+        val updatedBy: UserRef? = null,
         val statusType: String,
         val isCompleted: Boolean,
     )
