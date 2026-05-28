@@ -150,7 +150,7 @@ fun IndentDetailsScreen(
             ModalBottomSheet(
                 onDismissRequest = { viewModel.onEvent(IndentDetailsEvent.HideTruckerSheet) },
                 sheetState = sheetState,
-            containerColor = colorScheme.surface,
+                containerColor = colorScheme.surface,
                 dragHandle = { BottomSheetDefaults.DragHandle() }
             ) {
             Column(

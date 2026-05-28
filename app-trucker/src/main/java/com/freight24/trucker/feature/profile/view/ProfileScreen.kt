@@ -107,6 +107,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -120,6 +121,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.freight24.trucker.R
 import com.freight24.trucker.feature.profile.domain.DocumentStatus
 import com.freight24.trucker.feature.profile.domain.DocumentType
 import com.freight24.trucker.feature.profile.domain.Profile
@@ -294,8 +296,7 @@ private fun ProfileMainContent(
 
     val isVerified = profile.profileVerificationStatus?.lowercase() == "verified"
     val profileStatus = profile.profileVerificationStatus?.lowercase() ?: "incomplete"
-    val supportPhone = "+919620111667"
-    val makeCall = rememberCallAction(supportPhone)
+    val makeCall = rememberCallAction(stringResource(R.string.supportPhoneNumber))
 
     var pickingDocumentType by rememberSaveable { mutableStateOf<DocumentType?>(null) }
     var showSourcePicker by rememberSaveable { mutableStateOf(false) }

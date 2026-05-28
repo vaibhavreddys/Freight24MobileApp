@@ -655,6 +655,6 @@ fun CostColumn(
 }
 
 fun formatCurrency(amount: Double?): String {
-    if (amount == null) return "₹0"
-    return "₹${"%,.0f".format(amount)}"
+    if (amount == null) return "₹ 0"
+    return "₹ ${"%,.0f".format(amount)}"
 }

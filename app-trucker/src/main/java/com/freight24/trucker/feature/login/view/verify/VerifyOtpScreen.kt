@@ -1,8 +1,10 @@
 package com.freight24.trucker.feature.login.view.verify
 
 import OtpInputField
+import android.annotation.SuppressLint
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -12,42 +14,35 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.freight24.ui.UiState
+import com.freight24.trucker.R
 import com.freight24.ui.theme.AppTypography
 import com.freight24.ui.theme.Freight24Theme
 
+@SuppressLint("DefaultLocale")
 @Composable
 internal fun VerifyOtpScreen(
     navController: NavController,
@@ -60,8 +55,11 @@ internal fun VerifyOtpScreen(
     val isVerifyEnabled by viewModel.isVerifyEnabled.collectAsState()
     val otp by viewModel.otp.collectAsState()
     val shake by viewModel.shake.collectAsState()
-    val uiState by viewModel.uiState.collectAsState()
+    val buttonState by viewModel.buttonState.collectAsState()
+    val errorMessage by viewModel.errorMessage.collectAsState()
+    val attemptsRemaining by viewModel.attemptsRemaining.collectAsState()
     val navigateToDashboard by viewModel.navigateToDashboard.collectAsState()
+    val isResending by viewModel.isResending.collectAsState()
 
     val keyboardController = LocalSoftwareKeyboardController.current
     val scrollState = rememberScrollState()
@@ -77,63 +75,90 @@ internal fun VerifyOtpScreen(
         }
     }
 
-    // Loading
-    if (uiState is UiState.Loading) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator()
-        }
-    }
-
-    // Error snackbar
-    val snackbarHostState = remember { SnackbarHostState() }
-    LaunchedEffect(uiState) {
-        if (uiState is UiState.Error) {
-            snackbarHostState.showSnackbar((uiState as UiState.Error).message)
-            viewModel.resetUiState()
-        }
-    }
-
     Freight24Theme {
         val colors = MaterialTheme.colorScheme
         Surface(modifier = Modifier.fillMaxSize(), color = colors.background) {
             Box(modifier = Modifier.fillMaxSize()) {
                 // Back button
-                IconButton(
-                    onClick = { navController.popBackStack() },
-                    modifier = Modifier.align(Alignment.TopStart).padding(16.dp),
-                ) {
-                    Text("←", fontSize = 32.sp, color = colors.surface)
-                }
+//                IconButton(
+//                    onClick = { navController.popBackStack() },
+//                    modifier = Modifier
+//                        .align(Alignment.TopStart)
+//                        .padding(16.dp),
+//                ) {
+//                    Icon(
+//                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+//                        contentDescription = "Back",
+//                        tint = colors.onSurface,
+//                    )
+//                }
 
                 // Main scrollable content with windowInsets padding
                 Column(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .verticalScroll(scrollState)
-                            .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.systemBars))
-                            .padding(horizontal = 32.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(scrollState)
+                        .windowInsetsPadding(WindowInsets.ime.union(WindowInsets.systemBars))
+                        .padding(horizontal = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center, // Perfect centering
                 ) {
+                    Spacer(Modifier.height(60.dp))
+
+                    // App name header
+//                    Text(
+//                        text = "FREIGHT 24",
+//                        style = AppTypography.titleLarge,
+//                        fontWeight = FontWeight.Bold,
+//                        color = colors.primary,
+//                        letterSpacing = 2.sp,
+//                    )
+
+//                    Spacer(Modifier.height(16.dp))
+
+                    // Verification title
                     Text(
-                        "Verify your number",
-                        style = AppTypography.headlineLarge,
+                        text = "Verifying your number",
+                        style = AppTypography.displaySmall,
                         fontWeight = FontWeight.Bold,
                         color = colors.onBackground,
                     )
 
-                    Spacer(Modifier.height(16.dp))
+                    Spacer(Modifier.height(12.dp))
 
+                    // Subtitle
                     Text(
-                        "We sent a 6-digit code to $phoneNumber",
+                        text = "Enter the 6-digit code sent to your phone",
                         style = AppTypography.bodyLarge,
                         color = colors.onSurfaceVariant,
                         textAlign = TextAlign.Center,
                     )
 
-                    Spacer(Modifier.height(48.dp))
+                    Spacer(Modifier.height(32.dp))
 
+                    // Truck illustration card
+                    val isDark = isSystemInDarkTheme()
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(260.dp),
+                        shape = RoundedCornerShape(24.dp),
+                        color = colors.surfaceContainerLow,
+                    ) {
+                        Image(
+                            painter = painterResource(
+                                id = if (isDark) R.drawable.otp_truck_dark else R.drawable.otp_truck_light
+                            ),
+                            contentDescription = "Truck illustration",
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(8.dp),
+                            contentScale = ContentScale.Fit,
+                        )
+                    }
+
+                    Spacer(Modifier.height(40.dp))
+
+                    // OTP Input Field
                     OtpInputField(
                         otp = otp,
                         otpLength = 6,
@@ -141,75 +166,78 @@ internal fun VerifyOtpScreen(
                         onOtpChange = viewModel::onOtpChange,
                     )
 
-                    Spacer(Modifier.height(40.dp))
-
-                    Text(
-                        text =
-                            if (isResendEnabled) {
-                                "Resend code"
-                            } else {
-                                "Resend code in ${String.format(
-                                    "%02d:%02d",
-                                    remainingSeconds / 60,
-                                    remainingSeconds % 60,
-                                )}"
-                            },
-                        color = colors.onSurfaceVariant,
-                        style = AppTypography.bodyMedium,
-                        modifier =
-                            Modifier.clickable(enabled = isResendEnabled) {
-                                viewModel.onResendClick()
-                            },
-                    )
-
-                    Spacer(Modifier.height(80.dp)) // Push button down naturally
-
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            "I didn't receive a code",
-                            color = colors.onSurfaceVariant,
-                            style = AppTypography.bodyMedium,
-                            textDecoration = TextDecoration.Underline,
-                            modifier =
-                                Modifier
-                                    .padding(bottom = 16.dp)
-                                    .clickable { /* TODO */ },
-                        )
-
-                        Button(
-                            onClick = { viewModel.onVerifyClick(phoneNumber) },
-                            enabled = isVerifyEnabled,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .height(56.dp),
-                            colors =
-                                ButtonDefaults.buttonColors(
-                                    containerColor = colors.primary,
-                                    contentColor = colors.onPrimary,
-                                    disabledContainerColor = colors.surfaceDim,
-                                    disabledContentColor = colors.onSurfaceVariant,
-                                ),
-                            shape = RoundedCornerShape(28.dp),
+                    // Persistent error display
+                    errorMessage?.let { message ->
+                        Spacer(Modifier.height(16.dp))
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            color = colors.errorContainer,
+                            tonalElevation = 0.dp,
                         ) {
-                            Text("Verify", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                            Column(
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                Text(
+                                    text = message,
+                                    color = colors.onErrorContainer,
+                                    style = AppTypography.titleSmall,
+                                    fontWeight = FontWeight.SemiBold,
+                                    textAlign = TextAlign.Center,
+                                )
+                                attemptsRemaining?.let { attempts ->
+                                    Spacer(Modifier.height(4.dp))
+                                    Text(
+                                        text = "$attempts attempt${if (attempts != 1) "s" else ""} remaining",
+                                        color = colors.onErrorContainer.copy(alpha = 0.7f),
+                                        style = AppTypography.bodySmall,
+                                        textAlign = TextAlign.Center,
+                                    )
+                                }
+                            }
                         }
+                        Spacer(Modifier.height(16.dp))
+                    } ?: Spacer(Modifier.height(40.dp))
 
-                        Spacer(Modifier.height(40.dp))
-                    }
-                }
-
-                // Snackbar
-                SnackbarHost(
-                    hostState = snackbarHostState,
-                    modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp),
-                ) { data ->
-                    Snackbar(
-                        snackbarData = data,
-                        containerColor = Color.Black,
-                        contentColor = Color.White,
-                        shape = RoundedCornerShape(12.dp),
+                    // Verify button
+                    ExpressiveVerifyButton(
+                        state = buttonState,
+                        enabled = isVerifyEnabled,
+                        onClick = { viewModel.onVerifyClick(phoneNumber) },
                     )
+
+                    Spacer(Modifier.height(24.dp))
+
+                    // Didn't receive code text
+                    Text(
+                        text = "Didn't receive the code?",
+                        style = AppTypography.bodyMedium,
+                        color = colors.onSurfaceVariant,
+                    )
+
+                    Spacer(Modifier.height(8.dp))
+
+                    // Resend Code link
+                    Text(
+                        text = when {
+                            isResending -> "Resending..."
+                            isResendEnabled -> "Resend Code"
+                            else -> "Resend Code in ${String.format(
+                                "%02d:%02d",
+                                remainingSeconds / 60,
+                                remainingSeconds % 60,
+                            )}"
+                        },
+                        style = AppTypography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isResendEnabled) colors.primary else colors.onSurfaceVariant,
+                        modifier = Modifier.clickable(enabled = isResendEnabled && !isResending) {
+                            viewModel.onResendClick(phoneNumber)
+                        },
+                    )
+
+                    Spacer(Modifier.height(32.dp))
                 }
             }
         }

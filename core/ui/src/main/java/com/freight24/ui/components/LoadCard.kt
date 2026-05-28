@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.freight24.ui.theme.monoSpace
 
 @Composable
 fun LoadCard(
@@ -74,7 +75,7 @@ fun LoadCard(
                     )
                     Spacer(Modifier.height(16.dp))
                     Text(
-                        text = price,
+                        text = formatCurrency(price),
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold,
@@ -99,31 +100,31 @@ fun LoadCard(
                 Spacer(Modifier.width(8.dp))
                 Text(
                     text = truckInfo,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontFamily = monoSpace),
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
                     text = "|",
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodySmall.copy(fontFamily = monoSpace),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
                     text = loadWeight,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontFamily = monoSpace),
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
                     text = "|",
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodySmall.copy(fontFamily = monoSpace),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
                     text = commodity,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontFamily = monoSpace),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -181,3 +182,21 @@ fun LoadCard(
         }
     }
 }
+
+fun formatCurrency(amount: String?): String {
+    if (amount.isNullOrBlank() || amount == "null") return "₹ 0"
+
+    return try {
+        // Remove any existing currency symbols/spaces and parse
+        val numericValue = amount.replace("[₹,\\s]".toRegex(), "").toDoubleOrNull()
+
+        if (numericValue != null) {
+            "₹ ${"%,.0f".format(numericValue)}"
+        } else {
+            "₹ 0" // Fallback for invalid input
+        }
+    } catch (e: Exception) {
+        "₹ 0" // Fallback for any parsing errors
+    }
+}
+

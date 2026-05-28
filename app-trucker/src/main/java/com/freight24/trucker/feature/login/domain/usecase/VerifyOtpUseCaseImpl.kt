@@ -1,9 +1,14 @@
 package com.freight24.trucker.feature.login.domain.usecase
 
+import com.freight24.rest.response.LoginResponse
 import com.freight24.trucker.feature.login.data.models.VerifyOtpResult
 import com.freight24.trucker.feature.login.data.repository.LoginRepository
+import kotlinx.serialization.json.Json
+import retrofit2.HttpException
 import javax.inject.Inject
 import javax.inject.Singleton
+
+private val errorJson = Json { ignoreUnknownKeys = true }
 
 @Singleton
 internal class VerifyOtpUseCaseImpl
@@ -16,7 +21,14 @@ internal class VerifyOtpUseCaseImpl
                 val response = loginRepository.verifyOtp(params.phoneNumber, params.otp)
 
                 if (!response.success) {
-                    return@runCatching VerifyOtpResult.OtpExpired(response.message)
+                    val message = response.message
+                    return@runCatching when {
+                        message.contains("Invalid", ignoreCase = true) ->
+                            VerifyOtpResult.InvalidOtp(message)
+                        message.contains("expired", ignoreCase = true) ->
+                            VerifyOtpResult.OtpExpired(message)
+                        else -> VerifyOtpResult.Error(message)
+                    }
                 }
 
                 val authData =
@@ -31,6 +43,25 @@ internal class VerifyOtpUseCaseImpl
                 val userId = authData.user?.id.orEmpty()
                 VerifyOtpResult.Success(true, token)
             }.recover { e ->
+                if (e is HttpException) {
+                    val errorBody = e.response()?.errorBody()?.string()
+                    if (errorBody != null) {
+                        try {
+                            val errorResponse = errorJson
+                                .decodeFromString<LoginResponse>(errorBody)
+                            val message = errorResponse.message
+                            return@recover when {
+                                message.contains("Invalid", ignoreCase = true) ->
+                                    VerifyOtpResult.InvalidOtp(message)
+                                message.contains("expired", ignoreCase = true) ->
+                                    VerifyOtpResult.OtpExpired(message)
+                                else -> VerifyOtpResult.Error(message)
+                            }
+                        } catch (_: Exception) {
+                            // parsing failed - fall through
+                        }
+                    }
+                }
                 VerifyOtpResult.Error(e.message.orEmpty())
             }
     }
