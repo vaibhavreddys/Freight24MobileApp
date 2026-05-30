@@ -1,11 +1,15 @@
 package com.freight24.connect.feature.login_new.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.freight24.notifications.AppNotification
+import com.freight24.notifications.NotificationDispatcher
 import com.freight24.rest.api.LoginConnectApi
 import com.freight24.rest.request.OtpRequest
 import com.freight24.ui.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,6 +21,7 @@ internal class NewLoginViewModel
 @Inject
 constructor(
     private val loginConnectApi: LoginConnectApi,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
     companion object {
         private const val FULL_PHONE_PREFIX = "+91"
@@ -76,6 +81,13 @@ constructor(
 
                 _uiState.value =
                     if (response.success) {
+                        val otpCode = response.data?.otp_code
+                        if (!otpCode.isNullOrBlank()) {
+                            val fullPhone = "$FULL_PHONE_PREFIX${_phoneNumber.value}"
+                            NotificationDispatcher(context).show(
+                                AppNotification.Critical(message = "OTP for $fullPhone is $otpCode")
+                            )
+                        }
                         UiState.Success(_phoneNumber.value)
                     } else {
                         UiState.Error(response.message.ifBlank { "Failed to send OTP" })

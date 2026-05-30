@@ -1,15 +1,19 @@
 package com.freight24.connect.feature.login_new.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.freight24.auth.SessionManager
 import com.freight24.connect.navigation.ConnectDestination
+import com.freight24.notifications.AppNotification
+import com.freight24.notifications.NotificationDispatcher
 import com.freight24.rest.api.LoginConnectApi
 import com.freight24.rest.request.OtpRequest
 import com.freight24.rest.request.VerifyOtpRequest
 import com.freight24.ui.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +29,7 @@ import javax.inject.Inject
 internal class NewOtpViewModel @Inject constructor(
     private val loginConnectApi: LoginConnectApi,
     private val sessionManager: SessionManager,
+    @ApplicationContext private val context: Context,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
@@ -171,6 +176,13 @@ internal class NewOtpViewModel @Inject constructor(
                 )
 
                 if (response.success) {
+                    val otpCode = response.data?.otp_code
+                    if (!otpCode.isNullOrBlank()) {
+                        val fullPhone = "$FULL_PHONE_PREFIX$phoneNumber"
+                        NotificationDispatcher(context).show(
+                            AppNotification.Critical(message = "OTP for $fullPhone is $otpCode")
+                        )
+                    }
                     resetForNewOtp()
                 } else {
                     _uiState.value = UiState.Error(response.message.ifBlank { "Failed to resend OTP" })
