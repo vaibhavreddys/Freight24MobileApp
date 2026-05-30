@@ -4,6 +4,7 @@ import com.freight24.common.di.IoDispatcher
 import com.freight24.common.model.TripDetail
 import com.freight24.network.provider.SafeCallProvider
 import com.freight24.rest.api.TripApi
+import com.freight24.rest.request.UpdateTruckerStatus
 import com.freight24.rest.response.TripResponse
 import com.freight24.trucker.feature.trips.mapper.toDomain
 import kotlinx.coroutines.CoroutineDispatcher
@@ -40,7 +41,7 @@ internal class TripRepositoryImpl @Inject constructor(
         val updateResult = safeCallProvider.safeApiCall(ioDispatcher) {
             tripApi.updateTripStatus(
                 tripId,
-                com.freight24.rest.request.UpdateTripStatusRequest(status)
+                UpdateTruckerStatus(truckerStatus = status, remarks = null)
             )
         }
 

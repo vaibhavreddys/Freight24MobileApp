@@ -45,8 +45,8 @@ interface TripApi {
     @PATCH("trips/{tripId}/trucker-status")
     suspend fun updateTripStatus(
         @Path("tripId") tripId: String,
-        @Body request: com.freight24.rest.request.UpdateTripStatusRequest,
-    ): Response<TripDetailResponse>
+        @Body request: UpdateTruckerStatus,
+    ): Response<BaseResponse>
 
     @POST("trips")
     suspend fun createTrip(
@@ -78,12 +78,6 @@ interface TripApi {
         @Part file: MultipartBody.Part,
         @Part("notes") description: RequestBody? = null
     ): Response<UploadedDataResponse>
-
-    @PATCH("trips/{tripId}/trucker-status")
-    suspend fun updateTruckerStatus(
-        @Path("tripId") tripId: String,
-        @Body request: UpdateTruckerStatus
-    ): Response<TripDetailDataResponse>
 
     @GET("trips/{trip_id}/documents/{document_id}/signed-url")
     suspend fun getSignedDocument(

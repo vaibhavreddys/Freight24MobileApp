@@ -313,8 +313,9 @@ fun IndentDetailsScreen(
                     } else if (indent.status.equals("READY_FOR_ASSIGNMENT", true)) {
                         Button(
                             onClick = {
-                                val cost = indent.indentGroupDetails.clientTripCost
-                                if (cost == null || cost <= 0) {
+                                val clientMissing = indent.indentGroupDetails.clientTripCost?.let { it <= 0 } ?: true
+                                val negotiatedMissing = indent.negotiatedTripCost?.let { it <= 0 } ?: true
+                                if (clientMissing || negotiatedMissing) {
                                     costError = true
                                 } else {
                                     costError = false
@@ -377,6 +378,12 @@ fun IndentDetailsScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         if (costError) {
+                            val missingParts = buildList {
+                                val clientMissing = indent.indentGroupDetails.clientTripCost?.let { it <= 0 } ?: true
+                                val negotiatedMissing = indent.negotiatedTripCost?.let { it <= 0 } ?: true
+                                if (clientMissing) add("Client trip cost")
+                                if (negotiatedMissing) add("Negotiated trip cost")
+                            }
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = CardDefaults.cardColors(containerColor = colorScheme.errorContainer),
@@ -394,7 +401,7 @@ fun IndentDetailsScreen(
                                     )
                                     Spacer(Modifier.width(8.dp))
                                     Text(
-                                        "Client trip cost is required. Set it in Edit Indent.",
+                                        text = "${missingParts.joinToString(" and ")} is required. Set it in Edit Indent.",
                                         color = colorScheme.onErrorContainer,
                                         style = MaterialTheme.typography.bodySmall,
                                     )

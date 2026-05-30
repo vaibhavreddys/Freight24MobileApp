@@ -96,15 +96,15 @@ class TripRepositoryImpl @Inject constructor(
     ): Result<TripDataResponse> =
         withContext(ioDispatcher) {
             try {
-                val response = api.updateTruckerStatus(
+                val response = api.updateTripStatus(
                     tripId,
                     UpdateTruckerStatus(
                         truckerStatus = truckerStatus,
                         remarks = remarks
                     )
                 )
-                if (response.isSuccessful && response.body() != null) {
-                    Result.success(response.body()!!.data)
+                if (response.isSuccessful) {
+                    getTripDetails(tripId)
                 } else {
                     Result.failure(Exception(response.message()))
                 }
