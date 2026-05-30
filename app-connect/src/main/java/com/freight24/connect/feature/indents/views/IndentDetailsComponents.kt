@@ -54,6 +54,7 @@ fun IndentDetailSection(
     image: ImageVector? = null,
     title: String,
     onEditClick: (() -> Unit)? = null,
+    hasError: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val colorScheme = MaterialTheme.colorScheme
@@ -63,7 +64,10 @@ fun IndentDetailSection(
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainer),
-        border = BorderStroke(1.dp, colorScheme.outlineVariant),
+        border = BorderStroke(
+            1.dp,
+            if (hasError) colorScheme.error else colorScheme.outlineVariant,
+        ),
     ) {
         Box(
             modifier = Modifier
@@ -71,9 +75,10 @@ fun IndentDetailSection(
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-                            colorScheme.primaryContainer.copy(alpha = 0.42f),
+                            if (hasError) colorScheme.errorContainer.copy(alpha = 0.3f)
+                            else colorScheme.primaryContainer.copy(alpha = 0.42f),
                             colorScheme.surfaceContainer,
-                            colorScheme.surfaceContainerHigh
+                            colorScheme.surfaceContainerHigh,
                         )
                     )
                 )
@@ -91,13 +96,13 @@ fun IndentDetailSection(
                             modifier = Modifier.size(28.dp),
                             shape = CircleShape,
                             color = colorScheme.primaryContainer,
-                            contentColor = colorScheme.onPrimaryContainer
+                            contentColor = colorScheme.onPrimaryContainer,
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
                                     imageVector = image,
                                     contentDescription = null,
-                                    modifier = Modifier.size(16.dp)
+                                    modifier = Modifier.size(16.dp),
                                 )
                             }
                         }
@@ -107,16 +112,16 @@ fun IndentDetailSection(
                     Text(
                         text = title.uppercase(),
                         style = MaterialTheme.typography.labelMedium,
-                        color = colorScheme.onSurfaceVariant,
+                        color = if (hasError) colorScheme.error else colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.2.sp,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     )
 
                     if (onEditClick != null) {
                         FilledTonalIconButton(
                             onClick = onEditClick,
-                            modifier = Modifier.size(40.dp)
+                            modifier = Modifier.size(40.dp),
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
@@ -128,6 +133,14 @@ fun IndentDetailSection(
                 }
 
                 content()
+
+                if (hasError) {
+                    Text(
+                        text = "Client trip cost is required",
+                        color = colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
             }
         }
     }
@@ -337,12 +350,14 @@ fun FinancialDetailsSection(
     clientCost: String,
     negotiatedCost: String,
     hideCost: Boolean,
-    onEditClick: (() -> Unit)? = null
+    onEditClick: (() -> Unit)? = null,
+    hasError: Boolean = false,
 ) {
     IndentDetailSection(
         image = Icons.Outlined.Payments,
         title = "FINANCIAL DETAILS",
-        onEditClick = onEditClick
+        onEditClick = onEditClick,
+        hasError = hasError,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Row(

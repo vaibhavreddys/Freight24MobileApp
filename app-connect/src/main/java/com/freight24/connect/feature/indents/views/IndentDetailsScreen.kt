@@ -25,6 +25,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.freight24.connect.feature.inbox.views.TruckerCallRow
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.foundation.shape.RoundedCornerShape
 import com.freight24.connect.feature.findTrucks.views.SearchResultsContent
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsEvent
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsViewModel
@@ -144,6 +146,7 @@ fun IndentDetailsScreen(
     }
 
     var menuExpanded by remember { mutableStateOf(false) }
+    var costError by remember { mutableStateOf(false) }
 
     if (uiState.isTruckerSheetVisible) {
         val sheetState = rememberModalBottomSheetState()
@@ -309,7 +312,15 @@ fun IndentDetailsScreen(
                         }
                     } else if (indent.status.equals("READY_FOR_ASSIGNMENT", true)) {
                         Button(
-                            onClick = { onCreateTripClick(indentId) },
+                            onClick = {
+                                val cost = indent.indentGroupDetails.clientTripCost
+                                if (cost == null || cost <= 0) {
+                                    costError = true
+                                } else {
+                                    costError = false
+                                    onCreateTripClick(indentId)
+                                }
+                            },
                             modifier = Modifier.fillMaxWidth(),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = colorScheme.primary,
@@ -365,9 +376,35 @@ fun IndentDetailsScreen(
                             .padding(12.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
+                        if (costError) {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = colorScheme.errorContainer),
+                                shape = RoundedCornerShape(12.dp),
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Icon(
+                                        Icons.Filled.Warning,
+                                        contentDescription = null,
+                                        tint = colorScheme.onErrorContainer,
+                                        modifier = Modifier.size(20.dp),
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        "Client trip cost is required. Set it in Edit Indent.",
+                                        color = colorScheme.onErrorContainer,
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                }
+                            }
+                        }
+
                         GeneralInfoSection(
                             clientName = groupDetails.clientProfile?.companyName ?: groupDetails.clientProfile?.fullName ?: "Unknown",
-                            tagCode = groupDetails.clientProfile?.tagCode.orEmpty(), // tagCode not available in IndentResponse
+                            tagCode = groupDetails.clientProfile?.tagCode.orEmpty(),
                             indentId = indent.indentCode,
                             onEditClick = null
                         )
@@ -401,7 +438,9 @@ fun IndentDetailsScreen(
                             clientCost = formatCurrencyDetails(groupDetails.clientTripCost),
                             negotiatedCost = formatCurrencyDetails(indent.negotiatedTripCost),
                             hideCost = indent.hideCostInfo,
+                            hasError = costError,
                             onEditClick = {
+                                costError = false
                                 onEditClick(indentId)
                             }
                         )

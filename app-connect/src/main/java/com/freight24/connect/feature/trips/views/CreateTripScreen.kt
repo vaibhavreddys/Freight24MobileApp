@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -24,6 +25,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -32,6 +34,7 @@ import com.freight24.connect.feature.trips.domain.viewmodel.CreateTripEvent
 import com.freight24.connect.feature.trips.domain.viewmodel.CreateTripUiState
 import com.freight24.connect.feature.trips.domain.viewmodel.CreateTripViewModel
 import com.freight24.ui.theme.FreightThemeTokens
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -354,6 +357,8 @@ internal fun DriverDetailsCard(
         colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
+        val isPhoneValid = uiState.driverPhone.matches(Regex("^\\+?[0-9]{10,15}$"))
+
         Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.Person, contentDescription = "Driver", tint = colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
@@ -367,7 +372,26 @@ internal fun DriverDetailsCard(
             Spacer(modifier = Modifier.height(4.dp))
             OutlinedTextField(
                 value = uiState.driverPhone,
-                onValueChange = { viewModel.onEvent(CreateTripEvent.UpdateDriverPhone(it)) },
+                onValueChange = { newValue ->
+                    // 1. Filter: Allow only digits & standard phone formatting chars
+                    val allowedChars = "+-() "
+                    val filtered = newValue.filter { it.isDigit() || it in allowedChars }
+
+                    // 2. Limit to 15 chars (E.164 international standard max length)
+                    val limited = filtered.take(15)
+
+                    // 3. Update state only if value actually changed
+                    if (limited != uiState.driverPhone) {
+                        viewModel.onEvent(CreateTripEvent.UpdateDriverPhone(limited))
+                    }
+                },
+                isError = uiState.driverPhone.isNotBlank() && !isPhoneValid,
+                supportingText = {
+                    if (!isPhoneValid && uiState.driverPhone.isNotBlank()) {
+                        Text("Enter a valid phone number", color = colorScheme.error)
+                    }
+                },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 placeholder = { Text("Enter phone number", color = colorScheme.onSurfaceVariant) },
                 leadingIcon = { Icon(Icons.Default.Call, contentDescription = null, tint = colorScheme.onSurfaceVariant) },
                 modifier = Modifier.fillMaxWidth(),
