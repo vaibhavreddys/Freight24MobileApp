@@ -31,6 +31,10 @@ fun TripDto.toDomain(): Trip {
 
 fun TripDetailDto.toDomain(): TripDetail {
     val mappedFinancials = financials?.toDomain()
+    val latestDocuments = trip_documents
+        .groupBy { it.document_type }
+        .map { (_, docs) -> docs.maxByOrNull { it.uploaded_at ?: "" }!! }
+        .map { it.toDomain() }
     return TripDetail(
         id = id,
         tripCode = trip_code,
@@ -43,7 +47,7 @@ fun TripDetailDto.toDomain(): TripDetail {
         origin = origin.toDomain(),
         destination = destination.toDomain(),
         statusEvents = status_events.map { it.toDomain() },
-        tripDocuments = trip_documents.map { it.toDomain() },
+        tripDocuments = latestDocuments,
         financials = mappedFinancials,
     )
 }
