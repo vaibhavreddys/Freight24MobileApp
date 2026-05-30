@@ -62,7 +62,7 @@ fun AppTopBar(
         windowInsets = WindowInsets.statusBars,
         colors =
             TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.surface,
+                containerColor = MaterialTheme.colorScheme.surfaceTint,
             ),
     )
 }

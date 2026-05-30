@@ -172,8 +172,13 @@ fun IndentDetailsScreen(
                             fontWeight = FontWeight.Bold,
                             color = colorScheme.onSurface
                         )
+                        val count = uiState.truckerList.size
                         Text(
-                            text = "${uiState.truckerList.size} truckers have shown interest",
+                            text = if (count == 1) {
+                                "$count trucker has shown interest"
+                            } else {
+                                "$count truckers have shown interest"
+                            },
                             style = MaterialTheme.typography.bodySmall,
                             color = colorScheme.onSurfaceVariant
                         )

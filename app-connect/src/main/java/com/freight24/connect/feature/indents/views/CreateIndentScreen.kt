@@ -247,7 +247,7 @@ fun CreateIndentContent(
                         .fillMaxWidth()
                         .background(Color.Transparent)
                         .padding(horizontal = 20.dp)
-                        .padding(bottom = 20.dp)
+                        .padding(bottom = 20.dp, top = 10.dp)
                 ) {
                     Button(
                         onClick = {

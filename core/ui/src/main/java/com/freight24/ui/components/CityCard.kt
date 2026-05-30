@@ -39,7 +39,7 @@ fun CityCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors =
             CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surface,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             ),
     ) {
         Row(
@@ -77,7 +77,7 @@ fun CityCard(
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    text = "$listingCount listings available",
+                    text = "$listingCount load${if (listingCount != 1) "s" else ""} available",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

@@ -55,7 +55,7 @@ private val LightColorScheme =
         outlineVariant = OutlineVariantLight,
         inverseSurface = InverseSurfaceLight,
         inverseOnSurface = InverseOnSurfaceLight,
-        surfaceTint = PrimaryGreen,
+        surfaceTint = PrimaryGreenGradient,
     )
 
 private val DarkColorScheme =
@@ -94,7 +94,7 @@ private val DarkColorScheme =
         outlineVariant = OutlineVariantDark,
         inverseSurface = InverseSurfaceDark,
         inverseOnSurface = InverseOnSurfaceDark,
-        surfaceTint = InversePrimary,
+        surfaceTint = SurfaceDark,
     )
 
 private val LightExtendedColors =

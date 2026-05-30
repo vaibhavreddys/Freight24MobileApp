@@ -5,6 +5,7 @@ import androidx.compose.ui.graphics.Color
 // Freight24 Expressive Design System Colors
 // Primary - Deep Green (Container stability)
 val PrimaryGreen = Color(0xFF509367)
+val PrimaryGreenGradient = Color(0xFFDEEFE4)
 
 val OnPrimary = Color(0xFFFFFFFF)
 val OnPrimaryInverse = Color(0xFFF3F4F6)
@@ -31,12 +32,12 @@ val OnTertiaryContainer = Color(0xFFC4C5BD)
 // Error
 val ErrorRed = Color(0xFFBA1A1A)
 val OnError = Color(0xFFFFFFFF)
-val ErrorContainer = Color(0xFFFFDAD6)
+val ErrorContainer = Color(0xFFEE9F96)
 val OnErrorContainer = Color(0xFF93000A)
 
 // Surface tones (Tonal Layers)
 val SurfaceLight = Color(0xFFDEDDD9)
-val SurfaceDimLight = Color(0xFFDADAD7)
+val SurfaceDimLight = Color(0xFFCECECB)
 val SurfaceBrightLight = Color(0xFFFAF9F6)
 val SurfaceContainerLowestLight = Color(0xFFFFFFFF)
 val SurfaceContainerLowLight = Color(0xFFF4F4F0)
@@ -45,7 +46,7 @@ val SurfaceContainerHighLight = Color(0xFFE8E8E5)
 val SurfaceContainerHighestLight = Color(0xFFE2E3DF)
 
 val SurfaceDark = Color(0xFF262826) // #CC785C // 1E201D
-val SurfaceDimDark = Color(0xFF1A1C1A)
+val SurfaceDimDark = Color(0xFF272827)
 val SurfaceBrightDark = Color(0xFF3F3F3F)
 val SurfaceContainerLowestDark = Color(0xFF0E110E)
 val SurfaceContainerLowDark = Color(0xFF1A1C1A)

@@ -22,7 +22,7 @@ fun <T : NavTabItem> FreightBottomNavBar(
 
     NavigationBar(
         modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.surfaceTint,
         tonalElevation = 6.dp,
         windowInsets = WindowInsets.navigationBars,
     ) {
