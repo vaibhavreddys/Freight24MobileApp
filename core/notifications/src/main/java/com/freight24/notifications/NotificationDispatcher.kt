@@ -13,11 +13,15 @@ class NotificationDispatcher
     constructor(
         @param:ApplicationContext private val context: Context,
     ) {
-        @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
         fun show(notification: AppNotification) {
+            if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return
+
+            NotificationChannels.create(context)
+
             val channelId =
                 when (notification) {
                     is AppNotification.Critical -> NotificationChannels.CRITICAL
+                    is AppNotification.InterestAlert -> NotificationChannels.CRITICAL
                     else -> NotificationChannels.GENERAL
                 }
 
@@ -28,6 +32,7 @@ class NotificationDispatcher
                     .setContentText(notification.message)
                     .setAutoCancel(true)
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setDefaults(NotificationCompat.DEFAULT_ALL)
 
             NotificationManagerCompat.from(context)
                 .notify(notification.id, builder.build())

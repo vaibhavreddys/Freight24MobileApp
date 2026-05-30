@@ -1,8 +1,11 @@
 package com.freight24.notifications
 
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.media.RingtoneManager
+import android.net.Uri
 import android.os.Build
 
 object NotificationChannels {
@@ -11,6 +14,7 @@ object NotificationChannels {
 
     fun create(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val soundUri: Uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
             val critical =
                 NotificationChannel(
                     CRITICAL,
@@ -18,6 +22,7 @@ object NotificationChannels {
                     NotificationManager.IMPORTANCE_HIGH,
                 ).apply {
                     enableVibration(true)
+                    setSound(soundUri, Notification.AUDIO_ATTRIBUTES_DEFAULT)
                     setBypassDnd(true)
                 }
 

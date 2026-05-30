@@ -20,4 +20,13 @@ sealed class AppNotification(
             title = "Trip Update",
             message = message,
         )
+
+    class InterestAlert(
+        title: String,
+        message: String,
+    ) : AppNotification(
+            id = 3001,
+            title = title,
+            message = message,
+        )
 }
