@@ -6,73 +6,58 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FooterIconButton(
-    icon: ImageVector,
-    tooltipText: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
     contentDescription: String,
     highlighted: Boolean = false,
     enabled: Boolean = true,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val tooltipState = rememberTooltipState()
+    val haptics = LocalHapticFeedback.current
     val iconScale = animateFloatAsState(
         targetValue = if (highlighted) 1.15f else 1f,
         animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
-        label = "bookmarkScale",
+        label = "iconScale"
     )
     val iconTint = animateColorAsState(
         targetValue = if (highlighted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
         animationSpec = tween(durationMillis = 220),
-        label = "bookmarkColor",
+        label = "iconTint"
     )
 
-    TooltipBox(
-        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-        tooltip = {
-            PlainTooltip {
-                Text(
-                    text = tooltipText,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-        },
-        state = tooltipState,
+    Surface(
+        shape = CircleShape,
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 2.dp,
+        modifier = modifier,
     ) {
-        Surface(
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.surface,
-            shadowElevation = 2.dp,
+        IconButton(
+            onClick = {
+                haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                onClick()
+            },
+            modifier = Modifier.size(40.dp),
+            enabled = enabled,
         ) {
-            IconButton(
-                onClick = onClick,
-                modifier = Modifier.size(40.dp),
-                enabled = enabled,
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = contentDescription,
-                    tint = iconTint.value,
-                    modifier = Modifier.size(18.dp).scale(iconScale.value),
-                )
-            }
+            Icon(
+                imageVector = icon,
+                contentDescription = contentDescription,
+                tint = iconTint.value,
+                modifier = Modifier.size(18.dp).scale(iconScale.value),
+            )
         }
     }
 }
