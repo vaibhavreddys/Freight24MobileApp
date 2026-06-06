@@ -13,14 +13,12 @@ data class TripDetailResponse(
 data class TripDetailDto(
     val id: String,
     val trip_code: String,
-    val registration_number: String,
-    val truck_type: String,
+    val registration_number: String? = null,
+    val truck_type: String? = null,
     val created_at: String,
-    val trucker_trip_cost: Double = 0.0,
-    val advance_amount: Double = 0.0,
     val trucker_status: String? = null,
-    val origin: TripLocationDto,
-    val destination: TripLocationDto,
+    val origin: TripLocationDto? = null,
+    val destination: TripLocationDto? = null,
     val status_events: List<StatusEventDto> = emptyList(),
     val trip_documents: List<TripDocumentDto> = emptyList(),
     val financials: TripFinancialsDto? = null,
@@ -37,35 +35,96 @@ data class StatusEventDto(
 )
 
 @Serializable
-data class TripFinancialsDto(
-    val client_trip_cost: Double = 0.0,
-    val trucker_trip_cost: Double = 0.0,
-    val balance_amount: Double = 0.0,
-    val platform_fee_amount: Double = 0.0,
-    val tds_amount: Double = 0.0,
-    val tds_applicable: Boolean = false,
-    val other_deductions: Double = 0.0,
-    val deduction_remarks: String? = null,
-    val trucker_net_amount: Double = 0.0,
-    val halting_amount: Double = 0.0,
-    val lu_amount_total: Double = 0.0,
-    val lu_amount_reimbursable: Double = 0.0,
-    val lu_included: Boolean? = null,
-    val advance_paid: Boolean = false,
-    val advance_paid_amount: Double = 0.0,
-    val balance_paid: Boolean = false,
-    val balance_paid_amount: Double = 0.0,
-    val total_deductions: Double = 0.0,
+data class TripDocumentDto(
+    val id: String,
+    val document_type: String,
+    val file_url: String? = null,
+    val verification_status: String,
+    val verification_remarks: String? = null,
+    val pod_type: String? = null,
+    val pod_status: String? = null,
+    val uploaded_at: String? = null,
+    val uploaded_by: String? = null,
+    val uploaded_by_name: String? = null,
 )
 
 @Serializable
-data class TripDocumentDto(
-    val document_type: String,
-    val original_filename: String? = null,
-    val verification_status: String,
-    val verification_remarks: String? = null,
-    val uploaded_at: String? = null,
-    val pod_type: String? = null,
-    val pod_status: String? = null,
-    val id: String
+data class TripFinancialsDto(
+    val trucker_trip_cost: Double = 0.0,
+    val platform_fee: FeeBlockDto = FeeBlockDto(),
+    val tds: TdsBlockDto = TdsBlockDto(),
+    val halting: HaltingBlockDto = HaltingBlockDto(),
+    val lu_charges: LuBlockDto = LuBlockDto(),
+    val other_deductions: Double = 0.0,
+    val deduction_remarks: String? = null,
+    val advance: AdvanceBlockDto = AdvanceBlockDto(),
+    val balance: BalanceBlockDto = BalanceBlockDto(),
+    val net_payable: Double = 0.0,
+    val total_paid_amount: Double = 0.0,
+)
+
+@Serializable
+data class FeeBlockDto(
+    val amount: Double = 0.0,
+    val percent: Int = 0,
+)
+
+@Serializable
+data class TdsBlockDto(
+    val amount: Double = 0.0,
+    val percent: Float = 0f,
+    val applicable: Boolean = false,
+)
+
+@Serializable
+data class HaltingBlockDto(
+    val loading: HaltingLegDto = HaltingLegDto(),
+    val unloading: HaltingLegDto = HaltingLegDto(),
+)
+
+@Serializable
+data class HaltingLegDto(
+    val days: Int = 0,
+    val totalAmount: Double = 0.0,
+    val perDayAmount: Double = 0.0,
+    val notes: String? = null,
+    val createdAt: String? = null,
+    val createdBy: String? = null,
+    val updatedAt: String? = null,
+    val updatedBy: String? = null,
+)
+
+@Serializable
+data class LuBlockDto(
+    val loading: LuLegDto = LuLegDto(),
+    val unloading: LuLegDto = LuLegDto(),
+)
+
+@Serializable
+data class LuLegDto(
+    val id: String? = null,
+    val total: Double = 0.0,
+    val reimbursable: Double = 0.0,
+    val isLUIncluded: Boolean? = null,
+    val slipUrl: String? = null,
+    val notes: String? = null,
+    val createdAt: String? = null,
+    val createdBy: String? = null,
+    val updatedAt: String? = null,
+    val updatedBy: String? = null,
+)
+
+@Serializable
+data class AdvanceBlockDto(
+    val percent: Int = 0,
+    val amount: Double = 0.0,
+    val paid: Boolean = false,
+    val paidAmount: Double = 0.0,
+)
+
+@Serializable
+data class BalanceBlockDto(
+    val amount: Double = 0.0,
+    val paid: Boolean = false,
+    val paidAmount: Double = 0.0,
 )

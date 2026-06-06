@@ -18,7 +18,7 @@ data class TripEntity(
     val status: String,
     val createdAt: String,
     val tripCost: Double,
-    val advanceAmount: Double,
+    val totalPaidAmount: Double,
     val origin: String,
     val destination: String,
     val cachedAt: Long = System.currentTimeMillis(),

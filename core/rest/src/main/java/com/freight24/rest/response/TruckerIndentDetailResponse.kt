@@ -38,7 +38,6 @@ data class TruckerIndentGroupDetails(
     val vehicleHeight: Double? = null,
     val tarpaulingRequired: Boolean = false,
     val specialRequirements: String? = null,
-    val clientTripCost: Double? = null,
     val businessProposedCost: Double? = null,
     val luIncludedInTripCost: Boolean? = null,
     val truckType: TruckerTruckType? = null,

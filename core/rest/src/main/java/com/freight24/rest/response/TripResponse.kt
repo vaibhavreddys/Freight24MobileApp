@@ -17,7 +17,7 @@ data class TripDto(
     val trucker_status: String,
     val created_at: String,
     val trucker_trip_cost: Double,
-    val advance_amount: Double,
+    val balance_paid_amount: Double,
     val origin: TripLocationDto,
     val destination: TripLocationDto,
 )

@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.freight24.common.model.Trip
+import com.freight24.common.util.formatCurrency
 
 @Composable
 fun TripCard(
@@ -108,7 +109,7 @@ fun TripCard(
                         fontWeight = FontWeight.Medium,
                     )
                     Text(
-                        text = "₹${trip.tripCost.toInt()}",
+                        text = formatCurrency(trip.tripCost.toString()),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
@@ -133,7 +134,7 @@ fun TripCard(
                         fontWeight = FontWeight.Medium,
                     )
                     Text(
-                        text = "₹${trip.advanceAmount.toInt()}",
+                        text = formatCurrency(trip.totalPaidAmount.toString()),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,

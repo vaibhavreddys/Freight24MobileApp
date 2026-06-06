@@ -536,7 +536,7 @@ internal fun TripDetailsContent(
                 status = trip.status,
                 createdAt = trip.createdAt,
                 tripCost = trip.tripCost,
-                advanceAmount = trip.advanceAmount,
+                totalPaidAmount = trip.totalPaidAmount,
                 origin = trip.origin.toDisplayString(),
                 destination = trip.destination.toDisplayString()
             ),
@@ -731,28 +731,52 @@ private fun PaymentsContent(financials: com.freight24.common.model.TripFinancial
     ) {
         PaymentDetailRow("Trip Cost", financials.truckerTripCost)
 
-        if (financials.haltingAmount > 0) {
-            PaymentDetailRow("Halting Charges", financials.haltingAmount, isAddition = true)
+        if (financials.halting.loading.totalAmount > 0) {
+            PaymentDetailRow(
+                label = "Loading",
+                amount = financials.halting.loading.totalAmount,
+                isAddition = true,
+                detailText = "(${financials.halting.loading.days} Days × ₹${formatAmount(financials.halting.loading.perDayAmount.toString())})",
+                addHeader = true,
+                headerName = "Halting Charges",
+            )
         }
 
-        if (financials.luAmountTotal > 0) {
-            PaymentDetailRow("Loading/Unloading", financials.luAmountTotal, isAddition = true)
+        if (financials.halting.unloading.totalAmount > 0) {
+            PaymentDetailRow(
+                label = "Unloading",
+                amount = financials.halting.unloading.totalAmount,
+                isAddition = true,
+                detailText = "(${financials.halting.unloading.days} Days × ₹${formatAmount(financials.halting.unloading.perDayAmount.toString())})",
+            )
+        }
+
+        if (financials.luCharges.loading.total > 0) {
+            PaymentDetailRow(
+                label = "Loading Charges",
+                amount = financials.luCharges.loading.total,
+                isAddition = true,
+            )
+        }
+
+        if (financials.luCharges.unloading.total > 0) {
+            PaymentDetailRow(
+                label = "Unloading Charges",
+                amount = financials.luCharges.unloading.total,
+                isAddition = true,
+            )
         }
 
         if (financials.otherDeductions > 0) {
             PaymentDetailRow("Other Deductions", financials.otherDeductions, isDeduction = true)
         }
 
-        if (financials.advancePaidAmount > 0) {
-            PaymentDetailRow("Advance Paid", financials.advancePaidAmount, isDeduction = true)
+        if (financials.advance.paidAmount > 0) {
+            PaymentDetailRow("Advance Paid", financials.advance.paidAmount)
         }
 
-        PaymentDetailRow("Platform Fee", financials.platformFeeAmount, isDeduction = true)
-        PaymentDetailRow("TDS", financials.tdsAmount, isDeduction = true)
-
-        if (financials.totalDeductions > 0) {
-            PaymentDetailRow("Total Deductions", financials.totalDeductions, isDeduction = true, bold = true)
-        }
+        PaymentDetailRow("Platform Fee", financials.platformFee.amount, isDeduction = true)
+        PaymentDetailRow("TDS", financials.tds.amount, isDeduction = true)
 
         HorizontalDivider(
             color = MaterialTheme.colorScheme.outlineVariant,
@@ -765,20 +789,40 @@ private fun PaymentsContent(financials: com.freight24.common.model.TripFinancial
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Net Amount",
+                text = "Net Payable",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = "₹${formatAmount(financials.truckerNetAmount.toString())}",
+                text = "₹${formatAmount(financials.netPayable.toString())}",
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
         }
 
-        if (financials.balanceAmount > 0) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Total Paid",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = "₹${formatAmount(financials.totalPaidAmount.toString())}",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+
+        val balanceDue = financials.netPayable - financials.totalPaidAmount
+        if (balanceDue > 0) {
             Spacer(modifier = Modifier.height(4.dp))
             Surface(
                 color = MaterialTheme.colorScheme.tertiaryContainer,
@@ -797,7 +841,7 @@ private fun PaymentsContent(financials: com.freight24.common.model.TripFinancial
                         style = MaterialTheme.typography.bodyLarge
                     )
                     Text(
-                        text = "₹${formatAmount(financials.balanceAmount.toString())}",
+                        text = "₹${formatAmount(balanceDue.toString())}",
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.bodyLarge
@@ -815,32 +859,54 @@ private fun PaymentDetailRow(
     isDeduction: Boolean = false,
     isAddition: Boolean = false,
     bold: Boolean = false,
+    detailText: String? = null,
+    addHeader: Boolean = false,
+    headerName: String = "",
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal,
-        )
-        Text(
-            text = when {
-                isDeduction -> "- ₹${formatAmount(amount.toString())}"
-                isAddition && amount > 0 -> "+ ₹${formatAmount(amount.toString())}"
-                else -> "₹${formatAmount(amount.toString())}"
-            },
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal,
-            color = when {
-                isDeduction -> MaterialTheme.colorScheme.error
-                isAddition && amount > 0 -> MaterialTheme.colorScheme.primary
-                else -> MaterialTheme.colorScheme.onSurface
-            }
-        )
+    Column(modifier = Modifier.padding(vertical = 2.dp)) {
+        if (addHeader && headerName.isNotEmpty()) {
+            Text(
+                text = headerName,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(top = 4.dp, bottom = 2.dp),
+            )
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal,
+            )
+            Text(
+                text = when {
+                    isDeduction -> "- ₹${formatAmount(amount.toString())}"
+                    isAddition && amount > 0 -> "+ ₹${formatAmount(amount.toString())}"
+                    else -> "₹${formatAmount(amount.toString())}"
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal,
+                color = when {
+                    isDeduction -> MaterialTheme.colorScheme.error
+                    isAddition && amount > 0 -> MaterialTheme.colorScheme.primary
+                    else -> MaterialTheme.colorScheme.onSurface
+                }
+            )
+        }
+        if (!detailText.isNullOrEmpty()) {
+            Text(
+                text = detailText,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 4.dp, top = 2.dp),
+            )
+        }
     }
 }
 

@@ -7,7 +7,7 @@ data class Trip(
     val status: String,
     val createdAt: String,
     val tripCost: Double,
-    val advanceAmount: Double,
+    val totalPaidAmount: Double,
     val origin: String,
     val destination: String,
 )
@@ -19,34 +19,58 @@ data class TripDetail(
     val truckType: String,
     val createdAt: String,
     val tripCost: Double,
-    val advanceAmount: Double,
+    val totalPaidAmount: Double,
     val origin: TripLocation,
     val destination: TripLocation,
     val status: String,
     val statusEvents: List<StatusEvent>,
     val tripDocuments: List<TripDocument>,
     val financials: TripFinancials? = null,
+    val truckerStatus: String? = null,
 )
 
 data class TripFinancials(
-    val clientTripCost: Double = 0.0,
-    val truckerTripCost: Double = 0.0,
-    val balanceAmount: Double = 0.0,
-    val platformFeeAmount: Double = 0.0,
-    val tdsAmount: Double = 0.0,
-    val tdsApplicable: Boolean = false,
-    val otherDeductions: Double = 0.0,
-    val deductionRemarks: String? = null,
-    val truckerNetAmount: Double = 0.0,
-    val haltingAmount: Double = 0.0,
-    val luAmountTotal: Double = 0.0,
-    val luAmountReimbursable: Double = 0.0,
-    val luIncluded: Boolean? = null,
-    val advancePaid: Boolean = false,
-    val advancePaidAmount: Double = 0.0,
-    val balancePaid: Boolean = false,
-    val balancePaidAmount: Double = 0.0,
-    val totalDeductions: Double = 0.0,
+    val truckerTripCost: Double,
+    val platformFee: FeeBlock,
+    val tds: TdsBlock,
+    val halting: HaltingBlock,
+    val luCharges: LuBlock,
+    val otherDeductions: Double,
+    val deductionRemarks: String?,
+    val advance: AdvanceBlock,
+    val balance: BalanceBlock,
+    val netPayable: Double,
+    val totalPaidAmount: Double,
+)
+
+data class FeeBlock(val amount: Double, val percent: Int)
+data class TdsBlock(val amount: Double, val percent: Float, val applicable: Boolean)
+data class HaltingBlock(val loading: HaltingLeg, val unloading: HaltingLeg)
+data class HaltingLeg(
+    val days: Int,
+    val totalAmount: Double,
+    val perDayAmount: Double,
+    val notes: String?,
+)
+data class LuBlock(val loading: LuLeg, val unloading: LuLeg)
+data class LuLeg(
+    val id: String?,
+    val total: Double,
+    val reimbursable: Double,
+    val isLUIncluded: Boolean,
+    val slipUrl: String?,
+    val notes: String?,
+)
+data class AdvanceBlock(
+    val percent: Int,
+    val amount: Double,
+    val paid: Boolean,
+    val paidAmount: Double,
+)
+data class BalanceBlock(
+    val amount: Double,
+    val paid: Boolean,
+    val paidAmount: Double,
 )
 
 data class TripLocation(
@@ -71,10 +95,11 @@ data class StatusEvent(
 data class TripDocument(
     val id: String?,
     val documentType: String,
-    val originalFilename: String? = null,
     val verificationStatus: String,
     val verificationRemarks: String? = null,
     val uploadedAt: String? = null,
     val podType: String? = null,
     val podStatus: String? = null,
+    val uploadedBy: String? = null,
+    val uploadedByName: String? = null,
 )
