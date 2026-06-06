@@ -3,6 +3,7 @@ package com.freight24.trucker.feature.loads.data.repository
 import com.freight24.rest.response.LoadBoardResponse
 import com.freight24.rest.response.IndentInterestResponse
 import com.freight24.rest.response.PaginatedLoadBoardResponse
+import com.freight24.rest.response.TruckerIndentDetailResponse
 
 interface LoadBoardRepository {
     /**
@@ -26,4 +27,9 @@ interface LoadBoardRepository {
     suspend fun expressInterest(indentId: String): Result<IndentInterestResponse>
 
     suspend fun withdrawInterest(indentId: String): Result<IndentInterestResponse>
+
+    /**
+     * Fetch the trucker-safe indent detail (no client cost details).
+     */
+    suspend fun fetchTruckerIndentDetail(indentId: String): Result<TruckerIndentDetailResponse>
 }

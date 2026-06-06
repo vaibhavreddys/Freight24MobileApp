@@ -8,12 +8,18 @@ import com.freight24.trucker.feature.loads.domain.usecase.CityLoadBoardUseCase
 import com.freight24.trucker.feature.loads.domain.usecase.CityLoadBoardUseCaseParams
 import com.freight24.trucker.feature.loads.domain.usecase.ExpressInterestUseCase
 import com.freight24.trucker.feature.loads.domain.usecase.ExpressInterestUseCaseParams
+import com.freight24.trucker.feature.loads.domain.usecase.GetTruckerIndentDetailParams
+import com.freight24.trucker.feature.loads.domain.usecase.GetTruckerIndentDetailUseCase
 import com.freight24.trucker.feature.loads.domain.usecase.LoadBoardUseCase
 import com.freight24.trucker.feature.loads.domain.usecase.WithdrawInterestUseCase
 import com.freight24.trucker.feature.loads.domain.usecase.WithdrawInterestUseCaseParams
+import com.freight24.trucker.feature.loads.mapper.toLoadDetail
 import com.freight24.trucker.feature.loads.mapper.toUi
 import com.freight24.trucker.feature.loads.model.LoadBoardItem
+import com.freight24.ui.components.LoadDetail
+import com.freight24.ui.components.LoadDetailState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -31,6 +37,7 @@ class LoadBoardViewModel
         private val cityLoadBoardUseCase: CityLoadBoardUseCase,
         private val expressInterestUseCase: ExpressInterestUseCase,
         private val withdrawInterestUseCase: WithdrawInterestUseCase,
+        private val getTruckerIndentDetailUseCase: GetTruckerIndentDetailUseCase,
     ) : ViewModel() {
         private val _items = MutableStateFlow<List<LoadBoardItem>>(emptyList())
         val items: StateFlow<List<LoadBoardItem>> = _items.asStateFlow()
@@ -46,6 +53,24 @@ class LoadBoardViewModel
 
         private val _bookmarkMessage = MutableSharedFlow<String>()
         val bookmarkMessage: SharedFlow<String> = _bookmarkMessage.asSharedFlow()
+
+        // ── Bottom sheet state ───────────────────────────────────────────────
+        private val _selectedIndentId = MutableStateFlow<String?>(null)
+        val selectedIndentId: StateFlow<String?> = _selectedIndentId.asStateFlow()
+
+        private val _indentDetailState = MutableStateFlow<LoadDetailState>(LoadDetailState.Loading)
+        val indentDetailState: StateFlow<LoadDetailState> = _indentDetailState.asStateFlow()
+
+        private val _detailMessage = MutableSharedFlow<String>()
+        val detailMessage: SharedFlow<String> = _detailMessage.asSharedFlow()
+
+        private val detailCache = mutableMapOf<String, CachedDetail>()
+        private var detailJob: Job? = null
+
+        private data class CachedDetail(
+            val detail: LoadDetail,
+            val cachedAt: Long,
+        )
 
         private var citySummaries: List<com.freight24.common.model.CityLoadSummary> = emptyList()
 
@@ -68,8 +93,10 @@ class LoadBoardViewModel
         /**
          * Handle pull-to-refresh action.
          * Forces a network fetch and updates the UI.
+         * Also dismisses any open indent detail bottom sheet.
          */
         fun onRefresh() {
+            onDismissIndentSheet()
             viewModelScope.launch {
                 _isRefreshing.value = true
 
@@ -389,26 +416,146 @@ class LoadBoardViewModel
             }
         }
 
-        private fun updateLoadInterestState(
-            indentId: String,
-            isInterested: Boolean,
-            isLoading: Boolean,
+    private fun updateLoadInterestState(
+        indentId: String,
+        isInterested: Boolean,
+        isLoading: Boolean,
+    ) {
+        publishItems(
+            _items.value.map { item ->
+            if (item is LoadBoardItem.LoadItem && item.load.id == indentId) {
+                item.copy(
+                    load = item.load.copy(
+                        isInterested = isInterested,
+                        isInterestLoading = isLoading,
+                    ),
+                )
+            } else {
+                item
+            }
+            },
+        )
+
+        // Mirror the state into the bottom sheet detail if it's open for
+        // this indent, so the CTA reflects the current interest status.
+        val current = _indentDetailState.value
+        if (current is LoadDetailState.Success &&
+            _selectedIndentId.value == indentId
         ) {
-            publishItems(
-                _items.value.map { item ->
-                if (item is LoadBoardItem.LoadItem && item.load.id == indentId) {
-                    item.copy(
-                        load = item.load.copy(
-                            isInterested = isInterested,
-                            isInterestLoading = isLoading,
-                        ),
-                    )
-                } else {
-                    item
-                }
-                },
+            _indentDetailState.value = LoadDetailState.Success(
+                current.detail.copy(
+                    isInterested = isInterested,
+                    isInterestLoading = isLoading,
+                ),
             )
         }
+    }
+
+    // ── Bottom sheet: open / dismiss / fetch ────────────────────────────────
+
+    private val detailCacheTtlMs = 60_000L
+
+    fun onLoadCardClicked(indentId: String, tripPrice: String) {
+        val previousId = _selectedIndentId.value
+        _selectedIndentId.value = indentId
+
+        // If user taps the same load again, do nothing — the sheet is already
+        // open for it.
+        if (previousId == indentId) return
+
+        // Cancel any in-flight fetch for a different indent.
+        detailJob?.cancel()
+
+        // Use the brief cache if it's still fresh; otherwise show loading.
+        val cached = detailCache[indentId]
+        if (cached != null && System.currentTimeMillis() - cached.cachedAt < detailCacheTtlMs) {
+            _indentDetailState.value = LoadDetailState.Success(cached.detail)
+        } else {
+            _indentDetailState.value = LoadDetailState.Loading
+        }
+        fetchIndentDetail(indentId, tripPrice, allowCache = true)
+    }
+
+    fun onDismissIndentSheet() {
+        detailJob?.cancel()
+        detailJob = null
+        _selectedIndentId.value = null
+        _indentDetailState.value = LoadDetailState.Loading
+    }
+
+    fun onToggleInterestInSheet() {
+        val indentId = _selectedIndentId.value ?: return
+        if (indentId !in interestedLoadIds) {
+            expressInterest(indentId)
+        } else {
+            withdrawInterest(indentId)
+        }
+    }
+
+    private fun fetchIndentDetail(
+        indentId: String,
+        tripPrice: String,
+        allowCache: Boolean,
+    ) {
+        detailJob = viewModelScope.launch {
+            getTruckerIndentDetailUseCase(
+                GetTruckerIndentDetailParams(indentId),
+            )
+                .onSuccess { response ->
+                    val data = response.data
+                    if (data == null) {
+                        _indentDetailState.value = LoadDetailState.Error("Indent not found")
+                        _detailMessage.emit("Indent not found")
+                        onDismissIndentSheet()
+                        return@onSuccess
+                    }
+
+                    val isInterested = indentId in interestedLoadIds
+                    val isInterestLoading = indentId in loadingInterestedLoadIds
+                    val detail = data.toLoadDetail(
+                        tripPrice = tripPrice,
+                        isInterested = isInterested,
+                        isInterestLoading = isInterestLoading,
+                    )
+
+                    if (allowCache) {
+                        detailCache[indentId] = CachedDetail(
+                            detail = detail,
+                            cachedAt = System.currentTimeMillis(),
+                        )
+                    }
+                    _indentDetailState.value = LoadDetailState.Success(detail)
+                }
+                .onFailure { error ->
+                    val message = mapDetailError(error)
+                    val isGone = isGoneError(error)
+                    Log.e("LoadBoardViewModel", "Fetch indent detail failed", error)
+                    _indentDetailState.value = LoadDetailState.Error(message)
+                    if (isGone) {
+                        _detailMessage.emit(message)
+                        onDismissIndentSheet()
+                    }
+                }
+        }
+    }
+
+    private fun isGoneError(error: Throwable): Boolean {
+        val raw = error.message.orEmpty()
+        return raw.contains("410") || raw.contains("no longer available", ignoreCase = true)
+    }
+
+    private fun mapDetailError(error: Throwable): String {
+        val raw = error.message.orEmpty().lowercase()
+        return when {
+            raw.contains("410") || raw.contains("no longer available") ->
+                "This indent is no longer available"
+            raw.contains("404") || raw.contains("not found") ->
+                "Indent not found"
+            raw.contains("network") || raw.contains("unable to resolve") ->
+                "Network error. Check your connection and try again."
+            else -> "Unable to load indent details"
+        }
+    }
 
         private fun com.freight24.trucker.feature.loads.model.ui.LoadUi.decorateInterestState() =
             run {

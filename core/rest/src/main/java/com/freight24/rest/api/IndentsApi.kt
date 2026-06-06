@@ -11,6 +11,7 @@ import com.freight24.rest.response.IndentsListResponse
 import com.freight24.rest.response.LoadBoardResponse
 import com.freight24.rest.response.PaginatedLoadBoardResponse
 import com.freight24.rest.response.TruckTypeResponse
+import com.freight24.rest.response.TruckerIndentDetailResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -84,4 +85,9 @@ interface IndentsApi {
         @Query("client_id") clientId: String?,
         @Query("assigned_to_me") assignedToMe: Boolean?,
     ): Response<GetIndentsResponse>
+
+    @GET("indents/trucker/child/{id}")
+    suspend fun getTruckerIndentDetail(
+        @Path("id") id: String,
+    ): Response<TruckerIndentDetailResponse>
 }

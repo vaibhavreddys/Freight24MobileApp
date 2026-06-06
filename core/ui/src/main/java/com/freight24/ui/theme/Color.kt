@@ -68,7 +68,7 @@ val OnSurfaceVariantDark = Color(0xFFC1C9C1)
 val OutlineLight = Color(0xFF717972)
 val OutlineDark = Color(0xFF8B938C)
 val OutlineVariantLight = Color(0xFFC1C9C1)
-val OutlineVariantDark = Color(0xFF414943)
+val OutlineVariantDark = Color(0xFFDCE7DF)
 
 // Inverse
 val InverseSurfaceLight = Color(0xFF2F312F)

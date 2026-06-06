@@ -9,6 +9,7 @@ import com.freight24.rest.request.IndentInterestRequest
 import com.freight24.rest.response.IndentInterestResponse
 import com.freight24.rest.response.LoadBoardResponse
 import com.freight24.rest.response.PaginatedLoadBoardResponse
+import com.freight24.rest.response.TruckerIndentDetailResponse
 import kotlinx.coroutines.CoroutineDispatcher
 import javax.inject.Inject
 
@@ -50,6 +51,13 @@ class LoadBoardRepositoryImpl
             runCatching {
                 safeCallProvider.safeApiCall(ioDispatcher) {
                     indentsApi.withdrawInterest(IndentInterestRequest(indentId))
+                }.getOrThrow()
+            }
+
+        override suspend fun fetchTruckerIndentDetail(indentId: String): Result<TruckerIndentDetailResponse> =
+            runCatching {
+                safeCallProvider.safeApiCall(ioDispatcher) {
+                    indentsApi.getTruckerIndentDetail(indentId)
                 }.getOrThrow()
             }
     }

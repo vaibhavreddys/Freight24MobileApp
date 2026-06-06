@@ -6,6 +6,8 @@ import com.freight24.trucker.feature.loads.domain.usecase.CityLoadBoardUseCase
 import com.freight24.trucker.feature.loads.domain.usecase.CityLoadBoardUseCaseImpl
 import com.freight24.trucker.feature.loads.domain.usecase.ExpressInterestUseCase
 import com.freight24.trucker.feature.loads.domain.usecase.ExpressInterestUseCaseImpl
+import com.freight24.trucker.feature.loads.domain.usecase.GetTruckerIndentDetailUseCase
+import com.freight24.trucker.feature.loads.domain.usecase.GetTruckerIndentDetailUseCaseImpl
 import com.freight24.trucker.feature.loads.domain.usecase.LoadBoardUseCase
 import com.freight24.trucker.feature.loads.domain.usecase.LoadBoardUseCaseImpl
 import com.freight24.trucker.feature.loads.domain.usecase.WithdrawInterestUseCase
@@ -38,4 +40,10 @@ interface LoadBinderModule {
     @Binds
     @Singleton
     fun bindWithdrawInterestUseCase(impl: WithdrawInterestUseCaseImpl): WithdrawInterestUseCase
+
+    @Binds
+    @Singleton
+    fun bindGetTruckerIndentDetailUseCase(
+        impl: GetTruckerIndentDetailUseCaseImpl,
+    ): GetTruckerIndentDetailUseCase
 }

@@ -1,7 +1,6 @@
 package com.freight24.trucker.feature.loads
 
 import android.content.Intent
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -11,7 +10,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -30,7 +33,9 @@ import androidx.core.net.toUri
 import com.freight24.trucker.feature.loads.model.LoadBoardItem
 import com.freight24.ui.components.CityCard
 import com.freight24.ui.components.LoadCard
+import com.freight24.ui.components.LoadDetailBottomSheet
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoadBoardScreen(
     paddingValues: PaddingValues,
@@ -44,9 +49,19 @@ fun LoadBoardScreen(
     val expandedCityId by viewModel.expandedCityId.collectAsState()
     val context = LocalContext.current
 
+    val selectedIndentId by viewModel.selectedIndentId.collectAsState()
+    val indentDetailState by viewModel.indentDetailState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
     LaunchedEffect(Unit) {
         viewModel.bookmarkMessage.collect { message ->
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            snackbarHostState.showSnackbar(message, duration = SnackbarDuration.Short)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.detailMessage.collect { message ->
+            snackbarHostState.showSnackbar(message, duration = SnackbarDuration.Short)
         }
     }
 
@@ -68,108 +83,134 @@ fun LoadBoardScreen(
         previousExpandedCityId.value = current
     }
 
-    PullToRefreshBox(
-        isRefreshing = isRefreshing,
-        onRefresh = { viewModel.onRefresh() },
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues),
     ) {
-        LazyColumn(
-            state = listState,
-            modifier =
-                Modifier
-                    .fillMaxSize(),
-            contentPadding =
-                PaddingValues(
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = { viewModel.onRefresh() },
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
                     top = 12.dp,
                     start = 16.dp,
                     end = 16.dp,
                     bottom = 16.dp,
                 ),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            if (items.isEmpty()) {
-                item(key = "empty") {
-                    Box(
-                        modifier = Modifier.fillParentMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            "No loads available right now",
-                            style = MaterialTheme.typography.bodyLarge,
-                            textAlign = TextAlign.Center,
-                        )
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                if (items.isEmpty()) {
+                    item(key = "empty") {
+                        Box(
+                            modifier = Modifier.fillParentMaxSize(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                "No loads available right now",
+                                style = MaterialTheme.typography.bodyLarge,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
                     }
-                }
-            } else {
-                items(
-                    items = items,
-                    key = {
-                        when (it) {
-                            is LoadBoardItem.CityItem -> "city-${it.cityId}-${it.cityName}"
-                            is LoadBoardItem.LoadItem -> "load-${it.cityId}-${it.load.id}"
-                            is LoadBoardItem.ShowMoreItem -> "show-more-${it.cityId}"
-                        }
-                    },
-                    contentType = {
-                        when (it) {
-                            is LoadBoardItem.CityItem -> "city"
-                            is LoadBoardItem.LoadItem -> "load"
-                            is LoadBoardItem.ShowMoreItem -> "show_more"
-                        }
-                    },
-                ) { item ->
-                    when (item) {
-                        is LoadBoardItem.CityItem ->
-                            CityCard(
-                                cityName = item.cityName,
-                                listingCount = item.totalLoads,
-                                expanded = item.expanded,
-                                onClick = { viewModel.onCityClicked(item.cityId) },
-                            )
-
-                        is LoadBoardItem.LoadItem ->
-                            LoadCard(
-                                sourceCity = item.load.sourceCity,
-                                destinationCity = item.load.destinationCity,
-                                postedTime = item.load.postedTime,
-                                price = item.load.price,
-                                truckInfo = item.load.truckInfo,
-                                commodity = item.load.commodity,
-                                loadWeight = item.load.loadWeight,
-                                f24AgentName = item.load.f24AgentName,
-                                isBookmarked = item.load.isInterested,
-                                isBookmarkLoading = item.load.isInterestLoading,
-                                onCallClick = {
-                                    val phone = item.load.f24AgentPhone.trim()
-                                    if (phone.isNotEmpty() && phone != "--") {
-                                        val intent = Intent(Intent.ACTION_DIAL, "tel:$phone".toUri())
-                                        context.startActivity(intent)
-                                    } else {
-                                        Toast.makeText(context, "Phone number not available", Toast.LENGTH_SHORT).show()
-                                    }
-                                },
-                                onBookmarkClick = {
-                                    viewModel.onBookmarkClicked(item.load.id)
-                                },
-                            )
-
-                        is LoadBoardItem.ShowMoreItem -> {
-                            TextButton(
-                                onClick = { viewModel.onShowMoreClicked(item.cityId) },
-                                modifier = Modifier.fillMaxWidth(),
-                            ) {
-                                Text(
-                                    text = "Show more loads",
-                                    color = MaterialTheme.colorScheme.primary,
+                } else {
+                    items(
+                        items = items,
+                        key = {
+                            when (it) {
+                                is LoadBoardItem.CityItem -> "city-${it.cityId}-${it.cityName}"
+                                is LoadBoardItem.LoadItem -> "load-${it.cityId}-${it.load.id}"
+                                is LoadBoardItem.ShowMoreItem -> "show-more-${it.cityId}"
+                            }
+                        },
+                        contentType = {
+                            when (it) {
+                                is LoadBoardItem.CityItem -> "city"
+                                is LoadBoardItem.LoadItem -> "load"
+                                is LoadBoardItem.ShowMoreItem -> "show_more"
+                            }
+                        },
+                    ) { item ->
+                        when (item) {
+                            is LoadBoardItem.CityItem ->
+                                CityCard(
+                                    cityName = item.cityName,
+                                    listingCount = item.totalLoads,
+                                    expanded = item.expanded,
+                                    onClick = { viewModel.onCityClicked(item.cityId) },
                                 )
+
+                            is LoadBoardItem.LoadItem ->
+                                LoadCard(
+                                    sourceCity = item.load.sourceCity,
+                                    destinationCity = item.load.destinationCity,
+                                    postedTime = item.load.postedTime,
+                                    price = item.load.price,
+                                    truckInfo = item.load.truckInfo,
+                                    commodity = item.load.commodity,
+                                    loadWeight = item.load.loadWeight,
+                                    f24AgentName = item.load.f24AgentName,
+                                    isBookmarked = item.load.isInterested,
+                                    isBookmarkLoading = item.load.isInterestLoading,
+                                    onClick = {
+                                        viewModel.onLoadCardClicked(
+                                            indentId = item.load.id,
+                                            tripPrice = item.load.price,
+                                        )
+                                    },
+                                    onCallClick = {
+                                        val phone = item.load.f24AgentPhone.trim()
+                                        if (phone.isNotEmpty() && phone != "--") {
+                                            val intent = Intent(Intent.ACTION_DIAL, "tel:$phone".toUri())
+                                            context.startActivity(intent)
+                                        }
+                                    },
+                                    onBookmarkClick = {
+                                        viewModel.onBookmarkClicked(item.load.id)
+                                    },
+                                )
+
+                            is LoadBoardItem.ShowMoreItem -> {
+                                TextButton(
+                                    onClick = { viewModel.onShowMoreClicked(item.cityId) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                ) {
+                                    Text(
+                                        text = "Show more loads",
+                                        color = MaterialTheme.colorScheme.primary,
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
         }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth(),
+        )
+    }
+
+    if (selectedIndentId != null) {
+        LoadDetailBottomSheet(
+            state = indentDetailState,
+            onDismiss = { viewModel.onDismissIndentSheet() },
+            onCallAgent = { phone ->
+                val trimmed = phone.trim()
+                if (trimmed.isNotEmpty() && trimmed != "--") {
+                    val intent = Intent(Intent.ACTION_DIAL, "tel:$trimmed".toUri())
+                    context.startActivity(intent)
+                }
+            },
+            onToggleInterest = { viewModel.onToggleInterestInSheet() },
+        )
     }
 }

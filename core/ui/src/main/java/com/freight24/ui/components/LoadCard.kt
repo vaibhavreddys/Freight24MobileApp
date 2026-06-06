@@ -1,5 +1,7 @@
 package com.freight24.ui.components
 
+import android.util.Log
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -53,6 +55,7 @@ fun LoadCard(
     onCallClick: () -> Unit,
     onBookmarkClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onClick: () -> Unit = {},
 ) {
     var showThankYouTooltip by remember { mutableStateOf(false) }
     val haptics = LocalHapticFeedback.current
@@ -65,8 +68,14 @@ fun LoadCard(
         }
     }
 
+    // Outer Card receives taps that fall outside the inner action buttons.
+    // The FooterIconButton and PrimaryCallButton consume their own touches
+    // first (they are themselves clickable), so the Card's onClick only
+    // fires for taps on the route, divider, and meta rows.
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
@@ -94,13 +103,15 @@ fun LoadCard(
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                        Spacer(Modifier.height(16.dp))
-                        Text(
-                            text = formatCurrency(price),
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold,
-                        )
+                        if (price.isNotBlank() && price != "null" && price != "--") {
+                            Spacer(Modifier.height(16.dp))
+                            Text(
+                                text = formatCurrency(price),
+                                style = MaterialTheme.typography.titleLarge,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
                     }
                 }
 
@@ -219,7 +230,6 @@ fun LoadCard(
 
 fun formatCurrency(amount: String?): String {
     if (amount.isNullOrBlank() || amount == "null") return "₹ 0"
-
     return try {
         // Remove any existing currency symbols/spaces and parse
         val numericValue = amount.replace("[₹,\\s]".toRegex(), "").toDoubleOrNull()
@@ -229,7 +239,7 @@ fun formatCurrency(amount: String?): String {
         } else {
             "₹ 0" // Fallback for invalid input
         }
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         "₹ 0" // Fallback for any parsing errors
     }
 }
