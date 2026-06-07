@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.truckowners.views
+import com.freight24.ui.components.FreightTopAppBar
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
@@ -44,7 +45,6 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -110,14 +110,14 @@ fun ManageTruckOwnersScreen(
     val selectedFilter by viewModel.selectedFilter.collectAsState()
     val filteredOwners by viewModel.filteredOwners.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
-    val successColor = FreightThemeTokens.colors.successColor
+    val successColor = FreightThemeTokens.colors.success
     val listState = rememberLazyListState()
     val animatedOwnerIds = remember { mutableStateListOf<String>() }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
+            FreightTopAppBar(
                 title = {
                     Text(
                         text = "Truck Owners",
@@ -329,7 +329,7 @@ private fun FilterChip(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val successColor = FreightThemeTokens.colors.successColor
+    val successColor = FreightThemeTokens.colors.success
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(24.dp),
@@ -351,7 +351,7 @@ private fun FilterChip(
                     fontWeight = FontWeight.Bold,
                     color =
                         if (isSelected) {
-                            FreightThemeTokens.colors.onSuccessColor
+                            FreightThemeTokens.colors.onSuccess
                         } else {
                             MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
                         }
@@ -485,10 +485,22 @@ private fun OwnerCard(
 private fun OwnerAvatar(owner: TruckOwnerDto) {
     val inactiveBackground = MaterialTheme.colorScheme.surfaceVariant
     val inactiveText = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+    val extended = FreightThemeTokens.colors
+    // Five M3 container/on-container pairs that read as distinct "owners"
+    // in the list. Resolved in composable scope so MaterialTheme / extended
+    // tokens can be read, then passed into the pure helper below.
+    val avatarPalettes = listOf(
+        MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer,
+        extended.surfaceSuccess to extended.onSurfaceSuccess,
+        extended.surfaceWarning to extended.onSurfaceWarning,
+        extended.surfaceInfo to extended.onSurfaceInfo,
+        MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.onErrorContainer,
+    )
     val palette =
         remember(owner.full_name, owner.ownerSection, inactiveBackground, inactiveText) {
             avatarPaletteFor(
                 owner = owner,
+                palettes = avatarPalettes,
                 inactiveBackground = inactiveBackground,
                 inactiveText = inactiveText
             )
@@ -515,7 +527,7 @@ private fun OwnerAvatar(owner: TruckOwnerDto) {
 
 @Composable
 private fun TagText(owner: TruckOwnerDto) {
-    val warningColor = FreightThemeTokens.colors.warningColor
+    val warningColor = FreightThemeTokens.colors.warning
 
     if (owner.ownerSection == OwnerSection.PENDING) {
         Text(
@@ -555,8 +567,8 @@ private fun TagText(owner: TruckOwnerDto) {
 
 @Composable
 private fun StatusBadge(section: OwnerSection) {
-    val successColor = FreightThemeTokens.colors.successColor
-    val warningColor = FreightThemeTokens.colors.warningColor
+    val successColor = FreightThemeTokens.colors.success
+    val warningColor = FreightThemeTokens.colors.warning
     val background: Color
     val content: Color
     val border: Color
@@ -631,8 +643,8 @@ private fun AddTruckOwnerFab(
                 scaleY = scale
             },
         shape = RoundedCornerShape(16.dp),
-        containerColor = FreightThemeTokens.colors.successColor,
-        contentColor = FreightThemeTokens.colors.onSuccessColor,
+        containerColor = FreightThemeTokens.colors.success,
+        contentColor = FreightThemeTokens.colors.onSuccess,
         interactionSource = interactionSource
     ) {
         Box(
@@ -667,14 +679,14 @@ private fun ErrorState(
         Spacer(modifier = Modifier.height(16.dp))
         Surface(
             shape = RoundedCornerShape(14.dp),
-            color = FreightThemeTokens.colors.successColor
+            color = FreightThemeTokens.colors.success
         ) {
             Text(
                 text = "Retry",
                 modifier = Modifier
                     .clickable(onClick = onRetry)
                     .padding(horizontal = 18.dp, vertical = 10.dp),
-                color = FreightThemeTokens.colors.onSuccessColor
+                color = FreightThemeTokens.colors.onSuccess
             )
         }
     }
@@ -729,6 +741,7 @@ private val TruckOwnerDto.ownerSection: OwnerSection
 
 private fun avatarPaletteFor(
     owner: TruckOwnerDto,
+    palettes: List<Pair<Color, Color>>,
     inactiveBackground: Color,
     inactiveText: Color
 ): Pair<Color, Color> {
@@ -736,14 +749,6 @@ private fun avatarPaletteFor(
         return inactiveBackground to inactiveText
     }
 
-    val palettes =
-        listOf(
-            Color(0xFFEEEDFE) to Color(0xFF534AB7),
-            Color(0xFFE1F5EE) to Color(0xFF0F6E56),
-            Color(0xFFFAEEDA) to Color(0xFF854F0B),
-            Color(0xFFE6F1FB) to Color(0xFF185FA5),
-            Color(0xFFFAECE7) to Color(0xFF993C1D)
-        )
     val hash = owner.full_name.trim().ifBlank { owner.id }.hashCode()
     return palettes[abs(hash) % palettes.size]
 }

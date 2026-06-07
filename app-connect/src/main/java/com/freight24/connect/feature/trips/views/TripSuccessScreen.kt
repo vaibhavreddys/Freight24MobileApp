@@ -53,13 +53,13 @@ fun TripSuccessScreen(
             Box(
                 modifier = Modifier
                     .size(80.dp)
-                    .background(extendedColors.successColor.copy(alpha = 0.12f), CircleShape),
+                    .background(extendedColors.success.copy(alpha = 0.12f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Box(
                     modifier = Modifier
                         .size(48.dp)
-                        .background(extendedColors.successColor, CircleShape),
+                        .background(extendedColors.success, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -110,7 +110,7 @@ fun TripSuccessScreen(
                             Text(
                                 "#$tripId",
                                 style = MaterialTheme.typography.titleMedium,
-                                color = extendedColors.successColor,
+                                color = extendedColors.success,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -139,7 +139,7 @@ fun TripSuccessScreen(
                             Box(
                                 modifier = Modifier
                                     .size(8.dp)
-                                    .background(extendedColors.successColor, CircleShape)
+                                    .background(extendedColors.success, CircleShape)
                             )
                             // Line
                             Box(
@@ -213,7 +213,7 @@ fun TripSuccessScreen(
                     .height(50.dp),
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = extendedColors.successColor,
+                    containerColor = extendedColors.success,
                     contentColor = colorScheme.onPrimary
                 )
             ) {

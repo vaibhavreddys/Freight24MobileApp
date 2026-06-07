@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.trips.views
+import com.freight24.ui.components.FreightTopAppBar
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -31,7 +32,7 @@ fun FilteredTripsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            FreightTopAppBar(
                 title = { 
                     Text(
                         text = uiState.selectedFilter.displayText,
@@ -47,9 +48,6 @@ fun FilteredTripsScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = colorScheme.surface
-                )
             )
         },
         containerColor = colorScheme.background

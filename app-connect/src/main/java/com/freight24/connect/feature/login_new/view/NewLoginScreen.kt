@@ -141,7 +141,7 @@ fun NewLoginScreen(
         val extendedColors = FreightThemeTokens.colors
         val loginGradient =
             Brush.verticalGradient(
-                colors = listOf(colorScheme.primary, extendedColors.infoColor),
+                colors = listOf(colorScheme.primary, extendedColors.info),
             )
 
         Scaffold(

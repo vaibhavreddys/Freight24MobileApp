@@ -2,106 +2,156 @@ package com.freight24.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Freight24 Expressive Design System Colors
-// Primary - Deep Green (Container stability)
-val PrimaryGreen = Color(0xFF509367)
-val PrimaryGreenGradient = Color(0xFFDEEFE4)
+// ---------------------------------------------------------------------------
+// Primary (indigo tonal palette — T0..T100, Tonal Spot)
+// Light-mode primary lives in T40; dark-mode primary lives in T80.
+// Container pairs: T90/T10 (light), T30/T90 (dark).
+// ---------------------------------------------------------------------------
 
-val OnPrimary = Color(0xFFFFFFFF)
-val OnPrimaryInverse = Color(0xFFF3F4F6)
-val PrimaryContainer = Color(0xFF2D5A42)
-val OnPrimaryContainer = Color(0xFF9FCFB1)
+internal val Primary40 = Color(0xFF6750A4)
+internal val Primary80 = Color(0xFFD0BCFF)
+internal val Primary90 = Color(0xFFEADDFF)
+internal val Primary30 = Color(0xFF4F378B)
+internal val OnPrimary100 = Color(0xFFFFFFFF)
+internal val OnPrimary20 = Color(0xFF381E72)
+internal val OnPrimaryContainer100 = Color(0xFF21005D)
+internal val InversePrimaryLight = Color(0xFFD0BCFF)
+internal val InversePrimaryDark = Color(0xFF6750A4)
 
-//val InversePrimary = Color(0xFFA1D2B3)
-val InversePrimary = Color(0xFF34D399)
+// ---------------------------------------------------------------------------
+// Secondary (mauve — supports primary)
+// ---------------------------------------------------------------------------
 
-// 0xFF34D399
+internal val Secondary40 = Color(0xFF625B71)
+internal val Secondary80 = Color(0xFFCCC2DC)
+internal val Secondary90 = Color(0xFFE8DEF8)
+internal val Secondary30 = Color(0xFF4A4458)
+internal val OnSecondary100 = Color(0xFFFFFFFF)
+internal val OnSecondary20 = Color(0xFF332D41)
+internal val OnSecondaryContainer100 = Color(0xFF1D192B)
 
-// Secondary - Sage (Softens interface)
-val SecondarySage = Color(0xFF3F6750)
-val OnSecondary = Color(0xFFFFFFFF)
-val SecondaryContainer = Color(0xFFF4F4F0)
-val OnSecondaryContainer = Color(0xFF456D56)
+// ---------------------------------------------------------------------------
+// Tertiary (rose/pink — accent for status badges, tags)
+// ---------------------------------------------------------------------------
 
-// Tertiary - Warm Neutral/Sand (Highway-inspired)
-val TertiarySand = Color(0xFF717972)
-val OnTertiary = Color(0xFFFFFFFF)
-val TertiaryContainer = Color(0xFF50524C)
-val OnTertiaryContainer = Color(0xFFC4C5BD)
+internal val Tertiary40 = Color(0xFF7D5260)
+internal val Tertiary80 = Color(0xFFEFB8C8)
+internal val Tertiary90 = Color(0xFFFFD8E4)
+internal val Tertiary30 = Color(0xFF633B48)
+internal val OnTertiary100 = Color(0xFFFFFFFF)
+internal val OnTertiary20 = Color(0xFF492532)
+internal val OnTertiaryContainer100 = Color(0xFF31111D)
 
-// Error
-val ErrorRed = Color(0xFFBA1A1A)
-val OnError = Color(0xFFFFFFFF)
-val ErrorContainer = Color(0xFFEE9F96)
-val OnErrorContainer = Color(0xFF93000A)
+// ---------------------------------------------------------------------------
+// Error (Material 3 standard tonal)
+// ---------------------------------------------------------------------------
 
-// Surface tones (Tonal Layers)
-val SurfaceLight = Color(0xFFDEDDD9)
-val SurfaceDimLight = Color(0xFFCECECB)
-val SurfaceBrightLight = Color(0xFFFAF9F6)
-val SurfaceContainerLowestLight = Color(0xFFFFFFFF)
-val SurfaceContainerLowLight = Color(0xFFF4F4F0)
-val SurfaceContainerLight = Color(0xFFEEEEEA)
-val SurfaceContainerHighLight = Color(0xFFE8E8E5)
-val SurfaceContainerHighestLight = Color(0xFFE2E3DF)
+internal val Error40 = Color(0xFFBA1A1A)
+internal val Error80 = Color(0xFFFFB4AB)
+internal val Error90 = Color(0xFFFFDAD6)
+internal val Error30 = Color(0xFF93000A)
+internal val OnError100 = Color(0xFFFFFFFF)
+internal val OnError20 = Color(0xFF690005)
+internal val OnErrorContainer100 = Color(0xFF410002)
 
-val SurfaceDark = Color(0xFF262826) // #CC785C // 1E201D
-val SurfaceDimDark = Color(0xFF272827)
-val SurfaceBrightDark = Color(0xFF3F3F3F)
-val SurfaceContainerLowestDark = Color(0xFF0E110E)
-val SurfaceContainerLowDark = Color(0xFF1A1C1A)
-val SurfaceContainerDark = Color(0xFF1E201E)
-val SurfaceContainerHighDark = Color(0xFF282B28)
-val SurfaceContainerHighestDark = Color(0xFF333633)
+// ---------------------------------------------------------------------------
+// Surfaces — light mode (very subtly lavender-tinted, M3 default for indigo)
+// Background/surface = #FEF7FF (T98); containers step down to T90.
+// ---------------------------------------------------------------------------
 
-// Background
-val BackgroundLight = Color(0xFFFAF9F6)
-val BackgroundDark = Color(0xFF1A1C1A)
+internal val BackgroundLight98 = Color(0xFFFEF7FF)
+internal val OnBackgroundLight10 = Color(0xFF1D1B20)
+internal val SurfaceLight98 = Color(0xFFFEF7FF)
+internal val OnSurfaceLight10 = Color(0xFF1D1B20)
+internal val SurfaceVariantLight90 = Color(0xFFE7E0EC)
+internal val OnSurfaceVariantLight30 = Color(0xFF49454F)
+internal val SurfaceDimLight87 = Color(0xFFDED8E1)
+internal val SurfaceBrightLight98 = Color(0xFFFEF7FF)
+internal val SurfaceContainerLowestLight100 = Color(0xFFFFFFFF)
+internal val SurfaceContainerLowLight96 = Color(0xFFF7F2FA)
+internal val SurfaceContainerLight94 = Color(0xFFF1ECF4)
+internal val SurfaceContainerHighLight92 = Color(0xFFECE6EE)
+internal val SurfaceContainerHighestLight90 = Color(0xFFE6E0E9)
 
-// On-Surface (Text)
-val OnSurfaceLight = Color(0xFF1A1C1A)
-val OnSurfaceDark = Color(0xFFF1F1ED)
-val OnSurfaceVariantLight = Color(0xFF414943)
-val OnSurfaceVariantDark = Color(0xFFC1C9C1)
+// ---------------------------------------------------------------------------
+// Surfaces — dark mode (very subtly lavender-tinted)
+// Background/surface = #141218 (T6); containers step up to T22.
+// ---------------------------------------------------------------------------
 
-// Outline
-val OutlineLight = Color(0xFF717972)
-val OutlineDark = Color(0xFF8B938C)
-val OutlineVariantLight = Color(0xFFC1C9C1)
-val OutlineVariantDark = Color(0xFFDCE7DF)
+internal val BackgroundDark6 = Color(0xFF141218)
+internal val OnBackgroundDark90 = Color(0xFFE6E0E9)
+internal val SurfaceDark6 = Color(0xFF141218)
+internal val OnSurfaceDark90 = Color(0xFFE6E0E9)
+internal val SurfaceVariantDark30 = Color(0xFF49454F)
+internal val OnSurfaceVariantDark80 = Color(0xFFCAC4D0)
+internal val SurfaceDimDark6 = Color(0xFF141218)
+internal val SurfaceBrightDark22 = Color(0xFF3B383E)
+internal val SurfaceContainerLowestDark4 = Color(0xFF0F0D13)
+internal val SurfaceContainerLowDark10 = Color(0xFF1D1B20)
+internal val SurfaceContainerDark12 = Color(0xFF211F26)
+internal val SurfaceContainerHighDark17 = Color(0xFF2B2930)
+internal val SurfaceContainerHighestDark20 = Color(0xFF36343B)
 
-// Inverse
-val InverseSurfaceLight = Color(0xFF2F312F)
-val InverseSurfaceDark = Color(0xFFE2E3DF)
-val InverseOnSurfaceLight = Color(0xFFF1F1ED)
-val InverseOnSurfaceDark = Color(0xFF1A1C1A)
+// ---------------------------------------------------------------------------
+// Outlines & inverse
+// ---------------------------------------------------------------------------
 
-// Utility Colors
-val DisabledButtonColorLight = Color(0xFFE2E3DF)
-val DisabledButtonColorDark = Color(0xFF414943)
-val WarningYellow = Color(0xFFF9A825)
-val SuccessGreenLight = Color(0xFF0F6E56)
-val SuccessGreenDark = Color(0xFF1D9E75)
-val WarningAmberLight = Color(0xFF854F0B)
-val WarningAmberDark = Color(0xFFBA7517)
-val InfoBlueLight = Color(0xFF185FA5)
-val InfoBlueDark = Color(0xFF378ADD)
-val SuccessOnColor = Color(0xFFFFFFFF)
-val DialogScrimLight = Color(0x66000000)
-val DialogScrimDark = Color(0x99000000)
-val SettingsPurpleLight = Color(0xFF534AB7)
-val SettingsPurpleDark = Color(0xFF7F77DD)
+internal val OutlineLight50 = Color(0xFF79747E)
+internal val OutlineDark60 = Color(0xFF938F99)
+internal val OutlineVariantLight80 = Color(0xFFCAC4D0)
+internal val OutlineVariantDark30 = Color(0xFF49454F)
+internal val InverseSurfaceLight20 = Color(0xFF322F35)
+internal val InverseSurfaceDark90 = Color(0xFFE6E0E9)
+internal val InverseOnSurfaceLight95 = Color(0xFFF5EFF7)
+internal val InverseOnSurfaceDark10 = Color(0xFF1D1B20)
 
-// Legacy aliases for backward compatibility
-val PrimaryGreenLegacy = Color(0xFF10B981)
-val SecondaryRed = Color(0xFFEF4444)
-val PurpleTertiary = Color(0xFF7E57C2)
-val DividerColor = Color(0xFFE0E0E0)
-val DividerColorLight = Color(0xFFE5E7EB)
-val DividerColorDark = Color(0xFF2A2F36)
-val CardLight = Color(0xFFFFFFFF)
-val CardDark = Color(0xFF1F2937)
-val TextMainLight = Color(0xFF1A1C1A)
-val TextMainDark = Color(0xFFF1F1ED)
-val TextMutedLight = Color(0xFF414943)
-val TextMutedDark = Color(0xFFC1C9C1)
+// ---------------------------------------------------------------------------
+// Extended — status (success / warning / info) tonal pairs
+// Status colors stay green/amber/blue even with indigo brand — they're
+// semantic (success=green, warning=amber, info=blue) and matching the
+// universal mental model beats brand purity here.
+// ---------------------------------------------------------------------------
+
+// Success — green, distinct from indigo brand
+internal val SuccessLight = Color(0xFF0F6E56)
+internal val OnSuccessLight = Color(0xFFFFFFFF)
+internal val SurfaceSuccessLight = Color(0xFFCEEBDF)
+internal val OnSurfaceSuccessLight = Color(0xFF07211A)
+internal val SuccessDark = Color(0xFF74D6B0)
+internal val OnSuccessDark = Color(0xFF003828)
+internal val SurfaceSuccessDark = Color(0xFF21513F)
+internal val OnSurfaceSuccessDark = Color(0xFFCEEBDF)
+
+// Warning — amber, distinct from green/blue
+internal val WarningLight = Color(0xFF854F0B)
+internal val OnWarningLight = Color(0xFFFFFFFF)
+internal val SurfaceWarningLight = Color(0xFFFFDDB1)
+internal val OnSurfaceWarningLight = Color(0xFF2A1700)
+internal val WarningDark = Color(0xFFFFB95C)
+internal val OnWarningDark = Color(0xFF462900)
+internal val SurfaceWarningDark = Color(0xFF623F12)
+internal val OnSurfaceWarningDark = Color(0xFFFFDDB1)
+
+// Info — blue, distinct from indigo/green/amber
+internal val InfoLight = Color(0xFF185FA5)
+internal val OnInfoLight = Color(0xFFFFFFFF)
+internal val SurfaceInfoLight = Color(0xFFD4E3FF)
+internal val OnSurfaceInfoLight = Color(0xFF001B3D)
+internal val InfoDark = Color(0xFFA6C8FF)
+internal val OnInfoDark = Color(0xFF003063)
+internal val SurfaceInfoDark = Color(0xFF284777)
+internal val OnSurfaceInfoDark = Color(0xFFD4E3FF)
+
+// ---------------------------------------------------------------------------
+// Extended — brand extras (settings accent + scrim)
+// ---------------------------------------------------------------------------
+
+// Settings — deeper indigo, for settings/profile chrome accents
+internal val SettingsLight = Color(0xFF534AB7)
+internal val OnSettingsLight = Color(0xFFFFFFFF)
+internal val SettingsDark = Color(0xFFBDB3FF)
+internal val OnSettingsDark = Color(0xFF1E1561)
+
+// Scrim — dialog scrim opacity differs per mode for legibility on M3 surfaces
+internal val DialogScrimLight = Color(0x66000000)
+internal val DialogScrimDark = Color(0x99000000)

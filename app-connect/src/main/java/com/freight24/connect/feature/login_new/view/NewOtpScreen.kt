@@ -103,10 +103,10 @@ fun NewOtpScreen(
         val colorScheme = MaterialTheme.colorScheme
         val extendedColors = FreightThemeTokens.colors
         val headerGradient = Brush.verticalGradient(
-            colors = listOf(colorScheme.primary, extendedColors.infoColor)
+            colors = listOf(colorScheme.primary, extendedColors.info)
         )
         val buttonGradient = Brush.horizontalGradient(
-            colors = listOf(colorScheme.primary, extendedColors.successColor)
+            colors = listOf(colorScheme.primary, extendedColors.success)
         )
 
         Scaffold(
@@ -184,13 +184,13 @@ fun NewOtpScreen(
                                         Icon(
                                             imageVector = Icons.Filled.Edit,
                                             contentDescription = null,
-                                            tint = extendedColors.successColor,
+                                            tint = extendedColors.success,
                                             modifier = Modifier.size(16.dp)
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text(
                                             text = "Wrong number?",
-                                            color = extendedColors.successColor,
+                                            color = extendedColors.success,
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.SemiBold
                                         )
@@ -269,13 +269,13 @@ fun NewOtpScreen(
                                         Icon(
                                             imageVector = Icons.Filled.Refresh,
                                             contentDescription = null,
-                                            tint = if (isResendEnabled) extendedColors.successColor else colorScheme.onSurfaceVariant,
+                                            tint = if (isResendEnabled) extendedColors.success else colorScheme.onSurfaceVariant,
                                             modifier = Modifier.size(16.dp)
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text(
                                             text = if (isResendEnabled) "Resend OTP" else "Resend OTP in ${resendSecondsRemaining}s",
-                                            color = if (isResendEnabled) extendedColors.successColor else colorScheme.onSurfaceVariant,
+                                            color = if (isResendEnabled) extendedColors.success else colorScheme.onSurfaceVariant,
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.Medium
                                         )
@@ -312,13 +312,13 @@ fun NewOtpScreen(
                                 Box(
                                     modifier = Modifier
                                         .size(36.dp)
-                                        .background(extendedColors.successColor.copy(alpha = 0.12f), CircleShape),
+                                        .background(extendedColors.success.copy(alpha = 0.12f), CircleShape),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = Icons.Filled.LocalPhone,
                                         contentDescription = null,
-                                        tint = extendedColors.successColor,
+                                        tint = extendedColors.success,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }

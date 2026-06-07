@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.trucks.views
+import com.freight24.ui.components.FreightTopAppBar
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -40,14 +41,13 @@ fun AssignTruckScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            FreightTopAppBar(
                 title = { Text("Assign Truck", fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = colorScheme.surface)
             )
         },
         containerColor = colorScheme.background
@@ -156,8 +156,8 @@ fun TruckItem(
     val statusText = TruckStatus.from(truck).displayText
     val colorScheme = MaterialTheme.colorScheme
     val extendedColors = FreightThemeTokens.colors
-    val statusColor = if (isEnabled) extendedColors.successColor else colorScheme.error
-    val buttonColor = if (isEnabled) extendedColors.successColor else colorScheme.surfaceVariant
+    val statusColor = if (isEnabled) extendedColors.success else colorScheme.error
+    val buttonColor = if (isEnabled) extendedColors.success else colorScheme.surfaceVariant
     val buttonContentColor = if (isEnabled) colorScheme.onPrimary else colorScheme.onSurfaceVariant
 
     Card(

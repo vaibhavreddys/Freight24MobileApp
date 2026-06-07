@@ -19,144 +19,358 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val LightColorScheme =
+// ---------------------------------------------------------------------------
+// Indigo M3 schemes (existing — preserved exactly as-is)
+// ---------------------------------------------------------------------------
+
+private val IndigoLightColorScheme =
     lightColorScheme(
-        primary = PrimaryGreen,
-        onPrimary = OnPrimary,
-        primaryContainer = PrimaryContainer,
-        onPrimaryContainer = OnPrimaryContainer,
-        inversePrimary = InversePrimary,
-        secondary = SecondarySage,
-        onSecondary = OnSecondary,
-        secondaryContainer = SecondaryContainer,
-        onSecondaryContainer = OnSecondaryContainer,
-        tertiary = TertiarySand,
-        onTertiary = OnTertiary,
-        tertiaryContainer = TertiaryContainer,
-        onTertiaryContainer = OnTertiaryContainer,
-        error = ErrorRed,
-        onError = OnError,
-        errorContainer = ErrorContainer,
-        onErrorContainer = OnErrorContainer,
-        background = BackgroundLight,
-        onBackground = OnSurfaceLight,
-        surface = SurfaceLight,
-        onSurface = OnSurfaceLight,
-        surfaceVariant = SurfaceContainerLight,
-        onSurfaceVariant = OnSurfaceVariantLight,
-        surfaceDim = SurfaceDimLight,
-        surfaceBright = SurfaceBrightLight,
-        surfaceContainerLowest = SurfaceContainerLowestLight,
-        surfaceContainerLow = SurfaceContainerLowLight,
-        surfaceContainer = SurfaceContainerLight,
-        surfaceContainerHigh = SurfaceContainerHighLight,
-        surfaceContainerHighest = SurfaceContainerHighestLight,
-        outline = OutlineLight,
-        outlineVariant = OutlineVariantLight,
-        inverseSurface = InverseSurfaceLight,
-        inverseOnSurface = InverseOnSurfaceLight,
-        surfaceTint = PrimaryGreenGradient,
+        primary = Primary40,
+        onPrimary = OnPrimary100,
+        primaryContainer = Primary90,
+        onPrimaryContainer = OnPrimaryContainer100,
+        inversePrimary = InversePrimaryLight,
+        secondary = Secondary40,
+        onSecondary = OnSecondary100,
+        secondaryContainer = Secondary90,
+        onSecondaryContainer = OnSecondaryContainer100,
+        tertiary = Tertiary40,
+        onTertiary = OnTertiary100,
+        tertiaryContainer = Tertiary90,
+        onTertiaryContainer = OnTertiaryContainer100,
+        error = Error40,
+        onError = OnError100,
+        errorContainer = Error90,
+        onErrorContainer = OnErrorContainer100,
+        background = BackgroundLight98,
+        onBackground = OnBackgroundLight10,
+        surface = SurfaceLight98,
+        onSurface = OnSurfaceLight10,
+        surfaceVariant = SurfaceVariantLight90,
+        onSurfaceVariant = OnSurfaceVariantLight30,
+        surfaceDim = SurfaceDimLight87,
+        surfaceBright = SurfaceBrightLight98,
+        surfaceContainerLowest = SurfaceContainerLowestLight100,
+        surfaceContainerLow = SurfaceContainerLowLight96,
+        surfaceContainer = SurfaceContainerLight94,
+        surfaceContainerHigh = SurfaceContainerHighLight92,
+        surfaceContainerHighest = SurfaceContainerHighestLight90,
+        outline = OutlineLight50,
+        outlineVariant = OutlineVariantLight80,
+        inverseSurface = InverseSurfaceLight20,
+        inverseOnSurface = InverseOnSurfaceLight95,
+        surfaceTint = Primary40,
     )
 
-private val DarkColorScheme =
+private val IndigoDarkColorScheme =
     darkColorScheme(
-        primary = PrimaryGreen,
-        onPrimary = OnPrimaryInverse,
-        primaryContainer = PrimaryContainer,
-        onPrimaryContainer = OnPrimaryContainer,
-        inversePrimary = PrimaryGreen,
-        secondary = SecondaryContainer,
-        onSecondary = OnSecondaryContainer,
-        secondaryContainer = SecondarySage,
-        onSecondaryContainer = OnSecondary,
-        tertiary = OnTertiaryContainer,
-        onTertiary = OnTertiary,
-        tertiaryContainer = TertiaryContainer,
-        onTertiaryContainer = OnTertiaryContainer,
-        error = ErrorRed,
-        onError = OnError,
-        errorContainer = ErrorContainer,
-        onErrorContainer = OnErrorContainer,
-        background = BackgroundDark,
-        onBackground = OnSurfaceDark,
-        surface = SurfaceDark,
-        onSurface = OnSurfaceDark,
-        surfaceVariant = SurfaceContainerDark,
-        onSurfaceVariant = OnSurfaceVariantDark,
-        surfaceDim = SurfaceDimDark,
-        surfaceBright = SurfaceBrightDark,
-        surfaceContainerLowest = SurfaceContainerLowestDark,
-        surfaceContainerLow = SurfaceContainerLowDark,
-        surfaceContainer = SurfaceContainerDark,
-        surfaceContainerHigh = SurfaceContainerHighDark,
-        surfaceContainerHighest = SurfaceContainerHighestDark,
-        outline = OutlineDark,
-        outlineVariant = OutlineVariantDark,
-        inverseSurface = InverseSurfaceDark,
-        inverseOnSurface = InverseOnSurfaceDark,
-        surfaceTint = SurfaceDark,
+        primary = Primary80,
+        onPrimary = OnPrimary20,
+        primaryContainer = Primary30,
+        onPrimaryContainer = Primary90,
+        inversePrimary = InversePrimaryDark,
+        secondary = Secondary80,
+        onSecondary = OnSecondary20,
+        secondaryContainer = Secondary30,
+        onSecondaryContainer = Secondary90,
+        tertiary = Tertiary80,
+        onTertiary = OnTertiary20,
+        tertiaryContainer = Tertiary30,
+        onTertiaryContainer = Tertiary90,
+        error = Error80,
+        onError = OnError20,
+        errorContainer = Error30,
+        onErrorContainer = Error90,
+        background = BackgroundDark6,
+        onBackground = OnBackgroundDark90,
+        surface = SurfaceDark6,
+        onSurface = OnSurfaceDark90,
+        surfaceVariant = SurfaceVariantDark30,
+        onSurfaceVariant = OnSurfaceVariantDark80,
+        surfaceDim = SurfaceDimDark6,
+        surfaceBright = SurfaceBrightDark22,
+        surfaceContainerLowest = SurfaceContainerLowestDark4,
+        surfaceContainerLow = SurfaceContainerLowDark10,
+        surfaceContainer = SurfaceContainerDark12,
+        surfaceContainerHigh = SurfaceContainerHighDark17,
+        surfaceContainerHighest = SurfaceContainerHighestDark20,
+        outline = OutlineDark60,
+        outlineVariant = OutlineVariantDark30,
+        inverseSurface = InverseSurfaceDark90,
+        inverseOnSurface = InverseOnSurfaceDark10,
+        surfaceTint = Primary80,
     )
 
-private val LightExtendedColors =
+// ---------------------------------------------------------------------------
+// Green M3 schemes (derived from the original Freight24 green identity)
+// ---------------------------------------------------------------------------
+
+private val GreenLightColorScheme =
+    lightColorScheme(
+        primary = GreenPrimary40,
+        onPrimary = GreenOnPrimary100,
+        primaryContainer = GreenPrimary90,
+        onPrimaryContainer = GreenOnPrimaryContainer100,
+        inversePrimary = GreenInversePrimaryLight,
+        secondary = GreenSecondary40,
+        onSecondary = GreenOnSecondary100,
+        secondaryContainer = GreenSecondary90,
+        onSecondaryContainer = GreenOnSecondaryContainer100,
+        tertiary = GreenTertiary40,
+        onTertiary = GreenOnTertiary100,
+        tertiaryContainer = GreenTertiary90,
+        onTertiaryContainer = GreenOnTertiaryContainer100,
+        error = GreenError40,
+        onError = GreenOnError100,
+        errorContainer = GreenError90,
+        onErrorContainer = GreenOnErrorContainer100,
+        background = GreenBackgroundLight98,
+        onBackground = GreenOnBackgroundLight10,
+        surface = GreenSurfaceLight98,
+        onSurface = GreenOnSurfaceLight10,
+        surfaceVariant = GreenSurfaceVariantLight90,
+        onSurfaceVariant = GreenOnSurfaceVariantLight30,
+        surfaceDim = GreenSurfaceDimLight87,
+        surfaceBright = GreenSurfaceBrightLight98,
+        surfaceContainerLowest = GreenSurfaceContainerLowestLight100,
+        surfaceContainerLow = GreenSurfaceContainerLowLight96,
+        surfaceContainer = GreenSurfaceContainerLight94,
+        surfaceContainerHigh = GreenSurfaceContainerHighLight92,
+        surfaceContainerHighest = GreenSurfaceContainerHighestLight90,
+        outline = GreenOutlineLight50,
+        outlineVariant = GreenOutlineVariantLight80,
+        inverseSurface = GreenInverseSurfaceLight20,
+        inverseOnSurface = GreenInverseOnSurfaceLight95,
+        surfaceTint = GreenPrimary40,
+    )
+
+private val GreenDarkColorScheme =
+    darkColorScheme(
+        primary = GreenPrimary80,
+        onPrimary = GreenOnPrimary20,
+        primaryContainer = GreenPrimary30,
+        onPrimaryContainer = GreenPrimary90,
+        inversePrimary = GreenInversePrimaryDark,
+        secondary = GreenSecondary80,
+        onSecondary = GreenOnSecondary20,
+        secondaryContainer = GreenSecondary30,
+        onSecondaryContainer = GreenSecondary90,
+        tertiary = GreenTertiary80,
+        onTertiary = GreenOnTertiary20,
+        tertiaryContainer = GreenTertiary30,
+        onTertiaryContainer = GreenTertiary90,
+        error = GreenError80,
+        onError = GreenOnError20,
+        errorContainer = GreenError30,
+        onErrorContainer = GreenError90,
+        background = GreenBackgroundDark6,
+        onBackground = GreenOnBackgroundDark90,
+        surface = GreenSurfaceDark6,
+        onSurface = GreenOnSurfaceDark90,
+        surfaceVariant = GreenSurfaceVariantDark30,
+        onSurfaceVariant = GreenOnSurfaceVariantDark80,
+        surfaceDim = GreenSurfaceDimDark6,
+        surfaceBright = GreenSurfaceBrightDark22,
+        surfaceContainerLowest = GreenSurfaceContainerLowestDark4,
+        surfaceContainerLow = GreenSurfaceContainerLowDark10,
+        surfaceContainer = GreenSurfaceContainerDark12,
+        surfaceContainerHigh = GreenSurfaceContainerHighDark17,
+        surfaceContainerHighest = GreenSurfaceContainerHighestDark20,
+        outline = GreenOutlineDark60,
+        outlineVariant = GreenOutlineVariantDark30,
+        inverseSurface = GreenInverseSurfaceDark90,
+        inverseOnSurface = GreenInverseOnSurfaceDark10,
+        surfaceTint = GreenPrimary80,
+    )
+
+// ---------------------------------------------------------------------------
+// Extended colors — Indigo (success/warning/info stay the same; brand
+// accents routeOrigin/routeDestination swap to match the primary palette)
+// ---------------------------------------------------------------------------
+
+private val IndigoLightExtendedColors =
     FreightExtendedColors(
-        successColor = SuccessGreenLight,
-        warningColor = WarningAmberLight,
-        infoColor = InfoBlueLight,
-        settingsColor = SettingsPurpleLight,
-        onSuccessColor = SuccessOnColor,
-        dialogScrimColor = DialogScrimLight,
-        surfaceGray = Color(0xFFF3F3F3),
-        borderOverlay = Color(0xFFF1F5F9),
-        surfaceSuccessLight = Color(0xFFECFDF5),
-        surfaceSuccessLighter = Color(0xFFF0FDF4),
+        success = SuccessLight,
+        onSuccess = OnSuccessLight,
+        surfaceSuccess = SurfaceSuccessLight,
+        onSurfaceSuccess = OnSurfaceSuccessLight,
+        warning = WarningLight,
+        onWarning = OnWarningLight,
+        surfaceWarning = SurfaceWarningLight,
+        onSurfaceWarning = OnSurfaceWarningLight,
+        info = InfoLight,
+        onInfo = OnInfoLight,
+        surfaceInfo = SurfaceInfoLight,
+        onSurfaceInfo = OnSurfaceInfoLight,
+        settings = SettingsLight,
+        onSettings = OnSettingsLight,
+        dialogScrim = DialogScrimLight,
+        routeOrigin = Primary40,
+        onRouteOrigin = OnPrimary100,
+        routeDestination = Tertiary40,
+        onRouteDestination = OnTertiary100,
+        statusAvailable = SuccessLight,
+        onStatusAvailable = OnSuccessLight,
+        statusPending = WarningLight,
+        onStatusPending = OnWarningLight,
     )
 
-private val DarkExtendedColors =
+private val IndigoDarkExtendedColors =
     FreightExtendedColors(
-        successColor = SuccessGreenDark,
-        warningColor = WarningAmberDark,
-        infoColor = InfoBlueDark,
-        settingsColor = SettingsPurpleDark,
-        onSuccessColor = SuccessOnColor,
-        dialogScrimColor = DialogScrimDark,
-        surfaceGray = Color(0xFF374151),
-        borderOverlay = Color(0xFF374151),
-        surfaceSuccessLight = Color(0xFF064E3B),
-        surfaceSuccessLighter = Color(0xFFECFDF5),
+        success = SuccessDark,
+        onSuccess = OnSuccessDark,
+        surfaceSuccess = SurfaceSuccessDark,
+        onSurfaceSuccess = OnSurfaceSuccessDark,
+        warning = WarningDark,
+        onWarning = OnWarningDark,
+        surfaceWarning = SurfaceWarningDark,
+        onSurfaceWarning = OnSurfaceWarningDark,
+        info = InfoDark,
+        onInfo = OnInfoDark,
+        surfaceInfo = SurfaceInfoDark,
+        onSurfaceInfo = OnSurfaceInfoDark,
+        settings = SettingsDark,
+        onSettings = OnSettingsDark,
+        dialogScrim = DialogScrimDark,
+        routeOrigin = Primary80,
+        onRouteOrigin = OnPrimary20,
+        routeDestination = Tertiary80,
+        onRouteDestination = OnTertiary20,
+        statusAvailable = SuccessDark,
+        onStatusAvailable = OnSuccessDark,
+        statusPending = WarningDark,
+        onStatusPending = OnWarningDark,
     )
 
+// ---------------------------------------------------------------------------
+// Extended colors — Green (success/warning/info stay the same; routeOrigin
+// swaps to green primary so the route indicator harmonizes with the palette)
+// ---------------------------------------------------------------------------
+
+private val GreenLightExtendedColors =
+    FreightExtendedColors(
+        success = SuccessLight,
+        onSuccess = OnSuccessLight,
+        surfaceSuccess = SurfaceSuccessLight,
+        onSurfaceSuccess = OnSurfaceSuccessLight,
+        warning = WarningLight,
+        onWarning = OnWarningLight,
+        surfaceWarning = SurfaceWarningLight,
+        onSurfaceWarning = OnSurfaceWarningLight,
+        info = InfoLight,
+        onInfo = OnInfoLight,
+        surfaceInfo = SurfaceInfoLight,
+        onSurfaceInfo = OnSurfaceInfoLight,
+        settings = SettingsLight,
+        onSettings = OnSettingsLight,
+        dialogScrim = DialogScrimLight,
+        routeOrigin = GreenPrimary40,
+        onRouteOrigin = GreenOnPrimary100,
+        routeDestination = GreenTertiary40,
+        onRouteDestination = GreenOnTertiary100,
+        statusAvailable = SuccessLight,
+        onStatusAvailable = OnSuccessLight,
+        statusPending = WarningLight,
+        onStatusPending = OnWarningLight,
+    )
+
+private val GreenDarkExtendedColors =
+    FreightExtendedColors(
+        success = SuccessDark,
+        onSuccess = OnSuccessDark,
+        surfaceSuccess = SurfaceSuccessDark,
+        onSurfaceSuccess = OnSurfaceSuccessDark,
+        warning = WarningDark,
+        onWarning = OnWarningDark,
+        surfaceWarning = SurfaceWarningDark,
+        onSurfaceWarning = OnSurfaceWarningDark,
+        info = InfoDark,
+        onInfo = OnInfoDark,
+        surfaceInfo = SurfaceInfoDark,
+        onSurfaceInfo = OnSurfaceInfoDark,
+        settings = SettingsDark,
+        onSettings = OnSettingsDark,
+        dialogScrim = DialogScrimDark,
+        routeOrigin = GreenPrimary80,
+        onRouteOrigin = GreenOnPrimary20,
+        routeDestination = GreenTertiary80,
+        onRouteDestination = GreenOnTertiary20,
+        statusAvailable = SuccessDark,
+        onStatusAvailable = OnSuccessDark,
+        statusPending = WarningDark,
+        onStatusPending = OnWarningDark,
+    )
+
+// ---------------------------------------------------------------------------
+// CompositionLocal for the current theme choice
+// ---------------------------------------------------------------------------
+
+/** Provides the currently-selected [FreightAppTheme] throughout the tree. */
+val LocalAppTheme =
+    androidx.compose.runtime.staticCompositionLocalOf<FreightAppTheme> {
+        FreightAppTheme.INDIGO
+    }
+
+/**
+ * App-wide theme entry point.
+ *
+ * @param appTheme The user-selected color scheme (Indigo or Green).
+ * @param darkTheme Whether dark mode is active. Derived from system when
+ *   [darkModeOverride] is `"system"` (the default); forced on/off otherwise.
+ * @param darkModeOverride One of `"system"`, `"on"`, or `"off"` — persisted
+ *   by [com.freight24.common.manager.ThemePreferenceManager].
+ * @param dynamicColor Material You dynamic color — opt-in only, default false.
+ * @param content Root composable.
+ */
 @Composable
 fun Freight24Theme(
+    appTheme: FreightAppTheme = FreightAppTheme.INDIGO,
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
+    darkModeOverride: String = "system",
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit,
 ) {
+    // Resolve dark mode: if the user picked "on"/"off", honour that;
+    // otherwise defer to the system setting (the darkTheme parameter).
+    val isDark = when (darkModeOverride) {
+        "on" -> true
+        "off" -> false
+        else -> darkTheme
+    }
+
     val colorScheme =
         when {
             dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
                 val context = LocalContext.current
-                if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+                if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
             }
-            darkTheme -> DarkColorScheme
-            else -> LightColorScheme
+            isDark && appTheme == FreightAppTheme.GREEN -> GreenDarkColorScheme
+            isDark -> IndigoDarkColorScheme
+            appTheme == FreightAppTheme.GREEN -> GreenLightColorScheme
+            else -> IndigoLightColorScheme
         }
+
     val extendedColors =
         when {
-            darkTheme -> DarkExtendedColors
-            else -> LightExtendedColors
+            isDark && appTheme == FreightAppTheme.GREEN -> GreenDarkExtendedColors
+            isDark -> IndigoDarkExtendedColors
+            appTheme == FreightAppTheme.GREEN -> GreenLightExtendedColors
+            else -> IndigoLightExtendedColors
         }
+
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.background.toArgb() // Use background color for status bar to blend in
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            window.statusBarColor = colorScheme.surface.toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !isDark
         }
     }
-    val extendedFontsMono = MaterialTheme.typography.bodyMedium.copy(fontFamily = monoSpace)
 
-    CompositionLocalProvider(LocalFreightExtendedColors provides extendedColors) {
+    CompositionLocalProvider(
+        LocalFreightExtendedColors provides extendedColors,
+        LocalAppTheme provides appTheme,
+    ) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = AppTypography,

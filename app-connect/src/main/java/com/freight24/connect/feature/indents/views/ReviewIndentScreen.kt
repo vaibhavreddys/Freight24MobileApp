@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.indents.views
+import com.freight24.ui.components.FreightTopAppBar
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -26,7 +27,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -83,7 +83,7 @@ fun ReviewIndentScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            FreightTopAppBar(
                 title = { Text("Review Indent") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {

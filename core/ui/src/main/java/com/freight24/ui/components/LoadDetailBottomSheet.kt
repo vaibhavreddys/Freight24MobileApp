@@ -393,7 +393,7 @@ private fun AmountChip(priceText: String) {
             Text(
                 text = priceText,
                 style = MaterialTheme.typography.titleLarge,
-                color = FreightThemeTokens.colors.successColor,
+                color = FreightThemeTokens.colors.success,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -692,7 +692,7 @@ private fun EngagementLine(detail: LoadDetail) {
                     .size(8.dp)
                     .background(
                         color = if (hasInterest) {
-                            FreightThemeTokens.colors.successColor
+                            FreightThemeTokens.colors.success
                         } else {
                             MaterialTheme.colorScheme.outlineVariant
                         },
@@ -704,7 +704,7 @@ private fun EngagementLine(detail: LoadDetail) {
                 text = interestText,
                 style = MaterialTheme.typography.labelLarge,
                 color = if (hasInterest) {
-                    FreightThemeTokens.colors.successColor
+                    FreightThemeTokens.colors.success
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
                 },

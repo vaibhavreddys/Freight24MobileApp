@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.freight24.ui.theme.FreightThemeTokens
 
 enum class TimelineStatus {
     COMPLETED,
@@ -63,11 +64,21 @@ private fun TimelineEventItem(
     ) {
         // Timeline indicator
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            val extended = FreightThemeTokens.colors
+            // ACTIVE = "in progress" — success palette.
+            // COMPLETED = "done" — primary (brand) palette, with onPrimary icon.
+            // PENDING = "not started" — outlineVariant for a quiet hollow.
             val indicatorColor =
                 when (item.status) {
-                    TimelineStatus.ACTIVE -> Color(0xFF4CAF50)
+                    TimelineStatus.ACTIVE -> extended.success
                     TimelineStatus.COMPLETED -> MaterialTheme.colorScheme.primary
                     TimelineStatus.PENDING -> MaterialTheme.colorScheme.outlineVariant
+                }
+            val innerGlyphColor =
+                when (item.status) {
+                    TimelineStatus.COMPLETED -> MaterialTheme.colorScheme.onPrimary
+                    TimelineStatus.ACTIVE -> extended.onSuccess
+                    TimelineStatus.PENDING -> Color.Transparent
                 }
 
             Box(
@@ -82,7 +93,7 @@ private fun TimelineEventItem(
                     Icon(
                         imageVector = Icons.Default.Check,
                         contentDescription = null,
-                        tint = Color.White,
+                        tint = innerGlyphColor,
                         modifier = Modifier.size(16.dp),
                     )
                 } else if (item.status == TimelineStatus.ACTIVE) {
@@ -91,7 +102,7 @@ private fun TimelineEventItem(
                             Modifier
                                 .size(8.dp)
                                 .clip(CircleShape)
-                                .background(Color.White),
+                                .background(innerGlyphColor),
                     )
                 }
             }

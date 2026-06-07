@@ -24,9 +24,11 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.compose.rememberNavController
 import com.freight24.connect.BuildConfig
 import com.freight24.auth.SessionManager
+import com.freight24.common.manager.ThemePreferenceManager
 import com.freight24.connect.navigation.ConnectDestination
 import com.freight24.connect.navigation.ConnectNavGraph
 import com.freight24.ui.theme.Freight24Theme
+import com.freight24.ui.theme.FreightAppTheme
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.messaging.FirebaseMessaging
 import dagger.hilt.android.AndroidEntryPoint
@@ -37,11 +39,23 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var sessionManager: SessionManager
 
+    @Inject
+    lateinit var themePreferenceManager: ThemePreferenceManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
-            Freight24Theme {
+            val themeChoiceOrdinal by themePreferenceManager.themeChoice.collectAsState(initial = ThemePreferenceManager.THEME_INDIGO)
+            val darkModeOverride by themePreferenceManager.darkModeOverride.collectAsState(initial = ThemePreferenceManager.DARK_MODE_FOLLOW_SYSTEM)
+            val appTheme = remember(themeChoiceOrdinal) {
+                FreightAppTheme.entries.getOrElse(themeChoiceOrdinal) { FreightAppTheme.INDIGO }
+            }
+
+            Freight24Theme(
+                appTheme = appTheme,
+                darkModeOverride = darkModeOverride,
+            ) {
                 val navController = rememberNavController()
                 val isLoggedIn by sessionManager.isLoggedIn.collectAsState(initial = false)
                 val lastRefreshError by sessionManager.lastRefreshError.collectAsState(initial = null)

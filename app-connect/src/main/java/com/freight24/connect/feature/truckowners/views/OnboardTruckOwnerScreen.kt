@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.truckowners.views
+import com.freight24.ui.components.FreightTopAppBar
 
 import android.util.Log
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -67,7 +68,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.runtime.Composable
@@ -111,9 +111,7 @@ import com.freight24.ui.components.AddRouteBottomSheet
 import com.freight24.ui.components.CitySearchField
 import com.freight24.ui.components.RouteChip
 import com.freight24.ui.theme.FreightThemeTokens
-import com.freight24.ui.theme.PrimaryGreen
 
-private val BrandGreen = PrimaryGreen
 
 private enum class InputValidationType {
     NONE,
@@ -204,7 +202,7 @@ fun OnboardTruckOwnerScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
-            TopAppBar(
+            FreightTopAppBar(
                 title = {
                     Text(
                         text = "Onboard Truck Owner",
@@ -571,25 +569,25 @@ private fun ProfileSection(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = BrandGreen,
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(18.dp),
             )
             Spacer(modifier = Modifier.width(10.dp))
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelLarge,
-                color = BrandGreen,
+                color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp,
                 modifier = Modifier.weight(1f),
             )
-//            VerificationChip("Unverified", Color(0xFFFFA000))
+//            VerificationChip("Unverified", FreightThemeTokens.colors.warning)
             Spacer(modifier = Modifier.width(8.dp))
             IconButton(onClick = { isExpanded = !isExpanded }) {
                 Icon(
                     imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                     contentDescription = if (isExpanded) "Collapse" else "Expand",
-                    tint = BrandGreen,
+                    tint = MaterialTheme.colorScheme.primary,
                 )
             }
         }
@@ -715,7 +713,7 @@ private fun ProfileField(
                 else -> null
             },
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = if (validationError == null) BrandGreen else MaterialTheme.colorScheme.error,
+                focusedBorderColor = if (validationError == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                 unfocusedBorderColor = if (validationError == null) MaterialTheme.colorScheme.outlineVariant else MaterialTheme.colorScheme.error,
                 errorBorderColor = MaterialTheme.colorScheme.error,
             ),
@@ -789,7 +787,7 @@ private fun DocumentPlaceholderList() {
                 Icon(
                     imageVector = Icons.Default.CloudUpload,
                     contentDescription = "Upload disabled",
-                    tint = BrandGreen.copy(alpha = 0.35f),
+                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),
                     modifier = Modifier.size(24.dp),
                 )
             }
@@ -808,8 +806,8 @@ private fun DocumentPlaceholderList() {
 @Composable
 private fun StatusBadge(status: DocumentStatus) {
     val (text, color) = when (status) {
-        DocumentStatus.VERIFIED -> "Verified" to BrandGreen
-        DocumentStatus.UPLOADED -> "Verification Pending" to FreightThemeTokens.colors.warningColor
+        DocumentStatus.VERIFIED -> "Verified" to MaterialTheme.colorScheme.primary
+        DocumentStatus.UPLOADED -> "Verification Pending" to FreightThemeTokens.colors.warning
         DocumentStatus.REJECTED -> "Rejected" to MaterialTheme.colorScheme.error
         DocumentStatus.PENDING -> "Pending" to MaterialTheme.colorScheme.error
         DocumentStatus.UNKNOWN -> "N/A" to MaterialTheme.colorScheme.onSurfaceVariant
@@ -866,7 +864,7 @@ private fun FloatingActions(
                 enabled = enabled,
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = BrandGreen),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
             ) {
                 if (isSaving) {
                     CircularProgressIndicator(
@@ -1019,9 +1017,9 @@ private fun TruckOwnerOnboardedDialog(
     onDismiss: () -> Unit,
 ) {
     val colorScheme = MaterialTheme.colorScheme
-    val successColor = FreightThemeTokens.colors.successColor
-    val onSuccessColor = FreightThemeTokens.colors.onSuccessColor
-    val scrimColor = FreightThemeTokens.colors.dialogScrimColor
+    val successColor = FreightThemeTokens.colors.success
+    val onSuccessColor = FreightThemeTokens.colors.onSuccess
+    val scrimColor = FreightThemeTokens.colors.dialogScrim
     val density = LocalDensity.current
 
     var playEntry by remember { mutableStateOf(false) }

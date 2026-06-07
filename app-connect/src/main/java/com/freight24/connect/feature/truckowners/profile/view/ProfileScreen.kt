@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.truckowners.profile.view
+import com.freight24.ui.components.FreightTopAppBar
 
 import android.Manifest
 import android.content.Context
@@ -84,7 +85,6 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -202,7 +202,7 @@ internal fun ProfileScreen(
             snackbarHost = { androidx.compose.material3.SnackbarHost(hostState = snackbarHostState) },
             containerColor = MaterialTheme.colorScheme.background,
             topBar = {
-                TopAppBar(
+                FreightTopAppBar(
                     title = {
                         Text(
                             text = "Truck Owner Profile",
@@ -892,7 +892,7 @@ private fun ProfileHeaderCard(
     verificationStatus: String,
     status: String,
 ) {
-    val warningColor = FreightThemeTokens.colors.warningColor
+    val warningColor = FreightThemeTokens.colors.warning
     val isVerified = verificationStatus == "verified" || verificationStatus == "active"
     val statusColor = when (verificationStatus) {
         "active", "verified" -> MaterialTheme.colorScheme.primary
@@ -989,7 +989,7 @@ private fun ProfileSection(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     var isExpanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
-    val warningColor = FreightThemeTokens.colors.warningColor
+    val warningColor = FreightThemeTokens.colors.warning
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,

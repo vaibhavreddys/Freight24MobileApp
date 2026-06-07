@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.adhocTruck.views
+import com.freight24.ui.components.FreightTopAppBar
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -80,7 +81,7 @@ fun QuickAdhocTruckScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            FreightTopAppBar(
                 title = { Text("Create Adhoc Truck", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {

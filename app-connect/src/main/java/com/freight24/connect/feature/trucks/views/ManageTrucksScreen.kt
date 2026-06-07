@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.trucks.views
+import com.freight24.ui.components.FreightTopAppBar
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -37,7 +38,6 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import android.util.Log
 import androidx.compose.runtime.Composable
@@ -94,7 +94,7 @@ fun ManageTrucksScreen(
                 modifier = Modifier
                     .background(MaterialTheme.colorScheme.surface)
             ) {
-                TopAppBar(
+                FreightTopAppBar(
                     title = {
                         Text(
                             text = "Trucks",
@@ -115,8 +115,8 @@ fun ManageTrucksScreen(
                 onClick = onAddTruckClick,
                 modifier = Modifier
                     .padding(end = 4.dp, bottom = 4.dp),
-                containerColor = FreightThemeTokens.colors.successColor,
-                contentColor = FreightThemeTokens.colors.onSuccessColor,
+                containerColor = FreightThemeTokens.colors.success,
+                contentColor = FreightThemeTokens.colors.onSuccess,
                 shape = RoundedCornerShape(16.dp),
             ) {
 //                Icon(Icons.Default.Add, contentDescription = "Onboard Truck")

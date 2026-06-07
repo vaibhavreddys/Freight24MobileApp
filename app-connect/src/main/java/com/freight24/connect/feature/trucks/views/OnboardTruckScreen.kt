@@ -1,4 +1,6 @@
 package com.freight24.connect.feature.trucks.views
+import com.freight24.ui.components.FreightCenterAlignedTopAppBar
+import com.freight24.ui.components.FreightTopAppBar
 
 import android.Manifest
 import android.content.Context
@@ -46,7 +48,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -138,7 +139,7 @@ fun OnboardTruckScreen(
     } else {
         Scaffold(
             topBar = {
-                CenterAlignedTopAppBar(
+                FreightCenterAlignedTopAppBar(
                     title = {
                         Text(
                             text = "Add New Truck",
@@ -365,7 +366,7 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
                             Icon(
                                 imageVector = Icons.Default.Search,
                                 contentDescription = null,
-                                tint = extendedColors.successColor
+                                tint = extendedColors.success
                             )
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -373,8 +374,8 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
                         singleLine = true,
                         colors = if (selectedTruckOwner != null) {
                             OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = extendedColors.successColor,
-                                unfocusedBorderColor = extendedColors.successColor
+                                focusedBorderColor = extendedColors.success,
+                                unfocusedBorderColor = extendedColors.success
                             )
                         } else {
                             OutlinedTextFieldDefaults.colors()

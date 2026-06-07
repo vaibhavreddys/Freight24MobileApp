@@ -19,7 +19,6 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.freight24.ui.theme.PrimaryGreen
 
 @Composable
 fun PrimaryCallButton(
@@ -36,22 +35,23 @@ fun PrimaryCallButton(
             onClick()
         },
         colors = ButtonDefaults.buttonColors(
-            containerColor = PrimaryGreen,
+            containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,
         ),
-        shape = RoundedCornerShape(20.dp),
-        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+        shape = RoundedCornerShape(24.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
+        modifier = modifier,
     ) {
         Icon(
             imageVector = Icons.Default.Call,
             contentDescription = contentDescription,
-            modifier = Modifier.size(13.dp),
+            modifier = Modifier.size(18.dp),
         )
-        Spacer(modifier = Modifier.width(5.dp))
+        Spacer(modifier = Modifier.width(6.dp))
         Text(
             text = label,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
         )
     }
 }

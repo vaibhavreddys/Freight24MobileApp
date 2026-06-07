@@ -356,6 +356,8 @@ sealed class ConnectDestination(val route: String) {
 
     data object More : ConnectDestination("more")
 
+    data object Settings : ConnectDestination("settings")
+
     data object QuickAdhocTruck : ConnectDestination("quick_adhoc_truck")
 
     data object TruckOwnerProfile : ConnectDestination("truck_owner_profile/{userId}") {

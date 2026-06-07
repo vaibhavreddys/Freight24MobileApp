@@ -1,4 +1,5 @@
 package com.freight24.trucker.feature.trucks.view.details
+import com.freight24.ui.components.FreightTopAppBar
 
 import android.Manifest
 import android.content.Context
@@ -54,7 +55,6 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -230,7 +230,7 @@ internal fun TruckDetailsScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
+            FreightTopAppBar(
                 title = {
                     Text(
                         text = "Truck Details",

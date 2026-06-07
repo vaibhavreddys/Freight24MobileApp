@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.trips.views
+import com.freight24.ui.components.FreightTopAppBar
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -300,7 +301,7 @@ fun TripDetailsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            FreightTopAppBar(
                 title = { Text("Trip Details", style = MaterialTheme.typography.titleMedium) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
@@ -340,7 +341,6 @@ fun TripDetailsScreen(
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = colorScheme.surface)
             )
         },
         bottomBar = {

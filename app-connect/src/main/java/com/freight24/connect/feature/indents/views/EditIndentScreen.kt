@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.indents.views
+import com.freight24.ui.components.FreightTopAppBar
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -50,7 +51,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -144,18 +144,12 @@ private fun EditIndentContent(
 ) {
     val isDark = isSystemInDarkTheme()
 
-    val bgGradient = if (isDark) {
-        Brush.verticalGradient(
-            colors = listOf(Color(0xFF0F172A), Color(0xFF111827))
-        )
-    } else {
-        Brush.verticalGradient(
-            colors = listOf(Color(0xFFF8FAFC), Color(0xFFF1F5F9))
-        )
-    }
+    // Solid M3 background — replaces the legacy slate gradient. M3 prefers
+    // tonal hierarchy over visible page-level gradients.
+    val screenBackground = MaterialTheme.colorScheme.background
 
     Box(Modifier.fillMaxSize()) {
-        Box(Modifier.fillMaxSize().background(bgGradient))
+        Box(Modifier.fillMaxSize().background(screenBackground))
 
         if (isDark) {
             Box(
@@ -178,7 +172,7 @@ private fun EditIndentContent(
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
-                TopAppBar(
+                FreightTopAppBar(
                     title = { Text("Edit Indent") },
                     navigationIcon = {
                         IconButton(onClick = onBackClick) {

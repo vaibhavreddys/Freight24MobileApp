@@ -179,7 +179,7 @@ fun FileConfirmationSheet(
                 onClick = onUploadClick,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = FreightThemeTokens.colors.successColor),
+                colors = ButtonDefaults.buttonColors(containerColor = FreightThemeTokens.colors.success),
                 enabled = !isUploading,
             ) {
                 if (isUploading) {

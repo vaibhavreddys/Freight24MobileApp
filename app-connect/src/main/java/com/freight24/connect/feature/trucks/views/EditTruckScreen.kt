@@ -1,4 +1,6 @@
 package com.freight24.connect.feature.trucks.views
+import com.freight24.ui.components.FreightCenterAlignedTopAppBar
+import com.freight24.ui.components.FreightTopAppBar
 
 import android.Manifest
 import android.content.Context
@@ -45,7 +47,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -122,7 +123,7 @@ fun EditTruckScreen(
     } else {
         Scaffold(
             topBar = {
-                CenterAlignedTopAppBar(
+                FreightCenterAlignedTopAppBar(
                     title = {
                         Text(
                             text = if (currentStep == 1) "Edit Truck Details" else "Edit Documents",

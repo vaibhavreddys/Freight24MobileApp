@@ -1,4 +1,5 @@
 package com.freight24.trucker.feature.trips.view.details
+import com.freight24.ui.components.FreightTopAppBar
 
 import android.Manifest
 import android.content.Context
@@ -63,8 +64,6 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -268,7 +267,7 @@ internal fun TripDetailsScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
+            FreightTopAppBar(
                 title = {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
@@ -296,9 +295,6 @@ internal fun TripDetailsScreen(
                 actions = {
                     Spacer(modifier = Modifier.width(48.dp))
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                ),
             )
         },
         bottomBar = {

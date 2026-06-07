@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.verificationrequests.views
+import com.freight24.ui.components.FreightTopAppBar
 
 import android.content.Context
 import android.os.Build
@@ -52,8 +53,6 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -230,7 +229,7 @@ fun VerificationRequestsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            FreightTopAppBar(
                 title = {
                     Text(
                         text = "Verification Requests",
@@ -246,9 +245,6 @@ fun VerificationRequestsScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                ),
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -1133,8 +1129,8 @@ private fun TripVerificationRequestDetailSheet(
                     modifier = Modifier.weight(1f),
                     text = "Approve",
                     icon = Icons.Default.CheckCircle,
-                    containerColor = FreightThemeTokens.colors.successColor,
-                    contentColor = FreightThemeTokens.colors.onSuccessColor,
+                    containerColor = FreightThemeTokens.colors.success,
+                    contentColor = FreightThemeTokens.colors.onSuccess,
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)),
                     isLoading = isApproveLoading,
                     onClick = onApproveClick,
@@ -1539,12 +1535,12 @@ private fun CompletedStatusChip(status: VerificationRequestStatus) {
     val containerColor = if (isRejected) {
         MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.7f)
     } else {
-        FreightThemeTokens.colors.successColor.copy(alpha = 0.15f)
+        FreightThemeTokens.colors.success.copy(alpha = 0.15f)
     }
     val contentColor = if (isRejected) {
         MaterialTheme.colorScheme.onErrorContainer
     } else {
-        FreightThemeTokens.colors.successColor
+        FreightThemeTokens.colors.success
     }
 
     Surface(
@@ -1835,8 +1831,8 @@ private fun BusinessProfileVerificationDetailSheet(
                     modifier = Modifier.weight(1f),
                     text = "Approve",
                     icon = Icons.Default.CheckCircle,
-                    containerColor = FreightThemeTokens.colors.successColor,
-                    contentColor = FreightThemeTokens.colors.onSuccessColor,
+                    containerColor = FreightThemeTokens.colors.success,
+                    contentColor = FreightThemeTokens.colors.onSuccess,
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)),
                     isLoading = isApproveLoading,
                     onClick = onApproveClick,
@@ -2001,8 +1997,8 @@ private fun TruckVerificationRequestDetailSheet(
                     modifier = Modifier.weight(1f),
                     text = "Approve",
                     icon = Icons.Default.CheckCircle,
-                    containerColor = FreightThemeTokens.colors.successColor,
-                    contentColor = FreightThemeTokens.colors.onSuccessColor,
+                    containerColor = FreightThemeTokens.colors.success,
+                    contentColor = FreightThemeTokens.colors.onSuccess,
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)),
                     isLoading = isApproveLoading,
                     onClick = onApproveClick,

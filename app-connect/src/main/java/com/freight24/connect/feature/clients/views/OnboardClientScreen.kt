@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.clients.views
+import com.freight24.ui.components.FreightTopAppBar
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -71,7 +72,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -197,9 +197,9 @@ fun OnboardClientScreen(
     val teamContactsExpanded = remember { mutableStateMapOf<Int, Boolean>() }
 
     val snackbarHostState = remember { SnackbarHostState() }
-    val successColor = FreightThemeTokens.colors.successColor
-    val warningColor = FreightThemeTokens.colors.warningColor
-    val infoColor = FreightThemeTokens.colors.infoColor
+    val successColor = FreightThemeTokens.colors.success
+    val warningColor = FreightThemeTokens.colors.warning
+    val infoColor = FreightThemeTokens.colors.info
 
     var pendingUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
     var isPdfPending by remember { mutableStateOf(false) }
@@ -331,7 +331,7 @@ fun OnboardClientScreen(
         containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
+            FreightTopAppBar(
                 title = {
                     Text(
                         text = "Onboard Client",
@@ -629,7 +629,7 @@ fun OnboardClientScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(FreightThemeTokens.colors.dialogScrimColor),
+                        .background(FreightThemeTokens.colors.dialogScrim),
                     contentAlignment = Alignment.Center,
                 ) {
                     Card(
@@ -820,15 +820,15 @@ private fun TeamContactBlock(
             Surface(
                 modifier = Modifier.clickable(onClick = onCopyFromPrimary),
                 shape = RoundedCornerShape(8.dp),
-                color = FreightThemeTokens.colors.successColor.copy(alpha = 0.08f),
-                border = BorderStroke(0.5.dp, FreightThemeTokens.colors.successColor.copy(alpha = 0.20f)),
+                color = FreightThemeTokens.colors.success.copy(alpha = 0.08f),
+                border = BorderStroke(0.5.dp, FreightThemeTokens.colors.success.copy(alpha = 0.20f)),
             ) {
                 Text(
                     text = "Copy from primary",
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                     fontSize = 10.5.sp,
                     fontWeight = FontWeight.Medium,
-                    color = FreightThemeTokens.colors.successColor,
+                    color = FreightThemeTokens.colors.success,
                 )
             }
         }
@@ -853,9 +853,9 @@ private fun TeamContactBlock(
 private fun contactSectionColor(contactSection: ContactSection): Color {
     val colors = FreightThemeTokens.colors
     return when (contactSection) {
-        ContactSection.PAYMENT -> colors.successColor
-        ContactSection.TRAFFIC -> colors.infoColor
-        ContactSection.POD -> colors.warningColor
+        ContactSection.PAYMENT -> colors.success
+        ContactSection.TRAFFIC -> colors.info
+        ContactSection.POD -> colors.warning
         ContactSection.TRACKING -> MaterialTheme.colorScheme.tertiary
     }
 }
@@ -871,7 +871,7 @@ private fun FormField(
     onValueChange: (String) -> Unit,
     onFocusLost: (() -> Unit)? = null,
 ) {
-    val successColor = FreightThemeTokens.colors.successColor
+    val successColor = FreightThemeTokens.colors.success
     val monospace = fieldType == ClientFieldType.GST || fieldType == ClientFieldType.PAN
     val isMultiline = fieldType == ClientFieldType.ADDRESS
 
@@ -1047,17 +1047,17 @@ private fun FloatingActions(
                 modifier = Modifier.weight(1.9f).height(54.dp).scale(scale),
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = FreightThemeTokens.colors.successColor,
-                    contentColor = FreightThemeTokens.colors.onSuccessColor,
-                    disabledContainerColor = FreightThemeTokens.colors.successColor.copy(alpha = 0.4f),
-                    disabledContentColor = FreightThemeTokens.colors.onSuccessColor.copy(alpha = 0.6f),
+                    containerColor = FreightThemeTokens.colors.success,
+                    contentColor = FreightThemeTokens.colors.onSuccess,
+                    disabledContainerColor = FreightThemeTokens.colors.success.copy(alpha = 0.4f),
+                    disabledContentColor = FreightThemeTokens.colors.onSuccess.copy(alpha = 0.6f),
                 ),
             ) {
                 if (isSaving) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(18.dp),
                         strokeWidth = 2.dp,
-                        color = FreightThemeTokens.colors.onSuccessColor,
+                        color = FreightThemeTokens.colors.onSuccess,
                     )
                 } else {
                     Text("Save Changes \u2192", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
@@ -1077,9 +1077,9 @@ private fun EntityOnboardedDialog(
     onDismiss: () -> Unit,
 ) {
     val colorScheme = MaterialTheme.colorScheme
-    val successColor = FreightThemeTokens.colors.successColor
-    val onSuccessColor = FreightThemeTokens.colors.onSuccessColor
-    val scrimColor = FreightThemeTokens.colors.dialogScrimColor
+    val successColor = FreightThemeTokens.colors.success
+    val onSuccessColor = FreightThemeTokens.colors.onSuccess
+    val scrimColor = FreightThemeTokens.colors.dialogScrim
     var playEntry by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { playEntry = true }
 

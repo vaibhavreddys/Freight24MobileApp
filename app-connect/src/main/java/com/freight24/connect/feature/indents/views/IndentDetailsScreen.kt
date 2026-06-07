@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.indents.views
+import com.freight24.ui.components.FreightTopAppBar
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -248,7 +249,7 @@ fun IndentDetailsScreen(
     Scaffold(
         topBar = {
             // Custom Top Bar with Actions Menu
-            TopAppBar(
+            FreightTopAppBar(
                 title = { Text("Indent Details") },
                 navigationIcon = {
                         IconButton(onClick = onBackClick) {
@@ -291,7 +292,6 @@ fun IndentDetailsScreen(
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = colorScheme.surface)
             )
         },
         bottomBar = {

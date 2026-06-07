@@ -41,7 +41,8 @@ fun AccountStatusCard(
     onToggle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val successColor = FreightThemeTokens.colors.successColor
+    val successColor = FreightThemeTokens.colors.success
+    val onSuccessColor = FreightThemeTokens.colors.onSuccess
     val containerColor by animateColorAsState(
         targetValue = if (isActive) successColor.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
         label = "containerColor"
@@ -112,7 +113,7 @@ fun AccountStatusCard(
                 onCheckedChange = { onToggle() },
                 enabled = !isToggling,
                 colors = SwitchDefaults.colors(
-                    checkedThumbColor = Color.White,
+                    checkedThumbColor = onSuccessColor,
                     checkedTrackColor = successColor,
                     uncheckedThumbColor = MaterialTheme.colorScheme.outline,
                     uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,

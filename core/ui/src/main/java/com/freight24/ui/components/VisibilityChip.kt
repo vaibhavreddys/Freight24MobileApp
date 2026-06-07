@@ -15,17 +15,24 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.freight24.ui.theme.FreightThemeTokens
 
 @Composable
 fun VisibilityChip(
     isVisible: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val backgroundColor = if (isVisible) Color(0xFFE6F4EA) else Color(0xFFFDE7E7)
-    val contentColor = if (isVisible) Color(0xFF1A7A3A) else Color(0xFFD32F2F)
+    // "Visible" reads as a positive state → success palette; "Hidden" is a
+    // blocking / concerning state → error palette. Both come from the
+    // extended/theme tokens so the chip flips with the rest of the theme
+    // in dark mode.
+    val extended = FreightThemeTokens.colors
+    val backgroundColor =
+        if (isVisible) extended.surfaceSuccess else MaterialTheme.colorScheme.errorContainer
+    val contentColor =
+        if (isVisible) extended.onSurfaceSuccess else MaterialTheme.colorScheme.onErrorContainer
     val text = if (isVisible) "VISIBLE" else "HIDDEN"
     val icon = if (isVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
 
@@ -41,7 +48,7 @@ fun VisibilityChip(
         ) {
             Icon(
                 imageVector = icon,
-                contentDescription = null, 
+                contentDescription = null,
                 tint = contentColor,
                 modifier = Modifier.size(18.dp)
             )

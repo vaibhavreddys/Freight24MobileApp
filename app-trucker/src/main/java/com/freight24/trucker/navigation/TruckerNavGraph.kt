@@ -9,9 +9,15 @@ import androidx.navigation.navArgument
 import com.freight24.trucker.feature.home.TruckerHomeScreen
 import com.freight24.trucker.feature.login.view.signin.LoginScreen
 import com.freight24.trucker.feature.login.view.verify.VerifyOtpScreen
+import com.freight24.trucker.feature.profile.view.AppSettingsViewModel
 import com.freight24.trucker.feature.trips.view.details.TripDetailsScreen
 import com.freight24.trucker.feature.trucks.view.details.TruckDetailsScreen
 import com.freight24.trucker.feature.trucks.view.onboard.OnboardTruckScreen
+import com.freight24.ui.components.AppSettingsScreen
+import com.freight24.ui.theme.FreightAppTheme
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
 fun TruckerNavGraph(
@@ -147,6 +153,21 @@ fun TruckerNavGraph(
                     navController.popBackStack(TruckerDestination.Main.route, false)
                 },
                 navController = navController,
+            )
+        }
+
+        composable(TruckerDestination.Settings.route) {
+            val viewModel: AppSettingsViewModel = hiltViewModel()
+            val themeOrdinal by viewModel.themeChoice.collectAsState()
+            val darkMode by viewModel.darkModeOverride.collectAsState()
+            val appTheme = FreightAppTheme.entries.getOrElse(themeOrdinal) { FreightAppTheme.INDIGO }
+
+            AppSettingsScreen(
+                currentTheme = appTheme,
+                currentDarkMode = darkMode,
+                onThemeChange = viewModel::setTheme,
+                onDarkModeChange = viewModel::setDarkMode,
+                onBackClick = { navController.popBackStack() },
             )
         }
     }

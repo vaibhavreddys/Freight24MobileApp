@@ -22,8 +22,10 @@ fun <T : NavTabItem> FreightBottomNavBar(
 
     NavigationBar(
         modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.surfaceTint,
-        tonalElevation = 6.dp,
+        // The bar itself sits on the screen's surface; no tonal lift needed
+        // because the selected indicator handles the brand accent.
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 0.dp,
         windowInsets = WindowInsets.navigationBars,
     ) {
         items.forEach { item ->
@@ -45,16 +47,20 @@ fun <T : NavTabItem> FreightBottomNavBar(
                     Text(
                         text = stringResource(item.titleRes),
                         style = MaterialTheme.typography.labelMedium,
-                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                     )
                 },
+                // M3 spec mapping: the active item uses a soft secondary
+                // container wash with the matching on-container icon and
+                // on-surface label — softer than a full primary block and
+                // reads as the "active" affordance without dominating.
                 colors =
                     NavigationBarItemDefaults.colors(
-                        selectedIconColor = MaterialTheme.colorScheme.primary,
-                        selectedTextColor = MaterialTheme.colorScheme.primary,
+                        selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        selectedTextColor = MaterialTheme.colorScheme.onSurface,
                         unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        indicatorColor = MaterialTheme.colorScheme.surface,
+                        indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
                     ),
             )
         }

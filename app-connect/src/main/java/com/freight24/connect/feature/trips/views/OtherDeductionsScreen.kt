@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.trips.views
+import com.freight24.ui.components.FreightTopAppBar
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -52,14 +53,13 @@ fun OtherDeductionsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            FreightTopAppBar(
                 title = { Text("Other Deductions", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = colorScheme.surface)
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },

@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.trips.views
+import com.freight24.ui.components.FreightTopAppBar
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -79,14 +80,13 @@ internal fun CreateTripScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            FreightTopAppBar(
                 title = { Text("Create Trip", fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = colorScheme.surface)
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -286,7 +286,7 @@ fun IndentInfoCard(uiState: CreateTripUiState) {
                         "₹${formatCurrency(uiState.indent?.negotiatedTripCost)}",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = extendedColors.successColor
+                        color = extendedColors.success
                     )
                 }
             }
@@ -311,7 +311,7 @@ fun SelectedTruckCard(uiState: CreateTripUiState) {
             Spacer(modifier = Modifier.height(12.dp))
 
             Surface(
-                color = extendedColors.successColor.copy(alpha = 0.12f),
+                color = extendedColors.success.copy(alpha = 0.12f),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -321,7 +321,7 @@ fun SelectedTruckCard(uiState: CreateTripUiState) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("TRUCK NUMBER", style = MaterialTheme.typography.labelSmall, color = extendedColors.successColor, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        Text("TRUCK NUMBER", style = MaterialTheme.typography.labelSmall, color = extendedColors.success, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                         Text(
                             uiState.truck?.registrationNumber ?: "",
                             style = MaterialTheme.typography.titleLarge,
@@ -330,7 +330,7 @@ fun SelectedTruckCard(uiState: CreateTripUiState) {
                         )
                     }
                     Surface(
-                        color = extendedColors.successColor,
+                        color = extendedColors.success,
                         shape = RoundedCornerShape(4.dp)
                     ) {
                         Text(

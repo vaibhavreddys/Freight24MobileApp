@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.freight24.ui.theme.FreightThemeTokens
 
 @Composable
 fun DashedUploadCard(
@@ -42,6 +43,13 @@ fun DashedUploadCard(
     label: String? = null, // "Required" or "Optional"
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
+        val extended = FreightThemeTokens.colors
+        // Status-color mapping: uploaded → success palette, awaiting →
+        // warning palette. Replaces the legacy "green/orange" hex codes
+        // (Color(0xFF2E7D32) and Color(0xFFEF6C00)) so the chip harmonizes
+        // with the rest of the M3 system in both light and dark mode.
+        val uploadedStatusColor = extended.onSurfaceSuccess
+        val pendingStatusColor = extended.onSurfaceWarning
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -108,7 +116,7 @@ fun DashedUploadCard(
                             Icon(
                                 imageVector = if (isUploaded) Icons.Default.CheckCircle else icon,
                                 contentDescription = null,
-                                tint = if (isUploaded) Color(0xFF2E7D32) else MaterialTheme.colorScheme.onSurface,
+                                tint = if (isUploaded) extended.success else MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.size(24.dp),
                             )
                         }
@@ -135,7 +143,7 @@ fun DashedUploadCard(
                 Text(
                     text = "● Status: $statusText",
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (isUploaded) Color(0xFF2E7D32) else Color(0xFFEF6C00),
+                    color = if (isUploaded) uploadedStatusColor else pendingStatusColor,
                 )
             }
         }

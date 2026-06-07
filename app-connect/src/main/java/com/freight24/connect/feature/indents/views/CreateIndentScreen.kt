@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.indents.views
+import com.freight24.ui.components.FreightTopAppBar
 
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
@@ -52,7 +53,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -165,15 +165,11 @@ fun CreateIndentContent(
     val scope = rememberCoroutineScope()
     val fieldErrors = remember { mutableStateOf(emptySet<String>()) }
 
-    val bgGradient = if (isDark) {
-        Brush.verticalGradient(
-            colors = listOf(Color(0xFF0F172A), Color(0xFF111827))
-        )
-    } else {
-        Brush.verticalGradient(
-            colors = listOf(Color(0xFFF8FAFC), Color(0xFFF1F5F9))
-        )
-    }
+    // Screen background — solid M3 background, not a gradient. M3 prefers
+    // tonal hierarchy (surface / surfaceContainer) over visible gradients
+    // for page chrome, and a solid background tracks theme changes
+    // automatically (light/dark/system/dynamic).
+    val screenBackground = MaterialTheme.colorScheme.background
 
     fun validate(): Boolean {
         val errors = mutableSetOf<String>()
@@ -208,7 +204,7 @@ fun CreateIndentContent(
     }
 
     Box(Modifier.fillMaxSize()) {
-        Box(Modifier.fillMaxSize().background(bgGradient))
+        Box(Modifier.fillMaxSize().background(screenBackground))
 
         if (isDark) {
             Box(
@@ -231,7 +227,7 @@ fun CreateIndentContent(
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
-                TopAppBar(
+                FreightTopAppBar(
                     title = { Text("Create Indent") },
                     navigationIcon = {
                         IconButton(onClick = onBackClick) {

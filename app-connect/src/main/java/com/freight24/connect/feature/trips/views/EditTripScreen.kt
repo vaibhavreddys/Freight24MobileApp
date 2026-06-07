@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.trips.views
+import com.freight24.ui.components.FreightTopAppBar
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -89,14 +90,13 @@ fun EditTripScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            FreightTopAppBar(
                 title = { Text("Edit Trip", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = colorScheme.surface)
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -114,7 +114,7 @@ fun EditTripScreen(
                             .fillMaxWidth()
                             .height(56.dp),
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = extendedColors.successColor),
+                        colors = ButtonDefaults.buttonColors(containerColor = extendedColors.success),
                         enabled = !uiState.isSaving && uiState.hasChanges
                     ) {
                         if (uiState.isSaving) {
@@ -177,7 +177,7 @@ fun EditTripScreen(
                     Card(
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
-                        border = if (isTruckUpdated) androidx.compose.foundation.BorderStroke(1.dp, extendedColors.successColor) else null,
+                        border = if (isTruckUpdated) androidx.compose.foundation.BorderStroke(1.dp, extendedColors.success) else null,
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
@@ -199,14 +199,14 @@ fun EditTripScreen(
                         ) {
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = if (isTruckUpdated) extendedColors.successColor.copy(alpha = 0.12f) else colorScheme.surfaceVariant,
+                                color = if (isTruckUpdated) extendedColors.success.copy(alpha = 0.12f) else colorScheme.surfaceVariant,
                                 modifier = Modifier.size(40.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
                                         Icons.Default.LocalShipping,
                                         contentDescription = null,
-                                        tint = if (isTruckUpdated) extendedColors.successColor else colorScheme.onSurfaceVariant,
+                                        tint = if (isTruckUpdated) extendedColors.success else colorScheme.onSurfaceVariant,
                                         modifier = Modifier.size(20.dp)
                                     )
                                 }
@@ -222,14 +222,14 @@ fun EditTripScreen(
                                     if (isTruckUpdated) {
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Surface(
-                                            color = extendedColors.successColor.copy(alpha = 0.12f),
+                                            color = extendedColors.success.copy(alpha = 0.12f),
                                             shape = RoundedCornerShape(4.dp)
                                         ) {
                                             Text(
                                                 "Updated",
                                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                                 style = MaterialTheme.typography.labelSmall,
-                                                color = extendedColors.successColor,
+                                                color = extendedColors.success,
                                                 fontWeight = FontWeight.Bold
                                             )
                                         }
@@ -239,7 +239,7 @@ fun EditTripScreen(
                                     uiState.truckNumber,
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (isTruckUpdated) extendedColors.successColor else colorScheme.onSurface
+                                    color = if (isTruckUpdated) extendedColors.success else colorScheme.onSurface
                                 )
                                 if (isTruckUpdated) {
                                     Text(
@@ -363,7 +363,7 @@ fun EditTripScreen(
                                             checked = uiState.luIncluded,
                                             onCheckedChange = { viewModel.onEvent(EditTripEvent.ToggleLuIncluded) },
                                             colors = CheckboxDefaults.colors(
-                                                checkedColor = extendedColors.successColor
+                                                checkedColor = extendedColors.success
                                             )
                                         )
                                         Text(

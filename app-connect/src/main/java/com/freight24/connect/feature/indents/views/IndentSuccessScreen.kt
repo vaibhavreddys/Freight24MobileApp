@@ -156,7 +156,7 @@ fun IndentSuccessComponent(
             modifier = Modifier
                     .size(80.dp)
                     .background(
-                    color = extendedColors.successColor.copy(alpha = 0.1f),
+                    color = extendedColors.success.copy(alpha = 0.1f),
                     shape = CircleShape
                 ),
             contentAlignment = Alignment.Center
@@ -165,7 +165,7 @@ fun IndentSuccessComponent(
                 modifier = Modifier
                     .size(56.dp)
                     .background(
-                        color = extendedColors.successColor,
+                        color = extendedColors.success,
                         shape = CircleShape
                     ),
                 contentAlignment = Alignment.Center
@@ -253,7 +253,7 @@ fun IndentSuccessComponent(
                         Icon(
                             imageVector = Icons.Default.LocalShipping,
                             contentDescription = null,
-                            tint = extendedColors.infoColor,
+                            tint = extendedColors.info,
                             modifier = Modifier.size(16.dp)
                         )
                         Text(

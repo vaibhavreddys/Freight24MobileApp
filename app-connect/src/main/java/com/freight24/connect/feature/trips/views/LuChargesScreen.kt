@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.trips.views
+import com.freight24.ui.components.FreightTopAppBar
 
 import android.Manifest
 import android.content.Context
@@ -192,14 +193,13 @@ fun LuChargesScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            FreightTopAppBar(
                 title = { Text("Loading & Unloading", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = colorScheme.surface)
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -211,7 +211,7 @@ fun LuChargesScreen(
                     .padding(16.dp)
                     .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = extendedColors.successColor),
+                colors = ButtonDefaults.buttonColors(containerColor = extendedColors.success),
                 enabled = !uiState.isSubmitting && uiState.hasChanges
             ) {
                 if (uiState.isSubmitting) {
@@ -237,7 +237,7 @@ fun LuChargesScreen(
         ) {
             // Info Message
             Surface(
-                color = extendedColors.successColor.copy(alpha = 0.12f),
+                color = extendedColors.success.copy(alpha = 0.12f),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Row(
@@ -247,14 +247,14 @@ fun LuChargesScreen(
                     Icon(
                         Icons.Default.Info,
                         contentDescription = null,
-                        tint = extendedColors.successColor,
+                        tint = extendedColors.success,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = "All submitted charges and documents are subject to administrative verification and internal audit. Please ensure all details are accurate.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = extendedColors.successColor,
+                        color = extendedColors.success,
                         lineHeight = 18.sp
                     )
                 }
@@ -298,7 +298,7 @@ fun LuChargesScreen(
                             placeholder = { Text("Enter any additional details or remarks here...", color = colorScheme.onSurfaceVariant) },
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = extendedColors.successColor,
+                                focusedBorderColor = extendedColors.success,
                                 unfocusedBorderColor = colorScheme.outlineVariant
                             )
                         )
@@ -432,7 +432,7 @@ fun LuAmountInput(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = extendedColors.successColor,
+                focusedBorderColor = extendedColors.success,
                 unfocusedBorderColor = colorScheme.outlineVariant
             ),
             singleLine = true

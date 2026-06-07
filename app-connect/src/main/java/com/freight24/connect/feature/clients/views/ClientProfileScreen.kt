@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.clients.views
+import com.freight24.ui.components.FreightTopAppBar
 
 import android.content.Context
 import android.content.Intent
@@ -113,7 +114,7 @@ fun ClientProfileScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
-            TopAppBar(
+            FreightTopAppBar(
                 title = {
                     Text(
                         text = "Client Profile",
@@ -598,7 +599,7 @@ private fun BranchesSectionContent(
         return
     }
 
-    val successColor = FreightThemeTokens.colors.successColor
+    val successColor = FreightThemeTokens.colors.success
 
     Column(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp),
@@ -1420,7 +1421,7 @@ private fun DocumentList(
                             tint = if ((uploadState?.uploadStatus ?: UploadStatus.IDLE) == UploadStatus.ERROR) {
                                 MaterialTheme.colorScheme.error
                             } else {
-                                FreightThemeTokens.colors.successColor
+                                FreightThemeTokens.colors.success
                             },
                             modifier = Modifier.size(24.dp),
                         )
@@ -1453,7 +1454,7 @@ private fun DocumentList(
 private fun ExistingStatusBadge(existingVerifyStatus: String?, fallbackStatus: String?) {
     val status = existingVerifyStatus?.lowercase()?.trim() ?: fallbackStatus?.lowercase()?.trim().orEmpty()
     val (text, color) = when (status) {
-        "verified" -> "Verified" to FreightThemeTokens.colors.successColor
+        "verified" -> "Verified" to FreightThemeTokens.colors.success
         "rejected" -> "Rejected" to MaterialTheme.colorScheme.error
         "pending" -> "Verification Pending" to MaterialTheme.colorScheme.tertiary
         else -> "N/A" to MaterialTheme.colorScheme.onSurfaceVariant

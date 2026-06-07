@@ -136,13 +136,10 @@ import com.freight24.ui.components.PODAddressCard
 import com.freight24.ui.components.ProfileUtilityRow
 import com.freight24.ui.components.RouteChip
 import com.freight24.ui.theme.FreightThemeTokens
-import com.freight24.ui.theme.PrimaryGreen
 import kotlinx.coroutines.launch
 import java.io.File
 
 // Define theme-aware colors or use MaterialTheme directly
-// For BrandGreen, we can keep it as a constant for branding, but text colors should adapt
-private val BrandGreen = PrimaryGreen
 
 /**
  * Enum representing the type of validation for profile fields.
@@ -165,6 +162,7 @@ private enum class ValidationType {
 internal fun ProfileScreen(
     paddingValues: PaddingValues,
     viewModel: ProfileViewModel = hiltViewModel(),
+    onSettingsClick: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
@@ -224,7 +222,7 @@ internal fun ProfileScreen(
                 when (val state = uiState) {
                     is UiState.Loading -> {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(strokeWidth = 3.dp, color = BrandGreen)
+                            CircularProgressIndicator(strokeWidth = 3.dp, color = MaterialTheme.colorScheme.primary)
                         }
                     }
                     is UiState.Error -> {
@@ -239,6 +237,7 @@ internal fun ProfileScreen(
                             gstDuplicateError = gstDuplicateError,
                             hasChanges = hasChanges,
                             snackbarHostState = snackbarHostState,
+                            onSettingsClick = onSettingsClick,
                         )
                     }
                     UiState.Idle -> {}
@@ -281,6 +280,7 @@ private fun ProfileMainContent(
     gstDuplicateError: String?,
     hasChanges: Boolean,
     snackbarHostState: SnackbarHostState,
+    onSettingsClick: () -> Unit = {},
 ) {
     val documentStates by viewModel.documentStates.collectAsState()
     val hasPendingTemporaryUploads by viewModel.hasPendingTemporaryUploads.collectAsState()
@@ -811,14 +811,14 @@ private fun ProfileMainContent(
                 Icon(
                     imageVector = Icons.Default.SettingsApplications,
                     contentDescription = null,
-                    tint = PrimaryGreen,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(18.dp),
                 )
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(
                     text = "APP",
                     style = MaterialTheme.typography.labelLarge,
-                    color = PrimaryGreen,
+                    color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp,
                     modifier = Modifier.weight(1f),
@@ -835,9 +835,9 @@ private fun ProfileMainContent(
                 ProfileUtilityRow(
                     title = "App Settings",
                     icon = Icons.Default.Settings,
-                    onClick = { },
-                    iconContainerColor = FreightThemeTokens.colors.settingsColor.copy(alpha = 0.12f),
-                    iconTint = FreightThemeTokens.colors.settingsColor,
+                    onClick = onSettingsClick,
+                    iconContainerColor = FreightThemeTokens.colors.settings.copy(alpha = 0.12f),
+                    iconTint = FreightThemeTokens.colors.settings,
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
                 ProfileUtilityRow(
@@ -845,8 +845,8 @@ private fun ProfileMainContent(
                     icon = Icons.Default.ChatBubble,
                     onClick = { makeCall() },
 //                    subtitle = "Available Mon–Sat, 9am–6pm",
-                    iconContainerColor = FreightThemeTokens.colors.infoColor.copy(alpha = 0.12f),
-                    iconTint = FreightThemeTokens.colors.infoColor,
+                    iconContainerColor = FreightThemeTokens.colors.info.copy(alpha = 0.12f),
+                    iconTint = FreightThemeTokens.colors.info,
                 )
             }
 
@@ -914,7 +914,7 @@ private fun ProfileHeaderCard(
 ) {
     val isVerified = verificationStatus == "verified"
     val verificationColor = when (verificationStatus) {
-        "verified" -> BrandGreen
+        "verified" -> MaterialTheme.colorScheme.primary
         "pending" -> MaterialTheme.colorScheme.tertiary
         else -> MaterialTheme.colorScheme.error 
     }
@@ -922,7 +922,7 @@ private fun ProfileHeaderCard(
 
     val normalizedStatus = status.lowercase()
     val isActive = normalizedStatus == "active"
-    val chipColor = if (isActive) BrandGreen else MaterialTheme.colorScheme.error
+    val chipColor = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -944,13 +944,13 @@ private fun ProfileHeaderCard(
                         Modifier
                             .size(80.dp)
                             .clip(CircleShape)
-                            .background(BrandGreen.copy(alpha = 0.1f)),
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         text = initials,
                         style = MaterialTheme.typography.headlineLarge,
-                        color = BrandGreen,
+                        color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Bold,
                     )
                 }
@@ -1021,21 +1021,21 @@ private fun ProfileSection(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = BrandGreen,
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(18.dp),
             )
             Spacer(modifier = Modifier.width(10.dp))
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelLarge,
-                color = BrandGreen,
+                color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp,
                 modifier = Modifier.weight(1f)
             )
             
             if (isVerified) {
-                VerificationChip("Verified", BrandGreen)
+                VerificationChip("Verified", MaterialTheme.colorScheme.primary)
             } else {
                 VerificationChip("Unverified", MaterialTheme.colorScheme.tertiary)
             }
@@ -1044,7 +1044,7 @@ private fun ProfileSection(
             Icon(
                 imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                 contentDescription = if (isExpanded) "Collapse" else "Expand",
-                tint = BrandGreen
+                tint = MaterialTheme.colorScheme.primary
             )
         }
 
@@ -1271,7 +1271,7 @@ private fun ProfileField(
                     },
                     colors =
                         OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = if (validationError != null) MaterialTheme.colorScheme.error else BrandGreen,
+                            focusedBorderColor = if (validationError != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                             unfocusedBorderColor = if (validationError != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outlineVariant,
                             errorBorderColor = MaterialTheme.colorScheme.error,
                             errorLabelColor = MaterialTheme.colorScheme.error,
@@ -1406,7 +1406,7 @@ private fun DocumentList(
                             tint = if ((uploadState?.uploadStatus ?: UploadStatus.IDLE) == UploadStatus.ERROR) {
                                 MaterialTheme.colorScheme.error
                             } else {
-                                BrandGreen
+                                MaterialTheme.colorScheme.primary
                             },
                             modifier = Modifier.size(24.dp),
                         )
@@ -1439,10 +1439,10 @@ private fun DocumentList(
 private fun ExistingStatusBadge(existingVerifyStatus: String?, fallbackStatus: DocumentStatus?) {
     val normalizedStatus = existingVerifyStatus?.lowercase()?.trim()
     val (text, color) = when {
-        normalizedStatus == "verified" -> "Verified" to BrandGreen
+        normalizedStatus == "verified" -> "Verified" to MaterialTheme.colorScheme.primary
         normalizedStatus == "rejected" -> "Rejected" to MaterialTheme.colorScheme.error
         normalizedStatus == "pending" -> "Verification Pending" to MaterialTheme.colorScheme.tertiary
-        fallbackStatus == DocumentStatus.VERIFIED -> "Verified" to BrandGreen
+        fallbackStatus == DocumentStatus.VERIFIED -> "Verified" to MaterialTheme.colorScheme.primary
         fallbackStatus == DocumentStatus.REJECTED -> "Rejected" to MaterialTheme.colorScheme.error
         fallbackStatus == DocumentStatus.UPLOADED -> "Verification Pending" to MaterialTheme.colorScheme.tertiary
         fallbackStatus == DocumentStatus.PENDING -> "Pending" to MaterialTheme.colorScheme.tertiary
@@ -1555,7 +1555,7 @@ private fun EditActions(
                 enabled = hasChanges && !isSaving,
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = BrandGreen),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
             ) {
                 Text("Save Changes", fontWeight = FontWeight.Bold)
             }
@@ -1581,7 +1581,7 @@ private fun ProfileErrorState(
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             color = MaterialTheme.colorScheme.onBackground,
         )
-        TextButton(onClick = onRetry, colors = ButtonDefaults.textButtonColors(contentColor = BrandGreen)) {
+        TextButton(onClick = onRetry, colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)) {
             Text("Retry", fontWeight = FontWeight.Bold)
         }
     }

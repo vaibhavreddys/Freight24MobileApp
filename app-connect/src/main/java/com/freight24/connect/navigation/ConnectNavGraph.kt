@@ -45,7 +45,13 @@ import com.freight24.connect.feature.truckowners.views.ManageTruckOwnersScreen
 import com.freight24.connect.feature.truckowners.views.OnboardTruckOwnerScreen
 import com.freight24.connect.feature.truckowners.profile.view.ProfileScreen
 import com.freight24.connect.feature.more.views.MoreScreen
+import com.freight24.connect.feature.more.AppSettingsViewModel
 import com.freight24.connect.feature.adhocTruck.views.QuickAdhocTruckScreen
+import com.freight24.ui.components.AppSettingsScreen
+import com.freight24.ui.theme.FreightAppTheme
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
 fun ConnectNavGraph(
@@ -178,7 +184,7 @@ fun ConnectNavGraph(
                 onManageTrucks = { navHostController.navigate(ConnectDestination.ManageTrucks.route) },
                 onManageTruckOwners = { navHostController.navigate(ConnectDestination.ManageTruckOwners.route) },
                 onMyProfile = { /* TODO: Navigate to Profile */ },
-                onSettings = { /* TODO: Navigate to Settings */ },
+                onSettings = { navHostController.navigate(ConnectDestination.Settings.route) },
                 onLogout = {
                     navHostController.navigate(authStartDestination) {
                         popUpTo(ConnectDestination.Home.route) {
@@ -187,6 +193,21 @@ fun ConnectNavGraph(
                         launchSingleTop = true
                     }
                 },
+            )
+        }
+
+        composable(ConnectDestination.Settings.route) {
+            val viewModel: AppSettingsViewModel = hiltViewModel()
+            val themeOrdinal by viewModel.themeChoice.collectAsState()
+            val darkMode by viewModel.darkModeOverride.collectAsState()
+            val appTheme = FreightAppTheme.entries.getOrElse(themeOrdinal) { FreightAppTheme.INDIGO }
+
+            AppSettingsScreen(
+                currentTheme = appTheme,
+                currentDarkMode = darkMode,
+                onThemeChange = viewModel::setTheme,
+                onDarkModeChange = viewModel::setDarkMode,
+                onBackClick = { navHostController.popBackStack() },
             )
         }
 

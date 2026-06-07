@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.inbox.views
+import com.freight24.ui.components.FreightTopAppBar
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -40,7 +41,7 @@ fun InboxScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            FreightTopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text("Interest Inbox", style = MaterialTheme.typography.titleMedium)
@@ -68,7 +69,6 @@ fun InboxScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = colorScheme.surface)
             )
         },
         containerColor = colorScheme.background

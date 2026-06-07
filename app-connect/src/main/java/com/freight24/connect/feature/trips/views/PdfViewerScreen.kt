@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.trips.views
+import com.freight24.ui.components.FreightTopAppBar
 
 import android.util.Log
 import androidx.compose.foundation.background
@@ -45,7 +46,7 @@ internal fun PdfViewerScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            FreightTopAppBar(
                 title = { Text("Lorry Receipt", fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
@@ -58,7 +59,7 @@ internal fun PdfViewerScreen(
                         Text(
                             "Approved",
                             modifier = Modifier.padding(end = 16.dp),
-                            color = extendedColors.successColor,
+                            color = extendedColors.success,
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Bold
                         )
@@ -72,7 +73,6 @@ internal fun PdfViewerScreen(
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = colorScheme.surface)
             )
         },
         floatingActionButton = {
@@ -100,7 +100,7 @@ internal fun PdfViewerScreen(
                     // Approve FAB
                     FloatingActionButton(
                         onClick = { viewModel.onEvent(PdfViewerEvent.ShowApproveDialog) },
-                        containerColor = extendedColors.successColor,
+                        containerColor = extendedColors.success,
                         contentColor = colorScheme.onPrimary
                     ) {
                         Row(

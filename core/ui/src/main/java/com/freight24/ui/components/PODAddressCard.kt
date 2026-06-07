@@ -23,7 +23,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.freight24.ui.theme.FreightThemeTokens
-import com.freight24.ui.theme.PrimaryGreen
 import kotlinx.coroutines.delay
 
 @Composable
@@ -32,7 +31,8 @@ fun PODAddressCard(
     addressLines: List<String>,
     modifier: Modifier = Modifier
 ) {
-    val successColor = FreightThemeTokens.colors.successColor
+    val colorScheme = MaterialTheme.colorScheme
+    val successColor = FreightThemeTokens.colors.success
     val clipboardManager = LocalClipboardManager.current
     var isCopied by remember { mutableStateOf(false) }
 
@@ -57,14 +57,14 @@ fun PODAddressCard(
         Icon(
             imageVector = Icons.Default.LocationOn,
             contentDescription = null,
-            tint = PrimaryGreen,
+            tint = colorScheme.primary,
             modifier = Modifier.size(18.dp),
         )
         Spacer(modifier = Modifier.width(10.dp))
         Text(
             text = "POD COURIER ADDRESS",
             style = MaterialTheme.typography.labelLarge,
-            color = PrimaryGreen,
+            color = colorScheme.primary,
             fontWeight = FontWeight.Bold,
             letterSpacing = 1.sp,
             modifier = Modifier.weight(1f)
@@ -76,7 +76,7 @@ fun PODAddressCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
         border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
     ) {
         Column(modifier = Modifier.padding(16.dp)) {

@@ -132,7 +132,7 @@ fun OtpInputField(
                         .background(
                             when {
                                 isFilled -> colors.surface
-                                isActive -> extendedColors.successColor.copy(alpha = 0.12f)
+                                isActive -> extendedColors.success.copy(alpha = 0.12f)
                                 else -> colors.surfaceVariant
                             },
                             CircleShape
@@ -140,7 +140,7 @@ fun OtpInputField(
                         .border(
                             width = if (isActive) 2.dp else if (isFilled) 1.dp else 0.dp,
                             color = when {
-                                isActive -> extendedColors.successColor
+                                isActive -> extendedColors.success
                                 isFilled -> colors.outlineVariant
                                 else -> colors.surface.copy(alpha = 0f)
                             },
@@ -160,7 +160,7 @@ fun OtpInputField(
                             modifier = Modifier
                                 .size(if (isActive) 8.dp else 6.dp)
                                 .background(
-                                    if (isActive) extendedColors.successColor else colors.onSurfaceVariant,
+                                    if (isActive) extendedColors.success else colors.onSurfaceVariant,
                                     CircleShape
                                 )
                         )

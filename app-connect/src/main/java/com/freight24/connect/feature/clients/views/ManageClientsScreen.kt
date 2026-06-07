@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.clients.views
+import com.freight24.ui.components.FreightTopAppBar
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -33,8 +34,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -74,7 +73,7 @@ fun ManageClientsScreen(
                 modifier = Modifier
                     .background(MaterialTheme.colorScheme.surface)
             ) {
-                TopAppBar(
+                FreightTopAppBar(
                     title = {
                         Text(
                             text = "Clients",
@@ -87,17 +86,14 @@ fun ManageClientsScreen(
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    )
                 )
             }
         },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onAddClientClick,
-                containerColor = FreightThemeTokens.colors.successColor,
-                contentColor = FreightThemeTokens.colors.onSuccessColor,
+                containerColor = FreightThemeTokens.colors.success,
+                contentColor = FreightThemeTokens.colors.onSuccess,
                 modifier = Modifier
                     .padding(end = 4.dp, bottom = 4.dp),
                 shape = RoundedCornerShape(16.dp)

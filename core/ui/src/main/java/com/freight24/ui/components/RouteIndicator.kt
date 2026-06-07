@@ -10,12 +10,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
+import com.freight24.ui.theme.FreightThemeTokens
 
 @Composable
 fun RouteIndicatorWithCities(
     fromCity: String,
     toCity: String,
 ) {
+    val extended = FreightThemeTokens.colors
     Row(
         verticalAlignment = Alignment.Top,
     ) {
@@ -23,18 +25,18 @@ fun RouteIndicatorWithCities(
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            // Green dot
+            // Origin (pickup) dot
             Box(
                 modifier =
                     Modifier
                         .size(12.dp)
                         .background(
-                            color = MaterialTheme.colorScheme.primary,
+                            color = extended.routeOrigin,
                             shape = CircleShape,
                         ),
             )
 
-            // Gradient line
+            // Gradient line — origin → destination
             Box(
                 modifier =
                     Modifier
@@ -45,20 +47,20 @@ fun RouteIndicatorWithCities(
                                 Brush.verticalGradient(
                                     colors =
                                         listOf(
-                                            MaterialTheme.colorScheme.primary,
-                                            MaterialTheme.colorScheme.error,
+                                            extended.routeOrigin,
+                                            extended.routeDestination,
                                         ),
                                 ),
                         ),
             )
 
-            // Red dot
+            // Destination (drop) dot
             Box(
                 modifier =
                     Modifier
                         .size(12.dp)
                         .background(
-                            color = MaterialTheme.colorScheme.error,
+                            color = extended.routeDestination,
                             shape = CircleShape,
                         ),
             )
