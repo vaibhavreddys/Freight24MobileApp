@@ -175,6 +175,17 @@ internal class ProfileViewModel
 
         private val _showAddRouteSheet = MutableStateFlow(false)
         val showAddRouteSheet: StateFlow<Boolean> = _showAddRouteSheet.asStateFlow()
+
+        private val _showLogoutSheet = MutableStateFlow(false)
+        val showLogoutSheet: StateFlow<Boolean> = _showLogoutSheet.asStateFlow()
+
+        fun requestLogout() {
+            _showLogoutSheet.value = true
+        }
+
+        fun dismissLogoutSheet() {
+            _showLogoutSheet.value = false
+        }
         val fromCityQuery = MutableStateFlow("")
         val toCityQuery = MutableStateFlow("")
         private val _fromCitySuggestions = MutableStateFlow<List<CityResult>>(emptyList())

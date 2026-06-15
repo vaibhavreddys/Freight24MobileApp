@@ -296,7 +296,7 @@ internal fun LoginScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                contentDescription = "Send OTP",
+                                contentDescription = "Send OTP arrow",
                                 modifier = Modifier.size(20.dp),
                             )
                         }

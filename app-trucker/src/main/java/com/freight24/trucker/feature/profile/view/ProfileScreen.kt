@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -92,6 +93,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -118,6 +120,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -173,6 +176,7 @@ internal fun ProfileScreen(
     val panDuplicateError by viewModel.panDuplicateError.collectAsState()
     val gstDuplicateError by viewModel.gstDuplicateError.collectAsState()
     val showAddRouteSheet by viewModel.showAddRouteSheet.collectAsState()
+    val showLogoutSheet by viewModel.showLogoutSheet.collectAsState()
     val fromQuery by viewModel.fromCityQuery.collectAsState()
     val toQuery by viewModel.toCityQuery.collectAsState()
     val fromSuggestions by viewModel.fromCitySuggestions.collectAsState()
@@ -264,6 +268,16 @@ internal fun ProfileScreen(
                         onConfirm = viewModel::onStageRouteAdd,
                         onDismiss = viewModel::dismissAddRouteSheet,
                         errorMessage = routeSheetError,
+                    )
+                }
+
+                if (showLogoutSheet) {
+                    LogoutConfirmationSheet(
+                        onConfirm = {
+                            viewModel.dismissLogoutSheet()
+                            viewModel.logout()
+                        },
+                        onDismiss = { viewModel.dismissLogoutSheet() },
                     )
                 }
             }
@@ -854,7 +868,7 @@ private fun ProfileMainContent(
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            LogoutButton(onLogout = { viewModel.logout() })
+            LogoutButton(onLogout = { viewModel.requestLogout() })
 
             Spacer(modifier = Modifier.height(60.dp))
         }
@@ -1521,6 +1535,112 @@ private fun LogoutButton(onLogout: () -> Unit) {
         Icon(imageVector = Icons.AutoMirrored.Filled.Logout, contentDescription = null, modifier = Modifier.size(20.dp))
         Spacer(modifier = Modifier.width(8.dp))
         Text(text = "LOGOUT", fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LogoutConfirmationSheet(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.surface,
+    ) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 24.dp, vertical = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            // Icon badge
+            Box(
+                modifier =
+                    Modifier
+                        .size(56.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.error.copy(alpha = 0.18f),
+                            shape = CircleShape,
+                        ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Logout,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(28.dp),
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Text(
+                text = "Logging out?",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Are you sure you want to log out of your account? You'll need to sign back in to access your loads.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Primary action: Logout
+            Button(
+                onClick = onConfirm,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                        .semantics(mergeDescendants = true) { contentDescription = "logout_confirm" },
+                shape = RoundedCornerShape(28.dp),
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                    ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
+            ) {
+                Text(text = "Logout", fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Secondary action: Stay Logged In
+            OutlinedButton(
+                onClick = onDismiss,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                        .semantics(mergeDescendants = true) { contentDescription = "logout_cancel" },
+                shape = RoundedCornerShape(28.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            ) {
+                Text(
+                    text = "Stay Logged In",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 15.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
     }
 }
 

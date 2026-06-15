@@ -107,18 +107,27 @@ The `Main` route renders a `FreightBottomNavScaffold` with `TruckerTab.entries` 
   5. **DOCUMENTS** — chip `Verified`, chevron. Inside: identity documents list.
   6. **POD COURIER ADDRESS** — non-collapsible card showing `Freight24 / 4th Floor, #3, Srirampur Cross Road, Jakkuru, Bengaluru, Karnataka - 560064` + a `Copy Address` button.
   7. **APP** — list with `App Settings` and `Contact Support` rows.
-  8. **LOGOUT** — full-width red button.
+  8. **LOGOUT** — full-width red button (tapping it opens a confirmation bottom sheet; see section 3.5 below).
 - **Edit mode:** tapping the pencil flips the relevant rows into editable fields and shows `Cancel` + `Save Changes` buttons. Sections whose `Verified` chip is green are read-only even in edit mode.
 - **Driving it:**
   - Pencil at `[975,159][1038,222]`.
   - Each section row is a `View` with `clickable="true"` parent — tap anywhere on the row text.
   - `Cancel` button at `bounds=[242,1964][356,2017]` in edit mode.
-  - `LOGOUT` button is a `View` at the bottom; tapping it calls `ProfileViewModel.logout()` → `SessionManager.logout()`.
+  - `LOGOUT` button is a `View` at the bottom; tapping it calls `ProfileViewModel.requestLogout()` which opens a confirmation `ModalBottomSheet`. The sheet has two actions: `logout_confirm` (Logout) calls `viewModel.logout()` → `SessionManager.logout()`; `logout_cancel` (Stay Logged In) calls `viewModel.dismissLogoutSheet()`.
   - `App Settings` row opens `TruckerDestination.Settings.route`.
 - **Source:** `app-trucker/.../feature/profile/view/ProfileScreen.kt` (~1400 lines, the biggest file in the module), `ProfileViewModel.kt`, `AppSettingsViewModel.kt`. Sections use `core/ui/components/ProfileUtilityRow.kt`, `PODAddressCard.kt`, `AccountStatusCard.kt`.
 - **API:** `GET /api/v1/truck-owners/profile` (per `TruckOwnerApi.kt`); PATCH calls go to `/api/v1/truck-owners/:id`.
 
 ---
+
+### 3.5 Logout confirmation bottom sheet
+
+- **What you see:** A modal bottom sheet slides up from the bottom of the screen. It contains (top to bottom): a drag handle, a 56dp circular badge tinted with `colorScheme.error` at 18% alpha containing a white logout arrow icon, the bold headline `Logging out?`, the body text `Are you sure you want to log out of your account? You will need to sign back in to access your loads.`, a wide light pill button labelled `Logout` (the primary confirm action), and a wide dark pill button with a 1dp outline border labelled `Stay Logged In` (the secondary cancel action). The sheet has `navigationBarsPadding` so it sits above the system gesture bar.
+- **Driving it:** the sheet uses `rememberModalBottomSheetState(skipPartiallyExpanded = true)` so it opens fully and cannot be partially dismissed by swiping only partway down. The `onDismissRequest` (back press / scrim tap) maps to `dismissLogoutSheet`.
+  - `logout_confirm` is the wide pill in the middle (taps confirm logout).
+  - `logout_cancel` is the wide pill at the bottom (taps dismiss the sheet and stay logged in).
+- **Verification (2026-06-15):** built, installed, and walked through on `adb-001196478009045-leuQws._adb-tls-connect._tcp`. Both content-desc IDs are present in the UIAutomator dump. Stay Logged In correctly returns to the Profile screen with the session intact; Logout returns to the Login screen (phone field empty, `Welcome back` title). Artifacts in `Freight24MobileApp/.devloop/logout-sheet/`.
+- **Source:** `app-trucker/.../feature/profile/view/ProfileScreen.kt` (the new private composable `LogoutConfirmationSheet` plus the `if (showLogoutSheet) { ... }` render block) and `ProfileViewModel.kt` (new `showLogoutSheet: StateFlow<Boolean>` + `requestLogout()` / `dismissLogoutSheet()`).
 
 ## 4. Drill-down screens
 
@@ -213,6 +222,8 @@ All 11 IDs from the original proposal were added in one pass, using `Modifier.se
 | `truck_row_<id>` | Trucks tab, each truck card | `truck_row_0d78929f-6b1e-40f5-b4c9-2a13c9ab3bdd` etc. |
 | `truck_edit_button` | Truck Details, bottom CTA | static |
 | `profile_logout` | Profile, bottom red LOGOUT button | static |
+| `logout_confirm` | Logout sheet, primary "Logout" pill | static |
+| `logout_cancel` | Logout sheet, secondary "Stay Logged In" pill | static |
 
 Verification dumps: `Freight24MobileApp/.devloop/testtag-verify/{02..10}-*.xml`.
 
@@ -269,7 +280,7 @@ Top-level coords that are stable (1080×2400 device):
 - **Search on Loads tab:** the callback is a TODO. Either wire it to a real search API or remove the icon.
 - **Empty states:** the Loads tab has no visible empty state when the cluster card has no loads — we just see "1 load available" with no row beneath. Trips has a clear "No Active Trips Available". Trucks shows the full list (no empty state because the test account has 5).
 - **Edit mode UX:** when tapping the pencil on Profile, **all** sections go into edit mode, but already-`Verified` rows stay read-only with no visual indication of which fields are editable. Easy follow-up: dim or hide the pencil when there's nothing to edit.
-- **Logout confirmation:** tapping LOGOUT fires immediately with no confirm dialog — risk of accidental tap.
+- **Logout confirmation:** ~~tapping LOGOUT fires immediately with no confirm dialog — risk of accidental tap.~~ **Fixed (2026-06-15)** — LOGOUT now opens a Material 3 `ModalBottomSheet` with a `Logging out?` headline and two actions (`logout_confirm` / `logout_cancel`). See section 3.5 for the full spec.
 - **Notification permission flow:** the first launch shows a system permission dialog. We tested with "Don't allow"; the login still completes. There's a `BuildConfig.FEATURE_NEW_LOGIN` flag in `app-connect` that gates the new login screen; not used in `app-trucker`.
 
 ---
@@ -280,6 +291,7 @@ All screenshots + UI dumps from this walkthrough are saved under
 ```
 Freight24MobileApp/.devloop/login-walkthrough/    # 01-login-screen through 04-after-verify
 Freight24MobileApp/.devloop/sweep/                # 00-loads-home through 12-app-settings
+Freight24MobileApp/.devloop/logout-sheet/           # 12-profile through 17-after-confirm - logout confirmation bottom sheet
 ```
 
 Re-run the sweep with:
