@@ -27,6 +27,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -107,7 +109,9 @@ fun LoadBoardScreen(
                 if (items.isEmpty()) {
                     item(key = "empty") {
                         Box(
-                            modifier = Modifier.fillParentMaxSize(),
+                            modifier = Modifier
+                                .fillParentMaxSize()
+                                .semantics(mergeDescendants = true) { contentDescription = "loads_empty_state" },
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
@@ -142,6 +146,7 @@ fun LoadBoardScreen(
                                     listingCount = item.totalLoads,
                                     expanded = item.expanded,
                                     onClick = { viewModel.onCityClicked(item.cityId) },
+                                    modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = "load_board_city_${item.cityId}" },
                                 )
 
                             is LoadBoardItem.LoadItem ->
@@ -156,6 +161,7 @@ fun LoadBoardScreen(
                                     f24AgentName = item.load.f24AgentName,
                                     isBookmarked = item.load.isInterested,
                                     isBookmarkLoading = item.load.isInterestLoading,
+                                    modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = "load_row_${item.load.id}" },
                                     onClick = {
                                         viewModel.onLoadCardClicked(
                                             indentId = item.load.id,
@@ -177,7 +183,9 @@ fun LoadBoardScreen(
                             is LoadBoardItem.ShowMoreItem -> {
                                 TextButton(
                                     onClick = { viewModel.onShowMoreClicked(item.cityId) },
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .semantics(mergeDescendants = true) { contentDescription = "load_show_more_${item.cityId}" },
                                 ) {
                                     Text(
                                         text = "Show more loads",

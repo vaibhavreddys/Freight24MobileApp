@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
@@ -37,6 +39,7 @@ fun <T : NavTabItem> FreightBottomNavBar(
                     onItemSelected(item)
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 },
+                modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = "tab_${item.id}" },
                 icon = {
                     Icon(
                         imageVector = item.icon,

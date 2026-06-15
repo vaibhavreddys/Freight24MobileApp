@@ -102,6 +102,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
@@ -1506,7 +1508,8 @@ private fun LogoutButton(onLogout: () -> Unit) {
         modifier =
             Modifier
                 .fillMaxWidth()
-                .height(56.dp),
+                .height(56.dp)
+                .semantics(mergeDescendants = true) { contentDescription = "profile_logout" },
         shape = RoundedCornerShape(28.dp),
         colors =
             ButtonDefaults.buttonColors(

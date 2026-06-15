@@ -35,6 +35,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -138,7 +140,9 @@ internal fun TrucksScreen(
                                         availability = truck.availability,
                                         isVerified = truck.isVerified,
                                         isBlacklisted = truck.isBlacklisted,
-                                        modifier = Modifier.clickable { onTruckClick(truck.id) },
+                                        modifier = Modifier
+                                            .semantics(mergeDescendants = true) { contentDescription = "truck_row_${truck.id}" }
+                                            .clickable { onTruckClick(truck.id) },
                                     )
                                 }
                             }
@@ -206,6 +210,7 @@ fun FilterChips(
                 label = option.name.lowercase().replaceFirstChar { it.uppercase() }.replace("_", " "),
                 isSelected = option == selected,
                 onClick = { onSelected(option) },
+                modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = "trucks_filter_${option.name.lowercase()}" },
             )
         }
     }

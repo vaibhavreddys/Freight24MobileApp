@@ -68,6 +68,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -257,7 +259,10 @@ internal fun TruckDetailsScreen(
                 ) {
                     Button(
                         onClick = { onEditClick(state.data.truckId) },
-                        modifier = Modifier.fillMaxWidth().height(56.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .semantics(mergeDescendants = true) { contentDescription = "truck_edit_button" },
                         shape = RoundedCornerShape(50.dp),
                     ) {
                         Text("Edit Truck", fontWeight = FontWeight.Bold, fontSize = 16.sp)
