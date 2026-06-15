@@ -33,3 +33,7 @@ local.properties
 /core/ui/build/
 /core/notifications/build/
 /core/rest/build/
+
+# Scripts (for automating)
+scripts/*
+.devloop/*

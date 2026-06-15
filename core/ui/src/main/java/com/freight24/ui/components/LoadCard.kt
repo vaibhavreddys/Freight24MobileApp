@@ -179,7 +179,7 @@ fun LoadCard(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Person,
-                            contentDescription = "Delivery truck",
+                            contentDescription = "Agent",
                             tint = MaterialTheme.colorScheme.onSurface,
                         )
                         Spacer(Modifier.width(8.dp))
@@ -231,16 +231,26 @@ fun LoadCard(
 fun formatCurrency(amount: String?): String {
     if (amount.isNullOrBlank() || amount == "null") return "₹ 0"
     return try {
-        // Remove any existing currency symbols/spaces and parse
-        val numericValue = amount.replace("[₹,\\s]".toRegex(), "").toDoubleOrNull()
+        // Clean the string: remove common currency prefixes and separators
+        val cleaned = amount.replace("Rs.", "", ignoreCase = true)
+            .replace("Rs", "", ignoreCase = true)
+            .replace("[₹,\\s]".toRegex(), "")
 
-        if (numericValue != null) {
-            "₹ ${"%,.0f".format(numericValue)}"
+        // Extract the numeric part (digits and at most one decimal point)
+        val numericRegex = Regex("[0-9]+(?:\\.[0-9]+)?")
+        val match = numericRegex.find(cleaned)
+
+        if (match != null) {
+            val numericValue = match.value.toDouble()
+            val formattedValue = "%,.0f".format(numericValue)
+            // Preserve any suffix (e.g., "/ton") that was in the cleaned string
+            val suffix = cleaned.substringAfter(match.value)
+            "₹ $formattedValue$suffix"
         } else {
-            "₹ 0" // Fallback for invalid input
+            "₹ 0"
         }
     } catch (_: Exception) {
-        "₹ 0" // Fallback for any parsing errors
+        "₹ 0"
     }
 }
 

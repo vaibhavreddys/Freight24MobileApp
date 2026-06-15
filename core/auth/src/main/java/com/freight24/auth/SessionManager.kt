@@ -259,6 +259,10 @@ class SessionManager
         private suspend fun clearLocalSession() {
             proactiveRefreshJob?.cancel()
             proactiveRefreshJob = null
+            // Drop any pending refresh error so it cannot leak to the next launch.
+            // Once the local session is gone the user is effectively signed out;
+            // the message would only appear on a future login screen as stale noise.
+            _lastRefreshError.value = null
             authDataStore.clearAuthData()
         }
     }
