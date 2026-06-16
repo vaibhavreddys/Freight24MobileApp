@@ -1,0 +1,23 @@
+# maestro/flows/_helpers/assert_home_loaded.yaml
+#
+# Asserts that the post-login home screen is visible. Kept as a helper so
+# we can evolve "what counts as home" in one place.
+#
+# Inputs (env):
+#   HOME_TEXT    - regex (POSIX) that matches any visible element unique
+#                  to the home screen for the calling app. Required.
+#
+# For app-trucker, the home has 4 bottom tabs: Loads, Trips, Trucks, Profile.
+# A regex matching "Loads|Trips|Trucks|Profile" accepts any of them.
+#
+# For app-connect, the home is reached and "Shipments" (or whatever) is
+# visible. A single-word regex works there.
+#
+# appId: a placeholder required by the Maestro parser. The calling flow
+# owns the appId.
+appId: com.freight24.trucker.debug
+---
+- assertVisible:
+    text: '${HOME_TEXT}'
+- assertNotVisible:
+    text: "Send OTP"

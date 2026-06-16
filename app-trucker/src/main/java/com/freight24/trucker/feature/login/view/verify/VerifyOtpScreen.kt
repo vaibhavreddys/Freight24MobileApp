@@ -30,6 +30,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
@@ -205,6 +208,9 @@ internal fun VerifyOtpScreen(
                         state = buttonState,
                         enabled = isVerifyEnabled,
                         onClick = { viewModel.onVerifyClick(phoneNumber) },
+                        modifier = Modifier
+                            .testTag("verify_btn")
+                            .semantics { testTagsAsResourceId = true },
                     )
 
                     Spacer(Modifier.height(24.dp))

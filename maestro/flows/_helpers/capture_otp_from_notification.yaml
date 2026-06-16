@@ -1,0 +1,38 @@
+# maestro/flows/_helpers/capture_otp_from_notification.yaml
+#
+# Pulls the most recent 6-digit OTP from the Android notification shade and
+# exposes it on `output.otp` for the calling flow to consume.
+#
+# Output:
+#   output.otp   - 6-digit string (e.g. "932180")
+#
+# Note: notification-based capture is fragile. The Freight24 backend does
+# not expose a test-mode OTP, so this is the only path. If the SMS body
+# template changes, update the line marked FIX.
+#
+# appId: this helper does not launch any app. The appId below is a
+# placeholder required by the Maestro parser. The calling flow's appId
+# is what actually drives launchApp invocations.
+appId: com.freight24.trucker.debug
+---
+# Open the notification shade from the very top of the screen.
+- swipe:
+    start: 50%, 0%
+    end: 50%, 80%
+# Copy any visible text block that contains 6 digits. We grab
+# the whole block and parse the exact digits in the next step.
+- copyTextFrom:
+    text: ".*\\d{6}.*"
+# Collapse the shade before continuing so we don't tap on it.
+- swipe:
+    start: 50%, 80%
+    end: 50%, 0%
+# FIX: SMS body template is "Your verification code is 932180".
+# If it changes, update the "is " offset (3) and the digit count (6).
+# No regex literals: extract the 6 characters after "is ".
+- evalScript: '${var s = maestro.copiedText || ""; var i = s.indexOf("is "); var d = (i >= 0 ? s.substring(i + 3, i + 9) : ""); var ok = d.length === 6; var j = 0; while (ok && j < 6) { if (d.charAt(j) < "0" || d.charAt(j) > "9") ok = false; j = j + 1; } output.otp = ok ? d : ""}'
+# Hard assertion: empty OTP is a clear failure with a useful message,
+# not a silent downstream login error.
+- assertTrue:
+    condition: '${output.otp.length === 6}'
+    message: 'OTP not captured from the notification shade. Forward a real SMS to the device, or update the "is " offset to match the current SMS body template.'

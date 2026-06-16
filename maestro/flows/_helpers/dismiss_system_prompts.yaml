@@ -1,0 +1,36 @@
+# maestro/flows/_helpers/dismiss_system_prompts.yaml
+#
+# Best-effort dismissal of Android system permission dialogs (POST_NOTIFICATIONS,
+# location, contacts) that may appear on first launch or first use of a feature.
+# Each step is conditional — runs only if the dialog text is visible. This
+# helper never fails; it just does its best and moves on.
+appId: com.freight24.trucker.debug
+---
+- runFlow:
+    when:
+      visible: "Allow.*notif"
+    commands:
+      - tapOn:
+          text: "Allow"
+          optional: true
+- runFlow:
+    when:
+      visible: ".*notifications.*"
+    commands:
+      - tapOn:
+          text: "Allow"
+          optional: true
+- runFlow:
+    when:
+      visible: "While using the app"
+    commands:
+      - tapOn:
+          text: "While using the app"
+          optional: true
+- runFlow:
+    when:
+      visible: "Allow Freight24 to access"
+    commands:
+      - tapOn:
+          text: "Allow"
+          optional: true

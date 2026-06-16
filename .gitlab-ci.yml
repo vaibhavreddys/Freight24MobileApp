@@ -87,4 +87,3 @@ deploy:release:
           url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/apk-builds/${CI_COMMIT_SHORT_SHA}/app-connect-qa-debug.apk"
           link_type: package
   only:
-    - main  # or your release branch, e.g. develop

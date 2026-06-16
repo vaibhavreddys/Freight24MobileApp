@@ -1,0 +1,9 @@
+# maestro/flows/smoke/app-connect/01_launch_login_home.yaml
+#
+# Smoke test: cold-launch app-connect, log in, reach the home screen.
+# @smoke
+appId: com.freight24.connect.debug
+---
+- launchApp:
+    clearState: true
+- runFlow: ../../_helpers/login_connect.yaml

@@ -24,6 +24,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
@@ -221,7 +224,10 @@ internal fun LoginScreen(
                         OutlinedTextField(
                             value = phoneNumber,
                             onValueChange = viewModel::onPhoneNumberChange,
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("phone_input")
+                                .semantics { testTagsAsResourceId = true },
                             placeholder = {
                                 Text(
                                     stringResource(R.string.login_phone_placeholder),
@@ -275,7 +281,9 @@ internal fun LoginScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 24.dp)
-                            .height(56.dp),
+                            .height(56.dp)
+                            .testTag("send_otp_btn")
+                            .semantics { testTagsAsResourceId = true },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = colors.primary,
                             contentColor = colors.onPrimary,

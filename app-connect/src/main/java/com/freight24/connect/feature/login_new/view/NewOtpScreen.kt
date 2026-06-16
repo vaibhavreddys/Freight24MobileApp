@@ -43,6 +43,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -242,7 +245,9 @@ fun NewOtpScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(56.dp)
-                                    .background(buttonGradient, RoundedCornerShape(28.dp)),
+                                        .background(buttonGradient, RoundedCornerShape(28.dp))
+                                        .testTag("verify_btn")
+                                        .semantics { testTagsAsResourceId = true },
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = colorScheme.surface.copy(alpha = 0f),
                                         contentColor = colorScheme.onPrimary,

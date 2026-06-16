@@ -1,0 +1,31 @@
+# maestro/flows/_helpers/login_trucker.yaml
+#
+# Trucker-specific login helper. Phone number is hard-coded below.
+#
+# SELECTORS USED (test tags in app-trucker Compose code):
+#   phone_input  - the phone number TextField
+#   otp_input    - the OTP TextField (the visible clickable wrapper)
+#   send_otp_btn - the button that requests the OTP
+#   verify_btn   - the button that submits the OTP
+appId: com.freight24.trucker.debug
+---
+- runFlow: ./dismiss_system_prompts.yaml
+- tapOn:
+    id: "phone_input"
+- inputText: "7022457678"
+- tapOn:
+    id: "send_otp_btn"
+- runFlow: ./capture_otp_from_notification.yaml
+- tapOn:
+    id: "otp_input"
+- inputText: '${output.otp}'
+- tapOn:
+    id: "verify_btn"
+- runFlow:
+    env:
+      # The trucker home has 4 bottom tabs: Loads, Trips, Trucks, Profile.
+      # A regex matches any of them, so the test passes as long as the
+      # bottom nav is on screen.
+      HOME_TEXT: "Loads|Trips|Trucks|Profile"
+    commands:
+      - runFlow: ./assert_home_loaded.yaml

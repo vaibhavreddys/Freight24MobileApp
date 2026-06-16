@@ -1,0 +1,40 @@
+# maestro/flows/_helpers/login_connect.yaml
+#
+# Connect-specific login helper. Phone number is hard-coded below.
+#
+# The app auto-submits the phone number once it has the expected number
+# of digits, so the Send OTP button is often already-clicked (or never
+# visible) by the time we get to it. The flow handles both cases: it
+# taps the button if it's still there, and moves on if the OTP screen
+# has already appeared.
+#
+# SELECTORS USED (test tags in app-connect Compose code):
+#   phone_input  - the phone number TextField
+#   otp_input    - the OTP TextField (the visible clickable wrapper)
+#   send_otp_btn - the button that requests the OTP
+#   verify_btn   - the button that submits the OTP
+appId: com.freight24.connect.debug
+---
+- runFlow: ./dismiss_system_prompts.yaml
+- tapOn:
+    id: "phone_input"
+- inputText: "9880300300"
+# The phone field auto-submits once the number is complete. Wait briefly
+# for either the Send OTP button (still on phone screen) or the OTP field
+# (already moved on). Tap the button only if it's still there.
+- runFlow:
+    commands:
+      - tapOn:
+          id: "send_otp_btn"
+          optional: true
+- runFlow: ./capture_otp_from_notification.yaml
+- tapOn:
+    id: "otp_input"
+- inputText: '${output.otp}'
+- tapOn:
+    id: "verify_btn"
+- runFlow:
+    env:
+      HOME_TEXT: "Home|Trips|Trucks|Profile"
+    commands:
+      - runFlow: ./assert_home_loaded.yaml

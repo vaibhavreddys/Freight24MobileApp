@@ -27,6 +27,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -101,7 +104,10 @@ fun LoginScreen(
                     OutlinedTextField(
                         value = phoneNumber,
                         onValueChange = viewModel::onPhoneNumberChange,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("phone_input")
+                            .semantics { testTagsAsResourceId = true },
                         placeholder = { Text("Mobile Number") },
                         leadingIcon = {
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -125,7 +131,9 @@ fun LoginScreen(
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .height(50.dp),
+                                .height(50.dp)
+                                .testTag("send_otp_btn")
+                                .semantics { testTagsAsResourceId = true },
                         colors = ButtonDefaults.buttonColors(containerColor = colorScheme.primary),
                     ) {
                         Text("Send OTP", color = colorScheme.onPrimary, fontSize = 16.sp)

@@ -28,6 +28,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -69,6 +72,8 @@ fun OtpInputField(
     Box(
         modifier =
             Modifier
+                .testTag("otp_input")
+                .semantics { testTagsAsResourceId = true }
                 .clickable(
                     indication = null,
                     interactionSource = remember { MutableInteractionSource() },

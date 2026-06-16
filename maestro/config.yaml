@@ -1,0 +1,19 @@
+# maestro/config.yaml
+# Global defaults applied to every flow. Individual flows can still set
+# their own `appId:` to override.
+#
+# Reference: https://maestro.dev/docs/configuration
+
+defaults:
+  # Headless execution: helpful for CI. Remove for local debugging.
+  headless: false
+
+  # Default Android emulator/device. Override per-environment.
+  device:
+    - platform: android
+      name: Pixel_5_API_34
+      type: emulator
+
+  # How long Maestro will wait for an element to appear before failing.
+  # Bump this if your QA build is slow on cold start.
+  timeout: 30000

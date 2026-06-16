@@ -1,0 +1,9 @@
+# maestro/flows/smoke/app-trucker/01_launch_login_home.yaml
+#
+# Smoke test: cold-launch app-trucker, log in, reach the home screen.
+# @smoke
+appId: com.freight24.trucker.debug
+---
+- launchApp:
+    clearState: true
+- runFlow: ../../_helpers/login_trucker.yaml
