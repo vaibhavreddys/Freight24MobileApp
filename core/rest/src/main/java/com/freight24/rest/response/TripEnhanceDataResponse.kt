@@ -105,7 +105,7 @@ data class TripDataResponse(
 
     @Serializable
     data class Balance(
-        val paid: Boolean,
+        val paid: Boolean = false,
         val amount: Double,
         val paidAmount: Double
     )
