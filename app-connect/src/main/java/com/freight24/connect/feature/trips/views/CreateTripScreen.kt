@@ -95,7 +95,8 @@ internal fun CreateTripScreen(
                 onClick = { viewModel.onEvent(CreateTripEvent.CreateTrip) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 20.dp, top = 10.dp)
                     .height(50.dp),
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(

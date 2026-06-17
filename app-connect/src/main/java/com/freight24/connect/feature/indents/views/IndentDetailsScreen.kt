@@ -30,6 +30,7 @@ import com.freight24.connect.feature.inbox.views.TruckerCallRow
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import com.freight24.connect.feature.findTrucks.views.SearchResultsContent
@@ -388,13 +389,16 @@ fun IndentDetailsScreen(
                                     onCreateTripClick(indentId)
                                 }
                             },
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().height(52.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = colorScheme.primary,
                                 contentColor = colorScheme.onPrimary
                             )
                         ) {
-                            Text("Create trip")
+                            Text("Create trip",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     } else if (!indent.status.equals("CANCELLED", true)) {
                         Button(
