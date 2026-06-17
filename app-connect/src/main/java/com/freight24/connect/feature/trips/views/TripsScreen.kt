@@ -6,7 +6,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -29,7 +28,6 @@ import com.freight24.connect.feature.trips.views.components.TripCard
 fun TripsScreen(
     paddingValues: PaddingValues,
     onTripClick: (String) -> Unit = {},
-    onSearchClick: () -> Unit = {},
     initialFilter: TripTypes? = null,
     viewModel: TripsListViewModel = hiltViewModel<TripsListViewModelImpl>()
 ) {
@@ -42,25 +40,30 @@ fun TripsScreen(
         }
     }
 
+    Scaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues),
+        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+    ) { _ ->
     PullToRefreshBox(
         isRefreshing = uiState.isLoading,
         onRefresh = { viewModel.onEvent(TripsListEvent.Refresh) },
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues)
+        modifier = Modifier.fillMaxSize(),
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 16.dp)
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
         ) {
             item {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     LazyRow(
-                        modifier = Modifier.weight(1f),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp),
                     ) {
                         items(TripTypes.entries) { type ->
                             TripFilterChip(
@@ -69,13 +72,6 @@ fun TripsScreen(
                                 onClick = { viewModel.onEvent(TripsListEvent.SelectFilter(type)) }
                             )
                         }
-                    }
-                    IconButton(onClick = onSearchClick) {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Search trips",
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
                     }
                 }
             }
@@ -121,15 +117,20 @@ fun TripsScreen(
                 }
 
                 else -> {
-                    items(uiState.trips) { trip ->
+                    items(
+                        items = uiState.trips,
+                        key = { trip -> trip.id },
+                    ) { trip ->
                         TripCard(
                             trip = trip,
-                            onClick = { onTripClick(trip.id) }
+                            onClick = { onTripClick(trip.id) },
+                            modifier = Modifier.padding(vertical = 6.dp),
                         )
                     }
                 }
             }
         }
+    }
     }
 }
 

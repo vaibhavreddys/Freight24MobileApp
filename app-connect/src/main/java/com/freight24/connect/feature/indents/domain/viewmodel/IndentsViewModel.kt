@@ -40,7 +40,7 @@ data class CreateIndentUiState(
     val negotiatedCost: String = "",
     val businessProposedCost: String = "",
     val vehicleHeight: String = "",
-    val flooringType: String = "Steel", // Default
+    val flooringType: String = "STEEL", // Default
     val tatRequired: Boolean = false,
     val tatHours: String = "",
     val tarpaulinRequired: Boolean = false,

@@ -68,6 +68,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.freight24.connect.feature.indents.domain.viewmodel.CreateIndentEvent
@@ -200,32 +201,32 @@ fun CreateIndentContent(
     }
 
     fun clearError(key: String) {
-        fieldErrors.value = fieldErrors.value - key
+        fieldErrors.value -= key
     }
 
     Box(Modifier.fillMaxSize()) {
-        Box(Modifier.fillMaxSize().background(screenBackground))
+//        Box(Modifier.fillMaxSize().background(screenBackground))
 
-        if (isDark) {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.45f)
-                    .align(Alignment.TopEnd)
-                    .background(
-                        Brush.horizontalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.06f),
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
-                            )
-                        )
-                    )
-            )
-        }
+//        if (isDark) {
+//            Box(
+//                Modifier
+//                    .fillMaxWidth()
+//                    .fillMaxHeight(0.45f)
+//                    .align(Alignment.TopEnd)
+//                    .background(
+//                        Brush.horizontalGradient(
+//                            colors = listOf(
+//                                Color.Transparent,
+//                                MaterialTheme.colorScheme.primary.copy(alpha = 0.06f),
+//                                MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
+//                            )
+//                        )
+//                    )
+//            )
+//        }
 
         Scaffold(
-            containerColor = Color.Transparent,
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
             topBar = {
                 FreightTopAppBar(
                     title = { Text("Create Indent") },
@@ -559,12 +560,12 @@ private fun VehicleTypeSection(
             }
 
             if (closedTrucks.isNotEmpty()) {
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    "Closed",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+//                Spacer(Modifier.height(4.dp))
+//                Text(
+//                    "Closed",
+//                    style = MaterialTheme.typography.labelMedium,
+//                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+//                )
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -696,12 +697,17 @@ private fun OptionalDetailsSection(
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                SectionHeaderText("Cost Breakdown")
+                SectionHeaderText("Trip Cost Breakdown")
 
                 OutlinedTextField(
                     value = uiState.clientCost,
                     onValueChange = { onEvent(CreateIndentEvent.UpdateOptionalField(clientCost = it)) },
-                    label = { Text("Client Cost (₹)") },
+                    label = {
+                        Text(
+                            text = "Client Cost (₹)",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -710,18 +716,28 @@ private fun OptionalDetailsSection(
 
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedTextField(
-                        value = uiState.negotiatedCost,
-                        onValueChange = { onEvent(CreateIndentEvent.UpdateOptionalField(negotiatedCost = it)) },
-                        label = { Text("Negotiated (₹)") },
+                        value = uiState.businessProposedCost,
+                        onValueChange = { onEvent(CreateIndentEvent.UpdateOptionalField(businessProposedCost = it)) },
+                        label = {
+                            Text(
+                                text = "Proposed Cost (₹)",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(16.dp),
                         singleLine = true,
                     )
                     OutlinedTextField(
-                        value = uiState.businessProposedCost,
-                        onValueChange = { onEvent(CreateIndentEvent.UpdateOptionalField(businessProposedCost = it)) },
-                        label = { Text("Proposed (₹)") },
+                        value = uiState.negotiatedCost,
+                        onValueChange = { onEvent(CreateIndentEvent.UpdateOptionalField(negotiatedCost = it)) },
+                        label = {
+                            Text(
+                                text = "Negotiated Cost (₹)",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(16.dp),
@@ -738,7 +754,12 @@ private fun OptionalDetailsSection(
                     OutlinedTextField(
                         value = uiState.vehicleHeight,
                         onValueChange = { onEvent(CreateIndentEvent.UpdateOptionalField(vehicleHeight = it)) },
-                        label = { Text("Height (ft)") },
+                        label = {
+                            Text(
+                                text = "Height (ft)",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(16.dp),
@@ -747,7 +768,12 @@ private fun OptionalDetailsSection(
                     OutlinedTextField(
                         value = uiState.flooringType,
                         onValueChange = { onEvent(CreateIndentEvent.UpdateOptionalField(flooringType = it)) },
-                        label = { Text("Flooring Type") },
+                        label = {
+                            Text(
+                                text = "Flooring Type",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(16.dp),
                         singleLine = true,
@@ -791,7 +817,7 @@ private fun OptionalDetailsSection(
                         )
                         Spacer(Modifier.width(4.dp))
                         Text(
-                            "Hide Cost",
+                            "Hide Indent Cost",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface,
                         )

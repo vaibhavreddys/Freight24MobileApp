@@ -51,19 +51,24 @@ fun IndentsScreen(
     val viewModel: IndentsListViewModel = hiltViewModel<IndentsListViewModelImpl>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    PullToRefreshBox(
-        isRefreshing = uiState.isLoading,
-        onRefresh = { viewModel.onEvent(IndentsListEvent.RefreshIndents) },
+    Scaffold(
         modifier = modifier.fillMaxSize(),
-    ) {
-        IndentsContent(
-            uiState = uiState,
-            onEvent = viewModel::onEvent,
-            onIndentClick = onIndentClick,
-            onCloneClick = onCloneClick,
-            onSearchClick = onSearchClick,
+        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+    ) { _ ->
+        PullToRefreshBox(
+            isRefreshing = uiState.isLoading,
+            onRefresh = { viewModel.onEvent(IndentsListEvent.RefreshIndents) },
             modifier = Modifier.fillMaxSize(),
-        )
+        ) {
+            IndentsContent(
+                uiState = uiState,
+                onEvent = viewModel::onEvent,
+                onIndentClick = onIndentClick,
+                onCloneClick = onCloneClick,
+                onSearchClick = onSearchClick,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
     }
 
 }
@@ -191,7 +196,7 @@ fun TabButton(
         shape = RoundedCornerShape(24.dp),
         border = if (!isSelected) BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant) else null,
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-        modifier = modifier.height(40.dp)
+        modifier = modifier.height(32.dp)
     ) {
         Text(
             text = text,

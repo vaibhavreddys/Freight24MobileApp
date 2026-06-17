@@ -25,14 +25,15 @@ import com.freight24.rest.response.TripDataResponse
 @Composable
 fun TripCard(
     trip: TripDataResponse,
-    onClick: (() -> Unit)? = null
+    onClick: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
 ) {
     val colorScheme = MaterialTheme.colorScheme
     Card(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
     ) {

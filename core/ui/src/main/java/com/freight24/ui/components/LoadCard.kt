@@ -79,6 +79,7 @@ fun LoadCard(
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
+//            containerColor = MaterialTheme.colorScheme.primaryContainer,
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {

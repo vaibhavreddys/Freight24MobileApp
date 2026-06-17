@@ -81,7 +81,12 @@ internal fun HomeScreen(
         topBar = {
             AppTopBar(
                 title = selectedTab.name,
-                showSearch = selectedTab == ConnectTab.Home,
+                showSearch = selectedTab == ConnectTab.Home || selectedTab == ConnectTab.Trips,
+                onSearchClick = when (selectedTab) {
+                    ConnectTab.Home -> onSearchClick
+                    ConnectTab.Trips -> onTripSearchClick
+                    else -> null
+                },
                 showFilter = selectedTab == ConnectTab.Indents,
                 onFilterClick = { /* TODO: Filter */ }
             )
@@ -148,7 +153,6 @@ internal fun HomeScreen(
                 ConnectTab.Trips -> TripsScreen(
                     paddingValues = paddingValues,
                     onTripClick = onTripClick,
-                    onSearchClick = onTripSearchClick,
                     initialFilter = selectedFilter
                 )
                 ConnectTab.Trucks -> FindTrucksScreen(
