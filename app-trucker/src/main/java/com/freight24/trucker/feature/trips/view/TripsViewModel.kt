@@ -61,6 +61,7 @@ internal class TripsViewModel
                         calculateCounts()
                     }.onFailure { error: Throwable ->
                         // Handle error
+                        error.printStackTrace()
                     }
             }
         }

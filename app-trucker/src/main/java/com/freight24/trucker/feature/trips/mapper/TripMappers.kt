@@ -39,7 +39,7 @@ fun TripDto.toDomain(): Trip {
         status = trucker_status,
         createdAt = DateTimeUtils.formatRelativeTime(created_at),
         tripCost = trucker_trip_cost,
-        totalPaidAmount = balance_paid_amount,
+        totalPaidAmount = trucker_paid_amount,
         origin = origin.toDisplayString(),
         destination = destination.toDisplayString(),
     )
@@ -124,7 +124,6 @@ fun AdvanceBlockDto.toDomain(): AdvanceBlock = AdvanceBlock(
 
 fun BalanceBlockDto.toDomain(): BalanceBlock = BalanceBlock(
     amount = amount,
-    paid = paid,
     paidAmount = paidAmount,
 )
 
