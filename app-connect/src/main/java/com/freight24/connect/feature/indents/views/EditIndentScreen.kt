@@ -71,6 +71,7 @@ import com.freight24.connect.feature.indents.domain.viewmodel.EditIndentEvent
 import com.freight24.connect.feature.indents.domain.viewmodel.EditIndentUiState
 import com.freight24.connect.feature.indents.domain.viewmodel.EditIndentViewModel
 import com.freight24.connect.feature.indents.domain.viewmodel.EditIndentViewModelImpl
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,7 +91,9 @@ fun EditIndentScreen(
 
     LaunchedEffect(uiState.successMessage) {
         uiState.successMessage?.let {
-            snackbarHostState.showSnackbar(it)
+            launch {
+                snackbarHostState.showSnackbar(it)
+            }
             onSuccess()
             viewModel.onEvent(EditIndentEvent.ClearSuccess)
         }
@@ -252,7 +255,7 @@ private fun EditIndentContent(
 private fun EditFormContent(
     uiState: EditIndentUiState,
     onEvent: (EditIndentEvent) -> Unit,
-    paddingValues: androidx.compose.foundation.layout.PaddingValues,
+    paddingValues: PaddingValues,
 ) {
     val indent = uiState.indent!!
     val groupDetails = indent.indentGroupDetails

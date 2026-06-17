@@ -1,6 +1,5 @@
 package com.freight24.rest.response
 
-import com.freight24.rest.IntToDoubleSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -105,7 +104,6 @@ data class TripDataResponse(
 
     @Serializable
     data class Balance(
-        val paid: Boolean = false,
         val amount: Double,
         val paidAmount: Double
     )

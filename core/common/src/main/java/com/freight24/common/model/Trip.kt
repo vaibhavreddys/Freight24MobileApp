@@ -69,7 +69,6 @@ data class AdvanceBlock(
 )
 data class BalanceBlock(
     val amount: Double,
-    val paid: Boolean,
     val paidAmount: Double,
 )
 
