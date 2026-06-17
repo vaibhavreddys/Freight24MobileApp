@@ -308,7 +308,7 @@ private val GreenDarkExtendedColors =
 /** Provides the currently-selected [FreightAppTheme] throughout the tree. */
 val LocalAppTheme =
     androidx.compose.runtime.staticCompositionLocalOf<FreightAppTheme> {
-        FreightAppTheme.INDIGO
+        FreightAppTheme.GREEN
     }
 
 /**

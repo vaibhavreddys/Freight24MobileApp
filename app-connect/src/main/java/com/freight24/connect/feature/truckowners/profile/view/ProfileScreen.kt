@@ -1119,28 +1119,29 @@ private fun ProfileField(
         }
     }
 
-    Column(
+    Row(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.Top,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (leadingIcon != null) {
-                val iconModifier =
-                    if (onLeadingIconClick != null) {
-                        Modifier.clickable(onClick = onLeadingIconClick)
-                    } else {
-                        Modifier
-                    }
-                Icon(
-                    imageVector = leadingIcon,
-                    contentDescription = label,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = iconModifier.size(16.dp),
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-            }
+        if (leadingIcon != null) {
+            val iconModifier =
+                if (onLeadingIconClick != null) {
+                    Modifier.clickable(onClick = onLeadingIconClick)
+                } else {
+                    Modifier
+                }
+            Icon(
+                imageVector = leadingIcon,
+                contentDescription = label,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = iconModifier.size(24.dp),
+            )
+            Spacer(modifier = Modifier.width(20.dp))
+        }
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
@@ -1148,8 +1149,7 @@ private fun ProfileField(
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 0.5.sp,
             )
-        }
-        Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
         if ((isEditing && isEditable) || showAsLabelOnly) {
             if (showAsLabelOnly) {
@@ -1274,6 +1274,7 @@ private fun ProfileField(
                 fontWeight = FontWeight.SemiBold,
                 color = if (value.isEmpty()) MaterialTheme.colorScheme.outlineVariant else MaterialTheme.colorScheme.onSurface,
             )
+        }
         }
     }
 }

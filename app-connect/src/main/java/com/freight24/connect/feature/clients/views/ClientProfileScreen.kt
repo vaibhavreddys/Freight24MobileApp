@@ -1108,27 +1108,28 @@ private fun ProfileField(
     val clipboardManager = LocalClipboardManager.current
     var showPhoneMenu by remember { mutableStateOf(false) }
 
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 18.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.Top,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (leadingIcon != null) {
-                val iconModifier =
-                    if (onLeadingIconClick != null) {
-                        Modifier.clickable(onClick = onLeadingIconClick)
-                    } else {
-                        Modifier
-                    }
-                Icon(
-                    imageVector = leadingIcon,
-                    contentDescription = label,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = iconModifier.size(16.dp),
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-            }
+        if (leadingIcon != null) {
+            val iconModifier =
+                if (onLeadingIconClick != null) {
+                    Modifier.clickable(onClick = onLeadingIconClick)
+                } else {
+                    Modifier
+                }
+            Icon(
+                imageVector = leadingIcon,
+                contentDescription = label,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = iconModifier.size(24.dp),
+            )
+            Spacer(modifier = Modifier.width(20.dp))
+        }
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
@@ -1136,8 +1137,7 @@ private fun ProfileField(
                 letterSpacing = 0.6.sp,
                 fontWeight = FontWeight.Bold,
             )
-        }
-        Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(6.dp))
         if (isEditing && isEditable) {
             var isFocused by remember { mutableStateOf(false) }
             OutlinedTextField(
@@ -1219,6 +1219,7 @@ private fun ProfileField(
                 }
             }
         }
+    }
     }
 }
 
