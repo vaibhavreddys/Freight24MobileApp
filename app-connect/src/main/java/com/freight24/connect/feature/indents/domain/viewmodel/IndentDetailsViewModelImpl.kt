@@ -1,6 +1,7 @@
 package com.freight24.connect.feature.indents.domain.viewmodel
 
 import androidx.lifecycle.ViewModel
+import com.freight24.common.util.formatIndianCurrency
 import androidx.lifecycle.viewModelScope
 import com.freight24.connect.feature.indents.domain.usecases.AssignIndentUseCase
 import com.freight24.connect.feature.indents.domain.usecases.AssignIndentUseCaseParams
@@ -54,8 +55,8 @@ class IndentDetailsViewModelImpl @Inject constructor(
                 _uiState.update {
                     it.copy(
                         isAssignDialogVisible = true,
-                        assignClientCost = indent?.indentGroupDetails?.clientTripCost?.toInt()?.toString() ?: "",
-                        assignNegotiatedCost = indent?.negotiatedTripCost?.toInt()?.toString() ?: "",
+                        assignClientCost = indent?.indentGroupDetails?.clientTripCost?.toInt()?.toString()?.let(::formatIndianCurrency) ?: "",
+                        assignNegotiatedCost = indent?.negotiatedTripCost?.toInt()?.toString()?.let(::formatIndianCurrency) ?: "",
                         assignNotes = "",
                         isNegotiatedSameAsClient = false
                     )
@@ -67,11 +68,11 @@ class IndentDetailsViewModelImpl @Inject constructor(
             is IndentDetailsEvent.UpdateAssignField -> {
                 _uiState.update { state ->
                     val newClientCost = event.clientCost ?: state.assignClientCost
-                    val newIsNegotiatedSame = event.isNegotiatedSameAsClient ?: false
+                    val newIsNegotiatedSame = event.isNegotiatedSameAsClient ?: state.isNegotiatedSameAsClient
                     val newNegotiatedCost = if (newIsNegotiatedSame) {
                         newClientCost
                     } else {
-                        event.negotiatedCost ?: state.indent?.negotiatedTripCost?.toInt()?.toString() ?: ""
+                        event.negotiatedCost ?: state.assignNegotiatedCost
                     }
 
                     state.copy(
@@ -228,8 +229,8 @@ class IndentDetailsViewModelImpl @Inject constructor(
             val result = assignIndentUseCase.invoke(
                 AssignIndentUseCaseParams(
                     id = indentId,
-                    clientTripCost = state.assignClientCost.toIntOrNull(),
-                    negotiatedTripCost = state.assignNegotiatedCost.toIntOrNull(),
+                    clientTripCost = state.assignClientCost.replace(",", "").toIntOrNull(),
+                    negotiatedTripCost = state.assignNegotiatedCost.replace(",", "").toIntOrNull(),
                     notes = state.assignNotes
                 )
             )

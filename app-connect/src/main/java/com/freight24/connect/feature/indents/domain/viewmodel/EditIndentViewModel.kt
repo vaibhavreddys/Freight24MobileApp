@@ -16,7 +16,8 @@ data class EditIndentUiState(
     val errorMessage: String? = null,
     val successMessage: String? = null,
     val indent: IndentResponse.Indent? = null,
-    
+    val hasChanges: Boolean = false,
+
     // Editable fields
     val clientCost: String = "",
     val negotiatedCost: String = "",

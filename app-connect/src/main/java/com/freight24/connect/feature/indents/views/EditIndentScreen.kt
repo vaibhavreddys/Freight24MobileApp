@@ -58,12 +58,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -71,6 +74,8 @@ import com.freight24.connect.feature.indents.domain.viewmodel.EditIndentEvent
 import com.freight24.connect.feature.indents.domain.viewmodel.EditIndentUiState
 import com.freight24.connect.feature.indents.domain.viewmodel.EditIndentViewModel
 import com.freight24.connect.feature.indents.domain.viewmodel.EditIndentViewModelImpl
+import com.freight24.common.util.formatIndianCurrency
+import com.freight24.common.util.negotiatedCostExceedsClientError
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,6 +88,8 @@ fun EditIndentScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var showConfirmDialog by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val negotiatedCostError = negotiatedCostExceedsClientError(uiState.negotiatedCost, uiState.clientCost)
 
     LaunchedEffect(indentId) {
         viewModel.onEvent(EditIndentEvent.LoadIndent(indentId))
@@ -129,7 +136,14 @@ fun EditIndentScreen(
         snackbarHostState = snackbarHostState,
         onBackClick = onBackClick,
         onEvent = viewModel::onEvent,
-        onSubmitClick = { showConfirmDialog = true },
+        onSubmitClick = {
+            val err = negotiatedCostExceedsClientError(uiState.negotiatedCost, uiState.clientCost)
+            if (err != null) {
+                scope.launch { snackbarHostState.showSnackbar(err) }
+            } else {
+                showConfirmDialog = true
+            }
+        },
     )
 }
 
@@ -192,7 +206,7 @@ private fun EditIndentContent(
                 ) {
                     Button(
                         onClick = onSubmitClick,
-                        enabled = !uiState.isSubmitting && uiState.indent != null,
+                        enabled = !uiState.isSubmitting && uiState.indent != null && uiState.hasChanges,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp),
@@ -402,6 +416,32 @@ private fun EditOptionalDetailsSection(
     onEvent: (EditIndentEvent) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(true) }
+    val negotiatedCostError = negotiatedCostExceedsClientError(uiState.negotiatedCost, uiState.clientCost)
+
+    var costFieldValue by remember {
+        mutableStateOf(TextFieldValue(uiState.clientCost, TextRange(uiState.clientCost.length)))
+    }
+    LaunchedEffect(uiState.clientCost) {
+        if (costFieldValue.text != uiState.clientCost) {
+            costFieldValue = TextFieldValue(uiState.clientCost, TextRange(uiState.clientCost.length))
+        }
+    }
+    var proposedCostFieldValue by remember {
+        mutableStateOf(TextFieldValue(uiState.businessProposedCost, TextRange(uiState.businessProposedCost.length)))
+    }
+    LaunchedEffect(uiState.businessProposedCost) {
+        if (proposedCostFieldValue.text != uiState.businessProposedCost) {
+            proposedCostFieldValue = TextFieldValue(uiState.businessProposedCost, TextRange(uiState.businessProposedCost.length))
+        }
+    }
+    var negotiatedCostFieldValue by remember {
+        mutableStateOf(TextFieldValue(uiState.negotiatedCost, TextRange(uiState.negotiatedCost.length)))
+    }
+    LaunchedEffect(uiState.negotiatedCost) {
+        if (negotiatedCostFieldValue.text != uiState.negotiatedCost) {
+            negotiatedCostFieldValue = TextFieldValue(uiState.negotiatedCost, TextRange(uiState.negotiatedCost.length))
+        }
+    }
 
     SectionCard {
         Row(
@@ -436,8 +476,17 @@ private fun EditOptionalDetailsSection(
                 SectionHeaderText("Cost Breakdown")
 
                 OutlinedTextField(
-                    value = uiState.clientCost,
-                    onValueChange = { onEvent(EditIndentEvent.UpdateField(clientCost = it)) },
+                    value = costFieldValue,
+                    onValueChange = { newValue ->
+                        val rawText = newValue.text.replace(",", "")
+                        val formatted = formatIndianCurrency(rawText)
+
+                        val commaDiff = formatted.count { it == ',' } - costFieldValue.text.count { it == ',' }
+                        val newCursor = (newValue.selection.start + commaDiff).coerceIn(0, formatted.length)
+
+                        costFieldValue = TextFieldValue(formatted, TextRange(newCursor))
+                        onEvent(EditIndentEvent.UpdateField(clientCost = formatted))
+                    },
                     label = { Text("Client Cost (₹)") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
@@ -447,17 +496,37 @@ private fun EditOptionalDetailsSection(
 
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedTextField(
-                        value = uiState.negotiatedCost,
-                        onValueChange = { onEvent(EditIndentEvent.UpdateField(negotiatedCost = it)) },
+                        value = negotiatedCostFieldValue,
+                        onValueChange = { newValue ->
+                            val rawText = newValue.text.replace(",", "")
+                            val formatted = formatIndianCurrency(rawText)
+
+                            val commaDiff = formatted.count { it == ',' } - negotiatedCostFieldValue.text.count { it == ',' }
+                            val newCursor = (newValue.selection.start + commaDiff).coerceIn(0, formatted.length)
+
+                            negotiatedCostFieldValue = TextFieldValue(formatted, TextRange(newCursor))
+                            onEvent(EditIndentEvent.UpdateField(negotiatedCost = formatted))
+                        },
                         label = { Text("Negotiated (₹)") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(16.dp),
                         singleLine = true,
+                        isError = negotiatedCostError != null,
+                        supportingText = negotiatedCostError?.let { msg -> { Text(msg) } },
                     )
                     OutlinedTextField(
-                        value = uiState.businessProposedCost,
-                        onValueChange = { onEvent(EditIndentEvent.UpdateField(businessProposedCost = it)) },
+                        value = proposedCostFieldValue,
+                        onValueChange = { newValue ->
+                            val rawText = newValue.text.replace(",", "")
+                            val formatted = formatIndianCurrency(rawText)
+
+                            val commaDiff = formatted.count { it == ',' } - proposedCostFieldValue.text.count { it == ',' }
+                            val newCursor = (newValue.selection.start + commaDiff).coerceIn(0, formatted.length)
+
+                            proposedCostFieldValue = TextFieldValue(formatted, TextRange(newCursor))
+                            onEvent(EditIndentEvent.UpdateField(businessProposedCost = formatted))
+                        },
                         label = { Text("Proposed (₹)") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.weight(1f),

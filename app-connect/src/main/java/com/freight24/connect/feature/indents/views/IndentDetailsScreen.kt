@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -28,10 +29,15 @@ import androidx.navigation.NavController
 import com.freight24.connect.feature.inbox.views.TruckerCallRow
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import com.freight24.connect.feature.findTrucks.views.SearchResultsContent
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsEvent
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsViewModel
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsViewModelImpl
+import com.freight24.common.util.formatIndianCurrency
+import com.freight24.common.util.negotiatedCostExceedsClientError
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,6 +65,33 @@ fun IndentDetailsScreen(
         }
     }
 
+    var assignClientCostFieldValue by remember {
+        mutableStateOf(TextFieldValue(uiState.assignClientCost, TextRange(uiState.assignClientCost.length)))
+    }
+    LaunchedEffect(uiState.assignClientCost) {
+        if (assignClientCostFieldValue.text != uiState.assignClientCost) {
+            assignClientCostFieldValue = TextFieldValue(uiState.assignClientCost, TextRange(uiState.assignClientCost.length))
+        }
+    }
+    var assignNegotiatedCostFieldValue by remember {
+        mutableStateOf(
+            TextFieldValue(
+                uiState.assignNegotiatedCost,
+                TextRange(uiState.assignNegotiatedCost.length)
+            )
+        )
+    }
+    LaunchedEffect(uiState.assignNegotiatedCost) {
+        if (assignNegotiatedCostFieldValue.text != uiState.assignNegotiatedCost) {
+            assignNegotiatedCostFieldValue = TextFieldValue(uiState.assignNegotiatedCost, TextRange(uiState.assignNegotiatedCost.length))
+        }
+    }
+    val assignNegotiatedCostError = if (uiState.isNegotiatedSameAsClient) {
+        null
+    } else {
+        negotiatedCostExceedsClientError(uiState.assignNegotiatedCost, uiState.assignClientCost)
+    }
+
     if (uiState.isAssignDialogVisible) {
         AlertDialog(
             onDismissRequest = { viewModel.onEvent(IndentDetailsEvent.HideAssignDialog) },
@@ -66,9 +99,19 @@ fun IndentDetailsScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
-                        value = uiState.assignClientCost,
-                        onValueChange = { viewModel.onEvent(IndentDetailsEvent.UpdateAssignField(clientCost = it)) },
+                        value = assignClientCostFieldValue,
+                        onValueChange = { newValue ->
+                            val rawText = newValue.text.replace(",", "")
+                            val formatted = formatIndianCurrency(rawText)
+
+                            val commaDiff = formatted.count { it == ',' } - assignClientCostFieldValue.text.count { it == ',' }
+                            val newCursor = (newValue.selection.start + commaDiff).coerceIn(0, formatted.length)
+
+                            assignClientCostFieldValue = TextFieldValue(formatted, TextRange(newCursor))
+                            viewModel.onEvent(IndentDetailsEvent.UpdateAssignField(clientCost = formatted))
+                        },
                         label = { Text("Client Cost") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth()
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -79,10 +122,22 @@ fun IndentDetailsScreen(
                         Text("Negotiated cost same as client cost")
                     }
                     OutlinedTextField(
-                        value = uiState.assignNegotiatedCost,
-                        onValueChange = { viewModel.onEvent(IndentDetailsEvent.UpdateAssignField(negotiatedCost = it)) },
+                        value = assignNegotiatedCostFieldValue,
+                        onValueChange = { newValue ->
+                            val rawText = newValue.text.replace(",", "")
+                            val formatted = formatIndianCurrency(rawText)
+
+                            val commaDiff = formatted.count { it == ',' } - assignNegotiatedCostFieldValue.text.count { it == ',' }
+                            val newCursor = (newValue.selection.start + commaDiff).coerceIn(0, formatted.length)
+
+                            assignNegotiatedCostFieldValue = TextFieldValue(formatted, TextRange(newCursor))
+                            viewModel.onEvent(IndentDetailsEvent.UpdateAssignField(negotiatedCost = formatted))
+                        },
                         label = { Text("Negotiated Cost") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         enabled = !uiState.isNegotiatedSameAsClient,
+                        isError = assignNegotiatedCostError != null,
+                        supportingText = assignNegotiatedCostError?.let { msg -> { Text(msg) } },
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedTextField(
@@ -97,7 +152,7 @@ fun IndentDetailsScreen(
             confirmButton = {
                 Button(
                     onClick = { viewModel.onEvent(IndentDetailsEvent.ConfirmAssignment) },
-                    enabled = !uiState.isAssigning
+                    enabled = !uiState.isAssigning && assignNegotiatedCostError == null
                 ) {
                     if (uiState.isAssigning) {
                         CircularProgressIndicator(
@@ -297,18 +352,29 @@ fun IndentDetailsScreen(
         bottomBar = {
             uiState.indent?.let { indent ->
                 Box(
-                    modifier = Modifier.fillMaxWidth().padding(12.dp)
+                    modifier = Modifier.fillMaxWidth()
+                        .padding(horizontal = 20.dp)
+                        .padding(bottom = 20.dp, top = 10.dp)
                 ) {
                     if (indent.status.equals("open", true)) {
                         Button(
                             onClick = { viewModel.onEvent(IndentDetailsEvent.ShowAssignDialog) },
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp),
+                            shape = RoundedCornerShape(28.dp),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = colorScheme.primary,
                                 contentColor = colorScheme.onPrimary
-                            )
+                            ),
+                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp),
                         ) {
-                            Text("Ready for Assignment")
+                            Text(
+                                "Ready for Assignment",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Spacer(Modifier.width(8.dp))
                         }
                     } else if (indent.status.equals("READY_FOR_ASSIGNMENT", true)) {
                         Button(

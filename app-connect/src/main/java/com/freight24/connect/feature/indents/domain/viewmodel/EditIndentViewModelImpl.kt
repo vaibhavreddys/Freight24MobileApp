@@ -6,6 +6,7 @@ import com.freight24.connect.feature.indents.domain.usecases.GetIndentByIdUseCas
 import com.freight24.connect.feature.indents.domain.usecases.GetIndentByIdUseCaseParams
 import com.freight24.connect.feature.indents.domain.usecases.UpdateIndentUseCase
 import com.freight24.connect.feature.indents.domain.usecases.UpdateIndentUseCaseParams
+import com.freight24.common.util.formatIndianCurrency
 import com.freight24.rest.request.CreateIndentRequest
 import com.freight24.rest.request.UpdateIndentRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -35,7 +36,7 @@ class EditIndentViewModelImpl @Inject constructor(
             }
             is EditIndentEvent.UpdateField -> {
                 _uiState.update { state ->
-                    state.copy(
+                    val next = state.copy(
                         clientCost = event.clientCost ?: state.clientCost,
                         negotiatedCost = event.negotiatedCost ?: state.negotiatedCost,
                         businessProposedCost = event.businessProposedCost ?: state.businessProposedCost,
@@ -47,6 +48,7 @@ class EditIndentViewModelImpl @Inject constructor(
                         tatHours = event.tatHours ?: state.tatHours,
                         remarks = event.remarks ?: state.remarks
                     )
+                    next.copy(hasChanges = computeHasChanges(next))
                 }
             }
             is EditIndentEvent.SubmitUpdate -> {
@@ -69,9 +71,10 @@ class EditIndentViewModelImpl @Inject constructor(
                         it.copy(
                             isLoading = false,
                             indent = indent,
-                            clientCost = details.clientTripCost?.toInt()?.toString() ?: "",
-                            negotiatedCost = indent.negotiatedTripCost?.toInt()?.toString() ?: "",
-                            businessProposedCost = details.businessProposedCost?.toInt()?.toString() ?: "",
+                            hasChanges = false,
+                            clientCost = details.clientTripCost?.toInt()?.toString()?.let(::formatIndianCurrency) ?: "",
+                            negotiatedCost = indent.negotiatedTripCost?.toInt()?.toString()?.let(::formatIndianCurrency) ?: "",
+                            businessProposedCost = details.businessProposedCost?.toInt()?.toString()?.let(::formatIndianCurrency) ?: "",
                             vehicleHeight = details.vehicleHeight?.toString() ?: "",
                             flooringType = details.flooringType ?: "steel",
                             tarpaulinRequired = details.tarpaulingRequired,
@@ -103,9 +106,9 @@ class EditIndentViewModelImpl @Inject constructor(
             _uiState.update { it.copy(isSubmitting = true, errorMessage = null) }
 
             val request = UpdateIndentRequest(
-                clientTripCost = compareFields(currentState.clientCost.toIntOrNull(), originalDetails.clientTripCost?.toInt()),
-                negotiatedTripCost = compareFields(currentState.negotiatedCost.toIntOrNull(), originalIndent.negotiatedTripCost?.toInt()),
-                businessProposedCost = compareFields(currentState.businessProposedCost.toIntOrNull(), originalDetails.businessProposedCost?.toInt()),
+                clientTripCost = compareFields(currentState.clientCost.replace(",", "").toIntOrNull(), originalDetails.clientTripCost?.toInt()),
+                negotiatedTripCost = compareFields(currentState.negotiatedCost.replace(",", "").toIntOrNull(), originalIndent.negotiatedTripCost?.toInt()),
+                businessProposedCost = compareFields(currentState.businessProposedCost.replace(",", "").toIntOrNull(), originalDetails.businessProposedCost?.toInt()),
                 vehicleHeight = compareFields(currentState.vehicleHeight.toFloatOrNull(), originalDetails.vehicleHeight?.toFloat()),
                 hideCostInfo = compareFields(currentState.hideCost, originalIndent.hideCostInfo),
                 tatEnabled = compareFields(currentState.tatRequired, originalDetails.tatEnabled),
@@ -143,6 +146,21 @@ class EditIndentViewModelImpl @Inject constructor(
                 }
             }
         }
+    }
+
+    private fun computeHasChanges(state: EditIndentUiState): Boolean {
+        val original = state.indent?.indentGroupDetails ?: return false
+        val originalIndent = state.indent
+        return compareFields(state.clientCost.replace(",", "").toIntOrNull(), original.clientTripCost?.toInt()) != null ||
+                compareFields(state.negotiatedCost.replace(",", "").toIntOrNull(), originalIndent?.negotiatedTripCost?.toInt()) != null ||
+                compareFields(state.businessProposedCost.replace(",", "").toIntOrNull(), original.businessProposedCost?.toInt()) != null ||
+                compareFields(state.vehicleHeight.toFloatOrNull(), original.vehicleHeight?.toFloat()) != null ||
+                compareFields(state.flooringType, original.flooringType) != null ||
+                compareFields(state.tarpaulinRequired, original.tarpaulingRequired) != null ||
+                compareFields(state.hideCost, originalIndent?.hideCostInfo) != null ||
+                compareFields(state.tatRequired, original.tatEnabled) != null ||
+                compareFields(state.tatHours.toIntOrNull(), original.tatHours) != null ||
+                compareFields(state.remarks, original.specialRequirements) != null
     }
 
     private fun <T> compareFields(current: T?, original: T?): T? {

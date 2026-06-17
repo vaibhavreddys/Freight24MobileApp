@@ -65,12 +65,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.freight24.common.util.formatIndianCurrency
+import com.freight24.common.util.negotiatedCostExceedsClientError
 import com.freight24.connect.feature.indents.domain.viewmodel.CreateIndentEvent
 import com.freight24.connect.feature.indents.domain.viewmodel.CreateIndentUiState
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsViewModel
@@ -182,6 +186,7 @@ fun CreateIndentContent(
         if (uiState.weight.isBlank()) errors.add("weight")
         if (uiState.materialName.isBlank()) errors.add("material")
         if (uiState.tatRequired && uiState.tatHours.isBlank()) errors.add("tat")
+        if (negotiatedCostExceedsClientError(uiState.negotiatedCost, uiState.clientCost) != null) errors.add("negotiated")
 
         fieldErrors.value = errors
 
@@ -192,6 +197,7 @@ fun CreateIndentContent(
                 errors.contains("truck") -> "Please select truck type"
                 errors.contains("weight") || errors.contains("material") -> "Please enter cargo details"
                 errors.contains("tat") -> "Please enter TAT hours"
+                errors.contains("negotiated") -> "Negotiated cost cannot exceed client cost"
                 else -> "Please fill all required fields"
             }
             scope.launch { snackbarHostState.showSnackbar(message) }
@@ -666,7 +672,33 @@ private fun OptionalDetailsSection(
     tatError: Boolean = false,
     onTatClear: () -> Unit = {},
 ) {
+    val negotiatedCostError = negotiatedCostExceedsClientError(uiState.negotiatedCost, uiState.clientCost)
+
     var expanded by remember { mutableStateOf(true) }
+    var costFieldValue by remember {
+        mutableStateOf(TextFieldValue(uiState.clientCost, TextRange(uiState.clientCost.length)))
+    }
+    LaunchedEffect(uiState.clientCost) {
+        if (costFieldValue.text != uiState.clientCost) {
+            costFieldValue = TextFieldValue(uiState.clientCost, TextRange(uiState.clientCost.length))
+        }
+    }
+    var proposedCostFieldValue by remember {
+        mutableStateOf(TextFieldValue(uiState.businessProposedCost, TextRange(uiState.businessProposedCost.length)))
+    }
+    LaunchedEffect(uiState.businessProposedCost) {
+        if (proposedCostFieldValue.text != uiState.businessProposedCost) {
+            proposedCostFieldValue = TextFieldValue(uiState.businessProposedCost, TextRange(uiState.businessProposedCost.length))
+        }
+    }
+    var negotiatedCostFieldValue by remember {
+        mutableStateOf(TextFieldValue(uiState.negotiatedCost, TextRange(uiState.negotiatedCost.length)))
+    }
+    LaunchedEffect(uiState.negotiatedCost) {
+        if (negotiatedCostFieldValue.text != uiState.negotiatedCost) {
+            negotiatedCostFieldValue = TextFieldValue(uiState.negotiatedCost, TextRange(uiState.negotiatedCost.length))
+        }
+    }
 
     SectionCard {
         Row(
@@ -700,8 +732,18 @@ private fun OptionalDetailsSection(
                 SectionHeaderText("Trip Cost Breakdown")
 
                 OutlinedTextField(
-                    value = uiState.clientCost,
-                    onValueChange = { onEvent(CreateIndentEvent.UpdateOptionalField(clientCost = it)) },
+                    value = costFieldValue,
+                    onValueChange = { newValue ->
+                        val rawText = newValue.text.replace(",", "")
+                        val formatted = formatIndianCurrency(rawText)
+
+                        // Calculate cursor shift caused by added/removed commas
+                        val commaDiff = formatted.count { it == ',' } - costFieldValue.text.count { it == ',' }
+                        val newCursor = (newValue.selection.start + commaDiff).coerceIn(0, formatted.length)
+
+                        costFieldValue = TextFieldValue(formatted, TextRange(newCursor))
+                        onEvent(CreateIndentEvent.UpdateOptionalField(clientCost = formatted))
+                    },
                     label = {
                         Text(
                             text = "Client Cost (₹)",
@@ -716,8 +758,17 @@ private fun OptionalDetailsSection(
 
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedTextField(
-                        value = uiState.businessProposedCost,
-                        onValueChange = { onEvent(CreateIndentEvent.UpdateOptionalField(businessProposedCost = it)) },
+                        value = proposedCostFieldValue,
+                        onValueChange = { newValue ->
+                            val rawText = newValue.text.replace(",", "")
+                            val formatted = formatIndianCurrency(rawText)
+
+                            val commaDiff = formatted.count { it == ',' } - proposedCostFieldValue.text.count { it == ',' }
+                            val newCursor = (newValue.selection.start + commaDiff).coerceIn(0, formatted.length)
+
+                            proposedCostFieldValue = TextFieldValue(formatted, TextRange(newCursor))
+                            onEvent(CreateIndentEvent.UpdateOptionalField(businessProposedCost = formatted))
+                        },
                         label = {
                             Text(
                                 text = "Proposed Cost (₹)",
@@ -730,8 +781,17 @@ private fun OptionalDetailsSection(
                         singleLine = true,
                     )
                     OutlinedTextField(
-                        value = uiState.negotiatedCost,
-                        onValueChange = { onEvent(CreateIndentEvent.UpdateOptionalField(negotiatedCost = it)) },
+                        value = negotiatedCostFieldValue,
+                        onValueChange = { newValue ->
+                            val rawText = newValue.text.replace(",", "")
+                            val formatted = formatIndianCurrency(rawText)
+
+                            val commaDiff = formatted.count { it == ',' } - negotiatedCostFieldValue.text.count { it == ',' }
+                            val newCursor = (newValue.selection.start + commaDiff).coerceIn(0, formatted.length)
+
+                            negotiatedCostFieldValue = TextFieldValue(formatted, TextRange(newCursor))
+                            onEvent(CreateIndentEvent.UpdateOptionalField(negotiatedCost = formatted))
+                        },
                         label = {
                             Text(
                                 text = "Negotiated Cost (₹)",
@@ -742,6 +802,8 @@ private fun OptionalDetailsSection(
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(16.dp),
                         singleLine = true,
+                        isError = negotiatedCostError != null,
+                        supportingText = negotiatedCostError?.let { msg -> { Text(msg) } },
                     )
                 }
 
