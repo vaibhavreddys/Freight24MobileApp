@@ -20,8 +20,11 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -46,11 +49,24 @@ fun IndentsScreen(
     onIndentClick: (String) -> Unit = {},
     onCloneClick: (String, String) -> Unit = { s1, s2 -> },
     onSearchClick: () -> Unit = {},
+    onRefreshingChange: (Boolean) -> Unit = {},
+    onPullFractionChange: (Float) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val viewModel: IndentsListViewModel = hiltViewModel<IndentsListViewModelImpl>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val pullToRefreshState = rememberPullToRefreshState()
 
+    // Pipe pull distance to HomeScreen
+    LaunchedEffect(pullToRefreshState) {
+        snapshotFlow { pullToRefreshState.distanceFraction }
+            .collect { onPullFractionChange(it) }
+    }
+
+    // Pipe loading/refreshing state to HomeScreen
+    LaunchedEffect(uiState.isLoading) {
+        onRefreshingChange(uiState.isLoading)
+    }
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
@@ -58,6 +74,8 @@ fun IndentsScreen(
         PullToRefreshBox(
             isRefreshing = uiState.isLoading,
             onRefresh = { viewModel.onEvent(IndentsListEvent.RefreshIndents) },
+            state = pullToRefreshState,
+            indicator = {},             // <-- ADD: Hide default circular indicator
             modifier = Modifier.fillMaxSize(),
         ) {
             IndentsContent(

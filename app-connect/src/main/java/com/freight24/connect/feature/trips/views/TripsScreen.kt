@@ -8,8 +8,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,21 +26,36 @@ import com.freight24.connect.feature.trips.domain.viewmodel.TripsListEvent
 import com.freight24.connect.feature.trips.domain.viewmodel.TripsListViewModel
 import com.freight24.connect.feature.trips.domain.viewmodel.TripsListViewModelImpl
 import com.freight24.connect.feature.trips.views.components.TripCard
+import kotlinx.coroutines.flow.collect
 
 @Composable
 fun TripsScreen(
     paddingValues: PaddingValues,
     onTripClick: (String) -> Unit = {},
     initialFilter: TripTypes? = null,
+    onRefreshingChange: (Boolean) -> Unit = {},
+    onPullFractionChange: (Float) -> Unit = {},
     viewModel: TripsListViewModel = hiltViewModel<TripsListViewModelImpl>()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val colorScheme = MaterialTheme.colorScheme
+    val pullToRefreshState = rememberPullToRefreshState()
 
     androidx.compose.runtime.LaunchedEffect(initialFilter) {
         initialFilter?.let {
             viewModel.onEvent(TripsListEvent.SelectFilter(it))
         }
+    }
+
+    // Pipe pull distance to HomeScreen
+    LaunchedEffect(pullToRefreshState) {
+        snapshotFlow { pullToRefreshState.distanceFraction }
+            .collect { onPullFractionChange(it) }
+    }
+
+    // Pipe loading/refreshing state to HomeScreen
+    LaunchedEffect(uiState.isLoading) {
+        onRefreshingChange(uiState.isLoading)
     }
 
     Scaffold(
@@ -49,6 +67,8 @@ fun TripsScreen(
     PullToRefreshBox(
         isRefreshing = uiState.isLoading,
         onRefresh = { viewModel.onEvent(TripsListEvent.Refresh) },
+        state = pullToRefreshState,
+        indicator = {},             // Hide default circular indicator
         modifier = Modifier.fillMaxSize(),
     ) {
         LazyColumn(

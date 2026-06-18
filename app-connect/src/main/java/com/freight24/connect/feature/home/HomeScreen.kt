@@ -27,7 +27,6 @@ import androidx.compose.ui.res.stringResource
 import com.freight24.connect.R
 import com.freight24.connect.enum.ConnectTab
 import com.freight24.connect.feature.dashboard.views.DashboardScreen
-import com.freight24.connect.feature.dashboard.views.RefreshProgressBar
 import com.freight24.connect.feature.indents.views.IndentsScreen
 import com.freight24.connect.feature.trips.views.TripsScreen
 import com.freight24.connect.feature.findTrucks.views.FindTrucksScreen
@@ -37,6 +36,7 @@ import com.freight24.connect.feature.trips.domain.usecase.TripTypes
 import com.freight24.connect.navigation.ConnectDestination
 import com.freight24.ui.components.AppTopBar
 import com.freight24.ui.components.FreightBottomNavScaffold
+import com.freight24.ui.components.RefreshProgressBar
 
 @Composable
 internal fun HomeScreen(
@@ -100,19 +100,11 @@ internal fun HomeScreen(
                     showFilter = selectedTab == ConnectTab.Indents,
                     onFilterClick = { /* TODO: Filter */ }
                 )
-                // FIX: Only show the progress bar when on the Home tab,
-                // with a smooth fade in/out when switching tabs.
-                AnimatedVisibility(
-                    visible = selectedTab == ConnectTab.Home,
-                    enter = fadeIn(animationSpec = tween(durationMillis = 150)),
-                    exit = fadeOut(animationSpec = tween(durationMillis = 150))
-                ) {
-                    RefreshProgressBar(
-                        isRefreshing = isRefreshing,
-                        pullFraction = pullFraction,
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                }
+                RefreshProgressBar(
+                    isRefreshing = isRefreshing,
+                    pullFraction = pullFraction,
+                    color = MaterialTheme.colorScheme.primary,
+                )
             }
         },
         floatingActionButton = {
@@ -174,12 +166,16 @@ internal fun HomeScreen(
                         onCloneClick(indentId, indentGroupId)
                     },
                     onSearchClick = onSearchClick,
+                    onRefreshingChange = { isRefreshing = it },
+                    onPullFractionChange = { pullFraction = it },
                     modifier = Modifier.padding(paddingValues)
                 )
                 ConnectTab.Trips -> TripsScreen(
                     paddingValues = paddingValues,
                     onTripClick = onTripClick,
-                    initialFilter = selectedFilter
+                    initialFilter = selectedFilter,
+                    onRefreshingChange = { isRefreshing = it },
+                    onPullFractionChange = { pullFraction = it }
                 )
                 ConnectTab.Trucks -> FindTrucksScreen(
                     paddingValues = paddingValues,
