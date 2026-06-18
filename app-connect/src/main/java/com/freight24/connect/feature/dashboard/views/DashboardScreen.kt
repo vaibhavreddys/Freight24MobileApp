@@ -58,12 +58,18 @@ fun DashboardScreen(
     onActiveAssignedClick: () -> Unit = {},
     onActiveLoadingClick: () -> Unit = {},
     onActiveInTransitClick: () -> Unit = {},
-    onRefresh: () -> Unit = { viewModel.onEvent(DashboardEvent.Refresh) }
+    onRefresh: () -> Unit = { viewModel.onEvent(DashboardEvent.Refresh) },
+    onRefreshingChange: (Boolean) -> Unit = {},
 ) {
     val uiState = viewModel.uiState
     val colorScheme = MaterialTheme.colorScheme
     val scrollState = rememberScrollState()
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    LaunchedEffect(uiState.isRefreshing) {
+        onRefreshingChange(uiState.isRefreshing)
+    }
+
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
@@ -108,10 +114,6 @@ fun DashboardScreen(
                             .padding(horizontal = 16.dp, vertical = 20.dp),
                         verticalArrangement = Arrangement.spacedBy(24.dp)
                     ) {
-                        RefreshProgressBar(
-                            isRefreshing = uiState.isRefreshing,
-                            color = colorScheme.primary,
-                        )
                         AttentionNeededSection(
                             attentionNeeded = data.attentionNeeded,
                             onTripFilterClick = onTripFilterClick,
@@ -608,7 +610,7 @@ fun SectionHeader(title: String) {
 
 
 @Composable
-private fun RefreshProgressBar(
+internal fun RefreshProgressBar(
     isRefreshing: Boolean,
     color: Color,
 ) {

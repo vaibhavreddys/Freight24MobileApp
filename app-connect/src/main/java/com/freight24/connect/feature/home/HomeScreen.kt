@@ -2,6 +2,7 @@ package com.freight24.connect.feature.home
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
@@ -9,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -21,6 +23,7 @@ import androidx.compose.ui.res.stringResource
 import com.freight24.connect.R
 import com.freight24.connect.enum.ConnectTab
 import com.freight24.connect.feature.dashboard.views.DashboardScreen
+import com.freight24.connect.feature.dashboard.views.RefreshProgressBar
 import com.freight24.connect.feature.indents.views.IndentsScreen
 import com.freight24.connect.feature.trips.views.TripsScreen
 import com.freight24.connect.feature.findTrucks.views.FindTrucksScreen
@@ -51,6 +54,7 @@ internal fun HomeScreen(
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(startTab ?: ConnectTab.Home) }
     var selectedFilter by rememberSaveable { mutableStateOf(startFilter) }
+    var isRefreshing by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         homeViewModel.registerDevice()
@@ -79,17 +83,23 @@ internal fun HomeScreen(
             }
         },
         topBar = {
-            AppTopBar(
-                title = selectedTab.name,
-                showSearch = selectedTab == ConnectTab.Home || selectedTab == ConnectTab.Trips,
-                onSearchClick = when (selectedTab) {
-                    ConnectTab.Home -> onSearchClick
-                    ConnectTab.Trips -> onTripSearchClick
-                    else -> null
-                },
-                showFilter = selectedTab == ConnectTab.Indents,
-                onFilterClick = { /* TODO: Filter */ }
-            )
+            Column {
+                AppTopBar(
+                    title = selectedTab.name,
+                    showSearch = selectedTab == ConnectTab.Home || selectedTab == ConnectTab.Trips,
+                    onSearchClick = when (selectedTab) {
+                        ConnectTab.Home -> onSearchClick
+                        ConnectTab.Trips -> onTripSearchClick
+                        else -> null
+                    },
+                    showFilter = selectedTab == ConnectTab.Indents,
+                    onFilterClick = { /* TODO: Filter */ }
+                )
+                RefreshProgressBar(
+                    isRefreshing = isRefreshing,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
         },
         floatingActionButton = {
             if (selectedTab == ConnectTab.Indents) {
@@ -111,6 +121,7 @@ internal fun HomeScreen(
             when (currentTab) {
                 ConnectTab.Home -> DashboardScreen(
                     paddingValues = paddingValues,
+                    onRefreshingChange = { isRefreshing = it },
                     onCreateIndentClick = onCreateIndentClick,
                     onCreateTripClick = onQuickAdhocTruckClick,
                     onInterestInboxClick = { navController.navigate(ConnectDestination.InterestInbox.route) },
