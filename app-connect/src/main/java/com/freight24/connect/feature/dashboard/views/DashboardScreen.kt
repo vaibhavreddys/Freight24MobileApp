@@ -8,25 +8,37 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.ui.platform.LocalLifecycleOwner
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import kotlinx.coroutines.delay
 import com.freight24.connect.feature.dashboard.domain.viewmodel.DashboardEvent
 import com.freight24.connect.feature.dashboard.domain.viewmodel.DashboardViewModel
 import com.freight24.connect.feature.dashboard.domain.viewmodel.DashboardViewModelImpl
@@ -65,6 +77,7 @@ fun DashboardScreen(
     PullToRefreshBox(
         isRefreshing = uiState.isRefreshing,
         onRefresh = onRefresh,
+        indicator = {},
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)
@@ -95,6 +108,10 @@ fun DashboardScreen(
                             .padding(horizontal = 16.dp, vertical = 20.dp),
                         verticalArrangement = Arrangement.spacedBy(24.dp)
                     ) {
+                        RefreshProgressBar(
+                            isRefreshing = uiState.isRefreshing,
+                            color = colorScheme.primary,
+                        )
                         AttentionNeededSection(
                             attentionNeeded = data.attentionNeeded,
                             onTripFilterClick = onTripFilterClick,
@@ -587,4 +604,65 @@ fun SectionHeader(title: String) {
         letterSpacing = 1.sp,
         modifier = Modifier.padding(vertical = 8.dp)
     )
+}
+
+
+@Composable
+private fun RefreshProgressBar(
+    isRefreshing: Boolean,
+    color: Color,
+) {
+    // Drives the determinate fill value. Animatable gives us a suspending,
+    // cancellable animation that we can re-target from the LaunchedEffect
+    // below, and its .value is read directly by the LinearProgressIndicator.
+    val progress = remember { Animatable(0f) }
+    // Controls fade-in / fade-out so the bar doesn't appear or disappear
+    // abruptly. Toggled explicitly by the effect.
+    var visible by remember { mutableStateOf(false) }
+
+    // Single LaunchedEffect orchestrates the three phases:
+    //   - isRefreshing == true  -> fade in, crawl 0 -> 0.9 (loop, capped)
+    //   - isRefreshing -> false -> glide to 1f, hold 400ms, fade out
+    // Re-keying on isRefreshing cancels the in-flight coroutine, so we always
+    // end up in the correct phase for the latest state.
+    LaunchedEffect(isRefreshing) {
+        if (isRefreshing) {
+            visible = true
+            progress.snapTo(0f)
+            // Indeterminate-style crawl. The API duration is unknown, so we
+            // never quite reach 1f while the request is in flight — the bar
+            // caps at 0.9 and the API completion is what actually pushes it
+            // to 1f in the next phase.
+            while (isRefreshing) {
+                progress.animateTo(
+                    targetValue = 0.9f,
+                    animationSpec = tween(durationMillis = 3000, easing = LinearEasing),
+                )
+                if (!isRefreshing) break
+                progress.snapTo(0f)
+            }
+        } else if (visible) {
+            // Completion: glide to 1f, hold briefly so the user sees the bar
+            // reach the end, then drop out of the AnimatedVisibility so it
+            // fades away.
+            progress.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 150, easing = LinearEasing),
+            )
+            delay(400)
+            visible = false
+        }
+    }
+
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(animationSpec = tween(durationMillis = 150)),
+        exit = fadeOut(animationSpec = tween(durationMillis = 250)),
+    ) {
+        LinearProgressIndicator(
+            progress = { progress.value },
+            modifier = Modifier.fillMaxWidth(),
+            color = color,
+        )
+    }
 }
