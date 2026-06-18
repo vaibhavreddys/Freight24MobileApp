@@ -1,7 +1,11 @@
 package com.freight24.connect.feature.home
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -96,11 +100,19 @@ internal fun HomeScreen(
                     showFilter = selectedTab == ConnectTab.Indents,
                     onFilterClick = { /* TODO: Filter */ }
                 )
-                RefreshProgressBar(
-                    isRefreshing = isRefreshing,
-                    pullFraction = pullFraction,
-                    color = MaterialTheme.colorScheme.primary,
-                )
+                // FIX: Only show the progress bar when on the Home tab,
+                // with a smooth fade in/out when switching tabs.
+                AnimatedVisibility(
+                    visible = selectedTab == ConnectTab.Home,
+                    enter = fadeIn(animationSpec = tween(durationMillis = 150)),
+                    exit = fadeOut(animationSpec = tween(durationMillis = 150))
+                ) {
+                    RefreshProgressBar(
+                        isRefreshing = isRefreshing,
+                        pullFraction = pullFraction,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
             }
         },
         floatingActionButton = {
