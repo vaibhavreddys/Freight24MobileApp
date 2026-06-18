@@ -55,6 +55,7 @@ internal fun HomeScreen(
     var selectedTab by rememberSaveable { mutableStateOf(startTab ?: ConnectTab.Home) }
     var selectedFilter by rememberSaveable { mutableStateOf(startFilter) }
     var isRefreshing by remember { mutableStateOf(false) }
+    var pullFraction by remember { mutableStateOf(0f) }
 
     LaunchedEffect(Unit) {
         homeViewModel.registerDevice()
@@ -97,6 +98,7 @@ internal fun HomeScreen(
                 )
                 RefreshProgressBar(
                     isRefreshing = isRefreshing,
+                    pullFraction = pullFraction,
                     color = MaterialTheme.colorScheme.primary,
                 )
             }
@@ -122,6 +124,7 @@ internal fun HomeScreen(
                 ConnectTab.Home -> DashboardScreen(
                     paddingValues = paddingValues,
                     onRefreshingChange = { isRefreshing = it },
+                    onPullFractionChange = { pullFraction = it },
                     onCreateIndentClick = onCreateIndentClick,
                     onCreateTripClick = onQuickAdhocTruckClick,
                     onInterestInboxClick = { navController.navigate(ConnectDestination.InterestInbox.route) },

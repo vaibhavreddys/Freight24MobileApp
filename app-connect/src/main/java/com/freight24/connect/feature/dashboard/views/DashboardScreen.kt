@@ -4,41 +4,51 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import kotlin.math.sin
+import kotlinx.coroutines.isActive
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import kotlinx.coroutines.delay
 import com.freight24.connect.feature.dashboard.domain.viewmodel.DashboardEvent
 import com.freight24.connect.feature.dashboard.domain.viewmodel.DashboardViewModel
 import com.freight24.connect.feature.dashboard.domain.viewmodel.DashboardViewModelImpl
@@ -60,11 +70,18 @@ fun DashboardScreen(
     onActiveInTransitClick: () -> Unit = {},
     onRefresh: () -> Unit = { viewModel.onEvent(DashboardEvent.Refresh) },
     onRefreshingChange: (Boolean) -> Unit = {},
+    onPullFractionChange: (Float) -> Unit = {},
 ) {
     val uiState = viewModel.uiState
     val colorScheme = MaterialTheme.colorScheme
     val scrollState = rememberScrollState()
+    val pullToRefreshState = rememberPullToRefreshState()
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    LaunchedEffect(pullToRefreshState) {
+        snapshotFlow { pullToRefreshState.distanceFraction }
+            .collect { onPullFractionChange(it) }
+    }
 
     LaunchedEffect(uiState.isRefreshing) {
         onRefreshingChange(uiState.isRefreshing)
@@ -83,6 +100,7 @@ fun DashboardScreen(
     PullToRefreshBox(
         isRefreshing = uiState.isRefreshing,
         onRefresh = onRefresh,
+        state = pullToRefreshState,
         indicator = {},
         modifier = Modifier
             .fillMaxSize()
@@ -607,64 +625,188 @@ fun SectionHeader(title: String) {
         modifier = Modifier.padding(vertical = 8.dp)
     )
 }
-
-
 @Composable
 internal fun RefreshProgressBar(
     isRefreshing: Boolean,
+    pullFraction: Float,
     color: Color,
 ) {
-    // Drives the determinate fill value. Animatable gives us a suspending,
-    // cancellable animation that we can re-target from the LaunchedEffect
-    // below, and its .value is read directly by the LinearProgressIndicator.
-    val progress = remember { Animatable(0f) }
-    // Controls fade-in / fade-out so the bar doesn't appear or disappear
-    // abruptly. Toggled explicitly by the effect.
-    var visible by remember { mutableStateOf(false) }
+    // Wavy bar driven by a single symmetric [leftX, rightX] band centered
+    // on the bar's horizontal midpoint, derived from a `halfWidth`
+    // Animatable (distance from center to either edge).
+    //
+    //   * Pulling (pullFraction > 0): halfWidth follows the finger
+    //     exactly - the band grows outward from the center, edges
+    //     expanding equally toward both ends.
+    //
+    //   * Loading (isRefreshing == true): halfWidth shrinks toward 0
+    //     at SLOW speed (2 wavelengths/s). The band narrows from both
+    //     ends toward the center.
+    //
+    //   * Closing (just after isRefreshing flipped to false, until the
+    //     band fully closes): halfWidth continues to shrink toward 0,
+    //     now at FAST speed (5x = 10 wavelengths/s). The band races
+    //     closed from both ends.
+    //
+    //   * Idle: smooth 200ms tween back to 0 (mid-pull cancel) and
+    //     alpha fades to 0 because the band has zero width.
+    //
+    // `wasRefreshing` is a latch that keeps the Closing phase running
+    // after isRefreshing flips to false; it is cleared the moment the
+    // band is fully closed so the next pull starts cleanly.
+    val currentPullFraction by rememberUpdatedState(pullFraction)
+    val barWidthPx = remember { mutableStateOf(0f) }
+    val density = LocalDensity.current
+    val wavelengthPx = with(density) { 40.dp.toPx() }
+    val slowSpeedPxPerSec = 2f * wavelengthPx
+    val fastSpeedPxPerSec = 5f * slowSpeedPxPerSec
+    val halfWidth = remember { Animatable(0f) }
+    var wasRefreshing by remember { mutableStateOf(false) }
+    var lastIsRefreshing by remember { mutableStateOf(false) }
 
-    // Single LaunchedEffect orchestrates the three phases:
-    //   - isRefreshing == true  -> fade in, crawl 0 -> 0.9 (loop, capped)
-    //   - isRefreshing -> false -> glide to 1f, hold 400ms, fade out
-    // Re-keying on isRefreshing cancels the in-flight coroutine, so we always
-    // end up in the correct phase for the latest state.
+    // Latch wasRefreshing on the rising edge of isRefreshing.
     LaunchedEffect(isRefreshing) {
-        if (isRefreshing) {
-            visible = true
-            progress.snapTo(0f)
-            // Indeterminate-style crawl. The API duration is unknown, so we
-            // never quite reach 1f while the request is in flight — the bar
-            // caps at 0.9 and the API completion is what actually pushes it
-            // to 1f in the next phase.
-            while (isRefreshing) {
-                progress.animateTo(
-                    targetValue = 0.9f,
-                    animationSpec = tween(durationMillis = 3000, easing = LinearEasing),
-                )
-                if (!isRefreshing) break
-                progress.snapTo(0f)
+        if (isRefreshing && !lastIsRefreshing) {
+            wasRefreshing = true
+        }
+        lastIsRefreshing = isRefreshing
+    }
+
+    // Derive the current phase purely from the input state + latch.
+    val phase = when {
+        isRefreshing -> Phase.Loading
+        pullFraction > 0f -> Phase.Pulling
+        wasRefreshing -> Phase.Closing
+        else -> Phase.Idle
+    }
+
+    // Drive halfWidth from the current phase. One effect; Animatable
+    // cancels the prior in-flight animation whenever phase changes.
+    LaunchedEffect(phase, barWidthPx.value) {
+        when (phase) {
+            Phase.Pulling -> {
+                // Per-frame loop: re-read pullFraction every frame and
+                // snap halfWidth to the latest value so the band
+                // follows the finger exactly. The loop is cancelled
+                // automatically when this effect re-launches (i.e. when
+                // phase or barWidthPx.value changes).
+                while (isActive) {
+                    val target = currentPullFraction.coerceIn(0f, 1f) *
+                            barWidthPx.value / 2f
+                    halfWidth.snapTo(target)
+                    withFrameNanos { }
+                }
             }
-        } else if (visible) {
-            // Completion: glide to 1f, hold briefly so the user sees the bar
-            // reach the end, then drop out of the AnimatedVisibility so it
-            // fades away.
-            progress.animateTo(
-                targetValue = 1f,
-                animationSpec = tween(durationMillis = 150, easing = LinearEasing),
-            )
-            delay(400)
-            visible = false
+            Phase.Loading -> {
+                val maxHalfWidth = barWidthPx.value / 2f
+                if (maxHalfWidth <= 0f) return@LaunchedEffect
+
+                // 1. Initial shrink to center when loading starts
+                if (halfWidth.value > 0f) {
+                    val durationMs = ((halfWidth.value / slowSpeedPxPerSec) * 1000f)
+                        .toInt().coerceAtLeast(1)
+                    halfWidth.animateTo(
+                        targetValue = 0f,
+                        animationSpec = tween(durationMillis = durationMs, easing = LinearEasing)
+                    )
+                }
+
+                // 2. Indeterminate loop: continuously grow and shrink
+                while (isActive) {
+                    // Grow to max width
+                    val growDuration = ((maxHalfWidth / slowSpeedPxPerSec) * 1000f)
+                        .toInt().coerceAtLeast(1)
+                    halfWidth.animateTo(
+                        targetValue = maxHalfWidth,
+                        animationSpec = tween(durationMillis = growDuration, easing = LinearEasing)
+                    )
+
+                    // Shrink back to center
+                    val shrinkDuration = ((maxHalfWidth / slowSpeedPxPerSec) * 1000f)
+                        .toInt().coerceAtLeast(1)
+                    halfWidth.animateTo(
+                        targetValue = 0f,
+                        animationSpec = tween(durationMillis = shrinkDuration, easing = LinearEasing)
+                    )
+                }
+            }
+            Phase.Closing -> {
+                val remaining = halfWidth.value
+                if (remaining <= 0f) {
+                    wasRefreshing = false
+                    return@LaunchedEffect
+                }
+                val durationMs = ((remaining / fastSpeedPxPerSec) * 1000f)
+                    .toInt().coerceAtLeast(1)
+                halfWidth.animateTo(
+                    targetValue = 0f,
+                    animationSpec = tween(
+                        durationMillis = durationMs,
+                        easing = LinearEasing,
+                    ),
+                )
+                wasRefreshing = false
+            }
+            Phase.Idle -> {
+                halfWidth.animateTo(0f, tween(durationMillis = 200))
+            }
         }
     }
 
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn(animationSpec = tween(durationMillis = 150)),
-        exit = fadeOut(animationSpec = tween(durationMillis = 250)),
+    // Alpha is derived from halfWidth - fully opaque once the band has
+    // any visible width, smoothly fading to 0 in the sub-pixel range.
+    val alpha = (halfWidth.value * 2f).coerceIn(0f, 1f)
+    val leftX = (barWidthPx.value / 2f - halfWidth.value).coerceAtLeast(0f)
+    val rightX = (barWidthPx.value / 2f + halfWidth.value)
+        .coerceAtMost(barWidthPx.value)
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(10.dp)
+            .clipToBounds()
+            .alpha(alpha)
     ) {
-        LinearProgressIndicator(
-            progress = { progress.value },
-            modifier = Modifier.fillMaxWidth(),
-            color = color,
-        )
+        Canvas(
+            modifier = Modifier
+                .fillMaxSize()
+                .onSizeChanged { barWidthPx.value = it.width.toFloat() }
+        ) {
+            if (barWidthPx.value <= 0f || rightX <= leftX) return@Canvas
+            val midY = size.height / 2f
+            val strokeWidthPx = 4.dp.toPx()
+            val wavelengthPxLocal = 40.dp.toPx()
+            val amplitudePx = 1.dp.toPx()
+            val drawStart = leftX.coerceAtLeast(0f)
+            val drawEnd = rightX.coerceAtMost(barWidthPx.value)
+            if (drawEnd <= drawStart) return@Canvas
+            val path = Path().apply {
+                moveTo(drawStart, midY + amplitudePx * sin(
+                    (2.0 * Math.PI * drawStart / wavelengthPxLocal).toFloat()
+                ))
+                val step = 1f
+                var x = drawStart + step
+                while (x <= drawEnd) {
+                    val theta = (2.0 * Math.PI *
+                        (x / wavelengthPxLocal)).toFloat()
+                    val y = midY + amplitudePx * sin(theta)
+                    lineTo(x, y)
+                    x += step
+                }
+            }
+            drawPath(
+                path = path,
+                color = color,
+                style = Stroke(width = strokeWidthPx, cap = StrokeCap.Round),
+            )
+        }
     }
 }
+
+
+/**
+ * Lifecycle of [RefreshProgressBar]. Derived from `isRefreshing`,
+ * `pullFraction`, and the `wasRefreshing` latch - not stored
+ * explicitly, so there's a single source of truth.
+ */
+private enum class Phase { Idle, Pulling, Loading, Closing }
