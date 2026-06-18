@@ -2153,10 +2153,10 @@ private fun DocumentBadge(document: VerificationRequestDocument) {
     ) {
         Text(
             text = displayDocumentName(document.name, true),
-            style = MaterialTheme.typography.labelMedium,
+            style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSecondaryContainer,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
         )
     }
 }
