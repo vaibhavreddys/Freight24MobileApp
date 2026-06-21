@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.freight24.ui.theme.FreightThemeTokens
 
 @Composable
 fun TruckHeaderCard(
@@ -43,7 +44,7 @@ fun TruckHeaderCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors =
             CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
             ),
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -137,12 +138,12 @@ fun TruckStatusChip(
 fun TruckVerificationRow(isVerified: Boolean) {
     val (text, icon, color) =
         if (isVerified) {
-            Triple("Document verification completed", Icons.Default.CheckCircle, MaterialTheme.colorScheme.primary)
+            Triple("Document verification completed", Icons.Default.CheckCircle, FreightThemeTokens.colors.success)
         } else {
             Triple(
                 "Verification Pending",
                 Icons.Default.Error,
-                MaterialTheme.colorScheme.tertiaryFixed
+                MaterialTheme.colorScheme.tertiary,
             )
         }
 

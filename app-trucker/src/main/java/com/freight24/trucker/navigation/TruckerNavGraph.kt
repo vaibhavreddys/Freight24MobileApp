@@ -160,7 +160,7 @@ fun TruckerNavGraph(
             val viewModel: AppSettingsViewModel = hiltViewModel()
             val themeOrdinal by viewModel.themeChoice.collectAsState()
             val darkMode by viewModel.darkModeOverride.collectAsState()
-            val appTheme = FreightAppTheme.entries.getOrElse(themeOrdinal) { FreightAppTheme.INDIGO }
+            val appTheme = FreightAppTheme.entries.getOrElse(themeOrdinal) { FreightAppTheme.LOGISTICS }
 
             AppSettingsScreen(
                 currentTheme = appTheme,

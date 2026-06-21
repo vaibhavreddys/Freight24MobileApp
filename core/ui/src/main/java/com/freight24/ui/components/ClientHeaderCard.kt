@@ -21,10 +21,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.freight24.ui.theme.FreightThemeTokens
 
 @Composable
 fun ClientHeaderCard(
@@ -40,14 +43,17 @@ fun ClientHeaderCard(
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
         ),
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            ClientIcon(fullName = fullName)
+            ClientIcon(
+                fullName = fullName,
+                isActive = status.equals("active", ignoreCase = true),
+            )
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -89,36 +95,66 @@ fun ClientHeaderCard(
 }
 
 @Composable
-fun ClientIcon(fullName: String) {
+fun ClientIcon(
+    fullName: String,
+    isActive: Boolean = true,
+) {
+    // Five M3 container/on-container pairs that read as distinct "clients"
+    // in the list. Same pattern as OwnerAvatar in ManageTruckOwnersScreen:
+    // hash the name to pick a stable palette so the same client always gets
+    // the same color across screens/launches.
+    val extended = FreightThemeTokens.colors
+    val inactiveBackground = MaterialTheme.colorScheme.surfaceContainerHigh
+    val inactiveText = MaterialTheme.colorScheme.onSurfaceVariant
+    val avatarPalettes =
+        listOf(
+            MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer,
+            extended.surfaceSuccess to extended.onSurfaceSuccess,
+            extended.surfaceWarning to extended.onSurfaceWarning,
+            extended.surfaceInfo to extended.onSurfaceInfo,
+            MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.onErrorContainer,
+        )
+    val palette =
+        remember(fullName, isActive, inactiveBackground, inactiveText) {
+            if (!isActive) {
+                inactiveBackground to inactiveText
+            } else {
+                val hash = fullName.trim().ifBlank { fullName }.hashCode()
+                avatarPalettes[kotlin.math.abs(hash) % avatarPalettes.size]
+            }
+        }
     val initials =
         fullName
             .trim()
-            .split("\\s+".toRegex())
+            .split(Regex("\\s+"))
             .filter { it.isNotBlank() }
             .take(2)
-            .joinToString("") { it.first().uppercase() }
+            .joinToString("") { it.take(1).uppercase() }
+            .ifBlank { null }
 
     Box(
-        modifier = Modifier
-            .size(44.dp)
-            .background(
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-                RoundedCornerShape(10.dp)
-            ),
+        modifier =
+            Modifier
+                .size(44.dp)
+                .background(palette.first, RoundedCornerShape(10.dp)),
         contentAlignment = Alignment.Center,
     ) {
-        if (initials.isNotBlank()) {
+        if (initials != null) {
             Text(
                 text = initials,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
+                style =
+                    androidx.compose.ui.text.TextStyle(
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 0.03.sp,
+                        color = palette.second,
+                    ),
             )
         } else {
             Icon(
                 imageVector = Icons.Default.Business,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurface,
+                tint = palette.second,
             )
         }
     }
@@ -128,13 +164,13 @@ fun ClientIcon(fullName: String) {
 fun ClientStatusChip(status: String) {
     val isActive = status.equals("active", ignoreCase = true)
     val (text, color) = if (isActive) {
-        "Active" to MaterialTheme.colorScheme.primary
+        "Active" to FreightThemeTokens.colors.success
     } else {
-        "Inactive" to MaterialTheme.colorScheme.outline
+        "Inactive" to MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     Surface(
-        color = color.copy(alpha = 0.1f),
+        color = color.copy(alpha = 0.18f),
         shape = RoundedCornerShape(8.dp),
     ) {
         Text(

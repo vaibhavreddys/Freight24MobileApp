@@ -33,8 +33,8 @@ internal val GreenOnSecondaryContainer100 = Color(0xFF0E2B1C)
 // Tertiary (warm neutral/sand — highway-inspired)
 // ---------------------------------------------------------------------------
 
-internal val GreenTertiary40 = Color(0xFF717972)
-internal val GreenTertiary80 = Color(0xFFB0B8B1)
+internal val GreenTertiary40 = Color(0xF2D51A1A)
+internal val GreenTertiary80 = Color(0xFFBB0707)
 internal val GreenTertiary90 = Color(0xFFD3DAD5)
 internal val GreenTertiary30 = Color(0xFF5A615B)
 internal val GreenOnTertiary100 = Color(0xFFFFFFFF)

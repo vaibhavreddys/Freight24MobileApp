@@ -34,8 +34,8 @@ internal val OnSecondaryContainer100 = Color(0xFF1D192B)
 // Tertiary (rose/pink — accent for status badges, tags)
 // ---------------------------------------------------------------------------
 
-internal val Tertiary40 = Color(0xFF7D5260)
-internal val Tertiary80 = Color(0xFFEFB8C8)
+internal val Tertiary40 = Color(0xFFC90A48)
+internal val Tertiary80 = Color(0xFFC71146)
 internal val Tertiary90 = Color(0xFFFFD8E4)
 internal val Tertiary30 = Color(0xFF633B48)
 internal val OnTertiary100 = Color(0xFFFFFFFF)

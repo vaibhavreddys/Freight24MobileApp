@@ -18,7 +18,7 @@ class AppSettingsViewModel
     ) : ViewModel() {
         val themeChoice =
             themePreferenceManager.themeChoice
-                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ThemePreferenceManager.THEME_INDIGO)
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ThemePreferenceManager.THEME_LOGISTICS)
 
         val darkModeOverride =
             themePreferenceManager.darkModeOverride

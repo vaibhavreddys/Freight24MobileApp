@@ -184,6 +184,89 @@ private val GreenDarkColorScheme =
     )
 
 // ---------------------------------------------------------------------------
+// Logistics M3 schemes (forest green primary + brick red secondary,
+// deep muted register. Status colors stay universal — see FreightExtendedColors.)
+// ---------------------------------------------------------------------------
+
+private val LogisticsLightColorScheme =
+    lightColorScheme(
+        primary = LogisticsPrimary40,
+        onPrimary = LogisticsOnPrimary100,
+        primaryContainer = LogisticsPrimary90,
+        onPrimaryContainer = LogisticsOnPrimaryContainer100,
+        inversePrimary = LogisticsInversePrimaryLight,
+        secondary = LogisticsSecondary40,
+        onSecondary = LogisticsOnSecondary100,
+        secondaryContainer = LogisticsSecondary90,
+        onSecondaryContainer = LogisticsOnSecondaryContainer100,
+        tertiary = LogisticsTertiary40,
+        onTertiary = LogisticsOnTertiary100,
+        tertiaryContainer = LogisticsTertiary90,
+        onTertiaryContainer = LogisticsOnTertiaryContainer100,
+        error = LogisticsError40,
+        onError = LogisticsOnError100,
+        errorContainer = LogisticsError90,
+        onErrorContainer = LogisticsOnErrorContainer100,
+        background = LogisticsBackgroundLight98,
+        onBackground = LogisticsOnBackgroundLight10,
+        surface = LogisticsSurfaceLight98,
+        onSurface = LogisticsOnSurfaceLight10,
+        surfaceVariant = LogisticsSurfaceVariantLight90,
+        onSurfaceVariant = LogisticsOnSurfaceVariantLight30,
+        surfaceDim = LogisticsSurfaceDimLight87,
+        surfaceBright = LogisticsSurfaceBrightLight98,
+        surfaceContainerLowest = LogisticsSurfaceContainerLowestLight100,
+        surfaceContainerLow = LogisticsSurfaceContainerLowLight96,
+        surfaceContainer = LogisticsSurfaceContainerLight94,
+        surfaceContainerHigh = LogisticsSurfaceContainerHighLight92,
+        surfaceContainerHighest = LogisticsSurfaceContainerHighestLight90,
+        outline = LogisticsOutlineLight50,
+        outlineVariant = LogisticsOutlineVariantLight80,
+        inverseSurface = LogisticsInverseSurfaceLight20,
+        inverseOnSurface = LogisticsInverseOnSurfaceLight95,
+        surfaceTint = LogisticsPrimary40,
+    )
+
+private val LogisticsDarkColorScheme =
+    darkColorScheme(
+        primary = LogisticsPrimary80,
+        onPrimary = LogisticsOnPrimary20,
+        primaryContainer = LogisticsPrimary30,
+        onPrimaryContainer = LogisticsPrimary90,
+        inversePrimary = LogisticsInversePrimaryDark,
+        secondary = LogisticsSecondary80,
+        onSecondary = LogisticsOnSecondary20,
+        secondaryContainer = LogisticsSecondary30,
+        onSecondaryContainer = LogisticsSecondary90,
+        tertiary = LogisticsTertiary80,
+        onTertiary = LogisticsOnTertiary20,
+        tertiaryContainer = LogisticsTertiary30,
+        onTertiaryContainer = LogisticsTertiary90,
+        error = LogisticsError80,
+        onError = LogisticsOnError20,
+        errorContainer = LogisticsError30,
+        onErrorContainer = LogisticsError90,
+        background = LogisticsBackgroundDark6,
+        onBackground = LogisticsOnBackgroundDark90,
+        surface = LogisticsSurfaceDark6,
+        onSurface = LogisticsOnSurfaceDark90,
+        surfaceVariant = LogisticsSurfaceVariantDark30,
+        onSurfaceVariant = LogisticsOnSurfaceVariantDark80,
+        surfaceDim = LogisticsSurfaceDimDark6,
+        surfaceBright = LogisticsSurfaceBrightDark22,
+        surfaceContainerLowest = LogisticsSurfaceContainerLowestDark4,
+        surfaceContainerLow = LogisticsSurfaceContainerLowDark10,
+        surfaceContainer = LogisticsSurfaceContainerDark12,
+        surfaceContainerHigh = LogisticsSurfaceContainerHighDark17,
+        surfaceContainerHighest = LogisticsSurfaceContainerHighestDark20,
+        outline = LogisticsOutlineDark60,
+        outlineVariant = LogisticsOutlineVariantDark30,
+        inverseSurface = LogisticsInverseSurfaceDark90,
+        inverseOnSurface = LogisticsInverseOnSurfaceDark10,
+        surfaceTint = LogisticsPrimary80,
+    )
+
+// ---------------------------------------------------------------------------
 // Extended colors — Indigo (success/warning/info stay the same; brand
 // accents routeOrigin/routeDestination swap to match the primary palette)
 // ---------------------------------------------------------------------------
@@ -302,19 +385,79 @@ private val GreenDarkExtendedColors =
     )
 
 // ---------------------------------------------------------------------------
+// Extended colors — Logistics (forest + brick; success/warning/info stay
+// universal; routeOrigin = green primary, routeDestination = brick red
+// secondary for clear pickup/drop visual distinction)
+// ---------------------------------------------------------------------------
+
+private val LogisticsLightExtendedColors =
+    FreightExtendedColors(
+        success = SuccessLight,
+        onSuccess = OnSuccessLight,
+        surfaceSuccess = SurfaceSuccessLight,
+        onSurfaceSuccess = OnSurfaceSuccessLight,
+        warning = WarningLight,
+        onWarning = OnWarningLight,
+        surfaceWarning = SurfaceWarningLight,
+        onSurfaceWarning = OnSurfaceWarningLight,
+        info = InfoLight,
+        onInfo = OnInfoLight,
+        surfaceInfo = SurfaceInfoLight,
+        onSurfaceInfo = OnSurfaceInfoLight,
+        settings = LogisticsSettingsLight,
+        onSettings = LogisticsOnSettingsLight,
+        dialogScrim = DialogScrimLight,
+        routeOrigin = LogisticsPrimary40,
+        onRouteOrigin = LogisticsOnPrimary100,
+        routeDestination = LogisticsSecondary40,
+        onRouteDestination = LogisticsOnSecondary100,
+        statusAvailable = SuccessLight,
+        onStatusAvailable = OnSuccessLight,
+        statusPending = WarningLight,
+        onStatusPending = OnWarningLight,
+    )
+
+private val LogisticsDarkExtendedColors =
+    FreightExtendedColors(
+        success = SuccessDark,
+        onSuccess = OnSuccessDark,
+        surfaceSuccess = SurfaceSuccessDark,
+        onSurfaceSuccess = OnSurfaceSuccessDark,
+        warning = WarningDark,
+        onWarning = OnWarningDark,
+        surfaceWarning = SurfaceWarningDark,
+        onSurfaceWarning = OnSurfaceWarningDark,
+        info = InfoDark,
+        onInfo = OnInfoDark,
+        surfaceInfo = SurfaceInfoDark,
+        onSurfaceInfo = OnSurfaceInfoDark,
+        settings = LogisticsSettingsDark,
+        onSettings = LogisticsOnSettingsDark,
+        dialogScrim = DialogScrimDark,
+        routeOrigin = LogisticsPrimary80,
+        onRouteOrigin = LogisticsOnPrimary20,
+        routeDestination = LogisticsSecondary80,
+        onRouteDestination = LogisticsOnSecondary20,
+        statusAvailable = SuccessDark,
+        onStatusAvailable = OnSuccessDark,
+        statusPending = WarningDark,
+        onStatusPending = OnWarningDark,
+    )
+
+// ---------------------------------------------------------------------------
 // CompositionLocal for the current theme choice
 // ---------------------------------------------------------------------------
 
 /** Provides the currently-selected [FreightAppTheme] throughout the tree. */
 val LocalAppTheme =
     androidx.compose.runtime.staticCompositionLocalOf<FreightAppTheme> {
-        FreightAppTheme.GREEN
+        FreightAppTheme.LOGISTICS
     }
 
 /**
  * App-wide theme entry point.
  *
- * @param appTheme The user-selected color scheme (Indigo or Green).
+ * @param appTheme The user-selected color scheme (Indigo, Green, or Logistics).
  * @param darkTheme Whether dark mode is active. Derived from system when
  *   [darkModeOverride] is `"system"` (the default); forced on/off otherwise.
  * @param darkModeOverride One of `"system"`, `"on"`, or `"off"` — persisted
@@ -324,7 +467,7 @@ val LocalAppTheme =
  */
 @Composable
 fun Freight24Theme(
-    appTheme: FreightAppTheme = FreightAppTheme.INDIGO,
+    appTheme: FreightAppTheme = FreightAppTheme.LOGISTICS,
     darkTheme: Boolean = isSystemInDarkTheme(),
     darkModeOverride: String = "system",
     dynamicColor: Boolean = false,
@@ -344,16 +487,20 @@ fun Freight24Theme(
                 val context = LocalContext.current
                 if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
             }
+            isDark && appTheme == FreightAppTheme.LOGISTICS -> LogisticsDarkColorScheme
             isDark && appTheme == FreightAppTheme.GREEN -> GreenDarkColorScheme
             isDark -> IndigoDarkColorScheme
+            appTheme == FreightAppTheme.LOGISTICS -> LogisticsLightColorScheme
             appTheme == FreightAppTheme.GREEN -> GreenLightColorScheme
             else -> IndigoLightColorScheme
         }
 
     val extendedColors =
         when {
+            isDark && appTheme == FreightAppTheme.LOGISTICS -> LogisticsDarkExtendedColors
             isDark && appTheme == FreightAppTheme.GREEN -> GreenDarkExtendedColors
             isDark -> IndigoDarkExtendedColors
+            appTheme == FreightAppTheme.LOGISTICS -> LogisticsLightExtendedColors
             appTheme == FreightAppTheme.GREEN -> GreenLightExtendedColors
             else -> IndigoLightExtendedColors
         }

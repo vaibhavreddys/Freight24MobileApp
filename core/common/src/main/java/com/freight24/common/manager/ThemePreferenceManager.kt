@@ -31,19 +31,20 @@ class ThemePreferenceManager
             private val THEME_KEY = intPreferencesKey("app_theme")
             private val DARK_MODE_KEY = stringPreferencesKey("dark_mode")
 
-            /** Theme constants — must match [ThemeChoice] ordinals. */
+            /** Theme constants — must match [FreightAppTheme] ordinals. */
             const val THEME_INDIGO = 0
             const val THEME_GREEN = 1
+            const val THEME_LOGISTICS = 2
 
             const val DARK_MODE_FOLLOW_SYSTEM = "system"
             const val DARK_MODE_ON = "on"
             const val DARK_MODE_OFF = "off"
         }
 
-        /** The selected app theme (color scheme). Defaults to Indigo (0). */
+        /** The selected app theme (color scheme). Defaults to Logistics (2). */
         val themeChoice: Flow<Int> =
             context.themeDataStore.data.map { prefs ->
-                prefs[THEME_KEY] ?: THEME_INDIGO
+                prefs[THEME_KEY] ?: THEME_LOGISTICS
             }
 
         /** Dark-mode override: "system" | "on" | "off". Defaults to "system". */
