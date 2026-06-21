@@ -1,4 +1,10 @@
 package com.freight24.connect.feature.trips.views
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
 import com.freight24.ui.components.FreightTopAppBar
 
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -9,8 +15,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,6 +25,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.outlined.BorderColor
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Description
@@ -31,25 +37,32 @@ import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.rememberAsyncImagePainter
 import com.freight24.connect.feature.trips.domain.viewmodel.TripDetailsEvent
 import com.freight24.connect.feature.trips.domain.viewmodel.TripDetailsViewModel
 import com.freight24.connect.feature.trips.domain.viewmodel.TripDetailsViewModelImpl
 import com.freight24.connect.feature.trips.views.components.TripCard
 import com.freight24.connect.feature.trips.views.components.formatAmount
+import com.freight24.ui.components.FileConfirmationSheet
+import com.freight24.ui.components.FileSourcePickerSheet
 import com.freight24.connect.utils.toDateTime
 import com.freight24.rest.response.TripDataResponse
+import kotlinx.coroutines.launch
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,7 +81,6 @@ fun TripDetailsScreen(
     val colorScheme = MaterialTheme.colorScheme
     var menuExpanded by remember { mutableStateOf(false) }
     var showConfirmationDialog by remember { mutableStateOf(false) }
-    var showSelectionDialog by remember { mutableStateOf(false) }
     var pendingStatus by remember { mutableStateOf("") }
     var pendingButtonText by remember { mutableStateOf("") }
     
@@ -85,28 +97,75 @@ fun TripDetailsScreen(
         }
     }
     
-    val sheetState = rememberModalBottomSheetState()
-    var showSheet by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    val sourceSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showSourcePicker by rememberSaveable { mutableStateOf(false) }
+    var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickMultipleVisualMedia(),
         onResult = { uris ->
             if (uris.isNotEmpty()) {
                 viewModel.onEvent(TripDetailsEvent.OnFilesPicked(uris, isPdf = false))
-                showSheet = true
             }
-        }
+        },
     )
 
     val pdfPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent(),
+        contract = ActivityResultContracts.OpenDocument(),
         onResult = { uri ->
             uri?.let {
                 viewModel.onEvent(TripDetailsEvent.OnFilesPicked(listOf(it), isPdf = true))
-                showSheet = true
             }
-        }
+        },
     )
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture(),
+        onResult = { success ->
+            if (success) {
+                tempCameraUri?.let {
+                    viewModel.onEvent(TripDetailsEvent.OnFilesPicked(listOf(it), isPdf = false))
+                }
+            }
+            tempCameraUri = null
+        },
+    )
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                val imageUri = createTempImageUri(context)
+                tempCameraUri = imageUri
+                cameraLauncher.launch(imageUri)
+            } else {
+                scope.launch {
+                    val result = snackbarHostState.showSnackbar(
+                        message = "Camera permission denied. Grant it from app settings to use camera upload.",
+                        actionLabel = "Settings",
+                        duration = SnackbarDuration.Long,
+                    )
+                    if (result == SnackbarResult.ActionPerformed) {
+                        openAppSettings(context)
+                    }
+                }
+            }
+        },
+    )
+
+    fun startCameraCapture() {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            val imageUri = createTempImageUri(context)
+            tempCameraUri = imageUri
+            cameraLauncher.launch(imageUri)
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
 
     if (showConfirmationDialog) {
         AlertDialog(
@@ -194,112 +253,45 @@ fun TripDetailsScreen(
         )
     }
 
-    if (showSelectionDialog) {
-        AlertDialog(
-            onDismissRequest = { showSelectionDialog = false },
-            title = { Text("Select Document Type") },
-            text = { Text("Select images from gallery or a PDF file to upload.") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                        showSelectionDialog = false
-                    }
-                ) {
-                    Text("Images", color = MaterialTheme.colorScheme.primary)
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        pdfPickerLauncher.launch("application/pdf")
-                        showSelectionDialog = false
-                    }
-                ) {
-                    Text("PDF", color = MaterialTheme.colorScheme.primary)
-                }
-            },
-            containerColor = colorScheme.surface,
-            shape = RoundedCornerShape(12.dp)
-        )
-    }
-
-    if (showSheet && uiState.selectedUris.isNotEmpty()) {
-        ModalBottomSheet(
-            onDismissRequest = { 
-                showSheet = false
-                viewModel.onEvent(TripDetailsEvent.OnClearSelection)
-            },
-            sheetState = sheetState,
-                containerColor = colorScheme.surface
-            ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = if (uiState.isPdf) "PDF Selected" else "Images Selected (${uiState.selectedUris.size})",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                if (uiState.isPdf) {
-                    Icon(
-                        imageVector = Icons.Outlined.Description,
-                        contentDescription = null,
-                        modifier = Modifier.size(64.dp),
-                        tint = colorScheme.error
-                    )
-                    Text(text = "PDF Document", style = MaterialTheme.typography.bodyMedium)
-                } else {
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        items(uiState.selectedUris) { uri ->
-                            Box {
-                                Image(
-                                    painter = rememberAsyncImagePainter(uri),
-                                    contentDescription = null,
-                                    modifier = Modifier
-                                        .size(100.dp)
-                                        .clip(RoundedCornerShape(8.dp)),
-                                    contentScale = ContentScale.Crop
-                                )
-                            }
-                        }
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(24.dp))
-                
-                Button(
-                    onClick = {
-                        viewModel.onEvent(TripDetailsEvent.UploadLR)
-                        showSheet = false
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = colorScheme.primary),
-                    enabled = !uiState.isUploading
-                ) {
-                    if (uiState.isUploading) {
-                        CircularProgressIndicator(modifier = Modifier.size(20.dp), color = colorScheme.onPrimary)
-                    } else {
-                        Text("Upload", color = colorScheme.onPrimary, fontWeight = FontWeight.Bold)
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(32.dp))
+    FileSourcePickerSheet(
+        showSheet = showSourcePicker,
+        onDismissRequest = { showSourcePicker = false },
+        onCameraClick = {
+            scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
+                showSourcePicker = false
+                startCameraCapture()
             }
-        }
-    }
+        },
+        onGalleryClick = {
+            scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
+                showSourcePicker = false
+                imagePickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            }
+        },
+        onDocumentClick = {
+            scope.launch { sourceSheetState.hide() }.invokeOnCompletion {
+                showSourcePicker = false
+                pdfPickerLauncher.launch(arrayOf("application/pdf"))
+            }
+        },
+        sheetState = sourceSheetState,
+    )
+
+    FileConfirmationSheet(
+        selectedUris = uiState.selectedUris,
+        isPdf = uiState.isPdf,
+        isUploading = uiState.isUploading,
+        uploadButtonText = "Confirm Upload",
+        onUploadClick = {
+            viewModel.onEvent(TripDetailsEvent.UploadLR)
+        },
+        onDismiss = {
+            viewModel.onEvent(TripDetailsEvent.OnClearSelection)
+        },
+    )
 
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             FreightTopAppBar(
                 title = { Text("Trip Details", style = MaterialTheme.typography.titleMedium) },
@@ -358,12 +350,12 @@ fun TripDetailsScreen(
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shadowElevation = 8.dp,
-                    color = colorScheme.onPrimary
+//                    color = colorScheme.onPrimary
                 ) {
                     Button(
                         onClick = {
                             if (nextStatus == "UPLOAD_LR") {
-                                showSelectionDialog = true
+                                showSourcePicker = true
                             } else {
                                 pendingStatus = nextStatus
                                 pendingButtonText = buttonText
@@ -404,7 +396,7 @@ fun TripDetailsScreen(
                 uiState.trip != null -> {
                     TripDetailsContent(
                         trip = uiState.trip!!,
-                        onUploadLrClick = { showSelectionDialog = true },
+                        onUploadLrClick = { showSourcePicker = true },
                         onDocClick = { docId, status ->
                             onDocumentView(tripId, docId, status)
                         },
@@ -442,12 +434,16 @@ fun TripDetailsContent(
         TripCard(trip = trip)
 
 
-        // Trip Documents
+        // Trip Documents — auto-expand to cue the user when LR is missing or rejected
+        val lrDoc = (trip.documents ?: emptyList()).find { it.type.equals("lr", ignoreCase = true) }
+        val isLrMissing = lrDoc == null
+        val isLrRejected = lrDoc?.status?.lowercase() == "rejected"
         ExpandableSection(
             title = "Documents",
             icon = Icons.Outlined.Description,
             iconBg = colorScheme.primaryContainer,
-            iconTint = colorScheme.primary
+            iconTint = colorScheme.primary,
+            initiallyExpanded = isLrMissing || isLrRejected,
         ) {
             TripDocumentsSection(
                 truckerStatus = trip.truckerStatus,
@@ -661,9 +657,10 @@ fun ExpandableSection(
     icon: ImageVector,
     iconBg: Color = MaterialTheme.colorScheme.surfaceVariant,
     iconTint: Color = MaterialTheme.colorScheme.primary,
+    initiallyExpanded: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(initiallyExpanded) }
     
     Card(
         shape = RoundedCornerShape(12.dp),
@@ -1045,4 +1042,20 @@ fun mapStatusToTitle(statusType: String): String {
         "CLOSED" -> "Closed"
         else -> normalized.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }
     }
+}
+
+private fun createTempImageUri(context: Context): Uri {
+    val tempFile = File(context.cacheDir, "camera_capture_${System.currentTimeMillis()}.jpg")
+    return FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.fileprovider",
+        tempFile,
+    )
+}
+
+private fun openAppSettings(context: Context) {
+    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+        data = Uri.fromParts("package", context.packageName, null)
+    }
+    context.startActivity(intent)
 }
