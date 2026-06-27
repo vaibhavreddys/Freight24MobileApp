@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,6 +18,8 @@ import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.FireTruck
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -27,8 +30,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -36,12 +39,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.freight24.common.util.DateTimeUtils.formatRelativeTime
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentTab
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsListEvent
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsListUiState
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsListViewModel
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsListViewModelImpl
+import com.freight24.connect.feature.trucks.views.capitalize
 import com.freight24.rest.response.IndentResponse
+import com.freight24.ui.components.RouteIndicatorWithCities
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,21 +109,26 @@ fun IndentsContent(
     val colorScheme = MaterialTheme.colorScheme
     Box(modifier = modifier) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Tab Switcher
-            IndentTabSwitcher(
-                selectedTab = uiState.selectedTab,
-                onTabSelected = { onEvent(IndentsListEvent.SelectTab(it)) },
-                modifier = Modifier.padding(16.dp)
-            )
-
-            if (uiState.selectedTab == IndentTab.ALL) {
-                SearchBarTrigger(
-                    onClick = onSearchClick,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .padding(bottom = 16.dp)
+            // Tab Switcher + (optional) search trigger share a single row so
+            // the search sits inline to the right of the tabs instead of
+            // pushing the list down. Search is only relevant on the ALL tab.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                IndentTabSwitcher(
+                    selectedTab = uiState.selectedTab,
+                    onTabSelected = { onEvent(IndentsListEvent.SelectTab(it)) },
                 )
+                if (uiState.selectedTab == IndentTab.ALL) {
+                    Spacer(modifier = Modifier.width(12.dp))
+                    SearchBarTrigger(
+                        onClick = onSearchClick,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
             }
 
             if (uiState.isLoading && uiState.indents.isEmpty()) {
@@ -148,8 +159,8 @@ fun SearchBarTrigger(
 ) {
     Box(
         modifier = modifier
-            .height(48.dp)
-            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
+            .height(36.dp)
+            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(16.dp))
             .clickable { onClick() }
             .padding(horizontal = 12.dp),
         contentAlignment = Alignment.CenterStart
@@ -162,7 +173,7 @@ fun SearchBarTrigger(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Search by Client or Indent ID",
+                text = "Search indents",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -177,8 +188,7 @@ fun IndentTabSwitcher(
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
+        modifier = modifier,
     ) {
         TabButton(
             text = "Mine",
@@ -311,7 +321,7 @@ fun IndentCard(
                 
                 // Posted time
                 Text(
-                    text = "45m ago", // TODO: Dynamic formatting
+                    text = formatRelativeTime(indent.createdAt),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -441,188 +451,240 @@ fun AllIndentCard(
     val fleetExecutive = indent.fleetExecutive
 
     Card(
+        onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-            .clickable { onClick() },
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
-            modifier = Modifier.padding(12.dp)
+            modifier = Modifier.padding(16.dp)
         ) {
-            // Row 1: Company Name, ID & Time
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Outlined.LocalShipping,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column {
-                        Text(
-                            text = clientProfile?.companyName ?: clientProfile?.fullName ?: "Unknown Company",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp
-                            )
-                        )
-                        Text(
-                            text = indent.indentCode.orEmpty(),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontSize = 11.sp
-                        )
-                    }
-                }
-                
-                // Posted time
-                Text(
-                    text = "45m ago(hardcoded)", // TODO: Dynamic formatting
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Row 2: Route
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                RouteDot(isStart = true)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = loadingLocation?.areaName ?: loadingLocation?.cityName ?: "Unknown",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
-                    )
-                )
-            }
-            RouteVerticalLine()
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                RouteDot(isStart = false)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = unloadingLocation?.areaName ?: unloadingLocation?.cityName ?: "Unknown",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
-                    )
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Row 3: Metadata (Truck, Weight, Material)
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Outlined.LocalShipping,
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                val truckDisplay = indent.indentGroupDetails.truckType?.displayName ?: "N/A"
-                val weightDisplay = "${indent.indentGroupDetails.loadWeight} tons"
-                val materialDisplay = indent.indentGroupDetails.material
-                Text(
-                    text = "$truckDisplay | $weightDisplay | $materialDisplay",
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Row 4: Pricing
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = "CLIENT: ",
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = formatCurrency(indent.indentGroupDetails.clientTripCost),
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, fontSize = 13.sp),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                Text(
-                    text = "NEG: ",
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = formatCurrency(indent.negotiatedTripCost),
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold, fontSize = 13.sp),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Row 5: Client Name & Clone Button
+            // Header: Company Name + Code + Time Chip
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
                     Text(
-                        text = fleetExecutive?.name ?: "Unknown",
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium, fontSize = 13.sp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = clientProfile?.companyName ?: clientProfile?.fullName ?: "Unknown",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "(${indent.indentCode.orEmpty()})",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Medium
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                // Time Chip
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHighest
+                ) {
+                    Text(
+                        text = formatRelativeTime(indent.createdAt),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Route (Left) + Prices (Right) — Two Column Layout
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                // Route Column (Left)
+                Row(
+                    verticalAlignment = Alignment.Top,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    RouteIndicatorWithCities(
+                        fromCity = loadingLocation?.areaName ?: loadingLocation?.cityName ?: "Unknown",
+                        toCity = unloadingLocation?.areaName ?: unloadingLocation?.cityName ?: "Unknown",
                     )
                 }
 
-                if(indent.indentOwnership == "OTHER") {
-                    Button(
-                        onClick = onCloneClick,
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.primary
+                Spacer(modifier = Modifier.width(16.dp))
+
+                // Prices Column (Right Aligned)
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    modifier = Modifier.padding(top = 2.dp)
+                ) {
+                    Text(
+                        text = "CLIENT COST",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = formatCurrency(indent.indentGroupDetails.clientTripCost),
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold
                         ),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                        modifier = Modifier.height(32.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Outlined.LocalShipping,
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "NEGOTIATED COST",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = formatCurrency(indent.negotiatedTripCost),
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+
+//            Spacer(modifier = Modifier.height(8.dp))
+
+            // Cargo Chips
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                val truckDisplay = indent.indentGroupDetails.truckType?.displayName ?: "N/A"
+                val weightDisplay = "${indent.indentGroupDetails.loadWeight} MT"
+                val materialDisplay = indent.indentGroupDetails.material.capitalize()
+
+                AssistChip(
+                    onClick = { /* no-op */ },
+                    label = {
+                        Text(
+                            text = truckDisplay,
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    },
+                    colors = AssistChipDefaults.assistChipColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                    ),
+                    border = AssistChipDefaults.assistChipBorder(
+                        enabled = false,
+                        borderColor = MaterialTheme.colorScheme.outlineVariant
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                )
+
+                AssistChip(
+                    onClick = { /* no-op */ },
+                    label = {
+                        Text(
+                            text = weightDisplay,
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    },
+                    colors = AssistChipDefaults.assistChipColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                    ),
+                    border = AssistChipDefaults.assistChipBorder(
+                        enabled = false,
+                        borderColor = MaterialTheme.colorScheme.outlineVariant
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                )
+
+                if (materialDisplay.isNotBlank()) {
+                    AssistChip(
+                        onClick = { /* no-op */ },
+                        label = {
                             Text(
-                                text = "Clone",
-                                style = MaterialTheme.typography.labelLarge.copy(fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                text = materialDisplay,
+                                style = MaterialTheme.typography.labelMedium
                             )
-                        }
+                        },
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                        ),
+                        border = AssistChipDefaults.assistChipBorder(
+                            enabled = false,
+                            borderColor = MaterialTheme.colorScheme.outlineVariant
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                }
+            }
+
+//            Spacer(modifier = Modifier.height(14.dp))
+
+            // Footer: Admin + Clone
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (indent.indentOwnership == "OTHER") {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = fleetExecutive?.name ?: "Unknown",
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Medium
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    FilledTonalButton(
+                        onClick = onCloneClick,
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        ),
+                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.ContentCopy,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Clone",
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        )
                     }
                 }
             }
         }
     }
 }
-
 
 @Composable
 fun RouteDot(isStart: Boolean) {
