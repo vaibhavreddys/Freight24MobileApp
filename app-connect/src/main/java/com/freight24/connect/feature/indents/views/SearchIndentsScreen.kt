@@ -47,8 +47,14 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
+import android.net.Uri
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.freight24.common.util.DateTimeUtils.formatRelativeTime
 import com.freight24.connect.feature.indents.domain.viewmodel.SearchIndentsEvent
+import com.freight24.rest.response.IndentResponse
+import com.freight24.ui.components.IndentCard
 import com.freight24.connect.feature.indents.domain.viewmodel.SearchIndentsUiState
 import com.freight24.connect.feature.indents.domain.viewmodel.SearchIndentsViewModel
 import com.freight24.connect.feature.indents.domain.viewmodel.SearchIndentsViewModelImpl
@@ -207,14 +213,41 @@ fun SearchIndentsContent(
                     color = colorScheme.onSurfaceVariant
                 )
             } else {
+                val context = LocalContext.current
+
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(uiState.indents) { indent ->
-                        AllIndentCard(
-                            indent = indent,
+                        val loadingLocation = indent.indentGroupDetails.indentLocations.find { it.locationType == "loading" }
+                        val unloadingLocation = indent.indentGroupDetails.indentLocations.find { it.locationType == "unloading" }
+                        val clientProfile = indent.indentGroupDetails.clientProfile
+                        val fleetExecutive = indent.fleetExecutive
+                        val showAdmin = indent.indentOwnership == "OTHER"
+
+                        IndentCard(
+                            companyName = clientProfile?.companyName ?: clientProfile?.fullName ?: "Unknown",
+                            indentCode = indent.indentCode,
+                            postedTime = formatRelativeTime(indent.createdAt),
+                            fromCity = loadingLocation?.areaName ?: loadingLocation?.cityName ?: "Unknown",
+                            toCity = unloadingLocation?.areaName ?: unloadingLocation?.cityName ?: "Unknown",
+                            clientCostFormatted = formatCurrency(indent.indentGroupDetails.clientTripCost),
+                            negotiatedCostFormatted = formatCurrency(indent.negotiatedTripCost),
+                            truckDisplay = indent.indentGroupDetails.truckType?.displayName ?: "N/A",
+                            weightDisplay = "${indent.indentGroupDetails.loadWeight} MT",
+                            materialDisplay = indent.indentGroupDetails.material.replaceFirstChar { it.uppercase() },
+                            showAdmin = showAdmin,
+                            adminName = fleetExecutive?.name,
+                            onCallClick = clientProfile?.phoneNumber?.takeIf { it.isNotBlank() }?.let { phone ->
+                                {
+                                    val intent = Intent(Intent.ACTION_DIAL).apply {
+                                        data = Uri.parse("tel:$phone")
+                                    }
+                                    context.startActivity(intent)
+                                }
+                            },
                             onClick = { onIndentClick(indent.id) },
-                            onCloneClick = { onCloneClick(indent.id, indent.indentGroupDetails.id) }
+                            onCloneClick = { onCloneClick(indent.id, indent.indentGroupDetails.id) },
                         )
                     }
                 }

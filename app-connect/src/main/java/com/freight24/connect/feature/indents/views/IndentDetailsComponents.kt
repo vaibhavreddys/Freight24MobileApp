@@ -281,13 +281,13 @@ fun GeneralInfoSection(
 ) {
     IndentDetailSection(
         image = Icons.Default.Info,
-        title = "GENERAL INFO",
+        title = "CLIENT",
         onEditClick = onEditClick,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            if (indentId == null) {
-                IndentDetailItem(label = "INDENT TYPE", value = "New Indent")
-            } else {
+            if (indentId != null) {
+//                IndentDetailItem(label = "INDENT TYPE", value = "New Indent")
+//            } else {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     DetailLabel(text = "INDENT ID")
                     Text(
