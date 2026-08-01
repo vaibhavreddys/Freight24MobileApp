@@ -9,15 +9,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.freight24.ui.theme.FreightThemeTokens
 
 @Composable
 fun RouteIndicatorWithCities(
     fromCity: String,
     toCity: String,
+    fromLabel: String? = null,
+    toLabel: String? = null,
 ) {
     val extended = FreightThemeTokens.colors
+    val labelStyle = MaterialTheme.typography.labelSmall.copy(
+        fontWeight = FontWeight.Medium,
+        letterSpacing = 0.6.sp,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
     Row(
         verticalAlignment = Alignment.Top,
     ) {
@@ -70,14 +79,26 @@ fun RouteIndicatorWithCities(
 
         // City names aligned with dots
         Column {
+            if (fromLabel != null) {
+                Text(
+                    text = fromLabel.uppercase(),
+                    style = labelStyle,
+                )
+            }
             Text(
                 text = fromCity,
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface,
             )
 
-            Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(if (fromLabel != null) 12.dp else 18.dp))
 
+            if (toLabel != null) {
+                Text(
+                    text = toLabel.uppercase(),
+                    style = labelStyle,
+                )
+            }
             Text(
                 text = toCity,
                 style = MaterialTheme.typography.bodyLarge,

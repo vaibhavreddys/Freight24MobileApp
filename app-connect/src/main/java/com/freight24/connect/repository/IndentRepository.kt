@@ -23,6 +23,7 @@ interface IndentRepository {
     suspend fun updateIndent(id: String, request: UpdateIndentRequest): Result<IndentResponse>
 
     suspend fun getAllIndents(page: Int, limit: Int): Result<GetIndentsResponse>
+    suspend fun getInactiveIndents(page: Int, limit: Int): Result<GetIndentsResponse>
     suspend fun cloneIndent(indentGroupId: String, assignedTo: String?, notes: String?): Result<IndentResponse>
     suspend fun searchIndents(query: String, priority: String?, clientId: String?, assignedToMe: Boolean?): Result<GetIndentsResponse>
 }

@@ -1,7 +1,17 @@
 package com.freight24.ui.components
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
@@ -13,6 +23,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -22,7 +38,9 @@ fun AppTopBar(
     onSearchClick: (() -> Unit)? = null,
     showFilter: Boolean = false,
     onFilterClick: (() -> Unit)? = null,
-    trailingActionIcon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    filterBadge: Boolean = false,
+    filterLabel: (@Composable () -> Unit)? = null,
+    trailingActionIcon: ImageVector? = null,
     trailingActionContentDescription: String? = null,
     onTrailingActionClick: (() -> Unit)? = null,
 ) {
@@ -43,11 +61,21 @@ fun AppTopBar(
                 }
             }
             if (showFilter && onFilterClick != null) {
-                IconButton(onClick = onFilterClick) {
-                    Icon(
-                        imageVector = Icons.Default.FilterList,
-                        contentDescription = "Filter",
-                    )
+                filterLabel?.invoke()
+                Box {
+                    IconButton(onClick = onFilterClick) {
+                        Icon(
+                            imageVector = Icons.Default.FilterList,
+                            contentDescription = "Filter",
+                        )
+                    }
+                    if (filterBadge) {
+                        PulsingBadgeDot(
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .offset(y = (5).dp)
+                        )
+                    }
                 }
             }
             if (trailingActionIcon != null && onTrailingActionClick != null) {
@@ -68,5 +96,25 @@ fun AppTopBar(
                 titleContentColor = MaterialTheme.colorScheme.onSurface,
                 actionIconContentColor = MaterialTheme.colorScheme.onSurface,
             ),
+    )
+}
+
+@Composable
+private fun PulsingBadgeDot(modifier: Modifier = Modifier) {
+    val transition = rememberInfiniteTransition(label = "FilterBadgePulse")
+    val alpha by transition.animateFloat(
+        initialValue = 1f,
+        targetValue = 0.35f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 700),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "FilterBadgeAlpha",
+    )
+    Box(
+        modifier = modifier
+            .size(8.dp)
+            .alpha(alpha)
+            .background(MaterialTheme.colorScheme.error, CircleShape),
     )
 }

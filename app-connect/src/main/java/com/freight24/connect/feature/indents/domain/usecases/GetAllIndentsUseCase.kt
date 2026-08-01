@@ -9,6 +9,7 @@ import javax.inject.Inject
 data class GetAllIndentsUseCaseParams(
     val page: Int,
     val limit: Int,
+    val inactive: Boolean = false,
 ) : UseCaseParams
 
 interface GetAllIndentsUseCase : UseCase<GetAllIndentsUseCaseParams, GetIndentsResponse>
@@ -19,7 +20,11 @@ class GetAllIndentsUseCaseImpl @Inject constructor(
 ): GetAllIndentsUseCase {
 
     override suspend fun invoke(params: GetAllIndentsUseCaseParams): Result<GetIndentsResponse> {
-        return repository.getAllIndents(params.page, params.limit)
+        return if (params.inactive) {
+            repository.getInactiveIndents(params.page, params.limit)
+        } else {
+            repository.getAllIndents(params.page, params.limit)
+        }
     }
 
 }

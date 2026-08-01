@@ -33,6 +33,11 @@ class IndentsListViewModelImpl @Inject constructor(
                 _uiState.update { it.copy(selectedTab = event.tab) }
                 loadIndents()
             }
+            is IndentsListEvent.SelectStatusFilter -> {
+                if (_uiState.value.statusFilter == event.filter) return
+                _uiState.update { it.copy(statusFilter = event.filter) }
+                loadIndents()
+            }
             is IndentsListEvent.RefreshIndents -> {
                 loadIndents()
             }
@@ -49,7 +54,7 @@ class IndentsListViewModelImpl @Inject constructor(
             val result = when (_uiState.value.selectedTab) {
                 IndentTab.MINE -> getMyIndentsUseCase.invoke(
                     GetMyIndentsUseCaseParams(
-                        status = "OPEN",
+                        status = _uiState.value.statusFilter.name,
                         page = 1,
                         limit = 50
                     )
@@ -57,7 +62,8 @@ class IndentsListViewModelImpl @Inject constructor(
                 IndentTab.ALL -> getAllIndentsUseCase.invoke(
                     GetAllIndentsUseCaseParams(
                         page = 1,
-                        limit = 50
+                        limit = 50,
+                        inactive = _uiState.value.statusFilter == IndentStatusFilter.INACTIVE
                     )
                 )
             }

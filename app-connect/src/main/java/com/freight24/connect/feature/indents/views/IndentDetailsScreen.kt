@@ -21,7 +21,9 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -304,9 +306,26 @@ fun IndentDetailsScreen(
 
     Scaffold(
         topBar = {
-            // Custom Top Bar with Actions Menu
             FreightTopAppBar(
-                title = { Text("Indent Details") },
+                title = {
+                    val indent = uiState.indent
+                    if (indent != null) {
+                        val code = indent.indentCode?.let {
+                            if (it.startsWith("#")) it else "#$it"
+                        } ?: ""
+                        Text(
+                            text = code,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.SemiBold,
+                            color = colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    } else {
+                        Text("Indent Details")
+                    }
+                },
                 navigationIcon = {
                         IconButton(onClick = onBackClick) {
                             Icon(
@@ -352,61 +371,58 @@ fun IndentDetailsScreen(
         },
         bottomBar = {
             uiState.indent?.let { indent ->
-                Box(
-                    modifier = Modifier.fillMaxWidth()
-                        .padding(horizontal = 20.dp)
-                        .padding(bottom = 20.dp, top = 10.dp)
+                if (
+                    indent.status.equals("open", true)
+                    || indent.status.equals("READY_FOR_ASSIGNMENT", true)
                 ) {
-                    if (indent.status.equals("open", true)) {
-                        Button(
-                            onClick = { viewModel.onEvent(IndentDetailsEvent.ShowAssignDialog) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(52.dp),
-                            shape = RoundedCornerShape(28.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = colorScheme.primary,
-                                contentColor = colorScheme.onPrimary
-                            ),
-                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp),
-                        ) {
-                            Text(
-                                "Ready for Assignment",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Spacer(Modifier.width(8.dp))
-                        }
-                    } else if (indent.status.equals("READY_FOR_ASSIGNMENT", true)) {
-                        Button(
-                            onClick = {
-                                val clientMissing = indent.indentGroupDetails.clientTripCost?.let { it <= 0 } ?: true
-                                val negotiatedMissing = indent.negotiatedTripCost?.let { it <= 0 } ?: true
-                                if (clientMissing || negotiatedMissing) {
-                                    costError = true
-                                } else {
-                                    costError = false
-                                    onCreateTripClick(indentId)
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth().height(52.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = colorScheme.primary,
-                                contentColor = colorScheme.onPrimary
-                            )
-                        ) {
-                            Text("Create trip",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    } else if (!indent.status.equals("CANCELLED", true)) {
-                        Button(
-                            onClick = {},
-                            modifier = Modifier.fillMaxWidth(),
-                            enabled = false
-                        ) {
-                            Text(indent.status.replace("_", " "))
+                    Box(
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(horizontal = 20.dp)
+                            .padding(bottom = 20.dp, top = 10.dp)
+                    ) {
+                        if (indent.status.equals("open", true)) {
+                            Button(
+                                onClick = { viewModel.onEvent(IndentDetailsEvent.ShowAssignDialog) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(52.dp),
+                                shape = RoundedCornerShape(28.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = colorScheme.primary,
+                                    contentColor = colorScheme.onPrimary
+                                ),
+                                elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp),
+                            ) {
+                                Text(
+                                    "Ready for Assignment",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                                Spacer(Modifier.width(8.dp))
+                            }
+                        } else {
+                            Button(
+                                onClick = {
+                                    val clientMissing = indent.indentGroupDetails.clientTripCost?.let { it <= 0 } ?: true
+                                    val negotiatedMissing = indent.negotiatedTripCost?.let { it <= 0 } ?: true
+                                    if (clientMissing || negotiatedMissing) {
+                                        costError = true
+                                    } else {
+                                        costError = false
+                                        onCreateTripClick(indentId)
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth().height(52.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = colorScheme.primary,
+                                    contentColor = colorScheme.onPrimary
+                                )
+                            ) {
+                                Text("Create trip",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
                 }
@@ -444,7 +460,7 @@ fun IndentDetailsScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
-                            .padding(12.dp),
+                            .padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         if (costError) {
@@ -481,8 +497,9 @@ fun IndentDetailsScreen(
 
                         GeneralInfoSection(
                             clientName = groupDetails.clientProfile?.companyName ?: groupDetails.clientProfile?.fullName ?: "Unknown",
-                            tagCode = groupDetails.clientProfile?.tagCode.orEmpty(),
-                            indentId = indent.indentCode,
+                            clientPhone = groupDetails.clientProfile?.phoneNumber,
+                            tagCode = groupDetails.clientProfile?.tagCode,
+                            status = indent.status,
                             onEditClick = null
                         )
 
@@ -501,17 +518,13 @@ fun IndentDetailsScreen(
                             }
                         }
 
-                        RouteDetailsSection(
+                        RouteAndFinancialsSection(
                             originCity = loadingLocation?.let {
                                 "${it.areaName ?: it.cityName}${it.address?.let { addr -> ", $addr" } ?: ""}"
                             } ?: "Unknown",
                             destinationCity = unloadingLocation?.let {
                                 "${it.areaName ?: it.cityName}${it.address?.let { addr -> ", $addr" } ?: ""}"
                             } ?: "Unknown",
-                            onEditClick = null
-                        )
-
-                        FinancialDetailsSection(
                             clientCost = formatCurrencyDetails(groupDetails.clientTripCost),
                             negotiatedCost = formatCurrencyDetails(indent.negotiatedTripCost),
                             hideCost = indent.hideCostInfo,

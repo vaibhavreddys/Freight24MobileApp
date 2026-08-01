@@ -33,7 +33,7 @@ fun VisibilityChip(
         if (isVisible) extended.surfaceSuccess else MaterialTheme.colorScheme.errorContainer
     val contentColor =
         if (isVisible) extended.onSurfaceSuccess else MaterialTheme.colorScheme.onErrorContainer
-    val text = if (isVisible) "VISIBLE" else "HIDDEN"
+    val text = if (isVisible) "COST VISIBLE" else "COST HIDDEN"
     val icon = if (isVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
 
     Surface(

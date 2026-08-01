@@ -138,29 +138,24 @@ fun ReviewCloneIndentScreen(
                 // General Info Section
                 GeneralInfoSection(
                     clientName = groupDetails.clientProfile?.companyName ?: groupDetails.clientProfile?.fullName ?: "Unknown",
+                    clientPhone = groupDetails.clientProfile?.phoneNumber,
                     tagCode = groupDetails.clientProfile?.tagCode,
                     onEditClick = onEditClick
                 )
 
-                // Route Details Section
-                RouteDetailsSection(
+                // Route & Financials Section
+                RouteAndFinancialsSection(
                     originCity = loadingLocation?.let {
                         "${it.areaName ?: it.cityName}"
                     } ?: "Unknown",
                     destinationCity = unloadingLocation?.let {
                         "${it.areaName ?: it.cityName}"
                     } ?: "Unknown",
+                    clientCost = uiState.clientCost,
+                    negotiatedCost = uiState.negotiatedCost,
+                    hideCost = uiState.hideCost,
                     onEditClick = onEditClick
                 )
-
-                if (uiState.clientCost.isNotEmpty()) {
-                    FinancialDetailsSection(
-                        clientCost = uiState.clientCost,
-                        negotiatedCost = uiState.negotiatedCost,
-                        hideCost = uiState.hideCost,
-                        onEditClick = onEditClick
-                    )
-                }
 
                 // Specifications Section
                 SpecificationsSection(

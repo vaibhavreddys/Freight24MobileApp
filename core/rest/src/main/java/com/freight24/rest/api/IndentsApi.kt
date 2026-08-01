@@ -72,6 +72,12 @@ interface IndentsApi {
         @Query("limit") limit: Int,
     ): Response<GetIndentsResponse>
 
+    @GET("indents/groups/inactive")
+    suspend fun getInactiveIndents(
+        @Query("page") page: Int,
+        @Query("limit") limit: Int,
+    ): Response<GetIndentsResponse>
+
     @POST("indents/groups/{groupId}/clone")
     suspend fun cloneIndent(
         @Path("groupId") indentGroupId: String,

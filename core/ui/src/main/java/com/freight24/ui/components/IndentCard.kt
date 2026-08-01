@@ -1,5 +1,7 @@
 package com.freight24.ui.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -29,11 +31,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.freight24.ui.theme.freightBrandGradient
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,7 +69,7 @@ fun IndentCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -283,32 +288,34 @@ private fun CargoChips(
         if (onCallClick != null) {
             Spacer(modifier = Modifier.weight(1f))
 
-            Surface(
-                onClick = onCallClick,
-                shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.primary,
+            // LIGHTWEIGHT CUSTOM CHIP: 100% predictable sizing, no hidden framework padding
+            Row(
+                modifier = Modifier
+                    .height(32.dp) // STRICT: Exact same height as standard AssistChip
+                    .clip(RoundedCornerShape(8.dp)) // Clip to shape before background
+                    .background(freightBrandGradient()) // Apply your gradient
+                    .clickable(
+                        onClick = onCallClick,
+                    )
+                    .padding(horizontal = 8.dp), // STRICT: Exact same horizontal padding as AssistChip
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .height(32.dp)
-                        .padding(horizontal = 12.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Call,
-                        contentDescription = "Call",
-                        modifier = Modifier.size(14.dp),
+                Icon(
+                    imageVector = Icons.Default.Call,
+                    contentDescription = "Call",
+                    modifier = Modifier.size(18.dp), // Exact same icon size as AssistChip
+                    tint = MaterialTheme.colorScheme.onPrimary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Call",
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        // CRITICAL: Prevents the Text composable from adding hidden vertical padding
+                        lineHeight = 16.sp
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "Call",
-                        style = MaterialTheme.typography.labelLarge.copy(
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                        ),
-                    )
-                }
+                )
             }
         }
     }
@@ -354,7 +361,7 @@ private fun Footer(
                         containerColor = MaterialTheme.colorScheme.primaryContainer,
                         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                     ),
-                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.ContentCopy,

@@ -6,15 +6,22 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,10 +30,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.freight24.connect.R
 import com.freight24.connect.enum.ConnectTab
 import com.freight24.connect.feature.dashboard.views.DashboardScreen
+import com.freight24.connect.feature.indents.domain.viewmodel.IndentStatusFilter
+import com.freight24.connect.feature.indents.views.IndentStatusFilterMenu
 import com.freight24.connect.feature.indents.views.IndentsScreen
 import com.freight24.connect.feature.trips.views.TripsScreen
 import com.freight24.connect.feature.findTrucks.views.FindTrucksScreen
@@ -37,6 +48,7 @@ import com.freight24.connect.navigation.ConnectDestination
 import com.freight24.ui.components.AppTopBar
 import com.freight24.ui.components.FreightBottomNavScaffold
 import com.freight24.ui.components.RefreshProgressBar
+import com.freight24.ui.theme.freightBrandGradient
 
 @Composable
 internal fun HomeScreen(
@@ -58,6 +70,8 @@ internal fun HomeScreen(
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(startTab ?: ConnectTab.Home) }
     var selectedFilter by rememberSaveable { mutableStateOf(startFilter) }
+    var indentStatusFilter by rememberSaveable { mutableStateOf(IndentStatusFilter.ACTIVE) }
+    var showIndentFilterMenu by remember { mutableStateOf(false) }
     var isRefreshing by remember { mutableStateOf(false) }
     var pullFraction by remember { mutableStateOf(0f) }
 
@@ -73,11 +87,16 @@ internal fun HomeScreen(
         startFilter?.let { selectedFilter = it }
     }
 
+    BackHandler(enabled = showIndentFilterMenu) {
+        showIndentFilterMenu = false
+    }
+
     BackHandler(enabled = selectedTab != ConnectTab.Home) {
         selectedTab = ConnectTab.Home
     }
 
-    FreightBottomNavScaffold(
+    Box(modifier = Modifier.fillMaxSize()) {
+        FreightBottomNavScaffold(
         items = ConnectTab.entries,
         selectedItem = selectedTab,
         onItemSelected = {
@@ -98,7 +117,26 @@ internal fun HomeScreen(
                         else -> null
                     },
                     showFilter = selectedTab == ConnectTab.Indents,
-                    onFilterClick = { /* TODO: Filter */ }
+                    onFilterClick = { showIndentFilterMenu = true },
+                    filterBadge = selectedTab == ConnectTab.Indents &&
+                        indentStatusFilter == IndentStatusFilter.INACTIVE,
+                    filterLabel = if (selectedTab == ConnectTab.Indents &&
+                        indentStatusFilter == IndentStatusFilter.INACTIVE
+                    ) {
+                        {
+                            Surface(
+                                color = MaterialTheme.colorScheme.surfaceContainer,
+                                shape = RoundedCornerShape(16.dp),
+                            ) {
+                                Text(
+                                    text = "Showing inactive indents",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                )
+                            }
+                        }
+                    } else null,
                 )
                 RefreshProgressBar(
                     isRefreshing = isRefreshing,
@@ -114,6 +152,9 @@ internal fun HomeScreen(
                     onClick = {
                         onCreateIndentClick()
                     },
+                    containerColor = Color.Transparent,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.background(freightBrandGradient(), CircleShape),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
@@ -166,6 +207,7 @@ internal fun HomeScreen(
                         onCloneClick(indentId, indentGroupId)
                     },
                     onSearchClick = onSearchClick,
+                    statusFilter = indentStatusFilter,
                     onRefreshingChange = { isRefreshing = it },
                     onPullFractionChange = { pullFraction = it },
                     modifier = Modifier.padding(paddingValues)
@@ -186,6 +228,15 @@ internal fun HomeScreen(
                 )
                 ConnectTab.More -> Spacer(Modifier.padding(paddingValues))
             }
+        }
+    }
+
+        if (selectedTab == ConnectTab.Indents && showIndentFilterMenu) {
+            IndentStatusFilterMenu(
+                selectedFilter = indentStatusFilter,
+                onFilterSelected = { indentStatusFilter = it },
+                onDismissRequest = { showIndentFilterMenu = false },
+            )
         }
     }
 }

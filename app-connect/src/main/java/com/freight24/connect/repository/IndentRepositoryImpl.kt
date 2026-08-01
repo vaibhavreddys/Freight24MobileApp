@@ -110,6 +110,23 @@ class IndentRepositoryImpl
             }
         }
 
+    override suspend fun getInactiveIndents(
+        page: Int,
+        limit: Int
+    ): Result<GetIndentsResponse> =
+        withContext(ioDispatcher) {
+            try {
+                val response = api.getInactiveIndents(page, limit)
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!)
+                } else {
+                    Result.failure(Exception(response.message()))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
     override suspend fun cloneIndent(
         indentGroupId: String,
         assignedTo: String?,

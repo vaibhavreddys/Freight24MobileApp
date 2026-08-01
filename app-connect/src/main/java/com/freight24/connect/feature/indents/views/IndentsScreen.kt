@@ -36,6 +36,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.common.util.DateTimeUtils.formatRelativeTime
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentTab
+import com.freight24.connect.feature.indents.domain.viewmodel.IndentStatusFilter
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsListEvent
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsListUiState
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsListViewModel
@@ -49,6 +50,7 @@ fun IndentsScreen(
     onIndentClick: (String) -> Unit = {},
     onCloneClick: (String, String) -> Unit = { s1, s2 -> },
     onSearchClick: () -> Unit = {},
+    statusFilter: IndentStatusFilter = IndentStatusFilter.ACTIVE,
     onRefreshingChange: (Boolean) -> Unit = {},
     onPullFractionChange: (Float) -> Unit = {},
     modifier: Modifier = Modifier
@@ -56,6 +58,10 @@ fun IndentsScreen(
     val viewModel: IndentsListViewModel = hiltViewModel<IndentsListViewModelImpl>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val pullToRefreshState = rememberPullToRefreshState()
+
+    LaunchedEffect(statusFilter) {
+        viewModel.onEvent(IndentsListEvent.SelectStatusFilter(statusFilter))
+    }
 
     // Pipe pull distance to HomeScreen
     LaunchedEffect(pullToRefreshState) {
