@@ -50,6 +50,8 @@ data class CreateIndentUiState(
     val errorMessage: String? = null,
     val successMessage: String? = null,
     val createdIndentId: String? = null,
+    val createdIndentCode: String? = null,
+    val createdDate: String? = null,
 )
 
 sealed class CreateIndentEvent {

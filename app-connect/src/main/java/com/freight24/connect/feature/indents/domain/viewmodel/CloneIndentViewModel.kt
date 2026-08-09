@@ -16,6 +16,8 @@ data class CloneIndentUiState(
     val errorMessage: String? = null,
     val successMessage: String? = null,
     val createdIndentId: String? = null,
+    val createdIndentCode: String? = null,
+    val createdDate: String? = null,
     val indent: IndentResponse.Indent? = null,
     
     // Editable fields

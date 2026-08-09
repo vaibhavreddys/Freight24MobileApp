@@ -62,7 +62,7 @@ fun ReviewIndentScreen(
         uiState.successMessage?.let {
             uiState.createdIndentId?.let { indentId ->
                 navController.navigate(
-                    ConnectDestination.IndentSuccess.createRoute(indentId)
+                    ConnectDestination.IndentSuccess.createRoute(indentId, uiState.createdIndentCode)
                 ) {
                     launchSingleTop = true
                 }

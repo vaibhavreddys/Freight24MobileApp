@@ -77,17 +77,24 @@ sealed class ConnectDestination(val route: String) {
 
     data object ReviewIndent : ConnectDestination("reviewIndent")
 
-    data object IndentSuccess : ConnectDestination("indentSuccess/{indentId}") {
+    data object IndentSuccess : ConnectDestination("indentSuccess/{indentId}/{indentCode}") {
         const val INDENT_ID_ARG = "indentId"
+        const val INDENT_CODE_ARG = "indentCode"
         override val arguments =
             listOf(
                 navArgument(INDENT_ID_ARG) {
                     type = NavType.StringType
                 },
+                navArgument(INDENT_CODE_ARG) {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = "_none_"
+                },
             )
 
-        fun createRoute(indentId: String): String {
-            return "indentSuccess/$indentId"
+        fun createRoute(indentId: String, indentCode: String? = null): String {
+            val code = if (indentCode != null) Uri.encode(indentCode) else "_none_"
+            return "indentSuccess/$indentId/$code"
         }
     }
 

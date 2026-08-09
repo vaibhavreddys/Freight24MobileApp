@@ -55,7 +55,7 @@ class CloneIndentViewModelImpl @Inject constructor(
                 submitClone()
             }
             is CloneIndentEvent.ClearError -> _uiState.update { it.copy(errorMessage = null) }
-            is CloneIndentEvent.ClearSuccess -> _uiState.update { it.copy(successMessage = null, createdIndentId = null) }
+            is CloneIndentEvent.ClearSuccess -> _uiState.update { it.copy(successMessage = null, createdIndentId = null, createdIndentCode = null, createdDate = null) }
         }
     }
 
@@ -71,9 +71,9 @@ class CloneIndentViewModelImpl @Inject constructor(
                         it.copy(
                             isLoading = false,
                             indent = indent,
-                            clientCost = details.clientTripCost?.toInt()?.toString() ?: "",
-                            negotiatedCost = indent.negotiatedTripCost?.toInt()?.toString() ?: "",
-                            businessProposedCost = details.businessProposedCost?.toInt()?.toString() ?: "",
+                            clientCost = details.clientTripCost?.toString() ?: "",
+                            negotiatedCost = indent.negotiatedTripCost?.toString() ?: "",
+                            businessProposedCost = details.businessProposedCost?.toString() ?: "",
                             vehicleHeight = details.vehicleHeight?.toString() ?: "",
                             flooringType = details.flooringType ?: "steel",
                             tarpaulinRequired = details.tarpaulingRequired,
@@ -117,7 +117,9 @@ class CloneIndentViewModelImpl @Inject constructor(
                     it.copy(
                         isSubmitting = false,
                         successMessage = "Indent cloned successfully",
-                        createdIndentId = createdIndent?.indentCode
+                        createdIndentId = createdIndent?.id,
+                        createdIndentCode = createdIndent?.indentCode,
+                        createdDate = createdIndent?.createdAt,
                     )
                 }
             } else {

@@ -124,7 +124,7 @@ class IndentsViewModelImpl
                 _uiState.update { it.copy(errorMessage = null) }
             }
             is CreateIndentEvent.ClearSuccess -> {
-                _uiState.update { it.copy(successMessage = null) }
+                _uiState.update { it.copy(successMessage = null, createdIndentId = null, createdIndentCode = null, createdDate = null) }
             }
         }
     }
@@ -232,13 +232,13 @@ class IndentsViewModelImpl
 
                 val request = CreateIndentRequest(
                     clientId = state.selectedClient!!.clientId,
-                    truckTypeId = state.selectedTruckType!!.id.toInt(),
-                    loadWeight = state.weight.toInt(),
+                    truckTypeId = state.selectedTruckType!!.id.toIntOrNull() ?: 0,
+                    loadWeight = state.weight.toDoubleOrNull() ?: 0.0,
                     material = state.materialName,
-                    clientTripCost = state.clientCost.replace(",", "").toIntOrNull(),
-                    negotiatedTripCost = state.negotiatedCost.replace(",", "").toIntOrNull(),
-                    businessProposedCost = state.businessProposedCost.replace(",", "").toIntOrNull(),
-                    vehicleHeight = state.vehicleHeight.toFloatOrNull(),
+                    clientTripCost = state.clientCost.replace(",", "").toDoubleOrNull(),
+                    negotiatedTripCost = state.negotiatedCost.replace(",", "").toDoubleOrNull(),
+                    businessProposedCost = state.businessProposedCost.replace(",", "").toDoubleOrNull(),
+                    vehicleHeight = state.vehicleHeight.toDoubleOrNull(),
                     hideCostInfo = state.hideCost,
                     tatEnabled = state.tatRequired,
                     tatHours = state.tatHours.toIntOrNull(),
@@ -250,12 +250,14 @@ class IndentsViewModelImpl
                 val result = createIndentUseCase.invoke(request)
                 if (result.isSuccess) {
                     val indentResponse = result.getOrNull()
-                    _uiState.update { 
+                    _uiState.update {
                         it.copy(
-                            isSubmitting = false, 
+                            isSubmitting = false,
                             successMessage = "Indent Created Successfully",
-                            createdIndentId = indentResponse?.data?.indentCode.orEmpty()
-                        ) 
+                            createdIndentId = indentResponse?.data?.id,
+                            createdIndentCode = indentResponse?.data?.indentCode,
+                            createdDate = indentResponse?.data?.createdAt,
+                        )
                     }
                 } else {
                     _uiState.update { it.copy(isSubmitting = false, errorMessage = result.exceptionOrNull()?.message) }
@@ -270,9 +272,9 @@ class IndentsViewModelImpl
 
         if(location != null){
             if(location.type.equals("area", true)) {
-                areaId = location.id.toInt()
+                areaId = location.id.toIntOrNull()
             } else {
-                cityId = location.id.toInt()
+                cityId = location.id.toIntOrNull()
             }
         }
         return Pair(areaId, cityId)

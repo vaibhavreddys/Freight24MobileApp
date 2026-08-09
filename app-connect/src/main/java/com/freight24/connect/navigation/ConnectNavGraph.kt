@@ -1,5 +1,6 @@
 package com.freight24.connect.navigation
 
+import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
@@ -676,12 +677,19 @@ fun ConnectNavGraph(
                 backStackEntry
                     .arguments
                     ?.getString(ConnectDestination.IndentSuccess.INDENT_ID_ARG) ?: ""
+            val indentCodeRaw =
+                backStackEntry
+                    .arguments
+                    ?.getString(ConnectDestination.IndentSuccess.INDENT_CODE_ARG)
+            val indentCode = if (indentCodeRaw != "_none_") Uri.decode(indentCodeRaw) else null
 
             IndentSuccessScreen(
                 navController = navHostController,
                 indentId = indentId,
+                indentCode = indentCode,
                 onViewIndentClick = {
-                    navHostController.navigate(ConnectDestination.Home.route) {
+                    navHostController.navigate(ConnectDestination.IndentDetails.createRoute(indentId)) {
+                        popUpTo(ConnectDestination.Home.route) { saveState = true }
                         launchSingleTop = true
                     }
                 },
