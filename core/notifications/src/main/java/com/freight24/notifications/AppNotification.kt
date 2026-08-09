@@ -24,8 +24,9 @@ sealed class AppNotification(
     class InterestAlert(
         title: String,
         message: String,
+        val indentId: String? = null,
     ) : AppNotification(
-            id = 3001,
+            id = indentId?.let { 3000 + (it.hashCode() and 0x7FFF) % 1000 } ?: 3001,
             title = title,
             message = message,
         )

@@ -1,5 +1,6 @@
 package com.freight24.connect.navigation
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -699,9 +700,13 @@ fun ConnectNavGraph(
             val indentId =
                 backStackEntry.arguments?.getString(ConnectDestination.IndentDetails.INDENT_ID_ARG)
                     ?: ""
+            val openInterests =
+                backStackEntry.arguments?.getBoolean(ConnectDestination.IndentDetails.OPEN_INTERESTS_ARG) ?: false
+            Log.d("FCM_DEBUG", "NavGraph IndentDetails: indentId=$indentId openInterests=$openInterests args=${backStackEntry.arguments}")
             IndentDetailsScreen(
                 navController = navHostController,
                 indentId = indentId,
+                openInterests = openInterests,
                 onBackClick = {
                     navHostController.popBackStack()
                 },

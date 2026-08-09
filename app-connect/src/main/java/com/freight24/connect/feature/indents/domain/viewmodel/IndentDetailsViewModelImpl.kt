@@ -1,5 +1,6 @@
 package com.freight24.connect.feature.indents.domain.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.freight24.common.util.formatIndianCurrency
 import androidx.lifecycle.viewModelScope
@@ -96,6 +97,7 @@ class IndentDetailsViewModelImpl @Inject constructor(
                 confirmCancel()
             }
             is IndentDetailsEvent.ShowTruckerSheet -> {
+                Log.d("FCM_DEBUG", "ShowTruckerSheet event received, opening sheet")
                 _uiState.update { it.copy(isTruckerSheetVisible = true) }
                 loadTruckerList()
             }

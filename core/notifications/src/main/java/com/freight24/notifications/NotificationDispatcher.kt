@@ -1,8 +1,7 @@
 package com.freight24.notifications
 
-import android.Manifest
+import android.app.PendingIntent
 import android.content.Context
-import androidx.annotation.RequiresPermission
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -13,7 +12,7 @@ class NotificationDispatcher
     constructor(
         @param:ApplicationContext private val context: Context,
     ) {
-        fun show(notification: AppNotification) {
+        fun show(notification: AppNotification, pendingIntent: PendingIntent? = null) {
             if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return
 
             NotificationChannels.create(context)
@@ -33,6 +32,10 @@ class NotificationDispatcher
                     .setAutoCancel(true)
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
                     .setDefaults(NotificationCompat.DEFAULT_ALL)
+
+            if (pendingIntent != null) {
+                builder.setContentIntent(pendingIntent)
+            }
 
             NotificationManagerCompat.from(context)
                 .notify(notification.id, builder.build())

@@ -1,6 +1,7 @@
 package com.freight24.connect
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -27,6 +28,7 @@ import com.freight24.auth.SessionManager
 import com.freight24.common.manager.ThemePreferenceManager
 import com.freight24.connect.navigation.ConnectDestination
 import com.freight24.connect.navigation.ConnectNavGraph
+import com.freight24.connect.services.ConnectMessagingService
 import com.freight24.ui.theme.Freight24Theme
 import com.freight24.ui.theme.FreightAppTheme
 import com.google.android.gms.tasks.OnCompleteListener
@@ -42,8 +44,12 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var themePreferenceManager: ThemePreferenceManager
 
+    private var pendingIndentId by mutableStateOf<String?>(null)
+    private var pendingOpenInterests by mutableStateOf(false)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        handleDeepLinkIntent(intent)
 
         setContent {
             val themeChoiceOrdinal by themePreferenceManager.themeChoice.collectAsState(initial = ThemePreferenceManager.THEME_LOGISTICS)
@@ -82,6 +88,21 @@ class MainActivity : ComponentActivity() {
                     if (isBootstrapped && !isLoggedIn && sessionExpiredMessage == null && !lastRefreshError.isNullOrBlank()) {
                         sessionExpiredMessage = lastRefreshError
                         sessionManager.consumeLastRefreshError()
+                    }
+                }
+
+                LaunchedEffect(isBootstrapped, isAuthenticated, pendingIndentId) {
+                    Log.d("FCM_DEBUG", "Nav check: isBootstrapped=$isBootstrapped isAuthenticated=$isAuthenticated pendingIndentId=$pendingIndentId pendingOpenInterests=$pendingOpenInterests")
+                    if (isBootstrapped && isAuthenticated && pendingIndentId != null) {
+                        val indentId = pendingIndentId!!
+                        val openInterests = pendingOpenInterests
+                        pendingIndentId = null
+                        val route = ConnectDestination.IndentDetails.createRoute(indentId, openInterests)
+                        Log.d("FCM_DEBUG", "Navigating to: $route")
+                        navController.navigate(route) {
+                            launchSingleTop = true
+                        }
+                        Log.d("FCM_DEBUG", "Navigation called")
                     }
                 }
 
@@ -139,6 +160,30 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleDeepLinkIntent(intent)
+    }
+
+    private fun handleDeepLinkIntent(intent: Intent) {
+        Log.d("FCM_DEBUG", "handleDeepLinkIntent called: intent=$intent extras=${intent.extras}")
+        if (intent.hasExtra(ConnectMessagingService.EXTRA_INDENT_ID)) {
+            pendingIndentId = intent.getStringExtra(ConnectMessagingService.EXTRA_INDENT_ID)
+            val type = intent.getStringExtra(EXTRA_TYPE)
+            pendingOpenInterests =
+                intent.getBooleanExtra(ConnectMessagingService.EXTRA_OPEN_INTERESTS, false) ||
+                    type == INDENT_INTEREST_TYPE
+            Log.d("FCM_DEBUG", "Deep link extras found: indentId=$pendingIndentId type=$type openInterests=$pendingOpenInterests")
+        } else {
+            Log.d("FCM_DEBUG", "No indent_id extra in intent")
+        }
+    }
+
+    companion object {
+        const val EXTRA_TYPE = "type"
+        const val INDENT_INTEREST_TYPE = "INDENT_INTEREST"
+    }
+
     override fun onStart() {
         super.onStart()
         FirebaseMessaging
@@ -151,7 +196,6 @@ class MainActivity : ComponentActivity() {
                         return@OnCompleteListener
                     }
 
-                    // Get new FCM registration token
                     val token = task.result
                     Log.w("FCM", "Token is $token")
                 },

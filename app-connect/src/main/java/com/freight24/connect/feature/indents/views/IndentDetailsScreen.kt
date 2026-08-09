@@ -41,12 +41,15 @@ import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsViewM
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsViewModelImpl
 import com.freight24.common.util.formatIndianCurrency
 import com.freight24.common.util.negotiatedCostExceedsClientError
+import kotlinx.coroutines.flow.first
+import android.util.Log
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IndentDetailsScreen(
     navController: NavController,
     indentId: String,
+    openInterests: Boolean = false,
     onBackClick: () -> Unit,
     onEditClick: (String) -> Unit,
     onCreateTripClick: (String) -> Unit,
@@ -65,6 +68,20 @@ fun IndentDetailsScreen(
             navController.currentBackStackEntry?.savedStateHandle?.set("refresh", false)
         } else {
             viewModel.onEvent(IndentDetailsEvent.LoadIndent(indentId))
+        }
+    }
+
+    var hasAutoOpenedSheet by remember { mutableStateOf(false) }
+    LaunchedEffect(openInterests, indentId) {
+        Log.d("FCM_DEBUG", "Auto-open LaunchedEffect: openInterests=$openInterests indentId=$indentId hasAutoOpenedSheet=$hasAutoOpenedSheet")
+        if (openInterests && !hasAutoOpenedSheet) {
+            Log.d("FCM_DEBUG", "Waiting for indent to load...")
+            viewModel.uiState.first { it.indent != null && !it.isLoading }
+            hasAutoOpenedSheet = true
+            Log.d("FCM_DEBUG", "Indent loaded, opening trucker sheet")
+            viewModel.onEvent(IndentDetailsEvent.ShowTruckerSheet)
+        } else {
+            Log.d("FCM_DEBUG", "Skipping auto-open: openInterests=$openInterests hasAutoOpenedSheet=$hasAutoOpenedSheet")
         }
     }
 
