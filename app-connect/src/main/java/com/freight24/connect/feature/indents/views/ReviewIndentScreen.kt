@@ -151,7 +151,6 @@ fun ReviewIndentScreen(
                     ?: "Not selected",
                 clientPhone = uiState.selectedClient?.phoneNumber,
                 tagCode = uiState.selectedClient?.tagCode,
-                onEditClick = onEditClick,
             )
 
             RouteAndFinancialsSection(
@@ -164,23 +163,23 @@ fun ReviewIndentScreen(
                 clientCost = uiState.clientCost,
                 negotiatedCost = uiState.negotiatedCost,
                 hideCost = uiState.hideCost,
-                onEditClick = onEditClick,
+                isCostVisible = true,
             )
 
             SpecificationsSection(
                 weight = uiState.weight.ifBlank { "0" },
+                weightUnit = "MT",
                 materialType = uiState.materialName,
                 truckType = uiState.selectedTruckType?.displayName,
+                truckTypeUnit = uiState.selectedTruckType?.bodyType ?: "",
                 tatRequired = uiState.tatRequired,
                 tatHours = uiState.tatHours,
                 tarpaulinRequired = uiState.tarpaulinRequired,
-                onEditClick = onEditClick,
             )
 
             if (uiState.remarks.isNotEmpty()) {
                 RemarksSection(
                     remarks = uiState.remarks,
-                    onEditClick = onEditClick,
                 )
             }
         }

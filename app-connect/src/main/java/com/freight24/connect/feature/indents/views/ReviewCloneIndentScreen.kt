@@ -140,7 +140,6 @@ fun ReviewCloneIndentScreen(
                     clientName = groupDetails.clientProfile?.companyName ?: groupDetails.clientProfile?.fullName ?: "Unknown",
                     clientPhone = groupDetails.clientProfile?.phoneNumber,
                     tagCode = groupDetails.clientProfile?.tagCode,
-                    onEditClick = onEditClick
                 )
 
                 // Route & Financials Section
@@ -154,34 +153,25 @@ fun ReviewCloneIndentScreen(
                     clientCost = uiState.clientCost,
                     negotiatedCost = uiState.negotiatedCost,
                     hideCost = uiState.hideCost,
-                    onEditClick = onEditClick
+                    isCostVisible = true,
                 )
 
                 // Specifications Section
                 SpecificationsSection(
                     weight = groupDetails.loadWeight.toString(),
+                    weightUnit = "MT",
                     materialType = groupDetails.material,
                     truckType = groupDetails.truckType?.displayName,
+                    truckTypeUnit = groupDetails.truckType?.bodyType ?: "",
                     tatRequired = uiState.tatRequired,
                     tatHours = uiState.tatHours,
                     tarpaulinRequired = uiState.tarpaulinRequired,
-                    onEditClick = onEditClick
                 )
-
-                // Clone Settings
-//                if (uiState.assignedTo.isNotBlank() || uiState.notes.isNotBlank()) {
-//                    CloneSettingsSection(
-//                        assignedTo = uiState.assignedTo,
-//                        notes = uiState.notes,
-//                        onEditClick = onEditClick
-//                    )
-//                }
 
                 // Remarks Section
                 if (uiState.remarks.isNotBlank()) {
                     RemarksSection(
                         remarks = uiState.remarks,
-                        onEditClick = onEditClick
                     )
                 }
             }
