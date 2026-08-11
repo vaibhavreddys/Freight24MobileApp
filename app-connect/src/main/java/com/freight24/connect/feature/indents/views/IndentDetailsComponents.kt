@@ -138,12 +138,18 @@ fun GeneralInfoSection(
         image = Icons.Default.Person,
         title = "CLIENT",
         trailing = {
-            Text(
-                text = displayTagCode,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = colorScheme.onSurfaceVariant,
-            )
+            Surface(
+                shape = RoundedCornerShape(50),
+                color = colorScheme.surfaceVariant.copy(alpha = 0.6f),
+            ) {
+                Text(
+                    text = displayTagCode,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                )
+            }
         },
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -169,8 +175,8 @@ fun GeneralInfoSection(
                         },
                         modifier = Modifier.semantics { contentDescription = "Call $formattedNumber" },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = extended.success,          // solid mint fill
-                            contentColor = extended.onSuccess,          // dark tone on mint (see note)
+                            containerColor = extended.success,
+                            contentColor = extended.onSuccess,
                         ),
                         shape = RoundedCornerShape(32.dp),
                     ) {
@@ -181,7 +187,7 @@ fun GeneralInfoSection(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "Call",//formattedNumber,
+                            text = "Call",
                             style = MaterialTheme.typography.titleMedium,
                         )
                     }
@@ -194,22 +200,35 @@ fun GeneralInfoSection(
                 }
 
                 if (onViewProfileClick != null) {
-                    TextButton(
-                        onClick = onViewProfileClick,
-                        colors = ButtonDefaults.textButtonColors(
-                            contentColor = colorScheme.onSurfaceVariant,
-                        ),
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
-                        Text(
-                            text = "View profile",
-                            style = MaterialTheme.typography.labelLarge,
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                        )
+                        Spacer(modifier = Modifier.width(32.dp))
+                        Surface(
+                            shape = RoundedCornerShape(50),
+                            color = colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                            modifier = Modifier.clickable { onViewProfileClick() },
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                Text(
+                                    text = "View profile",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = colorScheme.onSurfaceVariant,
+                                )
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
                     }
                 }
             }
