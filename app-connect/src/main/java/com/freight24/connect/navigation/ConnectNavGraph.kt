@@ -723,7 +723,10 @@ fun ConnectNavGraph(
                 },
                 onCreateTripClick = { id ->
                     navHostController.navigate(ConnectDestination.AssignTruck.createRoute(id))
-                }
+                },
+                onViewProfileClick = { userId ->
+                    navHostController.navigate(ConnectDestination.ClientProfile.createRoute(userId))
+                },
             )
         }
 

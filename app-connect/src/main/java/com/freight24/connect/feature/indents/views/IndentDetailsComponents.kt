@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -32,9 +33,12 @@ import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -122,16 +126,25 @@ fun GeneralInfoSection(
     clientName: String,
     clientPhone: String?,
     tagCode: String?,
+    onViewProfileClick: (() -> Unit)? = null,
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val extended = FreightThemeTokens.colors
     val phone = clientPhone?.takeIf { it.isNotBlank() }
     val context = LocalContext.current
-    val formattedPhone = phone?.let { formatPhoneNumber(it) }
+    val displayTagCode = tagCode?.takeIf { it.isNotBlank() } ?: "—"
 
     IndentDetailSection(
         image = Icons.Default.Person,
         title = "CLIENT",
+        trailing = {
+            Text(
+                text = displayTagCode,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = colorScheme.onSurfaceVariant,
+            )
+        },
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(
@@ -143,54 +156,61 @@ fun GeneralInfoSection(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    DetailLabel(text = "PHONE")
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = if (phone != null) {
-                            Modifier
-                                .clickable {
-                                    context.startActivity(
-                                        Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone"))
-                                    )
-                                }
-                                .semantics { contentDescription = "Call $formattedPhone" }
-                        } else {
-                            Modifier
-                        }
+                if (phone != null) {
+                    val formattedNumber = formatPhoneNumber(phone)
+                    Button(
+                        onClick = {
+                            context.startActivity(
+                                Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone"))
+                            )
+                        },
+                        modifier = Modifier.semantics { contentDescription = "Call $formattedNumber" },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = extended.success,          // solid mint fill
+                            contentColor = extended.onSuccess,          // dark tone on mint (see note)
+                        ),
+                        shape = RoundedCornerShape(32.dp),
                     ) {
                         Icon(
                             imageVector = Icons.Default.Call,
                             contentDescription = null,
-                            tint = if (phone != null) extended.success else colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(18.dp),
                         )
+                        Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = formattedPhone ?: "Not available",
+                            text = "Call",//formattedNumber,
                             style = MaterialTheme.typography.titleMedium,
-                            color = if (phone != null) extended.success else colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(start = 6.dp)
                         )
                     }
+                } else {
+                    Text(
+                        text = "Not available",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = colorScheme.onSurfaceVariant,
+                    )
                 }
 
-                Column(
-                    modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    DetailLabel(text = "TAG CODE")
-                    Text(
-                        text = tagCode?.takeIf { it.isNotBlank() } ?: "Not specified",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = colorScheme.onSurface,
-                        textAlign = TextAlign.End
-                    )
+                if (onViewProfileClick != null) {
+                    TextButton(
+                        onClick = onViewProfileClick,
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = colorScheme.onSurfaceVariant,
+                        ),
+                    ) {
+                        Text(
+                            text = "View profile",
+                            style = MaterialTheme.typography.labelLarge,
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
                 }
             }
         }

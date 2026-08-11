@@ -61,6 +61,7 @@ data class IndentResponse(
     @Serializable
     data class ClientProfile(
         val id: String? = null,
+        val userId: String? = null,
         val fullName: String? = null,
         val companyName: String? = null,
         val phoneNumber: String? = null,

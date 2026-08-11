@@ -53,6 +53,7 @@ fun IndentDetailsScreen(
     onBackClick: () -> Unit,
     onEditClick: (String) -> Unit,
     onCreateTripClick: (String) -> Unit,
+    onViewProfileClick: (String) -> Unit = { _ -> },
     viewModel: IndentDetailsViewModel = hiltViewModel<IndentDetailsViewModelImpl>()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -421,6 +422,10 @@ fun IndentDetailsScreen(
                             clientName = groupDetails.clientProfile?.companyName ?: groupDetails.clientProfile?.fullName ?: "Unknown",
                             clientPhone = groupDetails.clientProfile?.phoneNumber,
                             tagCode = groupDetails.clientProfile?.tagCode,
+                            onViewProfileClick = {
+                                val userId = groupDetails.clientProfile?.userId ?: groupDetails.clientProfile?.id ?: return@GeneralInfoSection
+                                onViewProfileClick(userId)
+                            },
                         )
 
                         currentIndent.metrics?.let { metrics ->
