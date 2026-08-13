@@ -21,7 +21,11 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -58,6 +62,8 @@ internal fun TrucksScreen(
     val uiState by viewModel.uiState.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val selectedFilter by viewModel.selectedFilter.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    val isSearchVisible by viewModel.isSearchVisible.collectAsState()
     val listState = rememberLazyListState()
 
     // Observe refresh signal from result of onboarding
@@ -88,7 +94,37 @@ internal fun TrucksScreen(
                 options = TruckFilter.entries,
                 selected = selectedFilter,
                 onSelected = viewModel::onFilterSelected,
+                isSearchVisible = isSearchVisible,
+                onSearchClick = viewModel::onSearchClick,
             )
+
+            if (isSearchVisible) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = viewModel::onSearchQueryChanged,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                    placeholder = { Text("Search by Registration Number or Type") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search trucks by Registration Number or Type",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    colors =
+                        OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color.Transparent,
+                            unfocusedBorderColor = Color.Transparent,
+                            disabledBorderColor = Color.Transparent,
+                            errorBorderColor = Color.Transparent,
+                        ),
+                )
+            }
 
             Box(modifier = Modifier.fillMaxSize()) {
                 when (val state = uiState) {
@@ -200,6 +236,8 @@ fun FilterChips(
     options: List<TruckFilter>,
     selected: TruckFilter,
     onSelected: (TruckFilter) -> Unit,
+    isSearchVisible: Boolean,
+    onSearchClick: () -> Unit,
 ) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -212,6 +250,16 @@ fun FilterChips(
                 onClick = { onSelected(option) },
                 modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = "trucks_filter_${option.name.lowercase()}" },
             )
+        }
+        item {
+            IconButton(onClick = onSearchClick) {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = if (isSearchVisible) "Hide search" else "Search trucks",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(32.dp),
+                )
+            }
         }
     }
 }
