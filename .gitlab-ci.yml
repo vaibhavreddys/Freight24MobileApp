@@ -48,43 +48,38 @@ build:connect:qaDebug:
     expire_in: 1 week
 
 # -----------------------------
-# DEPLOY — GitLab Release
+# DEPLOY — Only generic APK upload rather than a release.
 # -----------------------------
 
-deploy:release:
+deploy:apk:
   stage: deploy
-  image: registry.gitlab.com/gitlab-org/release-cli:latest  # switch image just for this job
-  before_script:  # override the global before_script — no Android SDK needed here
+  image: alpine:latest
+
+  before_script:
     - apk add --no-cache curl
+
   needs:
     - job: build:trucker:qaDebug
       artifacts: true
     - job: build:connect:qaDebug
       artifacts: true
+
   script:
-    # Upload APKs as Generic Package Registry files so they get a stable URL
+    # Upload Trucker APK
     - |
       curl --fail \
         --header "JOB-TOKEN: $CI_JOB_TOKEN" \
         --upload-file app-trucker/build/outputs/apk/qa/debug/app-trucker-qa-debug.apk \
         "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/apk-builds/${CI_COMMIT_SHORT_SHA}/app-trucker-qa-debug.apk"
+
+    # Upload Connect APK
     - |
       curl --fail \
         --header "JOB-TOKEN: $CI_JOB_TOKEN" \
         --upload-file app-connect/build/outputs/apk/qa/debug/app-connect-qa-debug.apk \
         "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/apk-builds/${CI_COMMIT_SHORT_SHA}/app-connect-qa-debug.apk"
-  release:
-    name: "QA Debug — $CI_COMMIT_SHORT_SHA"
-    description: |
-      Automated QA debug build from branch `$CI_COMMIT_REF_NAME`.
-      Commit: $CI_COMMIT_SHA
-    tag_name: "qa-debug-$CI_COMMIT_SHORT_SHA"  # creates a new tag per build
-    assets:
-      links:
-        - name: "app-trucker-qa-debug.apk"
-          url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/apk-builds/${CI_COMMIT_SHORT_SHA}/app-trucker-qa-debug.apk"
-          link_type: package
-        - name: "app-connect-qa-debug.apk"
-          url: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/apk-builds/${CI_COMMIT_SHORT_SHA}/app-connect-qa-debug.apk"
-          link_type: package
-  only:
+
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "qa"'
+      when: on_success
+    - when: never
