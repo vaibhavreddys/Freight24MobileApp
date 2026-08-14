@@ -30,6 +30,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -111,17 +112,17 @@ internal fun TrucksScreen(
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = "Search trucks by Registration Number or Type",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = colorScheme.onSurfaceVariant,
                         )
                     },
                     singleLine = true,
                     shape = RoundedCornerShape(14.dp),
                     colors =
                         OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color.Transparent,
-                            unfocusedBorderColor = Color.Transparent,
-                            disabledBorderColor = Color.Transparent,
-                            errorBorderColor = Color.Transparent,
+                            focusedBorderColor = colorScheme.primary,
+                            unfocusedBorderColor = colorScheme.outlineVariant,
+                            focusedContainerColor = colorScheme.surface,
+                            unfocusedContainerColor = colorScheme.surface
                         ),
                 )
             }
