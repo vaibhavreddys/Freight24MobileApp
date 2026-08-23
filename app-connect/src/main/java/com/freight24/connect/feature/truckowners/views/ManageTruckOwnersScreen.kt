@@ -299,7 +299,7 @@ private fun SearchField(
                 text = "Search by name or TAG ID",
                 style = TextStyle(
                     fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f)
                 )
             )
         },
@@ -307,7 +307,7 @@ private fun SearchField(
             Icon(
                 imageVector = Icons.Outlined.Search,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )
         },
         colors = OutlinedTextFieldDefaults.colors(
@@ -329,11 +329,11 @@ private fun FilterChip(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val successColor = FreightThemeTokens.colors.success
+    // Navigation filter — brand primary, not the success/status semantic.
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(24.dp),
-            color = if (isSelected) successColor else MaterialTheme.colorScheme.surface,
+            color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
             border = BorderStroke(
                 width = 0.5.dp,
             color = if (isSelected) MaterialTheme.colorScheme.surface.copy(alpha = 0f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
@@ -351,9 +351,9 @@ private fun FilterChip(
                     fontWeight = FontWeight.Bold,
                     color =
                         if (isSelected) {
-                            FreightThemeTokens.colors.onSuccess
+                            MaterialTheme.colorScheme.onPrimary
                         } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                         }
                 )
             )
@@ -368,8 +368,8 @@ private fun SectionHeader(title: String) {
         style = TextStyle(
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
-            letterSpacing = 0.10.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)
+            letterSpacing = 1.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
         ),
         modifier = Modifier.padding(start = 2.dp, top = 4.dp, bottom = 8.dp)
     )
@@ -435,8 +435,8 @@ private fun OwnerCard(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(
-            width = 0.5.dp,
-            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.outlineVariant
         )
     ) {
         Row(
@@ -475,7 +475,7 @@ private fun OwnerCard(
             Icon(
                 imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.outlineVariant
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -534,7 +534,7 @@ private fun TagText(owner: TruckOwnerDto) {
             text = "Pending assignment",
             style = TextStyle(
                 fontSize = 11.5.sp,
-                color = warningColor.copy(alpha = 0.6f)
+                color = warningColor.copy(alpha = 0.8f)
             )
         )
         return
@@ -545,14 +545,14 @@ private fun TagText(owner: TruckOwnerDto) {
         text = buildAnnotatedString {
             withStyle(
                 style = SpanStyle(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)
                 )
             ) {
                 append("#")
             }
             withStyle(
                 style = SpanStyle(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
             ) {
                 append(tag)
@@ -591,7 +591,7 @@ private fun StatusBadge(section: OwnerSection) {
 
         OwnerSection.INACTIVE -> {
             background = MaterialTheme.colorScheme.surfaceVariant
-            content = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)
+            content = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f)
             border = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
             label = "Inactive"
         }
@@ -643,8 +643,8 @@ private fun AddTruckOwnerFab(
                 scaleY = scale
             },
         shape = RoundedCornerShape(16.dp),
-        containerColor = FreightThemeTokens.colors.success,
-        contentColor = FreightThemeTokens.colors.onSuccess,
+        containerColor = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
         interactionSource = interactionSource
     ) {
         Box(
