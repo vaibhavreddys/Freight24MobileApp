@@ -18,4 +18,10 @@ enum class FreightAppTheme(
     INDIGO("Indigo", "Deep purple accent"),
     GREEN("Green", "Classic Freight24 green"),
     LOGISTICS("Logistics", "Forest green + brick red"),
+
+    /**
+     * Premium Connect identity: deep forest green + graphite slate + bronze.
+     * Appended LAST so persisted ordinals for existing themes stay stable.
+     */
+    CONNECT("Connect", "Deep forest + slate"),
 }

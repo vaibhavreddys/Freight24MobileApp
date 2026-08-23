@@ -444,6 +444,7 @@ private fun themeSwatchPrimary(theme: FreightAppTheme): Color =
         FreightAppTheme.INDIGO -> Color(0xFF6750A4)
         FreightAppTheme.GREEN -> Color(0xFF509367)
         FreightAppTheme.LOGISTICS -> Color(0xFF2E5D3F)
+        FreightAppTheme.CONNECT -> Color(0xFF1B5E40)
     }
 
 private fun themeSwatchSecondary(theme: FreightAppTheme): Color =
@@ -451,4 +452,5 @@ private fun themeSwatchSecondary(theme: FreightAppTheme): Color =
         FreightAppTheme.INDIGO -> Color(0xFF625B71)
         FreightAppTheme.GREEN -> Color(0xFF3F6750)
         FreightAppTheme.LOGISTICS -> Color(0xFFA8433A)
+        FreightAppTheme.CONNECT -> Color(0xFF6F5A2A)
     }

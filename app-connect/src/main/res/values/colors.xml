@@ -9,4 +9,8 @@
     <color name="white">#FFFFFFFF</color>
     <color name="green_primary">#2E7D32</color>  <!-- Material Green 800 -->
     <color name="green_dark">#1B5E20</color>      <!-- Material Green 900 — ripple -->
+
+    <!-- Connect premium splash -->
+    <color name="connect_splash_background">#FAFBFA</color>
+    <color name="connect_splash_mark">#14422C</color>
 </resources>
