@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -232,7 +233,7 @@ fun CreateIndentContent(
 //        }
 
         Scaffold(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            containerColor = MaterialTheme.colorScheme.background,
             topBar = {
                 FreightTopAppBar(
                     title = { Text("Create Indent") },
@@ -248,7 +249,8 @@ fun CreateIndentContent(
                 Box(
                     Modifier
                         .fillMaxWidth()
-                        .background(Color.Transparent)
+                        .background(MaterialTheme.colorScheme.background)
+                        .navigationBarsPadding()
                         .padding(horizontal = 20.dp)
                         .padding(bottom = 20.dp, top = 10.dp)
                 ) {
@@ -264,7 +266,7 @@ fun CreateIndentContent(
                             containerColor = MaterialTheme.colorScheme.primary,
                             contentColor = MaterialTheme.colorScheme.onPrimary,
                         ),
-                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
                     ) {
                         Text(
                             "Review Indent",
@@ -361,17 +363,16 @@ private fun SectionCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = if (isSystemInDarkTheme()) 0.dp else 2.dp,
-        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
             content = content,
         )
     }
@@ -498,26 +499,7 @@ private fun VehicleTypeSection(
     isError: Boolean = false,
 ) {
     SectionCard {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            SectionHeaderText("Vehicle Type")
-
-            Surface(
-                shape = RoundedCornerShape(50),
-                color = MaterialTheme.colorScheme.surfaceVariant,
-            ) {
-                Text(
-                    "CLOSED",
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
+        SectionHeaderText("Vehicle Type")
 
         if (isError) {
             Text(
@@ -541,8 +523,8 @@ private fun VehicleTypeSection(
                 )
             }
         } else {
-            val openTrucks = truckTypes.open.sortedByDescending { it.displayName.length }
-            val closedTrucks = truckTypes.closed.sortedByDescending { it.displayName.length }
+            val openTrucks = truckTypes.open
+            val closedTrucks = truckTypes.closed
 
             if (openTrucks.isNotEmpty()) {
                 Text(
@@ -566,12 +548,11 @@ private fun VehicleTypeSection(
             }
 
             if (closedTrucks.isNotEmpty()) {
-//                Spacer(Modifier.height(4.dp))
-//                Text(
-//                    "Closed",
-//                    style = MaterialTheme.typography.labelMedium,
-//                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-//                )
+                Text(
+                    "Closed",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -756,56 +737,55 @@ private fun OptionalDetailsSection(
                     singleLine = true,
                 )
 
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(
-                        value = proposedCostFieldValue,
-                        onValueChange = { newValue ->
-                            val rawText = newValue.text.replace(",", "")
-                            val formatted = formatIndianCurrency(rawText)
+                // Costs stack full-width — the (₹) labels cramp in half-width fields.
+                OutlinedTextField(
+                    value = proposedCostFieldValue,
+                    onValueChange = { newValue ->
+                        val rawText = newValue.text.replace(",", "")
+                        val formatted = formatIndianCurrency(rawText)
 
-                            val commaDiff = formatted.count { it == ',' } - proposedCostFieldValue.text.count { it == ',' }
-                            val newCursor = (newValue.selection.start + commaDiff).coerceIn(0, formatted.length)
+                        val commaDiff = formatted.count { it == ',' } - proposedCostFieldValue.text.count { it == ',' }
+                        val newCursor = (newValue.selection.start + commaDiff).coerceIn(0, formatted.length)
 
-                            proposedCostFieldValue = TextFieldValue(formatted, TextRange(newCursor))
-                            onEvent(CreateIndentEvent.UpdateOptionalField(businessProposedCost = formatted))
-                        },
-                        label = {
-                            Text(
-                                text = "Proposed Cost (₹)",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(16.dp),
-                        singleLine = true,
-                    )
-                    OutlinedTextField(
-                        value = negotiatedCostFieldValue,
-                        onValueChange = { newValue ->
-                            val rawText = newValue.text.replace(",", "")
-                            val formatted = formatIndianCurrency(rawText)
+                        proposedCostFieldValue = TextFieldValue(formatted, TextRange(newCursor))
+                        onEvent(CreateIndentEvent.UpdateOptionalField(businessProposedCost = formatted))
+                    },
+                    label = {
+                        Text(
+                            text = "Proposed Cost (₹)",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    singleLine = true,
+                )
+                OutlinedTextField(
+                    value = negotiatedCostFieldValue,
+                    onValueChange = { newValue ->
+                        val rawText = newValue.text.replace(",", "")
+                        val formatted = formatIndianCurrency(rawText)
 
-                            val commaDiff = formatted.count { it == ',' } - negotiatedCostFieldValue.text.count { it == ',' }
-                            val newCursor = (newValue.selection.start + commaDiff).coerceIn(0, formatted.length)
+                        val commaDiff = formatted.count { it == ',' } - negotiatedCostFieldValue.text.count { it == ',' }
+                        val newCursor = (newValue.selection.start + commaDiff).coerceIn(0, formatted.length)
 
-                            negotiatedCostFieldValue = TextFieldValue(formatted, TextRange(newCursor))
-                            onEvent(CreateIndentEvent.UpdateOptionalField(negotiatedCost = formatted))
-                        },
-                        label = {
-                            Text(
-                                text = "Negotiated Cost (₹)",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(16.dp),
-                        singleLine = true,
-                        isError = negotiatedCostError != null,
-                        supportingText = negotiatedCostError?.let { msg -> { Text(msg) } },
-                    )
-                }
+                        negotiatedCostFieldValue = TextFieldValue(formatted, TextRange(newCursor))
+                        onEvent(CreateIndentEvent.UpdateOptionalField(negotiatedCost = formatted))
+                    },
+                    label = {
+                        Text(
+                            text = "Negotiated Cost (₹)",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    singleLine = true,
+                    isError = negotiatedCostError != null,
+                    supportingText = negotiatedCostError?.let { msg -> { Text(msg) } },
+                )
 
                 HorizontalDivider(
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
