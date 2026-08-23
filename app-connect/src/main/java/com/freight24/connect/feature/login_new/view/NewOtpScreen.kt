@@ -194,6 +194,7 @@ fun NewOtpScreen(
                 // Neutral countdown chip (was error-red; countdown ≠ failure).
                 Box(
                     modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
                         .clip(RoundedCornerShape(18.dp))
                         .background(colorScheme.surfaceContainerHigh)
                         .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -246,7 +247,8 @@ fun NewOtpScreen(
 
                 TextButton(
                     onClick = viewModel::onResendClick,
-                    enabled = isResendEnabled && !isResending
+                    enabled = isResendEnabled && !isResending,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
