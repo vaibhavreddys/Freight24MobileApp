@@ -109,8 +109,8 @@ fun ReviewIndentScreen(
                         .height(52.dp),
                     shape = RoundedCornerShape(28.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
                     ),
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp),
                     enabled = !uiState.isSubmitting,
@@ -118,7 +118,7 @@ fun ReviewIndentScreen(
                     if (uiState.isSubmitting) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp).padding(end = 8.dp),
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            color = MaterialTheme.colorScheme.onPrimary,
                             strokeWidth = 2.dp,
                         )
                     } else {
