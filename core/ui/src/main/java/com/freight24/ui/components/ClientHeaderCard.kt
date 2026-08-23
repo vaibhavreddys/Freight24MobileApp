@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.Card
@@ -39,7 +40,7 @@ fun ClientHeaderCard(
     modifier: Modifier = Modifier,
 ) {
     Card(
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors = CardDefaults.cardColors(
@@ -90,6 +91,12 @@ fun ClientHeaderCard(
                 }
             }
             ClientStatusChip(status)
+            Spacer(Modifier.width(6.dp))
+            Icon(
+                imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
