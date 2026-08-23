@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -15,52 +16,50 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LocalPhone
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.activity.compose.BackHandler
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.connect.feature.login_new.viewmodel.NewOtpViewModel
 import com.freight24.ui.UiState
 import com.freight24.ui.theme.Freight24Theme
-import com.freight24.ui.theme.FreightThemeTokens
 
-// Gradients matching the Login Screen
 @Composable
 fun NewOtpScreen(
     phoneNumber: String,
@@ -102,245 +101,222 @@ fun NewOtpScreen(
         keyboardController?.show()
     }
 
+    // Inherits the activity-level Freight24Theme (Connect identity, correct dark mode).
     Freight24Theme {
         val colorScheme = MaterialTheme.colorScheme
-        val extendedColors = FreightThemeTokens.colors
-        val headerGradient = Brush.verticalGradient(
-            colors = listOf(colorScheme.primary, extendedColors.info)
-        )
-        val buttonGradient = Brush.horizontalGradient(
-            colors = listOf(colorScheme.primary, extendedColors.success)
-        )
 
         Scaffold(
             modifier = Modifier
                 .fillMaxSize()
-                .imePadding() // Add IME padding for keyboard
+                .imePadding()
         ) { contentPadding ->
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(contentPadding)
-                    .background(colorScheme.background),
+                    .background(colorScheme.background)
+                    .statusBarsPadding()
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = 24.dp)
             ) {
-                Column(
+                // Back affordance — same destination as "Wrong number?".
+                IconButton(
+                    onClick = onBackClick,
                     modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(scrollState) // Scroll the entire screen
+                        .offset(x = (-12).dp)
+                        .size(44.dp)
                 ) {
-                    // 1. Header Section - Plain Gradient (NO TRUCK ICON)
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp) // Reduced height
-                            .background(headerGradient)
+                    Icon(
+                        imageVector = Icons.Filled.ArrowBackIosNew,
+                        contentDescription = "Back",
+                        tint = colorScheme.onSurface,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "Verify Phone Number",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = colorScheme.onSurface,
+                        textAlign = TextAlign.Center,
                     )
 
-                    // 2. Card Section (Overlaps Header)
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(
+                        text = "Enter the 6-digit code sent to",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "+91 ${formatPhoneDisplay(phoneNumber)}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colorScheme.onSurface,
+                    )
+
+                    TextButton(onClick = onWrongNumberClick, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 4.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Filled.Edit,
+                                contentDescription = null,
+                                tint = colorScheme.primary,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Wrong number?",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = colorScheme.primary,
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                OtpInputField(
+                    otp = otp,
+                    otpLength = 6,
+                    shake = shake,
+                    enabled = !isResending && uiState !is UiState.Loading,
+                    onOtpChange = viewModel::onOtpChange
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Neutral countdown chip (was error-red; countdown ≠ failure).
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(colorScheme.surfaceContainerHigh)
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Filled.Timer,
+                            contentDescription = null,
+                            tint = colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Spacer(modifier = Modifier.width(7.dp))
+                        Text(
+                            text = verificationSecondsRemaining.toMmSs(),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(28.dp))
+
+                Button(
+                    onClick = viewModel::onVerifyClick,
+                    enabled = isVerifyEnabled && uiState !is UiState.Loading,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .testTag("verify_btn")
+                        .semantics { testTagsAsResourceId = true },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colorScheme.primary,
+                        contentColor = colorScheme.onPrimary,
+                        disabledContainerColor = colorScheme.surfaceContainerHighest.copy(alpha = 0.5f),
+                        disabledContentColor = colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                    ),
+                    shape = RoundedCornerShape(28.dp)
+                ) {
+                    Text(
+                        text = if (uiState is UiState.Loading) "VERIFYING..." else "VERIFY & PROCEED",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = androidx.compose.ui.unit.TextUnit.Unspecified,
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                TextButton(
+                    onClick = viewModel::onResendClick,
+                    enabled = isResendEnabled && !isResending
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Filled.Refresh,
+                            contentDescription = null,
+                            tint = if (isResendEnabled) colorScheme.primary else colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (isResendEnabled) "Resend OTP" else "Resend OTP in ${resendSecondsRemaining}s",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = if (isResendEnabled) colorScheme.primary else colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                // Footer support block
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(top = 32.dp, bottom = 12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Having trouble with verification?",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .offset(y = (-40).dp) // Pull up to overlap
-                            .padding(horizontal = 24.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(colorScheme.surfaceContainerLow)
+                            .clickable { dialSupport(context) }
+                            .padding(horizontal = 16.dp, vertical = 14.dp)
                     ) {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(32.dp),
-                            colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
-                        ) {
-                            Column(
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 24.dp, vertical = 28.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
+                                    .size(36.dp)
+                                    .background(colorScheme.primary.copy(alpha = 0.10f), CircleShape),
+                                contentAlignment = Alignment.Center
                             ) {
-                                // Title
-                                Text(
-                                    text = "Verify Phone Number",
-                                    fontSize = 24.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = colorScheme.onSurface
+                                Icon(
+                                    imageVector = Icons.Filled.LocalPhone,
+                                    contentDescription = null,
+                                    tint = colorScheme.primary,
+                                    modifier = Modifier.size(18.dp)
                                 )
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                // Phone Number
-                                Text(
-                                    text = "Enter the 6-digit code sent to",
-                                    fontSize = 14.sp,
-                                    color = colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    text = "+91 ${formatPhoneDisplay(phoneNumber)}",
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = colorScheme.onSurface
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                // Wrong Number Link
-                                TextButton(
-                                    onClick = onWrongNumberClick,
-                                    contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            imageVector = Icons.Filled.Edit,
-                                            contentDescription = null,
-                                            tint = extendedColors.success,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text(
-                                            text = "Wrong number?",
-                                            color = extendedColors.success,
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.SemiBold
-                                        )
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                // OTP Input Field
-                                OtpInputField(
-                                    otp = otp,
-                                    otpLength = 6,
-                                    shake = shake,
-                                    enabled = !isResending && uiState !is UiState.Loading,
-                                    onOtpChange = viewModel::onOtpChange
-                                )
-
-                                Spacer(modifier = Modifier.height(24.dp))
-
-                                // Timer Badge
-                                Box(
-                                    modifier = Modifier
-                                        .background(colorScheme.errorContainer, RoundedCornerShape(18.dp))
-                                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            imageVector = Icons.Filled.Timer,
-                                            contentDescription = null,
-                                            tint = colorScheme.error,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = verificationSecondsRemaining.toMmSs(),
-                                            color = colorScheme.error,
-                                            fontSize = 15.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(24.dp))
-
-                                // Verify Button
-                                Button(
-                                    onClick = viewModel::onVerifyClick,
-                                    enabled = isVerifyEnabled && uiState !is UiState.Loading,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(56.dp)
-                                        .background(buttonGradient, RoundedCornerShape(28.dp))
-                                        .testTag("verify_btn")
-                                        .semantics { testTagsAsResourceId = true },
-                                    colors = ButtonDefaults.buttonColors(
-                                        containerColor = colorScheme.surface.copy(alpha = 0f),
-                                        contentColor = colorScheme.onPrimary,
-                                        disabledContainerColor = colorScheme.surface.copy(alpha = 0f),
-                                        disabledContentColor = colorScheme.onPrimary.copy(alpha = 0.7f)
-                                    ),
-                                    shape = RoundedCornerShape(28.dp)
-                                ) {
-                                    Text(
-                                        text = if (uiState is UiState.Loading) "VERIFYING..." else "VERIFY & PROCEED",
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.height(16.dp))
-
-                                // Resend OTP
-                                TextButton(
-                                    onClick = viewModel::onResendClick,
-                                    enabled = isResendEnabled && !isResending
-                                ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            imageVector = Icons.Filled.Refresh,
-                                            contentDescription = null,
-                                            tint = if (isResendEnabled) extendedColors.success else colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text(
-                                            text = if (isResendEnabled) "Resend OTP" else "Resend OTP in ${resendSecondsRemaining}s",
-                                            color = if (isResendEnabled) extendedColors.success else colorScheme.onSurfaceVariant,
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.Medium
-                                        )
-                                    }
-                                }
                             }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(200.dp)) // Add space for scrolling
-
-                    // 3. Footer Section
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 24.dp, vertical = 20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Having trouble with verification?",
-                            color = colorScheme.onSurfaceVariant,
-                            fontSize = 14.sp
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(colorScheme.surface, RoundedCornerShape(16.dp))
-                                .clickable { dialSupport(context) }
-                                .padding(horizontal = 16.dp, vertical = 14.dp)
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(36.dp)
-                                        .background(extendedColors.success.copy(alpha = 0.12f), CircleShape),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Filled.LocalPhone,
-                                        contentDescription = null,
-                                        tint = extendedColors.success,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Column {
-                                    Text(
-                                        text = "CALL SUPPORT",
-                                        fontWeight = FontWeight.Bold,
-                                        color = colorScheme.onSurface,
-                                        fontSize = 14.sp
-                                    )
-                                    Text(
-                                        text = "Instant help",
-                                        color = colorScheme.onSurfaceVariant,
-                                        fontSize = 12.sp
-                                    )
-                                }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "CALL SUPPORT",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = colorScheme.onSurface,
+                                )
+                                Text(
+                                    text = "Instant help",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = colorScheme.onSurfaceVariant,
+                                )
                             }
                         }
                     }
@@ -348,10 +324,6 @@ fun NewOtpScreen(
             }
         }
     }
-}
-
-private fun extractOtp(message: String): String? {
-    return Regex("\\b\\d{6}\\b").find(message)?.value
 }
 
 private fun formatPhoneDisplay(phoneNumber: String): String {

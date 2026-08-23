@@ -8,12 +8,13 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -25,9 +26,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
@@ -35,8 +36,8 @@ import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.freight24.ui.theme.FreightThemeTokens
+
+private val cellShape = RoundedCornerShape(14.dp)
 
 @Composable
 fun OtpInputField(
@@ -47,7 +48,6 @@ fun OtpInputField(
     onOtpChange: (String) -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
-    val extendedColors = FreightThemeTokens.colors
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
     val shakeOffset = remember { Animatable(0f) }
@@ -73,7 +73,7 @@ fun OtpInputField(
         }
     }
 
-    // Hidden TextField for input capture - positioned at the OTP circles location
+    // Hidden TextField for input capture - positioned at the OTP cells location
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -105,7 +105,7 @@ fun OtpInputField(
         )
     }
 
-    // Visual OTP circles - clickable to focus the hidden TextField
+    // Visual OTP cells - clickable to focus the hidden TextField
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -133,39 +133,39 @@ fun OtpInputField(
 
                 Box(
                     modifier = Modifier
-                        .size(48.dp)
+                        .size(width = 46.dp, height = 54.dp)
+                        .clip(cellShape)
                         .background(
                             when {
-                                isFilled -> colors.surface
-                                isActive -> extendedColors.success.copy(alpha = 0.12f)
-                                else -> colors.surfaceVariant
-                            },
-                            CircleShape
+                                isFilled -> colors.surfaceContainerLowest
+                                isActive -> colors.primary.copy(alpha = 0.06f)
+                                else -> colors.surfaceContainerHigh
+                            }
                         )
                         .border(
-                            width = if (isActive) 2.dp else if (isFilled) 1.dp else 0.dp,
+                            width = if (isActive) 1.5.dp else if (isFilled) 1.dp else 0.dp,
                             color = when {
-                                isActive -> extendedColors.success
+                                isActive -> colors.primary
                                 isFilled -> colors.outlineVariant
                                 else -> colors.surface.copy(alpha = 0f)
                             },
-                            shape = CircleShape
+                            shape = cellShape
                         ),
                     contentAlignment = Alignment.Center
                 ) {
                     if (isFilled) {
                         Text(
                             text = char,
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.SemiBold,
                             color = colors.onSurface
                         )
                     } else {
                         Box(
                             modifier = Modifier
-                                .size(if (isActive) 8.dp else 6.dp)
+                                .size(if (isActive) 7.dp else 5.dp)
                                 .background(
-                                    if (isActive) extendedColors.success else colors.onSurfaceVariant,
+                                    if (isActive) colors.primary else colors.onSurfaceVariant.copy(alpha = 0.45f),
                                     CircleShape
                                 )
                         )
