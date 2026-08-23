@@ -727,9 +727,9 @@ private fun formatInr(amount: String): String {
     return if (number != null) {
         val format = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("en-IN"))
         format.maximumFractionDigits = 0
-        format.format(number).replace("₹", "₹ ")
+        format.format(number)
     } else {
-        "₹ $amount"
+        "₹$amount"
     }
 }
 

@@ -1,11 +1,13 @@
 package com.freight24.connect.feature.trips.views
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -26,6 +28,7 @@ import com.freight24.connect.feature.trips.domain.viewmodel.TripsListEvent
 import com.freight24.connect.feature.trips.domain.viewmodel.TripsListViewModel
 import com.freight24.connect.feature.trips.domain.viewmodel.TripsListViewModelImpl
 import com.freight24.connect.feature.trips.views.components.TripCard
+import com.freight24.ui.components.FreightEmptyState
 import kotlinx.coroutines.flow.collect
 
 @Composable
@@ -82,8 +85,7 @@ fun TripsScreen(
                 ) {
                     LazyRow(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         items(TripTypes.entries) { type ->
                             TripFilterChip(
@@ -128,10 +130,14 @@ fun TripsScreen(
                         Box(
                             modifier = Modifier
                                 .fillParentMaxSize()
-                            .padding(top = 96.dp),
+                                .padding(top = 96.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = "No trips found", color = colorScheme.onSurfaceVariant)
+                            FreightEmptyState(
+                                icon = Icons.Outlined.LocalShipping,
+                                title = "No trips here yet",
+                                subtitle = "Trips matching this filter will appear in this list.",
+                            )
                         }
                     }
                 }
@@ -162,20 +168,22 @@ fun TripFilterChip(
 ) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(20.dp),
         color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
-        modifier = Modifier.height(32.dp)
+        border = if (isSelected) null
+        else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        modifier = Modifier.height(34.dp)
     ) {
         Box(
             contentAlignment = Alignment.Center,
-            modifier = Modifier.padding(horizontal = 16.dp)
+            modifier = Modifier.padding(horizontal = 14.dp)
         ) {
             Text(
                 text = text,
                 style = MaterialTheme.typography.labelLarge.copy(
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.SemiBold,
                     color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 12.sp
+                    fontSize = 13.sp
                 )
             )
         }

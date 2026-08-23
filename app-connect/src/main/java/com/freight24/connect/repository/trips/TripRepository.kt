@@ -19,7 +19,7 @@ interface TripRepository {
         driverPhone: String?): Result<CreatedTripResponse.TripData>
 
     suspend fun getMyTrips(
-        filter: String,
+        filter: String?,
         page: Int,
         limit: Int
     ): Result<MyTripsDataResponse>

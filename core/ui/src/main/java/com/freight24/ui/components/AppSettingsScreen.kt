@@ -353,10 +353,10 @@ private fun ThemePreviewCard(theme: FreightAppTheme) {
                     color = FreightThemeTokens.colors.surfaceSuccess,
                 ) {
                     Text(
-                        text = "  Available  ",
+                        text = "Available",
                         style = MaterialTheme.typography.labelSmall,
                         color = FreightThemeTokens.colors.onSurfaceSuccess,
-                        modifier = Modifier.padding(vertical = 4.dp),
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                     )
                 }
                 // Brand accent dot (secondary)

@@ -110,7 +110,7 @@ fun AssignTruckScreen(
                         color = colorScheme.surfaceVariant
                     ) {
                         Text(
-                            "${uiState.trucks.size} TRUCKS FOUND",
+                            "${uiState.trucks.size} ${if (uiState.trucks.size == 1) "TRUCK" else "TRUCKS"} FOUND",
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             style = MaterialTheme.typography.labelSmall,
                             fontSize = 11.sp,

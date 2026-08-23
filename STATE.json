@@ -1,15 +1,13 @@
 {
-  "phase": "P4_MANAGE_SCREENS_COMPLETE",
-  "current_task_id": "P4-remaining",
-  "status": "in_progress",
-  "next_action": "NEXT SESSION: read LEAN_PROTOCOL.md first (mandatory), then continue P4 remaining screens: Trip Details, Post Load/Adhoc flow, Profile/Settings; then final polish sweep + FINAL_REPORT.md. See BLOCKERS.md for DB-dependent issues (login-by-phone broken after logout — do NOT log out until DB row restored).",
-  "updated_at": "2026-08-23T19:55:00+05:30",
+  "phase": "P4_COMPLETE_SWEEP_PENDING",
+  "current_task_id": "P4-final",
+  "status": "complete",
+  "next_action": "P4 screen sweep done (Trip Details + sub-screens, Trips tab/search, Create Trip flow end-to-end, Indent details/edit, Adhoc, More/Settings, Inbox, Verification, Find Trucks). Fixes verified on device (see TEST_LOG.md). NEXT SESSION: optional polish \u2014 Review/Clone indent screens (clone only reachable via OTHER-ownership cards under Indents>All), TripSuccess typo re-screenshot, MoreScreen onMyProfile TODO (nav graph), dark-mode pass over LU/Halting/OtherDeductions forms. Then FINAL_REPORT.md. Do NOT log out (BLOCKERS.md #1 still open).",
+  "updated_at": "2026-08-24T00:20:00+05:30",
   "notes": [
-    "Commits today: 0f2aae9 P1 theme, db9ea48 P2 login/OTP, fff69aa P3 home, 84f4633 OTP alignment, 3877947 Create Indent, 1f7f92e Truck Owners, 03c5998 Trucks (trucker guard OK), 5152d4b Clients",
-    "Backend commits: 7e3a47d indents schema-alias fix, 8edcde7 client list schema-alias fix",
-    "DB SCHEMA DRIFTED ~13:30 UTC (client_profiles: phone→company_phone, full_name→display_name) — backend selects fixed only on indents.js (3 routes) + client.js /list; other routes still stale (see BLOCKERS.md #2)",
-    "android_agent.py is now primary driver (compact state JSON); dev-act.sh for raw taps; both share the single UiAutomation slot",
-    "Reviewer hallucination caught once (Clients 'plain text rows') — always verify suspicious verdicts with zoomed crops/pixels",
-    "Dark-mode CTA pattern: filled primary pill OK for buttons; elevated-surface+accents for large cards"
+    "KEY FIX: TripTypes ONGOING removed (RPC get_employee_trips_ui ignores it -> always empty); ALL(null,'All Trips') is new default; repo/API filter made nullable",
+    "KEY FIX: CreateTrip driver-phone filter now digits+(optional leading +); IME trailing space no longer fails validation",
+    "Empty states: new shared FreightEmptyState (core/ui) used by Trips/FilteredTrips/Inbox",
+    "Currency standardized to 95,000-style (no space after Rs symbol) across indents+loads; halting uses formatAmount (no decimals)"
   ]
 }

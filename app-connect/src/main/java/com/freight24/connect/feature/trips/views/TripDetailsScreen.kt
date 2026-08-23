@@ -434,16 +434,17 @@ fun TripDetailsContent(
         TripCard(trip = trip)
 
 
-        // Trip Documents — auto-expand to cue the user when LR is missing or rejected
+        // Trip Documents — auto-expand to cue the user when LR needs attention
         val lrDoc = (trip.documents ?: emptyList()).find { it.type.equals("lr", ignoreCase = true) }
         val isLrMissing = lrDoc == null
+        val isLrPending = lrDoc?.status?.lowercase() == "pending"
         val isLrRejected = lrDoc?.status?.lowercase() == "rejected"
         ExpandableSection(
             title = "Documents",
             icon = Icons.Outlined.Description,
             iconBg = colorScheme.primaryContainer,
             iconTint = colorScheme.primary,
-            initiallyExpanded = isLrMissing || isLrRejected,
+            initiallyExpanded = isLrMissing || isLrPending || isLrRejected,
         ) {
             TripDocumentsSection(
                 truckerStatus = trip.truckerStatus,
@@ -588,9 +589,9 @@ fun DocumentCard(
                 
                 if (doc == null) {
                     Text(
-                        text = "Not Available",
+                        text = "Not generated yet",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = colorScheme.error
+                        color = colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -619,7 +620,7 @@ fun DocumentCard(
                 ) {
                     Text(
                         text = buttonText,
-                        style = MaterialTheme.typography.labelSmall,
+                        style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -764,11 +765,20 @@ fun ChargesSubRow(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Row(verticalAlignment = Alignment.CenterVertically) {
+            val hasAmount = amount > 0.0
             Text(
-                text = (if (isDeduction) "- " else "") + "₹${formatAmount(amount.toString())}",
+                text = if (hasAmount) {
+                    (if (isDeduction) "- " else "") + "₹${formatAmount(amount.toString())}"
+                } else {
+                    "—"
+                },
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-                color = if (isDeduction) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+                fontWeight = if (hasAmount) FontWeight.Bold else FontWeight.Normal,
+                color = when {
+                    !hasAmount -> MaterialTheme.colorScheme.onSurfaceVariant
+                    isDeduction -> MaterialTheme.colorScheme.error
+                    else -> MaterialTheme.colorScheme.onSurface
+                }
             )
             Spacer(modifier = Modifier.width(8.dp))
             Icon(
@@ -925,15 +935,17 @@ fun PaymentDetailRow(
             }
             Text(
                 text = when {
+                    amount <= 0.0 -> "₹0"
                     isDeduction -> "- ₹${formatAmount(amount.toString())}"
-                    isAddition && amount > 0 -> "+ ₹${formatAmount(amount.toString())}"
+                    isAddition -> "+ ₹${formatAmount(amount.toString())}"
                     else -> "₹${formatAmount(amount.toString())}"
                 },
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
+                fontWeight = if (amount > 0.0) FontWeight.Bold else FontWeight.Normal,
                 color = when {
+                    amount <= 0.0 -> MaterialTheme.colorScheme.onSurfaceVariant
                     isDeduction -> MaterialTheme.colorScheme.error
-                    isAddition && amount > 0 -> MaterialTheme.colorScheme.primary
+                    isAddition -> MaterialTheme.colorScheme.primary
                     else -> MaterialTheme.colorScheme.onSurface
                 }
             )
@@ -962,12 +974,16 @@ fun TimelineItemRow(
     isLast: Boolean
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min),
         verticalAlignment = Alignment.Top
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.width(28.dp)
+            modifier = Modifier
+                .width(28.dp)
+                .fillMaxHeight()
         ) {
             Box(
                 modifier = Modifier
@@ -983,12 +999,13 @@ fun TimelineItemRow(
                         } else Modifier
                     )
             )
-            
+
             if (!isLast) {
                 Box(
                     modifier = Modifier
                         .width(2.dp)
-                        .height(60.dp)
+                        .weight(1f)
+                        .padding(bottom = 12.dp)
                         .background(
                             if (item.isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
                         )
