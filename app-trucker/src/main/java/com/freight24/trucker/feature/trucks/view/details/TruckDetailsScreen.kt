@@ -86,6 +86,7 @@ import coil3.compose.rememberAsyncImagePainter
 import com.freight24.common.model.TruckDetail
 import com.freight24.common.model.TruckDocument
 import com.freight24.ui.UiState
+import com.freight24.ui.theme.FreightThemeTokens
 import com.freight24.ui.components.DocumentStatus
 import com.freight24.ui.components.DocumentUploadItem
 import com.freight24.ui.components.TruckHeaderCard
@@ -271,9 +272,9 @@ internal fun TruckDetailsScreen(
                             .fillMaxWidth()
                             .height(56.dp)
                             .semantics(mergeDescendants = true) { contentDescription = "truck_edit_button" },
-                        shape = RoundedCornerShape(50.dp),
+                        shape = MaterialTheme.shapes.medium,
                     ) {
-                        Text("Edit Truck", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text("Edit Truck", style = MaterialTheme.typography.titleMedium)
                     }
                 }
             }
@@ -323,14 +324,26 @@ internal fun TruckDetailsScreen(
 
                         if (isUploading) {
                             Surface(
-                                color = Color.Black.copy(alpha = 0.5f),
+                                color = FreightThemeTokens.colors.dialogScrim,
                                 modifier = Modifier.fillMaxSize()
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        CircularProgressIndicator(color = Color.White)
-                                        Spacer(Modifier.height(16.dp))
-                                        Text("Uploading Document...", color = Color.White)
+                                    Surface(
+                                        color = MaterialTheme.colorScheme.surface,
+                                        shape = MaterialTheme.shapes.medium,
+                                    ) {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            modifier = Modifier.padding(24.dp),
+                                        ) {
+                                            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+                                            Spacer(Modifier.height(16.dp))
+                                            Text(
+                                                "Uploading Document...",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurface,
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -395,7 +408,7 @@ private fun TruckDetailsContent(
 @Composable
 private fun SpecificationsSection(truck: TruckDetail) {
     Card(
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
@@ -439,14 +452,13 @@ private fun SpecItem(
     Surface(
         modifier = modifier,
         color = MaterialTheme.colorScheme.surfaceVariant,
-        shape = RoundedCornerShape(8.dp),
+        shape = MaterialTheme.shapes.small,
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(4.dp))
             Text(
@@ -465,7 +477,7 @@ private fun DocumentsSection(
     onUploadClick: (String) -> Unit,
 ) {
     Card(
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
@@ -511,7 +523,6 @@ private fun DocumentItem(
         else -> ""
     }
 
-    println("")
 
     val docStatus = if (hasUrl) {
         DocumentStatus.Uploaded(
