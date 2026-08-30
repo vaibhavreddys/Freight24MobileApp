@@ -38,7 +38,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.freight24.ui.theme.freightBrandGradient
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -291,9 +290,9 @@ private fun CargoChips(
             // LIGHTWEIGHT CUSTOM CHIP: 100% predictable sizing, no hidden framework padding
             Row(
                 modifier = Modifier
-                    .height(32.dp) // STRICT: Exact same height as standard AssistChip
-                    .clip(RoundedCornerShape(8.dp)) // Clip to shape before background
-                    .background(freightBrandGradient()) // Apply your gradient
+                    .height(32.dp)
+                    .clip(MaterialTheme.shapes.small)
+                    .background(MaterialTheme.colorScheme.primary)
                     .clickable(
                         onClick = onCallClick,
                     )

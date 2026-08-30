@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -42,6 +43,7 @@ import com.freight24.connect.feature.indents.domain.viewmodel.IndentsListUiState
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsListViewModel
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsListViewModelImpl
 import com.freight24.rest.response.IndentResponse
+import com.freight24.ui.components.FreightEmptyState
 import com.freight24.ui.components.IndentCard
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -247,6 +249,20 @@ fun IndentsList(
         modifier = modifier,
         contentPadding = PaddingValues(bottom = 80.dp)
     ) {
+        if (indents.isEmpty()) {
+            item(key = "indents_empty") {
+                Box(
+                    modifier = Modifier.fillParentMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    FreightEmptyState(
+                        icon = Icons.Default.Description,
+                        title = "No indents here yet",
+                        subtitle = "Indents you create or are assigned will show up here",
+                    )
+                }
+            }
+        }
         items(indents) { indent ->
             val loadingLocation = indent.indentGroupDetails.indentLocations.find { it.locationType == "loading" }
             val unloadingLocation = indent.indentGroupDetails.indentLocations.find { it.locationType == "unloading" }

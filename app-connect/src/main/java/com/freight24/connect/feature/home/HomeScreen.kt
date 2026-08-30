@@ -48,7 +48,6 @@ import com.freight24.connect.navigation.ConnectDestination
 import com.freight24.ui.components.AppTopBar
 import com.freight24.ui.components.FreightBottomNavScaffold
 import com.freight24.ui.components.RefreshProgressBar
-import com.freight24.ui.theme.freightBrandGradient
 
 @Composable
 internal fun HomeScreen(
@@ -152,9 +151,8 @@ internal fun HomeScreen(
                     onClick = {
                         onCreateIndentClick()
                     },
-                    containerColor = Color.Transparent,
+                    containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.background(freightBrandGradient(), CircleShape),
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
