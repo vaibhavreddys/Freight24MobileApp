@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.trips.views
+import com.freight24.connect.feature.trips.views.components.formatAmount
 import com.freight24.ui.components.FreightTopAppBar
 
 import androidx.compose.foundation.background
@@ -95,7 +96,7 @@ fun HaltingChargesScreen(
             // Info Message
             Surface(
                 color = colorScheme.primaryContainer,
-                shape = RoundedCornerShape(8.dp),
+                shape = RoundedCornerShape(12.dp),
                 border = androidx.compose.foundation.BorderStroke(1.dp, colorScheme.primary.copy(alpha = 0.2f)),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -156,7 +157,7 @@ fun HaltingChargesScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column {
-                        BreakdownItem("Daily Halting Rate", "₹${uiState.dailyRate}")
+                        BreakdownItem("Daily Halting Rate", "₹${formatAmount(uiState.dailyRate.toString())}")
                         HorizontalDivider(color = colorScheme.outlineVariant)
                         BreakdownItem("Total Days", "${uiState.loadingDays + uiState.unloadingDays} Days")
                         HorizontalDivider(color = colorScheme.outlineVariant)
@@ -166,7 +167,7 @@ fun HaltingChargesScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text("Total Halting Charge", color = colorScheme.primary, fontWeight = FontWeight.Bold)
-                                Text("₹${(uiState.loadingDays + uiState.unloadingDays) * uiState.dailyRate}", color = colorScheme.primary, fontWeight = FontWeight.ExtraBold)
+                                Text("₹${formatAmount(((uiState.loadingDays + uiState.unloadingDays) * uiState.dailyRate).toString())}", color = colorScheme.primary, fontWeight = FontWeight.ExtraBold)
                             }
                         }
                     }

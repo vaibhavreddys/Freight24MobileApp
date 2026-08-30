@@ -1,0 +1,233 @@
+# maestro/flows/smoke/app-trucker/trucks/03_truck_details_filters.yaml
+#
+# Trucks tab, every filter (All, Available, On trip, Blacklisted): if the
+# filter lists trucks, the first card opens the Truck Details screen with the
+# Specifications and Documents sections; then back to the list. Filters with
+# no trucks just assert the empty state.
+#
+# @smoke @trucks
+#
+# Run:  ./run.sh flows/smoke/app-trucker/trucks/03_truck_details_filters.yaml
+appId: com.freight24.trucker.debug
+---
+- runFlow: ../../../_helpers/ensure_login_trucker.yaml
+- runFlow:
+    env:
+      TAB_ID: "trucks"
+      EXPECT_TEXT: "Trucks"
+    commands:
+      - runFlow: ../../../_helpers/open_tab.yaml
+
+# ── ALL ──────────────────────────────────────────────────────────────────────
+- tapOn:
+    id: "trucks_filter_all"
+- waitForAnimationToEnd:
+    timeout: 4000
+- runFlow:
+    when:
+      visible:
+        id: "truck_card"
+    commands:
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trucks ALL: cards listed, opening first truck"
+            SETTLE_MS: "2500"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+      - tapOn:
+          id: "truck_card"
+          index: 0
+      - waitForAnimationToEnd:
+          timeout: 10000
+      - assertVisible:
+          text: "Truck Details"
+      - assertVisible:
+          text: "Specifications"
+      - assertVisible:
+          text: "Documents"
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trucks ALL: Truck Details opened with Specifications + Documents sections"
+            SETTLE_MS: "3000"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+      - tapOn:
+          id: "truck_details_back_btn"
+      - waitForAnimationToEnd:
+          timeout: 8000
+      - assertVisible:
+          id: "truck_card"
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trucks ALL: back pressed, list restored"
+            SETTLE_MS: "2000"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+- runFlow:
+    when:
+      notVisible:
+        id: "truck_card"
+    commands:
+      - assertVisible: "No trucks found"
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trucks ALL: no trucks, details drill skipped (pass)"
+            SETTLE_MS: "2500"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+
+# ── AVAILABLE ────────────────────────────────────────────────────────────────
+- tapOn:
+    id: "trucks_filter_available"
+- waitForAnimationToEnd:
+    timeout: 4000
+- runFlow:
+    when:
+      visible:
+        id: "truck_card"
+    commands:
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trucks AVAILABLE: cards listed, opening first truck"
+            SETTLE_MS: "2500"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+      - tapOn:
+          id: "truck_card"
+          index: 0
+      - waitForAnimationToEnd:
+          timeout: 10000
+      - assertVisible:
+          text: "Truck Details"
+      - assertVisible:
+          text: "Specifications"
+      - assertVisible:
+          text: "Documents"
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trucks AVAILABLE: Truck Details opened"
+            SETTLE_MS: "3000"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+      - tapOn:
+          id: "truck_details_back_btn"
+      - waitForAnimationToEnd:
+          timeout: 8000
+      - assertVisible:
+          id: "truck_card"
+- runFlow:
+    when:
+      notVisible:
+        id: "truck_card"
+    commands:
+      - assertVisible: "No trucks found"
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trucks AVAILABLE: no trucks, details drill skipped (pass)"
+            SETTLE_MS: "2500"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+
+# ── ON TRIP ──────────────────────────────────────────────────────────────────
+- tapOn:
+    id: "trucks_filter_on_trip"
+- waitForAnimationToEnd:
+    timeout: 4000
+- runFlow:
+    when:
+      visible:
+        id: "truck_card"
+    commands:
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trucks ON TRIP: cards listed, opening first truck"
+            SETTLE_MS: "2500"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+      - tapOn:
+          id: "truck_card"
+          index: 0
+      - waitForAnimationToEnd:
+          timeout: 10000
+      - assertVisible:
+          text: "Truck Details"
+      - assertVisible:
+          text: "Specifications"
+      - assertVisible:
+          text: "Documents"
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trucks ON TRIP: Truck Details opened"
+            SETTLE_MS: "3000"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+      - tapOn:
+          id: "truck_details_back_btn"
+      - waitForAnimationToEnd:
+          timeout: 8000
+      - assertVisible:
+          id: "truck_card"
+- runFlow:
+    when:
+      notVisible:
+        id: "truck_card"
+    commands:
+      - assertVisible: "No trucks found"
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trucks ON TRIP: no trucks, details drill skipped (pass)"
+            SETTLE_MS: "2500"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+
+# ── BLACKLISTED ──────────────────────────────────────────────────────────────
+- tapOn:
+    id: "trucks_filter_blacklisted"
+- waitForAnimationToEnd:
+    timeout: 4000
+- runFlow:
+    when:
+      visible:
+        id: "truck_card"
+    commands:
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trucks BLACKLISTED: cards listed, opening first truck"
+            SETTLE_MS: "2500"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+      - tapOn:
+          id: "truck_card"
+          index: 0
+      - waitForAnimationToEnd:
+          timeout: 10000
+      - assertVisible:
+          text: "Truck Details"
+      - assertVisible:
+          text: "Specifications"
+      - assertVisible:
+          text: "Documents"
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trucks BLACKLISTED: Truck Details opened"
+            SETTLE_MS: "3000"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+      - tapOn:
+          id: "truck_details_back_btn"
+      - waitForAnimationToEnd:
+          timeout: 8000
+      - assertVisible:
+          id: "truck_card"
+- runFlow:
+    when:
+      notVisible:
+        id: "truck_card"
+    commands:
+      - assertVisible: "No trucks found"
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trucks BLACKLISTED: no trucks, details drill skipped (pass)"
+            SETTLE_MS: "2500"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml

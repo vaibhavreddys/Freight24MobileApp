@@ -1,0 +1,145 @@
+# maestro/flows/smoke/app-trucker/trips/02_trips_filters.yaml
+#
+# Trips tab: all four filter chips (ACTIVE, POD, COMPLETED, ALL) render and
+# switch. Each filter must show EITHER trip cards OR its empty state —
+# an empty filter is a legitimate pass, not a failure.
+# @smoke @trips
+#
+# Run:  ./run.sh flows/smoke/app-trucker/trips/02_trips_filters.yaml
+appId: com.freight24.trucker.debug
+---
+- runFlow: ../../../_helpers/ensure_login_trucker.yaml
+- runFlow:
+    env:
+      TAB_ID: "trips"
+      EXPECT_TEXT: "My Trips"
+    commands:
+      - runFlow: ../../../_helpers/open_tab.yaml
+- assertVisible:
+    id: "trips_filter_active"
+- assertVisible:
+    id: "trips_filter_pod"
+- assertVisible:
+    id: "trips_filter_completed"
+- assertVisible:
+    id: "trips_filter_all"
+- runFlow:
+    env:
+      LOG_MESSAGE: "Trips tab: all four filter chips visible"
+      SETTLE_MS: "2500"
+    commands:
+      - runFlow: ../../../_helpers/log_and_settle.yaml
+
+# ── ACTIVE (the default filter) ─────────────────────────────────────────────
+- runFlow:
+    when:
+      visible:
+        id: "trip_card"
+    commands:
+      - assertVisible:
+          id: "trips_filter_active"
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trips: ACTIVE filter lists trip cards"
+            SETTLE_MS: "2500"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+- runFlow:
+    when:
+      notVisible:
+        id: "trip_card"
+    commands:
+      - assertVisible: "No Active Trips Available"
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trips: ACTIVE filter shows empty state (pass)"
+            SETTLE_MS: "2500"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+
+# ── POD ──────────────────────────────────────────────────────────────────────
+- tapOn:
+    id: "trips_filter_pod"
+- waitForAnimationToEnd:
+    timeout: 4000
+- runFlow:
+    when:
+      visible:
+        id: "trip_card"
+    commands:
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trips: POD filter lists trip cards"
+            SETTLE_MS: "2500"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+- runFlow:
+    when:
+      notVisible:
+        id: "trip_card"
+    commands:
+      - assertVisible: "No POD Trips Available"
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trips: POD filter shows empty state (pass)"
+            SETTLE_MS: "2500"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+
+# ── COMPLETED ────────────────────────────────────────────────────────────────
+- tapOn:
+    id: "trips_filter_completed"
+- waitForAnimationToEnd:
+    timeout: 4000
+- runFlow:
+    when:
+      visible:
+        id: "trip_card"
+    commands:
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trips: COMPLETED filter lists trip cards"
+            SETTLE_MS: "2500"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+- runFlow:
+    when:
+      notVisible:
+        id: "trip_card"
+    commands:
+      - assertVisible: "No Completed Trips Available"
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trips: COMPLETED filter shows empty state (pass)"
+            SETTLE_MS: "2500"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+
+# ── ALL ──────────────────────────────────────────────────────────────────────
+- tapOn:
+    id: "trips_filter_all"
+- waitForAnimationToEnd:
+    timeout: 4000
+- runFlow:
+    when:
+      visible:
+        id: "trip_card"
+    commands:
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trips: ALL filter lists trip cards"
+            SETTLE_MS: "2500"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+- runFlow:
+    when:
+      notVisible:
+        id: "trip_card"
+    commands:
+      - assertVisible: "No All Trips Available"
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trips: ALL filter shows empty state (pass)"
+            SETTLE_MS: "2500"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml

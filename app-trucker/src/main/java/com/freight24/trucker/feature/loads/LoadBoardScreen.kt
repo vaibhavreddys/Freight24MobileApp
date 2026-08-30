@@ -27,8 +27,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -146,7 +148,12 @@ fun LoadBoardScreen(
                                     listingCount = item.totalLoads,
                                     expanded = item.expanded,
                                     onClick = { viewModel.onCityClicked(item.cityId) },
-                                    modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = "load_board_city_${item.cityId}" },
+                                    modifier = Modifier
+                                        .testTag("city_card")
+                                        .semantics(mergeDescendants = true) {
+                                            testTagsAsResourceId = true
+                                            contentDescription = "load_board_city_${item.cityId}"
+                                        },
                                 )
 
                             is LoadBoardItem.LoadItem ->
@@ -161,7 +168,12 @@ fun LoadBoardScreen(
                                     f24AgentName = item.load.f24AgentName,
                                     isBookmarked = item.load.isInterested,
                                     isBookmarkLoading = item.load.isInterestLoading,
-                                    modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = "load_row_${item.load.id}" },
+                                    modifier = Modifier
+                                        .testTag("load_card")
+                                        .semantics(mergeDescendants = true) {
+                                            testTagsAsResourceId = true
+                                            contentDescription = "load_row_${item.load.id}"
+                                        },
                                     onClick = {
                                         viewModel.onLoadCardClicked(
                                             indentId = item.load.id,
@@ -185,7 +197,11 @@ fun LoadBoardScreen(
                                     onClick = { viewModel.onShowMoreClicked(item.cityId) },
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .semantics(mergeDescendants = true) { contentDescription = "load_show_more_${item.cityId}" },
+                                        .testTag("show_more_btn")
+                                        .semantics(mergeDescendants = true) {
+                                            testTagsAsResourceId = true
+                                            contentDescription = "load_show_more_${item.cityId}"
+                                        },
                                 ) {
                                     Text(
                                         text = "Show more loads",

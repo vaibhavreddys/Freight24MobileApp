@@ -21,8 +21,8 @@ class FilteredTripsViewModelImpl @Inject constructor(
     savedStateHandle: SavedStateHandle
 ) : ViewModel(), TripsListViewModel {
 
-    private val filterTypeString: String = savedStateHandle[ConnectDestination.FilteredTrips.FILTER_TYPE_ARG] ?: TripTypes.ONGOING.name
-    private val initialFilter = TripTypes.entries.find { it.name == filterTypeString } ?: TripTypes.ONGOING
+    private val filterTypeString: String = savedStateHandle[ConnectDestination.FilteredTrips.FILTER_TYPE_ARG] ?: TripTypes.ALL.name
+    private val initialFilter = TripTypes.entries.find { it.name == filterTypeString } ?: TripTypes.ALL
 
     private val _uiState = MutableStateFlow(TripsListUiState(selectedFilter = initialFilter))
     override val uiState: StateFlow<TripsListUiState> = _uiState.asStateFlow()

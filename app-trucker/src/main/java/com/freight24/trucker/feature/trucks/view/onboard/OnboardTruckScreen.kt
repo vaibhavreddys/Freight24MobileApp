@@ -88,6 +88,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -156,7 +159,13 @@ internal fun OnboardTruckScreen(
                         )
                     },
                     navigationIcon = {
-                        IconButton(onClick = { if (currentStep == 1) onBackClick() else viewModel.previousStep() }) {
+                        IconButton(
+                            onClick = { if (currentStep == 1) onBackClick() else viewModel.previousStep() },
+                            modifier =
+                                Modifier
+                                    .testTag("onboard_back_btn")
+                                    .semantics { testTagsAsResourceId = true },
+                        ) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
                     },
@@ -180,7 +189,9 @@ internal fun OnboardTruckScreen(
                             modifier =
                                 Modifier
                                     .fillMaxWidth()
-                                    .height(56.dp),
+                                    .height(56.dp)
+                                    .testTag("onboard_next_btn")
+                                    .semantics { testTagsAsResourceId = true },
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -209,7 +220,9 @@ internal fun OnboardTruckScreen(
                                 modifier =
                                     Modifier
                                         .weight(0.6f)
-                                        .height(56.dp),
+                                        .height(56.dp)
+                                        .testTag("onboard_complete_btn")
+                                        .semantics { testTagsAsResourceId = true },
                                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -367,6 +380,8 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
 //            leadingIcon = { Icon(Icons.Default.Numbers, contentDescription = null) },
             modifier = Modifier
                 .fillMaxWidth()
+                .testTag("onboard_reg_input")
+                .semantics { testTagsAsResourceId = true }
                 .onFocusChanged { focusState ->
                     if (!focusState.isFocused) {
                         viewModel.checkRegistrationAvailability()
@@ -391,7 +406,10 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
             selectedOption = selectedTruckType,
             onOptionSelected = { viewModel.selectedTruckType.value = it },
             optionToString = { it.name },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("onboard_type_dropdown")
+                .semantics { testTagsAsResourceId = true },
             focusRequester = truckTypeFocusRequester,
         )
 
@@ -404,7 +422,9 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
                 modifier =
                     Modifier
                         .weight(1f)
-                        .focusRequester(makeFocusRequester),
+                        .focusRequester(makeFocusRequester)
+                        .testTag("onboard_make_input")
+                        .semantics { testTagsAsResourceId = true },
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true,
             )
@@ -413,7 +433,10 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
                 onValueChange = { viewModel.model.value = it },
                 label = { Text("Model") },
                 placeholder = { Text("FH Aero") },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag("onboard_model_input")
+                    .semantics { testTagsAsResourceId = true },
                 shape = RoundedCornerShape(12.dp),
                 singleLine = true,
             )
@@ -427,7 +450,9 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .focusRequester(yearFocusRequester),
+                    .focusRequester(yearFocusRequester)
+                    .testTag("onboard_year_input")
+                    .semantics { testTagsAsResourceId = true },
             shape = RoundedCornerShape(12.dp),
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -604,6 +629,7 @@ private fun DocumentsStep(
             label = "Required",
             isUploaded = rcFile != null,
             statusText = if (rcFile != null) "Ready to Upload" else "Pending Selection",
+            uploadTestTag = "onboard_upload_rc_card",
             onUploadClick = {
                 currentTargetPrefix = "RC"
                 showSourcePicker = true
@@ -616,6 +642,7 @@ private fun DocumentsStep(
             label = "Optional",
             isUploaded = insuranceFile != null,
             icon = Icons.Default.Shield,
+            uploadTestTag = "onboard_upload_insurance_card",
             onUploadClick = {
                 currentTargetPrefix = "INSURANCE"
                 showSourcePicker = true
@@ -628,6 +655,7 @@ private fun DocumentsStep(
             label = "Optional",
             isUploaded = fcFile != null,
             icon = Icons.AutoMirrored.Filled.Assignment,
+            uploadTestTag = "onboard_upload_fc_card",
             onUploadClick = {
                 currentTargetPrefix = "FC"
                 showSourcePicker = true
@@ -757,7 +785,11 @@ private fun OnboardSuccessScreen(
 
         Button(
             onClick = onViewFleet,
-            modifier = Modifier.fillMaxWidth().height(56.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .testTag("onboard_view_fleet_btn")
+                .semantics { testTagsAsResourceId = true },
             shape = RoundedCornerShape(12.dp),
             colors =
                 ButtonDefaults.buttonColors(

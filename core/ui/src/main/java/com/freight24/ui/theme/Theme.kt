@@ -19,6 +19,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
+import com.freight24.ui.connect.ConnectAppTypography
+import com.freight24.ui.connect.ConnectDarkColorScheme
+import com.freight24.ui.connect.ConnectDarkExtendedColors
+import com.freight24.ui.connect.ConnectLightColorScheme
+import com.freight24.ui.connect.ConnectLightExtendedColors
+
 // ---------------------------------------------------------------------------
 // Indigo M3 schemes (existing — preserved exactly as-is)
 // ---------------------------------------------------------------------------
@@ -489,9 +495,11 @@ fun Freight24Theme(
             }
             isDark && appTheme == FreightAppTheme.LOGISTICS -> LogisticsDarkColorScheme
             isDark && appTheme == FreightAppTheme.GREEN -> GreenDarkColorScheme
+            isDark && appTheme == FreightAppTheme.CONNECT -> ConnectDarkColorScheme
             isDark -> IndigoDarkColorScheme
             appTheme == FreightAppTheme.LOGISTICS -> LogisticsLightColorScheme
             appTheme == FreightAppTheme.GREEN -> GreenLightColorScheme
+            appTheme == FreightAppTheme.CONNECT -> ConnectLightColorScheme
             else -> IndigoLightColorScheme
         }
 
@@ -499,9 +507,11 @@ fun Freight24Theme(
         when {
             isDark && appTheme == FreightAppTheme.LOGISTICS -> LogisticsDarkExtendedColors
             isDark && appTheme == FreightAppTheme.GREEN -> GreenDarkExtendedColors
+            isDark && appTheme == FreightAppTheme.CONNECT -> ConnectDarkExtendedColors.toFreightExtendedColors()
             isDark -> IndigoDarkExtendedColors
             appTheme == FreightAppTheme.LOGISTICS -> LogisticsLightExtendedColors
             appTheme == FreightAppTheme.GREEN -> GreenLightExtendedColors
+            appTheme == FreightAppTheme.CONNECT -> ConnectLightExtendedColors.toFreightExtendedColors()
             else -> IndigoLightExtendedColors
         }
 
@@ -514,13 +524,15 @@ fun Freight24Theme(
         }
     }
 
+    val typography = if (appTheme == FreightAppTheme.CONNECT) ConnectAppTypography else AppTypography
+
     CompositionLocalProvider(
         LocalFreightExtendedColors provides extendedColors,
         LocalAppTheme provides appTheme,
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
-            typography = AppTypography,
+            typography = typography,
             content = content,
         )
     }

@@ -42,6 +42,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -177,9 +179,14 @@ internal fun TrucksScreen(
                                         availability = truck.availability,
                                         isVerified = truck.isVerified,
                                         isBlacklisted = truck.isBlacklisted,
-                                        modifier = Modifier
-                                            .semantics(mergeDescendants = true) { contentDescription = "truck_row_${truck.id}" }
-                                            .clickable { onTruckClick(truck.id) },
+                                        modifier =
+                                            Modifier
+                                                .testTag("truck_card")
+                                                .semantics(mergeDescendants = true) {
+                                                    testTagsAsResourceId = true
+                                                    contentDescription = "truck_row_${truck.id}"
+                                                }
+                                                .clickable { onTruckClick(truck.id) },
                                     )
                                 }
                             }
@@ -207,7 +214,9 @@ private fun OnboardTruckButton(onClick: () -> Unit) {
         modifier =
             Modifier
                 .fillMaxWidth()
-                .height(56.dp),
+                .height(56.dp)
+                .testTag("trucks_onboard_btn")
+                .semantics { testTagsAsResourceId = true },
         shadowElevation = 2.dp,
     ) {
         Row(
@@ -249,7 +258,13 @@ fun FilterChips(
                 label = option.name.lowercase().replaceFirstChar { it.uppercase() }.replace("_", " "),
                 isSelected = option == selected,
                 onClick = { onSelected(option) },
-                modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = "trucks_filter_${option.name.lowercase()}" },
+                modifier =
+                    Modifier
+                        .testTag("trucks_filter_${option.name.lowercase()}")
+                        .semantics(mergeDescendants = true) {
+                            testTagsAsResourceId = true
+                            contentDescription = "trucks_filter_${option.name.lowercase()}"
+                        },
             )
         }
         item {

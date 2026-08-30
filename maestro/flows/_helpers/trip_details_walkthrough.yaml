@@ -1,0 +1,136 @@
+# maestro/flows/_helpers/trip_details_walkthrough.yaml
+#
+# Walks one already-open Trip Details screen: Documents (expand), Payments
+# (expand → scroll → collapse again), Trip Timeline (expand → scroll), then
+# taps back and asserts the trips list is shown again. State-neutral: the
+# Payments card is closed again at the end, and Documents is only tapped if
+# its content is not already showing (ASSIGNED trips with no LR start
+# expanded — tapping the header again would collapse them).
+#
+# Every interaction is followed by log_and_settle so an observing agent can
+# screenshot each state.
+#
+# Inputs (env): none.
+appId: com.freight24.trucker.debug
+---
+# ── Documents ────────────────────────────────────────────────────────────────
+# Expanded content markers: upload row ("Loading Receipt (LR)" / "Upload LR"),
+# verification subtitles ("Your LR is ...", "Verification pending",
+# "Uploading LR...", "Upload failed. Tap retry") or the no-docs text.
+- runFlow:
+    when:
+      notVisible:
+        text: ".*(Loading Receipt|No documents currently|Your LR|Verification pending|Upload failed|Uploading LR|Upload LR).*"
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: "trip_details_documents_card"
+          timeout: 4000
+          direction: UP
+      - tapOn:
+          id: "trip_details_documents_card"
+      - waitForAnimationToEnd:
+          timeout: 4000
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trip details: Documents section expanded"
+            SETTLE_MS: "3000"
+          commands:
+            - runFlow: ./log_and_settle.yaml
+- runFlow:
+    when:
+      visible:
+        text: ".*(Loading Receipt|No documents currently|Your LR|Verification pending|Upload failed|Uploading LR|Upload LR).*"
+    commands:
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trip details: Documents content visible"
+            SETTLE_MS: "2500"
+          commands:
+            - runFlow: ./log_and_settle.yaml
+
+# ── Payments: expand, scroll through, then collapse again ───────────────────
+- scrollUntilVisible:
+    element:
+      id: "trip_details_payments_card"
+    timeout: 4000
+    direction: DOWN
+- tapOn:
+    id: "trip_details_payments_card"
+- waitForAnimationToEnd:
+    timeout: 4000
+- scrollUntilVisible:
+    element:
+      text: ".*(Net Payable|Payment details not available).*"
+    timeout: 6000
+    direction: DOWN
+- assertVisible:
+    text: ".*(Net Payable|Payment details not available).*"
+- scroll
+- waitForAnimationToEnd:
+    timeout: 3000
+- runFlow:
+    env:
+      LOG_MESSAGE: "Trip details: Payments section expanded and scrolled"
+      SETTLE_MS: "3000"
+    commands:
+      - runFlow: ./log_and_settle.yaml
+# Collapse again so the screen ends in the state it started in.
+- scrollUntilVisible:
+    element:
+      id: "trip_details_payments_card"
+    timeout: 4000
+    direction: UP
+- tapOn:
+    id: "trip_details_payments_card"
+- waitForAnimationToEnd:
+    timeout: 4000
+- assertNotVisible:
+    text: ".*(Net Payable|Payment details not available).*"
+- runFlow:
+    env:
+      LOG_MESSAGE: "Trip details: Payments section collapsed again"
+      SETTLE_MS: "2500"
+    commands:
+      - runFlow: ./log_and_settle.yaml
+
+# ── Trip Timeline: expand, scroll through (left open) ───────────────────────
+- scrollUntilVisible:
+    element:
+      id: "trip_details_timeline_card"
+    timeout: 4000
+    direction: DOWN
+- tapOn:
+    id: "trip_details_timeline_card"
+- waitForAnimationToEnd:
+    timeout: 4000
+- scrollUntilVisible:
+    element:
+      text: ".*(Waiting for update|In progress).*"
+    timeout: 6000
+    direction: DOWN
+- assertVisible:
+    text: ".*(Waiting for update|In progress).*"
+- scroll
+- waitForAnimationToEnd:
+    timeout: 3000
+- runFlow:
+    env:
+      LOG_MESSAGE: "Trip details: Trip Timeline section expanded and scrolled"
+      SETTLE_MS: "3000"
+    commands:
+      - runFlow: ./log_and_settle.yaml
+
+# ── Back to the trips list ──────────────────────────────────────────────────
+- tapOn:
+    id: "trip_details_back_btn"
+- waitForAnimationToEnd:
+    timeout: 8000
+- assertVisible:
+    id: "trip_card"
+- runFlow:
+    env:
+      LOG_MESSAGE: "Trip details: back pressed, trips list restored"
+      SETTLE_MS: "2000"
+    commands:
+      - runFlow: ./log_and_settle.yaml

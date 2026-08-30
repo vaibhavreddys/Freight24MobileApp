@@ -237,7 +237,7 @@ private fun TripSearchResultItem(
             fontWeight = FontWeight.Bold,
         )
         Text(
-            text = "$registrationNumber · $origin → $destination",
+            text = "$registrationNumber • $origin → $destination",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

@@ -6,17 +6,17 @@ import com.freight24.connect.repository.trips.TripRepository
 import com.freight24.rest.response.MyTripsDataResponse
 import javax.inject.Inject
 
-enum class TripTypes(val filter: String, val displayText: String) {
-    ONGOING("ONGOING", "ONGOING"),
-    IN_TRANSIT("IN_TRANSIT", "IN-TRANSIT"),
+enum class TripTypes(val filter: String?, val displayText: String) {
+    ALL(null, "All Trips"),
+    IN_TRANSIT("IN_TRANSIT", "In Transit"),
     LR_NOT_UPLOADED("LR_NOT_UPLOADED", "Upload LR Pending"),
     LR_PENDING_REVIEW("LR_PENDING_REVIEW", "Review LR"),
     WAITING_FOR_POD("WAITING_FOR_POD", "POD Pending"),
-    COMPLETED("COMPLETED", "COMPLETED");
+    COMPLETED("COMPLETED", "Completed");
 }
 
 data class GetMyTripsUseCaseDataParams(
-    val tripTypes: TripTypes = TripTypes.ONGOING,
+    val tripTypes: TripTypes = TripTypes.ALL,
     val page: Int?,
     val limit: Int?,
 ): UseCaseParams

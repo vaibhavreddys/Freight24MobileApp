@@ -15,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -42,7 +44,10 @@ fun FooterIconButton(
         shape = CircleShape,
         color = MaterialTheme.colorScheme.surface,
         shadowElevation = 2.dp,
-        modifier = modifier,
+        // Same modifier chain as the caller's testTag so the tag, the
+        // resourceId mapping and the selected state live on ONE semantics
+        // node (Maestro selectors match id+selected on the same node).
+        modifier = modifier.semantics { selected = highlighted },
     ) {
         IconButton(
             onClick = {

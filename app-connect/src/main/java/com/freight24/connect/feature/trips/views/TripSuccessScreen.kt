@@ -188,10 +188,10 @@ fun TripSuccessScreen(
                     }
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Call, contentDescription = "DriverPhone", tint = colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Default.Call, contentDescription = "Driver phone", tint = colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text("DRIVER PH0NE", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text("DRIVER PHONE", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                             Text(
                                 driverPhone,
                                 style = MaterialTheme.typography.bodyMedium,

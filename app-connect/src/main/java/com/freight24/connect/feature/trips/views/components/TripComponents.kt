@@ -81,14 +81,12 @@ fun TripCard(
                 Spacer(modifier = Modifier.width(8.dp))
 
                 Text(
-                    text = "|",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontSize = 16.sp
-                    ),
+                    text = "•",
+                    style = MaterialTheme.typography.bodySmall,
                     color = colorScheme.onSurfaceVariant,
                 )
 
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(6.dp))
 
                 Text(
                     text = "${trip.truck.truckType.displayName} • ${trip.indentDetails.loadWeight} MT • ${trip.indentDetails.material}",

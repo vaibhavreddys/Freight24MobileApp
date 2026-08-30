@@ -1,0 +1,46 @@
+# maestro/flows/smoke/app-trucker/loads/05_load_call_dialer.yaml
+#
+# Loads tab: the call button on a load card opens the system dialer with the
+# F24 agent's number pre-filled (ACTION_DIAL — no call is placed). The flow
+# verifies the board is replaced by the dialer, then returns.
+#
+# REQUIRES at least one load card whose agent has a phone number.
+# @smoke @loads
+#
+# Run:  ./run.sh flows/smoke/app-trucker/loads/05_load_call_dialer.yaml
+appId: com.freight24.trucker.debug
+---
+- runFlow: ../../../_helpers/ensure_login_trucker.yaml
+- tapOn:
+    id: "tab_loads"
+- waitForAnimationToEnd:
+    timeout: 8000
+- assertVisible:
+    id: "city_card"
+- tapOn:
+    id: "city_card"
+    index: 0
+- waitForAnimationToEnd:
+    timeout: 8000
+- assertVisible:
+    id: "load_card"
+- tapOn:
+    id: "load_call_btn"
+    index: 0
+- waitForAnimationToEnd:
+    timeout: 8000
+# The dialer replaced the app (the board, including its cards, is gone).
+# NOTE: pressKey Back is unreliable here — from the OEM dialer it can exit
+# to the launcher instead of the app — so bring the app back explicitly.
+# The relaunch may recreate the activity (cities collapse back), so assert
+# the board, not the expanded load card.
+- assertNotVisible:
+    id: "load_card"
+- launchApp:
+    clearState: false
+- waitForAnimationToEnd:
+    timeout: 8000
+- assertVisible:
+    id: "tab_loads"
+- assertVisible:
+    id: "city_card"

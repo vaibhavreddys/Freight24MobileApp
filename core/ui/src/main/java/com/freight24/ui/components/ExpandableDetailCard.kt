@@ -28,6 +28,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
@@ -37,6 +40,7 @@ fun ExpandableDetailCard(
     icon: ImageVector,
     modifier: Modifier = Modifier,
     initiallyExpanded: Boolean = false,
+    headerTestTag: String? = null,
 //    trailingContent: @Composable (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
@@ -55,6 +59,15 @@ fun ExpandableDetailCard(
                 modifier =
                     Modifier
                         .fillMaxWidth()
+                        .then(
+                            if (headerTestTag != null) {
+                                Modifier
+                                    .testTag(headerTestTag)
+                                    .semantics { testTagsAsResourceId = true }
+                            } else {
+                                Modifier
+                            },
+                        )
                         .clickable { expanded = !expanded }
                         .padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,

@@ -1,0 +1,21 @@
+# maestro/flows/_helpers/open_tab.yaml
+#
+# Switches to a bottom-nav tab by its resource id and verifies the switch
+# happened by asserting a marker unique to that tab's screen.
+#
+# Inputs (env):
+#   TAB_ID      - bottom nav resource id suffix, e.g. "trips" (taps tab_trips)
+#   EXPECT_TEXT - optional text unique to the tab's screen to assert after
+#                 switching. If empty, only the tab bar is re-asserted.
+appId: com.freight24.trucker.debug
+---
+- tapOn:
+    id: "tab_${TAB_ID}"
+- waitForAnimationToEnd:
+    timeout: 8000
+- runFlow:
+    when:
+      true: "${EXPECT_TEXT != ''}"
+    commands:
+      - assertVisible:
+          text: '${EXPECT_TEXT}'

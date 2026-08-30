@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material.icons.outlined.People
 import androidx.compose.material3.*
@@ -29,6 +30,7 @@ import com.freight24.connect.feature.inbox.domain.viewmodel.InboxEvent
 import com.freight24.connect.feature.inbox.domain.viewmodel.InboxViewModel
 import com.freight24.connect.feature.inbox.domain.viewmodel.InboxViewModelImpl
 import com.freight24.rest.response.IndentInterestInboxResponse
+import com.freight24.ui.components.FreightEmptyState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,11 +85,11 @@ fun InboxScreen(
                     modifier = Modifier.align(Alignment.Center).padding(16.dp)
                 )
             } else if (uiState.data.isEmpty()) {
-                Text(
-                    text = "No interests found",
+                FreightEmptyState(
+                    icon = Icons.Outlined.Inbox,
+                    title = "No interests yet",
+                    subtitle = "When truck owners express interest in your indents, they will show up here.",
                     modifier = Modifier.align(Alignment.Center),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colorScheme.onSurfaceVariant
                 )
             } else {
                 LazyColumn(

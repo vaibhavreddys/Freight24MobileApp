@@ -1,0 +1,20 @@
+appId: com.freight24.trucker.debug
+---
+- launchApp:
+    clearState: false
+- waitForAnimationToEnd
+
+- runFlow:
+    when:
+      visible: "Profile"
+    commands:
+    - assertVisible: "Profile"
+    - tapOn: "tab_profile"
+    - scrollUntilVisible:
+        element: "profile_logout"
+    - tapOn: "profile_logout"
+    - assertVisible: "logout_confirm"
+    - tapOn: "logout_confirm"
+    - assertVisible: "Welcome back"
+
+

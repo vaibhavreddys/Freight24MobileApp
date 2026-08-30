@@ -1,0 +1,53 @@
+# maestro/flows/_helpers/gallery_upload_first_photo.yaml
+#
+# Drives one dashed upload card through the Gallery path: opens the card,
+# picks "Gallery (Images)" in the Select Document Source sheet, selects the
+# FIRST photo in the system photo picker (matched by its "Photo taken on …"
+# content description), taps Done, then taps Confirm on the
+# "Images Selected" sheet and waits for the sheet to close (image→PDF
+# conversion happens in that window).
+#
+# Inputs (env):
+#   UPLOAD_CARD_ID - test tag of the dashed upload card to tap
+appId: com.freight24.trucker.debug
+---
+- tapOn:
+    id: "${UPLOAD_CARD_ID}"
+- waitForAnimationToEnd:
+    timeout: 4000
+- assertVisible:
+    text: "Select Document Source"
+- runFlow:
+    env:
+      LOG_MESSAGE: "Document source picker opened for upload card"
+      SETTLE_MS: "2000"
+    commands:
+      - runFlow: ./log_and_settle.yaml
+- tapOn:
+    id: "source_picker_gallery"
+- extendedWaitUntil:
+    visible:
+      text: "Photo taken on.*"
+    timeout: 15000
+- tapOn:
+    text: "Photo taken on.*"
+- waitForAnimationToEnd:
+    timeout: 3000
+- tapOn:
+    text: "Done"
+- waitForAnimationToEnd:
+    timeout: 6000
+- assertVisible:
+    text: "Images Selected .*"
+- runFlow:
+    env:
+      LOG_MESSAGE: "Photo picked from gallery, confirmation sheet shown"
+      SETTLE_MS: "2000"
+    commands:
+      - runFlow: ./log_and_settle.yaml
+- tapOn:
+    text: "Confirm"
+- extendedWaitUntil:
+    notVisible:
+      text: "Images Selected .*"
+    timeout: 30000

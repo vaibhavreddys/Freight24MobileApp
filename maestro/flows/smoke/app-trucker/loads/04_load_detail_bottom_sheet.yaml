@@ -1,0 +1,69 @@
+# maestro/flows/smoke/app-trucker/loads/04_load_detail_bottom_sheet.yaml
+#
+# Loads tab: tapping a load card opens the indent detail bottom sheet with
+# full details, an express-interest toggle and a call pill. Interest is
+# asserted via the sheet's button label flip ("Express interest" ↔
+# "Interest expressed") and toggled twice so the load ends in the state it
+# started in.
+#
+# REQUIRES at least one load card on the board.
+# @smoke @loads
+#
+# Run:  ./run.sh flows/smoke/app-trucker/loads/04_load_detail_bottom_sheet.yaml
+appId: com.freight24.trucker.debug
+---
+- runFlow: ../../../_helpers/ensure_login_trucker.yaml
+- tapOn:
+    id: "tab_loads"
+- waitForAnimationToEnd:
+    timeout: 8000
+- assertVisible:
+    id: "city_card"
+- tapOn:
+    id: "city_card"
+    index: 0
+- waitForAnimationToEnd:
+    timeout: 8000
+- assertVisible:
+    id: "load_card"
+# Open the bottom sheet from the card body (taps land on the route rows,
+# which the card treats as its own click target, not the action buttons).
+- tapOn:
+    id: "load_card"
+    index: 0
+- waitForAnimationToEnd:
+    timeout: 10000
+- assertVisible:
+    id: "load_detail_sheet"
+- assertVisible:
+    id: "sheet_close_btn"
+- assertVisible:
+    id: "sheet_call_btn"
+# ── Case A: currently NOT interested ("Express interest" showing) ─────────
+- runFlow:
+    when:
+      visible: "Express interest"
+    commands:
+      - tapOn:
+          id: "express_interest_btn"
+      - assertVisible: "Interest expressed"
+      - tapOn:
+          id: "express_interest_btn"
+      - assertVisible: "Express interest"
+# ── Case B: currently interested ("Interest expressed" showing) ───────────
+- runFlow:
+    when:
+      visible: "Interest expressed"
+    commands:
+      - tapOn:
+          id: "express_interest_btn"
+      - assertVisible: "Express interest"
+      - tapOn:
+          id: "express_interest_btn"
+      - assertVisible: "Interest expressed"
+- tapOn:
+    id: "sheet_close_btn"
+- assertNotVisible:
+    id: "load_detail_sheet"
+- assertVisible:
+    id: "load_card"

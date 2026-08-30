@@ -116,8 +116,8 @@ fun ManageTrucksScreen(
                 onClick = onAddTruckClick,
                 modifier = Modifier
                     .padding(end = 4.dp, bottom = 4.dp),
-                containerColor = FreightThemeTokens.colors.success,
-                contentColor = FreightThemeTokens.colors.onSuccess,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
                 shape = RoundedCornerShape(16.dp),
             ) {
 //                Icon(Icons.Default.Add, contentDescription = "Onboard Truck")
@@ -147,8 +147,8 @@ fun ManageTrucksScreen(
                     containerColor = MaterialTheme.colorScheme.surfaceContainer
                 ),
                 border = BorderStroke(
-                    width = 0.5.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant,
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
             ) {

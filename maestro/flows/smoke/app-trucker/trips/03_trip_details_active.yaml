@@ -1,0 +1,61 @@
+# maestro/flows/smoke/app-trucker/trips/03_trip_details_active.yaml
+#
+# Trips tab, ACTIVE filter: tapping the first trip card opens the Trip
+# Details screen, then walks Documents → Payments (expand, scroll, collapse)
+# → Trip Timeline (expand, scroll) via trip_details_walkthrough.
+#
+# Passes without drilling when the ACTIVE filter has no trips (empty list is
+# a legitimate state).
+# @smoke @trips
+#
+# Run:  ./run.sh flows/smoke/app-trucker/trips/03_trip_details_active.yaml
+appId: com.freight24.trucker.debug
+---
+- runFlow: ../../../_helpers/ensure_login_trucker.yaml
+- runFlow:
+    env:
+      TAB_ID: "trips"
+      EXPECT_TEXT: "My Trips"
+    commands:
+      - runFlow: ../../../_helpers/open_tab.yaml
+- tapOn:
+    id: "trips_filter_active"
+- waitForAnimationToEnd:
+    timeout: 4000
+- runFlow:
+    when:
+      visible:
+        id: "trip_card"
+    commands:
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trips ACTIVE: trip cards listed, opening first card"
+            SETTLE_MS: "2500"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+      - tapOn:
+          id: "trip_card"
+          index: 0
+      - waitForAnimationToEnd:
+          timeout: 10000
+      - assertVisible:
+          text: "Trip Details"
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trips ACTIVE: Trip Details screen opened"
+            SETTLE_MS: "3000"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+      - runFlow: ../../../_helpers/trip_details_walkthrough.yaml
+- runFlow:
+    when:
+      notVisible:
+        id: "trip_card"
+    commands:
+      - assertVisible: "No Active Trips Available"
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trips ACTIVE: no trips, details drill skipped (pass)"
+            SETTLE_MS: "2500"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml

@@ -26,6 +26,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,6 +44,7 @@ fun DashedUploadCard(
     isUploaded: Boolean = false,
     icon: ImageVector = Icons.Default.FileUpload,
     label: String? = null, // "Required" or "Optional"
+    uploadTestTag: String? = null, // tags the clickable dashed upload area
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         val extended = FreightThemeTokens.colors
@@ -86,6 +90,15 @@ fun DashedUploadCard(
             modifier =
                 Modifier
                     .fillMaxWidth()
+                    .then(
+                        if (uploadTestTag != null) {
+                            Modifier
+                                .testTag(uploadTestTag)
+                                .semantics { testTagsAsResourceId = true }
+                        } else {
+                            Modifier
+                        },
+                    )
                     .drawBehind {
                         val stroke =
                             Stroke(
