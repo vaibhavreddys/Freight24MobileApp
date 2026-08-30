@@ -844,7 +844,7 @@ private fun ProfileMainContent(
             }
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(14.dp),
+                shape = MaterialTheme.shapes.medium,
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
             ) {
@@ -931,8 +931,8 @@ private fun ProfileHeaderCard(
     val isVerified = verificationStatus == "verified"
     val verificationColor = when (verificationStatus) {
         "verified" -> MaterialTheme.colorScheme.primary
-        "pending" -> MaterialTheme.colorScheme.tertiary
-        else -> MaterialTheme.colorScheme.error 
+        "pending" -> FreightThemeTokens.colors.warning
+        else -> MaterialTheme.colorScheme.error
     }
     val statusIcon = if (isVerified) Icons.Default.CheckCircle else Icons.Default.Warning
 
@@ -1053,7 +1053,7 @@ private fun ProfileSection(
             if (isVerified) {
                 VerificationChip("Verified", MaterialTheme.colorScheme.primary)
             } else {
-                VerificationChip("Unverified", MaterialTheme.colorScheme.tertiary)
+                VerificationChip("Unverified", FreightThemeTokens.colors.warning)
             }
             
             Spacer(modifier = Modifier.width(8.dp))
@@ -1319,7 +1319,7 @@ private fun ProfileField(
 private fun VerificationChip(text: String, color: Color) {
     Surface(
         color = color.copy(alpha = 0.1f),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.small,
     ) {
         Text(
             text = text,

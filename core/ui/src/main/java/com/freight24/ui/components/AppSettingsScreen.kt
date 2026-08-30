@@ -117,7 +117,7 @@ fun AppSettingsScreen(
             // Theme picker card with swatch rows. Live-applies on tap.
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(14.dp),
+                shape = MaterialTheme.shapes.medium,
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
             ) {
@@ -149,7 +149,7 @@ fun AppSettingsScreen(
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(14.dp),
+                shape = MaterialTheme.shapes.medium,
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
             ) {
@@ -298,7 +298,7 @@ private fun ThemePreviewCard(theme: FreightAppTheme) {
     val secondary = themeSwatchSecondary(theme)
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
+        shape = MaterialTheme.shapes.medium,
         colors =
             CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -334,11 +334,11 @@ private fun ThemePreviewCard(theme: FreightAppTheme) {
                 colors =
                     ButtonDefaults.buttonColors(
                         containerColor = primary,
-                        contentColor = Color.White,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
                         disabledContainerColor = primary,
-                        disabledContentColor = Color.White,
+                        disabledContentColor = MaterialTheme.colorScheme.onPrimary,
                     ),
-                shape = RoundedCornerShape(10.dp),
+                shape = MaterialTheme.shapes.medium,
             ) {
                 Text(text = "Primary action", style = MaterialTheme.typography.labelLarge)
             }
