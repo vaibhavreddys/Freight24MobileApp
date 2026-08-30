@@ -4,7 +4,6 @@ import OtpInputField
 import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -19,11 +18,11 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -34,6 +33,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -43,7 +43,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.freight24.trucker.R
 import com.freight24.ui.theme.AppTypography
-import com.freight24.ui.theme.Freight24Theme
 
 @SuppressLint("DefaultLocale")
 @Composable
@@ -78,9 +77,8 @@ internal fun VerifyOtpScreen(
         }
     }
 
-    Freight24Theme {
-        val colors = MaterialTheme.colorScheme
-        Surface(modifier = Modifier.fillMaxSize(), color = colors.background) {
+    val colors = MaterialTheme.colorScheme
+    Surface(modifier = Modifier.fillMaxSize(), color = colors.background) {
             Box(modifier = Modifier.fillMaxSize()) {
                 // Back button
 //                IconButton(
@@ -121,8 +119,7 @@ internal fun VerifyOtpScreen(
                     // Verification title
                     Text(
                         text = "Verifying your number",
-                        style = AppTypography.displaySmall,
-                        fontWeight = FontWeight.Bold,
+                        style = AppTypography.headlineSmall,
                         color = colors.onBackground,
                     )
 
@@ -139,12 +136,12 @@ internal fun VerifyOtpScreen(
                     Spacer(Modifier.height(32.dp))
 
                     // Truck illustration card
-                    val isDark = isSystemInDarkTheme()
+                    val isDark = colors.background.luminance() < 0.5f
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(260.dp),
-                        shape = RoundedCornerShape(24.dp),
+                        shape = MaterialTheme.shapes.large,
                         color = colors.surfaceContainerLow,
                     ) {
                         Image(
@@ -174,7 +171,7 @@ internal fun VerifyOtpScreen(
                         Spacer(Modifier.height(16.dp))
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
+                            shape = MaterialTheme.shapes.medium,
                             color = colors.errorContainer,
                             tonalElevation = 0.dp,
                         ) {
@@ -238,14 +235,15 @@ internal fun VerifyOtpScreen(
                         style = AppTypography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = if (isResendEnabled) colors.primary else colors.onSurfaceVariant,
-                        modifier = Modifier.clickable(enabled = isResendEnabled && !isResending) {
-                            viewModel.onResendClick(phoneNumber)
-                        },
+                        modifier = Modifier
+                            .minimumInteractiveComponentSize()
+                            .clickable(enabled = isResendEnabled && !isResending) {
+                                viewModel.onResendClick(phoneNumber)
+                            },
                     )
 
                     Spacer(Modifier.height(32.dp))
                 }
             }
         }
-    }
 }
