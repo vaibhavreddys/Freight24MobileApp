@@ -13,6 +13,9 @@ import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
@@ -52,7 +55,10 @@ fun FileSourcePickerSheet(
                         Icon(Icons.Default.CameraAlt, null, modifier = Modifier.padding(8.dp).size(20.dp))
                     }
                 },
-                modifier = Modifier.clickable { onCameraClick() },
+                modifier = Modifier
+                    .testTag("source_picker_camera")
+                    .semantics { testTagsAsResourceId = true }
+                    .clickable { onCameraClick() },
             )
             ListItem(
                 headlineContent = { Text("Gallery (Images)") },
@@ -61,7 +67,10 @@ fun FileSourcePickerSheet(
                         Icon(Icons.Default.PhotoLibrary, null, modifier = Modifier.padding(8.dp).size(20.dp))
                     }
                 },
-                modifier = Modifier.clickable { onGalleryClick() },
+                modifier = Modifier
+                    .testTag("source_picker_gallery")
+                    .semantics { testTagsAsResourceId = true }
+                    .clickable { onGalleryClick() },
             )
             ListItem(
                 headlineContent = { Text("Documents (PDF)") },
@@ -70,7 +79,10 @@ fun FileSourcePickerSheet(
                         Icon(Icons.AutoMirrored.Filled.InsertDriveFile, null, modifier = Modifier.padding(8.dp).size(20.dp))
                     }
                 },
-                modifier = Modifier.clickable { onDocumentClick() },
+                modifier = Modifier
+                    .testTag("source_picker_document")
+                    .semantics { testTagsAsResourceId = true }
+                    .clickable { onDocumentClick() },
             )
         }
     }

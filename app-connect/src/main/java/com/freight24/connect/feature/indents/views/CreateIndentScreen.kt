@@ -249,8 +249,6 @@ fun CreateIndentContent(
                 Box(
                     Modifier
                         .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.background)
-                        .navigationBarsPadding()
                         .padding(horizontal = 20.dp)
                         .padding(bottom = 20.dp, top = 10.dp)
                 ) {
@@ -266,7 +264,7 @@ fun CreateIndentContent(
                             containerColor = MaterialTheme.colorScheme.primary,
                             contentColor = MaterialTheme.colorScheme.onPrimary,
                         ),
-                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp),
                     ) {
                         Text(
                             "Review Indent",

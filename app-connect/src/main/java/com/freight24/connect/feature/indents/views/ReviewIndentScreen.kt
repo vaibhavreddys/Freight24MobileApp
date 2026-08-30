@@ -1,5 +1,6 @@
 package com.freight24.connect.feature.indents.views
 
+import android.R.attr.strokeWidth
 import com.freight24.ui.components.FreightTopAppBar
 
 import androidx.compose.foundation.layout.Arrangement
@@ -32,6 +33,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -128,7 +130,11 @@ fun ReviewIndentScreen(
                             modifier = Modifier.size(20.dp).padding(end = 8.dp),
                         )
                     }
-                    Text("Confirm & Create Indent")
+                    Text(
+                        "Confirm & Create Indent",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
                 }
             }
         },

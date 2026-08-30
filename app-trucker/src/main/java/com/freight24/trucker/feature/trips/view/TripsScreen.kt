@@ -21,8 +21,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -88,7 +90,13 @@ fun TripsScreen(
                         TripCard(
                             trip = trip,
                             onClick = { onTripClick(trip.id) },
-                            modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = "trip_row_${trip.id}" },
+                            modifier =
+                                Modifier
+                                    .testTag("trip_card")
+                                    .semantics(mergeDescendants = true) {
+                                        testTagsAsResourceId = true
+                                        contentDescription = "trip_row_${trip.id}"
+                                    },
                         )
                     }
                 }
@@ -123,7 +131,13 @@ fun TripFilters(
                 isSelected = selectedFilter == filter,
                 count = count,
                 onClick = { onFilterSelected(filter) },
-                modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = "trips_filter_${filter.name.lowercase()}" },
+                modifier =
+                    Modifier
+                        .testTag("trips_filter_${filter.name.lowercase()}")
+                        .semantics(mergeDescendants = true) {
+                            testTagsAsResourceId = true
+                            contentDescription = "trips_filter_${filter.name.lowercase()}"
+                        },
             )
         }
     }
