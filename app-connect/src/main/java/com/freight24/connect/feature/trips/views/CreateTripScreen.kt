@@ -374,14 +374,18 @@ internal fun DriverDetailsCard(
             OutlinedTextField(
                 value = uiState.driverPhone,
                 onValueChange = { newValue ->
-                    // 1. Filter: Allow only digits & standard phone formatting chars
-                    val allowedChars = "+-() "
-                    val filtered = newValue.filter { it.isDigit() || it in allowedChars }
+                    // Keep only digits and an optional leading '+' so IME-inserted
+                    // spaces/separators can never break the E.164-style validation.
+                    val filtered = if (newValue.startsWith("+")) {
+                        "+" + newValue.drop(1).filter { it.isDigit() }
+                    } else {
+                        newValue.filter { it.isDigit() }
+                    }
 
-                    // 2. Limit to 15 chars (E.164 international standard max length)
+                    // Limit to 15 chars (E.164 international standard max length)
                     val limited = filtered.take(15)
 
-                    // 3. Update state only if value actually changed
+                    // Update state only if value actually changed
                     if (limited != uiState.driverPhone) {
                         viewModel.onEvent(CreateTripEvent.UpdateDriverPhone(limited))
                     }

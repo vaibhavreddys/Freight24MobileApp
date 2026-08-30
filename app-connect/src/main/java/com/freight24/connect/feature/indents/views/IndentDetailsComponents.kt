@@ -727,9 +727,9 @@ private fun formatInr(amount: String): String {
     return if (number != null) {
         val format = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("en-IN"))
         format.maximumFractionDigits = 0
-        format.format(number).replace("₹", "₹ ")
+        format.format(number)
     } else {
-        "₹ $amount"
+        "₹$amount"
     }
 }
 
@@ -760,24 +760,14 @@ private fun formatPhoneNumber(phone: String): String {
 
 private fun formatCreatedAt(isoTimestamp: String): String {
     return try {
-        val digits = isoTimestamp.replace(Regex("[^0-9]"), "")
-        if (digits.length >= 14) {
-            val year = digits.substring(0, 4)
-            val month = digits.substring(4, 6).toIntOrNull() ?: 1
-            val day = digits.substring(6, 8).toIntOrNull() ?: 1
-            val hour = digits.substring(8, 10).toIntOrNull() ?: 0
-            val minute = digits.substring(10, 12).toIntOrNull() ?: 0
-            val amPm = if (hour < 12) "AM" else "PM"
-            val displayHour = when {
-                hour == 0 -> 12
-                hour > 12 -> hour - 12
-                else -> hour
-            }
-            val monthNames = arrayOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-            "${monthNames[month - 1]} $day, $year at $displayHour:${"%02d".format(minute)} $amPm"
-        } else {
-            isoTimestamp
-        }
+        // Parse as UTC (Supabase timestamps) and render in IST — the raw digit
+        // slicing used before displayed UTC time as local, 5.5h off for IST users.
+        val utcDate = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault()).apply {
+            timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }.parse(isoTimestamp.substringBefore(".")) ?: return isoTimestamp
+        java.text.SimpleDateFormat("MMM d, yyyy 'at' h:mm a", java.util.Locale.getDefault()).apply {
+            timeZone = java.util.TimeZone.getTimeZone("Asia/Kolkata")
+        }.format(utcDate)
     } catch (e: Exception) {
         isoTimestamp
     }

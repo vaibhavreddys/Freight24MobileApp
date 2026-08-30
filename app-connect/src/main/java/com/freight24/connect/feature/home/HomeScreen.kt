@@ -187,11 +187,11 @@ internal fun HomeScreen(
                     },
                     onOpenIndentsClick = { selectedTab = ConnectTab.Indents },
                     onActiveAssignedClick = {
-                        selectedFilter = TripTypes.ONGOING
+                        selectedFilter = TripTypes.ALL
                         selectedTab = ConnectTab.Trips
                     },
                     onActiveLoadingClick = {
-                        selectedFilter = TripTypes.ONGOING
+                        selectedFilter = TripTypes.ALL
                         selectedTab = ConnectTab.Trips
                     },
                     onActiveInTransitClick = {

@@ -1,0 +1,27 @@
+# maestro/flows/_helpers/assert_load_board.yaml
+#
+# Asserts the Loads tab is rendered. The board legitimately shows either
+# city cards (indents exist) or the empty state (no indents) — both pass.
+# Flows that need actual load cards must assert `load_card` themselves and
+# will fail with a clear message on an empty board.
+#
+# appId is a parser placeholder; the calling flow owns the appId.
+appId: com.freight24.trucker.debug
+---
+- assertVisible:
+    id: "tab_loads"
+- runFlow:
+    when:
+      visible:
+        id: "city_card"
+    commands:
+      # "1 load available", "3 loads available", ... — regex, since Maestro
+      # text matching is exact unless the value is a pattern.
+      - assertVisible:
+          text: ".*load.*available.*"
+- runFlow:
+    when:
+      notVisible:
+        id: "city_card"
+    commands:
+      - assertVisible: "No loads available right now"

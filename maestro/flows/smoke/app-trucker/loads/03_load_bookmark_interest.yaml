@@ -1,0 +1,82 @@
+# maestro/flows/smoke/app-trucker/loads/03_load_bookmark_interest.yaml
+#
+# Loads tab: the bookmark button on a load card expresses / withdraws
+# interest. Success emits NO snackbar (the app only snackbar on errors), so
+# this flow asserts the button's `selected` state instead (exposed via
+# semantics in FooterIconButton). It branches on the current state and
+# toggles twice — the load ends in the state it started in, so the flow is
+# safe to re-run.
+#
+# REQUIRES at least one load card on the board.
+# @smoke @loads
+#
+# Run:  ./run.sh flows/smoke/app-trucker/loads/03_load_bookmark_interest.yaml
+appId: com.freight24.trucker.debug
+---
+- runFlow: ../../../_helpers/ensure_login_trucker.yaml
+- tapOn:
+    id: "tab_loads"
+- waitForAnimationToEnd:
+    timeout: 8000
+- assertVisible:
+    id: "city_card"
+- tapOn:
+    id: "city_card"
+    index: 0
+- waitForAnimationToEnd:
+    timeout: 8000
+- assertVisible:
+    id: "load_card"
+# ── Case A: load currently NOT interested ──────────────────────────────────
+- runFlow:
+    when:
+      visible:
+        id: "load_bookmark_btn"
+        index: 0
+        checked: false
+    commands:
+      # express → bookmark becomes selected; the "Thanks" tooltip is transient
+      - tapOn:
+          id: "load_bookmark_btn"
+          index: 0
+      - assertVisible:
+          id: "load_bookmark_btn"
+          index: 0
+          checked: true
+      - runFlow:
+          when:
+            visible: "Thanks for showing interest!"
+          commands:
+            - assertVisible: "Thanks for showing interest!"
+      # withdraw → back to unselected
+      - tapOn:
+          id: "load_bookmark_btn"
+          index: 0
+      - assertVisible:
+          id: "load_bookmark_btn"
+          index: 0
+          checked: false
+# ── Case B: load currently interested ─────────────────────────────────────
+- runFlow:
+    when:
+      visible:
+        id: "load_bookmark_btn"
+        index: 0
+        checked: true
+    commands:
+      # withdraw → bookmark becomes unselected
+      - tapOn:
+          id: "load_bookmark_btn"
+          index: 0
+      - assertVisible:
+          id: "load_bookmark_btn"
+          index: 0
+          checked: false
+      # express → back to selected
+      - tapOn:
+          id: "load_bookmark_btn"
+          index: 0
+      - assertVisible:
+          id: "load_bookmark_btn"
+          index: 0
+          checked: true

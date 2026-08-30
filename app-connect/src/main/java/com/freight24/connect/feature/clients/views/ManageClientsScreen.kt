@@ -93,8 +93,8 @@ fun ManageClientsScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onAddClientClick,
-                containerColor = FreightThemeTokens.colors.success,
-                contentColor = FreightThemeTokens.colors.onSuccess,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier
                     .padding(end = 4.dp, bottom = 4.dp),
                 shape = RoundedCornerShape(16.dp)
@@ -126,8 +126,8 @@ fun ManageClientsScreen(
                     containerColor = MaterialTheme.colorScheme.surfaceContainer
                 ),
                 border = BorderStroke(
-                    width = 0.5.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant,
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
             ) {

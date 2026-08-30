@@ -1,0 +1,18 @@
+# maestro/flows/_helpers/log_and_settle.yaml
+#
+# AI-feedback-loop helper: after a click/screen change, emits a LOG_STEP
+# marker and then blocks for SETTLE_MS so an observing AI agent has time to
+# take a screenshot of the screen the flow just reached (e.g. via adb while
+# the flow is paused). The marker is visible in two places:
+#   - stdout: the evalScript command line is echoed as it runs
+#   - maestro.log in Maestro's per-run debug dir, as a `JsConsole:` line
+#
+# Maestro 2.6.1 has no sleep command: the pause is a JS busy-wait inside a
+# single-line evalScript (top-level await / Java interop are not available).
+#
+# Inputs (env):
+#   LOG_MESSAGE - what just happened, e.g. "Trips: ACTIVE filter selected"
+#   SETTLE_MS   - pause length in ms (default 3000)
+appId: com.freight24.trucker.debug
+---
+- evalScript: "${(function(){ const ms = Number(SETTLE_MS || 3000); const end = Date.now() + ms; while (Date.now() < end) {} const msg = 'LOG_STEP: ' + LOG_MESSAGE + ' (paused ' + ms + 'ms for screenshot)'; console.log(msg); return msg; })()}"

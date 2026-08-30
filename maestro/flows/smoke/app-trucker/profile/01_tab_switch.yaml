@@ -1,0 +1,24 @@
+# maestro/flows/smoke/app-trucker/profile/01_tab_switch.yaml
+#
+# Profile tab: switching tabs renders the truck-owner profile ("PERSONAL
+# INFORMATION") and the board comes back intact when returning to Loads.
+# Deeper profile behaviour (logout etc.) lives in ../02_logout.yaml.
+# @smoke @profile
+#
+# Run:  ./run.sh flows/smoke/app-trucker/profile/01_tab_switch.yaml
+appId: com.freight24.trucker.debug
+---
+- runFlow: ../../../_helpers/ensure_login_trucker.yaml
+- runFlow:
+    env:
+      TAB_ID: "profile"
+      EXPECT_TEXT: "PERSONAL INFORMATION"
+    commands:
+      - runFlow: ../../../_helpers/open_tab.yaml
+- runFlow:
+    env:
+      TAB_ID: "loads"
+      EXPECT_TEXT: ""
+    commands:
+      - runFlow: ../../../_helpers/open_tab.yaml
+- runFlow: ../../../_helpers/assert_load_board.yaml

@@ -1,0 +1,33 @@
+# maestro/flows/smoke/app-trucker/loads/02_city_expand_load_cards.yaml
+#
+# Loads tab: tapping a city card expands it and populates load cards with
+# indent details plus the interest (bookmark) and call actions.
+#
+# REQUIRES at least one indent on the board — fails with a clear message
+# on an empty board.
+# @smoke @loads
+#
+# Run:  ./run.sh flows/smoke/app-trucker/loads/02_city_expand_load_cards.yaml
+appId: com.freight24.trucker.debug
+---
+- runFlow: ../../../_helpers/ensure_login_trucker.yaml
+- tapOn:
+    id: "tab_loads"
+- waitForAnimationToEnd:
+    timeout: 8000
+- assertVisible:
+    id: "city_card"
+- tapOn:
+    id: "city_card"
+    index: 0
+- waitForAnimationToEnd:
+    timeout: 8000
+# Expanded city must now show load cards with indent details and actions.
+- assertVisible:
+    id: "load_card"
+- assertVisible:
+    id: "load_bookmark_btn"
+- assertVisible:
+    id: "load_call_btn"
+- assertVisible:
+    text: "Call"

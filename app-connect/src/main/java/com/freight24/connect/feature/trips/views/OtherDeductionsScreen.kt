@@ -112,21 +112,12 @@ fun OtherDeductionsScreen(
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
-                    Column {
-                        Text(
-                            "NOTE",
-                            color = colorScheme.primary,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            "These are miscellaneous deductions subject to approval by the finance department. Please provide accurate details.",
-                            color = colorScheme.onSurface,
-                            fontSize = 14.sp,
-                            lineHeight = 20.sp
-                        )
-                    }
+                    Text(
+                        "These are miscellaneous deductions subject to approval by the finance department. Please provide accurate details.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colorScheme.onSurfaceVariant,
+                        lineHeight = 18.sp
+                    )
                 }
             }
 

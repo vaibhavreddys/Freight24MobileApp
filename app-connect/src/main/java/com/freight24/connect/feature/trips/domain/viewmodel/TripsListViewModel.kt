@@ -9,7 +9,7 @@ data class TripsListUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val trips: List<TripDataResponse> = emptyList(),
-    val selectedFilter: TripTypes = TripTypes.ONGOING
+    val selectedFilter: TripTypes = TripTypes.ALL
 )
 
 sealed class TripsListEvent {

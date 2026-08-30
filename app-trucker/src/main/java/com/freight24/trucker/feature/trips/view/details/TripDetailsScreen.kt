@@ -80,6 +80,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -288,7 +291,13 @@ internal fun TripDetailsScreen(
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(
+                        onClick = onBackClick,
+                        modifier =
+                            Modifier
+                                .testTag("trip_details_back_btn")
+                                .semantics { testTagsAsResourceId = true },
+                    ) {
                         Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
@@ -557,6 +566,7 @@ internal fun TripDetailsContent(
             title = "Documents",
             icon = Icons.Default.Description,
             initiallyExpanded = expandDocuments,
+            headerTestTag = "trip_details_documents_card",
         ) {
             if (trip.tripDocuments.isEmpty()) {
                 if (trip.status.uppercase() != "ASSIGNED") {
@@ -657,6 +667,7 @@ internal fun TripDetailsContent(
         ExpandableDetailCard(
             title = "Payments",
             icon = Icons.Default.Payments,
+            headerTestTag = "trip_details_payments_card",
         ) {
             val financials = trip.financials
             if (financials != null) {
@@ -674,7 +685,8 @@ internal fun TripDetailsContent(
         // Trip Timeline Card
         ExpandableDetailCard(
             title = "Trip Timeline",
-            icon = Icons.Default.History
+            icon = Icons.Default.History,
+            headerTestTag = "trip_details_timeline_card",
         ) {
             val stages = listOf("ASSIGNED", "LOADING", "IN_TRANSIT", "UNLOADED", "INVOICED", "PAID")
 

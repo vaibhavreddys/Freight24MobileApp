@@ -211,7 +211,10 @@ fun LuChargesScreen(
                     .padding(16.dp)
                     .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = extendedColors.success),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colorScheme.primary,
+                    contentColor = colorScheme.onPrimary,
+                ),
                 enabled = !uiState.isSubmitting && uiState.hasChanges
             ) {
                 if (uiState.isSubmitting) {
@@ -237,8 +240,10 @@ fun LuChargesScreen(
         ) {
             // Info Message
             Surface(
-                color = extendedColors.success.copy(alpha = 0.12f),
-                shape = RoundedCornerShape(12.dp)
+                color = colorScheme.primaryContainer,
+                shape = RoundedCornerShape(12.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, colorScheme.primary.copy(alpha = 0.2f)),
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),
@@ -247,14 +252,14 @@ fun LuChargesScreen(
                     Icon(
                         Icons.Default.Info,
                         contentDescription = null,
-                        tint = extendedColors.success,
+                        tint = colorScheme.primary,
                         modifier = Modifier.size(20.dp)
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = "All submitted charges and documents are subject to administrative verification and internal audit. Please ensure all details are accurate.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = extendedColors.success,
+                        color = colorScheme.onSurfaceVariant,
                         lineHeight = 18.sp
                     )
                 }
@@ -271,13 +276,13 @@ fun LuChargesScreen(
                     verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
                     LuAmountInput(
-                        label = "Loading Amount (₹)",
+                        label = "Loading Amount",
                         value = uiState.loadingAmount,
                         onValueChange = { viewModel.onEvent(LuChargesEvent.OnLoadingAmountChange(it)) }
                     )
 
                     LuAmountInput(
-                        label = "Unloading Amount (₹)",
+                        label = "Unloading Amount",
                         value = uiState.unloadingAmount,
                         onValueChange = { viewModel.onEvent(LuChargesEvent.OnUnloadingAmountChange(it)) }
                     )
@@ -298,7 +303,7 @@ fun LuChargesScreen(
                             placeholder = { Text("Enter any additional details or remarks here...", color = colorScheme.onSurfaceVariant) },
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = extendedColors.success,
+                                focusedBorderColor = colorScheme.primary,
                                 unfocusedBorderColor = colorScheme.outlineVariant
                             )
                         )
@@ -432,7 +437,7 @@ fun LuAmountInput(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = extendedColors.success,
+                focusedBorderColor = colorScheme.primary,
                 unfocusedBorderColor = colorScheme.outlineVariant
             ),
             singleLine = true

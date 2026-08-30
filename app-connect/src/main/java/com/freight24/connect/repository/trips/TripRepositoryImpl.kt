@@ -52,7 +52,7 @@ class TripRepositoryImpl @Inject constructor(
         }
 
     override suspend fun getMyTrips(
-        filter: String,
+        filter: String?,
         page: Int,
         limit: Int
     ): Result<MyTripsDataResponse> =

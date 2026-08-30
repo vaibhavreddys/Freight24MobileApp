@@ -1,6 +1,7 @@
 package com.freight24.rest.response
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
 @Serializable
 data class TripDetailResponse(
@@ -89,9 +90,11 @@ data class HaltingLegDto(
     val perDayAmount: Double = 0.0,
     val notes: String? = null,
     val createdAt: String? = null,
-    val createdBy: String? = null,
+    // Backend sends {"id": ..., "name": ...} objects here (or null) — typed as
+    // JsonElement so either shape parses; the UI does not use these fields.
+    val createdBy: JsonElement? = null,
     val updatedAt: String? = null,
-    val updatedBy: String? = null,
+    val updatedBy: JsonElement? = null,
 )
 
 @Serializable
@@ -109,9 +112,10 @@ data class LuLegDto(
     val slipUrl: String? = null,
     val notes: String? = null,
     val createdAt: String? = null,
-    val createdBy: String? = null,
+    // See HaltingLegDto: backend sends objects (or null) for these.
+    val createdBy: JsonElement? = null,
     val updatedAt: String? = null,
-    val updatedBy: String? = null,
+    val updatedBy: JsonElement? = null,
 )
 
 @Serializable

@@ -57,6 +57,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -147,7 +150,9 @@ fun LoadDetailBottomSheet(
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
         dragHandle = { DragHandle() },
-        modifier = modifier,
+        modifier = modifier
+            .testTag("load_detail_sheet")
+            .semantics { testTagsAsResourceId = true },
     ) {
         when (state) {
             is LoadDetailState.Loading -> LoadDetailLoading()
@@ -232,7 +237,10 @@ private fun Header(
         Spacer(Modifier.weight(1f))
         IconButton(
             onClick = onClose,
-            modifier = Modifier.size(40.dp),
+            modifier = Modifier
+                .size(40.dp)
+                .testTag("sheet_close_btn")
+                .semantics { testTagsAsResourceId = true },
         ) {
             Icon(
                 imageVector = Icons.Default.Close,
@@ -613,6 +621,9 @@ private fun CallPillButton(
         color = container,
         contentColor = onContainer,
         shape = RoundedCornerShape(999.dp),
+        modifier = Modifier
+            .testTag("sheet_call_btn")
+            .semantics { testTagsAsResourceId = true },
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
@@ -734,7 +745,9 @@ private fun ExpressInterestButton(
         },
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 56.dp),
+            .heightIn(min = 56.dp)
+            .testTag("express_interest_btn")
+            .semantics { testTagsAsResourceId = true },
         shape = RoundedCornerShape(28.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer,

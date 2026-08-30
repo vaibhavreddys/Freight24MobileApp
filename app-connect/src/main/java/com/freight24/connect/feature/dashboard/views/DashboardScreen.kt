@@ -33,11 +33,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -223,14 +223,12 @@ fun AttentionCard(
 
     Card(
         modifier = modifier.clickable { onClick() },
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             Text(
                 title,
@@ -238,10 +236,9 @@ fun AttentionCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 lineHeight = 16.sp
             )
-            Spacer(modifier = Modifier.height(16.dp))
             Text(
                 value,
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = valueColor
             )
@@ -281,7 +278,6 @@ fun PulseCard(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
@@ -404,7 +400,6 @@ fun PendingActionsSection(
                 iconTintColor = MaterialTheme.colorScheme.primary,
                 title = "LR waiting for review",
                 subtitle = "${pendingActions.lrReviews} documents pending",
-                badgeColor = MaterialTheme.colorScheme.primary,
                 onClick = { onTripFilterClick(TripTypes.LR_PENDING_REVIEW) }
             )
             ActionCard(
@@ -413,7 +408,6 @@ fun PendingActionsSection(
                 iconTintColor = MaterialTheme.colorScheme.error,
                 title = "POD Follow-up",
                 subtitle = "${pendingActions.podFollowUp} action required",
-                badgeColor = MaterialTheme.colorScheme.error,
                 onClick = { onTripFilterClick(TripTypes.WAITING_FOR_POD) }
             )
         }
@@ -427,7 +421,6 @@ fun ActionCard(
     iconTintColor: Color,
     title: String,
     subtitle: String,
-    badgeColor: Color,
     onClick: () -> Unit = {}
 ) {
     Card(
@@ -464,10 +457,6 @@ fun ActionCard(
             )
             }
             Spacer(modifier = Modifier.width(8.dp))
-            Box(
-                modifier = Modifier.size(6.dp).background(badgeColor, CircleShape)
-            )
-            Spacer(modifier = Modifier.width(12.dp))
             Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
@@ -493,18 +482,31 @@ fun QuickActionsSection(
                 modifier = Modifier.weight(1f),
                 title = "Create Indent",
                 icon = Icons.Default.Add,
-                backgroundColor = null,
-                backgroundBrush = Brush.linearGradient(
-                    colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary)
-                ),
-                contentColor = MaterialTheme.colorScheme.onPrimary,
+                // Light: solid forest fill (the one strong CTA). Dark: calm
+                // elevated surface with mint accents — a bright 80-tone fill
+                // would read as a headlight against the charcoal night UI.
+                containerColor = if (isDarkTheme()) {
+                    MaterialTheme.colorScheme.surfaceContainerHigh
+                } else {
+                    MaterialTheme.colorScheme.primary
+                },
+                contentColor = if (isDarkTheme()) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onPrimary
+                },
+                iconWellColor = if (isDarkTheme()) {
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
+                } else {
+                    MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.14f)
+                },
                 onClick = onCreateIndentClick
             )
             QuickActionCard(
                 modifier = Modifier.weight(1f),
                 title = "Adhoc Truck",
                 icon = Icons.Default.LocalShipping,
-                backgroundColor = MaterialTheme.colorScheme.surface,
+                containerColor = MaterialTheme.colorScheme.surface,
                 contentColor = MaterialTheme.colorScheme.primary,
                 onClick = onCreateTripClick
             )
@@ -518,7 +520,7 @@ fun QuickActionsSection(
                 modifier = Modifier.weight(1f),
                 title = "Interest Inbox",
                 icon = Icons.Default.Inbox,
-                backgroundColor = MaterialTheme.colorScheme.surface,
+                containerColor = MaterialTheme.colorScheme.surface,
                 contentColor = MaterialTheme.colorScheme.secondary,
                 badgeText = attentionNeeded.truckerInterests.toString(),
                 onClick = onInterestInboxClick
@@ -527,7 +529,7 @@ fun QuickActionsSection(
                 modifier = Modifier.weight(1f),
                 title = "Verification Requests",
                 icon = Icons.Default.Shield,
-                backgroundColor = MaterialTheme.colorScheme.surface,
+                containerColor = MaterialTheme.colorScheme.surface,
                 contentColor = MaterialTheme.colorScheme.primary,
                 badgeText = pendingActions.verificationRequests.total.toString(),
                 onClick = {
@@ -548,25 +550,25 @@ fun QuickActionCard(
     modifier: Modifier = Modifier,
     title: String,
     icon: ImageVector,
-    backgroundColor: Color? = null,
-    backgroundBrush: Brush? = null,
+    containerColor: Color,
     contentColor: Color,
+    iconWellColor: Color? = null,
     badgeText: String? = null,
+    badgeColor: Color = MaterialTheme.colorScheme.primary,
+    badgeContentColor: Color = MaterialTheme.colorScheme.onPrimary,
     onClick: () -> Unit
 ) {
     Box(modifier = modifier) {
             Card(
                 modifier = Modifier.fillMaxWidth().clickable { onClick() },
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (backgroundBrush != null) MaterialTheme.colorScheme.surface.copy(alpha = 0f) else backgroundColor ?: MaterialTheme.colorScheme.surface
-                ),
-            border = if (backgroundColor == MaterialTheme.colorScheme.surface) BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant) else null
+                colors = CardDefaults.cardColors(containerColor = containerColor),
+                border = if (containerColor != MaterialTheme.colorScheme.primary)
+                    BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant) else null
             ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .then(if (backgroundBrush != null) Modifier.background(backgroundBrush) else Modifier)
                     .padding(vertical = 24.dp)
             ) {
                 Column(
@@ -574,7 +576,7 @@ fun QuickActionCard(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Surface(
-                        color = if (backgroundColor == MaterialTheme.colorScheme.surface) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.12f),
+                        color = iconWellColor ?: MaterialTheme.colorScheme.surfaceVariant,
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.size(48.dp)
                     ) {
@@ -592,19 +594,19 @@ fun QuickActionCard(
                 }
             }
         }
-        
+
         if (badgeText != null) {
             Box(
                 modifier = Modifier
                     .size(24.dp)
                     .align(Alignment.TopEnd)
                     .offset(x = 6.dp, y = (-6).dp)
-                    .background(MaterialTheme.colorScheme.error, CircleShape)
+                    .background(badgeColor, CircleShape)
                     .padding(horizontal = 6.dp, vertical = 2.dp)
             ) {
                 Text(
                     badgeText,
-                    color = MaterialTheme.colorScheme.onError,
+                    color = badgeContentColor,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.align(Alignment.Center)
@@ -619,9 +621,14 @@ fun SectionHeader(title: String) {
     Text(
         title,
         style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = MaterialTheme.colorScheme.onSurface,
         fontWeight = FontWeight.SemiBold,
         letterSpacing = 1.sp,
         modifier = Modifier.padding(vertical = 8.dp)
     )
 }
+
+/** Theme-mode probe: surfaces go dark (< 0.5 luminance) in the night scheme. */
+@Composable
+private fun isDarkTheme(): Boolean =
+    MaterialTheme.colorScheme.surface.luminance() < 0.5f

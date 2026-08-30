@@ -34,6 +34,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -198,6 +201,9 @@ fun LoadCard(
                             contentDescription = "Mark as interested",
                             highlighted = isBookmarked,
                             enabled = !isBookmarkLoading,
+                            modifier = Modifier
+                                .testTag("load_bookmark_btn")
+                                .semantics { testTagsAsResourceId = true },
                             onClick = {
                                 // Only show tooltip when bookmarking (not unbookmarking)
                                 if (!isBookmarked) {
@@ -212,6 +218,9 @@ fun LoadCard(
                         PrimaryCallButton(
                             label = "Call",
                             contentDescription = "Call $f24AgentName",
+                            modifier = Modifier
+                                .testTag("load_call_btn")
+                                .semantics { testTagsAsResourceId = true },
                             onClick = onCallClick,
                         )
                     }
@@ -230,7 +239,7 @@ fun LoadCard(
 }
 
 fun formatCurrency(amount: String?): String {
-    if (amount.isNullOrBlank() || amount == "null") return "₹ 0"
+    if (amount.isNullOrBlank() || amount == "null") return "₹0"
     return try {
         // Clean the string: remove common currency prefixes and separators
         val cleaned = amount.replace("Rs.", "", ignoreCase = true)
@@ -246,12 +255,12 @@ fun formatCurrency(amount: String?): String {
             val formattedValue = "%,.0f".format(numericValue)
             // Preserve any suffix (e.g., "/ton") that was in the cleaned string
             val suffix = cleaned.substringAfter(match.value)
-            "₹ $formattedValue$suffix"
+            "₹$formattedValue$suffix"
         } else {
-            "₹ 0"
+            "₹0"
         }
     } catch (_: Exception) {
-        "₹ 0"
+        "₹0"
     }
 }
 

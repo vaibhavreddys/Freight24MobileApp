@@ -12,7 +12,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -29,6 +28,8 @@ import com.freight24.common.manager.ThemePreferenceManager
 import com.freight24.connect.navigation.ConnectDestination
 import com.freight24.connect.navigation.ConnectNavGraph
 import com.freight24.connect.services.ConnectMessagingService
+import com.freight24.ui.connect.ConnectSplashScreen
+import com.freight24.ui.connect.ConnectTruckMark
 import com.freight24.ui.theme.Freight24Theme
 import com.freight24.ui.theme.FreightAppTheme
 import com.google.android.gms.tasks.OnCompleteListener
@@ -55,7 +56,13 @@ class MainActivity : ComponentActivity() {
             val themeChoiceOrdinal by themePreferenceManager.themeChoice.collectAsState(initial = ThemePreferenceManager.THEME_LOGISTICS)
             val darkModeOverride by themePreferenceManager.darkModeOverride.collectAsState(initial = ThemePreferenceManager.DARK_MODE_FOLLOW_SYSTEM)
             val appTheme = remember(themeChoiceOrdinal) {
-                FreightAppTheme.entries.getOrElse(themeChoiceOrdinal) { FreightAppTheme.INDIGO }
+                // Default (persisted THEME_LOGISTICS) resolves to the premium
+                // CONNECT identity; an explicit user pick is honoured as-is.
+                if (themeChoiceOrdinal == ThemePreferenceManager.THEME_LOGISTICS) {
+                    FreightAppTheme.CONNECT
+                } else {
+                    FreightAppTheme.entries.getOrElse(themeChoiceOrdinal) { FreightAppTheme.CONNECT }
+                }
             }
 
             Freight24Theme(
@@ -123,12 +130,7 @@ class MainActivity : ComponentActivity() {
 
                 Box(modifier = Modifier.fillMaxSize()) {
                     if (!isBootstrapped) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            CircularProgressIndicator()
-                        }
+                        ConnectSplashScreen(logo = ConnectTruckMark)
                     } else {
                         val startDestination =
                             remember(isAuthenticated) {

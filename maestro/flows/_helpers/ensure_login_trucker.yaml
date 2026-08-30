@@ -1,0 +1,22 @@
+# maestro/flows/_helpers/ensure_login_trucker.yaml
+#
+# Fast path for smoke flows: reuse an existing session if the app is already
+# logged in, otherwise perform the full OTP login. Always leaves the app on
+# the trucker home (Loads tab).
+appId: com.freight24.trucker.debug
+---
+- launchApp:
+    clearState: false
+- waitForAnimationToEnd:
+    timeout: 8000
+# "Welcome back" only exists on the login screen.
+- runFlow:
+    when:
+      visible: "Welcome back"
+    commands:
+      - runFlow: ./login_trucker.yaml
+- runFlow:
+    env:
+      HOME_TEXT: "Loads|Trips|Trucks|Profile"
+    commands:
+      - runFlow: ./assert_home_loaded.yaml
