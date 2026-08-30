@@ -1,0 +1,10 @@
+{
+  "mission": "app-connect premium UI pass",
+  "phase": "complete",
+  "currentScreen": "FindTrucks",
+  "nextAction": "none \u2014 pass complete",
+  "deviceSerial": "001196478009045",
+  "warnings": [
+    "Do NOT log out (BLOCKERS.md)"
+  ]
+}
