@@ -20,6 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.connect.feature.trips.domain.viewmodel.FilteredTripsViewModelImpl
 import com.freight24.connect.feature.trips.domain.viewmodel.TripsListViewModel
 import com.freight24.connect.feature.trips.views.components.TripCard
+import com.freight24.connect.feature.trips.views.components.TripListItem
 import com.freight24.ui.components.FreightEmptyState
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -78,10 +79,10 @@ fun FilteredTripsScreen(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(uiState.trips) { trip ->
-                        TripCard(
+                        TripListItem(
                             trip = trip,
                             onClick = { onTripClick(trip.id) }
                         )

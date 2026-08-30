@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.outlined.Handshake
 import androidx.compose.material.icons.outlined.Payments
@@ -203,6 +204,124 @@ fun TripCard(
                     color = colorScheme.onSurfaceVariant
                 )
             }
+        }
+    }
+}
+
+/**
+ * Compact list card for the Trips tab — optimized for viewport density:
+ * single-line route (origin → destination), no stacked connector, and a
+ * brand-tinted financial band instead of a divider + row pair.
+ * The rich [TripCard] remains the hero header on Trip Details.
+ */
+@Composable
+fun TripListItem(
+    trip: TripDataResponse,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    Card(
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
+        border = BorderStroke(1.dp, colorScheme.outlineVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(start = 16.dp, end = 16.dp, top = 12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = trip.tripCode,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = colorScheme.onSurfaceVariant
+                )
+                StatusBadge(status = trip.truckerStatus)
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.LocalShipping,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = trip.truck.registrationNumber,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "${trip.truck.truckType.displayName} • ${trip.indentDetails.loadWeight} MT • ${trip.indentDetails.material}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Route on one line — origin → destination
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Text(
+                    text = trip.loadingLocation.city ?: trip.loadingLocation.area ?: "Unknown",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colorScheme.onSurface
+                )
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = "to",
+                    modifier = Modifier.size(16.dp),
+                    tint = colorScheme.primary
+                )
+                Text(
+                    text = trip.unLoadingLocation.city ?: trip.unLoadingLocation.area ?: "Unknown",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colorScheme.onSurface
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
+        // Brand-tinted financial band — no icons needed, labels carry meaning
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(colorScheme.primaryContainer)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "CLIENT  ₹${formatAmount(trip.clientTripCost.orEmpty())}",
+                style = MaterialTheme.typography.labelMedium,
+                color = colorScheme.onPrimaryContainer
+            )
+            Text(
+                text = "NEGOTIATED  ₹${formatAmount(trip.truckerTripCost.orEmpty())}",
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = colorScheme.primary
+            )
         }
     }
 }

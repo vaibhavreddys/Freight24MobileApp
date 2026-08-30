@@ -492,7 +492,9 @@ fun TripDetailsContent(
         // Trip Timeline
         ExpandableSection(
             title = "Timeline",
-            icon = Icons.Outlined.History
+            icon = Icons.Outlined.History,
+            iconBg = colorScheme.primaryContainer,
+            iconTint = colorScheme.primary
         ) {
             TripTimelineContent(timeline = trip.timelines ?: emptyList())
         }

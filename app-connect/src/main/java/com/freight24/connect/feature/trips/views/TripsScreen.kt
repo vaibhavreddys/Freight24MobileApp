@@ -29,6 +29,7 @@ import com.freight24.connect.feature.trips.domain.viewmodel.TripsListEvent
 import com.freight24.connect.feature.trips.domain.viewmodel.TripsListViewModel
 import com.freight24.connect.feature.trips.domain.viewmodel.TripsListViewModelImpl
 import com.freight24.connect.feature.trips.views.components.TripCard
+import com.freight24.connect.feature.trips.views.components.TripListItem
 import com.freight24.ui.components.FreightEmptyState
 import kotlinx.coroutines.flow.collect
 
@@ -148,10 +149,9 @@ fun TripsScreen(
                         items = uiState.trips,
                         key = { trip -> trip.id },
                     ) { trip ->
-                        TripCard(
+                        TripListItem(
                             trip = trip,
                             onClick = { onTripClick(trip.id) },
-                            modifier = Modifier.padding(vertical = 6.dp),
                         )
                     }
                 }
