@@ -1,7 +1,11 @@
 # maestro/flows/smoke/app-trucker/01_launch_login_home.yaml
 #
-# Smoke test: cold-launch app-trucker, log in, reach the home screen.
+# Smoke test: cold-launch app-trucker, log in (OTP fetched from the backend),
+# reach the home screen.
 # @smoke
+#
+# Run:  ./run.sh flows/smoke/app-trucker/01_launch_login_home.yaml
+# Needs: backend in dev mode (cd backendapi && ./scripts/dev.sh restart-dev)
 appId: com.freight24.trucker.debug
 ---
 - launchApp:

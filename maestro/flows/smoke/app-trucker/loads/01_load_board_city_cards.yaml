@@ -1,0 +1,23 @@
+# maestro/flows/smoke/app-trucker/loads/01_load_board_city_cards.yaml
+#
+# Loads tab: the board renders either city cards (new indents grouped by
+# origin city) or the empty state. Asserts tab bar + board content.
+# @smoke @loads
+#
+# Run:  ./run.sh flows/smoke/app-trucker/loads/01_load_board_city_cards.yaml
+appId: com.freight24.trucker.debug
+---
+- runFlow: ../../../_helpers/ensure_login_trucker.yaml
+# Loads is the default tab — make sure we're on it even if a previous flow
+# left another tab selected.
+- tapOn:
+    id: "tab_loads"
+- waitForAnimationToEnd:
+    timeout: 8000
+- assertVisible:
+    id: "tab_trips"
+- assertVisible:
+    id: "tab_trucks"
+- assertVisible:
+    id: "tab_profile"
+- runFlow: ../../../_helpers/assert_load_board.yaml

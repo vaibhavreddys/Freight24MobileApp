@@ -1,36 +1,40 @@
 # maestro/flows/_helpers/login_connect.yaml
 #
-# Connect-specific login helper. Phone number is hard-coded below.
+# Connect login helper. Requires env (supplied by maestro/run.sh):
+#   PHONE_NUMBER - 10-digit mobile number for a connect user, e.g. 9880300300
+#   BASE_URL     - backend base URL
+#
+# OTP comes from the backend's dev-only endpoint (DEVELOPMENT_MODE=true).
+# NOTE: not yet exercised on a device — app-connect flows are not in scope yet;
+# this was ported when the notification-shade capture helper was removed.
 #
 # The app auto-submits the phone number once it has the expected number
 # of digits, so the Send OTP button is often already-clicked (or never
-# visible) by the time we get to it. The flow handles both cases: it
-# taps the button if it's still there, and moves on if the OTP screen
-# has already appeared.
+# visible) by the time we get to it. The flow handles both cases.
 #
 # SELECTORS USED (test tags in app-connect Compose code):
-#   phone_input  - the phone number TextField
-#   otp_input    - the OTP TextField (the visible clickable wrapper)
-#   send_otp_btn - the button that requests the OTP
-#   verify_btn   - the button that submits the OTP
+#   phone_input / otp_input / send_otp_btn / verify_btn
 appId: com.freight24.connect.debug
 ---
 - runFlow: ./dismiss_system_prompts.yaml
 - tapOn:
     id: "phone_input"
-- inputText: "9880300300"
-# The phone field auto-submits once the number is complete. Wait briefly
-# for either the Send OTP button (still on phone screen) or the OTP field
-# (already moved on). Tap the button only if it's still there.
-- runFlow:
-    commands:
-      - tapOn:
-          id: "send_otp_btn"
-          optional: true
-- runFlow: ./capture_otp_from_notification.yaml
+- inputText: '${PHONE_NUMBER}'
+- tapOn:
+    id: "send_otp_btn"
+    optional: true
+- evalScript: "${(function(){ let otp=''; try { const res = http.get(BASE_URL + 'auth/dev/last-otp?phone_number=%2B91' + PHONE_NUMBER); const body = typeof res.body === 'string' ? JSON.parse(res.body) : res.body; if (body && body.otp_code) otp = body.otp_code; } catch(e) { console.log('OTP fetch failed: ' + e); } output.otp = otp; return 'OTP from backend: ' + otp; })()}"
+- assertTrue:
+    label: 'OTP was fetched from backend (is the server running restart-dev?)'
+    condition: ${output.otp != ''}
 - tapOn:
     id: "otp_input"
-- inputText: '${output.otp}'
+- inputText: "${output.otp.charAt(0)}"
+- inputText: "${output.otp.charAt(1)}"
+- inputText: "${output.otp.charAt(2)}"
+- inputText: "${output.otp.charAt(3)}"
+- inputText: "${output.otp.charAt(4)}"
+- inputText: "${output.otp.charAt(5)}"
 - tapOn:
     id: "verify_btn"
 - runFlow:

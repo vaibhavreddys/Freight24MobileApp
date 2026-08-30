@@ -1,0 +1,19 @@
+# maestro/flows/_helpers/fetch_otp_from_backend.yaml
+#
+# Standalone debugging helper: fetches the OTP for PHONE_NUMBER from the
+# backend's dev endpoint and copies it to the clipboard (pasteText manually
+# if needed).
+#
+# Requires env: PHONE_NUMBER, BASE_URL (supplied by maestro/run.sh).
+# Requires: request-otp was already triggered by the app, and the backend
+# runs with DEVELOPMENT_MODE=true.
+#
+# IMPORTANT: do NOT runFlow this from another flow expecting ${output.otp}
+# to propagate — output set inside a nested runFlow stays scoped. Login
+# helpers therefore inline this logic instead.
+appId: com.freight24.trucker.debug
+---
+- evalScript: "${(function(){ let otp=''; try { const res = http.get(BASE_URL + 'auth/dev/last-otp?phone_number=%2B91' + PHONE_NUMBER); const body = typeof res.body === 'string' ? JSON.parse(res.body) : res.body; if (body && body.otp_code) otp = body.otp_code; } catch(e) { console.log('OTP fetch failed: ' + e); } output.otp = otp; return 'OTP from backend: ' + otp; })()}"
+- assertTrue:
+    label: 'OTP was fetched from backend'
+    condition: ${output.otp != ''}

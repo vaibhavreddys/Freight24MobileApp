@@ -1,6 +1,13 @@
 # maestro/flows/_helpers/login_trucker.yaml
 #
-# Trucker-specific login helper. Phone number is hard-coded below.
+# Trucker login helper. Requires env (supplied by maestro/run.sh):
+#   PHONE_NUMBER - 10-digit mobile number, e.g. 7022457678
+#   BASE_URL     - backend base URL, e.g. http://192.168.88.4:3000/api/v1/
+#
+# The OTP is fetched from the backend's dev-only endpoint
+# (GET /auth/dev/last-otp) — active when the server runs with
+# DEVELOPMENT_MODE=true (`cd backendapi && ./scripts/dev.sh restart-dev`).
+# No SMS / notification-shade scraping involved.
 #
 # SELECTORS USED (test tags in app-trucker Compose code):
 #   phone_input  - the phone number TextField
@@ -12,13 +19,28 @@ appId: com.freight24.trucker.debug
 - runFlow: ./dismiss_system_prompts.yaml
 - tapOn:
     id: "phone_input"
-- inputText: "7022457678"
+- inputText: '${PHONE_NUMBER}'
 - tapOn:
     id: "send_otp_btn"
-- runFlow: ./capture_otp_from_notification.yaml
+# Fetch the OTP straight from the backend. NOTE: env vars are referenced as
+# BARE identifiers here (BASE_URL, PHONE_NUMBER) — the outer ${...} template
+# does NOT nest, so '${PHONE_NUMBER}' inside evalScript breaks parsing. Also
+# keep this a single-line ${...}: a raw multi-line evalScript body runs in a
+# throwaway scope and output.* set there is lost (Maestro 2.6.1).
+- evalScript: "${(function(){ let otp=''; try { const res = http.get(BASE_URL + 'auth/dev/last-otp?phone_number=%2B91' + PHONE_NUMBER); const body = typeof res.body === 'string' ? JSON.parse(res.body) : res.body; if (body && body.otp_code) otp = body.otp_code; } catch(e) { console.log('OTP fetch failed: ' + e); } output.otp = otp; return 'OTP from backend: ' + otp; })()}"
+- assertTrue:
+    label: 'OTP was fetched from backend (is the server running restart-dev?)'
+    condition: ${output.otp != ''}
 - tapOn:
     id: "otp_input"
-- inputText: '${output.otp}'
+# The OTP box rejects multi-char IME commits, so type one digit at a time.
+# (Unrolled: repeat/runFlow scopes don't see the parent's output.otp.)
+- inputText: "${output.otp.charAt(0)}"
+- inputText: "${output.otp.charAt(1)}"
+- inputText: "${output.otp.charAt(2)}"
+- inputText: "${output.otp.charAt(3)}"
+- inputText: "${output.otp.charAt(4)}"
+- inputText: "${output.otp.charAt(5)}"
 - tapOn:
     id: "verify_btn"
 - runFlow:

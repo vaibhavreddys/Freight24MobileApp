@@ -1,0 +1,169 @@
+# maestro/flows/smoke/app-trucker/trucks/04_onboard_truck.yaml
+#
+# Trucks tab: onboards a NEW truck end-to-end —
+#   Step 1 (Basic Info): unique registration number (TS09AB + 4 random-ish
+#   digits, so the flow is re-runnable without hitting "already exists"),
+#   vehicle type from the dropdown, make, model, year → Next.
+#   Step 2 (Documents): all three upload cards (RC required, Insurance and
+#   Fitness optional) are fed through the Gallery path — first photo of the
+#   photo picker — via _helpers/gallery_upload_first_photo.
+#   Then Complete → "Truck Onboarded Successfully!" → View My Fleet → the
+#   new truck is visible in the refreshed ALL list.
+#
+# NOTE: this flow intentionally creates a real truck on the backend each
+# run (with a fresh registration number), so the fleet grows by one per run.
+#
+# Requires at least one photo in the device's photo picker.
+# @smoke @trucks
+#
+# Run:  ./run.sh flows/smoke/app-trucker/trucks/04_onboard_truck.yaml
+appId: com.freight24.trucker.debug
+---
+- runFlow: ../../../_helpers/ensure_login_trucker.yaml
+- runFlow:
+    env:
+      TAB_ID: "trucks"
+      EXPECT_TEXT: "Trucks"
+    commands:
+      - runFlow: ../../../_helpers/open_tab.yaml
+- scrollUntilVisible:
+    element:
+      id: "trucks_onboard_btn"
+    timeout: 20000
+    direction: DOWN
+- tapOn:
+    id: "trucks_onboard_btn"
+- waitForAnimationToEnd:
+    timeout: 8000
+- assertVisible:
+    text: "Step 1 of 2"
+# ── Step 1: Basic Info ───────────────────────────────────────────────────────
+- evalScript: "${(function(){ output.regNo = 'TS09AB' + (Date.now() % 9000 + 1000); return 'LOG_STEP: onboarding truck with registration number ' + output.regNo; })()}"
+- tapOn:
+    id: "onboard_reg_input"
+- inputText: "${output.regNo}"
+- waitForAnimationToEnd:
+    timeout: 3000
+- runFlow:
+    env:
+      LOG_MESSAGE: "Onboard step 1: registration number entered"
+      SETTLE_MS: "2000"
+    commands:
+      - runFlow: ../../../_helpers/log_and_settle.yaml
+- tapOn:
+    id: "onboard_type_dropdown"
+- waitForAnimationToEnd:
+    timeout: 4000
+- tapOn:
+    text: "32 Feet Multi Axle High Cube"
+- waitForAnimationToEnd:
+    timeout: 3000
+- tapOn:
+    id: "onboard_make_input"
+- inputText: "Tata"
+- tapOn:
+    id: "onboard_model_input"
+- inputText: "LPT 3118"
+- tapOn:
+    id: "onboard_year_input"
+- inputText: "2024"
+- waitForAnimationToEnd:
+    timeout: 4000
+- assertNotVisible:
+    text: "Registration number already exists"
+- runFlow:
+    env:
+      LOG_MESSAGE: "Onboard step 1: all fields filled, tapping Next"
+      SETTLE_MS: "2000"
+    commands:
+      - runFlow: ../../../_helpers/log_and_settle.yaml
+- tapOn:
+    id: "onboard_next_btn"
+- extendedWaitUntil:
+    visible:
+      text: "Step 2 of 2"
+    timeout: 10000
+- assertVisible:
+    text: "Upload Documents"
+- runFlow:
+    env:
+      LOG_MESSAGE: "Onboard step 2: Documents step reached"
+      SETTLE_MS: "2500"
+    commands:
+      - runFlow: ../../../_helpers/log_and_settle.yaml
+
+# ── Step 2: upload all three documents via Gallery ──────────────────────────
+- runFlow:
+    env:
+      UPLOAD_CARD_ID: "onboard_upload_rc_card"
+    commands:
+      - runFlow: ../../../_helpers/gallery_upload_first_photo.yaml
+- assertVisible:
+    text: ".*Ready to Upload.*"
+- runFlow:
+    env:
+      LOG_MESSAGE: "Onboard step 2: Registration Certificate selected (Required)"
+      SETTLE_MS: "2500"
+    commands:
+      - runFlow: ../../../_helpers/log_and_settle.yaml
+- runFlow:
+    env:
+      UPLOAD_CARD_ID: "onboard_upload_insurance_card"
+    commands:
+      - runFlow: ../../../_helpers/gallery_upload_first_photo.yaml
+- runFlow:
+    env:
+      LOG_MESSAGE: "Onboard step 2: Insurance Policy selected (Optional)"
+      SETTLE_MS: "2500"
+    commands:
+      - runFlow: ../../../_helpers/log_and_settle.yaml
+- runFlow:
+    env:
+      UPLOAD_CARD_ID: "onboard_upload_fc_card"
+    commands:
+      - runFlow: ../../../_helpers/gallery_upload_first_photo.yaml
+- runFlow:
+    env:
+      LOG_MESSAGE: "Onboard step 2: Fitness Certificate selected (Optional)"
+      SETTLE_MS: "2500"
+    commands:
+      - runFlow: ../../../_helpers/log_and_settle.yaml
+
+# ── Submit and verify success ────────────────────────────────────────────────
+- waitForAnimationToEnd:
+    timeout: 4000
+- tapOn:
+    id: "onboard_complete_btn"
+- extendedWaitUntil:
+    visible:
+      text: "Truck Onboarded Successfully!"
+    timeout: 60000
+- runFlow:
+    env:
+      LOG_MESSAGE: "Onboard success: Truck Onboarded Successfully screen shown"
+      SETTLE_MS: "3000"
+    commands:
+      - runFlow: ../../../_helpers/log_and_settle.yaml
+- tapOn:
+    id: "onboard_view_fleet_btn"
+- waitForAnimationToEnd:
+    timeout: 10000
+# Fleet refresh lands on the ALL filter — make sure it is selected before
+# looking for the new truck.
+- tapOn:
+    id: "trucks_filter_all"
+- waitForAnimationToEnd:
+    timeout: 4000
+- scrollUntilVisible:
+    element:
+      text: "${output.regNo}"
+    timeout: 20000
+    direction: DOWN
+- assertVisible:
+    text: "${output.regNo}"
+- runFlow:
+    env:
+      LOG_MESSAGE: "Onboard success: new truck visible in fleet list"
+      SETTLE_MS: "3000"
+    commands:
+      - runFlow: ../../../_helpers/log_and_settle.yaml

@@ -1,0 +1,156 @@
+# maestro/flows/smoke/app-trucker/trucks/02_trucks_filters.yaml
+#
+# Trucks tab: all four filter chips (All, Available, On trip, Blacklisted)
+# render and switch. Each filter must show EITHER truck cards OR the
+# "No trucks found" empty state — an empty filter is a legitimate pass.
+# Also asserts the "Onboard Your New Truck" button at the bottom of the list.
+# @smoke @trucks
+#
+# Run:  ./run.sh flows/smoke/app-trucker/trucks/02_trucks_filters.yaml
+appId: com.freight24.trucker.debug
+---
+- runFlow: ../../../_helpers/ensure_login_trucker.yaml
+- runFlow:
+    env:
+      TAB_ID: "trucks"
+      EXPECT_TEXT: "Trucks"
+    commands:
+      - runFlow: ../../../_helpers/open_tab.yaml
+- assertVisible:
+    id: "trucks_filter_all"
+- assertVisible:
+    id: "trucks_filter_available"
+- assertVisible:
+    id: "trucks_filter_on_trip"
+- assertVisible:
+    id: "trucks_filter_blacklisted"
+- runFlow:
+    env:
+      LOG_MESSAGE: "Trucks tab: all four filter chips visible"
+      SETTLE_MS: "2500"
+    commands:
+      - runFlow: ../../../_helpers/log_and_settle.yaml
+
+# ── ALL (the default filter) ─────────────────────────────────────────────────
+- runFlow:
+    when:
+      visible:
+        id: "truck_card"
+    commands:
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trucks: ALL filter lists truck cards"
+            SETTLE_MS: "2500"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+- runFlow:
+    when:
+      notVisible:
+        id: "truck_card"
+    commands:
+      - assertVisible: "No trucks found"
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trucks: ALL filter shows empty state (pass)"
+            SETTLE_MS: "2500"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+# The onboard button sits at the bottom of the list in both cases.
+- scrollUntilVisible:
+    element:
+      id: "trucks_onboard_btn"
+    timeout: 20000
+    direction: DOWN
+- runFlow:
+    env:
+      LOG_MESSAGE: "Trucks: Onboard Your New Truck button visible at list bottom"
+      SETTLE_MS: "2500"
+    commands:
+      - runFlow: ../../../_helpers/log_and_settle.yaml
+
+# ── AVAILABLE ────────────────────────────────────────────────────────────────
+- tapOn:
+    id: "trucks_filter_available"
+- waitForAnimationToEnd:
+    timeout: 4000
+- runFlow:
+    when:
+      visible:
+        id: "truck_card"
+    commands:
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trucks: AVAILABLE filter lists truck cards"
+            SETTLE_MS: "2500"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+- runFlow:
+    when:
+      notVisible:
+        id: "truck_card"
+    commands:
+      - assertVisible: "No trucks found"
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trucks: AVAILABLE filter shows empty state (pass)"
+            SETTLE_MS: "2500"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+
+# ── ON TRIP ──────────────────────────────────────────────────────────────────
+- tapOn:
+    id: "trucks_filter_on_trip"
+- waitForAnimationToEnd:
+    timeout: 4000
+- runFlow:
+    when:
+      visible:
+        id: "truck_card"
+    commands:
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trucks: ON TRIP filter lists truck cards"
+            SETTLE_MS: "2500"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+- runFlow:
+    when:
+      notVisible:
+        id: "truck_card"
+    commands:
+      - assertVisible: "No trucks found"
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trucks: ON TRIP filter shows empty state (pass)"
+            SETTLE_MS: "2500"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+
+# ── BLACKLISTED ──────────────────────────────────────────────────────────────
+- tapOn:
+    id: "trucks_filter_blacklisted"
+- waitForAnimationToEnd:
+    timeout: 4000
+- runFlow:
+    when:
+      visible:
+        id: "truck_card"
+    commands:
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trucks: BLACKLISTED filter lists truck cards"
+            SETTLE_MS: "2500"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
+- runFlow:
+    when:
+      notVisible:
+        id: "truck_card"
+    commands:
+      - assertVisible: "No trucks found"
+      - runFlow:
+          env:
+            LOG_MESSAGE: "Trucks: BLACKLISTED filter shows empty state (pass)"
+            SETTLE_MS: "2500"
+          commands:
+            - runFlow: ../../../_helpers/log_and_settle.yaml
