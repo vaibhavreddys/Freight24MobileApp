@@ -40,7 +40,7 @@ fun TruckHeaderCard(
     modifier: Modifier = Modifier,
 ) {
     Card(
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.medium,
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors =
@@ -98,7 +98,7 @@ fun TruckIcon(
         modifier =
             Modifier
                 .size(44.dp)
-                .background(containerColor, RoundedCornerShape(10.dp)),
+                .background(containerColor, RoundedCornerShape(8.dp)),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
@@ -124,7 +124,7 @@ fun TruckStatusChip(
 
     Surface(
         color = color.copy(alpha = 0.1f),
-        shape = RoundedCornerShape(8.dp),
+        shape = MaterialTheme.shapes.small,
     ) {
         Text(
             text = text,

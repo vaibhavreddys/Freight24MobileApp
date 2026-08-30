@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.IconButton
@@ -44,13 +45,13 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.testTagsAsResourceId
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.freight24.ui.UiState
 import com.freight24.ui.components.FilterSelectionChip
+import com.freight24.ui.components.FreightEmptyState
 import com.freight24.ui.components.TruckHeaderCard
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -118,7 +119,7 @@ internal fun TrucksScreen(
                         )
                     },
                     singleLine = true,
-                    shape = RoundedCornerShape(14.dp),
+                    shape = MaterialTheme.shapes.medium,
                     colors =
                         OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = colorScheme.primary,
@@ -165,9 +166,10 @@ internal fun TrucksScreen(
                                                 .padding(top = 100.dp),
                                         contentAlignment = Alignment.Center,
                                     ) {
-                                        Text(
-                                            text = "No trucks found",
-                                            style = MaterialTheme.typography.bodyLarge,
+                                        FreightEmptyState(
+                                            icon = Icons.Default.LocalShipping,
+                                            title = "No trucks found",
+                                            subtitle = "Onboard your first truck to start taking trips",
                                         )
                                     }
                                 }
@@ -209,7 +211,7 @@ internal fun TrucksScreen(
 private fun OnboardTruckButton(onClick: () -> Unit) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(50.dp),
+        shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.primary,
         modifier =
             Modifier
@@ -227,15 +229,15 @@ private fun OnboardTruckButton(onClick: () -> Unit) {
             Icon(
                 imageVector = Icons.Default.Add,
                 contentDescription = null,
-                tint = Color.White,
+                tint = MaterialTheme.colorScheme.onPrimary,
                 modifier = Modifier.size(20.dp),
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Onboard Your New Truck",
                 style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onPrimary,
             )
         }
     }
