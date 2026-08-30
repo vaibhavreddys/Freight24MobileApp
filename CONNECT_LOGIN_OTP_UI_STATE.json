@@ -1,0 +1,23 @@
+{
+  "mission": "app-connect Login + OTP premium UI pass",
+  "phase": "complete",
+  "currentScreen": "Home (device logged in via 9880300300 flow)",
+  "iteration": 1,
+  "nextAction": "none — both screens PASS 35/35, committed",
+  "testPhone": "9880300300",
+  "deviceSerial": "001196478009045",
+  "activeFiles": [
+    "app-connect/src/main/java/com/freight24/connect/feature/login_new/view/NewLoginScreen.kt",
+    "app-connect/src/main/java/com/freight24/connect/feature/login_new/view/NewOtpScreen.kt",
+    "app-connect/src/main/java/com/freight24/connect/feature/login_new/view/OtpInputField.kt",
+    "core/ui/src/main/java/com/freight24/ui/components/InlineErrorBanner.kt"
+  ],
+  "scores": {
+    "login": { "light": "35/35 PASS", "dark": "PASS (visual)" },
+    "otp": { "light": "35/35 PASS", "dark": "PASS (visual)" }
+  },
+  "warnings": [
+    "Do NOT log out (BLOCKERS.md) — device session is active",
+    "Old feature/login screens are dead code behind FEATURE_NEW_LOGIN=true; untouched"
+  ]
+}
