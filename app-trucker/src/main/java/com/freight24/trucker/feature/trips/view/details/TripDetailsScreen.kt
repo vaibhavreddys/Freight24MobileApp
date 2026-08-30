@@ -94,6 +94,7 @@ import com.freight24.common.model.Trip
 import com.freight24.common.model.TripDetail
 import com.freight24.common.util.DateTimeUtils
 import com.freight24.ui.UiState
+import com.freight24.ui.theme.FreightThemeTokens
 import com.freight24.ui.components.DocumentStatus
 import com.freight24.ui.components.DocumentUploadItem
 import com.freight24.ui.components.ExpandableDetailCard
@@ -331,7 +332,7 @@ internal fun TripDetailsScreen(
                                 Button(
                                     onClick = { showStatusConfirmation = "LOADING" },
                                     modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(50.dp),
+                                    shape = MaterialTheme.shapes.medium,
                                 ) {
                                     Text("Update Trip Status to LOADING")
                                 }
@@ -344,7 +345,7 @@ internal fun TripDetailsScreen(
                                     Button(
                                         onClick = { showStatusConfirmation = "UNLOADED" },
                                         modifier = Modifier.fillMaxWidth(),
-                                        shape = RoundedCornerShape(50.dp),
+                                        shape = MaterialTheme.shapes.medium,
                                     ) {
                                         Text("Update Trip Status to UNLOADED")
                                     }
@@ -443,8 +444,8 @@ private fun openAppSettings(context: Context) {
 @Composable
 fun InfoBanner(text: String) {
     Surface(
-        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
-        shape = RoundedCornerShape(8.dp),
+        color = FreightThemeTokens.colors.surfaceInfo,
+        shape = MaterialTheme.shapes.small,
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -461,7 +462,7 @@ fun InfoBanner(text: String) {
             Text(
                 text = text,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                color = FreightThemeTokens.colors.onSurfaceInfo
             )
         }
     }
@@ -482,8 +483,8 @@ fun ErrorBanner(text: String) {
     )
 
     Surface(
-        color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f),
-        shape = RoundedCornerShape(8.dp),
+        color = MaterialTheme.colorScheme.errorContainer,
+        shape = MaterialTheme.shapes.small,
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -619,8 +620,8 @@ internal fun TripDetailsContent(
                                     DocumentStatus.Uploaded(
                                         id = doc.id ?: "",
                                         label = "Pending",
-                                        backgroundColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                        textColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                                        backgroundColor = FreightThemeTokens.colors.surfaceWarning,
+                                        textColor = FreightThemeTokens.colors.onSurfaceWarning,
                                     ) to "Verification pending"
                                 }
 
@@ -833,8 +834,8 @@ private fun PaymentsContent(financials: com.freight24.common.model.TripFinancial
         if (balanceDue > 0) {
             Spacer(modifier = Modifier.height(4.dp))
             Surface(
-                color = MaterialTheme.colorScheme.tertiaryContainer,
-                shape = RoundedCornerShape(12.dp),
+                color = FreightThemeTokens.colors.surfaceWarning,
+                shape = MaterialTheme.shapes.medium,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
@@ -871,14 +872,14 @@ private fun PaymentDetailRow(
     addHeader: Boolean = false,
     headerName: String = "",
 ) {
-    Column(modifier = Modifier.padding(vertical = 2.dp)) {
+    Column(modifier = Modifier.padding(vertical = 4.dp)) {
         if (addHeader && headerName.isNotEmpty()) {
             Text(
                 text = headerName,
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(top = 4.dp, bottom = 2.dp),
+                modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
             )
         }
         Row(
@@ -912,7 +913,7 @@ private fun PaymentDetailRow(
                 text = detailText,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 4.dp, top = 2.dp),
+                modifier = Modifier.padding(start = 4.dp, top = 4.dp),
             )
         }
     }
