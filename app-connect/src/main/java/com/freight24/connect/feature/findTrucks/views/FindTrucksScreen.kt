@@ -214,14 +214,16 @@ fun FindTrucksScreen(
                 shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colorScheme.primary,
-                    disabledContainerColor = colorScheme.surfaceVariant
+                    contentColor = colorScheme.onPrimary,
+                    disabledContainerColor = colorScheme.surfaceContainerHighest,
+                    disabledContentColor = colorScheme.onSurfaceVariant,
                 ),
                 enabled = uiState.loadingLocation != null && uiState.selectedTruckTypes.isNotEmpty() && !uiState.isSearching
             ) {
                 if (uiState.isSearching) {
                     CircularProgressIndicator(color = colorScheme.onPrimary, modifier = Modifier.size(24.dp))
                 } else {
-                    Text("Search Trucks", fontWeight = FontWeight.Bold, color = colorScheme.onPrimary)
+                    Text("Search Trucks", style = MaterialTheme.typography.titleMedium)
                 }
             }
         }

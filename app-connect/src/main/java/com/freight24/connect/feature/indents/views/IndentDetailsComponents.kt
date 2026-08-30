@@ -472,7 +472,7 @@ fun SpecificationsSection(
                 SpecRowData(
                     icon = Icons.Outlined.LocalShipping,
                     label = "Truck Type",
-                    value = if (truckType != null) titleCase(truckType) + " • $truckTypeUnit" else "Not selected",
+                    value = if (truckType != null) "$truckType • $truckTypeUnit" else "Not selected",
                     iconTint = FreightThemeTokens.colors.info,
                     subdued = truckType == null,
                 ),
