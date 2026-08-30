@@ -1,5 +1,6 @@
 package com.freight24.connect.feature.trips.views.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -33,7 +34,8 @@ fun TripCard(
     Card(
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        border = BorderStroke(1.dp, colorScheme.outlineVariant),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         modifier = modifier
             .fillMaxWidth()
             .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
@@ -44,7 +46,7 @@ fun TripCard(
                     start = 16.dp,
                     end = 16.dp,
                     top = 16.dp,
-                    bottom = 12.dp
+                    bottom = 16.dp
                 )
         ) {
             Row(
@@ -54,7 +56,7 @@ fun TripCard(
             ) {
                 Text(
                     text = trip.tripCode,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.labelMedium,
                     color = colorScheme.onSurfaceVariant
                 )
                 StatusBadge(status = trip.truckerStatus)
@@ -62,103 +64,116 @@ fun TripCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Truck Info
+            // Truck — the hero line
             Row(verticalAlignment = Alignment.CenterVertically) {
-
                 Icon(
                     imageVector = Icons.Default.LocalShipping,
                     contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                    tint = colorScheme.onSurfaceVariant
+                    modifier = Modifier.size(18.dp),
+                    tint = colorScheme.primary
                 )
-
                 Spacer(modifier = Modifier.width(8.dp))
-
                 Text(
                     text = trip.truck.registrationNumber,
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                )
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                Text(
-                    text = "•",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colorScheme.onSurfaceVariant,
-                )
-
-                Spacer(modifier = Modifier.width(6.dp))
-
-                Text(
-                    text = "${trip.truck.truckType.displayName} • ${trip.indentDetails.loadWeight} MT • ${trip.indentDetails.material}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    style = MaterialTheme.typography.titleLarge,
+                    color = colorScheme.onSurface
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
-            // Route
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                RouteDot(color = colorScheme.primary)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = trip.loadingLocation.city ?: trip.loadingLocation.area ?: "Unknown",
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
-                )
-            }
-            Box(
-                modifier = Modifier
-                    .padding(start = 3.dp)
-                    .width(2.dp)
-                    .height(12.dp)
-                    .background(colorScheme.outlineVariant)
+            Text(
+                text = "${trip.truck.truckType.displayName} • ${trip.indentDetails.loadWeight} MT • ${trip.indentDetails.material}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                RouteDot(color = colorScheme.secondary)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = trip.unLoadingLocation.city ?: trip.unLoadingLocation.area ?: "Unknown",
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
-                )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Route — connected dot-line-dot, city names aligned to dots
+            Row(verticalAlignment = Alignment.Top) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    RouteDot(color = colorScheme.primary)
+                    Box(
+                        modifier = Modifier
+                            .width(2.dp)
+                            .height(20.dp)
+                            .background(colorScheme.outlineVariant)
+                    )
+                    RouteDot(color = colorScheme.secondary)
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.padding(top = 0.dp)
+                ) {
+                    Text(
+                        text = trip.loadingLocation.city ?: trip.loadingLocation.area ?: "Unknown",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colorScheme.onSurface
+                    )
+                    Text(
+                        text = trip.unLoadingLocation.city ?: trip.unLoadingLocation.area ?: "Unknown",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colorScheme.onSurface
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             HorizontalDivider(
-                thickness = 0.5.dp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(0.5.dp)
-                    .background(colorScheme.outlineVariant)
+                color = colorScheme.outlineVariant,
+                thickness = 1.dp
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Financials
+            // Financials — labelled pair, negotiated cost emphasized
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                FinancialItem(
-                    icon = Icons.Outlined.Payments,
-                    amount = trip.clientTripCost.orEmpty()
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "CLIENT COST",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    FinancialItem(
+                        icon = Icons.Outlined.Payments,
+                        amount = trip.clientTripCost.orEmpty()
+                    )
+                }
 
                 VerticalDivider(
                     modifier = Modifier
-                        .width(0.5.dp)
-                        .height(22.dp)
+                        .width(1.dp)
+                        .height(32.dp)
                         .background(colorScheme.outlineVariant)
                 )
 
-                FinancialItem(
-                    icon = Icons.Outlined.Handshake,
-                    amount = trip.truckerTripCost.orEmpty()
-                )
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = "NEGOTIATED",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    FinancialItem(
+                        icon = Icons.Outlined.Handshake,
+                        amount = trip.truckerTripCost.orEmpty(),
+                        emphasized = true
+                    )
+                }
             }
         }
 
@@ -168,7 +183,7 @@ fun TripCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(
-                        color = colorScheme.surfaceVariant
+                        color = colorScheme.surfaceContainerLow
                     )
                     .padding(
                         horizontal = 16.dp,
@@ -223,28 +238,39 @@ fun StatusBadge(status: String) {
 fun RouteDot(color: Color) {
     Box(
         modifier = Modifier
-            .size(8.dp)
+            .size(12.dp)
             .background(color, CircleShape)
-            .padding(1.dp)
+            .padding(3.dp)
             .background(MaterialTheme.colorScheme.surface, CircleShape)
-            .background(color, CircleShape)
     )
 }
 
 @Composable
-fun FinancialItem(icon: ImageVector, amount: String) {
+fun FinancialItem(
+    icon: ImageVector,
+    amount: String,
+    emphasized: Boolean = false
+) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(
             imageVector = icon,
             contentDescription = null,
             modifier = Modifier.size(16.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
+            tint = if (emphasized) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            }
         )
         Spacer(modifier = Modifier.width(4.dp))
         Text(
             text = "₹${formatAmount(amount)}",
-            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-            color = MaterialTheme.colorScheme.onSurface
+            style = MaterialTheme.typography.titleMedium,
+            color = if (emphasized) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            }
         )
     }
 }

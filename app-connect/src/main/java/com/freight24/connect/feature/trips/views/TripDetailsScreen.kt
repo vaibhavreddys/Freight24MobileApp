@@ -13,6 +13,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -350,7 +351,6 @@ fun TripDetailsScreen(
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shadowElevation = 8.dp,
-//                    color = colorScheme.onPrimary
                 ) {
                     Button(
                         onClick = {
@@ -364,8 +364,8 @@ fun TripDetailsScreen(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(52.dp)
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                            .height(52.dp),
                         shape = MaterialTheme.shapes.medium,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = colorScheme.primary,
@@ -985,30 +985,44 @@ fun TimelineItemRow(
     item: TripDataResponse.Timeline,
     isLast: Boolean
 ) {
+    val lineColor = if (item.isCompleted) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.outlineVariant
+    }
+    val isCurrentStop = item.isCurrent && !item.isCompleted
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(IntrinsicSize.Min),
         verticalAlignment = Alignment.Top
     ) {
+        // Indicator column: dot centered over the connector line
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .width(28.dp)
-                .fillMaxHeight()
+            modifier = Modifier.width(24.dp)
         ) {
             Box(
                 modifier = Modifier
-                    .size(12.dp)
-                    .background(
-                        color = if (item.isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                    .size(16.dp)
+                    .border(
+                        width = 2.dp,
+                        color = if (item.isCompleted || isCurrentStop) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.outlineVariant
+                        },
                         shape = CircleShape
                     )
-                    .then(
-                        if (item.isCurrent && !item.isCompleted) {
-                            Modifier.background(MaterialTheme.colorScheme.surface, CircleShape)
-                                .then(Modifier.size(12.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
-                        } else Modifier
+                    .padding(4.dp)
+                    .background(
+                        color = if (item.isCompleted || isCurrentStop) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.outlineVariant
+                        },
+                        shape = CircleShape
                     )
             )
 
@@ -1017,28 +1031,25 @@ fun TimelineItemRow(
                     modifier = Modifier
                         .width(2.dp)
                         .weight(1f)
-                        .padding(bottom = 12.dp)
-                        .background(
-                            if (item.isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant
-                        )
+                        .background(lineColor)
                 )
             }
         }
-        
-        Spacer(modifier = Modifier.width(16.dp))
-        
+
+        Spacer(modifier = Modifier.width(12.dp))
+
         Column(modifier = Modifier.padding(bottom = if (isLast) 16.dp else 24.dp)) {
             Text(
                 text = mapStatusToTitle(item.statusType),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
-                color = if (item.isCompleted || item.isCurrent) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (item.isCompleted || isCurrentStop) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
             )
-            
-            val subText = if (item.isCurrent && !item.isCompleted) {
+
+            val subText = if (isCurrentStop) {
                 "In Progress"
             } else {
-                item.updatedAt?.let { 
+                item.updatedAt?.let {
                     try {
                         it.toDateTime()
                     } catch (e: Exception) {
@@ -1051,7 +1062,7 @@ fun TimelineItemRow(
                 Text(
                     text = subText,
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (item.isCurrent && !item.isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (isCurrentStop) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
