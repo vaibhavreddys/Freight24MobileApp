@@ -437,7 +437,7 @@ fun OnboardClientScreen(
                             ) {
                                 Text(
                                     text = "Branch ${index + 1}",
-                                    fontSize = 14.sp,
+                                    style = MaterialTheme.typography.labelLarge,
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onSurface,
                                 )
@@ -585,7 +585,7 @@ fun OnboardClientScreen(
                             Text(
                                 text = "At least one branch is required",
                                 color = MaterialTheme.colorScheme.error,
-                                fontSize = 12.sp,
+                                style = MaterialTheme.typography.bodySmall,
                             )
                         }
                         OutlinedButton(
@@ -594,7 +594,7 @@ fun OnboardClientScreen(
                                 saveAttempted = false
                             },
                             modifier = Modifier.fillMaxWidth().height(48.dp),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = MaterialTheme.shapes.medium,
                             border = BorderStroke(0.5.dp, successColor.copy(alpha = 0.5f)),
                             colors = ButtonDefaults.outlinedButtonColors(
                                 containerColor = MaterialTheme.colorScheme.surface,
@@ -609,7 +609,7 @@ fun OnboardClientScreen(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "Add Branch",
-                                fontSize = 14.sp,
+                                style = MaterialTheme.typography.labelLarge,
                                 fontWeight = FontWeight.SemiBold,
                             )
                         }
@@ -777,7 +777,7 @@ private fun OnboardSection(
 private fun SectionCard(content: @Composable ColumnScope.() -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
+        shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
     ) {
@@ -811,7 +811,6 @@ private fun TeamContactBlock(
             Spacer(modifier = Modifier.width(9.dp))
             Text(
                 text = contactSection.title,
-                fontSize = 12.5.sp,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 0.09.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -826,7 +825,6 @@ private fun TeamContactBlock(
                 Text(
                     text = "Copy from primary",
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                    fontSize = 10.5.sp,
                     fontWeight = FontWeight.Medium,
                     color = FreightThemeTokens.colors.success,
                 )
@@ -894,10 +892,9 @@ private fun FormField(
             singleLine = !isMultiline,
             minLines = if (isMultiline) 3 else 1,
             maxLines = if (isMultiline) Int.MAX_VALUE else 1,
-            shape = RoundedCornerShape(10.dp),
+            shape = MaterialTheme.shapes.small,
             isError = errorMessage != null,
-            textStyle = TextStyle(
-                fontSize = 14.sp,
+            textStyle = MaterialTheme.typography.labelLarge.copy(
                 color = MaterialTheme.colorScheme.onSurface,
                 fontFamily = if (monospace) FontFamily.Monospace else FontFamily.Default,
                 letterSpacing = if (monospace) 0.05.sp else 0.sp,
@@ -932,7 +929,7 @@ private fun FormField(
                         else -> label
                     },
                     fontFamily = if (monospace) FontFamily.Monospace else FontFamily.Default,
-                    fontSize = 14.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                     letterSpacing = if (monospace) 0.05.sp else 0.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f),
                 )
@@ -951,7 +948,7 @@ private fun FormField(
             Text(
                 text = errorMessage,
                 modifier = Modifier.padding(start = 16.dp, top = 4.dp, end = 16.dp, bottom = 8.dp),
-                fontSize = 12.sp,
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
             )
         }
@@ -991,7 +988,7 @@ private fun TextLabelRow(
                     }
                 }
             },
-            fontSize = 11.sp,
+            style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             letterSpacing = 0.07.sp,
             color = labelColor,
@@ -1021,7 +1018,7 @@ private fun FloatingActions(
             .padding(16.dp),
         tonalElevation = 8.dp,
         shadowElevation = 12.dp,
-        shape = RoundedCornerShape(18.dp),
+        shape = MaterialTheme.shapes.medium,
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -1031,21 +1028,21 @@ private fun FloatingActions(
             OutlinedButton(
                 onClick = onCancel,
                 modifier = Modifier.weight(1f).height(54.dp),
-                shape = RoundedCornerShape(14.dp),
+                shape = MaterialTheme.shapes.medium,
                 border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)),
                 colors = ButtonDefaults.outlinedButtonColors(
                     containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0f),
                     contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 ),
             ) {
-                Text("Cancel", fontSize = 14.sp, fontWeight = FontWeight.Medium)
+                Text("Cancel", fontWeight = FontWeight.Medium)
             }
             Button(
                 onClick = onSave,
                 enabled = enabled,
                 interactionSource = interactionSource,
                 modifier = Modifier.weight(1.9f).height(54.dp).scale(scale),
-                shape = RoundedCornerShape(14.dp),
+                shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = FreightThemeTokens.colors.success,
                     contentColor = FreightThemeTokens.colors.onSuccess,
@@ -1060,7 +1057,7 @@ private fun FloatingActions(
                         color = FreightThemeTokens.colors.onSuccess,
                     )
                 } else {
-                    Text("Save Changes \u2192", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Save Changes \u2192", fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -1159,11 +1156,11 @@ private fun EntityOnboardedDialog(
                         }
                     }
                     Spacer(modifier = Modifier.height(20.dp))
-                    Text("ONBOARDING COMPLETE", fontSize = 11.sp, letterSpacing = 0.12.sp, fontWeight = FontWeight.SemiBold, color = successColor)
+                    Text("ONBOARDING COMPLETE", letterSpacing = 0.12.sp, fontWeight = FontWeight.SemiBold, color = successColor)
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         text = "${entityName.ifBlank { entityLabel.lowercase().replaceFirstChar(Char::titlecase) }} has been onboarded successfully.",
-                        fontSize = 22.sp,
+                        style = MaterialTheme.typography.titleLarge,
                         lineHeight = 28.6.sp,
                         fontWeight = FontWeight.Normal,
                         letterSpacing = (-0.02).sp,
@@ -1179,7 +1176,7 @@ private fun EntityOnboardedDialog(
                         Text(
                             text = "\u25cf $entityLabel",
                             modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
-                            fontSize = 11.sp,
+                            style = MaterialTheme.typography.labelSmall,
                             letterSpacing = 0.06.sp,
                             fontWeight = FontWeight.Medium,
                             color = successColor.copy(alpha = 0.85f),
@@ -1235,23 +1232,23 @@ private fun DialogButton(
             onClick = onClick,
             modifier = modifier.scale(scale).height(52.dp),
             enabled = enabled,
-            shape = RoundedCornerShape(12.dp),
+            shape = MaterialTheme.shapes.medium,
             interactionSource = interactionSource,
             colors = ButtonDefaults.buttonColors(containerColor = containerColor, contentColor = contentColor),
         ) {
-            Text(text, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+            Text(text, fontWeight = FontWeight.Medium)
         }
     } else {
         OutlinedButton(
             onClick = onClick,
             modifier = modifier.scale(scale).height(52.dp),
             enabled = enabled,
-            shape = RoundedCornerShape(12.dp),
+            shape = MaterialTheme.shapes.medium,
             interactionSource = interactionSource,
             border = BorderStroke(0.5.dp, borderColor),
             colors = ButtonDefaults.outlinedButtonColors(containerColor = containerColor, contentColor = contentColor),
         ) {
-            Text(text, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+            Text(text, fontWeight = FontWeight.Medium)
         }
     }
 }

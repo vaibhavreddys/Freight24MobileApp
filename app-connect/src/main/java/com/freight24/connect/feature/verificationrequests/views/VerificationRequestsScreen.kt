@@ -832,7 +832,7 @@ fun TabWithBadge(
                     Text(
                         text = if (count > 99) "99+" else count.toString(),
                         color = MaterialTheme.colorScheme.onError,
-                        fontSize = 10.sp,
+                        style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         lineHeight = 12.sp
                     )
@@ -896,7 +896,7 @@ private fun VerificationRequestCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(20.dp),
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
@@ -943,7 +943,7 @@ private fun VerificationRequestCard(
             ) {
                 Surface(
                     color = iconContainerColor,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = MaterialTheme.shapes.medium,
                 ) {
                     Box(
                         modifier = Modifier.size(48.dp),
@@ -1041,7 +1041,7 @@ private fun TripVerificationRequestDetailSheet(
         Spacer(modifier = Modifier.height(10.dp))
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(20.dp),
+            shape = MaterialTheme.shapes.medium,
             color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)),
         ) {
@@ -1097,7 +1097,7 @@ private fun TripVerificationRequestDetailSheet(
                 Spacer(modifier = Modifier.height(10.dp))
                 Surface(
                     color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.65f),
-                    shape = RoundedCornerShape(14.dp),
+                    shape = MaterialTheme.shapes.medium,
                 ) {
                     Text(
                         text = actionErrorMessage,
@@ -1275,7 +1275,7 @@ private fun DocumentRow(
 ) {
     Surface(
         color = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(18.dp),
+        shape = MaterialTheme.shapes.medium,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)),
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -1285,7 +1285,7 @@ private fun DocumentRow(
         ) {
             Surface(
                 modifier = Modifier.size(46.dp),
-                shape = RoundedCornerShape(14.dp),
+                shape = MaterialTheme.shapes.medium,
                 color = MaterialTheme.colorScheme.primary,
             ) {
                 Box(contentAlignment = Alignment.Center) {
@@ -1351,7 +1351,7 @@ private fun RemarksField(
                 Text(if (enabled) "Add remarks for approval or rejection..." else "No remarks provided")
             },
             textStyle = MaterialTheme.typography.bodyMedium,
-            shape = RoundedCornerShape(18.dp),
+            shape = MaterialTheme.shapes.medium,
             isError = remarksError != null,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = MaterialTheme.colorScheme.primary,
@@ -1442,7 +1442,7 @@ private fun TruckVerificationRequestCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(20.dp),
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
@@ -1490,7 +1490,7 @@ private fun TruckVerificationRequestCard(
             ) {
                 Surface(
                     color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
-                    shape = RoundedCornerShape(10.dp),
+                    shape = MaterialTheme.shapes.small,
                 ) {
                     Box(
                         modifier = Modifier.size(36.dp),
@@ -1614,7 +1614,7 @@ private fun BusinessVerificationRequestCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        shape = RoundedCornerShape(20.dp),
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
@@ -1662,7 +1662,7 @@ private fun BusinessVerificationRequestCard(
             ) {
                 Surface(
                     color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
-                    shape = RoundedCornerShape(10.dp),
+                    shape = MaterialTheme.shapes.small,
                 ) {
                     Box(
                         modifier = Modifier.size(36.dp),
@@ -1799,7 +1799,7 @@ private fun BusinessProfileVerificationDetailSheet(
                 Spacer(modifier = Modifier.height(10.dp))
                 Surface(
                     color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.65f),
-                    shape = RoundedCornerShape(14.dp),
+                    shape = MaterialTheme.shapes.medium,
                 ) {
                     Text(
                         text = actionErrorMessage,
@@ -1965,7 +1965,7 @@ private fun TruckVerificationRequestDetailSheet(
                 Spacer(modifier = Modifier.height(10.dp))
                 Surface(
                     color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.65f),
-                    shape = RoundedCornerShape(14.dp),
+                    shape = MaterialTheme.shapes.medium,
                 ) {
                     Text(
                         text = actionErrorMessage,

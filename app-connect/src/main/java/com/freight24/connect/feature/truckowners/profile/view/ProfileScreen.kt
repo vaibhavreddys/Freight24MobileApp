@@ -1038,7 +1038,7 @@ private fun ProfileSection(
         ) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
+                shape = MaterialTheme.shapes.medium,
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
             ) {
@@ -1226,7 +1226,7 @@ private fun ProfileField(
                         },
                     textStyle = MaterialTheme.typography.bodyLarge,
                     singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = MaterialTheme.shapes.medium,
                     isError = validationError != null,
                     keyboardOptions = keyboardOptions,
                     visualTransformation = visualTransformation,
@@ -1283,7 +1283,7 @@ private fun ProfileField(
 private fun VerificationChip(text: String, color: Color) {
     Surface(
         color = color.copy(alpha = 0.1f),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
     ) {
         Text(
             text = text,
@@ -1500,7 +1500,7 @@ private fun EditActions(
             OutlinedButton(
                 onClick = onCancel,
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(width = 1.dp),
                 enabled = !isSaving,
             ) {
@@ -1510,7 +1510,7 @@ private fun EditActions(
                 onClick = onSave,
                 enabled = hasChanges && !isSaving,
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
             ) {
                 if (isSaving) {

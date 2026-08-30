@@ -121,8 +121,7 @@ fun ManageTruckOwnersScreen(
                 title = {
                     Text(
                         text = "Truck Owners",
-                        style = TextStyle(
-                            fontSize = 20.sp,
+                        style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.SemiBold,
                             letterSpacing = (-0.03).sp,
                             color = MaterialTheme.colorScheme.onSurface
@@ -134,7 +133,7 @@ fun ManageTruckOwnersScreen(
                         modifier = Modifier
                             .padding(start = 12.dp)
                             .size(36.dp),
-                        shape = RoundedCornerShape(10.dp),
+                        shape = MaterialTheme.shapes.small,
                         color = MaterialTheme.colorScheme.surfaceVariant
                     ) {
                         Box(
@@ -292,13 +291,12 @@ private fun SearchField(
         value = value,
         onValueChange = onValueChange,
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
+        shape = MaterialTheme.shapes.medium,
         singleLine = true,
         placeholder = {
             Text(
                 text = "Search by name or TAG ID",
-                style = TextStyle(
-                    fontSize = 14.sp,
+                style = MaterialTheme.typography.bodyMedium.copy(
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f)
                 )
             )
@@ -319,7 +317,7 @@ private fun SearchField(
             unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
             cursorColor = MaterialTheme.colorScheme.primary
         ),
-        textStyle = TextStyle(fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+        textStyle = MaterialTheme.typography.bodyMedium
     )
 }
 
@@ -346,8 +344,7 @@ private fun FilterChip(
         ) {
             Text(
                 text = title,
-                style = TextStyle(
-                    fontSize = 12.sp,
+                style = MaterialTheme.typography.labelMedium.copy(
                     fontWeight = FontWeight.Bold,
                     color =
                         if (isSelected) {
@@ -365,8 +362,7 @@ private fun FilterChip(
 private fun SectionHeader(title: String) {
     Text(
         text = title.uppercase(),
-        style = TextStyle(
-            fontSize = 11.sp,
+        style = MaterialTheme.typography.labelSmall.copy(
             fontWeight = FontWeight.SemiBold,
             letterSpacing = 1.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
@@ -458,8 +454,7 @@ private fun OwnerCard(
                     text = owner.full_name,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    style = TextStyle(
-                        fontSize = 14.sp,
+                    style = MaterialTheme.typography.labelLarge.copy(
                         fontWeight = FontWeight.SemiBold,
                         letterSpacing = (-0.01).sp,
                         color = MaterialTheme.colorScheme.onSurface
@@ -515,8 +510,7 @@ private fun OwnerAvatar(owner: TruckOwnerDto) {
     ) {
         Text(
             text = owner.full_name.initials(),
-            style = TextStyle(
-                fontSize = 13.sp,
+            style = MaterialTheme.typography.labelLarge.copy(
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 0.03.sp,
                 color = palette.second
@@ -532,8 +526,7 @@ private fun TagText(owner: TruckOwnerDto) {
     if (owner.ownerSection == OwnerSection.PENDING) {
         Text(
             text = "Pending assignment",
-            style = TextStyle(
-                fontSize = 11.5.sp,
+            style = MaterialTheme.typography.bodySmall.copy(
                 color = warningColor.copy(alpha = 0.8f)
             )
         )
@@ -558,9 +551,8 @@ private fun TagText(owner: TruckOwnerDto) {
                 append(tag)
             }
         },
-        style = TextStyle(
-            fontFamily = FontFamily.Monospace,
-            fontSize = 11.5.sp
+        style = MaterialTheme.typography.bodySmall.copy(
+            fontFamily = FontFamily.Monospace
         )
     )
 }
@@ -599,15 +591,14 @@ private fun StatusBadge(section: OwnerSection) {
 
     Box(
         modifier = Modifier
-            .border(BorderStroke(0.5.dp, border), RoundedCornerShape(20.dp))
-            .background(background, RoundedCornerShape(20.dp))
+            .border(BorderStroke(0.5.dp, border), MaterialTheme.shapes.medium)
+            .background(background, MaterialTheme.shapes.medium)
             .padding(horizontal = 10.dp, vertical = 4.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = label,
-            style = TextStyle(
-                fontSize = 11.sp,
+            style = MaterialTheme.typography.labelSmall.copy(
                 fontWeight = FontWeight.Medium,
                 letterSpacing = 0.02.sp,
                 color = content
@@ -678,7 +669,7 @@ private fun ErrorState(
         )
         Spacer(modifier = Modifier.height(16.dp))
         Surface(
-            shape = RoundedCornerShape(14.dp),
+            shape = MaterialTheme.shapes.medium,
             color = FreightThemeTokens.colors.success
         ) {
             Text(

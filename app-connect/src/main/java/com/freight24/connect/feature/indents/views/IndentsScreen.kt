@@ -321,8 +321,7 @@ fun CostColumn(
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall.copy(
-                fontSize = 10.sp,
-                letterSpacing = 0.5.sp
+                                letterSpacing = 0.5.sp
             ),
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -330,8 +329,7 @@ fun CostColumn(
             text = value,
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
-            ),
+                            ),
             color = MaterialTheme.colorScheme.onSurface
         )
     }

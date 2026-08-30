@@ -65,8 +65,8 @@ import com.freight24.ui.theme.Freight24Theme
 import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
 
-private val fieldShape = RoundedCornerShape(14.dp)
-private val buttonShape = RoundedCornerShape(28.dp)
+private val fieldShape = RoundedCornerShape(12.dp)
+private val buttonShape = RoundedCornerShape(24.dp)
 
 private const val sendOtpButtonAutoClickAfter = 2000
 
@@ -170,7 +170,7 @@ fun NewLoginScreen(
                 Box(
                     modifier = Modifier
                         .size(64.dp)
-                        .clip(RoundedCornerShape(20.dp))
+                        .clip(MaterialTheme.shapes.medium)
                         .background(colorScheme.primary),
                     contentAlignment = Alignment.Center,
                 ) {

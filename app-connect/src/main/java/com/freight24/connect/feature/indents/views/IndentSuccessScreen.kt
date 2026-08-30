@@ -463,7 +463,7 @@ private fun SpecRow(
     val colorScheme = MaterialTheme.colorScheme
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         color = colorScheme.surfaceVariant.copy(alpha = 0.4f)
     ) {
         Row(

@@ -27,6 +27,7 @@ import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material.icons.outlined.WorkspacePremium
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -210,7 +211,7 @@ fun FindTrucksScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colorScheme.primary,
                     disabledContainerColor = colorScheme.surfaceVariant
@@ -220,7 +221,7 @@ fun FindTrucksScreen(
                 if (uiState.isSearching) {
                     CircularProgressIndicator(color = colorScheme.onPrimary, modifier = Modifier.size(24.dp))
                 } else {
-                    Text("Search Trucks", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = colorScheme.onPrimary)
+                    Text("Search Trucks", fontWeight = FontWeight.Bold, color = colorScheme.onPrimary)
                 }
             }
         }
@@ -398,7 +399,7 @@ fun SearchResultsContent(data: SearchTruckerResponse.TruckerData?) {
             )
             Surface(
                 color = colorScheme.primaryContainer,
-                shape = RoundedCornerShape(20.dp)
+                shape = MaterialTheme.shapes.medium
             ) {
                 Text(
                     "${data?.totalOwners ?: 0} TRUCKERS FOUND",
@@ -465,7 +466,7 @@ fun TruckerResultItem(trucker: SearchTruckerResponse.Trucker) {
                         Spacer(modifier = Modifier.width(8.dp))
                         Surface(
                             color = colorScheme.tertiaryContainer,
-                            shape = RoundedCornerShape(12.dp)
+                            shape = MaterialTheme.shapes.medium
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
@@ -537,7 +538,7 @@ fun TruckerResultItem(trucker: SearchTruckerResponse.Trucker) {
                             verticalAlignment = Alignment.Top
                         ) {
                             Surface(
-                                shape = RoundedCornerShape(12.dp),
+                                shape = MaterialTheme.shapes.medium,
                                 border = androidx.compose.foundation.BorderStroke(1.dp, colorScheme.outlineVariant),
                                 color = colorScheme.surface,
                                 modifier = Modifier.size(48.dp)
@@ -565,7 +566,7 @@ fun TruckerResultItem(trucker: SearchTruckerResponse.Trucker) {
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Surface(
                                         color = colorScheme.primaryContainer,
-                                        shape = RoundedCornerShape(12.dp)
+                                        shape = MaterialTheme.shapes.medium
                                     ) {
                                         Row(
                                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),

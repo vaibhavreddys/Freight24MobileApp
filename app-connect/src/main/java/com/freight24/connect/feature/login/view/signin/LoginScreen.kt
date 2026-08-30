@@ -84,7 +84,7 @@ fun LoginScreen(
                     // Logo Replacement
                     Text(
                         text = "Freight24",
-                        fontSize = 40.sp,
+                        style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = colorScheme.primary,
                         modifier = Modifier.padding(bottom = 80.dp),
@@ -136,7 +136,7 @@ fun LoginScreen(
                                 .semantics { testTagsAsResourceId = true },
                         colors = ButtonDefaults.buttonColors(containerColor = colorScheme.primary),
                     ) {
-                        Text("Send OTP", color = colorScheme.onPrimary, fontSize = 16.sp)
+                        Text("Send OTP", color = colorScheme.onPrimary)
                     }
 
                     Spacer(modifier = Modifier.weight(1f))

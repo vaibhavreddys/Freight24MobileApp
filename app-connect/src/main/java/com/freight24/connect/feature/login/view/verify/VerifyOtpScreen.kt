@@ -111,7 +111,7 @@ internal fun VerifyOtpScreen(
                     onClick = { navController.popBackStack() },
                     modifier = Modifier.align(Alignment.TopStart).padding(16.dp),
                 ) {
-                    Text("←", fontSize = 32.sp, color = colors.surface)
+                    Text("←", color = colors.surface)
                 }
 
                 // Main scrollable content with windowInsets padding
@@ -203,9 +203,9 @@ internal fun VerifyOtpScreen(
                                     disabledContainerColor = colors.surfaceDim,
                                     disabledContentColor = colors.onSurfaceVariant,
                                 ),
-                            shape = RoundedCornerShape(28.dp),
+                            shape = MaterialTheme.shapes.large,
                         ) {
-                            Text("Verify", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                            Text("Verify", fontWeight = FontWeight.Bold)
                         }
 
                         Spacer(Modifier.height(40.dp))
@@ -221,7 +221,7 @@ internal fun VerifyOtpScreen(
                         snackbarData = data,
                         containerColor = MaterialTheme.colorScheme.inverseSurface,
                         contentColor = MaterialTheme.colorScheme.inverseOnSurface,
-                        shape = RoundedCornerShape(12.dp),
+                        shape = MaterialTheme.shapes.medium,
                     )
                 }
             }

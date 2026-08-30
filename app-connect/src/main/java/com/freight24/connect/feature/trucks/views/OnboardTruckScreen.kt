@@ -175,7 +175,7 @@ fun OnboardTruckScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("Next", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                Text("Next", fontWeight = FontWeight.Bold)
                                 Spacer(Modifier.width(8.dp))
                                 Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(18.dp))
                             }
@@ -370,7 +370,7 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
                             )
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = MaterialTheme.shapes.medium,
                         singleLine = true,
                         colors = if (selectedTruckOwner != null) {
                             OutlinedTextFieldDefaults.colors(
@@ -387,7 +387,7 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(top = 4.dp),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = MaterialTheme.shapes.medium,
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.surfaceVariant
                             ),
@@ -438,7 +438,7 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
             placeholder = { Text("KA07AB1287") },
 //            leadingIcon = { Icon(Icons.Default.Numbers, contentDescription = null) },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
+            shape = MaterialTheme.shapes.medium,
             singleLine = true,
             keyboardOptions =
                 KeyboardOptions(
@@ -467,7 +467,7 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
                     Modifier
                         .weight(1f)
                         .focusRequester(makeFocusRequester),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 singleLine = true,
             )
             OutlinedTextField(
@@ -476,7 +476,7 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
                 label = { Text("Model") },
                 placeholder = { Text("FH Aero") },
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 singleLine = true,
             )
         }
@@ -490,7 +490,7 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
                 Modifier
                     .fillMaxWidth()
                     .focusRequester(yearFocusRequester),
-            shape = RoundedCornerShape(12.dp),
+            shape = MaterialTheme.shapes.medium,
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         )
@@ -766,7 +766,7 @@ private fun OnboardSuccessScreen(
                         Text(
                             text = "● ACTIVE",
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            fontSize = 10.sp,
+                            style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
                         )
@@ -781,7 +781,7 @@ private fun OnboardSuccessScreen(
         Button(
             onClick = onAddAnother,
             modifier = Modifier.fillMaxWidth().height(56.dp),
-            shape = RoundedCornerShape(12.dp),
+            shape = MaterialTheme.shapes.medium,
             colors =
                 ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,

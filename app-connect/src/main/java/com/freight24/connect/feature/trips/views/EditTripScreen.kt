@@ -113,7 +113,7 @@ fun EditTripScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(56.dp),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = MaterialTheme.shapes.medium,
                         colors = ButtonDefaults.buttonColors(containerColor = extendedColors.success),
                         enabled = !uiState.isSaving && uiState.hasChanges
                     ) {
@@ -145,7 +145,7 @@ fun EditTripScreen(
                 ) {
                     // Trip ID Card
                     Card(
-                        shape = RoundedCornerShape(12.dp),
+                        shape = MaterialTheme.shapes.medium,
                         colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -175,7 +175,7 @@ fun EditTripScreen(
                     // Truck Selection Card
                     val isTruckUpdated = uiState.truckNumber != uiState.initialTruckNumber
                     Card(
-                        shape = RoundedCornerShape(12.dp),
+                        shape = MaterialTheme.shapes.medium,
                         colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
                         border = if (isTruckUpdated) androidx.compose.foundation.BorderStroke(1.dp, extendedColors.success) else null,
                         modifier = Modifier
@@ -261,7 +261,7 @@ fun EditTripScreen(
 
                     // Basic Details Section
                     Card(
-                        shape = RoundedCornerShape(12.dp),
+                        shape = MaterialTheme.shapes.medium,
                         colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -291,7 +291,7 @@ fun EditTripScreen(
 
                     // Optional Details Section
                     Card(
-                        shape = RoundedCornerShape(12.dp),
+                        shape = MaterialTheme.shapes.medium,
                         colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
                         modifier = Modifier.fillMaxWidth()
                     ) {

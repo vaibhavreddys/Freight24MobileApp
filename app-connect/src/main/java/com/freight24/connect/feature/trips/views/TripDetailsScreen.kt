@@ -188,7 +188,7 @@ fun TripDetailsScreen(
                 }
             },
             containerColor = colorScheme.surface,
-            shape = RoundedCornerShape(12.dp)
+            shape = MaterialTheme.shapes.medium
         )
     }
 
@@ -233,7 +233,7 @@ fun TripDetailsScreen(
                 }
             },
             containerColor = colorScheme.surface,
-            shape = RoundedCornerShape(12.dp)
+            shape = MaterialTheme.shapes.medium
         )
     }
 
@@ -249,7 +249,7 @@ fun TripDetailsScreen(
                 }
             },
             containerColor = colorScheme.surface,
-            shape = RoundedCornerShape(12.dp)
+            shape = MaterialTheme.shapes.medium
         )
     }
 
@@ -552,7 +552,7 @@ fun DocumentCard(
     }
 
     Card(
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
         border = androidx.compose.foundation.BorderStroke(1.dp, colorScheme.outlineVariant),
         modifier = Modifier.fillMaxWidth(),
@@ -647,7 +647,7 @@ fun StatusBadgeSmall(status: String) {
         Text(
             text = status.replaceFirstChar { it.uppercase() },
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, color = ticketColor, fontSize = 10.sp)
+            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, color = ticketColor)
         )
     }
 }
@@ -664,7 +664,7 @@ fun ExpandableSection(
     var expanded by remember { mutableStateOf(initiallyExpanded) }
     
     Card(
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -867,7 +867,7 @@ fun PaymentBreakdownContent(financials: TripDataResponse.FinanceDetails?) {
         val balanceDue = financials.netPayable - financials.totalPaidAmount
         Surface(
             color = MaterialTheme.colorScheme.tertiaryContainer,
-            shape = RoundedCornerShape(12.dp),
+            shape = MaterialTheme.shapes.medium,
             modifier = Modifier.fillMaxWidth()
         ) {
             Row(
@@ -929,8 +929,7 @@ fun PaymentDetailRow(
                         text = detailText,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 11.sp
-                    )
+                                            )
                 }
             }
             Text(

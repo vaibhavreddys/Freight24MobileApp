@@ -114,7 +114,7 @@ fun SearchSelectionScreen(
                         .padding(16.dp)
                         .focusRequester(focusRequester),
                 singleLine = true,
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 trailingIcon = {
                     Icon(Icons.Default.Search, contentDescription = null, tint = colorScheme.onSurfaceVariant)
                 },

@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -210,7 +211,7 @@ fun LuChargesScreen(
                     .fillMaxWidth()
                     .padding(16.dp)
                     .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colorScheme.primary,
                     contentColor = colorScheme.onPrimary,
@@ -223,7 +224,7 @@ fun LuChargesScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Update Charges", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text("Update Charges", fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -241,7 +242,7 @@ fun LuChargesScreen(
             // Info Message
             Surface(
                 color = colorScheme.primaryContainer,
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 border = androidx.compose.foundation.BorderStroke(1.dp, colorScheme.primary.copy(alpha = 0.2f)),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -301,7 +302,7 @@ fun LuChargesScreen(
                                 .fillMaxWidth()
                                 .height(120.dp),
                             placeholder = { Text("Enter any additional details or remarks here...", color = colorScheme.onSurfaceVariant) },
-                            shape = RoundedCornerShape(12.dp),
+                            shape = MaterialTheme.shapes.medium,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = colorScheme.primary,
                                 unfocusedBorderColor = colorScheme.outlineVariant
@@ -324,7 +325,7 @@ fun LuChargesScreen(
                     Text(
                         "Supporting Documents",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
+                        style = MaterialTheme.typography.titleMedium,
                         color = colorScheme.onSurface
                     )
 
@@ -431,11 +432,11 @@ fun LuAmountInput(
             onValueChange = onValueChange,
             modifier = Modifier.fillMaxWidth(),
             leadingIcon = {
-                Text("₹", color = colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text("₹", color = colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
             },
             placeholder = { Text("0.00", color = colorScheme.onSurfaceVariant) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            shape = RoundedCornerShape(12.dp),
+            shape = MaterialTheme.shapes.medium,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = colorScheme.primary,
                 unfocusedBorderColor = colorScheme.outlineVariant

@@ -92,7 +92,7 @@ fun TruckerCallRow(
                 modifier = Modifier.size(16.dp)
             )
             Spacer(Modifier.width(6.dp))
-            Text("Call", color = colorScheme.onPrimary, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Text("Call", color = colorScheme.onPrimary, fontWeight = FontWeight.Bold)
         }
 
         if (onReject != null) {

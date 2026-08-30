@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.outlined.Handshake
 import androidx.compose.material.icons.outlined.Payments
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,7 +31,7 @@ fun TripCard(
 ) {
     val colorScheme = MaterialTheme.colorScheme
     Card(
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         modifier = modifier
@@ -178,12 +179,12 @@ fun TripCard(
             ) {
                 Text(
                     text = trip.client.name.uppercase(),
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                    style = MaterialTheme.typography.labelSmall,
                     color = colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = trip.createdAt.toDate(),
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                    style = MaterialTheme.typography.labelSmall,
                     color = colorScheme.onSurfaceVariant
                 )
             }
@@ -210,8 +211,7 @@ fun StatusBadge(status: String) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelSmall.copy(
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
+                                fontWeight = FontWeight.Bold,
                 color = ticketColor
             ),
             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)

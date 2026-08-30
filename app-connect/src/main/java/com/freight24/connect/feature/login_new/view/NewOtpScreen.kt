@@ -195,7 +195,7 @@ fun NewOtpScreen(
                 Box(
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
-                        .clip(RoundedCornerShape(18.dp))
+                        .clip(MaterialTheme.shapes.medium)
                         .background(colorScheme.surfaceContainerHigh)
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     contentAlignment = Alignment.Center,
@@ -233,7 +233,7 @@ fun NewOtpScreen(
                         disabledContainerColor = colorScheme.surfaceContainerHighest.copy(alpha = 0.5f),
                         disabledContentColor = colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                     ),
-                    shape = RoundedCornerShape(28.dp)
+                    shape = MaterialTheme.shapes.large
                 ) {
                     Text(
                         text = if (uiState is UiState.Loading) "VERIFYING..." else "VERIFY & PROCEED",

@@ -37,7 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 
-private val cellShape = RoundedCornerShape(14.dp)
+private val cellShape = RoundedCornerShape(16.dp)
 
 @Composable
 fun OtpInputField(

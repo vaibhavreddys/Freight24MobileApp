@@ -159,7 +159,7 @@ fun EditTruckScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("Next", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                Text("Next", fontWeight = FontWeight.Bold)
                                 Spacer(Modifier.width(8.dp))
                                 Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(18.dp))
                             }
@@ -357,7 +357,7 @@ private fun BasicInfoStep(viewModel: com.freight24.connect.feature.trucks.domain
             supportingText = if (registrationError != null) {
                 { Text(registrationError!!) }
             } else null,
-            shape = RoundedCornerShape(12.dp),
+            shape = MaterialTheme.shapes.medium,
             singleLine = true,
             keyboardOptions =
                 KeyboardOptions(
@@ -386,7 +386,7 @@ private fun BasicInfoStep(viewModel: com.freight24.connect.feature.trucks.domain
                     Modifier
                         .weight(1f)
                         .focusRequester(makeFocusRequester),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 singleLine = true,
             )
             OutlinedTextField(
@@ -395,7 +395,7 @@ private fun BasicInfoStep(viewModel: com.freight24.connect.feature.trucks.domain
                 label = { Text("Model") },
                 placeholder = { Text("FH Aero") },
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 singleLine = true,
             )
         }
@@ -409,7 +409,7 @@ private fun BasicInfoStep(viewModel: com.freight24.connect.feature.trucks.domain
                 Modifier
                     .fillMaxWidth()
                     .focusRequester(yearFocusRequester),
-            shape = RoundedCornerShape(12.dp),
+            shape = MaterialTheme.shapes.medium,
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         )
@@ -704,7 +704,7 @@ private fun EditSuccessScreen(
         Button(
             onClick = onDone,
             modifier = Modifier.fillMaxWidth().height(56.dp),
-            shape = RoundedCornerShape(12.dp),
+            shape = MaterialTheme.shapes.medium,
             colors =
                 ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,

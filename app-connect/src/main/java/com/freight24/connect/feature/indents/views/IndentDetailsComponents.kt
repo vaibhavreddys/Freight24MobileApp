@@ -73,7 +73,7 @@ fun IndentDetailSection(
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = MaterialTheme.shapes.medium,
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainer),
         border = if (hasError) BorderStroke(1.dp, colorScheme.error) else null,
@@ -178,7 +178,7 @@ fun GeneralInfoSection(
                             containerColor = extended.success,
                             contentColor = extended.onSuccess,
                         ),
-                        shape = RoundedCornerShape(32.dp),
+                        shape = MaterialTheme.shapes.large,
                     ) {
                         Icon(
                             imageVector = Icons.Default.Call,
@@ -276,7 +276,7 @@ private fun MetricCard(
 
     Card(
         modifier = if (onClick != null) modifier.clickable { onClick() } else modifier,
-        shape = RoundedCornerShape(18.dp),
+        shape = MaterialTheme.shapes.medium,
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainer),
     ) {

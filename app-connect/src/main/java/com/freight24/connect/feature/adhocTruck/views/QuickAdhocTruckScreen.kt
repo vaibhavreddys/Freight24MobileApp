@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -72,7 +73,7 @@ fun QuickAdhocTruckScreen(
             Button(
                 onClick = onSuccess,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
             ) {
                 Text("Done")
             }
@@ -127,7 +128,7 @@ fun QuickAdhocTruckScreen(
                 placeholder = { Text("Enter name if new owner") },
                 leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 singleLine = true,
                 enabled = uiState.selectedOwner == null,
             )
@@ -158,7 +159,7 @@ fun QuickAdhocTruckScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 enabled = !uiState.isSubmitting,
             ) {
                 if (uiState.isSubmitting) {
@@ -169,7 +170,7 @@ fun QuickAdhocTruckScreen(
                 } else {
                     Text(
                         "Create Adhoc Entry",
-                        fontSize = 16.sp,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                     )
                 }
@@ -231,7 +232,7 @@ fun PhoneSearchSection(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 4.dp),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 border = BorderStroke(1.dp, colorScheme.outlineVariant),
             ) {
                 Column {
@@ -281,7 +282,7 @@ fun PhoneSearchSection(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 4.dp),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 colors = CardDefaults.cardColors(containerColor = colorScheme.primaryContainer),
             ) {
                 Row(
@@ -333,7 +334,7 @@ fun TruckTypeSection(
         } else if (truckTypes != null) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 border = BorderStroke(2.dp, colorScheme.outlineVariant),
             ) {
                 Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -411,7 +412,7 @@ fun LocationSearchSection(
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
+            shape = MaterialTheme.shapes.medium,
             singleLine = true,
         )
 
@@ -420,7 +421,7 @@ fun LocationSearchSection(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 4.dp),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 border = BorderStroke(1.dp, colorScheme.outlineVariant),
             ) {
                 Column {

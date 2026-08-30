@@ -13,6 +13,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -71,7 +72,7 @@ fun HaltingChargesScreen(
                 Button(
                     onClick = { viewModel.onEvent(HaltingChargesEvent.SubmitHaltingCharges(tripId)) },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = MaterialTheme.shapes.medium,
                     colors = ButtonDefaults.buttonColors(containerColor = colorScheme.primary),
                     enabled = !uiState.isUpdating && uiState.hasChanges
                 ) {
@@ -96,7 +97,7 @@ fun HaltingChargesScreen(
             // Info Message
             Surface(
                 color = colorScheme.primaryContainer,
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 border = androidx.compose.foundation.BorderStroke(1.dp, colorScheme.primary.copy(alpha = 0.2f)),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -122,7 +123,7 @@ fun HaltingChargesScreen(
             // Halting Days Section
             Card(
                 colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -153,7 +154,7 @@ fun HaltingChargesScreen(
                 Spacer(modifier = Modifier.height(12.dp))
                 Card(
                     colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = MaterialTheme.shapes.medium,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column {
@@ -183,7 +184,7 @@ fun HaltingChargesScreen(
                     onValueChange = { viewModel.onEvent(HaltingChargesEvent.UpdateNotes(it)) },
                     modifier = Modifier.fillMaxWidth().height(120.dp),
                     placeholder = { Text("Add any additional notes or details here...", style = MaterialTheme.typography.bodyMedium) },
-                    shape = RoundedCornerShape(12.dp),
+                    shape = MaterialTheme.shapes.medium,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedContainerColor = colorScheme.surface,
                         unfocusedContainerColor = colorScheme.surface,

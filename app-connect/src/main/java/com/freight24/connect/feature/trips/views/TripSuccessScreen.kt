@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -92,7 +93,7 @@ fun TripSuccessScreen(
 
             // Trip Details Card
             Card(
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -106,7 +107,7 @@ fun TripSuccessScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column {
-                            Text("TRIP ID", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text("TRIP ID", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
                             Text(
                                 "#$tripId",
                                 style = MaterialTheme.typography.titleMedium,
@@ -115,7 +116,7 @@ fun TripSuccessScreen(
                             )
                         }
                         Column(horizontalAlignment = Alignment.End) {
-                            Text("TRUCK NUMBER", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text("TRUCK NUMBER", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
                             Text(
                                 truckNumber,
                                 style = MaterialTheme.typography.titleMedium,
@@ -157,7 +158,7 @@ fun TripSuccessScreen(
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text("ROUTE", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text("ROUTE", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 "$origin to $destination",
@@ -175,7 +176,7 @@ fun TripSuccessScreen(
                             Icon(Icons.Default.Person, contentDescription = "Driver", tint = colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
-                                Text("DRIVER", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                Text("DRIVER", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
                                 Text(
                                     driverName,
                                     style = MaterialTheme.typography.bodyMedium,
@@ -191,7 +192,7 @@ fun TripSuccessScreen(
                         Icon(Icons.Default.Call, contentDescription = "Driver phone", tint = colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text("DRIVER PHONE", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            Text("DRIVER PHONE", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant, fontWeight = FontWeight.Bold)
                             Text(
                                 driverPhone,
                                 style = MaterialTheme.typography.bodyMedium,

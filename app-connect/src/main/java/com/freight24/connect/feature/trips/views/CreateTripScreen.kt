@@ -112,7 +112,7 @@ internal fun CreateTripScreen(
                         strokeWidth = 2.dp
                     )
                 }
-                Text("CREATE TRIP", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text("CREATE TRIP", fontWeight = FontWeight.Bold)
             }
         },
         containerColor = colorScheme.background
@@ -160,7 +160,7 @@ internal fun CreateTripScreen(
 @Composable
 fun IndentInfoCard(uiState: CreateTripUiState) {
     Card(
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -229,8 +229,7 @@ fun IndentInfoCard(uiState: CreateTripUiState) {
                             "ORIGIN",
                             style = MaterialTheme.typography.labelSmall,
                             color = colorScheme.onSurfaceVariant,
-                            fontSize = 10.sp
-                        )
+                                                    )
                         Text(
                             loadingLocation?.areaName ?: loadingLocation?.cityName ?: "Unknown",
                             style = MaterialTheme.typography.titleMedium,
@@ -243,8 +242,7 @@ fun IndentInfoCard(uiState: CreateTripUiState) {
                             "DESTINATION",
                             style = MaterialTheme.typography.labelSmall,
                             color = colorScheme.onSurfaceVariant,
-                            fontSize = 10.sp
-                        )
+                                                    )
                         Text(
                             unloadingLocation?.areaName ?: unloadingLocation?.cityName ?: "Unknown",
                             style = MaterialTheme.typography.titleMedium,
@@ -260,14 +258,14 @@ fun IndentInfoCard(uiState: CreateTripUiState) {
             val groupDetails = uiState.indent?.indentGroupDetails
             Row(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("CLIENT", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant, fontSize = 10.sp)
+                    Text("CLIENT", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant)
                     Text(
                         groupDetails?.clientProfile?.companyName ?: groupDetails?.clientProfile?.fullName ?: "N/A",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    Text("CLIENT COST", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant, fontSize = 10.sp)
+                    Text("CLIENT COST", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant)
                     Text(
                         "₹${formatCurrency(groupDetails?.clientTripCost)}",
                         style = MaterialTheme.typography.titleMedium,
@@ -275,14 +273,14 @@ fun IndentInfoCard(uiState: CreateTripUiState) {
                     )
                 }
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("MATERIAL TYPE", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant, fontSize = 10.sp)
+                    Text("MATERIAL TYPE", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant)
                     Text(
                         groupDetails?.material ?: "N/A",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    Text("NEGOTIATED COST", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant, fontSize = 10.sp)
+                    Text("NEGOTIATED COST", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant)
                     Text(
                         "₹${formatCurrency(uiState.indent?.negotiatedTripCost)}",
                         style = MaterialTheme.typography.titleMedium,
@@ -298,7 +296,7 @@ fun IndentInfoCard(uiState: CreateTripUiState) {
 @Composable
 fun SelectedTruckCard(uiState: CreateTripUiState) {
     Card(
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
@@ -322,7 +320,7 @@ fun SelectedTruckCard(uiState: CreateTripUiState) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("TRUCK NUMBER", style = MaterialTheme.typography.labelSmall, color = extendedColors.success, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        Text("TRUCK NUMBER", style = MaterialTheme.typography.labelSmall, color = extendedColors.success, fontWeight = FontWeight.Bold)
                         Text(
                             uiState.truck?.registrationNumber ?: "",
                             style = MaterialTheme.typography.titleLarge,
@@ -354,7 +352,7 @@ internal fun DriverDetailsCard(
     viewModel: CreateTripViewModel
 ) {
     Card(
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {

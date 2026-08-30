@@ -116,17 +116,17 @@ fun OtpInputField(
                         modifier =
                             Modifier
                                 .size(36.dp)
-                                .background(colors.surface, RoundedCornerShape(12.dp))
+                                .background(colors.surface, MaterialTheme.shapes.medium)
                                 .border(
                                     2.dp,
                                     if (otp.length == index) colors.primary else Color.Transparent,
-                                    RoundedCornerShape(12.dp),
+                                    MaterialTheme.shapes.medium,
                                 ),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
                             text = if (char.isEmpty() && otp.length == index) "|" else char,
-                            fontSize = 28.sp,
+                            style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
                             color = colors.onSurface,
                         )

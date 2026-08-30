@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -64,7 +65,7 @@ fun AssignTruckScreen(
                 onValueChange = { viewModel.onEvent(AssignTruckEvent.UpdateQuery(it)) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(colorScheme.surface, RoundedCornerShape(12.dp)),
+                    .background(colorScheme.surface, MaterialTheme.shapes.medium),
                 placeholder = { 
                     Text(
                         "Enter vehicle no. (e.g. KA01AB1234)",
@@ -79,7 +80,7 @@ fun AssignTruckScreen(
                         tint = colorScheme.onSurfaceVariant
                     ) 
                 },
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = colorScheme.surface,
                     unfocusedContainerColor = colorScheme.surface,
@@ -113,8 +114,7 @@ fun AssignTruckScreen(
                             "${uiState.trucks.size} ${if (uiState.trucks.size == 1) "TRUCK" else "TRUCKS"} FOUND",
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             style = MaterialTheme.typography.labelSmall,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
+                                                        fontWeight = FontWeight.Bold,
                             color = colorScheme.onSurfaceVariant
                         )
                     }
@@ -161,7 +161,7 @@ fun TruckItem(
     val buttonContentColor = if (isEnabled) colorScheme.onPrimary else colorScheme.onSurfaceVariant
 
     Card(
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
         border = androidx.compose.foundation.BorderStroke(1.dp, colorScheme.outlineVariant),
         modifier = Modifier.fillMaxWidth()
@@ -174,7 +174,7 @@ fun TruckItem(
         ) {
             // Truck Icon Box
             Surface(
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 color = colorScheme.surfaceVariant,
                 modifier = Modifier.size(48.dp)
             ) {
@@ -250,7 +250,7 @@ fun TruckItem(
                     disabledContentColor = buttonContentColor
                 ),
                 enabled = isEnabled,
-                shape = RoundedCornerShape(10.dp),
+                shape = MaterialTheme.shapes.small,
                 contentPadding = PaddingValues(horizontal = 16.dp),
                 modifier = Modifier.height(36.dp)
             ) {

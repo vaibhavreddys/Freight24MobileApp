@@ -60,16 +60,16 @@ fun IndentStatusFilterMenu(
                 .windowInsetsPadding(WindowInsets.statusBars)
                 .padding(top = 64.dp, end = 4.dp)
                 .widthIn(min = 160.dp, max = 240.dp)
-                .shadow(elevation = 4.dp, shape = RoundedCornerShape(12.dp))
+                .shadow(elevation = 4.dp, shape = MaterialTheme.shapes.medium)
                 .border(
                     width = 1.dp,
                     color = MaterialTheme.colorScheme.outlineVariant,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = MaterialTheme.shapes.medium,
                 )
-                .clip(RoundedCornerShape(12.dp))
+                .clip(MaterialTheme.shapes.medium)
                 .background(
                     color = MaterialTheme.colorScheme.surfaceContainer,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = MaterialTheme.shapes.medium,
                 )
                 .padding(vertical = 8.dp),
         ) {

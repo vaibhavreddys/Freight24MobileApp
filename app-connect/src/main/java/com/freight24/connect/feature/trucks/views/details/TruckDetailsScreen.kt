@@ -265,7 +265,7 @@ internal fun TruckDetailsScreen(
                     shape = RoundedCornerShape(50.dp),
                     enabled = uiState is UiState.Success
                 ) {
-                    Text("Edit Truck", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("Edit Truck", fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -386,7 +386,7 @@ private fun TruckDetailsContent(
 @Composable
 private fun SpecificationsSection(truck: TruckDetail) {
     Card(
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {
@@ -437,8 +437,7 @@ private fun SpecItem(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                fontSize = 10.sp,
-            )
+                            )
             Spacer(Modifier.height(4.dp))
             Text(
                 text = value,
@@ -456,7 +455,7 @@ private fun DocumentsSection(
     onUploadClick: (String) -> Unit,
 ) {
     Card(
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
     ) {

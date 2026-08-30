@@ -599,7 +599,7 @@ private fun ProfileSection(
         ) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
+                shape = MaterialTheme.shapes.medium,
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
             ) {
@@ -669,7 +669,7 @@ private fun ProfileField(
                 },
             textStyle = MaterialTheme.typography.bodyLarge,
             singleLine = true,
-            shape = RoundedCornerShape(12.dp),
+            shape = MaterialTheme.shapes.medium,
             isError = validationError != null,
             keyboardOptions = KeyboardOptions(
                 keyboardType = when (validationType) {
@@ -733,7 +733,7 @@ private fun DividerLine() {
 private fun VerificationChip(text: String, color: Color) {
     Surface(
         color = color.copy(alpha = 0.12f),
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
     ) {
         Text(
             text = text,
@@ -843,7 +843,7 @@ private fun FloatingActions(
 //        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f),
         tonalElevation = 8.dp,
         shadowElevation = 12.dp,
-        shape = RoundedCornerShape(18.dp),
+        shape = MaterialTheme.shapes.medium,
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -853,7 +853,7 @@ private fun FloatingActions(
             OutlinedButton(
                 onClick = onCancel,
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 enabled = !isSaving,
             ) {
                 Text("Cancel", fontWeight = FontWeight.Bold)
@@ -863,7 +863,7 @@ private fun FloatingActions(
                 onClick = onSave,
                 enabled = enabled,
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
             ) {
                 if (isSaving) {
@@ -1145,7 +1145,7 @@ private fun TruckOwnerOnboardedDialog(
                         Spacer(modifier = Modifier.height(20.dp))
                         Text(
                             text = "ONBOARDING COMPLETE",
-                            fontSize = 11.sp,
+                            style = MaterialTheme.typography.labelSmall,
                             letterSpacing = 0.12.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = successColor,
@@ -1156,7 +1156,7 @@ private fun TruckOwnerOnboardedDialog(
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             text = "${truckOwnerName.ifBlank { "Truck owner" }} has been onboarded successfully.",
-                            fontSize = 22.sp,
+                            style = MaterialTheme.typography.titleLarge,
                             lineHeight = 28.6.sp,
                             fontWeight = FontWeight.Normal,
                             letterSpacing = (-0.02).sp,
@@ -1179,7 +1179,7 @@ private fun TruckOwnerOnboardedDialog(
                             Text(
                                 text = "\u25cf TRUCK OWNER",
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
-                                fontSize = 11.sp,
+                                style = MaterialTheme.typography.labelSmall,
                                 letterSpacing = 0.06.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = successColor.copy(alpha = 0.85f),
@@ -1280,21 +1280,21 @@ private fun DialogActionButton(
             onClick = onClick,
             modifier = modifier.scale(scale).height(52.dp),
             enabled = enabled,
-            shape = RoundedCornerShape(12.dp),
+            shape = MaterialTheme.shapes.medium,
             interactionSource = interactionSource,
             colors = ButtonDefaults.buttonColors(
                 containerColor = containerColor,
                 contentColor = contentColor,
             ),
         ) {
-            Text(text = text, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+            Text(text = text, fontWeight = FontWeight.Medium)
         }
     } else {
         OutlinedButton(
             onClick = onClick,
             modifier = modifier.scale(scale).height(52.dp),
             enabled = enabled,
-            shape = RoundedCornerShape(12.dp),
+            shape = MaterialTheme.shapes.medium,
             interactionSource = interactionSource,
             border = androidx.compose.foundation.BorderStroke(0.5.dp, borderColor),
             colors = ButtonDefaults.outlinedButtonColors(
@@ -1302,7 +1302,7 @@ private fun DialogActionButton(
                 contentColor = contentColor,
             ),
         ) {
-            Text(text = text, fontSize = 14.sp, fontWeight = FontWeight.Medium)
+            Text(text = text, fontWeight = FontWeight.Medium)
         }
     }
 }

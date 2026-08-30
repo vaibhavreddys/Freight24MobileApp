@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -70,7 +71,7 @@ fun OtherDeductionsScreen(
                     .fillMaxWidth()
                     .padding(16.dp)
                     .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(containerColor = colorScheme.primary),
                 enabled = !uiState.isLoading && uiState.hasChanges
             ) {
@@ -80,7 +81,7 @@ fun OtherDeductionsScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Update Deductions", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text("Update Deductions", fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -98,8 +99,8 @@ fun OtherDeductionsScreen(
             // NOTE box
             Surface(
                 color = colorScheme.primaryContainer,
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth().border(1.dp, colorScheme.primary.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier.fillMaxWidth().border(1.dp, colorScheme.primary.copy(alpha = 0.2f), MaterialTheme.shapes.medium)
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),
@@ -126,7 +127,7 @@ fun OtherDeductionsScreen(
                 Text(
                     "Deduction Amount",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
+                    style = MaterialTheme.typography.labelLarge,
                     color = colorScheme.onSurface
                 )
                 OutlinedTextField(
@@ -138,7 +139,7 @@ fun OtherDeductionsScreen(
                         Text("₹", color = colorScheme.primary, fontWeight = FontWeight.Bold)
                     },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = MaterialTheme.shapes.medium,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = colorScheme.primary,
                         unfocusedBorderColor = colorScheme.outlineVariant,
@@ -154,7 +155,7 @@ fun OtherDeductionsScreen(
                 Text(
                     "Reason for Deduction",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
+                    style = MaterialTheme.typography.labelLarge,
                     color = colorScheme.onSurface
                 )
                 OutlinedTextField(
@@ -167,7 +168,7 @@ fun OtherDeductionsScreen(
                             color = colorScheme.onSurfaceVariant
                         ) 
                     },
-                    shape = RoundedCornerShape(12.dp),
+                    shape = MaterialTheme.shapes.medium,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = colorScheme.primary,
                         unfocusedBorderColor = colorScheme.outlineVariant,
