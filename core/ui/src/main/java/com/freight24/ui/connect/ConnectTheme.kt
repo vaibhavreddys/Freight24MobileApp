@@ -66,7 +66,7 @@ internal val ConnectLightColorScheme: ColorScheme =
 internal val ConnectDarkColorScheme: ColorScheme =
     darkColorScheme(
         primary = ConnectPrimary80,
-        onPrimary = OnPrimary20,
+        onPrimary = ConnectOnPrimary20,
         primaryContainer = ConnectPrimary30,
         onPrimaryContainer = ConnectPrimary90,
         inversePrimary = ConnectInversePrimaryDark,
