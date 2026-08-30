@@ -62,7 +62,7 @@ class ManageTruckOwnersViewModel @Inject constructor(
         } else {
             emptyList()
         }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     init {
         loadTruckOwners()
@@ -98,7 +98,9 @@ class ManageTruckOwnersViewModel @Inject constructor(
                     _isRefreshing.value = false
                 }
                 .onFailure { error ->
-                    _uiState.value = UiState.Error(error.message ?: "Failed to load truck owners")
+                    if (!isRefresh) {
+                        _uiState.value = UiState.Error(error.message ?: "Failed to load truck owners")
+                    }
                     _isRefreshing.value = false
                 }
         }

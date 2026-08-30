@@ -73,7 +73,11 @@ class ManageTrucksViewModel @Inject constructor(
                     _isRefreshing.value = false
                 }
                 .onFailure { error ->
-                    _uiState.value = UiState.Error(error.message ?: "Failed to load trucks")
+                    // A refresh failure must not wipe a visible list into a
+                    // full-screen error; only the initial load shows Error.
+                    if (!isRefresh) {
+                        _uiState.value = UiState.Error(error.message ?: "Failed to load trucks")
+                    }
                     _isRefreshing.value = false
                 }
         }

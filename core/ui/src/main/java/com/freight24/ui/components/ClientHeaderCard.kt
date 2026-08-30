@@ -40,7 +40,7 @@ fun ClientHeaderCard(
     modifier: Modifier = Modifier,
 ) {
     Card(
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.medium,
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors = CardDefaults.cardColors(
@@ -84,7 +84,7 @@ fun ClientHeaderCard(
                 if (showPhone && phone.isNotBlank()) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(top = 6.dp)
+                        modifier = Modifier.padding(top = 8.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Phone,
@@ -102,7 +102,7 @@ fun ClientHeaderCard(
                 }
             }
             ClientStatusChip(status)
-            Spacer(Modifier.width(6.dp))
+            Spacer(Modifier.width(8.dp))
             Icon(
                 imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
                 contentDescription = null,
@@ -154,19 +154,16 @@ fun ClientIcon(
         modifier =
             Modifier
                 .size(44.dp)
-                .background(palette.first, RoundedCornerShape(10.dp)),
+                .background(palette.first, MaterialTheme.shapes.small),
         contentAlignment = Alignment.Center,
     ) {
         if (initials != null) {
             Text(
                 text = initials,
-                style =
-                    androidx.compose.ui.text.TextStyle(
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        letterSpacing = 0.03.sp,
-                        color = palette.second,
-                    ),
+                style = MaterialTheme.typography.labelLarge.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = palette.second,
+                ),
             )
         } else {
             Icon(
@@ -181,21 +178,26 @@ fun ClientIcon(
 @Composable
 fun ClientStatusChip(status: String) {
     val isActive = status.equals("active", ignoreCase = true)
-    val (text, color) = if (isActive) {
-        "Active" to FreightThemeTokens.colors.success
+    val extended = FreightThemeTokens.colors
+    val (text, container, content) = if (isActive) {
+        Triple("Active", extended.surfaceSuccess, extended.onSurfaceSuccess)
     } else {
-        "Inactive" to MaterialTheme.colorScheme.onSurfaceVariant
+        Triple(
+            "Inactive",
+            MaterialTheme.colorScheme.surfaceContainerHigh,
+            MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 
     Surface(
-        color = color.copy(alpha = 0.18f),
-        shape = RoundedCornerShape(8.dp),
+        color = container,
+        shape = MaterialTheme.shapes.small,
     ) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
-            color = color,
+            color = content,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
         )
     }

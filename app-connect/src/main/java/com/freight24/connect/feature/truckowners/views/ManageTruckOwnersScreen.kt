@@ -33,9 +33,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -49,6 +53,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -76,6 +81,8 @@ import com.freight24.connect.feature.truckowners.domain.viewmodel.ManageTruckOwn
 import com.freight24.rest.response.TruckOwnerDto
 import com.freight24.ui.R
 import com.freight24.ui.UiState
+import com.freight24.ui.components.FilterSelectionChip
+import com.freight24.ui.components.FreightEmptyState
 import com.freight24.ui.theme.FreightThemeTokens
 import kotlinx.coroutines.delay
 import kotlin.math.abs
@@ -105,12 +112,11 @@ fun ManageTruckOwnersScreen(
     onTruckOwnerClick: (String) -> Unit,
     onBackClick: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val searchQuery by viewModel.searchQuery.collectAsState()
-    val selectedFilter by viewModel.selectedFilter.collectAsState()
-    val filteredOwners by viewModel.filteredOwners.collectAsState()
-    val isRefreshing by viewModel.isRefreshing.collectAsState()
-    val successColor = FreightThemeTokens.colors.success
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+    val selectedFilter by viewModel.selectedFilter.collectAsStateWithLifecycle()
+    val filteredOwners by viewModel.filteredOwners.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
     val animatedOwnerIds = remember { mutableStateListOf<String>() }
 
@@ -129,34 +135,17 @@ fun ManageTruckOwnersScreen(
                     )
                 },
                 navigationIcon = {
-                    Surface(
-                        modifier = Modifier
-                            .padding(start = 12.dp)
-                            .size(36.dp),
-                        shape = MaterialTheme.shapes.small,
-                        color = MaterialTheme.colorScheme.surfaceVariant
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clickable(onClick = onBackClick),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                                contentDescription = "Back",
-                                tint = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
+                            contentDescription = "Back"
+                        )
                     }
                 }
             )
         },
         floatingActionButton = {
-            AddTruckOwnerFab(
-                successColor = successColor,
-                onClick = onAddTruckOwnerClick
-            )
+            AddTruckOwnerFab(onClick = onAddTruckOwnerClick)
         }
     ) { paddingValues ->
         Column(
@@ -179,7 +168,7 @@ fun ManageTruckOwnersScreen(
                 when (val state = uiState) {
                     is UiState.Loading -> {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = successColor)
+                            CircularProgressIndicator()
                         }
                     }
 
@@ -230,7 +219,7 @@ fun ManageTruckOwnersScreen(
                                                 },
                                                 onClick = { onTruckOwnerClick(row.item.owner.user_id ?: row.item.owner.id) }
                                             )
-                                            Spacer(modifier = Modifier.height(10.dp))
+                                            Spacer(modifier = Modifier.height(12.dp))
                                         }
                                     }
                                 }
@@ -268,11 +257,11 @@ private fun HeaderBlock(
 
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             items(OwnerFilter.entries) { filter ->
-                FilterChip(
-                    title = filter.label,
+                FilterSelectionChip(
+                    label = filter.label,
                     isSelected = selectedFilter == filter,
                     onClick = { onFilterSelected(filter) }
                 )
@@ -296,16 +285,14 @@ private fun SearchField(
         placeholder = {
             Text(
                 text = "Search by name or TAG ID",
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f)
-                )
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         },
         leadingIcon = {
             Icon(
                 imageVector = Icons.Outlined.Search,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         },
         colors = OutlinedTextFieldDefaults.colors(
@@ -365,9 +352,9 @@ private fun SectionHeader(title: String) {
         style = MaterialTheme.typography.labelSmall.copy(
             fontWeight = FontWeight.SemiBold,
             letterSpacing = 1.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         ),
-        modifier = Modifier.padding(start = 2.dp, top = 4.dp, bottom = 8.dp)
+        modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
     )
 }
 
@@ -379,32 +366,19 @@ private fun OwnerCard(
     onAnimationFinished: () -> Unit,
     onClick: () -> Unit
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val isHovered by interactionSource.collectIsHoveredAsState()
     var visible by remember(owner.id, shouldAnimate) { mutableStateOf(!shouldAnimate) }
     val density = LocalDensity.current
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.99f else 1f,
-        animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing),
-        label = "owner_card_scale"
-    )
-    val hoverOffset by animateDpAsState(
-        targetValue = if (isHovered) (-1).dp else 0.dp,
-        animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing),
-        label = "owner_card_hover_offset"
-    )
     val alpha by animateFloatAsState(
         targetValue = when {
             !visible -> 0f
-            owner.ownerSection == OwnerSection.INACTIVE -> 0.6f
+            owner.ownerSection == OwnerSection.INACTIVE -> 0.75f
             else -> 1f
         },
         animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
         label = "owner_card_alpha"
     )
     val translateY by animateFloatAsState(
-        targetValue = with(density) { if (visible) hoverOffset.toPx() else 10.dp.toPx() },
+        targetValue = with(density) { if (visible) 0f else 10.dp.toPx() },
         animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
         label = "owner_card_translation"
     )
@@ -423,31 +397,21 @@ private fun OwnerCard(
         modifier = Modifier
             .fillMaxWidth()
             .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
                 this.alpha = alpha
                 translationY = translateY
             },
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(
-            width = 1.dp,
-            color = MaterialTheme.colorScheme.outlineVariant
-        )
+        onClick = onClick,
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surfaceContainer,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(
-                    interactionSource = interactionSource,
-                    indication = null,
-                    onClick = onClick
-                )
-                .padding(horizontal = 14.dp, vertical = 13.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             OwnerAvatar(owner = owner)
-            Spacer(modifier = Modifier.width(13.dp))
+            Spacer(modifier = Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -460,7 +424,7 @@ private fun OwnerCard(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 )
-                Spacer(modifier = Modifier.height(3.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 TagText(owner = owner)
             }
 
@@ -478,8 +442,8 @@ private fun OwnerCard(
 
 @Composable
 private fun OwnerAvatar(owner: TruckOwnerDto) {
-    val inactiveBackground = MaterialTheme.colorScheme.surfaceVariant
-    val inactiveText = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+    val inactiveBackground = MaterialTheme.colorScheme.surfaceContainerHigh
+    val inactiveText = MaterialTheme.colorScheme.onSurfaceVariant
     val extended = FreightThemeTokens.colors
     // Five M3 container/on-container pairs that read as distinct "owners"
     // in the list. Resolved in composable scope so MaterialTheme / extended
@@ -504,7 +468,7 @@ private fun OwnerAvatar(owner: TruckOwnerDto) {
     Box(
         modifier = Modifier
             .size(44.dp)
-            .clip(RoundedCornerShape(13.dp))
+            .clip(MaterialTheme.shapes.small)
             .background(palette.first),
         contentAlignment = Alignment.Center
     ) {
@@ -527,7 +491,7 @@ private fun TagText(owner: TruckOwnerDto) {
         Text(
             text = "Pending assignment",
             style = MaterialTheme.typography.bodySmall.copy(
-                color = warningColor.copy(alpha = 0.8f)
+                color = warningColor
             )
         )
         return
@@ -538,14 +502,14 @@ private fun TagText(owner: TruckOwnerDto) {
         text = buildAnnotatedString {
             withStyle(
                 style = SpanStyle(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             ) {
                 append("#")
             }
             withStyle(
                 style = SpanStyle(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             ) {
                 append(tag)
@@ -566,34 +530,34 @@ private fun StatusBadge(section: OwnerSection) {
     val border: Color
     val label: String
 
+    val extended = FreightThemeTokens.colors
     when (section) {
         OwnerSection.ACTIVE -> {
-            background = successColor.copy(alpha = 0.10f)
-            content = successColor
-            border = successColor.copy(alpha = 0.20f)
+            background = extended.surfaceSuccess
+            content = extended.onSurfaceSuccess
+            border = background
             label = "Active"
         }
 
         OwnerSection.PENDING -> {
-            background = warningColor.copy(alpha = 0.10f)
-            content = warningColor
-            border = warningColor.copy(alpha = 0.20f)
+            background = extended.surfaceWarning
+            content = extended.onSurfaceWarning
+            border = background
             label = "Pending"
         }
 
         OwnerSection.INACTIVE -> {
-            background = MaterialTheme.colorScheme.surfaceVariant
-            content = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f)
-            border = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+            background = MaterialTheme.colorScheme.surfaceContainerHigh
+            content = MaterialTheme.colorScheme.onSurfaceVariant
+            border = background
             label = "Inactive"
         }
     }
 
     Box(
         modifier = Modifier
-            .border(BorderStroke(0.5.dp, border), MaterialTheme.shapes.medium)
-            .background(background, MaterialTheme.shapes.medium)
-            .padding(horizontal = 10.dp, vertical = 4.dp),
+            .background(background, MaterialTheme.shapes.small)
+            .padding(horizontal = 12.dp, vertical = 4.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
@@ -608,45 +572,16 @@ private fun StatusBadge(section: OwnerSection) {
 }
 
 @Composable
-private fun AddTruckOwnerFab(
-    successColor: Color,
-    onClick: () -> Unit
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val isHovered by interactionSource.collectIsHoveredAsState()
-    val scale by animateFloatAsState(
-        targetValue = when {
-            isPressed -> 0.96f
-            isHovered -> 1.05f
-            else -> 1f
-        },
-        animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing),
-        label = "fab_scale"
-    )
-
+private fun AddTruckOwnerFab(onClick: () -> Unit) {
     FloatingActionButton(
         onClick = onClick,
-        modifier = Modifier
-            .padding(end = 4.dp, bottom = 4.dp)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            },
-        shape = RoundedCornerShape(16.dp),
         containerColor = MaterialTheme.colorScheme.primary,
         contentColor = MaterialTheme.colorScheme.onPrimary,
-        interactionSource = interactionSource
     ) {
-        Box(
-            modifier = Modifier.size(52.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                painter = painterResource(id = com.freight24.connect.R.drawable.ic_add_truck_owner),
-                contentDescription = "Add truck owner"
-            )
-        }
+        Icon(
+            Icons.Outlined.Add,
+            contentDescription = "Add truck owner"
+        )
     }
 }
 
@@ -662,23 +597,21 @@ private fun ErrorState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        Icon(
+            imageVector = Icons.Default.ErrorOutline,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.error,
+            modifier = Modifier.size(40.dp)
+        )
+        Spacer(modifier = Modifier.height(12.dp))
         Text(
             text = message,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.bodyMedium
         )
         Spacer(modifier = Modifier.height(16.dp))
-        Surface(
-            shape = MaterialTheme.shapes.medium,
-            color = FreightThemeTokens.colors.success
-        ) {
-            Text(
-                text = "Retry",
-                modifier = Modifier
-                    .clickable(onClick = onRetry)
-                    .padding(horizontal = 18.dp, vertical = 10.dp),
-                color = FreightThemeTokens.colors.onSuccess
-            )
+        FilledTonalButton(onClick = onRetry) {
+            Text("Retry")
         }
     }
 }
@@ -686,14 +619,17 @@ private fun ErrorState(
 @Composable
 private fun EmptyState(hasSearch: Boolean) {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 96.dp),
-        contentAlignment = Alignment.Center
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = if (hasSearch) "No matching truck owners found" else "No truck owners available",
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+        FreightEmptyState(
+            icon = Icons.Default.Person,
+            title = if (hasSearch) "No matching truck owners" else "No truck owners yet",
+            subtitle = if (hasSearch) {
+                "Try a different name or TAG ID"
+            } else {
+                "Onboard your first truck owner to get started"
+            },
         )
     }
 }

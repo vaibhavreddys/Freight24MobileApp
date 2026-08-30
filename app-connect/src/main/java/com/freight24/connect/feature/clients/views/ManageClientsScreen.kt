@@ -21,7 +21,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -52,6 +55,7 @@ import androidx.navigation.NavController
 import com.freight24.connect.feature.clients.domain.viewmodel.ManageClientsViewModel
 import com.freight24.ui.UiState
 import com.freight24.ui.components.ClientHeaderCard
+import com.freight24.ui.components.FreightEmptyState
 import com.freight24.ui.theme.FreightThemeTokens
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,51 +74,38 @@ fun ManageClientsScreen(
 
     Scaffold(
         topBar = {
-            Column(
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            ) {
-                FreightTopAppBar(
-                    title = {
-                        Text(
-                            text = "Clients",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onBackClick) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                        }
-                    },
-                )
-            }
+            FreightTopAppBar(
+                title = {
+                    Text(
+                        text = "Clients",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+            )
         },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onAddClientClick,
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier
-                    .padding(end = 4.dp, bottom = 4.dp),
-                shape = RoundedCornerShape(16.dp)
             ) {
-//                Icon(Icons.Default.Add, contentDescription = "Onboard Client")
-                Box(
-                    modifier = Modifier.size(52.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(id = com.freight24.connect.R.drawable.ic_add_truck_owner),
-                        contentDescription = "Onboard New Client"
-                    )
-                }
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = "Onboard New Client"
+                )
             }
         }
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                 .padding(paddingValues)
         ) {
             Card(
@@ -123,7 +114,7 @@ fun ManageClientsScreen(
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 shape = MaterialTheme.shapes.medium,
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    containerColor = MaterialTheme.colorScheme.surface
                 ),
                 border = BorderStroke(
                     width = 1.dp,
@@ -160,7 +151,7 @@ fun ManageClientsScreen(
                 modifier = Modifier.fillMaxSize()
             ) {
                 when (val state = uiState) {
-                    is UiState.Loading -> {
+                    is UiState.Loading, UiState.Idle -> {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             CircularProgressIndicator()
                         }
@@ -171,9 +162,20 @@ fun ManageClientsScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
-                            Text(text = state.message, color = MaterialTheme.colorScheme.error)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Button(onClick = viewModel::retry) {
+                            Icon(
+                                Icons.Default.ErrorOutline,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(40.dp)
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = state.message,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            FilledTonalButton(onClick = viewModel::retry) {
                                 Text("Retry")
                             }
                         }
@@ -181,7 +183,15 @@ fun ManageClientsScreen(
                     is UiState.Success -> {
                         if (filteredClients.isEmpty()) {
                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Text(text = if (searchQuery.isEmpty()) "No clients available" else "No matching clients found")
+                                FreightEmptyState(
+                                    icon = Icons.Default.Business,
+                                    title = if (searchQuery.isEmpty()) "No clients yet" else "No matching clients",
+                                    subtitle = if (searchQuery.isEmpty()) {
+                                        "Onboard your first client to start creating indents"
+                                    } else {
+                                        "Try a different name, company or phone"
+                                    },
+                                )
                             }
                         } else {
                             LazyColumn(
