@@ -9,12 +9,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -37,14 +34,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 
-private val cellShape = RoundedCornerShape(16.dp)
-
 @Composable
 fun OtpInputField(
     otp: String,
     otpLength: Int,
     shake: Boolean,
     enabled: Boolean,
+    isError: Boolean = false,
     onOtpChange: (String) -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
@@ -73,39 +69,8 @@ fun OtpInputField(
         }
     }
 
-    // Hidden TextField for input capture - positioned at the OTP cells location
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .offset(x = shakeOffset.value.dp)
-            .alpha(0.01f) // Make it nearly invisible but still functional
-    ) {
-        TextField(
-            value = otp,
-            onValueChange = { value ->
-                if (enabled) {
-                    val digitsOnly = value.filter(Char::isDigit).take(otpLength)
-                    onOtpChange(digitsOnly)
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .focusRequester(focusRequester),
-            enabled = enabled,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-            singleLine = true,
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = colors.surface.copy(alpha = 0f),
-                unfocusedContainerColor = colors.surface.copy(alpha = 0f),
-                focusedIndicatorColor = colors.surface.copy(alpha = 0f),
-                unfocusedIndicatorColor = colors.surface.copy(alpha = 0f),
-                disabledContainerColor = colors.surface.copy(alpha = 0f),
-                cursorColor = colors.primary,
-            ),
-        )
-    }
-
-    // Visual OTP cells - clickable to focus the hidden TextField
+    // Hidden TextField for input capture, overlaid on the visual cells so the
+    // strip is exactly one cell tall — no phantom gap above the boxes.
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -120,8 +85,34 @@ fun OtpInputField(
                     focusRequester.requestFocus()
                     keyboardController?.show()
                 }
-            }
+            },
+        contentAlignment = Alignment.Center,
     ) {
+        TextField(
+            value = otp,
+            onValueChange = { value ->
+                if (enabled) {
+                    val digitsOnly = value.filter(Char::isDigit).take(otpLength)
+                    onOtpChange(digitsOnly)
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .alpha(0.01f)
+                .focusRequester(focusRequester),
+            enabled = enabled,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+            singleLine = true,
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = colors.surface.copy(alpha = 0f),
+                unfocusedContainerColor = colors.surface.copy(alpha = 0f),
+                focusedIndicatorColor = colors.surface.copy(alpha = 0f),
+                unfocusedIndicatorColor = colors.surface.copy(alpha = 0f),
+                disabledContainerColor = colors.surface.copy(alpha = 0f),
+                cursorColor = colors.primary,
+            ),
+        )
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
@@ -133,8 +124,8 @@ fun OtpInputField(
 
                 Box(
                     modifier = Modifier
-                        .size(width = 46.dp, height = 54.dp)
-                        .clip(cellShape)
+                        .size(width = 48.dp, height = 56.dp)
+                        .clip(MaterialTheme.shapes.medium)
                         .background(
                             when {
                                 isFilled -> colors.surfaceContainerLowest
@@ -143,13 +134,18 @@ fun OtpInputField(
                             }
                         )
                         .border(
-                            width = if (isActive) 1.5.dp else if (isFilled) 1.dp else 0.dp,
+                            width = when {
+                                isActive -> 1.5.dp
+                                isFilled -> if (isError) 1.5.dp else 1.dp
+                                else -> 0.dp
+                            },
                             color = when {
                                 isActive -> colors.primary
+                                isFilled && isError -> colors.error
                                 isFilled -> colors.outlineVariant
                                 else -> colors.surface.copy(alpha = 0f)
                             },
-                            shape = cellShape
+                            shape = MaterialTheme.shapes.medium
                         ),
                     contentAlignment = Alignment.Center
                 ) {

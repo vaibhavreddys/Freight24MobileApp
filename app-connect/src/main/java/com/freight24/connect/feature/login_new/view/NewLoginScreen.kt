@@ -5,7 +5,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -19,9 +18,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -33,12 +32,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
@@ -60,13 +59,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.connect.feature.login_new.viewmodel.NewLoginViewModel
 import com.freight24.ui.UiState
+import com.freight24.ui.components.InlineErrorBanner
 import com.freight24.ui.connect.ConnectTruckMark
-import com.freight24.ui.theme.Freight24Theme
-import android.widget.Toast
-import androidx.compose.runtime.mutableStateOf
-
-private val fieldShape = RoundedCornerShape(12.dp)
-private val buttonShape = RoundedCornerShape(24.dp)
 
 private const val sendOtpButtonAutoClickAfter = 2000
 
@@ -80,11 +74,14 @@ fun NewLoginScreen(
     val phoneNumber by viewModel.phoneNumber.collectAsState()
     val isPhoneValid by viewModel.isPhoneValid.collectAsStateWithLifecycle()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val context = LocalContext.current
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val fillProgress = remember { Animatable(0f) }
     val snackbarHostState = remember { SnackbarHostState() }
+
+    // Inline, themed presentation for send-OTP failures — stays until the
+    // user edits the number, instead of vanishing with a system Toast.
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(isPhoneValid) {
         if (isPhoneValid) {
@@ -121,11 +118,15 @@ fun NewLoginScreen(
                 viewModel.resetUiState()
             }
             is UiState.Error -> {
-                Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
+                errorMessage = state.message.ifBlank { "Couldn't send OTP. Please try again." }
                 viewModel.resetUiState()
             }
             else -> Unit
         }
+    }
+
+    LaunchedEffect(phoneNumber) {
+        if (phoneNumber.isNotEmpty()) errorMessage = null
     }
 
     LaunchedEffect(sessionExpiredMessage) {
@@ -135,197 +136,203 @@ fun NewLoginScreen(
         }
     }
 
-    // Inherits the activity-level Freight24Theme (Connect identity, correct dark mode).
-    Freight24Theme {
-        val colorScheme = MaterialTheme.colorScheme
-        val isLoading = uiState is UiState.Loading
-        val buttonEnabled = isPhoneValid && !isLoading
-        val fillFraction = fillProgress.value
-        val buttonLabelColor = when {
-            isLoading -> colorScheme.onSurfaceVariant
-            fillFraction > 0.5f -> colorScheme.onPrimary
-            buttonEnabled -> colorScheme.primary
-            else -> colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-        }
+    // Renders under the activity-level Freight24Theme — Connect identity,
+    // user dark-mode override honoured. No nested theme re-wrap.
+    val colorScheme = MaterialTheme.colorScheme
+    val isLoading = uiState is UiState.Loading
+    val buttonEnabled = isPhoneValid && !isLoading
+    val fillFraction = fillProgress.value
+    val buttonLabelColor = when {
+        isLoading -> colorScheme.onSurfaceVariant
+        fillFraction > 0.5f -> colorScheme.onPrimary
+        buttonEnabled -> colorScheme.primary
+        else -> colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+    }
 
-        Scaffold(
+    Scaffold(
+        modifier = Modifier
+            .fillMaxSize()
+            .imePadding(),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+    ) { contentPadding ->
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .imePadding(),
-            snackbarHost = { SnackbarHost(snackbarHostState) },
-        ) { contentPadding ->
-            Column(
+                .padding(contentPadding)
+                .background(colorScheme.background)
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Spacer(modifier = Modifier.height(48.dp))
+
+            // Brand mark — geometric truck in a forest squircle.
+            Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(contentPadding)
-                    .background(colorScheme.background)
-                    .statusBarsPadding()
-                    .navigationBarsPadding()
-                    .padding(horizontal = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                    .size(64.dp)
+                    .clip(MaterialTheme.shapes.medium)
+                    .background(colorScheme.primary),
+                contentAlignment = Alignment.Center,
             ) {
-                Spacer(modifier = Modifier.height(48.dp))
-
-                // Brand mark — geometric truck in a forest squircle.
-                Box(
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(MaterialTheme.shapes.medium)
-                        .background(colorScheme.primary),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    androidx.compose.material3.Icon(
-                        imageVector = ConnectTruckMark,
-                        contentDescription = "Freight24 Logo",
-                        tint = colorScheme.onPrimary,
-                        modifier = Modifier.size(32.dp),
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(28.dp))
-
-                Text(
-                    text = buildAnnotatedString {
-                        append("Welcome to FREIGHT")
-                        withStyle(
-                            style = SpanStyle(
-                                color = colorScheme.primary,
-                            )
-                        ) {
-                            append("24")
-                        }
-                    },
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    color = colorScheme.onSurface,
-                )
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Text(
-                    text = "Log in to your dashboard to manage shipments and fleet operations",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.widthIn(max = 300.dp),
-                )
-
-                Spacer(modifier = Modifier.height(44.dp))
-
-                OutlinedTextField(
-                    value = phoneNumber,
-                    onValueChange = viewModel::onPhoneNumberChange,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .testTag("phone_input")
-                            .semantics { testTagsAsResourceId = true },
-                    singleLine = true,
-                    shape = fieldShape,
-                    placeholder = {
-                        Text(
-                            text = "98765 43210",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
-                        )
-                    },
-                    prefix = {
-                        Text(
-                            text = "+91",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = colorScheme.onSurface,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(end = 8.dp)
-                        )
-                    },
-                    keyboardOptions =
-                        KeyboardOptions(
-                            keyboardType = KeyboardType.Phone,
-                            imeAction = ImeAction.Done,
-                            autoCorrectEnabled = false,
-                        ),
-                    visualTransformation = IndianPhoneVisualTransformation(),
-                    colors =
-                        OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = colorScheme.primary,
-                            unfocusedBorderColor = colorScheme.outlineVariant,
-                            focusedContainerColor = colorScheme.surfaceContainerLowest,
-                            unfocusedContainerColor = colorScheme.surfaceContainerLowest,
-                            disabledContainerColor = colorScheme.surfaceContainerLowest,
-                            focusedTextColor = colorScheme.onSurface,
-                            unfocusedTextColor = colorScheme.onSurface,
-                            cursorColor = colorScheme.primary,
-                        ),
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Send OTP — outline fills toward auto-send; label flips contrast at midpoint.
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .clip(buttonShape)
-                        .background(
-                            when {
-                                buttonEnabled -> Color.Transparent
-                                isLoading -> colorScheme.surfaceContainerHighest.copy(alpha = 0.4f)
-                                else -> Color.Transparent
-                            }
-                        )
-                        .border(
-                            width = if (buttonEnabled || fillFraction > 0f) 1.5.dp else 1.dp,
-                            color = when {
-                                buttonEnabled || fillFraction > 0f -> colorScheme.primary
-                                else -> colorScheme.outlineVariant
-                            },
-                            shape = buttonShape
-                        )
-                        .clickable(
-                            enabled = buttonEnabled,
-                            onClick = { viewModel.onSendOtpClick() }
-                        ),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(fillFraction)
-                            .fillMaxHeight()
-                            .background(colorScheme.primary)
-                    )
-
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                strokeWidth = 2.5.dp,
-                                color = colorScheme.primary,
-                            )
-                        } else {
-                            Text(
-                                text = "Send OTP",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.SemiBold,
-                                color = buttonLabelColor
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                // Footer Links
-                Text(
-                    text = "Terms of Service & Privacy Policy",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(bottom = 20.dp),
-                    textAlign = TextAlign.Center,
+                Icon(
+                    imageVector = ConnectTruckMark,
+                    contentDescription = "Freight24 Logo",
+                    tint = colorScheme.onPrimary,
+                    modifier = Modifier.size(32.dp),
                 )
             }
+
+            Spacer(modifier = Modifier.height(28.dp))
+
+            Text(
+                text = buildAnnotatedString {
+                    append("Welcome to FREIGHT")
+                    withStyle(
+                        style = SpanStyle(
+                            color = colorScheme.primary,
+                        )
+                    ) {
+                        append("24")
+                    }
+                },
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                color = colorScheme.onSurface,
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "Log in to your dashboard to manage shipments and fleet operations",
+                style = MaterialTheme.typography.bodyMedium,
+                color = colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.widthIn(max = 300.dp),
+            )
+
+            Spacer(modifier = Modifier.height(44.dp))
+
+            OutlinedTextField(
+                value = phoneNumber,
+                onValueChange = viewModel::onPhoneNumberChange,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .testTag("phone_input")
+                        .semantics { testTagsAsResourceId = true },
+                singleLine = true,
+                shape = MaterialTheme.shapes.medium,
+                placeholder = {
+                    Text(
+                        text = "98765 43210",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
+                    )
+                },
+                prefix = {
+                    Text(
+                        text = "+91",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = colorScheme.onSurface,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                },
+                keyboardOptions =
+                    KeyboardOptions(
+                        keyboardType = KeyboardType.Phone,
+                        imeAction = ImeAction.Done,
+                        autoCorrectEnabled = false,
+                    ),
+                visualTransformation = IndianPhoneVisualTransformation(),
+                colors =
+                    OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = colorScheme.primary,
+                        unfocusedBorderColor = colorScheme.outlineVariant,
+                        focusedContainerColor = colorScheme.surfaceContainerLowest,
+                        unfocusedContainerColor = colorScheme.surfaceContainerLowest,
+                        disabledContainerColor = colorScheme.surfaceContainerLowest,
+                        focusedTextColor = colorScheme.onSurface,
+                        unfocusedTextColor = colorScheme.onSurface,
+                        cursorColor = colorScheme.primary,
+                    ),
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Send OTP — outline fills toward auto-send; label flips contrast at midpoint.
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .clip(MaterialTheme.shapes.large)
+                    .background(
+                        when {
+                            buttonEnabled -> colorScheme.surface.copy(alpha = 0f)
+                            isLoading -> colorScheme.surfaceContainerHighest.copy(alpha = 0.4f)
+                            else -> colorScheme.surface.copy(alpha = 0f)
+                        }
+                    )
+                    .border(
+                        width = if (buttonEnabled || fillFraction > 0f) 1.5.dp else 1.dp,
+                        color = when {
+                            buttonEnabled || fillFraction > 0f -> colorScheme.primary
+                            else -> colorScheme.outlineVariant
+                        },
+                        shape = MaterialTheme.shapes.large
+                    )
+                    .clickable(
+                        enabled = buttonEnabled,
+                        onClick = { viewModel.onSendOtpClick() }
+                    ),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(fillFraction)
+                        .fillMaxHeight()
+                        .background(colorScheme.primary)
+                )
+
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.5.dp,
+                            color = colorScheme.primary,
+                        )
+                    } else {
+                        Text(
+                            text = "Send OTP",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = buttonLabelColor
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            InlineErrorBanner(
+                message = errorMessage.orEmpty(),
+                visible = errorMessage != null,
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            // Footer Links
+            Text(
+                text = "Terms of Service & Privacy Policy",
+                style = MaterialTheme.typography.bodySmall,
+                color = colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 20.dp),
+                textAlign = TextAlign.Center,
+            )
         }
     }
 }
