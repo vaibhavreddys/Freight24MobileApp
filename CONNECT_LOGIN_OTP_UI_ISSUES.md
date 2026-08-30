@@ -2,6 +2,12 @@
 
 Open items — none blocking a PASS. Deferred with rationale.
 
+- [open — backend, not UI] QA server rejects even fresh resent OTPs with
+  "OTP not found or expired" (observed 2026-08-31 ~02:44 with code 571989 resent seconds
+  earlier). Possibly the failed-attempt path invalidates the stored OTP server-side, or QA
+  env instability. UI handled it correctly (red cells + banner + retry paths). Success path
+  itself was proven earlier the same day (code 611784 → Home). Needs a backend look, outside
+  UI scope.
 - [deferred] Login auto-send label contrast flips at `fillFraction > 0.5f` — during the 2s
   fill animation the white label can straddle the fill edge for a few frames at the midpoint.
   Transient animation nuance, invisible at rest, auto-resolves; not worth a layout change.
