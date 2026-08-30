@@ -364,13 +364,15 @@ fun TripDetailsScreen(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
-                        shape = RoundedCornerShape(8.dp),
+                            .height(52.dp)
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        shape = MaterialTheme.shapes.medium,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (nextStatus == "UPLOAD_LR") colorScheme.primary else colorScheme.primary
+                            containerColor = colorScheme.primary,
+                            contentColor = colorScheme.onPrimary
                         )
                     ) {
-                        Text(buttonText, color = colorScheme.onPrimary, fontWeight = FontWeight.Bold)
+                        Text(buttonText, style = MaterialTheme.typography.titleMedium)
                     }
                 }
             }
@@ -608,20 +610,19 @@ fun DocumentCard(
                 Button(
                     onClick = handleButtonClick,
                     enabled = isUploadEnabled,
-                    shape = RoundedCornerShape(8.dp),
+                    shape = MaterialTheme.shapes.small,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = colorScheme.primaryContainer,
-                        contentColor = colorScheme.primary,
+                        contentColor = colorScheme.onPrimaryContainer,
                         disabledContainerColor = colorScheme.primaryContainer.copy(alpha = 0.5f),
-                        disabledContentColor = colorScheme.primary.copy(alpha = 0.5f)
+                        disabledContentColor = colorScheme.onPrimaryContainer.copy(alpha = 0.5f)
                     ),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                    modifier = Modifier.height(32.dp)
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    modifier = Modifier.height(36.dp)
                 ) {
                     Text(
                         text = buttonText,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.labelLarge
                     )
                 }
             } else if (doc != null) {
@@ -642,11 +643,11 @@ fun StatusBadgeSmall(status: String) {
 
     Surface(
         color = color,
-        shape = RoundedCornerShape(4.dp)
+        shape = MaterialTheme.shapes.small
     ) {
         Text(
             text = status.replaceFirstChar { it.uppercase() },
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, color = ticketColor)
         )
     }
@@ -661,11 +662,11 @@ fun ExpandableSection(
     initiallyExpanded: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    var expanded by remember { mutableStateOf(initiallyExpanded) }
-    
+    var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
+
     Card(
         shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column {
@@ -677,30 +678,35 @@ fun ExpandableSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Surface(
-                    shape = RoundedCornerShape(8.dp),
+                    shape = MaterialTheme.shapes.small,
                     color = iconBg,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(40.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Icon(icon, contentDescription = null, modifier = Modifier.size(16.dp), tint = iconTint)
+                        Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp), tint = iconTint)
                     }
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.weight(1f)
                 )
                 Icon(
                     imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = null,
+                    contentDescription = if (expanded) "Collapse" else "Expand",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            
+
             AnimatedVisibility(visible = expanded) {
-                content()
+                Column {
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                    content()
+                }
             }
         }
     }
@@ -754,7 +760,14 @@ fun ChargesSubRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
+            .heightIn(min = 48.dp)
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable { onClick() }
+                } else {
+                    Modifier
+                }
+            )
             .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -876,16 +889,16 @@ fun PaymentBreakdownContent(financials: TripDataResponse.FinanceDetails?) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    "Balance Due", 
-                    fontWeight = FontWeight.Bold, 
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.bodyLarge
+                    "Balance Due",
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    style = MaterialTheme.typography.titleMedium
                 )
                 Text(
-                    "₹${formatAmount(balanceDue.toString())}", 
-                    fontWeight = FontWeight.Bold, 
-                    color = MaterialTheme.colorScheme.primary,
-                    style = MaterialTheme.typography.bodyLarge
+                    "₹${formatAmount(balanceDue.toString())}",
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    style = MaterialTheme.typography.titleMedium
                 )
             }
         }
@@ -902,7 +915,7 @@ fun PaymentDetailRow(
     addHeader: Boolean = false,
     headerName: String = ""
 ) {
-    Column(modifier = Modifier.padding(vertical = 2.dp)) {
+    Column(modifier = Modifier.padding(vertical = 4.dp)) {
         if (addHeader) {
             Text(
                 text = headerName, 

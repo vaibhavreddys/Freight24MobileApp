@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -49,6 +50,7 @@ import com.freight24.rest.response.SearchTruckerResponse
 import com.freight24.rest.response.TruckCategoryDto
 import com.freight24.rest.response.TruckTypeDto
 import com.freight24.ui.components.FilterSelectionChip
+import com.freight24.ui.components.FreightEmptyState
 import kotlinx.serialization.json.Json
 import androidx.core.net.toUri
 import com.freight24.ui.components.rememberCallAction
@@ -94,6 +96,7 @@ fun FindTrucksScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .background(colorScheme.surfaceVariant.copy(alpha = 0.5f))
             .padding(paddingValues)
     ) {
         Column(
@@ -106,7 +109,7 @@ fun FindTrucksScreen(
             // Location Selection Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = MaterialTheme.shapes.medium,
                 colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
                 border = CardDefaults.outlinedCardBorder()
@@ -136,7 +139,7 @@ fun FindTrucksScreen(
             
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = MaterialTheme.shapes.medium,
                 colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
                 border = CardDefaults.outlinedCardBorder()
             ) {
@@ -415,16 +418,11 @@ fun SearchResultsContent(data: SearchTruckerResponse.TruckerData?) {
         
         if (data == null || data.truckers.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        Icons.Default.Search,
-                        contentDescription = null,
-                        modifier = Modifier.size(48.dp),
-                        tint = colorScheme.outlineVariant
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text("No trucks found for this criteria", color = colorScheme.onSurfaceVariant)
-                }
+                FreightEmptyState(
+                    icon = Icons.Outlined.LocalShipping,
+                    title = "No trucks found",
+                    subtitle = "Try a different route or add more truck types",
+                )
             }
         } else {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -445,7 +443,7 @@ fun TruckerResultItem(trucker: SearchTruckerResponse.Trucker) {
 
     Card(
         modifier = Modifier.fillMaxWidth().clickable { isExpanded = !isExpanded },
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
         border = BorderStroke(1.dp, colorScheme.outlineVariant)
     ) {
