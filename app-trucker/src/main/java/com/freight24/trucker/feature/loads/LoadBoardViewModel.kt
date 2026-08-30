@@ -48,6 +48,10 @@ class LoadBoardViewModel
         private val _isRefreshing = MutableStateFlow(false)
         val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
+        /** True until the first board fetch settles; drives the initial spinner. */
+        private val _isInitialLoading = MutableStateFlow(true)
+        val isInitialLoading: StateFlow<Boolean> = _isInitialLoading.asStateFlow()
+
         private val interestedLoadIds = mutableSetOf<String>()
         private val loadingInterestedLoadIds = mutableSetOf<String>()
 
@@ -86,6 +90,10 @@ class LoadBoardViewModel
                 loadBoardUseCase.invoke(EmptyUseCaseParams)
                     .onSuccess { summaryList ->
                         updateCityList(summaryList)
+                        _isInitialLoading.value = false
+                    }
+                    .onFailure {
+                        _isInitialLoading.value = false
                     }
             }
         }

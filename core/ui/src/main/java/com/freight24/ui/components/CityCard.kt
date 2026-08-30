@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.LocationOn
@@ -35,11 +34,10 @@ fun CityCard(
             modifier
                 .fillMaxWidth()
                 .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.medium,
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors =
             CardDefaults.cardColors(
-//                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
             ),
     ) {
@@ -75,12 +73,12 @@ fun CityCard(
                 Text(
                     text = cityName,
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
                 Text(
                     text = "$listingCount load${if (listingCount != 1) "s" else ""} available",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
                 )
             }
 

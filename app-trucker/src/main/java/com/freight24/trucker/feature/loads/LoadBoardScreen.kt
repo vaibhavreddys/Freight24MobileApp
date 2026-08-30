@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocalShipping
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration
@@ -36,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.freight24.trucker.feature.loads.model.LoadBoardItem
 import com.freight24.ui.components.CityCard
+import com.freight24.ui.components.FreightEmptyState
 import com.freight24.ui.components.LoadCard
 import com.freight24.ui.components.LoadDetailBottomSheet
 
@@ -48,6 +52,7 @@ fun LoadBoardScreen(
 ) {
     val items by viewModel.items.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val isInitialLoading by viewModel.isInitialLoading.collectAsState()
     val previousExpandedCityId = remember { mutableStateOf<Int?>(null) }
 
     val expandedCityId by viewModel.expandedCityId.collectAsState()
@@ -116,11 +121,15 @@ fun LoadBoardScreen(
                                 .semantics(mergeDescendants = true) { contentDescription = "loads_empty_state" },
                             contentAlignment = Alignment.Center,
                         ) {
-                            Text(
-                                "No loads available right now",
-                                style = MaterialTheme.typography.bodyLarge,
-                                textAlign = TextAlign.Center,
-                            )
+                            if (isInitialLoading) {
+                                CircularProgressIndicator()
+                            } else {
+                                FreightEmptyState(
+                                    icon = Icons.Default.LocalShipping,
+                                    title = "No loads available right now",
+                                    subtitle = "Pull to refresh — new loads appear here the moment agents post them",
+                                )
+                            }
                         }
                     }
                 } else {

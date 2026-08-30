@@ -18,7 +18,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -40,7 +40,6 @@ import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.freight24.ui.theme.monoSpace
 import kotlinx.coroutines.delay
 
 @Composable
@@ -82,7 +81,6 @@ fun LoadCard(
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
-//            containerColor = MaterialTheme.colorScheme.primaryContainer,
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
@@ -120,8 +118,8 @@ fun LoadCard(
                 }
 
                 Spacer(Modifier.height(12.dp))
-                Divider(
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant,
                     thickness = 1.dp,
                 )
 
@@ -136,31 +134,31 @@ fun LoadCard(
                     Spacer(Modifier.width(8.dp))
                     Text(
                         text = truckInfo,
-                        style = MaterialTheme.typography.bodyMedium.copy(fontFamily = monoSpace),
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
                         text = "|",
-                        style = MaterialTheme.typography.bodySmall.copy(fontFamily = monoSpace),
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
                         text = loadWeight,
-                        style = MaterialTheme.typography.bodyMedium.copy(fontFamily = monoSpace),
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
                         text = "|",
-                        style = MaterialTheme.typography.bodySmall.copy(fontFamily = monoSpace),
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
                         text = commodity,
-                        style = MaterialTheme.typography.bodyMedium.copy(fontFamily = monoSpace),
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -168,7 +166,7 @@ fun LoadCard(
                 }
 
                 // ───── Footer ─────
-                Spacer(Modifier.height(6.dp))
+                Spacer(Modifier.height(8.dp))
 
                 Surface(
                     color = MaterialTheme.colorScheme.surface,

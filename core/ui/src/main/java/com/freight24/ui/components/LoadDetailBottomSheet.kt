@@ -148,7 +148,7 @@ fun LoadDetailBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
         dragHandle = { DragHandle() },
         modifier = modifier
             .testTag("load_detail_sheet")
@@ -260,7 +260,7 @@ private fun IndentIdChip(code: String) {
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
             Text(
                 text = code,
@@ -323,7 +323,7 @@ private fun ColumnRouteIndicator(
         // Indicator column: top dot, gradient line, bottom dot
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(top = 6.dp),
+            modifier = Modifier.padding(top = 8.dp),
         ) {
             Box(
                 modifier = Modifier
@@ -385,12 +385,12 @@ private fun ColumnRouteIndicator(
 private fun AmountChip(priceText: String) {
     Surface(
         color = MaterialTheme.colorScheme.surface,
-        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSurface,
         shape = RoundedCornerShape(999.dp),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
         ) {
             Icon(
                 imageVector = Icons.Filled.Payments,
@@ -413,13 +413,13 @@ private fun AmountChip(priceText: String) {
 @Composable
 private fun HideCostInline() {
     Surface(
-        color = MaterialTheme.colorScheme.tertiaryContainer,
-        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+        color = FreightThemeTokens.colors.surfaceInfo,
+        contentColor = FreightThemeTokens.colors.onSurfaceInfo,
         shape = RoundedCornerShape(999.dp),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
             Icon(
                 imageVector = Icons.Default.Info,
@@ -506,12 +506,12 @@ private fun PartnerCard(
     Surface(
         color = MaterialTheme.colorScheme.surfaceBright,
         contentColor = MaterialTheme.colorScheme.onSurface,
-        shape = RoundedCornerShape(20.dp),
+        shape = MaterialTheme.shapes.medium,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 14.dp),
+                .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AvatarCircle(
@@ -519,7 +519,7 @@ private fun PartnerCard(
                 onColor = onContainerColor,
                 icon = icon,
             )
-            Spacer(Modifier.width(14.dp))
+            Spacer(Modifier.width(16.dp))
             Text(
                 text = name,
                 style = MaterialTheme.typography.titleMedium,
@@ -567,20 +567,20 @@ private fun DispatchAgentCard(
         Surface(
             color = MaterialTheme.colorScheme.surfaceBright,
             contentColor = MaterialTheme.colorScheme.onSurface,
-            shape = RoundedCornerShape(20.dp),
+            shape = MaterialTheme.shapes.medium,
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 14.dp),
+                    .padding(horizontal = 16.dp, vertical = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 AvatarCircle(
-                    color = MaterialTheme.colorScheme.secondaryContainer,
-                    onColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    onColor = MaterialTheme.colorScheme.onPrimaryContainer,
                     icon = Icons.Filled.Person,
                 )
-                Spacer(Modifier.width(14.dp))
+                Spacer(Modifier.width(16.dp))
                 Text(
                     text = agent.name.ifBlank { "Freight24" },
                     style = MaterialTheme.typography.titleMedium,
@@ -606,12 +606,12 @@ private fun CallPillButton(
     onClick: () -> Unit,
 ) {
     val container = if (enabled) {
-        MaterialTheme.colorScheme.secondaryContainer
+        MaterialTheme.colorScheme.primaryContainer
     } else {
         MaterialTheme.colorScheme.surfaceContainerHigh
     }
     val onContainer = if (enabled) {
-        MaterialTheme.colorScheme.onSecondaryContainer
+        MaterialTheme.colorScheme.onPrimaryContainer
     } else {
         MaterialTheme.colorScheme.onSurfaceVariant
     }
@@ -626,15 +626,15 @@ private fun CallPillButton(
             .semantics { testTagsAsResourceId = true },
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 imageVector = Icons.Filled.Call,
                 contentDescription = "Call dispatch agent",
-                modifier = Modifier.size(18.dp),
+                modifier = Modifier.size(16.dp),
             )
-            Spacer(Modifier.width(6.dp))
+            Spacer(Modifier.width(8.dp))
             Text(
                 text = "Call",
                 style = MaterialTheme.typography.labelLarge,
@@ -677,7 +677,7 @@ private fun EngagementLine(detail: LoadDetail) {
                 },
                 modifier = Modifier.size(16.dp),
             )
-            Spacer(Modifier.width(6.dp))
+            Spacer(Modifier.width(8.dp))
             Text(
                 text = expiryText,
                 style = MaterialTheme.typography.labelLarge,
@@ -748,7 +748,7 @@ private fun ExpressInterestButton(
             .heightIn(min = 56.dp)
             .testTag("express_interest_btn")
             .semantics { testTagsAsResourceId = true },
-        shape = RoundedCornerShape(28.dp),
+        shape = MaterialTheme.shapes.medium,
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -767,7 +767,7 @@ private fun ExpressInterestButton(
                 contentDescription = null,
                 modifier = Modifier.size(20.dp),
             )
-            Spacer(Modifier.width(10.dp))
+            Spacer(Modifier.width(12.dp))
             Text(
                 text = if (isInterested) "Interest expressed" else "Express interest",
                 style = MaterialTheme.typography.titleMedium,
@@ -817,7 +817,7 @@ private fun SpecChip(
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
             if (icon != null) {
                 Icon(
