@@ -185,7 +185,7 @@ internal fun OnboardTruckScreen(
                         Button(
                             onClick = { viewModel.nextStep() },
                             enabled = isStep1Valid && uiState !is UiState.Loading,
-                            shape = RoundedCornerShape(50.dp),
+                            shape = MaterialTheme.shapes.medium,
                             modifier =
                                 Modifier
                                     .fillMaxWidth()
@@ -195,7 +195,7 @@ internal fun OnboardTruckScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("Next", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                Text("Next", style = MaterialTheme.typography.titleMedium)
                                 Spacer(Modifier.width(8.dp))
                                 Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(18.dp))
                             }
@@ -205,18 +205,18 @@ internal fun OnboardTruckScreen(
                             OutlinedButton(
                                 onClick = { viewModel.previousStep() },
                                 enabled = uiState !is UiState.Loading,
-                                shape = RoundedCornerShape(50.dp),
+                                shape = MaterialTheme.shapes.medium,
                                 modifier =
                                     Modifier
                                         .weight(0.4f)
                                         .height(56.dp),
                             ) {
-                                Text("Back", fontWeight = FontWeight.Bold)
+                                Text("Back", style = MaterialTheme.typography.titleMedium)
                             }
                             Button(
                                 onClick = { viewModel.submit() },
                                 enabled = isStep2Valid && uiState !is UiState.Loading,
-                                shape = RoundedCornerShape(50.dp),
+                                shape = MaterialTheme.shapes.medium,
                                 modifier =
                                     Modifier
                                         .weight(0.6f)
@@ -391,7 +391,7 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
             supportingText = if (registrationError != null) {
                 { Text(registrationError!!) }
             } else null,
-            shape = RoundedCornerShape(12.dp),
+            shape = MaterialTheme.shapes.medium,
             singleLine = true,
             keyboardOptions =
                 KeyboardOptions(
@@ -425,7 +425,7 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
                         .focusRequester(makeFocusRequester)
                         .testTag("onboard_make_input")
                         .semantics { testTagsAsResourceId = true },
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 singleLine = true,
             )
             OutlinedTextField(
@@ -437,7 +437,7 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
                     .weight(1f)
                     .testTag("onboard_model_input")
                     .semantics { testTagsAsResourceId = true },
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 singleLine = true,
             )
         }
@@ -453,7 +453,7 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
                     .focusRequester(yearFocusRequester)
                     .testTag("onboard_year_input")
                     .semantics { testTagsAsResourceId = true },
-            shape = RoundedCornerShape(12.dp),
+            shape = MaterialTheme.shapes.medium,
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         )
@@ -700,7 +700,7 @@ private fun OnboardSuccessScreen(
         Box(contentAlignment = Alignment.BottomEnd) {
             Surface(
                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                shape = RoundedCornerShape(50.dp),
+                shape = MaterialTheme.shapes.medium,
                 modifier = Modifier.size(120.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
@@ -714,7 +714,7 @@ private fun OnboardSuccessScreen(
             }
             Surface(
                 color = MaterialTheme.colorScheme.primary,
-                shape = RoundedCornerShape(50.dp),
+                shape = MaterialTheme.shapes.medium,
                 modifier = Modifier.size(40.dp).offset(x = 4.dp, y = 4.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
@@ -771,7 +771,7 @@ private fun OnboardSuccessScreen(
                         Text(
                             text = "● ACTIVE",
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            fontSize = 10.sp,
+                            
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
                         )
@@ -790,7 +790,7 @@ private fun OnboardSuccessScreen(
                 .height(56.dp)
                 .testTag("onboard_view_fleet_btn")
                 .semantics { testTagsAsResourceId = true },
-            shape = RoundedCornerShape(12.dp),
+            shape = MaterialTheme.shapes.medium,
             colors =
                 ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,

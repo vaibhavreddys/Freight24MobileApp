@@ -96,6 +96,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.freight24.rest.response.AddTruckDto
 import com.freight24.ui.UiState
+import com.freight24.ui.theme.FreightThemeTokens
 import com.freight24.ui.components.AppDropdown
 import com.freight24.ui.components.DashedUploadCard
 import com.freight24.ui.components.getPdfLaunchIntent
@@ -167,7 +168,7 @@ internal fun EditTruckScreen(
                         Button(
                             onClick = { viewModel.nextStep() },
                             enabled = isStep1Valid && uiState !is UiState.Loading,
-                            shape = RoundedCornerShape(50.dp),
+                            shape = MaterialTheme.shapes.medium,
                             modifier =
                                 Modifier
                                     .fillMaxWidth()
@@ -175,7 +176,7 @@ internal fun EditTruckScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("Next", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                Text("Next", style = MaterialTheme.typography.titleMedium)
                                 Spacer(Modifier.width(8.dp))
                                 Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(18.dp))
                             }
@@ -185,18 +186,18 @@ internal fun EditTruckScreen(
                             OutlinedButton(
                                 onClick = { viewModel.previousStep() },
                                 enabled = uiState !is UiState.Loading,
-                                shape = RoundedCornerShape(50.dp),
+                                shape = MaterialTheme.shapes.medium,
                                 modifier =
                                     Modifier
                                         .weight(0.4f)
                                         .height(56.dp),
                             ) {
-                                Text("Back", fontWeight = FontWeight.Bold)
+                                Text("Back", style = MaterialTheme.typography.titleMedium)
                             }
                             Button(
                                 onClick = { viewModel.submit() },
                                 enabled = isStep2Valid && uiState !is UiState.Loading,
-                                shape = RoundedCornerShape(50.dp),
+                                shape = MaterialTheme.shapes.medium,
                                 modifier =
                                     Modifier
                                         .weight(0.6f)
@@ -211,7 +212,7 @@ internal fun EditTruckScreen(
                                             strokeWidth = 2.dp,
                                         )
                                     } else {
-                                        Text("Save Changes", fontWeight = FontWeight.Bold)
+                                        Text("Save Changes", style = MaterialTheme.typography.titleMedium)
                                         Spacer(Modifier.width(8.dp))
                                         Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
                                     }
@@ -367,7 +368,7 @@ private fun BasicInfoStep(viewModel: EditTruckViewModel) {
             supportingText = if (registrationError != null) {
                 { Text(registrationError!!) }
             } else null,
-            shape = RoundedCornerShape(12.dp),
+            shape = MaterialTheme.shapes.medium,
             singleLine = true,
             keyboardOptions =
                 KeyboardOptions(
@@ -396,7 +397,7 @@ private fun BasicInfoStep(viewModel: EditTruckViewModel) {
                     Modifier
                         .weight(1f)
                         .focusRequester(makeFocusRequester),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 singleLine = true,
             )
             OutlinedTextField(
@@ -405,7 +406,7 @@ private fun BasicInfoStep(viewModel: EditTruckViewModel) {
                 label = { Text("Model") },
                 placeholder = { Text("FH Aero") },
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp),
+                shape = MaterialTheme.shapes.medium,
                 singleLine = true,
             )
         }
@@ -419,7 +420,7 @@ private fun BasicInfoStep(viewModel: EditTruckViewModel) {
                 Modifier
                     .fillMaxWidth()
                     .focusRequester(yearFocusRequester),
-            shape = RoundedCornerShape(12.dp),
+            shape = MaterialTheme.shapes.medium,
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         )
@@ -676,7 +677,7 @@ private fun DocumentUploadSection(
                         Text(
                             text = label,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                            fontSize = 10.sp,
+                            
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
@@ -733,7 +734,7 @@ private fun ViewDocumentCard(
 ) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
         modifier = modifier.fillMaxWidth(),
@@ -764,7 +765,7 @@ private fun ViewDocumentCard(
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    text = "Verification " + status.uppercase(),
+                    text = "Verification " + status.lowercase().replaceFirstChar { it.uppercase() },
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
@@ -781,7 +782,7 @@ private fun UploadActionCard(
 ) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
         modifier = modifier.fillMaxWidth(),
@@ -800,7 +801,7 @@ private fun UploadActionCard(
                         Icon(
                             imageVector = if (hasFile) Icons.Default.CheckCircle else Icons.Default.FileUpload,
                             contentDescription = null,
-                            tint = if (hasFile) Color(0xFF2E7D32) else MaterialTheme.colorScheme.onSurface,
+                            tint = if (hasFile) FreightThemeTokens.colors.success else MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.size(20.dp),
                         )
                     }
@@ -819,13 +820,6 @@ private fun UploadActionCard(
             }
         }
     }
-}
-
-private fun documentStatusColor(status: String): Color = when (status.uppercase()) {
-    "VERIFIED", "COMPLETED" -> Color(0xFF2E7D32)
-    "PENDING" -> Color(0xFFEF6C00)
-    "REJECTED" -> Color(0xFFC62828)
-    else -> Color(0xFF757575)
 }
 
 private fun createTempImageUri(context: Context): Uri {
@@ -856,7 +850,7 @@ private fun EditSuccessScreen(
         Box(contentAlignment = Alignment.BottomEnd) {
             Surface(
                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                shape = RoundedCornerShape(50.dp),
+                shape = MaterialTheme.shapes.medium,
                 modifier = Modifier.size(120.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
@@ -870,7 +864,7 @@ private fun EditSuccessScreen(
             }
             Surface(
                 color = MaterialTheme.colorScheme.primary,
-                shape = RoundedCornerShape(50.dp),
+                shape = MaterialTheme.shapes.medium,
                 modifier = Modifier.size(40.dp).offset(x = 4.dp, y = 4.dp),
             ) {
                 Box(contentAlignment = Alignment.Center) {
@@ -927,7 +921,7 @@ private fun EditSuccessScreen(
                         Text(
                             text = "● ACTIVE",
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            fontSize = 10.sp,
+                            
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
                         )
@@ -942,7 +936,7 @@ private fun EditSuccessScreen(
         Button(
             onClick = onViewFleet,
             modifier = Modifier.fillMaxWidth().height(56.dp),
-            shape = RoundedCornerShape(12.dp),
+            shape = MaterialTheme.shapes.medium,
             colors =
                 ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
