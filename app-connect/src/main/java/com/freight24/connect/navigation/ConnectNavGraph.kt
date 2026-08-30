@@ -187,14 +187,6 @@ fun ConnectNavGraph(
                 onManageTruckOwners = { navHostController.navigate(ConnectDestination.ManageTruckOwners.route) },
                 onMyProfile = { /* TODO: Navigate to Profile */ },
                 onSettings = { navHostController.navigate(ConnectDestination.Settings.route) },
-                onLogout = {
-                    navHostController.navigate(authStartDestination) {
-                        popUpTo(ConnectDestination.Home.route) {
-                            inclusive = true
-                        }
-                        launchSingleTop = true
-                    }
-                },
             )
         }
 

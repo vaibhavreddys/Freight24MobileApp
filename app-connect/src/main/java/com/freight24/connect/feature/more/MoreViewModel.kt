@@ -5,10 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.freight24.auth.SessionManager
 import com.freight24.connect.repository.EmployeesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -26,11 +24,19 @@ class MoreViewModel @Inject constructor(
     private val employeesRepository: EmployeesRepository
 ) : ViewModel() {
 
-    private val _navigateToLogin = MutableSharedFlow<Unit>()
-    val navigateToLogin = _navigateToLogin.asSharedFlow()
-
     private val _employeeInfo = MutableStateFlow(EmployeeBasicInfoState())
     val employeeInfo = _employeeInfo.asStateFlow()
+
+    private val _showLogoutSheet = MutableStateFlow(false)
+    val showLogoutSheet = _showLogoutSheet.asStateFlow()
+
+    fun requestLogout() {
+        _showLogoutSheet.value = true
+    }
+
+    fun dismissLogoutSheet() {
+        _showLogoutSheet.value = false
+    }
 
     init {
         loadEmployeeBasicInfo()
@@ -76,7 +82,6 @@ class MoreViewModel @Inject constructor(
     fun logout() {
         viewModelScope.launch {
             sessionManager.logout()
-            _navigateToLogin.emit(Unit)
         }
     }
 }
