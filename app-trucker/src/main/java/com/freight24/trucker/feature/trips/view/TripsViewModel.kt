@@ -37,6 +37,10 @@ internal class TripsViewModel
         private val _isRefreshing = MutableStateFlow(false)
         val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
+        /** True until the first trips fetch settles; drives the initial spinner. */
+        private val _isInitialLoading = MutableStateFlow(true)
+        val isInitialLoading: StateFlow<Boolean> = _isInitialLoading.asStateFlow()
+
         private val _filterCounts = MutableStateFlow<Map<TripFilter, Int>>(emptyMap())
         val filterCounts: StateFlow<Map<TripFilter, Int>> = _filterCounts.asStateFlow()
 
@@ -63,6 +67,7 @@ internal class TripsViewModel
                         // Handle error
                         error.printStackTrace()
                     }
+                _isInitialLoading.value = false
             }
         }
         

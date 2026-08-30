@@ -13,6 +13,9 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Assignment
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -29,6 +32,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.freight24.ui.components.FilterSelectionChip
+import com.freight24.ui.components.FreightEmptyState
 import com.freight24.ui.components.TripCard
 
 @Preview
@@ -43,6 +47,7 @@ fun TripsScreen(
     val selectedFilter by viewModel.selectedFilter.collectAsState()
     val filterCounts by viewModel.filterCounts.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val isInitialLoading by viewModel.isInitialLoading.collectAsState()
 
     PullToRefreshBox(
         isRefreshing = isRefreshing,
@@ -71,11 +76,15 @@ fun TripsScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(
-                        text = "No ${selectedFilter.name.lowercase().replaceFirstChar { it.uppercase() }} Trips Available",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    if (isInitialLoading) {
+                        CircularProgressIndicator()
+                    } else {
+                        FreightEmptyState(
+                            icon = Icons.AutoMirrored.Filled.Assignment,
+                            title = "No ${selectedFilter.name.lowercase().replaceFirstChar { it.uppercase() }} Trips Available",
+                            subtitle = "Trips assigned to you will show up here",
+                        )
+                    }
                 }
             } else {
                 LazyColumn(

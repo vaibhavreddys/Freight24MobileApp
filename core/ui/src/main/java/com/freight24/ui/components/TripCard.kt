@@ -22,9 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.freight24.common.model.Trip
-import com.freight24.common.util.formatCurrency
 
 @Composable
 fun TripCard(
@@ -38,7 +36,7 @@ fun TripCard(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
                 .clickable { onClick() },
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
         ),
@@ -47,7 +45,7 @@ fun TripCard(
         Column(
             modifier =
                 Modifier
-                    .padding(8.dp)
+                    .padding(12.dp)
                     .fillMaxWidth(),
         ) {
             // Header: Reg Number | Truck Type and Date
@@ -59,13 +57,13 @@ fun TripCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = trip.registrationNumber,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                     Text(
                         text = " | ${trip.truckType}",
-                        fontSize = 12.sp,
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(start = 4.dp),
                     )
@@ -73,7 +71,7 @@ fun TripCard(
 
                 Text(
                     text = trip.createdAt,
-                    fontSize = 12.sp,
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -106,14 +104,13 @@ fun TripCard(
                 Column {
                     Text(
                         text = "TRIP COST",
-                        fontSize = 10.sp,
+                        style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium,
                     )
                     Text(
                         text = formatCurrency(trip.tripCost.toString()),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                 }
@@ -131,14 +128,13 @@ fun TripCard(
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
                         text = "PAID",
-                        fontSize = 10.sp,
+                        style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Medium,
                     )
                     Text(
                         text = formatCurrency(trip.totalPaidAmount.toString()),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                 }
