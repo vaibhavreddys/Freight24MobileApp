@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Connect premium splash — night variants -->
+    <!-- Connect premium splash — night variant -->
     <color name="connect_splash_background">#101412</color>
-    <color name="connect_splash_mark">#A6D3BB</color>
 </resources>

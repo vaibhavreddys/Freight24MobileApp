@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Visually empty system-splash icon: filled with the splash background
+     color (mode-aware via values-night) so the cold start shows only the
+     brand background. An EMPTY vector is not an option — the system treats
+     it as "no icon" and falls back to the launcher icon. The in-app
+     choreography (F24 unfurling into FREIGHT 24) owns the intro. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="@color/connect_splash_background"
+        android:pathData="M0,0 h108 v108 h-108 z" />
+</vector>

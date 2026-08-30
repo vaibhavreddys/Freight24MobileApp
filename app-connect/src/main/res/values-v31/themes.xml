@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Android 12+ system splash: brand background + geometric truck mark.
-         Falls back to plain Theme.Freight24 below API 31. -->
+    <!-- Android 12+ system splash: brand background only, no icon — the
+         in-app splash (F24 unfurling into FREIGHT 24) owns the intro. -->
     <style name="Theme.Freight24.Starting" parent="Theme.Freight24">
         <item name="android:windowSplashScreenBackground">@color/connect_splash_background</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/connect_splash_logo</item>
-        <item name="android:windowSplashScreenAnimationDuration">300</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/connect_splash_icon_blank</item>
     </style>
 </resources>

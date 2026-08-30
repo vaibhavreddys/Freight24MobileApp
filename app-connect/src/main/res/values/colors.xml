@@ -12,5 +12,4 @@
 
     <!-- Connect premium splash -->
     <color name="connect_splash_background">#FAFBFA</color>
-    <color name="connect_splash_mark">#14422C</color>
 </resources>

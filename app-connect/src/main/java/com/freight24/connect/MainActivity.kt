@@ -10,6 +10,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.LaunchedEffect
@@ -29,12 +31,12 @@ import com.freight24.connect.navigation.ConnectDestination
 import com.freight24.connect.navigation.ConnectNavGraph
 import com.freight24.connect.services.ConnectMessagingService
 import com.freight24.ui.connect.ConnectSplashScreen
-import com.freight24.ui.connect.ConnectTruckMark
 import com.freight24.ui.theme.Freight24Theme
 import com.freight24.ui.theme.FreightAppTheme
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.messaging.FirebaseMessaging
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -83,11 +85,18 @@ class MainActivity : ComponentActivity() {
                 }
 
                 LaunchedEffect(Unit) {
+                    val bootstrapStarted = android.os.SystemClock.uptimeMillis()
                     val authenticated = sessionManager.bootstrapSession()
                     if (!authenticated) {
                         sessionExpiredMessage = sessionManager.consumeLastRefreshError()
                     }
                     isAuthenticated = authenticated
+                    // Hold the splash until the one-shot choreography has
+                    // landed (F24 in → unfurl → road ≈ 1.3s), even when
+                    // bootstrap finishes instantly on a cached session.
+                    val remaining = SPLASH_MIN_DISPLAY_MS -
+                        (android.os.SystemClock.uptimeMillis() - bootstrapStarted)
+                    if (remaining > 0) delay(remaining)
                     isBootstrapped = true
                 }
 
@@ -129,33 +138,40 @@ class MainActivity : ComponentActivity() {
                 }
 
                 Box(modifier = Modifier.fillMaxSize()) {
-                    if (!isBootstrapped) {
-                        ConnectSplashScreen(logo = ConnectTruckMark)
-                    } else {
-                        val startDestination =
-                            remember(isAuthenticated) {
-                                if (isAuthenticated) {
-                                    ConnectDestination.Home.route
-                                } else {
-                                    loginRoute
+                    Crossfade(
+                        targetState = isBootstrapped,
+                        animationSpec = tween(durationMillis = 350),
+                        label = "splashExit",
+                        modifier = Modifier.fillMaxSize(),
+                    ) { bootstrapped ->
+                        if (!bootstrapped) {
+                            ConnectSplashScreen()
+                        } else {
+                            val startDestination =
+                                remember(isAuthenticated) {
+                                    if (isAuthenticated) {
+                                        ConnectDestination.Home.route
+                                    } else {
+                                        loginRoute
+                                    }
+                                }
+
+                            LaunchedEffect(isLoggedIn, isBootstrapped) {
+                                if (isBootstrapped && !isLoggedIn) {
+                                    navController.navigate(loginRoute) {
+                                        popUpTo(0) { inclusive = true }
+                                        launchSingleTop = true
+                                    }
                                 }
                             }
 
-                        LaunchedEffect(isLoggedIn, isBootstrapped) {
-                            if (isBootstrapped && !isLoggedIn) {
-                                navController.navigate(loginRoute) {
-                                    popUpTo(0) { inclusive = true }
-                                    launchSingleTop = true
-                                }
-                            }
+                            ConnectNavGraph(
+                                navHostController = navController,
+                                startDestination = startDestination,
+                                sessionExpiredMessage = sessionExpiredMessage,
+                                onSessionExpiredMessageShown = { sessionExpiredMessage = null },
+                            )
                         }
-
-                        ConnectNavGraph(
-                            navHostController = navController,
-                            startDestination = startDestination,
-                            sessionExpiredMessage = sessionExpiredMessage,
-                            onSessionExpiredMessageShown = { sessionExpiredMessage = null },
-                        )
                     }
                 }
             }
@@ -182,6 +198,12 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
+        /**
+         * Splash stays up long enough for the one-shot choreography — F24 in,
+         * unfurl to FREIGHT 24, road draw (~1.3s) — to land before the
+         * crossfade.
+         */
+        private const val SPLASH_MIN_DISPLAY_MS = 1500L
         const val EXTRA_TYPE = "type"
         const val INDENT_INTEREST_TYPE = "INDENT_INTEREST"
     }

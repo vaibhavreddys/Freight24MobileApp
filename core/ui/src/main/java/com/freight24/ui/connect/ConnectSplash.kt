@@ -1,57 +1,84 @@
 package com.freight24.ui.connect
 
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 /**
- * Freight24 Connect cold-start splash.
+ * Freight24 Connect cold-start splash — "the monogram unfurls".
  *
- * Calm, brand-true, quiet: forest mark on a deep charcoal-green field,
- * wordmark fading in. Purely visual — shown while session bootstrap runs,
- * replacing the old indeterminate spinner. No navigation implications.
+ * One continuous, one-shot motion with no crossfade and no loop:
+ *  1. the "F24" monogram fades in and settles,
+ *  2. the wordmark unfurls around it — "F" glides left, "24" glides right
+ *     while "REIGHT" is revealed between them. The monogram glyphs never
+ *     leave the screen, so there is no cut, only expansion,
+ *  3. a road line draws out beneath the finished wordmark and rests.
+ *
+ * Purely visual. No navigation implications. All color from Connect tokens.
  */
 @Composable
 fun ConnectSplashScreen(
-    logo: ImageVector,
     modifier: Modifier = Modifier,
 ) {
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val background = connectSplashBackground(isDark)
-    val markTint = if (isDark) ConnectPrimary80 else ConnectBrandForest
     val wordmarkColor = if (isDark) ConnectOnSurfaceDark90 else ConnectPrimary10
+    val accentColor = if (isDark) ConnectPrimary80 else ConnectPrimary40
+    val roadColor = if (isDark) ConnectOutlineVariantDark30 else ConnectOutlineVariantLight80
 
-    var visible by remember { mutableStateOf(false) }
-    val alpha by animateFloatAsState(
-        targetValue = if (visible) 1f else 0f,
-        animationSpec = tween(durationMillis = 450),
-        label = "splashAlpha",
+    val markAlpha = remember { Animatable(0f) }
+    val markOffsetY = remember { Animatable(8f) }
+    val unfurl = remember { Animatable(0f) }
+    val roadScale = remember { Animatable(0f) }
+
+    LaunchedEffect(Unit) {
+        launch { markAlpha.animateTo(1f, tween(durationMillis = 320)) }
+        launch {
+            markOffsetY.animateTo(
+                0f,
+                tween(durationMillis = 420, easing = LinearOutSlowInEasing),
+            )
+        }
+        launch {
+            delay(480)
+            unfurl.animateTo(1f, tween(durationMillis = 620, easing = FastOutSlowInEasing))
+        }
+        launch {
+            delay(980)
+            roadScale.animateTo(1f, tween(durationMillis = 320, easing = LinearOutSlowInEasing))
+        }
+    }
+
+    val wordmarkStyle = MaterialTheme.typography.headlineMedium.copy(
+        fontWeight = FontWeight.Bold,
     )
-    LaunchedEffect(Unit) { visible = true }
 
     Box(
         modifier = modifier
@@ -59,35 +86,57 @@ fun ConnectSplashScreen(
             .background(background),
         contentAlignment = Alignment.Center,
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-        ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.graphicsLayer {
+                    alpha = markAlpha.value
+                    translationY = markOffsetY.value.dp.toPx()
+                },
+            ) {
+                Text(text = "F", style = wordmarkStyle, color = wordmarkColor)
+                Text(
+                    text = "REIGHT ",
+                    style = wordmarkStyle,
+                    color = wordmarkColor,
+                    maxLines = 1,
+                    softWrap = false,
+                    // Reveal only the leading `unfurl` fraction of the natural
+                    // text width; the Row re-centres every frame, so "F" and
+                    // "24" glide outward as the middle letters stream in.
+                    modifier = Modifier
+                        .clipToBounds()
+                        .layout { measurable, constraints ->
+                            val placeable = measurable.measure(
+                                constraints.copy(minWidth = 0),
+                            )
+                            val width = (placeable.width * unfurl.value).roundToInt()
+                            layout(width, placeable.height) {
+                                placeable.placeRelative(0, 0)
+                            }
+                        },
+                )
+                Text(text = "24", style = wordmarkStyle, color = accentColor)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Road line: draws out from centre once, then rests.
             Box(
                 modifier = Modifier
-                    .size(96.dp)
-                    .background(
-                        color = Color.White.copy(alpha = if (isDark) 0.06f else 0.10f),
-                        shape = RoundedCornerShape(28.dp),
-                    ),
-                contentAlignment = Alignment.Center,
+                    .size(width = 96.dp, height = 2.dp)
+                    .clip(RoundedCornerShape(1.dp)),
             ) {
-                Icon(
-                    imageVector = logo,
-                    contentDescription = null,
-                    tint = markTint,
-                    modifier = Modifier.size(44.dp),
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer { scaleX = roadScale.value }
+                        .background(
+                            color = roadColor,
+                            shape = RoundedCornerShape(1.dp),
+                        ),
                 )
             }
-            Text(
-                text = "FREIGHT24",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 4.sp,
-                ),
-                color = wordmarkColor,
-                modifier = Modifier.alpha(alpha),
-            )
         }
     }
 }

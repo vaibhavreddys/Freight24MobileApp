@@ -13,4 +13,8 @@
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
     </style>
+
+    <!-- Manifest launcher theme. The v31 variant adds the system-splash
+         attributes; this plain alias keeps API < 31 devices resolvable. -->
+    <style name="Theme.Freight24.Starting" parent="Theme.Freight24" />
 </resources>
