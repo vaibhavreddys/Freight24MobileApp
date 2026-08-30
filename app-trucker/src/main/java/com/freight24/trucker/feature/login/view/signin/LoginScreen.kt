@@ -9,7 +9,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -38,7 +37,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.freight24.trucker.R
@@ -46,7 +44,6 @@ import com.freight24.trucker.feature.login.view.signin.LoginViewModel.Companion.
 import com.freight24.trucker.navigation.TruckerDestination
 import com.freight24.trucker.ui.components.rememberCallAction
 import com.freight24.ui.UiState
-import com.freight24.ui.theme.Freight24Theme
 
 @Composable
 internal fun LoginScreen(
@@ -136,9 +133,8 @@ internal fun LoginScreen(
         }
     }
 
-    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
-        Freight24Theme {
-            val colors = MaterialTheme.colorScheme
+    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { _ ->
+        val colors = MaterialTheme.colorScheme
 
             Surface(
                 modifier = Modifier.fillMaxSize(),
@@ -180,7 +176,7 @@ internal fun LoginScreen(
                             .fillMaxWidth()
                             .padding(horizontal = 24.dp)
                             .height(240.dp)
-                            .clip(RoundedCornerShape(24.dp)),
+                            .clip(MaterialTheme.shapes.large),
                         contentScale = ContentScale.Crop,
                     )
 
@@ -196,7 +192,6 @@ internal fun LoginScreen(
                             text = stringResource(R.string.login_welcome_back),
                             style = MaterialTheme.typography.headlineLarge,
                             color = colors.onSurface,
-                            fontWeight = FontWeight.Bold,
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
@@ -268,7 +263,7 @@ internal fun LoginScreen(
                                 focusedTextColor = colors.onSurface,
                                 unfocusedTextColor = colors.onSurface,
                             ),
-                            shape = RoundedCornerShape(12.dp),
+                            shape = MaterialTheme.shapes.medium,
                         )
                     }
 
@@ -290,7 +285,7 @@ internal fun LoginScreen(
                             disabledContainerColor = colors.surfaceContainerHighest,
                             disabledContentColor = colors.onSurfaceVariant,
                         ),
-                        shape = RoundedCornerShape(16.dp),
+                        shape = MaterialTheme.shapes.medium,
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -328,10 +323,9 @@ internal fun LoginScreen(
                         )
                         Text(
                             text = stringResource(R.string.login_secure_portal),
-                            style = MaterialTheme.typography.labelSmall,
+                            style = MaterialTheme.typography.labelMedium,
                             color = colors.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 12.dp),
-                            letterSpacing = 1.sp,
                         )
                         HorizontalDivider(
                             modifier = Modifier.weight(1f),
@@ -397,6 +391,5 @@ internal fun LoginScreen(
                     }
                 }
             }
-        }
     }
 }
