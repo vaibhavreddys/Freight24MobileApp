@@ -122,28 +122,24 @@ fun OtpInputField(
                 val isActive = otp.length == index && otp.length < otpLength
                 val isFilled = char.isNotEmpty()
 
+                // Same visual language as the phone input: white well with a
+                // hairline border; focus/error state is carried by the border
+                // alone — no placeholder dots in empty cells.
                 Box(
                     modifier = Modifier
-                        .size(width = 48.dp, height = 56.dp)
+                        .size(width = 44.dp, height = 56.dp)
                         .clip(MaterialTheme.shapes.medium)
-                        .background(
-                            when {
-                                isFilled -> colors.surfaceContainerLowest
-                                isActive -> colors.primary.copy(alpha = 0.06f)
-                                else -> colors.surfaceContainerHigh
-                            }
-                        )
+                        .background(colors.surfaceContainerLowest)
                         .border(
                             width = when {
                                 isActive -> 1.5.dp
-                                isFilled -> if (isError) 1.5.dp else 1.dp
-                                else -> 0.dp
+                                isFilled && isError -> 1.5.dp
+                                else -> 1.dp
                             },
                             color = when {
                                 isActive -> colors.primary
                                 isFilled && isError -> colors.error
-                                isFilled -> colors.outlineVariant
-                                else -> colors.surface.copy(alpha = 0f)
+                                else -> colors.outlineVariant
                             },
                             shape = MaterialTheme.shapes.medium
                         ),
@@ -156,14 +152,11 @@ fun OtpInputField(
                             fontWeight = FontWeight.SemiBold,
                             color = colors.onSurface
                         )
-                    } else {
+                    } else if (isActive) {
                         Box(
                             modifier = Modifier
-                                .size(if (isActive) 7.dp else 5.dp)
-                                .background(
-                                    if (isActive) colors.primary else colors.onSurfaceVariant.copy(alpha = 0.45f),
-                                    CircleShape
-                                )
+                                .size(7.dp)
+                                .background(colors.primary, CircleShape)
                         )
                     }
                 }

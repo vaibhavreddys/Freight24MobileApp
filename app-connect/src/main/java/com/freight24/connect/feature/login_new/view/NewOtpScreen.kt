@@ -6,6 +6,7 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -62,6 +63,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.connect.feature.login_new.viewmodel.NewOtpViewModel
 import com.freight24.ui.UiState
 import com.freight24.ui.components.InlineErrorBanner
+import com.freight24.ui.theme.FreightThemeTokens
 
 @Composable
 fun NewOtpScreen(
@@ -211,14 +213,24 @@ fun NewOtpScreen(
                 visible = errorMessage != null,
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // Neutral countdown chip (was error-red; countdown ≠ failure).
+            // Code-expiry countdown: neutral while calm, warning tokens in the
+            // last 30 seconds. Hairline border keeps it a deliberate unit.
+            val expiringSoon = verificationSecondsRemaining in 1..30
+            val extendedColors = FreightThemeTokens.colors
             Box(
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .clip(MaterialTheme.shapes.medium)
-                    .background(colorScheme.surfaceContainerHigh)
+                    .background(
+                        if (expiringSoon) extendedColors.surfaceWarning else colorScheme.surfaceContainerLow
+                    )
+                    .border(
+                        width = 1.dp,
+                        color = if (expiringSoon) extendedColors.warning else colorScheme.outlineVariant,
+                        shape = MaterialTheme.shapes.medium,
+                    )
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 contentAlignment = Alignment.Center,
             ) {
@@ -226,20 +238,20 @@ fun NewOtpScreen(
                     Icon(
                         imageVector = Icons.Filled.Timer,
                         contentDescription = null,
-                        tint = colorScheme.onSurfaceVariant,
+                        tint = if (expiringSoon) extendedColors.onSurfaceWarning else colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(16.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = verificationSecondsRemaining.toMmSs(),
+                        text = "Expires in ${verificationSecondsRemaining.toMmSs()}",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.SemiBold,
-                        color = colorScheme.onSurfaceVariant,
+                        color = if (expiringSoon) extendedColors.onSurfaceWarning else colorScheme.onSurfaceVariant,
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             Button(
                 onClick = viewModel::onVerifyClick,
@@ -252,17 +264,17 @@ fun NewOtpScreen(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = colorScheme.primary,
                     contentColor = colorScheme.onPrimary,
-                    // While the verify call is in flight the CTA stays filled
-                    // (work in progress), otherwise it reads as disabled.
+                    // Disabled reads as "brand on standby" (soft container tint,
+                    // AA-legible label) — not a washed-out grey slab.
                     disabledContainerColor = if (isLoading) {
                         colorScheme.primary
                     } else {
-                        colorScheme.surfaceContainerHighest
+                        colorScheme.primaryContainer
                     },
                     disabledContentColor = if (isLoading) {
                         colorScheme.onPrimary
                     } else {
-                        colorScheme.onSurfaceVariant
+                        colorScheme.onPrimaryContainer
                     },
                 ),
                 shape = MaterialTheme.shapes.large
