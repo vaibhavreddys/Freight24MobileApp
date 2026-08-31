@@ -1,9 +1,11 @@
 package com.freight24.connect.feature.clients.views
 import com.freight24.ui.components.FreightTopAppBar
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,6 +44,9 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -71,6 +76,18 @@ fun ManageClientsScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val filteredClients by viewModel.filteredClients.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
+    var isNavigatingBack by remember { mutableStateOf(false) }
+    val navigationInteractionSource = remember { MutableInteractionSource() }
+
+    fun navigateBack() {
+        if (isNavigatingBack) return
+        isNavigatingBack = true
+        onBackClick()
+    }
+
+    BackHandler(enabled = !isNavigatingBack) {
+        navigateBack()
+    }
 
     Scaffold(
         topBar = {
@@ -83,7 +100,7 @@ fun ManageClientsScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = { navigateBack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
@@ -91,7 +108,7 @@ fun ManageClientsScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = onAddClientClick,
+                onClick = { if (!isNavigatingBack) onAddClientClick() },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
             ) {
@@ -102,12 +119,16 @@ fun ManageClientsScreen(
             }
         }
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                 .padding(paddingValues)
         ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+            ) {
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -216,6 +237,21 @@ fun ManageClientsScreen(
                     }
                     else -> {}
                 }
+            }
+            }
+            // Topmost scrim: once BACK is pressed this screen is animating out,
+            // but its list items would still win hit-tests against the page
+            // underneath (More). This overlay consumes those taps instead.
+            if (isNavigatingBack) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clickable(
+                            interactionSource = navigationInteractionSource,
+                            indication = null,
+                            onClick = {},
+                        )
+                )
             }
         }
     }

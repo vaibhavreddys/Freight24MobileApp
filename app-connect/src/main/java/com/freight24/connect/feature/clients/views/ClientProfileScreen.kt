@@ -355,7 +355,7 @@ private fun ClientProfileContent(
             initiallyExpanded = true,
         ) {
             ProfileField(
-                label = "FULL NAME",
+                label = "DISPLAY NAME",
                 value = fullName,
                 isEditing = isEditing,
                 leadingIcon = Icons.Default.Person,
@@ -976,6 +976,9 @@ private fun ProfileHeaderCard(
     val isActive = normalizedStatus == "active"
     val chipColor = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
 
+    val titleText = fullName.ifBlank { companyName.ifBlank { "Client" } }
+    val showCompanyLine = fullName.isNotBlank() || companyName.isBlank()
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -1006,16 +1009,18 @@ private fun ProfileHeaderCard(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = fullName.ifBlank { "Client" },
+                    text = titleText,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                 )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = companyName.ifBlank { "Company not added" },
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                if (showCompanyLine) {
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = companyName.ifBlank { "Company not added" },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "Tag Code: ${tagCode.ifBlank { "Not available" }}",

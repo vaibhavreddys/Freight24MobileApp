@@ -234,7 +234,9 @@ class ClientProfileViewModel
         }
 
         fun getInitials(): String {
-            val name = editableFullName.value.ifBlank { originalClient?.full_name.orEmpty() }
+            val name = editableFullName.value
+                .ifBlank { originalClient?.full_name.orEmpty() }
+                .ifBlank { editableCompanyName.value.ifBlank { originalClient?.company_name.orEmpty() } }
             val letters = name.split(" ").filter { it.isNotBlank() }.map { it.first().uppercaseChar() }
             return when {
                 letters.isEmpty() -> "CL"

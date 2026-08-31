@@ -1,6 +1,7 @@
 package com.freight24.connect.feature.truckowners.views
 import com.freight24.ui.components.FreightTopAppBar
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -119,6 +120,18 @@ fun ManageTruckOwnersScreen(
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
     val animatedOwnerIds = remember { mutableStateListOf<String>() }
+    var isNavigatingBack by remember { mutableStateOf(false) }
+    val navigationInteractionSource = remember { MutableInteractionSource() }
+
+    fun navigateBack() {
+        if (isNavigatingBack) return
+        isNavigatingBack = true
+        onBackClick()
+    }
+
+    BackHandler(enabled = !isNavigatingBack) {
+        navigateBack()
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -135,7 +148,7 @@ fun ManageTruckOwnersScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = { navigateBack() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
                             contentDescription = "Back"
@@ -145,14 +158,18 @@ fun ManageTruckOwnersScreen(
             )
         },
         floatingActionButton = {
-            AddTruckOwnerFab(onClick = onAddTruckOwnerClick)
+            AddTruckOwnerFab(onClick = { if (!isNavigatingBack) onAddTruckOwnerClick() })
         }
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
             HeaderBlock(
                 searchQuery = searchQuery,
                 selectedFilter = selectedFilter,
@@ -229,6 +246,21 @@ fun ManageTruckOwnersScreen(
 
                     else -> Unit
                 }
+            }
+            }
+            // Topmost scrim: once BACK is pressed this screen is animating out,
+            // but its list items would still win hit-tests against the page
+            // underneath (More). This overlay consumes those taps instead.
+            if (isNavigatingBack) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clickable(
+                            interactionSource = navigationInteractionSource,
+                            indication = null,
+                            onClick = {},
+                        )
+                )
             }
         }
     }
