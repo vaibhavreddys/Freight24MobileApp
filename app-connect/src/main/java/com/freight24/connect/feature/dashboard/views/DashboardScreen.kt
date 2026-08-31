@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.animation.core.Animatable
@@ -32,7 +31,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -55,6 +53,11 @@ import com.freight24.connect.feature.dashboard.domain.viewmodel.DashboardViewMod
 import com.freight24.connect.feature.dashboard.domain.viewmodel.DashboardViewModelImpl
 import com.freight24.connect.feature.trips.domain.usecase.TripTypes
 import com.freight24.rest.response.DashboardDataResponse
+import com.freight24.ui.components.BoundaryBadge
+import com.freight24.ui.components.BoundaryBadgeTone
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 
 @Composable
 fun DashboardScreen(
@@ -480,7 +483,10 @@ fun QuickActionsSection(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             QuickActionCard(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag("dashboard_quick_action_create_indent")
+                    .semantics { testTagsAsResourceId = true },
                 title = "Create Indent",
                 icon = Icons.Default.Add,
                 // Light: solid forest fill (the one strong CTA). Dark: calm
@@ -504,7 +510,10 @@ fun QuickActionsSection(
                 onClick = onCreateIndentClick
             )
             QuickActionCard(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag("dashboard_quick_action_adhoc_truck")
+                    .semantics { testTagsAsResourceId = true },
                 title = "Adhoc Truck",
                 icon = Icons.Default.LocalShipping,
                 containerColor = MaterialTheme.colorScheme.surface,
@@ -518,21 +527,29 @@ fun QuickActionsSection(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             QuickActionCard(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag("dashboard_quick_action_interest_inbox")
+                    .semantics { testTagsAsResourceId = true },
                 title = "Interest Inbox",
                 icon = Icons.Default.Inbox,
                 containerColor = MaterialTheme.colorScheme.surface,
                 contentColor = MaterialTheme.colorScheme.secondary,
-                badgeText = attentionNeeded.truckerInterests.toString(),
+                badgeCount = attentionNeeded.truckerInterests,
+                badgeTone = BoundaryBadgeTone.Info,
                 onClick = onInterestInboxClick
             )
             QuickActionCard(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag("dashboard_quick_action_verification_requests")
+                    .semantics { testTagsAsResourceId = true },
                 title = "Verification Requests",
                 icon = Icons.Default.Shield,
                 containerColor = MaterialTheme.colorScheme.surface,
                 contentColor = MaterialTheme.colorScheme.primary,
-                badgeText = pendingActions.verificationRequests.total.toString(),
+                badgeCount = pendingActions.verificationRequests.total,
+                badgeTone = BoundaryBadgeTone.Urgent,
                 onClick = {
                     onVerificationRequestsClick(
                         pendingActions.verificationRequests.tripVerificationRequests,
@@ -554,65 +571,53 @@ fun QuickActionCard(
     containerColor: Color,
     contentColor: Color,
     iconWellColor: Color? = null,
-    badgeText: String? = null,
-    badgeColor: Color = MaterialTheme.colorScheme.primary,
-    badgeContentColor: Color = MaterialTheme.colorScheme.onPrimary,
+    badgeCount: Int? = null,
+    badgeTone: BoundaryBadgeTone = BoundaryBadgeTone.Info,
     onClick: () -> Unit
 ) {
+    // Root = Box so the badge can be a sibling drawn on top of the card,
+    // half-breaking its top-end corner. No clipToBounds anywhere here — the
+    // badge overhang must stay visible (the grid root is a Row, not a grid).
     Box(modifier = modifier) {
-            Card(
-                modifier = Modifier.fillMaxWidth().clickable { onClick() },
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = containerColor),
-                border = if (containerColor != MaterialTheme.colorScheme.primary)
-                    BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant) else null
+        OutlinedCard(
+            modifier = Modifier.fillMaxWidth().clickable { onClick() },
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.outlinedCardColors(containerColor = containerColor),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 24.dp)
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Surface(
+                    color = iconWellColor ?: MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.size(48.dp)
                 ) {
-                    Surface(
-                        color = iconWellColor ?: MaterialTheme.colorScheme.surfaceVariant,
-                        shape = MaterialTheme.shapes.medium,
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(icon, contentDescription = null, tint = contentColor)
-                        }
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(icon, contentDescription = null, tint = contentColor)
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        title,
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = contentColor
-                    )
                 }
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = contentColor
+                )
             }
         }
 
-        if (badgeText != null) {
-            Box(
+        if (badgeCount != null) {
+            BoundaryBadge(
+                count = badgeCount,
+                tone = badgeTone,
                 modifier = Modifier
-                    .size(24.dp)
                     .align(Alignment.TopEnd)
-                    .offset(x = 6.dp, y = (-6).dp)
-                    .background(badgeColor, CircleShape)
-                    .padding(horizontal = 6.dp, vertical = 2.dp)
-            ) {
-                Text(
-                    badgeText,
-                    color = badgeContentColor,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
+                    .offset(x = 12.dp, y = (-12).dp)
+                    .testTag("dashboard_quick_action_badge")
+                    .semantics { testTagsAsResourceId = true },
+            )
         }
     }
 }
