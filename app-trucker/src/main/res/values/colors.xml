@@ -7,4 +7,7 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Trucker premium splash — light variant matches logistics background -->
+    <color name="trucker_splash_background">#F4F6F2</color>
 </resources>

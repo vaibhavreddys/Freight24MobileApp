@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Android 12+ system splash: brand background only, no icon — the
+         in-app splash (F24 unfurling into FREIGHT 24) owns the intro. -->
+    <style name="Theme.Freight24.Starting" parent="Theme.Freight24">
+        <item name="android:windowSplashScreenBackground">@color/trucker_splash_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/trucker_splash_icon_blank</item>
+    </style>
+</resources>
