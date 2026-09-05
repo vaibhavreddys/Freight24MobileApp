@@ -14,6 +14,7 @@ import com.freight24.trucker.feature.login.domain.usecase.VerifyOtpUseCase
 import com.freight24.trucker.feature.login.domain.usecase.VerifyOtpUseCaseParams
 import com.freight24.ui.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,6 +40,7 @@ internal class VerifyOtpViewModel
         companion object {
             private const val OTP_LENGTH = 6
             private const val RESEND_DELAY_SECONDS = 30
+            private const val VERIFY_WINDOW_SECONDS = 300
             private val ATTEMPTS_REGEX = Regex("""(\d+)\s*attempts?\s*remaining""", RegexOption.IGNORE_CASE)
         }
 
@@ -50,6 +52,11 @@ internal class VerifyOtpViewModel
 
         private val _remainingSeconds = MutableStateFlow(RESEND_DELAY_SECONDS)
         val remainingSeconds: StateFlow<Int> = _remainingSeconds.asStateFlow()
+
+        /** 5-minute window from when the OTP was sent. Drives the expiry
+         *  meter — once it hits zero the user has to resend to continue. */
+        private val _verificationSecondsRemaining = MutableStateFlow(VERIFY_WINDOW_SECONDS)
+        val verificationSecondsRemaining: StateFlow<Int> = _verificationSecondsRemaining.asStateFlow()
 
         private val _isResendEnabled = MutableStateFlow(false)
         val isResendEnabled: StateFlow<Boolean> = _isResendEnabled.asStateFlow()
@@ -75,8 +82,15 @@ internal class VerifyOtpViewModel
         private val _isResending = MutableStateFlow(false)
         val isResending: StateFlow<Boolean> = _isResending.asStateFlow()
 
+        // Timer jobs are held so a resend cancels the previous countdowns
+        // before starting new ones. Without this the old and new loops both
+        // decrement the same StateFlow and the timer runs at double speed.
+        private var resendTimerJob: Job? = null
+        private var verifyWindowJob: Job? = null
+
         init {
             startResendTimer()
+            startVerifyWindowTimer()
         }
 
         fun onOtpChange(value: String) {
@@ -98,12 +112,23 @@ internal class VerifyOtpViewModel
         }
 
         private fun startResendTimer() {
-            viewModelScope.launch {
+            resendTimerJob?.cancel()
+            resendTimerJob = viewModelScope.launch {
                 while (_remainingSeconds.value > 0) {
                     delay(1000)
                     _remainingSeconds.value -= 1
                 }
                 _isResendEnabled.value = true
+            }
+        }
+
+        private fun startVerifyWindowTimer() {
+            verifyWindowJob?.cancel()
+            verifyWindowJob = viewModelScope.launch {
+                while (_verificationSecondsRemaining.value > 0) {
+                    delay(1000)
+                    _verificationSecondsRemaining.value -= 1
+                }
             }
         }
 
@@ -130,8 +155,10 @@ internal class VerifyOtpViewModel
                                 _otp.value = ""
                                 _buttonState.value = ButtonState.Idle
                                 _remainingSeconds.value = RESEND_DELAY_SECONDS
+                                _verificationSecondsRemaining.value = VERIFY_WINDOW_SECONDS
                                 _isResendEnabled.value = false
                                 startResendTimer()
+                                startVerifyWindowTimer()
                             }
                             is LoginResult.Error -> {
                                 _errorMessage.value = loginResult.message

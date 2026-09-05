@@ -27,9 +27,6 @@ internal val ConnectOnPrimaryContainer100 = Color(0xFF002013)
 internal val ConnectInversePrimaryLight = Color(0xFFA6D3BB)
 internal val ConnectInversePrimaryDark = Color(0xFF1B5E40)
 
-/** Brand anchor — F24 forest green, used for marks/wordmarks on light surfaces. */
-internal val ConnectBrandForest = Color(0xFF14422C)
-
 // Secondary — Graphite Slate (structure, secondary chips & buttons)
 internal val ConnectSecondary40 = Color(0xFF49524C)
 internal val ConnectSecondary80 = Color(0xFFCBD3CD)

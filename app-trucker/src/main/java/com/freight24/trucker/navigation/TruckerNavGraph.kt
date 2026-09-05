@@ -37,16 +37,9 @@ fun TruckerNavGraph(
                 sessionExpiredMessage = sessionExpiredMessage,
                 onSessionExpiredMessageShown = onSessionExpiredMessageShown,
             )
-            // Replace with your actual LoginScreen composable
-//            LoginScreen()
-//             LoginScreen(
-//                 onNavigateToVerify = { phone ->
-//                     navController.navigate(TruckerDestination.VerifyOtp.createRoute(phone))
-//                 }
-//             )
         }
 
-        // 2️⃣ Verify OTP
+        // 2. Verify OTP
         composable(
             route = TruckerDestination.VerifyOtp.route,
             arguments =
@@ -66,42 +59,14 @@ fun TruckerNavGraph(
                         }
                     }
                 },
+                onBackClick = { navController.popBackStack() },
+                onWrongNumberClick = { navController.popBackStack() },
             )
         }
-//        // 2. Verify OTP Screen
-//        composable(
-//            route = TruckerDestination.VerifyOtp.route,
-//            arguments = listOf(
-//                navArgument("phone") { type = NavType.StringType }
-//            )
-//        ) { backStackEntry ->
-//            val phone = backStackEntry.arguments?.getString("phone") ?: ""
-//            VerifyOtpScreen(
-//                navController = navController,
-//                phoneNumber = phone
-//                // onLoginSuccess = { ... navigate to dashboard }
-//            )
-//            // Replace with your actual VerifyOtpScreen composable
-//            // VerifyOtpScreen(
-//            //     phoneNumber = phone,
-//            //     onLoginSuccess = {
-//            //         navController.navigate(TruckerDestination.LoadBoard.route) {
-//            //             popUpTo(TruckerDestination.Login.route) { inclusive = true }
-//            //         }
-//            //     }
-//            // )
-//        }
 
         // 3. LoadBoard
         composable(TruckerDestination.Main.route) {
             TruckerHomeScreen(navController = navController)
-//        composable(TruckerDestination.Dashboard.route) {
-            // Replace with your actual LoadBoardScreen composable
-            // LoadBoardScreen(
-            //     onTripClick = { tripId ->
-            //         navController.navigate(TruckerDestination.TripDetail.createRoute(tripId))
-            //     }
-            // )
         }
 
         // 4️⃣ Trip detail (optional, later)

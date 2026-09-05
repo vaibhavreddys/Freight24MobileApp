@@ -8,6 +8,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,8 +17,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -30,16 +31,12 @@ import androidx.compose.material.icons.filled.ArrowBackIosNew
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LocalPhone
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Timer
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -52,18 +49,32 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.connect.feature.login_new.viewmodel.NewOtpViewModel
+import com.freight24.common.util.groupIndianMobileDigits
 import com.freight24.ui.UiState
+import com.freight24.ui.auth.AuthChipShape
+import com.freight24.ui.auth.AuthControlShape
+import com.freight24.ui.auth.AuthHeroShape
+import com.freight24.ui.auth.AuthLaneMarkings
+import com.freight24.ui.auth.AuthLaneProgress
+import com.freight24.ui.auth.AuthLedgerBackdrop
+import com.freight24.ui.auth.AuthOutlinedRow
+import com.freight24.ui.auth.AuthOverline
+import com.freight24.ui.auth.AuthPrimaryAction
+import com.freight24.ui.auth.AuthRule
+import com.freight24.ui.auth.AuthSheet
+import com.freight24.ui.auth.rememberAuthColors
 import com.freight24.ui.components.InlineErrorBanner
+import com.freight24.ui.connect.ConnectTruckMark
 import com.freight24.ui.theme.FreightThemeTokens
+
+/** Matches NewOtpViewModel.VERIFY_TIMER_SECONDS — drives the expiry meter. */
+private const val VERIFY_WINDOW_SECONDS = 300
 
 @Composable
 fun NewOtpScreen(
@@ -120,6 +131,12 @@ fun NewOtpScreen(
     // Renders under the activity-level Freight24Theme — Connect identity,
     // user dark-mode override honoured. No nested theme re-wrap.
     val colorScheme = MaterialTheme.colorScheme
+    val hero = rememberAuthColors()
+    val extendedColors = FreightThemeTokens.colors
+    val expiringSoon = verificationSecondsRemaining in 1..30
+    val expiryFraction = (verificationSecondsRemaining.toFloat() / VERIFY_WINDOW_SECONDS)
+        .coerceIn(0f, 1f)
+    val expiryColor = if (expiringSoon) extendedColors.warning else colorScheme.primary
 
     Scaffold(
         modifier = Modifier
@@ -130,256 +147,304 @@ fun NewOtpScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(contentPadding)
-                .background(colorScheme.background)
-                .statusBarsPadding()
+                .background(hero.paper)
                 .verticalScroll(scrollState)
-                .padding(horizontal = 24.dp)
+                .navigationBarsPadding()
         ) {
-            // Back affordance — same destination as "Wrong number?".
-            IconButton(
-                onClick = onBackClick,
-                modifier = Modifier
-                    .offset(x = (-12).dp)
-                    .size(48.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.ArrowBackIosNew,
-                    contentDescription = "Back",
-                    tint = colorScheme.onSurface,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
-                Text(
-                    text = "Verify Phone Number",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = colorScheme.onSurface,
-                    textAlign = TextAlign.Center,
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Text(
-                    text = "Enter the 6-digit code sent to",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = "+91 ${formatPhoneDisplay(phoneNumber)}",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = colorScheme.onSurface,
-                )
-
-                TextButton(onClick = onWrongNumberClick, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 4.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Filled.Edit,
-                            contentDescription = null,
-                            tint = colorScheme.primary,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Wrong number?",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = colorScheme.primary,
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            OtpInputField(
-                otp = otp,
-                otpLength = 6,
-                shake = shake,
-                enabled = !isResending && !isLoading,
-                isError = errorMessage != null,
-                onOtpChange = viewModel::onOtpChange
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            InlineErrorBanner(
-                message = errorMessage.orEmpty(),
-                visible = errorMessage != null,
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Code-expiry countdown: neutral while calm, warning tokens in the
-            // last 30 seconds. Hairline border keeps it a deliberate unit.
-            val expiringSoon = verificationSecondsRemaining in 1..30
-            val extendedColors = FreightThemeTokens.colors
+            // -----------------------------------------------------------
+            // Masthead — the same brand document as the login screen, now
+            // carrying the route indicator so step 2 reads as continuation
+            // rather than a second, unrelated screen.
+            // -----------------------------------------------------------
             Box(
                 modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .clip(MaterialTheme.shapes.medium)
-                    .background(
-                        if (expiringSoon) extendedColors.surfaceWarning else colorScheme.surfaceContainerLow
-                    )
-                    .border(
-                        width = 1.dp,
-                        color = if (expiringSoon) extendedColors.warning else colorScheme.outlineVariant,
-                        shape = MaterialTheme.shapes.medium,
-                    )
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Filled.Timer,
-                        contentDescription = null,
-                        tint = if (expiringSoon) extendedColors.onSurfaceWarning else colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Expires in ${verificationSecondsRemaining.toMmSs()}",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = if (expiringSoon) extendedColors.onSurfaceWarning else colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(
-                onClick = viewModel::onVerifyClick,
-                enabled = isVerifyEnabled && !isLoading,
-                modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp)
-                    .testTag("verify_btn")
-                    .semantics { testTagsAsResourceId = true },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colorScheme.primary,
-                    contentColor = colorScheme.onPrimary,
-                    // Disabled reads as "brand on standby" (soft container tint,
-                    // AA-legible label) — not a washed-out grey slab.
-                    disabledContainerColor = if (isLoading) {
-                        colorScheme.primary
-                    } else {
-                        colorScheme.primaryContainer
-                    },
-                    disabledContentColor = if (isLoading) {
-                        colorScheme.onPrimary
-                    } else {
-                        colorScheme.onPrimaryContainer
-                    },
-                ),
-                shape = MaterialTheme.shapes.large
+                    .clip(AuthHeroShape)
+                    .background(hero.field)
+                    .statusBarsPadding()
+                    .padding(horizontal = 24.dp)
+                    .padding(top = 16.dp, bottom = 30.dp),
             ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        strokeWidth = 2.5.dp,
-                        color = colorScheme.onPrimary,
-                    )
-                } else {
-                    Text(
-                        text = "Verify & Proceed",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                }
-            }
+                AuthLedgerBackdrop(hero)
+                AuthLaneMarkings(hero)
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            TextButton(
-                onClick = viewModel::onResendClick,
-                enabled = isResendEnabled && !isResending,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Filled.Refresh,
-                        contentDescription = null,
-                        tint = if (isResendEnabled) colorScheme.primary else colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = if (isResendEnabled) "Resend OTP" else "Resend OTP in ${resendSecondsRemaining}s",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = if (isResendEnabled) colorScheme.primary else colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            // Footer support block
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .padding(top = 32.dp, bottom = 12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "Having trouble with verification?",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(MaterialTheme.shapes.medium)
-                        .background(colorScheme.surfaceContainerLow)
-                        .clickable { dialSupport(context) }
-                        .padding(horizontal = 16.dp, vertical = 16.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        IconButton(
+                            onClick = onBackClick,
                             modifier = Modifier
-                                .size(36.dp)
-                                .background(colorScheme.primary.copy(alpha = 0.10f), CircleShape),
-                            contentAlignment = Alignment.Center
+                                .offset(x = (-8).dp)
+                                .size(48.dp),
                         ) {
                             Icon(
-                                imageVector = Icons.Filled.LocalPhone,
-                                contentDescription = null,
-                                tint = colorScheme.primary,
-                                modifier = Modifier.size(18.dp)
+                                imageVector = Icons.Filled.ArrowBackIosNew,
+                                contentDescription = "Back",
+                                tint = hero.ink,
+                                modifier = Modifier.size(20.dp),
                             )
                         }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Icon(
+                            imageVector = ConnectTruckMark,
+                            contentDescription = null,
+                            tint = hero.lane,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        AuthOverline(text = "FREIGHT24 · CONNECT", color = hero.inkMuted)
+                    }
+
+                    Spacer(modifier = Modifier.height(22.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        AuthLaneProgress(
+                            steps = 2,
+                            current = 2,
+                            colors = hero,
+                            modifier = Modifier.weight(1f),
+                        )
                         Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(
-                                text = "CALL SUPPORT",
-                                style = MaterialTheme.typography.labelLarge,
+                        AuthOverline(text = "STEP 2 OF 2", color = hero.inkMuted)
+                    }
+
+                    Spacer(modifier = Modifier.height(22.dp))
+
+                    Text(
+                        text = "Confirm it's you",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = hero.ink,
+                    )
+                }
+            }
+
+            // -----------------------------------------------------------
+            // Sheet — the verification controls.
+            // -----------------------------------------------------------
+            AuthSheet(colors = hero) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "Verify your number",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = colorScheme.onSurface,
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "We've sent a 6-digit code to",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colorScheme.onSurfaceVariant,
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Destination block — tap to correct the number. Reads as a
+                    // consignment "deliver code to" row, not a generic chip.
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(AuthChipShape)
+                            .background(hero.paper)
+                            .border(1.dp, hero.paperEdge, AuthChipShape)
+                            .clickable(onClick = onWrongNumberClick)
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = "+91 ${groupIndianMobileDigits(phoneNumber)}",
+                            style = MaterialTheme.typography.titleSmall.copy(
+                                fontFeatureSettings = "tnum",
+                            ),
+                            color = colorScheme.onSurface,
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        Icon(
+                            imageVector = Icons.Filled.Edit,
+                            contentDescription = "Change number",
+                            tint = colorScheme.primary,
+                            modifier = Modifier.size(15.dp),
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(28.dp))
+
+                    OtpInputField(
+                        otp = otp,
+                        otpLength = 6,
+                        shake = shake,
+                        enabled = !isResending && !isLoading,
+                        isError = errorMessage != null,
+                        onOtpChange = viewModel::onOtpChange
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    InlineErrorBanner(
+                        message = errorMessage.orEmpty(),
+                        visible = errorMessage != null,
+                    )
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // Expiry — a labelled meter, not a floating grey blob.
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        AuthOverline(
+                            text = "CODE EXPIRES IN",
+                            color = if (expiringSoon) {
+                                extendedColors.onSurfaceWarning
+                            } else {
+                                colorScheme.onSurfaceVariant
+                            },
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        Text(
+                            text = verificationSecondsRemaining.toMmSs(),
+                            style = MaterialTheme.typography.labelMedium.copy(
                                 fontWeight = FontWeight.SemiBold,
-                                color = colorScheme.onSurface,
+                                fontFeatureSettings = "tnum",
+                                fontSize = 13.sp,
+                            ),
+                            color = if (expiringSoon) {
+                                extendedColors.onSurfaceWarning
+                            } else {
+                                colorScheme.onSurface
+                            },
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(3.dp)
+                            .clip(CircleShape)
+                            .background(hero.paperEdge)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(expiryFraction)
+                                .height(3.dp)
+                                .clip(CircleShape)
+                                .background(expiryColor)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    AuthPrimaryAction(
+                        label = "Verify & Proceed",
+                        enabled = isVerifyEnabled && !isLoading,
+                        loading = isLoading,
+                        progress = 0f,
+                        onClick = viewModel::onVerifyClick,
+                        testTag = "verify_btn",
+                        colors = hero,
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(AuthControlShape)
+                            .clickable(enabled = isResendEnabled && !isResending) {
+                                viewModel.onResendClick()
+                            }
+                            .padding(vertical = 12.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        if (isResending) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                                color = colorScheme.primary,
                             )
-                            Text(
-                                text = "Instant help",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = colorScheme.onSurfaceVariant,
+                            Spacer(modifier = Modifier.width(8.dp))
+                        } else {
+                            Icon(
+                                imageVector = Icons.Filled.Refresh,
+                                contentDescription = null,
+                                tint = if (isResendEnabled) {
+                                    colorScheme.primary
+                                } else {
+                                    colorScheme.onSurfaceVariant
+                                },
+                                modifier = Modifier.size(16.dp)
                             )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+                        Text(
+                            text = if (isResending) {
+                                "Sending a new code…"
+                            } else if (isResendEnabled) {
+                                "Resend OTP"
+                            } else {
+                                "Resend OTP in ${resendSecondsRemaining}s"
+                            },
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Medium,
+                            color = if (isResendEnabled || isResending) {
+                                colorScheme.primary
+                            } else {
+                                colorScheme.onSurfaceVariant
+                            },
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    AuthRule(colors = hero)
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    AuthOutlinedRow(onClick = { dialSupport(context) }, colors = hero) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .background(hero.field.copy(alpha = 0.10f), CircleShape)
+                                    .border(1.dp, hero.field.copy(alpha = 0.18f), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.LocalPhone,
+                                    contentDescription = null,
+                                    tint = hero.field,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "Call support",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = colorScheme.onSurface,
+                                )
+                                Text(
+                                    text = "Instant help, 24×7",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = colorScheme.onSurfaceVariant,
+                                )
+                            }
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
         }
     }
-}
-
-private fun formatPhoneDisplay(phoneNumber: String): String {
-    return if (phoneNumber.length > 5) "${phoneNumber.take(5)} ${phoneNumber.drop(5)}" else phoneNumber
 }
 
 private fun Int.toMmSs(): String {

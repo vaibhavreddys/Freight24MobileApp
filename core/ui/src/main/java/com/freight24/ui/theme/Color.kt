@@ -155,3 +155,13 @@ internal val OnSettingsDark = Color(0xFF1E1561)
 // Scrim — dialog scrim opacity differs per mode for legibility on M3 surfaces
 internal val DialogScrimLight = Color(0x66000000)
 internal val DialogScrimDark = Color(0x99000000)
+
+// ---------------------------------------------------------------------------
+// Shared brand anchor — F24 forest green.
+//
+// Single source of truth for the deep forest green used as the brand mark
+// across families (trucker auth fill, auth masthead field, connect settings
+// accent). Refer to this instead of re-stating the hex per file.
+// ---------------------------------------------------------------------------
+
+internal val FreightBrandForest = Color(0xFF14422C)

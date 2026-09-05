@@ -10,6 +10,7 @@ import com.freight24.ui.theme.Error30
 import com.freight24.ui.theme.Error40
 import com.freight24.ui.theme.Error80
 import com.freight24.ui.theme.Error90
+import com.freight24.ui.theme.FreightBrandForest
 import com.freight24.ui.theme.FreightExtendedColors
 import com.freight24.ui.theme.OnError100
 import com.freight24.ui.theme.OnError20
@@ -172,7 +173,7 @@ internal val ConnectLightExtendedColors = ConnectExtendedColors(
     onInfo = ConnectOnInfoLight,
     surfaceInfo = ConnectSurfaceInfoLight,
     onSurfaceInfo = ConnectOnSurfaceInfoLight,
-    settings = ConnectBrandForest,
+    settings = FreightBrandForest,
     onSettings = Color.White,
     dialogScrim = Color.Black.copy(alpha = 0.55f),
     routeOrigin = ConnectPrimary40,

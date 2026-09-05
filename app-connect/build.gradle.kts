@@ -67,10 +67,13 @@ android {
 
         create("qa") {
             dimension = "env"
+            // Follow local.properties (same source as the debug variant) so a
+            // local IP change only needs `scripts/update-local-ip.sh` — not a
+            // hardcoded edit. QA runs against the dev backend on the Mac.
             buildConfigField(
                 "String",
                 "BASE_URL",
-                "\"http://192.168.88.5:3000/api/v1/\"",
+                "\"${debugBaseUrl}\"",
             )
         }
 

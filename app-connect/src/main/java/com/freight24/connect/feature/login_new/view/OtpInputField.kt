@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,7 +32,18 @@ import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.freight24.ui.auth.AuthFieldShape
+import com.freight24.ui.auth.rememberAuthColors
 
+/**
+ * Six-cell code entry.
+ *
+ * Cells carry state through material, not decoration: an empty cell is a
+ * blank well, the cell awaiting input gets a brand caret, and a filled cell
+ * lights to the brand container so the code visibly builds as it is typed.
+ * Errors are carried by the border alone.
+ */
 @Composable
 fun OtpInputField(
     otp: String,
@@ -44,6 +54,7 @@ fun OtpInputField(
     onOtpChange: (String) -> Unit,
 ) {
     val colors = MaterialTheme.colorScheme
+    val hero = rememberAuthColors()
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
     val shakeOffset = remember { Animatable(0f) }
@@ -115,21 +126,20 @@ fun OtpInputField(
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             repeat(otpLength) { index ->
                 val char = otp.getOrNull(index)?.toString().orEmpty()
                 val isActive = otp.length == index && otp.length < otpLength
                 val isFilled = char.isNotEmpty()
 
-                // Same visual language as the phone input: white well with a
-                // hairline border; focus/error state is carried by the border
-                // alone — no placeholder dots in empty cells.
                 Box(
                     modifier = Modifier
-                        .size(width = 44.dp, height = 56.dp)
-                        .clip(MaterialTheme.shapes.medium)
-                        .background(colors.surfaceContainerLowest)
+                        .size(width = 46.dp, height = 56.dp)
+                        .clip(AuthFieldShape)
+                        .background(
+                            if (isFilled) colors.primaryContainer else hero.paper
+                        )
                         .border(
                             width = when {
                                 isActive -> 1.5.dp
@@ -139,25 +149,38 @@ fun OtpInputField(
                             color = when {
                                 isActive -> colors.primary
                                 isFilled && isError -> colors.error
+                                isFilled -> colors.primaryContainer
                                 else -> colors.outlineVariant
                             },
-                            shape = MaterialTheme.shapes.medium
+                            shape = AuthFieldShape,
                         ),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
-                    if (isFilled) {
-                        Text(
-                            text = char,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = colors.onSurface
-                        )
-                    } else if (isActive) {
-                        Box(
-                            modifier = Modifier
-                                .size(7.dp)
-                                .background(colors.primary, CircleShape)
-                        )
+                    when {
+                        isFilled -> {
+                            Text(
+                                text = char,
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 22.sp,
+                                    fontFeatureSettings = "tnum",
+                                ),
+                                color = if (isError) {
+                                    colors.onErrorContainer
+                                } else {
+                                    colors.onPrimaryContainer
+                                },
+                            )
+                        }
+                        isActive -> {
+                            // Caret, not a dot — the cell reads as a live
+                            // input rather than a status indicator.
+                            Box(
+                                modifier = Modifier
+                                    .size(width = 2.dp, height = 22.dp)
+                                    .background(colors.primary),
+                            )
+                        }
                     }
                 }
             }

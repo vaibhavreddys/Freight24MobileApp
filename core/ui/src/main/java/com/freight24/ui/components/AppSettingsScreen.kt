@@ -433,24 +433,36 @@ private fun SettingsRadioButtonRow(
 
 // ---------------------------------------------------------------------------
 // Swatch helpers — map a [FreightAppTheme] to its representative primary /
-// secondary color for the picker UI. These are the same T40 values used in
-// the schemes (Indigo Primary40, GreenPrimary40, LogisticsPrimary40, etc).
+// secondary color for the picker UI. Stated as named tokens (not inline hex
+// in the when branches) so the set is auditable in one place. NOTE: these
+// are representative swatches, deliberately NOT the scheme T40s in every
+// case — do not "fix" them to the tonal values without design sign-off.
 // Returns Color.Unspecified if a future theme is added without updating
 // these helpers, so the row falls back to grey rather than crashing.
 // ---------------------------------------------------------------------------
 
+private val SwatchIndigoPrimary = Color(0xFF6750A4)
+private val SwatchGreenPrimary = Color(0xFF509367)
+private val SwatchLogisticsPrimary = Color(0xFF2E5D3F)
+private val SwatchConnectPrimary = Color(0xFF1B5E40)
+
+private val SwatchIndigoSecondary = Color(0xFF625B71)
+private val SwatchGreenSecondary = Color(0xFF3F6750)
+private val SwatchLogisticsSecondary = Color(0xFFA8433A)
+private val SwatchConnectSecondary = Color(0xFF6F5A2A)
+
 private fun themeSwatchPrimary(theme: FreightAppTheme): Color =
     when (theme) {
-        FreightAppTheme.INDIGO -> Color(0xFF6750A4)
-        FreightAppTheme.GREEN -> Color(0xFF509367)
-        FreightAppTheme.LOGISTICS -> Color(0xFF2E5D3F)
-        FreightAppTheme.CONNECT -> Color(0xFF1B5E40)
+        FreightAppTheme.INDIGO -> SwatchIndigoPrimary
+        FreightAppTheme.GREEN -> SwatchGreenPrimary
+        FreightAppTheme.LOGISTICS -> SwatchLogisticsPrimary
+        FreightAppTheme.CONNECT -> SwatchConnectPrimary
     }
 
 private fun themeSwatchSecondary(theme: FreightAppTheme): Color =
     when (theme) {
-        FreightAppTheme.INDIGO -> Color(0xFF625B71)
-        FreightAppTheme.GREEN -> Color(0xFF3F6750)
-        FreightAppTheme.LOGISTICS -> Color(0xFFA8433A)
-        FreightAppTheme.CONNECT -> Color(0xFF6F5A2A)
+        FreightAppTheme.INDIGO -> SwatchIndigoSecondary
+        FreightAppTheme.GREEN -> SwatchGreenSecondary
+        FreightAppTheme.LOGISTICS -> SwatchLogisticsSecondary
+        FreightAppTheme.CONNECT -> SwatchConnectSecondary
     }
