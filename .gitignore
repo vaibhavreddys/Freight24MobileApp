@@ -37,3 +37,4 @@ local.properties
 # Scripts (for automating)
 scripts/*
 .devloop/*
+/.workbuddy-ai

@@ -90,11 +90,11 @@ fun AppTopBar(
         windowInsets = WindowInsets.statusBars,
         colors =
             TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.surface,
-                scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
                 titleContentColor = MaterialTheme.colorScheme.onSurface,
-                actionIconContentColor = MaterialTheme.colorScheme.onSurface,
+                actionIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             ),
     )
 }

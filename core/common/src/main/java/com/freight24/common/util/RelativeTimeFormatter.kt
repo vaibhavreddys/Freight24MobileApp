@@ -27,8 +27,7 @@ object RelativeTimeFormatter {
      * @return "Expires in 1d 12h", "Expires in 45m", "Expires in <1m",
      *         "Expired", or "--" if the input is unparseable.
      */
-    fun formatExpiry(timestamp: String?): String {
-        if (timestamp.isNullOrBlank()) return "--"
+    fun formatExpiry(timestamp: String?): String {        if (timestamp.isNullOrBlank()) return "--"
         return try {
             val parser = SimpleDateFormat(SUPABASE_PATTERN, Locale.getDefault()).apply {
                 timeZone = UTC
@@ -65,6 +64,63 @@ object RelativeTimeFormatter {
         } catch (e: Exception) {
             Log.e("RelativeTimeFormatter", "Invalid UTC timestamp: $timestamp", e)
             "--"
+        }
+    }
+
+    /**
+     * Formats a Supabase/Postgres UTC timestamp into a human-friendly IST
+     * "posted on" string: "Today, 10:30 AM IST", "Yesterday, 9:05 PM IST",
+     * "4 Sep, 9:08 AM IST", or "4 Sep 2025, 9:08 AM IST" across years.
+     *
+     * @param timestamp Supabase UTC timestamp like "2025-11-20T10:30:00"
+     *                  (optional fractional seconds / timezone suffix are
+     *                  tolerated and ignored).
+     * @return the IST wall-clock string, or "" when [timestamp] is blank or
+     *         unparseable so callers can hide the row instead of showing a
+     *         placeholder.
+     */
+    fun formatCreatedIst(timestamp: String?): String {
+        if (timestamp.isNullOrBlank()) return ""
+        return try {
+            val parser = SimpleDateFormat(SUPABASE_PATTERN, Locale.getDefault()).apply {
+                timeZone = UTC
+            }
+            val clean = stripFractionalAndZone(timestamp)
+            val instant = parser.parse(clean) ?: return ""
+
+            val created = Calendar.getInstance(IST).apply { time = instant }
+            val now = Calendar.getInstance(IST)
+            val yesterday = Calendar.getInstance(IST).apply { add(Calendar.DAY_OF_YEAR, -1) }
+
+            val timePart = SimpleDateFormat("h:mm a", Locale.getDefault()).apply {
+                timeZone = IST
+            }.format(instant)
+
+            val sameDay = created.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
+                created.get(Calendar.DAY_OF_YEAR) == now.get(Calendar.DAY_OF_YEAR)
+            val isYesterday = created.get(Calendar.YEAR) == yesterday.get(Calendar.YEAR) &&
+                created.get(Calendar.DAY_OF_YEAR) == yesterday.get(Calendar.DAY_OF_YEAR)
+            val sameYear = created.get(Calendar.YEAR) == now.get(Calendar.YEAR)
+
+            when {
+                sameDay -> "Today, $timePart IST"
+                isYesterday -> "Yesterday, $timePart IST"
+                sameYear -> {
+                    val datePart = SimpleDateFormat("d MMM", Locale.getDefault()).apply {
+                        timeZone = IST
+                    }.format(instant)
+                    "$datePart, $timePart IST"
+                }
+                else -> {
+                    val datePart = SimpleDateFormat("d MMM yyyy", Locale.getDefault()).apply {
+                        timeZone = IST
+                    }.format(instant)
+                    "$datePart, $timePart IST"
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("RelativeTimeFormatter", "Invalid UTC timestamp: $timestamp", e)
+            ""
         }
     }
 

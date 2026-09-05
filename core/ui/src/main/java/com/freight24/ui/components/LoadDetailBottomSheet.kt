@@ -60,13 +60,13 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.freight24.common.util.RelativeTimeFormatter
 import com.freight24.ui.theme.FreightThemeTokens
 import com.freight24.ui.theme.monoSpace
+import com.freight24.ui.trucker.TruckerColors
+import com.freight24.ui.trucker.rememberTruckerColors
 
 // ──────────────────────────────────────────────────────────────────────────────
 //  UI model
@@ -177,7 +177,7 @@ private fun DragHandle() {
             .padding(top = 12.dp, bottom = 4.dp)
             .size(width = 40.dp, height = 4.dp)
             .background(
-                color = MaterialTheme.colorScheme.surfaceDim,
+                color = MaterialTheme.colorScheme.outlineVariant,
                 shape = RoundedCornerShape(2.dp),
             ),
     )
@@ -202,20 +202,26 @@ private fun LoadDetailContent(
             .navigationBarsPadding(),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Header(code = detail.indentCode, onClose = onClose)
-        RouteCard(detail = detail)
+        // Brand tokens (deep forest #14422C in light) are hoisted once and
+        // passed down: the sheet's hero moments speak brand, the supporting
+        // surfaces stay in the Material container system.
+        val trucker = rememberTruckerColors()
+        Header(code = detail.indentCode, onClose = onClose, trucker = trucker)
+        PostedRow(createdAt = detail.createdAt)
+        RouteCard(detail = detail, onCallAgent = onCallAgent, trucker = trucker)
         SpecsChips(detail = detail)
         if (detail.client?.companyName != null) {
-            ShipperCard(companyName = detail.client.companyName)
+            ShipperCard(companyName = detail.client.companyName, trucker = trucker)
         }
         if (detail.agent != null) {
-            DispatchAgentCard(agent = detail.agent, onCallAgent = onCallAgent)
+            DispatchAgentCard(agent = detail.agent, onCallAgent = onCallAgent, trucker = trucker)
         }
         EngagementLine(detail = detail)
         ExpressInterestButton(
             isInterested = detail.isInterested,
             isLoading = detail.isInterestLoading,
             onToggle = onToggleInterest,
+            trucker = trucker,
         )
     }
 }
@@ -228,12 +234,13 @@ private fun LoadDetailContent(
 private fun Header(
     code: String,
     onClose: () -> Unit,
+    trucker: TruckerColors,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IndentIdChip(code = code)
+        IndentIdChip(code = code, trucker = trucker)
         Spacer(Modifier.weight(1f))
         IconButton(
             onClick = onClose,
@@ -252,10 +259,12 @@ private fun Header(
 }
 
 @Composable
-private fun IndentIdChip(code: String) {
+private fun IndentIdChip(code: String, trucker: TruckerColors) {
+    // Persistent brand anchor: deep-forest fill with light mono text, so the
+    // brand is visible at the top of the sheet in every state.
     Surface(
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = trucker.brand,
+        contentColor = trucker.onBrand,
         shape = RoundedCornerShape(999.dp),
     ) {
         Row(
@@ -265,8 +274,7 @@ private fun IndentIdChip(code: String) {
             Text(
                 text = code,
                 style = MaterialTheme.typography.labelLarge.copy(fontFamily = monoSpace),
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.SemiBold,
+                color = trucker.onBrand,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -275,18 +283,64 @@ private fun IndentIdChip(code: String) {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-//  Route card — surface-bright, column-style route (LoadCard pattern) + amount chip
+//  Posted row — human-friendly IST creation time ("Today, 10:30 AM IST").
+//  Hidden entirely when the backend timestamp is blank or unparseable.
 // ──────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun RouteCard(detail: LoadDetail) {
+private fun PostedRow(createdAt: String) {
+    val postedText = RelativeTimeFormatter.formatCreatedIst(createdAt)
+    if (postedText.isNotEmpty()) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp)
+                .testTag("sheet_posted_on")
+                .semantics { testTagsAsResourceId = true },
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Schedule,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(16.dp),
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = "Posted $postedText",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+//  Route hero — deep-brand gradient (the sheet's dominant region) with the
+//  column-style route in on-brand ink. Warm saffron marks the destination,
+//  echoing the trucker system's "single warm note" rule.
+// ──────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun RouteCard(
+    detail: LoadDetail,
+    onCallAgent: (String) -> Unit,
+    trucker: TruckerColors,
+) {
     val fromCity = bestCityLabel(detail.loadingLocation, fallback = "Pickup")
     val toCity = bestCityLabel(detail.unloadingLocation, fallback = "Drop")
 
-    Surface(
-        color = MaterialTheme.colorScheme.surfaceBright,
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        shape = RoundedCornerShape(24.dp),
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                    colors = listOf(trucker.brand, trucker.brandPressed),
+                ),
+                shape = RoundedCornerShape(24.dp),
+            ),
     ) {
         Column(
             modifier = Modifier
@@ -298,16 +352,27 @@ private fun RouteCard(detail: LoadDetail) {
             ColumnRouteIndicator(
                 fromCity = fromCity,
                 toCity = toCity,
+                trucker = trucker,
             )
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 1f))
+            HorizontalDivider(color = trucker.onBrand.copy(alpha = 0.25f))
             if (detail.hideCostInfo) {
-                HideCostInline()
+                HideCostInline(trucker = trucker)
+            } else if (isZeroAmount(detail.tripPrice)) {
+                PricingNote(
+                    agentPhone = detail.agent?.phone.orEmpty(),
+                    onCallAgent = onCallAgent,
+                    trucker = trucker,
+                )
             } else {
-                AmountChip(priceText = formatCurrency(detail.tripPrice))
+                AmountChip(priceText = formatCurrency(detail.tripPrice), trucker = trucker)
             }
         }
     }
 }
+
+/** True when the backend sent no usable amount (blank, "--", or numeric 0). */
+private fun isZeroAmount(tripPrice: String): Boolean =
+    formatCurrency(tripPrice).trim() == "₹0"
 
 /**
  * Column-style route indicator that mirrors the LoadCard layout:
@@ -318,7 +383,11 @@ private fun RouteCard(detail: LoadDetail) {
 private fun ColumnRouteIndicator(
     fromCity: String,
     toCity: String,
+    trucker: TruckerColors,
 ) {
+    // On the brand hero: pickup dot in on-brand ink, destination dot in the
+    // warm saffron accent — the same origin→destination story as the board
+    // card, retuned for the dark-green ground.
     Row(verticalAlignment = Alignment.Top) {
         // Indicator column: top dot, gradient line, bottom dot
         Column(
@@ -329,7 +398,7 @@ private fun ColumnRouteIndicator(
                 modifier = Modifier
                     .size(12.dp)
                     .background(
-                        color = MaterialTheme.colorScheme.primary,
+                        color = trucker.onBrand,
                         shape = CircleShape,
                     ),
             )
@@ -339,10 +408,7 @@ private fun ColumnRouteIndicator(
                     .height(28.dp)
                     .background(
                         brush = androidx.compose.ui.graphics.Brush.verticalGradient(
-                            colors = listOf(
-                                MaterialTheme.colorScheme.primary,
-                                MaterialTheme.colorScheme.error,
-                            ),
+                            colors = listOf(trucker.onBrand, trucker.accent),
                         ),
                     ),
             )
@@ -350,7 +416,7 @@ private fun ColumnRouteIndicator(
                 modifier = Modifier
                     .size(12.dp)
                     .background(
-                        color = MaterialTheme.colorScheme.error,
+                        color = trucker.accent,
                         shape = CircleShape,
                     ),
             )
@@ -364,16 +430,14 @@ private fun ColumnRouteIndicator(
             Text(
                 text = fromCity,
                 style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.SemiBold,
+                color = trucker.onBrand,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
                 text = toCity,
                 style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.SemiBold,
+                color = trucker.onBrand,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -382,10 +446,12 @@ private fun ColumnRouteIndicator(
 }
 
 @Composable
-private fun AmountChip(priceText: String) {
+private fun AmountChip(priceText: String, trucker: TruckerColors) {
+    // Earnings stay the dominant element inside the hero: a light surface
+    // pill with dark ink on the deep-green ground.
     Surface(
-        color = MaterialTheme.colorScheme.surface,
-        contentColor = MaterialTheme.colorScheme.onSurface,
+        color = trucker.surface,
+        contentColor = trucker.ink,
         shape = RoundedCornerShape(999.dp),
     ) {
         Row(
@@ -395,14 +461,14 @@ private fun AmountChip(priceText: String) {
             Icon(
                 imageVector = Icons.Filled.Payments,
                 contentDescription = null,
+                tint = trucker.brand,
                 modifier = Modifier.size(16.dp),
             )
             Spacer(Modifier.width(8.dp))
             Text(
                 text = priceText,
                 style = MaterialTheme.typography.titleLarge,
-                color = FreightThemeTokens.colors.success,
-                fontWeight = FontWeight.Bold,
+                color = trucker.ink,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -411,11 +477,65 @@ private fun AmountChip(priceText: String) {
 }
 
 @Composable
-private fun HideCostInline() {
+private fun PricingNote(
+    agentPhone: String,
+    onCallAgent: (String) -> Unit,
+    trucker: TruckerColors,
+) {
+    // ₹0 from the backend means "no usable amount" — never render it as a
+    // price. A tonal on-brand note with a Call affordance replaces the chip.
+    val canCall = agentPhone.isNotBlank() && agentPhone != "--"
     Surface(
-        color = FreightThemeTokens.colors.surfaceInfo,
-        contentColor = FreightThemeTokens.colors.onSurfaceInfo,
+        onClick = { if (canCall) onCallAgent(agentPhone) },
+        enabled = canCall,
+        color = trucker.onBrand.copy(alpha = 0.14f),
+        contentColor = trucker.onBrand,
         shape = RoundedCornerShape(999.dp),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            trucker.onBrand.copy(alpha = 0.35f),
+        ),
+        modifier = Modifier
+            .testTag("sheet_price_call_btn")
+            .semantics { testTagsAsResourceId = true },
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Default.Info,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = "Contact our agent for pricing",
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+            if (canCall) {
+                Spacer(Modifier.width(8.dp))
+                Icon(
+                    imageVector = Icons.Filled.Call,
+                    contentDescription = "Call dispatch agent",
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HideCostInline(trucker: TruckerColors) {
+    Surface(
+        color = trucker.onBrand.copy(alpha = 0.14f),
+        contentColor = trucker.onBrand,
+        shape = RoundedCornerShape(999.dp),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            trucker.onBrand.copy(alpha = 0.35f),
+        ),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -430,7 +550,6 @@ private fun HideCostInline() {
             Text(
                 text = "Price details not available, contact our agent",
                 style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Medium,
             )
         }
     }
@@ -485,13 +604,12 @@ private fun SpecsChips(detail: LoadDetail) {
 // ──────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun ShipperCard(companyName: String) {
+private fun ShipperCard(companyName: String, trucker: TruckerColors) {
     SectionColumn(label = "Shipper Account") {
         PartnerCard(
             name = companyName,
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            onContainerColor = MaterialTheme.colorScheme.onPrimaryContainer,
             icon = Icons.Filled.Business,
+            trucker = trucker,
         )
     }
 }
@@ -499,14 +617,17 @@ private fun ShipperCard(companyName: String) {
 @Composable
 private fun PartnerCard(
     name: String,
-    containerColor: androidx.compose.ui.graphics.Color,
-    onContainerColor: androidx.compose.ui.graphics.Color,
     icon: ImageVector,
+    trucker: TruckerColors,
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceBright,
+        color = MaterialTheme.colorScheme.surfaceContainerLowest,
         contentColor = MaterialTheme.colorScheme.onSurface,
         shape = MaterialTheme.shapes.medium,
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+        ),
     ) {
         Row(
             modifier = Modifier
@@ -515,8 +636,8 @@ private fun PartnerCard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AvatarCircle(
-                color = containerColor,
-                onColor = onContainerColor,
+                color = trucker.brand,
+                onColor = trucker.onBrand,
                 icon = icon,
             )
             Spacer(Modifier.width(16.dp))
@@ -524,7 +645,6 @@ private fun PartnerCard(
                 text = name,
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
@@ -562,12 +682,17 @@ private fun AvatarCircle(
 private fun DispatchAgentCard(
     agent: LoadDetailF24Agent,
     onCallAgent: (String) -> Unit,
+    trucker: TruckerColors,
 ) {
     SectionColumn(label = "Freight24 Agent") {
         Surface(
-            color = MaterialTheme.colorScheme.surfaceBright,
+            color = MaterialTheme.colorScheme.surfaceContainerLowest,
             contentColor = MaterialTheme.colorScheme.onSurface,
             shape = MaterialTheme.shapes.medium,
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+            ),
         ) {
             Row(
                 modifier = Modifier
@@ -576,8 +701,8 @@ private fun DispatchAgentCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 AvatarCircle(
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    onColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    color = trucker.brand,
+                    onColor = trucker.onBrand,
                     icon = Icons.Filled.Person,
                 )
                 Spacer(Modifier.width(16.dp))
@@ -585,7 +710,6 @@ private fun DispatchAgentCard(
                     text = agent.name.ifBlank { "Freight24" },
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
@@ -594,6 +718,7 @@ private fun DispatchAgentCard(
                 CallPillButton(
                     enabled = agent.phone.isNotBlank() && agent.phone != "--",
                     onClick = { onCallAgent(agent.phone) },
+                    trucker = trucker,
                 )
             }
         }
@@ -604,14 +729,17 @@ private fun DispatchAgentCard(
 private fun CallPillButton(
     enabled: Boolean,
     onClick: () -> Unit,
+    trucker: TruckerColors,
 ) {
+    // Secondary action in the brand family: pale brand wash with dark ink,
+    // so it harmonizes with the hero without competing with the Express CTA.
     val container = if (enabled) {
-        MaterialTheme.colorScheme.primaryContainer
+        trucker.brandSoft
     } else {
         MaterialTheme.colorScheme.surfaceContainerHigh
     }
     val onContainer = if (enabled) {
-        MaterialTheme.colorScheme.onPrimaryContainer
+        trucker.ink
     } else {
         MaterialTheme.colorScheme.onSurfaceVariant
     }
@@ -638,7 +766,6 @@ private fun CallPillButton(
             Text(
                 text = "Call",
                 style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
             )
         }
     }
@@ -666,7 +793,10 @@ private fun EngagementLine(detail: LoadDetail) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // Left: clock + relative expiry
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.weight(1f, fill = false),
+        ) {
             Icon(
                 imageVector = Icons.Default.AccessTime,
                 contentDescription = null,
@@ -680,23 +810,23 @@ private fun EngagementLine(detail: LoadDetail) {
             Spacer(Modifier.width(8.dp))
             Text(
                 text = expiryText,
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.labelMedium,
                 color = if (isExpired) {
                     MaterialTheme.colorScheme.error
                 } else {
                     MaterialTheme.colorScheme.onSurface
                 },
-                fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
             )
         }
 
-        Spacer(Modifier.weight(1f))
+        Spacer(Modifier.width(12.dp))
 
         // Right: status dot + interest count
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.End,
+            modifier = Modifier.weight(1f, fill = false),
         ) {
             Box(
                 modifier = Modifier
@@ -713,13 +843,12 @@ private fun EngagementLine(detail: LoadDetail) {
             Spacer(Modifier.width(8.dp))
             Text(
                 text = interestText,
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.labelMedium,
                 color = if (hasInterest) {
                     FreightThemeTokens.colors.success
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
                 },
-                fontWeight = FontWeight.Medium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -736,8 +865,23 @@ private fun ExpressInterestButton(
     isInterested: Boolean,
     isLoading: Boolean,
     onToggle: () -> Unit,
+    trucker: TruckerColors,
 ) {
+    // Action hierarchy: the sheet's primary CTA is the deep brand fill, so it
+    // dominates the tonal Call pill above it. Once interest is expressed it
+    // relaxes to the pale brand wash — still tappable (withdraw), but no
+    // longer shouting.
     val haptics = LocalHapticFeedback.current
+    val container = if (isInterested) {
+        trucker.brandSoft
+    } else {
+        trucker.brand
+    }
+    val onContainer = if (isInterested) {
+        trucker.ink
+    } else {
+        trucker.onBrand
+    }
     Button(
         onClick = {
             haptics.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -748,17 +892,17 @@ private fun ExpressInterestButton(
             .heightIn(min = 56.dp)
             .testTag("express_interest_btn")
             .semantics { testTagsAsResourceId = true },
-        shape = MaterialTheme.shapes.medium,
+        shape = MaterialTheme.shapes.large,
         colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            containerColor = container,
+            contentColor = onContainer,
         ),
         enabled = !isLoading,
     ) {
         if (isLoading) {
             CircularProgressIndicator(
                 modifier = Modifier.size(20.dp),
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = onContainer,
                 strokeWidth = 2.dp,
             )
         } else {
@@ -771,7 +915,6 @@ private fun ExpressInterestButton(
             Text(
                 text = if (isInterested) "Interest expressed" else "Express interest",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
             )
         }
     }
@@ -794,8 +937,6 @@ private fun SectionColumn(
             text = label,
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontWeight = FontWeight.Medium,
-            letterSpacing = 0.4.sp,
         )
         content()
     }
@@ -811,9 +952,13 @@ private fun SpecChip(
     icon: ImageVector? = null,
 ) {
     Surface(
-        color = MaterialTheme.colorScheme.surface,
+        color = MaterialTheme.colorScheme.surfaceContainerHighest,
         contentColor = MaterialTheme.colorScheme.onSurface,
         shape = RoundedCornerShape(999.dp),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+        ),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -830,7 +975,6 @@ private fun SpecChip(
             Text(
                 text = text,
                 style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Medium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )

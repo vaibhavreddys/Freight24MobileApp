@@ -35,7 +35,10 @@ fun FooterIconButton(
         label = "iconScale"
     )
     val iconTint = animateColorAsState(
-        targetValue = if (highlighted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+        // Bookmarked = brick-red secondary: a sharp accent against the forest
+        // primary Call button, so "interested" reads instantly and the two
+        // actions never compete in the same hue (dominant + accent rule).
+        targetValue = if (highlighted) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.onSurface,
         animationSpec = tween(durationMillis = 220),
         label = "iconTint"
     )

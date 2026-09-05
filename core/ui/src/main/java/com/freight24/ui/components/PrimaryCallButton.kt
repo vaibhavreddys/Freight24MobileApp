@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Call
 import androidx.compose.material3.Button
@@ -16,9 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 @Composable
 fun PrimaryCallButton(
@@ -38,7 +35,7 @@ fun PrimaryCallButton(
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,
         ),
-        shape = RoundedCornerShape(24.dp),
+        shape = MaterialTheme.shapes.large,
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
         modifier = modifier,
     ) {
@@ -50,8 +47,7 @@ fun PrimaryCallButton(
         Spacer(modifier = Modifier.width(6.dp))
         Text(
             text = label,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
+            style = MaterialTheme.typography.labelLarge,
         )
     }
 }

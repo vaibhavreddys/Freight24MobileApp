@@ -34,26 +34,37 @@ fun CityCard(
             modifier
                 .fillMaxWidth()
                 .clickable { onClick() },
-        shape = MaterialTheme.shapes.medium,
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = MaterialTheme.shapes.large,
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         colors =
             CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                containerColor =
+                    if (expanded) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surfaceContainerHigh
+                    },
             ),
     ) {
         Row(
             modifier =
                 Modifier
-                    .padding(16.dp),
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Location Icon
+            // Location Icon — tonal wash drawn from the on-container role so it
+            // stays harmonious in both light and dark Logistics schemes.
             Box(
                 modifier =
                     Modifier
-                        .size(40.dp)
+                        .size(44.dp)
                         .background(
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
+                            color =
+                                if (expanded) {
+                                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.12f)
+                                } else {
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                                },
                             shape = CircleShape,
                         ),
                 contentAlignment = Alignment.Center,
@@ -61,7 +72,12 @@ fun CityCard(
                 Icon(
                     imageVector = Icons.Default.LocationOn,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint =
+                        if (expanded) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.primary
+                        },
                 )
             }
 
@@ -73,21 +89,72 @@ fun CityCard(
                 Text(
                     text = cityName,
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    color =
+                        if (expanded) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        },
                 )
-                Text(
-                    text = "$listingCount load${if (listingCount != 1) "s" else ""} available",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
-                )
+                Spacer(Modifier.height(4.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .size(8.dp)
+                                .background(
+                                    color =
+                                        if (expanded) {
+                                            MaterialTheme.colorScheme.onPrimaryContainer
+                                        } else {
+                                            MaterialTheme.colorScheme.primary
+                                        },
+                                    shape = CircleShape,
+                                ),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = "$listingCount load${if (listingCount != 1) "s" else ""} available",
+                        style = MaterialTheme.typography.bodySmall,
+                        color =
+                            if (expanded) {
+                                MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                    )
+                }
             }
 
-            Icon(
-                imageVector = Icons.Default.KeyboardArrowDown,
-                contentDescription = null,
-                modifier = Modifier.rotate(rotation),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Box(
+                modifier =
+                    Modifier
+                        .size(32.dp)
+                        .background(
+                            color =
+                                if (expanded) {
+                                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.14f)
+                                } else {
+                                    MaterialTheme.colorScheme.surfaceContainerLowest.copy(alpha = 0.7f)
+                                },
+                            shape = CircleShape,
+                        ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription = null,
+                    modifier = Modifier.rotate(rotation),
+                    tint =
+                        if (expanded) {
+                            MaterialTheme.colorScheme.onPrimaryContainer
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                )
+            }
         }
     }
 }

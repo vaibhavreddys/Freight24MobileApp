@@ -1,15 +1,22 @@
 package com.freight24.trucker.feature.loads
 
 import android.content.Intent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material3.CircularProgressIndicator
@@ -18,6 +25,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -34,7 +42,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.freight24.trucker.feature.loads.model.LoadBoardItem
@@ -42,6 +49,7 @@ import com.freight24.ui.components.CityCard
 import com.freight24.ui.components.FreightEmptyState
 import com.freight24.ui.components.LoadCard
 import com.freight24.ui.components.LoadDetailBottomSheet
+import com.freight24.ui.theme.FreightThemeTokens
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,12 +88,21 @@ fun LoadBoardScreen(
 
         // Only scroll when the expanded city CHANGES
         if (current != null && current != prev) {
-            val index = viewModel.indexOfCity(current)
-            if (index >= 0) {
-                // Let LazyColumn settle after structural change
+            // Land on the first child of the new city, not the city header,
+            // so the user sees the loads immediately and the previous city's
+            // disappear-animation (animateItem) is pushed above the viewport
+            // instead of being frozen under the new header.
+            val targetIndex = viewModel.indexOfCity(current)
+            if (targetIndex >= 0) {
                 kotlinx.coroutines.yield()
-
-                listState.animateScrollToItem(index)
+                // +1 because the items list always places the new city
+                // header before its own load rows.
+                val firstChildIndex = targetIndex + 1
+                if (firstChildIndex < items.size) {
+                    listState.animateScrollToItem(firstChildIndex)
+                } else {
+                    listState.animateScrollToItem(targetIndex)
+                }
             }
         }
 
@@ -106,12 +123,12 @@ fun LoadBoardScreen(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
-                    top = 12.dp,
+                    top = 16.dp,
                     start = 16.dp,
                     end = 16.dp,
-                    bottom = 16.dp,
+                    bottom = 24.dp,
                 ),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 if (items.isEmpty()) {
                     item(key = "empty") {
@@ -133,6 +150,44 @@ fun LoadBoardScreen(
                         }
                     }
                 } else {
+                    // Board status strip — dominant secondary region answering
+                    // "what's live?" before the city list (Purpose First +
+                    // System Status Visibility). Tonal surfaceContainerLow keeps
+                    // it subordinate to the load cards themselves.
+                    item(key = "board_header") {
+                        val cityCount = items.filterIsInstance<LoadBoardItem.CityItem>().size
+                        val totalLoads = items.filterIsInstance<LoadBoardItem.CityItem>().sumOf { it.totalLoads }
+                        val extended = FreightThemeTokens.colors
+                        Surface(
+                            color = MaterialTheme.colorScheme.surfaceContainerLow,
+                            shape = MaterialTheme.shapes.medium,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .background(color = extended.success, shape = CircleShape),
+                                )
+                                Spacer(Modifier.width(10.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = "LIVE BOARD • $cityCount ${if (cityCount == 1) "city" else "cities"} • $totalLoads ${if (totalLoads == 1) "load" else "loads"}",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                    )
+                                    Text(
+                                        text = "Tap a city to see its loads",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
+                        }
+                    }
                     items(
                         items = items,
                         key = {
@@ -158,10 +213,30 @@ fun LoadBoardScreen(
                                     expanded = item.expanded,
                                     onClick = { viewModel.onCityClicked(item.cityId) },
                                     modifier = Modifier
+                                        // No placement animation on the city
+                                        // card itself: the previous-expanded
+                                        // card kept its body rendered under
+                                        // the new expanded card for the
+                                        // duration of the tween, and the
+                                        // tween left a "ghost" header from
+                                        // the next city stacked under the
+                                        // collapsed previous one. Letting
+                                        // the LazyColumn re-layout the
+                                        // header instantly removes the
+                                        // artefact.
+                                        //
+                                        // mergeDescendants is set on the
+                                        // inner Card by CityCard so the
+                                        // whole row is one tap target; no
+                                        // extra contentDescription is added
+                                        // here because cityId is encoded in
+                                        // the child Text content and a
+                                        // duplicate semantics node was being
+                                        // emitted during the collapse /
+                                        // expand transition.
                                         .testTag("city_card")
-                                        .semantics(mergeDescendants = true) {
+                                        .semantics {
                                             testTagsAsResourceId = true
-                                            contentDescription = "load_board_city_${item.cityId}"
                                         },
                                 )
 
@@ -178,10 +253,27 @@ fun LoadBoardScreen(
                                     isBookmarked = item.load.isInterested,
                                     isBookmarkLoading = item.load.isInterestLoading,
                                     modifier = Modifier
+                                        // No animateItem on the load rows:
+                                        // when a previous expanded city
+                                        // collapses and a new one expands in
+                                        // the same frame, animateItem kept
+                                        // the disappearing rows rendered
+                                        // under the new header for the
+                                        // duration of the tween — visible as
+                                        // a "ghost" of the previous city's
+                                        // loads. Without animateItem the
+                                        // LazyColumn settles to the new
+                                        // layout immediately.
+                                        //
+                                        // mergeDescendants / contentDescription
+                                        // removed here for the same reason as
+                                        // the city card above: a
+                                        // mergeDescendants wrapper was leaving
+                                        // a stale semantic node across the
+                                        // collapse/expand transition.
                                         .testTag("load_card")
-                                        .semantics(mergeDescendants = true) {
+                                        .semantics {
                                             testTagsAsResourceId = true
-                                            contentDescription = "load_row_${item.load.id}"
                                         },
                                     onClick = {
                                         viewModel.onLoadCardClicked(
@@ -207,13 +299,11 @@ fun LoadBoardScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .testTag("show_more_btn")
-                                        .semantics(mergeDescendants = true) {
-                                            testTagsAsResourceId = true
-                                            contentDescription = "load_show_more_${item.cityId}"
-                                        },
+                                        .semantics { testTagsAsResourceId = true },
                                 ) {
                                     Text(
-                                        text = "Show more loads",
+                                        text = "Show more (${item.loadedCount} of ${item.totalCount})",
+                                        style = MaterialTheme.typography.labelLarge,
                                         color = MaterialTheme.colorScheme.primary,
                                     )
                                 }
