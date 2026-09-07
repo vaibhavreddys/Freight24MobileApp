@@ -609,7 +609,12 @@ fun LedgerRow(
                 color = if (emphasis) colors.ink else colors.inkMuted,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f, fill = false),
+                // Labels take two shares so "Platform fee (5%)" fits inside
+                // padded containers; the leader takes the remaining third.
+                // fill = true (the default) is load-bearing: the label must
+                // hold its full share, otherwise the amount parks wherever
+                // the label ends and the column goes ragged.
+                modifier = Modifier.weight(2f),
             )
             Spacer(modifier = Modifier.width(8.dp))
             Canvas(
@@ -629,9 +634,14 @@ fun LedgerRow(
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = amount,
-                style = if (emphasis) TruckerType.title else TruckerType.bodyStrong,
+                // Tabular figures so digits line up down the column even in
+                // the proportional body face; harmless where unsupported.
+                style =
+                    (if (emphasis) TruckerType.title else TruckerType.bodyStrong)
+                        .copy(fontFeatureSettings = "tnum"),
                 color = amountColor,
                 maxLines = 1,
+                textAlign = TextAlign.End,
             )
         }
         if (!detail.isNullOrBlank()) {
@@ -878,6 +888,7 @@ fun TripLogRow(
     colors: TruckerColors,
     modifier: Modifier = Modifier,
     isLast: Boolean = false,
+    bubbleDescription: Boolean = false,
 ) {
     val markerColor =
         when (state) {
@@ -984,11 +995,28 @@ fun TripLogRow(
                     }
                     if (description.isNotBlank()) {
                         Spacer(modifier = Modifier.height(3.dp))
-                        Text(
-                            text = description,
-                            style = TruckerType.caption,
-                            color = if (state == LogState.AHEAD) colors.inkMuted else colors.ink.copy(alpha = 0.72f),
-                        )
+                        if (bubbleDescription) {
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .clip(FleetCellShape)
+                                        .background(colors.brandSoft)
+                                        .padding(horizontal = 12.dp, vertical = 10.dp),
+                            ) {
+                                Text(
+                                    text = description,
+                                    style = TruckerType.caption,
+                                    color = colors.ink,
+                                )
+                            }
+                        } else {
+                            Text(
+                                text = description,
+                                style = TruckerType.caption,
+                                color = if (state == LogState.AHEAD) colors.inkMuted else colors.ink.copy(alpha = 0.72f),
+                            )
+                        }
                     }
                 }
             }
@@ -1132,6 +1160,7 @@ fun FleetTopBar(
     subtitle: String? = null,
     backTestTag: String? = null,
     actions: (@Composable () -> Unit)? = null,
+    subtitleAction: (@Composable () -> Unit)? = null,
 ) {
     Row(
         modifier =
@@ -1157,13 +1186,20 @@ fun FleetTopBar(
                 overflow = TextOverflow.Ellipsis,
             )
             if (!subtitle.isNullOrBlank()) {
-                Text(
-                    text = subtitle,
-                    style = TruckerType.caption,
-                    color = colors.inkMuted,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = subtitle,
+                        style = TruckerType.caption,
+                        color = colors.inkMuted,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    if (subtitleAction != null) {
+                        Spacer(modifier = Modifier.width(4.dp))
+                        subtitleAction()
+                    }
+                }
             }
         }
         if (actions != null) {
@@ -1234,13 +1270,17 @@ fun DocWalletRow(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Spacer(modifier = Modifier.height(3.dp))
-            Text(
-                text = subtitle,
-                style = TruckerType.caption,
-                color = colors.inkMuted,
-                maxLines = 2,
-            )
+            // A blank subtitle collapses to nothing so verified rows read
+            // as a clean title + stamp instead of carrying filler text.
+            if (subtitle.isNotBlank()) {
+                Spacer(modifier = Modifier.height(3.dp))
+                Text(
+                    text = subtitle,
+                    style = TruckerType.caption,
+                    color = colors.inkMuted,
+                    maxLines = 2,
+                )
+            }
         }
         if (sealText != null) {
             Spacer(modifier = Modifier.width(10.dp))

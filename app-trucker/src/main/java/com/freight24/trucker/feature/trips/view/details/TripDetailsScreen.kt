@@ -1,6 +1,8 @@
 package com.freight24.trucker.feature.trips.view.details
 
 import android.Manifest
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -10,6 +12,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.border
 import androidx.compose.foundation.rememberScrollState
@@ -27,10 +31,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.HourglassEmpty
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -49,9 +56,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -66,6 +79,7 @@ import com.freight24.ui.components.getPdfLaunchIntent
 import com.freight24.ui.components.tripStageTone
 import com.freight24.ui.trucker.DocWalletRow
 import com.freight24.ui.trucker.FleetCardShape
+import com.freight24.ui.trucker.FleetCellShape
 import com.freight24.ui.trucker.FleetEmptyState
 import com.freight24.ui.trucker.FleetNotice
 import com.freight24.ui.trucker.FleetRule
@@ -282,12 +296,44 @@ internal fun TripDetailsScreen(
         containerColor = colors.canvas,
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
+            val tripCode = (uiState as? UiState.Success<TripDetail>)?.data?.tripCode
             FleetTopBar(
                 title = "Trip Details",
-                subtitle = (uiState as? UiState.Success<TripDetail>)?.data?.tripCode,
+                subtitle = tripCode,
                 colors = colors,
                 onBackClick = onBackClick,
                 backTestTag = "trip_details_back_btn",
+                subtitleAction = {
+                    if (!tripCode.isNullOrBlank()) {
+                        Box(
+                            modifier =
+                                Modifier
+                                    .size(32.dp)
+                                    .clip(androidx.compose.foundation.shape.CircleShape)
+                                    .clickable {
+                                        val clipboard =
+                                            context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                        clipboard.setPrimaryClip(ClipData.newPlainText("Trip ID", tripCode))
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(
+                                                message = "Trip ID copied",
+                                                duration = SnackbarDuration.Short,
+                                            )
+                                        }
+                                    }
+                                    .semantics { contentDescription = "Copy trip ID" }
+                                    .testTag("trip_id_copy_btn"),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.ContentCopy,
+                                contentDescription = null,
+                                tint = colors.inkMuted,
+                                modifier = Modifier.size(15.dp),
+                            )
+                        }
+                    }
+                },
             )
         },
         bottomBar = {
@@ -608,7 +654,17 @@ private fun DocumentsSection(
                     when (effectiveStatus) {
                         "uploading" -> Triple("Sending", FleetTone.ACCENT, "Uploading the LR now…")
                         "error" -> Triple("Failed", FleetTone.ERROR, "Upload failed. Try again.")
-                        "verified" -> Triple("Verified", FleetTone.BRAND, "Cleared by the Freight24 desk.")
+                        "verified" -> {
+                            // No generic filler: the stamp already says it.
+                            // A stamp date differentiates rows; without one
+                            // the row collapses to title + stamp.
+                            val stampedAt =
+                                doc.uploadedAt
+                                    ?.takeIf { it.isNotBlank() }
+                                    ?.let { DateTimeUtils.formatRelativeTime(it) }
+                                    ?.takeIf { it.isNotBlank() && it != "--" }
+                            Triple("Verified", FleetTone.BRAND, stampedAt?.let { "Verified · $it" } ?: "")
+                        }
                         "pending" -> Triple("Pending", FleetTone.ACCENT, "Lodged. Waiting on verification.")
                         "rejected" -> {
                             val remarks = doc.verificationRemarks?.takeIf { it.isNotBlank() }
@@ -708,182 +764,245 @@ private fun FreightBillSection(
             return
         }
 
-        // Earnings
-        Text(
-            text = "Earnings",
-            style = TruckerType.caption,
-            color = colors.inkMuted,
-        )
-        Spacer(modifier = Modifier.height(10.dp))
-        LedgerRow(
-            label = "Trip freight",
-            amount = inr(financials.truckerTripCost),
-            colors = colors,
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        if (financials.halting.loading.totalAmount > 0) {
+        // The bill sits on its own surface so it scans as one invoice.
+        // Depth stays tonal (surface + hairline border), per the fleet
+        // language — no shadows.
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .background(colors.surface, FleetCardShape)
+                    .border(1.5.dp, colors.line, FleetCardShape)
+                    .padding(16.dp),
+        ) {
+            // Earnings
+            BillGroupLabel(text = "Earnings", colors = colors)
+            Spacer(modifier = Modifier.height(10.dp))
             LedgerRow(
-                label = "Halting — loading",
-                amount = "+ ${inr(financials.halting.loading.totalAmount)}",
-                colors = colors,
-                tone = FleetTone.BRAND,
-                detail = "${financials.halting.loading.days} days × ${inr(financials.halting.loading.perDayAmount)}",
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-        }
-        if (financials.halting.unloading.totalAmount > 0) {
-            LedgerRow(
-                label = "Halting — unloading",
-                amount = "+ ${inr(financials.halting.unloading.totalAmount)}",
-                colors = colors,
-                tone = FleetTone.BRAND,
-                detail = "${financials.halting.unloading.days} days × ${inr(financials.halting.unloading.perDayAmount)}",
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-        }
-        if (financials.luCharges.loading.total > 0) {
-            LedgerRow(
-                label = "Loading charges",
-                amount = "+ ${inr(financials.luCharges.loading.total)}",
-                colors = colors,
-                tone = FleetTone.BRAND,
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-        }
-        if (financials.luCharges.unloading.total > 0) {
-            LedgerRow(
-                label = "Unloading charges",
-                amount = "+ ${inr(financials.luCharges.unloading.total)}",
-                colors = colors,
-                tone = FleetTone.BRAND,
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-        FleetRule(colors = colors)
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Deductions
-        Text(
-            text = "Deductions",
-            style = TruckerType.caption,
-            color = colors.inkMuted,
-        )
-        Spacer(modifier = Modifier.height(10.dp))
-        LedgerRow(
-            label = "Platform fee${if (financials.platformFee.percent > 0) " (${financials.platformFee.percent}%)" else ""}",
-            amount = "− ${inr(financials.platformFee.amount)}",
-            colors = colors,
-            tone = FleetTone.ERROR,
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        LedgerRow(
-            label = "TDS${if (financials.tds.percent > 0f) " (${financials.tds.percent}%)" else ""}",
-            amount = "− ${inr(financials.tds.amount)}",
-            colors = colors,
-            tone = FleetTone.ERROR,
-        )
-        if (financials.otherDeductions > 0) {
-            Spacer(modifier = Modifier.height(12.dp))
-            LedgerRow(
-                label = "Other deductions",
-                amount = "− ${inr(financials.otherDeductions)}",
-                colors = colors,
-                tone = FleetTone.ERROR,
-                detail = financials.deductionRemarks,
-            )
-        }
-
-        Spacer(modifier = Modifier.height(18.dp))
-        FleetRule(colors = colors)
-        Spacer(modifier = Modifier.height(16.dp))
-
-        LedgerRow(
-            label = "Net payable",
-            amount = inr(financials.netPayable),
-            colors = colors,
-            emphasis = true,
-            tone = FleetTone.BRAND,
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Payments made — advances and part-payments live here, not in
-        // deductions. A trip can settle in parts, so this section grows
-        // while deductions stay fixed.
-        Text(
-            text = "Payments Made",
-            style = TruckerType.caption,
-            color = colors.inkMuted,
-        )
-        Spacer(modifier = Modifier.height(10.dp))
-        val otherPayments = (financials.totalPaidAmount - financials.advance.paidAmount).coerceAtLeast(0.0)
-        if (financials.advance.paidAmount > 0) {
-            LedgerRow(
-                label = "Advance",
-                amount = inr(financials.advance.paidAmount),
+                label = "Trip freight",
+                amount = inr(financials.truckerTripCost),
                 colors = colors,
             )
             Spacer(modifier = Modifier.height(12.dp))
-        }
-        if (otherPayments > 0) {
-            LedgerRow(
-                label = "Other payments",
-                amount = inr(otherPayments),
-                colors = colors,
-            )
-            Spacer(modifier = Modifier.height(12.dp))
-        }
-        if (financials.totalPaidAmount > 0) {
-            LedgerRow(
-                label = "Paid so far",
-                amount = inr(financials.totalPaidAmount),
-                colors = colors,
-                emphasis = true,
-            )
-        } else if (financials.advance.paidAmount <= 0) {
-            Text(
-                text = "No payments made yet.",
-                style = TruckerType.body,
-                color = colors.inkMuted,
-            )
-        }
+            if (financials.halting.loading.totalAmount > 0) {
+                LedgerRow(
+                    label = "Halting — loading",
+                    amount = "+ ${inr(financials.halting.loading.totalAmount)}",
+                    colors = colors,
+                    tone = FleetTone.BRAND,
+                    detail = "${financials.halting.loading.days} days × ${inr(financials.halting.loading.perDayAmount)}",
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+            if (financials.halting.unloading.totalAmount > 0) {
+                LedgerRow(
+                    label = "Halting — unloading",
+                    amount = "+ ${inr(financials.halting.unloading.totalAmount)}",
+                    colors = colors,
+                    tone = FleetTone.BRAND,
+                    detail = "${financials.halting.unloading.days} days × ${inr(financials.halting.unloading.perDayAmount)}",
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+            if (financials.luCharges.loading.total > 0) {
+                LedgerRow(
+                    label = "Loading charges",
+                    amount = "+ ${inr(financials.luCharges.loading.total)}",
+                    colors = colors,
+                    tone = FleetTone.BRAND,
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+            if (financials.luCharges.unloading.total > 0) {
+                LedgerRow(
+                    label = "Unloading charges",
+                    amount = "+ ${inr(financials.luCharges.unloading.total)}",
+                    colors = colors,
+                    tone = FleetTone.BRAND,
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
-        val balanceDue = financials.netPayable - financials.totalPaidAmount
-        if (balanceDue > 0) {
-            Spacer(modifier = Modifier.height(14.dp))
-            Row(
+            Spacer(modifier = Modifier.height(8.dp))
+            FleetRule(colors = colors)
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Deductions sit in a soft tint so the red column scans apart
+            // from the gross earnings above it.
+            BillGroupLabel(text = "Deductions", colors = colors)
+            Spacer(modifier = Modifier.height(8.dp))
+            Column(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .background(FleetTone.ACCENT.wash(colors), FleetCardShape)
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                        .background(colors.line.copy(alpha = 0.22f), FleetCellShape)
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+            ) {
+                LedgerRow(
+                    label = "Platform fee${if (financials.platformFee.percent > 0) " (${financials.platformFee.percent}%)" else ""}",
+                    amount = "− ${inr(financials.platformFee.amount)}",
+                    colors = colors,
+                    tone = FleetTone.ERROR,
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                LedgerRow(
+                    label = "TDS${if (financials.tds.percent > 0f) " (${financials.tds.percent}%)" else ""}",
+                    amount = "− ${inr(financials.tds.amount)}",
+                    colors = colors,
+                    tone = FleetTone.ERROR,
+                )
+                if (financials.otherDeductions > 0) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    LedgerRow(
+                        label = "Other deductions",
+                        amount = "− ${inr(financials.otherDeductions)}",
+                        colors = colors,
+                        tone = FleetTone.ERROR,
+                        detail = financials.deductionRemarks,
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            // Net payable — the anchor figure of the bill.
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Bottom,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Balance due",
-                        style = TruckerType.caption,
+                        text = "Net payable",
+                        style = TruckerType.title,
                         color = colors.ink,
+                        maxLines = 1,
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "Settled after POD is verified",
+                        text = "Gross earnings minus deductions",
                         style = TruckerType.caption,
                         color = colors.inkMuted,
                     )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = inr(balanceDue),
-                    style = TruckerType.title,
-                    color = colors.accent,
+                    text = inr(financials.netPayable),
+                    style = TruckerType.digit,
+                    color = colors.ink,
                     maxLines = 1,
+                    textAlign = TextAlign.End,
                 )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            FleetRule(colors = colors)
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Payments made — advances and part-payments live here, not in
+            // deductions. A trip can settle in parts, so this section grows
+            // while deductions stay fixed.
+            BillGroupLabel(text = "Payments Made", colors = colors)
+            Spacer(modifier = Modifier.height(10.dp))
+            val otherPayments = (financials.totalPaidAmount - financials.advance.paidAmount).coerceAtLeast(0.0)
+            if (financials.advance.paidAmount > 0) {
+                LedgerRow(
+                    label = "Advance",
+                    amount = inr(financials.advance.paidAmount),
+                    colors = colors,
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+            if (otherPayments > 0) {
+                LedgerRow(
+                    label = "Other payments",
+                    amount = inr(otherPayments),
+                    colors = colors,
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+            if (financials.totalPaidAmount > 0) {
+                LedgerRow(
+                    label = "Paid so far",
+                    amount = inr(financials.totalPaidAmount),
+                    colors = colors,
+                    emphasis = true,
+                )
+            } else if (financials.advance.paidAmount <= 0) {
+                Text(
+                    text = "No payments made yet.",
+                    style = TruckerType.body,
+                    color = colors.inkMuted,
+                )
+            }
+
+            val balanceDue = financials.netPayable - financials.totalPaidAmount
+            if (balanceDue > 0) {
+                Spacer(modifier = Modifier.height(14.dp))
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .background(FleetTone.ACCENT.wash(colors), FleetCardShape)
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "Balance due",
+                                style = TruckerType.bodyStrong,
+                                color = colors.ink,
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .size(6.dp)
+                                        .clip(androidx.compose.foundation.shape.CircleShape)
+                                        .background(colors.accent),
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Filled.Info,
+                                contentDescription = null,
+                                tint = colors.inkMuted,
+                                modifier = Modifier.size(14.dp),
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "Settled after POD is verified",
+                                style = TruckerType.caption,
+                                color = colors.inkMuted,
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = inr(balanceDue),
+                        style = TruckerType.title,
+                        color = colors.accent,
+                        maxLines = 1,
+                        textAlign = TextAlign.End,
+                    )
+                }
             }
         }
     }
+}
+
+/** Small caps group label used inside the bill card. */
+@Composable
+private fun BillGroupLabel(
+    text: String,
+    colors: TruckerColors,
+) {
+    Text(
+        text = text.uppercase(),
+        style = TruckerType.caption.copy(letterSpacing = 1.2.sp),
+        color = colors.inkMuted,
+    )
 }
 
 // ---------------------------------------------------------------------------
@@ -946,15 +1065,25 @@ private fun TripLogSection(
                     )
                 }
 
-            rows.forEachIndexed { index, (_, state, texts) ->
-                TripLogRow(
-                    title = texts.first,
-                    description = texts.second,
-                    time = texts.third,
-                    state = state,
-                    colors = colors,
-                    isLast = index == rows.lastIndex,
-                )
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .background(colors.surface, FleetCardShape)
+                        .border(1.5.dp, colors.line, FleetCardShape)
+                        .padding(horizontal = 16.dp, vertical = 18.dp),
+            ) {
+                rows.forEachIndexed { index, (_, state, texts) ->
+                    TripLogRow(
+                        title = texts.first,
+                        description = texts.second,
+                        time = texts.third,
+                        state = state,
+                        colors = colors,
+                        isLast = index == rows.lastIndex,
+                        bubbleDescription = texts.second.contains("driver", ignoreCase = true),
+                    )
+                }
             }
         }
     }
