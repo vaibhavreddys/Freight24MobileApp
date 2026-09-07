@@ -1,7 +1,10 @@
 package com.freight24.trucker.feature.trucks.view
 
 import android.util.Log
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,25 +18,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Button
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MaterialTheme.colorScheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -41,18 +34,45 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.testTagsAsResourceId
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.freight24.common.model.Truck
 import com.freight24.ui.UiState
-import com.freight24.ui.components.FilterSelectionChip
-import com.freight24.ui.components.FreightEmptyState
-import com.freight24.ui.components.TruckHeaderCard
+import com.freight24.ui.trucker.FleetCard
+import com.freight24.ui.trucker.FleetEmptyState
+import com.freight24.ui.trucker.FleetFilterEntry
+import com.freight24.ui.trucker.FleetFilterRail
+import com.freight24.ui.trucker.FleetRule
+import com.freight24.ui.trucker.FleetSearchField
+import com.freight24.ui.trucker.FleetTone
+import com.freight24.ui.trucker.PlateBadge
+import com.freight24.ui.trucker.RigShape
+import com.freight24.ui.trucker.RigSilhouette
+import com.freight24.ui.trucker.StampSeal
+import com.freight24.ui.trucker.TruckerColors
+import com.freight24.ui.trucker.TruckerSecondaryButton
+import com.freight24.ui.trucker.VerificationLine
+import com.freight24.ui.trucker.color
+import com.freight24.ui.trucker.fleetPress
+import com.freight24.ui.trucker.rememberTruckerColors
+import com.freight24.ui.trucker.rigShapeFor
+import com.freight24.ui.trucker.truckSidingLabel
+import com.freight24.ui.trucker.truckSidingTone
+
+// ---------------------------------------------------------------------------
+// Trucks — the yard.
+//
+// Same language as Trips, same restraint: a siding down the left edge, the
+// registration set in a plate, one hairline, one line of state. The two
+// pages are meant to read as two views of one operation, so a driver
+// moving between them should not have to relearn anything.
+// ---------------------------------------------------------------------------
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,6 +89,7 @@ internal fun TrucksScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val isSearchVisible by viewModel.isSearchVisible.collectAsState()
     val listState = rememberLazyListState()
+    val colors = rememberTruckerColors()
 
     // Observe refresh signal from result of onboarding
     val refreshSignal =
@@ -93,114 +114,70 @@ internal fun TrucksScreen(
                 .fillMaxSize()
                 .padding(paddingValues),
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            FilterChips(
-                options = TruckFilter.entries,
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(colors.canvas),
+        ) {
+            TruckFilterRow(
                 selected = selectedFilter,
-                onSelected = viewModel::onFilterSelected,
                 isSearchVisible = isSearchVisible,
+                colors = colors,
+                onSelected = viewModel::onFilterSelected,
                 onSearchClick = viewModel::onSearchClick,
             )
 
             if (isSearchVisible) {
-                OutlinedTextField(
+                FleetSearchField(
                     value = searchQuery,
                     onValueChange = viewModel::onSearchQueryChanged,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                    placeholder = { Text("Search by Registration Number or Type") },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Search trucks by Registration Number or Type",
-                            tint = colorScheme.onSurfaceVariant,
-                        )
-                    },
-                    singleLine = true,
-                    shape = MaterialTheme.shapes.medium,
-                    colors =
-                        OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = colorScheme.primary,
-                            unfocusedBorderColor = colorScheme.outlineVariant,
-                            focusedContainerColor = colorScheme.surface,
-                            unfocusedContainerColor = colorScheme.surface
-                        ),
+                    placeholder = "Search by plate or type",
+                    colors = colors,
                 )
             }
 
             Box(modifier = Modifier.fillMaxSize()) {
                 when (val state = uiState) {
                     is UiState.Loading -> {
-                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                        CircularProgressIndicator(
+                            color = colors.brand,
+                            modifier = Modifier.align(Alignment.Center),
+                        )
                     }
                     is UiState.Error -> {
                         Column(
-                            modifier = Modifier.align(Alignment.Center),
+                            modifier =
+                                Modifier
+                                    .align(Alignment.Center)
+                                    .padding(horizontal = 16.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
-                            Text(
-                                text = state.message,
-                                color = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.padding(16.dp),
+                            FleetEmptyState(
+                                title = "Could not load your fleet",
+                                subtitle = state.message,
+                                colors = colors,
+                                shape = RigShape.OPEN,
                             )
-                            Button(onClick = { viewModel.retry() }) {
-                                Text("Retry")
-                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            TruckerSecondaryButton(
+                                text = "Retry",
+                                enabled = true,
+                                colors = colors,
+                                onClick = { viewModel.retry() },
+                            )
                         }
                     }
                     is UiState.Success -> {
-                        LazyColumn(
-                            state = listState,
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                            modifier = Modifier.fillMaxSize(),
-                        ) {
-                            if (state.data.isEmpty()) {
-                                item {
-                                    Box(
-                                        modifier =
-                                            Modifier
-                                                .fillMaxWidth()
-                                                .padding(top = 100.dp),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        FreightEmptyState(
-                                            icon = Icons.Default.LocalShipping,
-                                            title = "No trucks found",
-                                            subtitle = "Onboard your first truck to start taking trips",
-                                        )
-                                    }
-                                }
-                            } else {
-                                items(state.data) { truck ->
-                                    TruckHeaderCard(
-                                        registrationNumber = truck.registrationNumber,
-                                        truckType = truck.truckType,
-                                        availability = truck.availability,
-                                        isVerified = truck.isVerified,
-                                        isBlacklisted = truck.isBlacklisted,
-                                        modifier =
-                                            Modifier
-                                                .testTag("truck_card")
-                                                .semantics(mergeDescendants = true) {
-                                                    testTagsAsResourceId = true
-                                                    contentDescription = "truck_row_${truck.id}"
-                                                }
-                                                .clickable { onTruckClick(truck.id) },
-                                    )
-                                }
-                            }
-
-                            item {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                OnboardTruckButton(onClick = onOnboardClick)
-                                Spacer(modifier = Modifier.height(16.dp))
-                            }
-                        }
+                        TruckList(
+                            trucks = state.data,
+                            listState = listState,
+                            colors = colors,
+                            onTruckClick = onTruckClick,
+                            onOnboardClick = onOnboardClick,
+                        )
                     }
-                    UiState.Idle -> {}
+                    UiState.Idle -> Unit
                 }
             }
         }
@@ -208,76 +185,188 @@ internal fun TrucksScreen(
 }
 
 @Composable
-private fun OnboardTruckButton(onClick: () -> Unit) {
-    Surface(
-        onClick = onClick,
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.primary,
+private fun TruckFilterRow(
+    selected: TruckFilter,
+    isSearchVisible: Boolean,
+    colors: TruckerColors,
+    onSelected: (TruckFilter) -> Unit,
+    onSearchClick: () -> Unit,
+) {
+    val filters = TruckFilter.entries
+    Row(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .height(56.dp)
-                .testTag("trucks_onboard_btn")
-                .semantics { testTagsAsResourceId = true },
-        shadowElevation = 2.dp,
+                .padding(end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
+        FleetFilterRail(
+            entries = filters.map { FleetFilterEntry(label = truckFilterLabel(it)) },
+            selectedIndex = filters.indexOf(selected).coerceAtLeast(0),
+            onSelect = { onSelected(filters[it]) },
+            colors = colors,
+            modifier = Modifier.weight(1f),
+        )
+        Box(
+            modifier =
+                Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .clickable(onClick = onSearchClick)
+                    .semantics { contentDescription = if (isSearchVisible) "Hide search" else "Search trucks" }
+                    .testTag("trucks_search_btn"),
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = Icons.Default.Add,
+                imageVector = Icons.Filled.Search,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimary,
-                modifier = Modifier.size(20.dp),
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Onboard Your New Truck",
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onPrimary,
+                tint = if (isSearchVisible) colors.brand else colors.inkMuted,
+                modifier = Modifier.size(22.dp),
             )
         }
     }
 }
 
+private fun truckFilterLabel(filter: TruckFilter): String =
+    when (filter) {
+        TruckFilter.ALL -> "All"
+        TruckFilter.AVAILABLE -> "Available"
+        TruckFilter.ON_TRIP -> "On trip"
+        TruckFilter.BLACKLISTED -> "Blacklisted"
+    }
+
 @Composable
-fun FilterChips(
-    options: List<TruckFilter>,
-    selected: TruckFilter,
-    onSelected: (TruckFilter) -> Unit,
-    isSearchVisible: Boolean,
-    onSearchClick: () -> Unit,
+private fun TruckList(
+    trucks: List<Truck>,
+    listState: androidx.compose.foundation.lazy.LazyListState,
+    colors: TruckerColors,
+    onTruckClick: (String) -> Unit,
+    onOnboardClick: () -> Unit,
 ) {
-    LazyRow(
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    LazyColumn(
+        state = listState,
+        contentPadding = PaddingValues(top = 2.dp, bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(0.dp),
+        modifier = Modifier.fillMaxSize(),
     ) {
-        items(options) { option ->
-            FilterSelectionChip(
-                label = option.name.lowercase().replaceFirstChar { it.uppercase() }.replace("_", " "),
-                isSelected = option == selected,
-                onClick = { onSelected(option) },
-                modifier =
-                    Modifier
-                        .testTag("trucks_filter_${option.name.lowercase()}")
-                        .semantics(mergeDescendants = true) {
-                            testTagsAsResourceId = true
-                            contentDescription = "trucks_filter_${option.name.lowercase()}"
-                        },
-            )
-        }
-        item {
-            IconButton(onClick = onSearchClick) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = if (isSearchVisible) "Hide search" else "Search trucks",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(32.dp),
+        if (trucks.isEmpty()) {
+            item {
+                FleetEmptyState(
+                    title = "No trucks in the yard",
+                    subtitle = "Onboard your first truck to start taking trips",
+                    colors = colors,
+                    shape = RigShape.TRAILER,
                 )
             }
+        } else {
+            items(items = trucks, key = { it.id }) { truck ->
+                RigCard(
+                    truck = truck,
+                    colors = colors,
+                    onClick = { onTruckClick(truck.id) },
+                    modifier =
+                        Modifier.animateItem(
+                            fadeInSpec = null,
+                            placementSpec = spring(dampingRatio = 0.8f, stiffness = 300f),
+                        ),
+                )
+            }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(10.dp))
+            Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                TruckerSecondaryButton(
+                    text = "Onboard a truck",
+                    enabled = true,
+                    colors = colors,
+                    icon = Icons.Filled.Add,
+                    onClick = onOnboardClick,
+                    testTag = "trucks_onboard_btn",
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Rig card
+// ---------------------------------------------------------------------------
+
+/**
+ * One truck in the yard. Plate, class, hairline, state — the same four
+ * moves as a trip card, with the siding carrying availability rather than
+ * stage.
+ */
+@Composable
+internal fun RigCard(
+    truck: Truck,
+    colors: TruckerColors,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {},
+) {
+    val interactionSource = MutableInteractionSource()
+    val siding = truckSidingTone(truck.availability, truck.isBlacklisted)
+
+    FleetCard(
+        colors = colors,
+        spine = siding.color(colors),
+        modifier =
+            modifier
+                .padding(horizontal = 16.dp, vertical = 6.dp)
+                .fleetPress(interactionSource)
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onClick,
+                )
+                .testTag("truck_card")
+                .semantics(mergeDescendants = true) {
+                    testTagsAsResourceId = true
+                    contentDescription = "truck_row_${truck.id}"
+                },
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top,
+        ) {
+            PlateBadge(
+                registration = truck.registrationNumber,
+                colors = colors,
+                caption = listOfNotNull(truck.truckType, truck.bodyType)
+                    .joinToString(" · ")
+                    .ifBlank { null },
+                border = colors.brand,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            StampSeal(
+                text = truckSidingLabel(truck.availability, truck.isBlacklisted),
+                tone = siding,
+                colors = colors,
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        FleetRule(colors = colors)
+        Spacer(modifier = Modifier.height(13.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            VerificationLine(
+                isVerified = truck.isVerified,
+                colors = colors,
+                modifier = Modifier.weight(1f),
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            RigSilhouette(
+                shape = rigShapeFor(truckType = truck.truckType, bodyType = truck.bodyType),
+                tint = colors.inkMuted,
+                modifier = Modifier.size(width = 46.dp, height = 26.dp),
+            )
         }
     }
 }
