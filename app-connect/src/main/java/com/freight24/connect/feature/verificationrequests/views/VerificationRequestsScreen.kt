@@ -1,48 +1,58 @@
 package com.freight24.connect.feature.verificationrequests.views
+
 import com.freight24.ui.components.FreightTopAppBar
+import com.freight24.ui.components.FreightEmptyState
 
 import android.content.Context
 import android.os.Build
 import android.text.format.DateUtils
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.LocalShipping
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Route
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -50,12 +60,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -67,18 +76,29 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.material3.ScrollableTabRow
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRowDefaults
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
+import com.freight24.connect.feature.verificationrequests.domain.model.BusinessProfileChange
+import com.freight24.connect.feature.verificationrequests.domain.model.ClientVerificationRequest
 import com.freight24.connect.feature.verificationrequests.domain.model.TruckDetailChange
+import com.freight24.connect.feature.verificationrequests.domain.model.TruckOwnerVerificationRequest
 import com.freight24.connect.feature.verificationrequests.domain.model.TruckVerificationRequest
 import com.freight24.connect.feature.verificationrequests.domain.model.VerificationRequest
 import com.freight24.connect.feature.verificationrequests.domain.model.VerificationRequestDocument
@@ -88,30 +108,68 @@ import com.freight24.connect.feature.verificationrequests.domain.model.Verificat
 import com.freight24.connect.feature.verificationrequests.domain.viewmodel.VerificationRequestsEvent
 import com.freight24.connect.feature.verificationrequests.domain.viewmodel.VerificationRequestsViewModel
 import com.freight24.connect.feature.verificationrequests.domain.viewmodel.VerificationRequestsViewModelImpl
-import com.freight24.ui.components.FilterSelectionChip
 import com.freight24.ui.components.DocumentLinkChip
 import com.freight24.ui.components.RouteIndicatorWithCities
 import com.freight24.ui.components.getPdfLaunchIntent
 import com.freight24.ui.theme.FreightThemeTokens
 import java.text.DateFormat
+import java.time.OffsetDateTime
 import java.util.Date
 import java.util.Locale
-import java.time.OffsetDateTime
 import kotlinx.coroutines.launch
-import androidx.compose.material.icons.filled.LocalShipping
-import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Route
-import androidx.compose.material.icons.filled.TripOrigin
-import androidx.compose.material3.BottomSheetDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.minimumInteractiveComponentSize
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.style.TextAlign
-import com.freight24.connect.feature.verificationrequests.domain.model.BusinessProfileChange
-import com.freight24.connect.feature.verificationrequests.domain.model.ClientVerificationRequest
-import com.freight24.connect.feature.verificationrequests.domain.model.TruckOwnerVerificationRequest
+
+// ===========================================================================
+// Verification Requests — "clearing desk" presentation layer.
+//
+// The page is an intake desk: a queue of dockets an operations employee has to
+// clear. The visual language is borrowed from the freight paperwork the app
+// already speaks — waybills, lane markings, rubber stamps and perforated tear
+// lines — rather than generic Material cards.
+//
+// Three primitives carry the whole screen:
+//   • the LANE SPINE  — a 4dp colour bar down the left edge of every card,
+//                       keyed to the request status. Reads like a file tab in
+//                       a physical docket tray.
+//   • the PERFORATION — a dashed tear line separating the docket body from its
+//                       footer, so the card looks like a document, not a panel.
+//   • the LEDGER ROW  — one field per row. New onboardings drop the "Before"
+//                       column entirely and stamp the row NEW; genuine edits
+//                       read as `was → now` in a single wrapping line.
+// ===========================================================================
+
+/** Size of the dog-ear cut on the top-right of every docket card. */
+private val DocketCut = 16.dp
+
+/** Width of the status spine on the left edge of every docket card. */
+private val SpineWidth = 4.dp
+
+private val DocketShape = CutCornerShape(topEnd = DocketCut)
+private val PanelShape = RoundedCornerShape(10.dp)
+private val TagShape = RoundedCornerShape(4.dp)
+
+// ---------------------------------------------------------------------------
+// Page-local type helpers. Everything derives from MaterialTheme.typography so
+// the app-wide Sora / Be Vietnam Pro scale stays the single source of truth;
+// only tracking and weight are tuned here.
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun eyebrow() = MaterialTheme.typography.labelSmall.copy(
+    fontWeight = FontWeight.SemiBold,
+    letterSpacing = 1.4.sp,
+)
+
+@Composable
+private fun ledgerLabel() = MaterialTheme.typography.labelSmall.copy(
+    fontWeight = FontWeight.SemiBold,
+    letterSpacing = 1.1.sp,
+)
+
+@Composable
+private fun identifier() = MaterialTheme.typography.titleSmall.copy(
+    fontWeight = FontWeight.SemiBold,
+    letterSpacing = 0.9.sp,
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -158,32 +216,16 @@ fun VerificationRequestsScreen(
             remarks = ""
             remarksError = null
             if (selectedRequestData != null) {
-                scope.launch {
-                    sheetState.hide()
-                }.invokeOnCompletion {
-                    selectedRequestData = null
-                }
+                scope.launch { sheetState.hide() }.invokeOnCompletion { selectedRequestData = null }
             }
             if (selectedTruckData != null) {
-                scope.launch {
-                    sheetState.hide()
-                }.invokeOnCompletion {
-                    selectedTruckData = null
-                }
+                scope.launch { sheetState.hide() }.invokeOnCompletion { selectedTruckData = null }
             }
             if (selectedTruckOwnerData != null) {
-                scope.launch {
-                    sheetState.hide()
-                }.invokeOnCompletion {
-                    selectedTruckOwnerData = null
-                }
+                scope.launch { sheetState.hide() }.invokeOnCompletion { selectedTruckOwnerData = null }
             }
             if (selectedClientData != null) {
-                scope.launch {
-                    sheetState.hide()
-                }.invokeOnCompletion {
-                    selectedClientData = null
-                }
+                scope.launch { sheetState.hide() }.invokeOnCompletion { selectedClientData = null }
             }
         }
     }
@@ -192,38 +234,22 @@ fun VerificationRequestsScreen(
         if (uiState.selectedTab != VerificationRequestTab.TRIPS) {
             selectedRequestData = null
         } else {
-            selectedRequestData?.let {
-                if (!uiState.visibleTrips.contains(it)) {
-                    selectedRequestData = null
-                }
-            }
+            selectedRequestData?.let { if (!uiState.visibleTrips.contains(it)) selectedRequestData = null }
         }
         if (uiState.selectedTab != VerificationRequestTab.TRUCKS) {
             selectedTruckData = null
         } else {
-            selectedTruckData?.let {
-                if (!uiState.visibleTrucks.contains(it)) {
-                    selectedTruckData = null
-                }
-            }
+            selectedTruckData?.let { if (!uiState.visibleTrucks.contains(it)) selectedTruckData = null }
         }
         if (uiState.selectedTab != VerificationRequestTab.TRUCK_OWNERS) {
             selectedTruckOwnerData = null
         } else {
-            selectedTruckOwnerData?.let {
-                if (!uiState.visibleTruckOwners.contains(it)) {
-                    selectedTruckOwnerData = null
-                }
-            }
+            selectedTruckOwnerData?.let { if (!uiState.visibleTruckOwners.contains(it)) selectedTruckOwnerData = null }
         }
         if (uiState.selectedTab != VerificationRequestTab.CLIENTS) {
             selectedClientData = null
         } else {
-            selectedClientData?.let {
-                if (!uiState.visibleClients.contains(it)) {
-                    selectedClientData = null
-                }
-            }
+            selectedClientData?.let { if (!uiState.visibleClients.contains(it)) selectedClientData = null }
         }
     }
 
@@ -252,10 +278,9 @@ fun VerificationRequestsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(paddingValues),
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
-            VerificationTabs(
+            VerificationQueueRail(
                 selectedTab = uiState.selectedTab,
                 onTabSelected = { viewModel.onEvent(VerificationRequestsEvent.SelectTab(it)) },
                 tripCount = currentTripCount,
@@ -264,150 +289,122 @@ fun VerificationRequestsScreen(
                 clientCount = currentClientCount,
             )
 
-            Spacer(modifier = Modifier.height(14.dp))
             VerificationStatusFilters(
                 tabType = uiState.selectedTab.name,
                 selectedStatus = uiState.selectedStatus,
-                onStatusSelected = { viewModel.onEvent(VerificationRequestsEvent.SelectStatus(it)) }
+                onStatusSelected = { viewModel.onEvent(VerificationRequestsEvent.SelectStatus(it)) },
             )
-
-            Spacer(modifier = Modifier.height(12.dp))
 
             PullToRefreshBox(
                 isRefreshing = uiState.isRefreshing,
                 onRefresh = { viewModel.onEvent(VerificationRequestsEvent.Refresh) },
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth()
+                    .fillMaxWidth(),
             ) {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     when (uiState.selectedTab) {
                         VerificationRequestTab.TRIPS -> {
-                            if (uiState.isLoading && uiState.visibleTrips.isEmpty()) {
-                                item {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(top = 96.dp),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        CircularProgressIndicator()
-                                    }
-                                }
-                            } else if (uiState.errorMessage != null && uiState.visibleTrips.isEmpty()) {
+                            val empty = uiState.visibleTrips.isEmpty()
+                            if (uiState.isLoading && empty) {
+                                item { LoadingDockets() }
+                            } else if (uiState.errorMessage != null && empty) {
                                 item {
                                     VerificationErrorState(
                                         message = uiState.errorMessage.orEmpty(),
                                         onRetry = { viewModel.onEvent(VerificationRequestsEvent.Refresh) },
-                                        modifier = Modifier.fillMaxWidth(),
                                     )
                                 }
-                            } else if (uiState.visibleTrips.isEmpty()) {
+                            } else if (empty) {
                                 item {
                                     VerificationEmptyState(
-                                        message = "No verification requests found.",
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(top = 96.dp),
+                                        icon = Icons.Default.Route,
+                                        title = "Nothing waiting on trips",
+                                        subtitle = "Trip documents that need a decision will queue up here.",
+                                        status = uiState.selectedStatus,
                                     )
                                 }
                             } else {
                                 items(uiState.visibleTrips, key = { it.id }) { request ->
-                                    VerificationRequestCard(
+                                    TripDocketCard(
                                         request = request,
                                         onClick = {
                                             viewModel.onEvent(VerificationRequestsEvent.ClearActionState)
                                             selectedRequestData = request
-                                        }
+                                        },
                                     )
                                 }
                             }
                         }
 
                         VerificationRequestTab.TRUCKS -> {
-                            if (uiState.isLoading && uiState.visibleTrucks.isEmpty()) {
-                                item {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(top = 96.dp),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        CircularProgressIndicator()
-                                    }
-                                }
-                            } else if (uiState.errorMessage != null && uiState.visibleTrucks.isEmpty()) {
+                            val empty = uiState.visibleTrucks.isEmpty()
+                            if (uiState.isLoading && empty) {
+                                item { LoadingDockets() }
+                            } else if (uiState.errorMessage != null && empty) {
                                 item {
                                     VerificationErrorState(
                                         message = uiState.errorMessage.orEmpty(),
                                         onRetry = { viewModel.onEvent(VerificationRequestsEvent.Refresh) },
-                                        modifier = Modifier.fillMaxWidth(),
                                     )
                                 }
-                            } else if (uiState.visibleTrucks.isEmpty()) {
+                            } else if (empty) {
                                 item {
                                     VerificationEmptyState(
-                                        message = "No truck verification requests found.",
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(top = 96.dp),
+                                        icon = Icons.Default.LocalShipping,
+                                        title = "Nothing waiting on trucks",
+                                        subtitle = "New truck onboardings and detail edits land here for verification.",
+                                        status = uiState.selectedStatus,
                                     )
                                 }
                             } else {
                                 items(uiState.visibleTrucks, key = { it.id }) { truck ->
-                                    TruckVerificationRequestCard(
+                                    TruckDocketCard(
                                         request = truck,
                                         onClick = {
                                             viewModel.onEvent(VerificationRequestsEvent.ClearActionState)
                                             selectedTruckData = truck
-                                        }
+                                        },
                                     )
                                 }
                             }
                         }
 
                         VerificationRequestTab.TRUCK_OWNERS -> {
-                            if (uiState.isLoading && uiState.visibleTruckOwners.isEmpty()) {
-                                item {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(top = 96.dp),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        CircularProgressIndicator()
-                                    }
-                                }
-                            } else if (uiState.errorMessage != null && uiState.visibleTruckOwners.isEmpty()) {
+                            val empty = uiState.visibleTruckOwners.isEmpty()
+                            if (uiState.isLoading && empty) {
+                                item { LoadingDockets() }
+                            } else if (uiState.errorMessage != null && empty) {
                                 item {
                                     VerificationErrorState(
                                         message = uiState.errorMessage.orEmpty(),
                                         onRetry = { viewModel.onEvent(VerificationRequestsEvent.Refresh) },
-                                        modifier = Modifier.fillMaxWidth(),
                                     )
                                 }
-                            } else if (uiState.visibleTruckOwners.isEmpty()) {
+                            } else if (empty) {
                                 item {
                                     VerificationEmptyState(
-                                        message = "No truck owner verification requests found.",
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(top = 96.dp),
+                                        icon = Icons.Default.People,
+                                        title = "Nothing waiting on truck owners",
+                                        subtitle = "Onboarding and profile changes from truck owners queue up here.",
+                                        status = uiState.selectedStatus,
                                     )
                                 }
                             } else {
                                 items(uiState.visibleTruckOwners, key = { it.id }) { owner ->
-                                    BusinessVerificationRequestCard(
+                                    BusinessDocketCard(
+                                        eyebrowText = "TRUCK OWNER",
+                                        testTag = "verification_card_owner_${owner.id}",
                                         title = owner.fullName,
-                                        subtitle = owner.phone.orEmpty().ifBlank { "Phone unavailable" },
+                                        contact = owner.phone.orEmpty().ifBlank { "Phone not on record" },
                                         updatedAt = owner.updatedAt,
                                         status = owner.status,
-                                        icon = Icons.Default.Person,
-                                        changedLabels = owner.changedBusinessProfile.map { formatFieldName(it.displayFieldName) },
+                                        icon = Icons.Default.People,
+                                        changes = owner.changedBusinessProfile.map { it.toLedgerEntry() },
                                         onClick = {
                                             viewModel.onEvent(VerificationRequestsEvent.ClearActionState)
                                             selectedTruckOwnerData = owner
@@ -418,43 +415,36 @@ fun VerificationRequestsScreen(
                         }
 
                         VerificationRequestTab.CLIENTS -> {
-                            if (uiState.isLoading && uiState.visibleClients.isEmpty()) {
-                                item {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(top = 96.dp),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        CircularProgressIndicator()
-                                    }
-                                }
-                            } else if (uiState.errorMessage != null && uiState.visibleClients.isEmpty()) {
+                            val empty = uiState.visibleClients.isEmpty()
+                            if (uiState.isLoading && empty) {
+                                item { LoadingDockets() }
+                            } else if (uiState.errorMessage != null && empty) {
                                 item {
                                     VerificationErrorState(
                                         message = uiState.errorMessage.orEmpty(),
                                         onRetry = { viewModel.onEvent(VerificationRequestsEvent.Refresh) },
-                                        modifier = Modifier.fillMaxWidth(),
                                     )
                                 }
-                            } else if (uiState.visibleClients.isEmpty()) {
+                            } else if (empty) {
                                 item {
                                     VerificationEmptyState(
-                                        message = "No client verification requests found.",
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(top = 96.dp),
+                                        icon = Icons.Default.Business,
+                                        title = "Nothing waiting on clients",
+                                        subtitle = "New client onboardings and profile edits queue up here.",
+                                        status = uiState.selectedStatus,
                                     )
                                 }
                             } else {
                                 items(uiState.visibleClients, key = { it.id }) { client ->
-                                    BusinessVerificationRequestCard(
+                                    BusinessDocketCard(
+                                        eyebrowText = "CLIENT",
+                                        testTag = "verification_card_client_${client.id}",
                                         title = client.companyName,
-                                        subtitle = client.fullName,
+                                        contact = client.fullName,
                                         updatedAt = client.updatedAt,
                                         status = client.status,
                                         icon = Icons.Default.Business,
-                                        changedLabels = client.changedBusinessProfile.map { formatFieldName(it.displayFieldName) },
+                                        changes = client.changedBusinessProfile.map { it.toLedgerEntry() },
                                         onClick = {
                                             viewModel.onEvent(VerificationRequestsEvent.ClearActionState)
                                             selectedClientData = client
@@ -473,11 +463,8 @@ fun VerificationRequestsScreen(
         val activeRequest = selectedRequestData!!
         val isCompletedView = uiState.selectedStatus == VerificationRequestStatus.COMPLETED
         ModalBottomSheet(
-            onDismissRequest = {
-                clearSelectedRequest()
-            },
+            onDismissRequest = { clearSelectedRequest() },
             sheetState = sheetState,
-            dragHandle = { BottomSheetDefaults.DragHandle() },
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
             TripVerificationRequestDetailSheet(
@@ -486,16 +473,10 @@ fun VerificationRequestsScreen(
                 remarksError = remarksError,
                 onRemarksChange = {
                     remarks = it
-                    if (remarksError != null) {
-                        remarksError = null
-                    }
+                    if (remarksError != null) remarksError = null
                 },
                 onDocumentClick = { document ->
-                    openVerificationDocument(
-                        context = context,
-                        viewModel = viewModel,
-                        document = document,
-                    )
+                    openVerificationDocument(context = context, viewModel = viewModel, document = document)
                 },
                 resolutionNotes = activeRequest.resolutionNotes,
                 onApproveClick = {
@@ -522,17 +503,11 @@ fun VerificationRequestsScreen(
                         )
                     }
                 },
-                onClose = {
-                    scope.launch {
-                        sheetState.hide()
-                    }.invokeOnCompletion {
-                        clearSelectedRequest()
-                    }
-                },
+                onClose = { scope.launch { sheetState.hide() }.invokeOnCompletion { clearSelectedRequest() } },
                 actionErrorMessage = uiState.actionErrorMessage,
                 isApproveLoading = uiState.actionInProgressRequestId == activeRequest.id &&
                     (uiState.actionInProgressStatus == VerificationRequestStatus.APPROVED ||
-                     uiState.actionInProgressStatus == VerificationRequestStatus.VERIFIED),
+                        uiState.actionInProgressStatus == VerificationRequestStatus.VERIFIED),
                 isRejectLoading = uiState.actionInProgressRequestId == activeRequest.id &&
                     uiState.actionInProgressStatus == VerificationRequestStatus.REJECTED,
                 isCompletedView = isCompletedView,
@@ -544,11 +519,8 @@ fun VerificationRequestsScreen(
         val activeTruck = selectedTruckData!!
         val isCompletedView = uiState.selectedStatus == VerificationRequestStatus.COMPLETED
         ModalBottomSheet(
-            onDismissRequest = {
-                clearSelectedRequest()
-            },
+            onDismissRequest = { clearSelectedRequest() },
             sheetState = sheetState,
-            dragHandle = { BottomSheetDefaults.DragHandle() },
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
             TruckVerificationRequestDetailSheet(
@@ -557,16 +529,10 @@ fun VerificationRequestsScreen(
                 remarksError = remarksError,
                 onRemarksChange = {
                     remarks = it
-                    if (remarksError != null) {
-                        remarksError = null
-                    }
+                    if (remarksError != null) remarksError = null
                 },
                 onDocumentClick = { document ->
-                    openVerificationDocument(
-                        context = context,
-                        viewModel = viewModel,
-                        document = document,
-                    )
+                    openVerificationDocument(context = context, viewModel = viewModel, document = document)
                 },
                 resolutionNotes = activeTruck.resolutionNotes,
                 onApproveClick = {
@@ -591,13 +557,7 @@ fun VerificationRequestsScreen(
                         )
                     }
                 },
-                onClose = {
-                    scope.launch {
-                        sheetState.hide()
-                    }.invokeOnCompletion {
-                        clearSelectedRequest()
-                    }
-                },
+                onClose = { scope.launch { sheetState.hide() }.invokeOnCompletion { clearSelectedRequest() } },
                 actionErrorMessage = uiState.actionErrorMessage,
                 isApproveLoading = uiState.actionInProgressRequestId == activeTruck.id &&
                     uiState.actionInProgressStatus == VerificationRequestStatus.APPROVED,
@@ -614,12 +574,12 @@ fun VerificationRequestsScreen(
         ModalBottomSheet(
             onDismissRequest = { clearSelectedRequest() },
             sheetState = sheetState,
-            dragHandle = { BottomSheetDefaults.DragHandle() },
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
             BusinessProfileVerificationDetailSheet(
+                entityLabel = "Truck owner",
                 title = activeOwner.fullName,
-                subtitle = activeOwner.phone.orEmpty().ifBlank { "Truck Owner" },
+                subtitle = activeOwner.phone.orEmpty().ifBlank { "Phone not on record" },
                 status = activeOwner.status,
                 changes = activeOwner.changedBusinessProfile,
                 remarks = remarks,
@@ -627,9 +587,7 @@ fun VerificationRequestsScreen(
                 resolutionNotes = activeOwner.resolutionNotes,
                 onRemarksChange = {
                     remarks = it
-                    if (remarksError != null) {
-                        remarksError = null
-                    }
+                    if (remarksError != null) remarksError = null
                 },
                 onApproveClick = {
                     viewModel.onEvent(
@@ -653,13 +611,7 @@ fun VerificationRequestsScreen(
                         )
                     }
                 },
-                onClose = {
-                    scope.launch {
-                        sheetState.hide()
-                    }.invokeOnCompletion {
-                        clearSelectedRequest()
-                    }
-                },
+                onClose = { scope.launch { sheetState.hide() }.invokeOnCompletion { clearSelectedRequest() } },
                 actionErrorMessage = uiState.actionErrorMessage,
                 isApproveLoading = uiState.actionInProgressRequestId == activeOwner.id &&
                     uiState.actionInProgressStatus == VerificationRequestStatus.APPROVED,
@@ -676,10 +628,10 @@ fun VerificationRequestsScreen(
         ModalBottomSheet(
             onDismissRequest = { clearSelectedRequest() },
             sheetState = sheetState,
-            dragHandle = { BottomSheetDefaults.DragHandle() },
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
             BusinessProfileVerificationDetailSheet(
+                entityLabel = "Client",
                 title = activeClient.companyName,
                 subtitle = activeClient.fullName,
                 status = activeClient.status,
@@ -689,9 +641,7 @@ fun VerificationRequestsScreen(
                 resolutionNotes = activeClient.resolutionNotes,
                 onRemarksChange = {
                     remarks = it
-                    if (remarksError != null) {
-                        remarksError = null
-                    }
+                    if (remarksError != null) remarksError = null
                 },
                 onApproveClick = {
                     viewModel.onEvent(
@@ -715,13 +665,7 @@ fun VerificationRequestsScreen(
                         )
                     }
                 },
-                onClose = {
-                    scope.launch {
-                        sheetState.hide()
-                    }.invokeOnCompletion {
-                        clearSelectedRequest()
-                    }
-                },
+                onClose = { scope.launch { sheetState.hide() }.invokeOnCompletion { clearSelectedRequest() } },
                 actionErrorMessage = uiState.actionErrorMessage,
                 isApproveLoading = uiState.actionInProgressRequestId == activeClient.id &&
                     uiState.actionInProgressStatus == VerificationRequestStatus.APPROVED,
@@ -733,8 +677,29 @@ fun VerificationRequestsScreen(
     }
 }
 
+// ===========================================================================
+// Queue rail
+//
+// Four tally cells instead of a ScrollableTabRow. The old tab strip stacked a
+// red count badge ABOVE the icon, which (a) pushed every counted tab down and
+// left "Clients" — the only zero-count tab — sitting a few dp higher than its
+// neighbours, and (b) made the row 96dp tall for no information gain.
+//
+// The rail is a fixed four-up grid rather than a scroller: a queue you have to
+// swipe sideways to discover is a queue with a hidden tab, and "Clients" is
+// exactly the tab that gets lost. Every cell is the same width and height, and
+// the tally always renders — including 0.
+// ===========================================================================
+
+private fun VerificationRequestTab.railLabel(): String = when (this) {
+    VerificationRequestTab.TRIPS -> "Trips"
+    VerificationRequestTab.TRUCKS -> "Trucks"
+    VerificationRequestTab.TRUCK_OWNERS -> "Owners"
+    VerificationRequestTab.CLIENTS -> "Clients"
+}
+
 @Composable
-private fun VerificationTabs(
+private fun VerificationQueueRail(
     selectedTab: VerificationRequestTab,
     onTabSelected: (VerificationRequestTab) -> Unit,
     tripCount: Int,
@@ -748,107 +713,119 @@ private fun VerificationTabs(
         VerificationRequestTab.TRUCK_OWNERS to truckOwnerCount,
         VerificationRequestTab.CLIENTS to clientCount,
     )
-    val tabIcons = mapOf(
-        VerificationRequestTab.TRIPS to Icons.Default.LocalShipping,
+    val icons = mapOf(
+        VerificationRequestTab.TRIPS to Icons.Default.Route,
         VerificationRequestTab.TRUCKS to Icons.Default.LocalShipping,
         VerificationRequestTab.TRUCK_OWNERS to Icons.Default.People,
         VerificationRequestTab.CLIENTS to Icons.Default.Business,
     )
 
-    ScrollableTabRow(
-        selectedTabIndex = selectedTab.ordinal,
-        containerColor = MaterialTheme.colorScheme.surface,
-        contentColor = MaterialTheme.colorScheme.primary,
-        edgePadding = 16.dp,
-        indicator = { tabPositions ->
-            TabRowDefaults.SecondaryIndicator(
-                modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab.ordinal]),
-                color = MaterialTheme.colorScheme.primary,
-            )
-        },
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface),
     ) {
-        VerificationRequestTab.entries.forEach { tab ->
-            val isSelected = tab == selectedTab
-            val count = counts[tab] ?: 0
-
-            Tab(
-                selected = isSelected,
-                onClick = { onTabSelected(tab) },
-                icon = {
-                    TabWithBadge(
-                        icon = tabIcons[tab] ?: Icons.Filled.Route,
-                        count = count,
-                        isSelected = isSelected,
-                        onClick = { onTabSelected(tab) }
-                    )
-                },
-                text = {
-                    Text(
-                        text = tab.title,
-                        maxLines = 1,
-                    )
-                },
-            )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            VerificationRequestTab.entries.forEach { tab ->
+                QueueCell(
+                    label = tab.railLabel(),
+                    testTag = "verification_tab_${tab.name.lowercase(Locale.getDefault())}",
+                    icon = icons[tab] ?: Icons.Default.Route,
+                    count = counts[tab] ?: 0,
+                    isSelected = tab == selectedTab,
+                    onClick = { onTabSelected(tab) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
         }
+        HorizontalDivider(
+            thickness = 1.dp,
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f),
+        )
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TabWithBadge(
+private fun QueueCell(
+    label: String,
+    testTag: String,
     icon: ImageVector,
     count: Int,
-    isSelected: Boolean = false,
+    isSelected: Boolean,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit
 ) {
-    Box(
+    val scheme = MaterialTheme.colorScheme
+    val container = if (isSelected) scheme.primaryContainer else Color.Transparent
+    val content = if (isSelected) scheme.onPrimaryContainer else scheme.onSurfaceVariant
+    val outline = if (isSelected) scheme.primary.copy(alpha = 0.32f) else scheme.outlineVariant.copy(alpha = 0.8f)
+    val tallyContainer = if (isSelected) scheme.primary else scheme.surfaceContainerHighest
+    val tallyContent = if (isSelected) scheme.onPrimary else scheme.onSurfaceVariant
+
+    Surface(
         modifier = modifier
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = LocalIndication.current,
-                onClick = onClick,
-                role = Role.Tab
-            )
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .wrapContentSize()
-            .minimumInteractiveComponentSize(),
-        contentAlignment = Alignment.Center
+            .heightIn(min = 56.dp)
+            .testTag(testTag)
+            .semantics { testTagsAsResourceId = true }
+            .selectable(selected = isSelected, onClick = onClick, role = Role.Tab),
+        shape = PanelShape,
+        color = container,
+        border = BorderStroke(1.dp, outline),
     ) {
         Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 6.dp, vertical = 9.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(5.dp),
         ) {
-            if (count > 0) {
-                Box(
-                    modifier = Modifier
-                        .background(
-                            color = MaterialTheme.colorScheme.error,
-                            shape = RoundedCornerShape(percent = 50)
-                        )
-                        .padding(horizontal = 6.dp, vertical = 2.dp),
-                    contentAlignment = Alignment.Center
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = content,
+                )
+                Spacer(Modifier.width(6.dp))
+                Surface(
+                    shape = TagShape,
+                    color = tallyContainer,
                 ) {
                     Text(
-                        text = if (count > 99) "99+" else count.toString(),
-                        color = MaterialTheme.colorScheme.onError,
+                        text = count.toString(),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        lineHeight = 12.sp
+                        color = tallyContent,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp),
                     )
                 }
             }
-
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(24.dp),
-                tint = if (isSelected) MaterialTheme.colorScheme.primary
-                else MaterialTheme.colorScheme.onSurfaceVariant
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                color = content,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }
 }
+
+// ===========================================================================
+// Status filters
+//
+// Each chip leads with a status dot in the semantic status colour, so the
+// filter row can be read by colour before it is read by text. Pending is amber,
+// in-review is the info teal, completed is the brand green — all sourced from
+// the theme, never hardcoded.
+// ===========================================================================
 
 @Composable
 private fun VerificationStatusFilters(
@@ -859,123 +836,812 @@ private fun VerificationStatusFilters(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         VerificationRequestStatus.filterValues(tabType).forEach { status ->
-            FilterSelectionChip(
-                label = status.displayText,
+            StatusFilterChip(
+                status = status,
                 isSelected = selectedStatus == status,
-                onClick = { onStatusSelected(status) }
+                onClick = { onStatusSelected(status) },
             )
         }
     }
 }
 
 @Composable
-private fun VerificationRequestCard(
+private fun StatusFilterChip(
+    status: VerificationRequestStatus,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val accent = statusAccentColor(status)
+    val container = if (isSelected) accent.copy(alpha = 0.14f) else Color.Transparent
+    val outline = if (isSelected) accent.copy(alpha = 0.55f) else scheme.outlineVariant
+    val content = if (isSelected) scheme.onSurface else scheme.onSurfaceVariant
+
+    Surface(
+        modifier = Modifier
+            .heightIn(min = 44.dp)
+            .testTag("verification_filter_${status.apiValue.lowercase(Locale.getDefault())}")
+            .semantics { testTagsAsResourceId = true }
+            .selectable(selected = isSelected, onClick = onClick, role = Role.RadioButton),
+        shape = PanelShape,
+        color = container,
+        border = BorderStroke(1.dp, outline),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .background(accent, CircleShape),
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = status.displayText.uppercase(Locale.getDefault()),
+                style = ledgerLabel(),
+                fontWeight = FontWeight.Bold,
+                color = content,
+                maxLines = 1,
+            )
+        }
+    }
+}
+
+// ===========================================================================
+// Docket card shell
+// ===========================================================================
+
+@Composable
+private fun DocketCard(
+    accent: Color,
+    testTag: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val foldTone = MaterialTheme.colorScheme.surfaceContainerHighest
+
+    Box(modifier = modifier.fillMaxWidth()) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(testTag)
+                .semantics { testTagsAsResourceId = true }
+                .clickable(onClick = onClick),
+            shape = DocketShape,
+            color = MaterialTheme.colorScheme.surface,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
+        ) {
+            Row(modifier = Modifier.height(IntrinsicSize.Min)) {
+                // Lane spine — status colour, full height of the card.
+                Box(
+                    modifier = Modifier
+                        .width(SpineWidth)
+                        .fillMaxHeight()
+                        .background(accent),
+                )
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 14.dp, end = 14.dp, top = 13.dp, bottom = 12.dp),
+                    content = content,
+                )
+            }
+        }
+
+        // Folded corner: the visible half of the dog-ear notch, painted a shade
+        // darker so the cut reads as paper folded back rather than a clipped box.
+        Canvas(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .size(DocketCut),
+        ) {
+            val path = androidx.compose.ui.graphics.Path().apply {
+                moveTo(0f, 0f)
+                lineTo(size.width, size.height)
+                lineTo(0f, size.height)
+                close()
+            }
+            drawPath(path = path, color = foldTone)
+        }
+    }
+}
+
+/** Dashed tear line between a docket's body and its footer. */
+@Composable
+private fun PerforationRule(modifier: Modifier = Modifier) {
+    val color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.9f)
+    Canvas(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(1.dp),
+    ) {
+        drawLine(
+            color = color,
+            start = Offset(0f, size.height / 2f),
+            end = Offset(size.width, size.height / 2f),
+            strokeWidth = size.height,
+            pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 7f), 0f),
+        )
+    }
+}
+
+/** Diagonal hazard hatch used to mark new-onboarding content. */
+@Composable
+private fun HatchMark(
+    modifier: Modifier = Modifier,
+    color: Color,
+    step: Float = 5f,
+) {
+    Canvas(modifier = modifier) {
+        var x = -size.height
+        while (x < size.width + size.height) {
+            drawLine(
+                color = color,
+                start = Offset(x, size.height),
+                end = Offset(x + size.height, 0f),
+                strokeWidth = 1.6f,
+            )
+            x += step
+        }
+    }
+}
+
+/** The little `›` affordance at the end of a docket footer. */
+@Composable
+private fun ReviewCue() {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = "Review",
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Icon(
+            imageVector = Icons.Default.ChevronRight,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+            tint = MaterialTheme.colorScheme.primary,
+        )
+    }
+}
+
+/**
+ * Decided requests need their outcome visible in the list. Under the Pending
+ * and In-Review filters the chip already says the state for every row, so the
+ * stamp is suppressed there; under Completed the list mixes approved, verified
+ * and rejected items and each card has to carry its own verdict.
+ */
+private fun VerificationRequestStatus.isDecided(): Boolean =
+    this == VerificationRequestStatus.APPROVED ||
+        this == VerificationRequestStatus.VERIFIED ||
+        this == VerificationRequestStatus.REJECTED
+
+@Composable
+private fun DocketFooter(
+    status: VerificationRequestStatus,
+    metaText: String,
+    metaIcon: ImageVector? = null,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Row(
+            modifier = Modifier.weight(1f),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (status.isDecided()) {
+                StatusStamp(status = status)
+                Spacer(Modifier.width(8.dp))
+            }
+            if (metaIcon != null) {
+                Icon(
+                    imageVector = metaIcon,
+                    contentDescription = null,
+                    modifier = Modifier.size(14.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.width(6.dp))
+            }
+            Text(
+                text = metaText,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Spacer(Modifier.width(8.dp))
+        ReviewCue()
+    }
+}
+
+/** Small tracked-caps tag. Used for meta counts and NEW / REMOVED markers. */
+@Composable
+private fun MetaTag(
+    text: String,
+    container: Color,
+    content: Color,
+    modifier: Modifier = Modifier,
+    hatch: Boolean = false,
+) {
+    Surface(
+        modifier = modifier,
+        shape = TagShape,
+        color = container,
+    ) {
+        Row(
+            modifier = Modifier.height(20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (hatch) {
+                HatchMark(
+                    modifier = Modifier
+                        .width(14.dp)
+                        .fillMaxHeight(),
+                    color = content.copy(alpha = 0.55f),
+                )
+                Spacer(Modifier.width(6.dp))
+            }
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+                fontWeight = FontWeight.Bold,
+                color = content,
+                modifier = Modifier.padding(
+                    start = if (hatch) 0.dp else 7.dp,
+                    end = 7.dp,
+                ),
+            )
+        }
+    }
+}
+
+/** Amber / teal / green / red marker that says "new record", not "edit". */
+@Composable
+private fun OnboardingTag() {
+    MetaTag(
+        text = "NEW ONBOARDING",
+        container = MaterialTheme.colorScheme.tertiaryContainer,
+        content = MaterialTheme.colorScheme.onTertiaryContainer,
+        hatch = true,
+    )
+}
+
+@Composable
+private fun UpdateTag() {
+    MetaTag(
+        text = "UPDATE",
+        container = MaterialTheme.colorScheme.surfaceContainerHighest,
+        content = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+@Composable
+private fun AgeStamp(updatedAt: String) {
+    val label = remember(updatedAt) { formatRelativeTime(updatedAt) }
+    Text(
+        text = label,
+        style = MaterialTheme.typography.labelSmall,
+        fontWeight = FontWeight.Medium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 1,
+        modifier = Modifier
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh, TagShape)
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+    )
+}
+
+// ===========================================================================
+// Trip docket
+// ===========================================================================
+
+@Composable
+private fun TripDocketCard(
     request: VerificationRequest,
     onClick: () -> Unit,
 ) {
-    val relativeTime = remember(request.updatedAt) { formatRelativeTime(request.updatedAt) }
-    val primaryDocument = request.documents.firstOrNull()
-    val isCompleted = request.status == VerificationRequestStatus.APPROVED ||
-        request.status == VerificationRequestStatus.REJECTED
-    val iconContainerColor = when (request.status) {
-        VerificationRequestStatus.REJECTED -> MaterialTheme.colorScheme.errorContainer
-        VerificationRequestStatus.APPROVED -> MaterialTheme.colorScheme.surface.copy(alpha = 0f)
-        else -> MaterialTheme.colorScheme.primaryContainer
+    val accent = statusAccentColor(request.status)
+    val documentLabel = remember(request.documents) {
+        val names = request.documents.map { displayDocumentName(it.name, true) }.distinct()
+        when {
+            names.isEmpty() -> "No documents attached"
+            names.size <= 2 -> names.joinToString(" + ")
+            else -> "${names.take(2).joinToString(" + ")} +${names.size - 2}"
+        }
     }
-    val iconTint = when (request.status) {
-        VerificationRequestStatus.REJECTED -> MaterialTheme.colorScheme.onErrorContainer
-        VerificationRequestStatus.APPROVED -> MaterialTheme.colorScheme.primary
-        else -> MaterialTheme.colorScheme.onPrimaryContainer
-    }
+    val documentCount = request.documents.size
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+    DocketCard(
+        accent = accent,
+        testTag = "verification_card_trip_${request.tripCode}",
+        onClick = onClick,
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = request.tripCode,
+                style = identifier(),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+            Spacer(Modifier.width(10.dp))
+            AgeStamp(updatedAt = request.updatedAt)
+        }
+
+        Spacer(Modifier.height(10.dp))
+
+        Text(
+            text = request.truckRegistrationNumber,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+
+        Spacer(Modifier.height(8.dp))
+
+        LaneStrip(
+            from = request.origin.displayLabel(),
+            to = request.destination.displayLabel(),
+        )
+
+        Spacer(Modifier.height(12.dp))
+        PerforationRule()
+        Spacer(Modifier.height(11.dp))
+
+        DocketFooter(
+            status = request.status,
+            metaIcon = Icons.Default.Description,
+            metaText = if (documentCount == 1) {
+                "$documentLabel · 1 doc"
+            } else {
+                "$documentLabel · $documentCount docs"
+            },
+        )
+    }
+}
+
+/**
+ * Compact horizontal version of the app's route language: origin ring, dashed
+ * lane, destination dot. The vertical [RouteIndicatorWithCities] stays for
+ * detail views; this is its card-sized sibling.
+ */
+@Composable
+private fun LaneStrip(
+    from: String,
+    to: String,
+    modifier: Modifier = Modifier,
+) {
+    val ext = FreightThemeTokens.colors
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(9.dp)
+                .border(2.dp, ext.routeOrigin, CircleShape),
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = from,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.widthIn(max = 112.dp),
+        )
+        Spacer(Modifier.width(8.dp))
+        Canvas(
+            modifier = Modifier
+                .weight(1f)
+                .height(8.dp),
+        ) {
+            drawLine(
+                color = ext.routeDestination.copy(alpha = 0.45f),
+                start = Offset(0f, size.height / 2f),
+                end = Offset(size.width, size.height / 2f),
+                strokeWidth = 2f,
+                pathEffect = PathEffect.dashPathEffect(floatArrayOf(4f, 5f), 0f),
+            )
+        }
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = to,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.widthIn(max = 112.dp),
+        )
+        Spacer(Modifier.width(8.dp))
+        Box(
+            modifier = Modifier
+                .size(9.dp)
+                .background(ext.routeDestination, CircleShape),
+        )
+    }
+}
+
+// ===========================================================================
+// Truck docket
+// ===========================================================================
+
+@Composable
+private fun TruckDocketCard(
+    request: TruckVerificationRequest,
+    onClick: () -> Unit,
+) {
+    val accent = statusAccentColor(request.status)
+    val entries = remember(request.changedTruckDetails) { request.changedTruckDetails.map { it.toLedgerEntry() } }
+    val onboarding = entries.isOnboarding()
+    val preview = entries.take(2)
+    val remaining = (entries.size - preview.size).coerceAtLeast(0)
+
+    DocketCard(
+        accent = accent,
+        testTag = "verification_card_truck_${request.registrationNumber}",
+        onClick = onClick,
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = request.registrationNumber,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+            Spacer(Modifier.width(10.dp))
+            AgeStamp(updatedAt = request.updatedAt)
+        }
+
+        Spacer(Modifier.height(10.dp))
+
+        if (onboarding) OnboardingTag() else UpdateTag()
+
+        Spacer(Modifier.height(10.dp))
+
+        if (preview.isEmpty()) {
+            Text(
+                text = "No field changes on this request",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        } else {
+            preview.forEachIndexed { index, entry ->
+                if (index > 0) Spacer(Modifier.height(6.dp))
+                LedgerPreviewRow(entry = entry, isNew = entry.kind == ChangeKind.NEW)
+            }
+            if (remaining > 0) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = "+$remaining more field${if (remaining == 1) "" else "s"}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+        PerforationRule()
+        Spacer(Modifier.height(11.dp))
+
+        DocketFooter(
+            status = request.status,
+            metaText = buildMetaLine(
+                fields = entries.size,
+                documents = request.changedDocuments.size,
+            ),
+        )
+    }
+}
+
+// ===========================================================================
+// Truck-owner / client docket
+// ===========================================================================
+
+@Composable
+private fun BusinessDocketCard(
+    eyebrowText: String,
+    testTag: String,
+    title: String,
+    contact: String,
+    updatedAt: String,
+    status: VerificationRequestStatus,
+    icon: ImageVector,
+    changes: List<LedgerEntry>,
+    onClick: () -> Unit,
+) {
+    val accent = statusAccentColor(status)
+    val onboarding = changes.isOnboarding()
+    val preview = changes.take(2)
+    val remaining = (changes.size - preview.size).coerceAtLeast(0)
+
+    DocketCard(accent = accent, testTag = testTag, onClick = onClick) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
+            Spacer(Modifier.width(10.dp))
+            AgeStamp(updatedAt = updatedAt)
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(14.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.width(6.dp))
+            Text(
+                text = eyebrowText,
+                style = ledgerLabel(),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = "·",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.outline,
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = contact,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+
+        Spacer(Modifier.height(10.dp))
+
+        if (onboarding) OnboardingTag() else UpdateTag()
+
+        Spacer(Modifier.height(10.dp))
+
+        if (preview.isEmpty()) {
+            Text(
+                text = "No field changes on this request",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        } else {
+            preview.forEachIndexed { index, entry ->
+                if (index > 0) Spacer(Modifier.height(6.dp))
+                LedgerPreviewRow(entry = entry, isNew = entry.kind == ChangeKind.NEW)
+            }
+            if (remaining > 0) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = "+$remaining more field${if (remaining == 1) "" else "s"}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+        PerforationRule()
+        Spacer(Modifier.height(11.dp))
+
+        DocketFooter(
+            status = status,
+            metaText = "${changes.size} field${if (changes.size == 1) "" else "s"} submitted",
+        )
+    }
+}
+
+/** One line of the card-level ledger preview: label on the left, value right. */
+@Composable
+private fun LedgerPreviewRow(entry: LedgerEntry, isNew: Boolean) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // Fixed label column so every value in the preview starts on the same
+        // x — that alignment is what makes it read as a ledger rather than a
+        // stack of loose label/value pairs.
+        Text(
+            text = formatFieldName(entry.field),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.width(128.dp),
+        )
+        Spacer(Modifier.width(10.dp))
+        Text(
+            text = entry.displayAfter(),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = if (isNew) FontWeight.SemiBold else FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+// ===========================================================================
+// Bottom sheets
+// ===========================================================================
+
+/**
+ * Shared sheet chrome: eyebrow + title + status stamp + meta tags, a tear line,
+ * the scrollable body, and — when the request is actionable — a pinned action
+ * bar so Approve/Reject are reachable without scrolling past every field.
+ */
+@Composable
+private fun DocketSheet(
+    entityLabel: String,
+    title: String,
+    subtitle: String? = null,
+    status: VerificationRequestStatus,
+    metaTags: List<String> = emptyList(),
+    showActions: Boolean,
+    actionErrorMessage: String?,
+    isApproveLoading: Boolean,
+    isRejectLoading: Boolean,
+    approveLabel: String = "Approve",
+    onApprove: () -> Unit,
+    onReject: () -> Unit,
+    onClose: () -> Unit,
+    body: @Composable ColumnScope.() -> Unit,
+) {
+    val accent = statusAccentColor(status)
+    val barHeight = 84.dp
+
+    Box(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp)
+                .padding(bottom = if (showActions) barHeight + 12.dp else 28.dp),
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = Alignment.Top,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = entityLabel.uppercase(Locale.getDefault()),
+                        style = eyebrow(),
+                        color = accent,
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    if (!subtitle.isNullOrBlank()) {
+                        Spacer(Modifier.height(4.dp))
                         Text(
-                            text = request.tripCode,
+                            text = subtitle,
                             style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                        if (isCompleted) {
-                            Spacer(modifier = Modifier.width(8.dp))
-                            CompletedStatusMark(status = request.status)
-                        }
+                    }
+                    Spacer(Modifier.height(12.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        StatusStamp(status = status)
+                        metaTags.forEach { MetaTag(text = it, container = MaterialTheme.colorScheme.surfaceContainerHighest, content = MaterialTheme.colorScheme.onSurfaceVariant) }
                     }
                 }
-                Surface(
-                    color = MaterialTheme.colorScheme.secondaryContainer,
-                    shape = RoundedCornerShape(999.dp),
+                IconButton(
+                    onClick = onClose,
+                    modifier = Modifier
+                        .testTag("verification_sheet_close")
+                        .semantics { testTagsAsResourceId = true },
                 ) {
-                    Text(
-                        text = relativeTime,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Normal,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Close",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(Modifier.height(18.dp))
+            PerforationRule()
+            Spacer(Modifier.height(18.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Top,
+            body()
+
+            Spacer(Modifier.height(12.dp))
+        }
+
+        if (showActions) {
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth(),
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 12.dp,
             ) {
-                Surface(
-                    color = iconContainerColor,
-                    shape = MaterialTheme.shapes.medium,
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 12.dp),
                 ) {
-                    Box(
-                        modifier = Modifier.size(48.dp),
-                        contentAlignment = Alignment.Center,
+                    if (actionErrorMessage != null) {
+                        InlineNote(
+                            text = actionErrorMessage,
+                            container = MaterialTheme.colorScheme.errorContainer,
+                            content = MaterialTheme.colorScheme.onErrorContainer,
+                        )
+                        Spacer(Modifier.height(10.dp))
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Description,
-                            contentDescription = null,
-                            tint = iconTint,
+                        ActionButton(
+                            modifier = Modifier.weight(1f),
+                            testTag = "verification_sheet_reject",
+                            text = "Reject",
+                            icon = Icons.Default.Close,
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.24f)),
+                            isLoading = isRejectLoading,
+                            onClick = onReject,
+                        )
+                        ActionButton(
+                            modifier = Modifier.weight(1f),
+                            testTag = "verification_sheet_approve",
+                            text = approveLabel,
+                            icon = Icons.Default.CheckCircle,
+                            containerColor = FreightThemeTokens.colors.success,
+                            contentColor = FreightThemeTokens.colors.onSuccess,
+                            border = null,
+                            isLoading = isApproveLoading,
+                            onClick = onApprove,
                         )
                     }
-                }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = request.truckRegistrationNumber,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "${request.origin.displayLabel()} → ${request.destination.displayLabel()}",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-
-                if (primaryDocument != null) {
-                    DocumentBadge(document = primaryDocument)
                 }
             }
         }
@@ -998,391 +1664,548 @@ private fun TripVerificationRequestDetailSheet(
     isRejectLoading: Boolean,
     isCompletedView: Boolean,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 12.dp)
+    DocketSheet(
+        entityLabel = "Trip document review",
+        title = request.truckRegistrationNumber,
+        subtitle = request.tripCode,
+        status = request.status,
+        metaTags = listOf(
+            if (request.documents.size == 1) "1 DOC" else "${request.documents.size} DOCS",
+        ),
+        showActions = !isCompletedView,
+        actionErrorMessage = actionErrorMessage,
+        isApproveLoading = isApproveLoading,
+        isRejectLoading = isRejectLoading,
+        approveLabel = if (request.documents.any { it.name.trim().lowercase() == "lr" }) "Verify" else "Approve",
+        onApprove = onApproveClick,
+        onReject = onRejectClick,
+        onClose = onClose,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = request.truckRegistrationNumber,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = request.tripCode,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                if (isCompletedView) {
-                    Spacer(modifier = Modifier.height(10.dp))
-                    StatusBannerChip(status = request.status)
-                }
-            }
-
-            TextButton(onClick = onClose) {
-                Text("Close")
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        Spacer(modifier = Modifier.height(18.dp))
-
-        SectionLabel(text = "Route")
-        Spacer(modifier = Modifier.height(10.dp))
+        LedgerSectionLabel(text = "Lane")
+        Spacer(Modifier.height(10.dp))
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium,
-            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)),
+            shape = PanelShape,
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 RouteIndicatorWithCities(
                     fromCity = request.origin.displayLabel(),
                     toCity = request.destination.displayLabel(),
+                    fromLabel = "Pickup",
+                    toLabel = "Drop",
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(18.dp))
+        Spacer(Modifier.height(22.dp))
 
-        SectionLabel(text = "Documents")
-        Spacer(modifier = Modifier.height(10.dp))
-
+        LedgerSectionLabel(text = "Documents")
+        Spacer(Modifier.height(10.dp))
         if (request.documents.isEmpty()) {
-            EmptySheetNote(
-                text = "No uploaded documents found.",
-            )
+            EmptyLedgerNote(text = "No documents were attached to this request.")
         } else {
-            request.documents.forEach { document ->
-                DocumentRow(
+            request.documents.forEachIndexed { index, document ->
+                if (index > 0) Spacer(Modifier.height(8.dp))
+                DocumentLedgerRow(
                     document = document,
-                    onClick = onDocumentClick,
                     uploadDate = formatDisplayDate(request.updatedAt),
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-        }
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        SectionLabel(text = "Remarks")
-        Spacer(modifier = Modifier.height(10.dp))
-
-        if (isCompletedView) {
-            RemarksField(
-                remarks = resolutionNotes.orEmpty(),
-                remarksError = null,
-                enabled = false,
-                onRemarksChange = onRemarksChange,
-            )
-        } else {
-            RemarksField(
-                remarks = remarks,
-                remarksError = remarksError,
-                enabled = true,
-                onRemarksChange = onRemarksChange,
-            )
-
-            if (actionErrorMessage != null) {
-                Spacer(modifier = Modifier.height(10.dp))
-                Surface(
-                    color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.65f),
-                    shape = MaterialTheme.shapes.medium,
-                ) {
-                    Text(
-                        text = actionErrorMessage,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(18.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                ActionButton(
-                    modifier = Modifier.weight(1f),
-                    text = "Reject",
-                    icon = Icons.Default.Close,
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.24f)),
-                    isLoading = isRejectLoading,
-                    onClick = onRejectClick,
-                )
-                ActionButton(
-                    modifier = Modifier.weight(1f),
-                    text = "Approve",
-                    icon = Icons.Default.CheckCircle,
-                    containerColor = FreightThemeTokens.colors.success,
-                    contentColor = FreightThemeTokens.colors.onSuccess,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)),
-                    isLoading = isApproveLoading,
-                    onClick = onApproveClick,
+                    onClick = onDocumentClick,
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
-    }
-}
+        Spacer(Modifier.height(22.dp))
 
-@Composable
-private fun SummaryCard(
-    request: VerificationRequest,
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)),
-    ) {
-        Column(modifier = Modifier.padding(18.dp)) {
-            Text(
-                text = "Trip overview",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = request.truckRegistrationNumber,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = request.tripCode,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(modifier = Modifier.height(14.dp))
-            Surface(
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                shape = RoundedCornerShape(999.dp),
-            ) {
-                Text(
-                    text = request.status.displayText,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun SectionLabel(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        fontWeight = FontWeight.SemiBold,
-        modifier = Modifier.padding(horizontal = 4.dp),
-    )
-}
-
-@Composable
-private fun StatusBannerChip(status: VerificationRequestStatus) {
-    val (containerColor, contentColor) = when (status) {
-        VerificationRequestStatus.REJECTED -> {
-            MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.onErrorContainer
-        }
-        VerificationRequestStatus.APPROVED -> {
-            MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer
-        }
-        else -> {
-            MaterialTheme.colorScheme.secondaryContainer to MaterialTheme.colorScheme.onSecondaryContainer
-        }
-    }
-
-    Surface(
-        color = containerColor,
-        shape = RoundedCornerShape(999.dp),
-    ) {
-        Text(
-            text = status.displayText.uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            color = contentColor,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+        LedgerSectionLabel(text = if (isCompletedView) "Resolution" else "Remarks")
+        Spacer(Modifier.height(10.dp))
+        RemarksSection(
+            isCompletedView = isCompletedView,
+            resolutionNotes = resolutionNotes,
+            remarks = remarks,
+            remarksError = remarksError,
+            onRemarksChange = onRemarksChange,
         )
     }
 }
 
 @Composable
-private fun CompletedStatusMark(status: VerificationRequestStatus) {
-    val isRejected = status == VerificationRequestStatus.REJECTED
-    val containerColor = if (isRejected) {
-        MaterialTheme.colorScheme.errorContainer
-    } else {
-        MaterialTheme.colorScheme.primaryContainer
+private fun TruckVerificationRequestDetailSheet(
+    request: TruckVerificationRequest,
+    remarks: String,
+    remarksError: String?,
+    resolutionNotes: String?,
+    onRemarksChange: (String) -> Unit,
+    onDocumentClick: (VerificationRequestDocument) -> Unit,
+    onApproveClick: () -> Unit,
+    onRejectClick: () -> Unit,
+    onClose: () -> Unit,
+    actionErrorMessage: String?,
+    isApproveLoading: Boolean,
+    isRejectLoading: Boolean,
+    isCompletedView: Boolean,
+) {
+    val entries = remember(request.changedTruckDetails) { request.changedTruckDetails.map { it.toLedgerEntry() } }
+    val onboarding = entries.isOnboarding()
+
+    DocketSheet(
+        entityLabel = if (onboarding) "Truck onboarding" else "Truck detail update",
+        title = request.registrationNumber,
+        status = request.status,
+        metaTags = buildList {
+            add("${entries.size} FIELD${if (entries.size == 1) "" else "S"}")
+            if (request.changedDocuments.isNotEmpty()) {
+                add("${request.changedDocuments.size} DOC${if (request.changedDocuments.size == 1) "" else "S"}")
+            }
+        },
+        showActions = !isCompletedView,
+        actionErrorMessage = actionErrorMessage,
+        isApproveLoading = isApproveLoading,
+        isRejectLoading = isRejectLoading,
+        onApprove = onApproveClick,
+        onReject = onRejectClick,
+        onClose = onClose,
+    ) {
+        if (entries.isNotEmpty()) {
+            LedgerSectionLabel(
+                text = if (onboarding) "New details submitted" else "Field changes",
+                hatch = onboarding,
+            )
+            Spacer(Modifier.height(10.dp))
+            entries.forEachIndexed { index, entry ->
+                if (index > 0) Spacer(Modifier.height(8.dp))
+                ChangeLedgerRow(entry = entry, showNewTag = !onboarding)
+            }
+            Spacer(Modifier.height(22.dp))
+        }
+
+        if (request.changedDocuments.isNotEmpty()) {
+            LedgerSectionLabel(text = "Documents")
+            Spacer(Modifier.height(10.dp))
+            request.changedDocuments.forEachIndexed { index, document ->
+                if (index > 0) Spacer(Modifier.height(8.dp))
+                DocumentLedgerRow(
+                    document = document,
+                    uploadDate = formatDisplayDate(request.updatedAt),
+                    onClick = onDocumentClick,
+                )
+            }
+            Spacer(Modifier.height(22.dp))
+        }
+
+        if (entries.isEmpty() && request.changedDocuments.isEmpty()) {
+            EmptyLedgerNote(text = "Nothing changed on this request.")
+            Spacer(Modifier.height(22.dp))
+        }
+
+        LedgerSectionLabel(text = if (isCompletedView) "Resolution" else "Remarks")
+        Spacer(Modifier.height(10.dp))
+        RemarksSection(
+            isCompletedView = isCompletedView,
+            resolutionNotes = resolutionNotes,
+            remarks = remarks,
+            remarksError = remarksError,
+            onRemarksChange = onRemarksChange,
+        )
     }
-    val contentColor = if (isRejected) {
-        MaterialTheme.colorScheme.onErrorContainer
-    } else {
-        MaterialTheme.colorScheme.onPrimaryContainer
+}
+
+@Composable
+private fun BusinessProfileVerificationDetailSheet(
+    entityLabel: String,
+    title: String,
+    subtitle: String,
+    status: VerificationRequestStatus,
+    changes: List<BusinessProfileChange>,
+    remarks: String,
+    remarksError: String?,
+    resolutionNotes: String?,
+    onRemarksChange: (String) -> Unit,
+    onApproveClick: () -> Unit,
+    onRejectClick: () -> Unit,
+    onClose: () -> Unit,
+    actionErrorMessage: String?,
+    isApproveLoading: Boolean,
+    isRejectLoading: Boolean,
+    isCompletedView: Boolean,
+) {
+    val entries = remember(changes) { changes.map { it.toLedgerEntry() } }
+    val onboarding = entries.isOnboarding()
+
+    DocketSheet(
+        entityLabel = if (onboarding) "$entityLabel onboarding" else "$entityLabel profile update",
+        title = title,
+        subtitle = subtitle,
+        status = status,
+        metaTags = listOf("${entries.size} FIELD${if (entries.size == 1) "" else "S"}"),
+        showActions = !isCompletedView,
+        actionErrorMessage = actionErrorMessage,
+        isApproveLoading = isApproveLoading,
+        isRejectLoading = isRejectLoading,
+        onApprove = onApproveClick,
+        onReject = onRejectClick,
+        onClose = onClose,
+    ) {
+        if (entries.isEmpty()) {
+            EmptyLedgerNote(text = "No profile changes on this request.")
+            Spacer(Modifier.height(22.dp))
+        } else {
+            LedgerSectionLabel(
+                text = if (onboarding) "New details submitted" else "Field changes",
+                hatch = onboarding,
+            )
+            Spacer(Modifier.height(10.dp))
+            entries.forEachIndexed { index, entry ->
+                if (index > 0) Spacer(Modifier.height(8.dp))
+                ChangeLedgerRow(entry = entry, showNewTag = !onboarding)
+            }
+            Spacer(Modifier.height(22.dp))
+        }
+
+        LedgerSectionLabel(text = if (isCompletedView) "Resolution" else "Remarks")
+        Spacer(Modifier.height(10.dp))
+        RemarksSection(
+            isCompletedView = isCompletedView,
+            resolutionNotes = resolutionNotes,
+            remarks = remarks,
+            remarksError = remarksError,
+            onRemarksChange = onRemarksChange,
+        )
     }
+}
+
+// ===========================================================================
+// Ledger primitives
+// ===========================================================================
+
+@Composable
+private fun LedgerSectionLabel(
+    text: String,
+    hatch: Boolean = false,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        if (hatch) {
+            Surface(
+                shape = TagShape,
+                color = MaterialTheme.colorScheme.tertiaryContainer,
+            ) {
+                HatchMark(
+                    modifier = Modifier
+                        .size(width = 14.dp, height = 16.dp),
+                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.55f),
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+        }
+        Text(
+            text = text.uppercase(Locale.getDefault()),
+            style = ledgerLabel(),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+/**
+ * One field, one row.
+ *
+ * This is the fix for the old sheet, which printed a literal "N/A" under a
+ * "Before" heading for every field of a brand-new truck or profile. A new
+ * record has no before — so the row shows only what was submitted. Genuine
+ * edits read as a single wrapping `was → now` line, and a field that was
+ * cleared says REMOVED. The Before/After column headings are gone; they were
+ * repeated six times per sheet and carried no information.
+ *
+ * [showNewTag] is false when the whole request is an onboarding: five identical
+ * NEW stamps stacked down a sheet read as a rendering artefact, not as five
+ * facts. The eyebrow ("TRUCK ONBOARDING") and the hatched section label already
+ * say it once, which is the right number of times.
+ */
+@Composable
+private fun ChangeLedgerRow(
+    entry: LedgerEntry,
+    showNewTag: Boolean = true,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val accent = statusAccentColor(VerificationRequestStatus.PENDING)
 
     Surface(
-        color = containerColor,
-        shape = RoundedCornerShape(999.dp),
+        modifier = Modifier.fillMaxWidth(),
+        shape = PanelShape,
+        color = scheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, scheme.outlineVariant.copy(alpha = 0.5f)),
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = if (isRejected) Icons.Default.Close else Icons.Default.Check,
-                contentDescription = null,
-                tint = contentColor,
-                modifier = Modifier.size(14.dp),
-            )
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(
-                text = if (isRejected) "Rejected" else "Approved",
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                color = contentColor,
-            )
+        Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = formatFieldName(entry.field),
+                    style = ledgerLabel(),
+                    color = scheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+                when (entry.kind) {
+                    ChangeKind.NEW -> if (showNewTag) {
+                        Spacer(Modifier.width(8.dp))
+                        MetaTag(
+                            text = "NEW",
+                            container = scheme.tertiaryContainer,
+                            content = scheme.onTertiaryContainer,
+                        )
+                    }
+                    ChangeKind.CLEARED -> {
+                        Spacer(Modifier.width(8.dp))
+                        MetaTag(
+                            text = "REMOVED",
+                            container = scheme.errorContainer,
+                            content = scheme.onErrorContainer,
+                        )
+                    }
+                    else -> Unit
+                }
+            }
+
+            Spacer(Modifier.height(7.dp))
+
+            when (entry.kind) {
+                ChangeKind.NEW -> {
+                    Text(
+                        text = entry.displayAfter(),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = scheme.onSurface,
+                    )
+                }
+                ChangeKind.UPDATED -> {
+                    // One wrapping line: struck-through old value, arrow, new value.
+                    Text(
+                        text = buildAnnotatedString {
+                            withStyle(
+                                SpanStyle(
+                                    color = scheme.onSurfaceVariant,
+                                    textDecoration = TextDecoration.LineThrough,
+                                )
+                            ) { append(entry.displayBefore()) }
+                            withStyle(
+                                SpanStyle(
+                                    color = accent,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                            ) { append("   \u2192   ") }
+                            withStyle(
+                                SpanStyle(
+                                    color = scheme.onSurface,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                            ) { append(entry.displayAfter()) }
+                        },
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                }
+                ChangeKind.CLEARED -> {
+                    Text(
+                        text = entry.displayBefore(),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = scheme.onSurfaceVariant,
+                        textDecoration = TextDecoration.LineThrough,
+                    )
+                }
+                ChangeKind.SAME -> {
+                    Text(
+                        text = entry.displayAfter(),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = scheme.onSurface,
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun DocumentRow(
+private fun DocumentLedgerRow(
     document: VerificationRequestDocument,
     uploadDate: String,
     onClick: (VerificationRequestDocument) -> Unit,
 ) {
+    val scheme = MaterialTheme.colorScheme
     Surface(
-        color = MaterialTheme.colorScheme.surface,
-        shape = MaterialTheme.shapes.medium,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)),
         modifier = Modifier.fillMaxWidth(),
+        shape = PanelShape,
+        color = scheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, scheme.outlineVariant.copy(alpha = 0.5f)),
     ) {
         Row(
-            modifier = Modifier.padding(14.dp),
+            modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Surface(
-                modifier = Modifier.size(46.dp),
-                shape = MaterialTheme.shapes.medium,
-                color = MaterialTheme.colorScheme.primary,
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .background(scheme.primaryContainer, RoundedCornerShape(8.dp)),
+                contentAlignment = Alignment.Center,
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Default.Description,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Default.Description,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                    tint = scheme.onPrimaryContainer,
+                )
             }
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = displayDocumentName(document.displayName, false),
-                    style = MaterialTheme.typography.titleMedium,
+                    text = displayDocumentName(document.name, false),
+                    style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = scheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(Modifier.height(3.dp))
                 Text(
-                    text = "Uploaded on $uploadDate",
+                    text = "Uploaded $uploadDate",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = scheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
+            Spacer(Modifier.width(8.dp))
             if (!document.s3Url.isNullOrBlank()) {
-                DocumentLinkChip(
-                    onClick = { onClick(document) },
-                )
+                DocumentLinkChip(onClick = { onClick(document) })
             } else {
-                Surface(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = RoundedCornerShape(999.dp),
-                ) {
-                    Text(
-                        text = "Unavailable",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                    )
-                }
+                MetaTag(
+                    text = "UNAVAILABLE",
+                    container = scheme.surfaceContainerHighest,
+                    content = scheme.onSurfaceVariant,
+                )
             }
         }
     }
 }
 
 @Composable
-private fun RemarksField(
+private fun StatusStamp(status: VerificationRequestStatus) {
+    val (container, content) = statusStampColors(status)
+    val glyph = when (status) {
+        VerificationRequestStatus.REJECTED -> Icons.Default.Close
+        VerificationRequestStatus.APPROVED,
+        VerificationRequestStatus.VERIFIED -> Icons.Default.Check
+        else -> null
+    }
+
+    Surface(
+        shape = TagShape,
+        color = container,
+    ) {
+        Row(
+            modifier = Modifier
+                .height(22.dp)
+                .padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (glyph != null) {
+                Icon(
+                    imageVector = glyph,
+                    contentDescription = null,
+                    modifier = Modifier.size(12.dp),
+                    tint = content,
+                )
+                Spacer(Modifier.width(4.dp))
+            }
+            Text(
+                text = status.displayText.uppercase(Locale.getDefault()),
+                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+                fontWeight = FontWeight.Bold,
+                color = content,
+            )
+        }
+    }
+}
+
+@Composable
+private fun RemarksSection(
+    isCompletedView: Boolean,
+    resolutionNotes: String?,
     remarks: String,
     remarksError: String?,
-    enabled: Boolean,
     onRemarksChange: (String) -> Unit,
 ) {
+    if (isCompletedView) {
+        val note = resolutionNotes?.trim().orEmpty()
+        if (note.isBlank()) {
+            EmptyLedgerNote(text = "No remarks were recorded for this request.")
+        } else {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Box(
+                    modifier = Modifier
+                        .width(3.dp)
+                        .height(IntrinsicSize.Min)
+                        .background(MaterialTheme.colorScheme.primary, TagShape),
+                )
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    text = note,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+        }
+        return
+    }
+
     Column {
         OutlinedTextField(
             value = remarks,
             onValueChange = onRemarksChange,
-            modifier = Modifier.fillMaxWidth(),
-            enabled = enabled,
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("verification_sheet_remarks")
+                .semantics { testTagsAsResourceId = true },
             minLines = 2,
-            maxLines = 3,
+            maxLines = 4,
             placeholder = {
-                Text(if (enabled) "Add remarks for approval or rejection..." else "No remarks provided")
+                Text("Why you approved or rejected this request…")
             },
             textStyle = MaterialTheme.typography.bodyMedium,
-            shape = MaterialTheme.shapes.medium,
+            shape = PanelShape,
             isError = remarksError != null,
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = MaterialTheme.colorScheme.primary,
                 unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
                 errorBorderColor = MaterialTheme.colorScheme.error,
                 cursorColor = MaterialTheme.colorScheme.primary,
-                focusedLeadingIconColor = MaterialTheme.colorScheme.primary,
-                unfocusedLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 focusedLabelColor = MaterialTheme.colorScheme.primary,
                 unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                disabledBorderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f),
-                disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                errorContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             ),
         )
-        if (remarksError != null) {
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = remarksError,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error,
-                fontWeight = FontWeight.Medium,
-            )
-        }
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = remarksError ?: "Required when rejecting. Optional when approving.",
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = if (remarksError != null) FontWeight.Medium else FontWeight.Normal,
+            color = if (remarksError != null) {
+                MaterialTheme.colorScheme.error
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+        )
     }
 }
 
 @Composable
 private fun ActionButton(
     modifier: Modifier = Modifier,
+    testTag: String,
     text: String,
     icon: ImageVector,
     containerColor: Color,
@@ -1392,10 +2215,13 @@ private fun ActionButton(
     onClick: () -> Unit,
 ) {
     Button(
-        modifier = modifier,
+        modifier = modifier
+            .heightIn(min = 52.dp)
+            .testTag(testTag)
+            .semantics { testTagsAsResourceId = true },
         onClick = onClick,
         enabled = !isLoading,
-        shape = RoundedCornerShape(16.dp),
+        shape = PanelShape,
         colors = ButtonDefaults.buttonColors(
             containerColor = containerColor,
             contentColor = contentColor,
@@ -1416,9 +2242,10 @@ private fun ActionButton(
                 imageVector = icon,
                 contentDescription = null,
                 tint = contentColor,
+                modifier = Modifier.size(18.dp),
             )
         }
-        Spacer(modifier = Modifier.width(8.dp))
+        Spacer(Modifier.width(8.dp))
         Text(
             text = text,
             style = MaterialTheme.typography.labelLarge,
@@ -1429,689 +2256,33 @@ private fun ActionButton(
 }
 
 @Composable
-private fun TruckVerificationRequestCard(
-    request: TruckVerificationRequest,
-    onClick: () -> Unit,
+private fun InlineNote(
+    text: String,
+    container: Color,
+    content: Color,
 ) {
-    val relativeTime = remember(request.updatedAt) { formatRelativeTime(request.updatedAt) }
-    val isCompleted = request.status == VerificationRequestStatus.APPROVED ||
-        request.status == VerificationRequestStatus.REJECTED
-    val changedLabels = buildChangedSummaryLabels(request)
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text(
-                        text = request.registrationNumber,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    if (isCompleted) {
-                        CompletedStatusChip(status = request.status)
-                    }
-                }
-                Surface(
-                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f),
-                    shape = RoundedCornerShape(999.dp),
-                ) {
-                    Text(
-                        text = relativeTime,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Surface(
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
-                    shape = MaterialTheme.shapes.small,
-                ) {
-                    Box(
-                        modifier = Modifier.size(36.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.LocalShipping,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                if (changedLabels.isNotEmpty()) {
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        changedLabels.forEach { label ->
-                            ChangedFieldChip(label = label)
-                        }
-                    }
-                } else {
-                    Text(
-                        text = "Verification changes",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CompletedStatusChip(status: VerificationRequestStatus) {
-    val isRejected = status == VerificationRequestStatus.REJECTED
-    val containerColor = if (isRejected) {
-        MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.7f)
-    } else {
-        FreightThemeTokens.colors.success.copy(alpha = 0.15f)
-    }
-    val contentColor = if (isRejected) {
-        MaterialTheme.colorScheme.onErrorContainer
-    } else {
-        FreightThemeTokens.colors.success
-    }
-
     Surface(
-        color = containerColor,
-        shape = RoundedCornerShape(999.dp),
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Icon(
-                imageVector = if (isRejected) Icons.Default.Close else Icons.Default.Check,
-                contentDescription = null,
-                tint = contentColor,
-                modifier = Modifier.size(12.dp),
-            )
-            Text(
-                text = if (isRejected) "Rejected" else "Approved",
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                color = contentColor,
-            )
-        }
-    }
-}
-
-@Composable
-private fun ChangedFieldChip(label: String) {
-    Surface(
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        shape = RoundedCornerShape(999.dp),
-        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Medium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-        )
-    }
-}
-
-private fun buildChangedSummaryLabels(request: TruckVerificationRequest): List<String> {
-    return buildList {
-        request.changedDocuments.forEach { doc ->
-            add(displayDocumentName(doc.displayName, false))
-        }
-        request.changedTruckDetails.forEach { change ->
-            add(formatFieldName(change.displayFieldName))
-        }
-    }
-}
-
-@Composable
-private fun BusinessVerificationRequestCard(
-    title: String,
-    subtitle: String,
-    updatedAt: String,
-    status: VerificationRequestStatus,
-    icon: ImageVector,
-    changedLabels: List<String>,
-    onClick: () -> Unit,
-) {
-    val relativeTime = remember(updatedAt) { formatRelativeTime(updatedAt) }
-    val isCompleted = status == VerificationRequestStatus.APPROVED ||
-        status == VerificationRequestStatus.REJECTED
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f),
-                ) {
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    if (isCompleted) {
-                        CompletedStatusChip(status = status)
-                    }
-                }
-                Surface(
-                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f),
-                    shape = RoundedCornerShape(999.dp),
-                ) {
-                    Text(
-                        text = relativeTime,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Surface(
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
-                    shape = MaterialTheme.shapes.small,
-                ) {
-                    Box(
-                        modifier = Modifier.size(36.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    if (changedLabels.isNotEmpty()) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            changedLabels.take(3).forEach { label ->
-                                ChangedFieldChip(label = label)
-                            }
-                        }
-                    } else {
-                        Text(
-                            text = "Business profile changes",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun BusinessProfileVerificationDetailSheet(
-    title: String,
-    subtitle: String,
-    status: VerificationRequestStatus,
-    changes: List<BusinessProfileChange>,
-    remarks: String,
-    remarksError: String?,
-    resolutionNotes: String?,
-    onRemarksChange: (String) -> Unit,
-    onApproveClick: () -> Unit,
-    onRejectClick: () -> Unit,
-    onClose: () -> Unit,
-    actionErrorMessage: String?,
-    isApproveLoading: Boolean,
-    isRejectLoading: Boolean,
-    isCompletedView: Boolean,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 12.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                StatusBannerChip(status = status)
-            }
-
-            TextButton(onClick = onClose) {
-                Text("Close")
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        Spacer(modifier = Modifier.height(18.dp))
-
-        SectionLabel(text = "Changed Business Profile")
-        Spacer(modifier = Modifier.height(10.dp))
-
-        if (changes.isEmpty()) {
-            EmptySheetNote(text = "No business profile changes to display.")
-        } else {
-            changes.forEach { change ->
-                BusinessProfileChangeRow(change = change)
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-        }
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        SectionLabel(text = "Remarks")
-        Spacer(modifier = Modifier.height(10.dp))
-
-        if (isCompletedView) {
-            RemarksField(
-                remarks = resolutionNotes.orEmpty(),
-                remarksError = null,
-                enabled = false,
-                onRemarksChange = onRemarksChange,
-            )
-        } else {
-            RemarksField(
-                remarks = remarks,
-                remarksError = remarksError,
-                enabled = true,
-                onRemarksChange = onRemarksChange,
-            )
-
-            if (actionErrorMessage != null) {
-                Spacer(modifier = Modifier.height(10.dp))
-                Surface(
-                    color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.65f),
-                    shape = MaterialTheme.shapes.medium,
-                ) {
-                    Text(
-                        text = actionErrorMessage,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(18.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                ActionButton(
-                    modifier = Modifier.weight(1f),
-                    text = "Reject",
-                    icon = Icons.Default.Close,
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.24f)),
-                    isLoading = isRejectLoading,
-                    onClick = onRejectClick,
-                )
-                ActionButton(
-                    modifier = Modifier.weight(1f),
-                    text = "Approve",
-                    icon = Icons.Default.CheckCircle,
-                    containerColor = FreightThemeTokens.colors.success,
-                    contentColor = FreightThemeTokens.colors.onSuccess,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)),
-                    isLoading = isApproveLoading,
-                    onClick = onApproveClick,
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-    }
-}
-
-@Composable
-private fun BusinessProfileChangeRow(change: BusinessProfileChange) {
-    TruckDetailChangeRow(
-        change = TruckDetailChange(
-            fieldName = change.fieldName,
-            displayFieldName = change.displayFieldName,
-            beforeValue = change.beforeValue,
-            afterValue = change.afterValue,
-        )
-    )
-}
-
-private fun formatFieldName(fieldName: String): String {
-    return fieldName.replace('_', ' ').replace('-', ' ')
-        .trim()
-        .split(' ')
-        .joinToString(" ") { word ->
-            word.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-        }
-        .ifBlank { fieldName }
-}
-
-@Composable
-private fun TruckVerificationRequestDetailSheet(
-    request: TruckVerificationRequest,
-    remarks: String,
-    remarksError: String?,
-    resolutionNotes: String?,
-    onRemarksChange: (String) -> Unit,
-    onDocumentClick: (VerificationRequestDocument) -> Unit,
-    onApproveClick: () -> Unit,
-    onRejectClick: () -> Unit,
-    onClose: () -> Unit,
-    actionErrorMessage: String?,
-    isApproveLoading: Boolean,
-    isRejectLoading: Boolean,
-    isCompletedView: Boolean,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 12.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = request.registrationNumber,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                StatusBannerChip(status = request.status)
-            }
-
-            TextButton(onClick = onClose) {
-                Text("Close")
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        Spacer(modifier = Modifier.height(18.dp))
-
-        if (request.changedTruckDetails.isNotEmpty()) {
-            SectionLabel(text = "Changed Details")
-            Spacer(modifier = Modifier.height(10.dp))
-
-            request.changedTruckDetails.forEach { change ->
-                TruckDetailChangeRow(change = change)
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-        }
-
-        if (request.changedDocuments.isNotEmpty()) {
-            SectionLabel(text = "Documents")
-            Spacer(modifier = Modifier.height(10.dp))
-
-            request.changedDocuments.forEach { document ->
-                DocumentRow(
-                    document = document,
-                    onClick = onDocumentClick,
-                    uploadDate = formatDisplayDate(request.updatedAt),
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-        }
-
-        if (request.changedTruckDetails.isEmpty() && request.changedDocuments.isEmpty()) {
-            EmptySheetNote(text = "No changes to display.")
-        }
-
-        Spacer(modifier = Modifier.height(18.dp))
-
-        SectionLabel(text = "Remarks")
-        Spacer(modifier = Modifier.height(10.dp))
-
-        if (isCompletedView) {
-            RemarksField(
-                remarks = resolutionNotes.orEmpty(),
-                remarksError = null,
-                enabled = false,
-                onRemarksChange = onRemarksChange,
-            )
-        } else {
-            RemarksField(
-                remarks = remarks,
-                remarksError = remarksError,
-                enabled = true,
-                onRemarksChange = onRemarksChange,
-            )
-
-            if (actionErrorMessage != null) {
-                Spacer(modifier = Modifier.height(10.dp))
-                Surface(
-                    color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.65f),
-                    shape = MaterialTheme.shapes.medium,
-                ) {
-                    Text(
-                        text = actionErrorMessage,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(18.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                ActionButton(
-                    modifier = Modifier.weight(1f),
-                    text = "Reject",
-                    icon = Icons.Default.Close,
-                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.24f)),
-                    isLoading = isRejectLoading,
-                    onClick = onRejectClick,
-                )
-                ActionButton(
-                    modifier = Modifier.weight(1f),
-                    text = "Approve",
-                    icon = Icons.Default.CheckCircle,
-                    containerColor = FreightThemeTokens.colors.success,
-                    contentColor = FreightThemeTokens.colors.onSuccess,
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)),
-                    isLoading = isApproveLoading,
-                    onClick = onApproveClick,
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
-    }
-}
-
-@Composable
-private fun TruckDetailChangeRow(change: TruckDetailChange) {
-    Surface(
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
         modifier = Modifier.fillMaxWidth(),
-    ) {
-        Column(modifier = Modifier.padding(14.dp)) {
-            Text(
-                text = formatFieldName(change.displayFieldName),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Before",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = change.beforeValue?.takeUnless { it.isBlank() } ?: "N/A",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(16.dp))
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "After",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = change.afterValue?.takeUnless { it.isBlank() } ?: "N/A",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun VerificationErrorState(
-    message: String,
-    onRetry: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier.padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        color = container,
+        shape = PanelShape,
     ) {
         Text(
-            text = message,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.error,
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        Button(onClick = onRetry) {
-            Text("Retry")
-        }
-    }
-}
-
-@Composable
-private fun VerificationEmptyState(
-    message: String,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier.padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            text = text,
+            style = MaterialTheme.typography.bodySmall,
+            color = content,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
         )
     }
 }
 
 @Composable
-private fun EmptySheetNote(text: String) {
+private fun EmptyLedgerNote(text: String) {
     Surface(
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        shape = PanelShape,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
     ) {
         Text(
             text = text,
@@ -2119,6 +2290,204 @@ private fun EmptySheetNote(text: String) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(14.dp),
         )
+    }
+}
+
+// ===========================================================================
+// Loading / empty / error
+// ===========================================================================
+
+@Composable
+private fun LoadingDockets() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 96.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+    }
+}
+
+@Composable
+private fun VerificationEmptyState(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    status: VerificationRequestStatus,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 64.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        FreightEmptyState(
+            icon = icon,
+            title = title,
+            subtitle = subtitle,
+        )
+        Spacer(Modifier.height(14.dp))
+        MetaTag(
+            text = "SHOWING ${status.displayText.uppercase(Locale.getDefault())}",
+            container = MaterialTheme.colorScheme.surfaceContainerHigh,
+            content = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun VerificationErrorState(
+    message: String,
+    onRetry: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 72.dp, start = 24.dp, end = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        FreightEmptyState(
+            icon = Icons.Default.Close,
+            title = "Could not load the queue",
+            subtitle = message,
+        )
+        Spacer(Modifier.height(14.dp))
+        Button(
+            onClick = onRetry,
+            shape = PanelShape,
+        ) {
+            Text(
+                text = "Retry",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+    }
+}
+
+// ===========================================================================
+// Ledger model + formatting
+// ===========================================================================
+
+private enum class ChangeKind { NEW, UPDATED, CLEARED, SAME }
+
+private data class LedgerEntry(
+    val field: String,
+    val before: String?,
+    val after: String?,
+    val kind: ChangeKind,
+) {
+    fun displayBefore(): String = humanizeValue(before)
+    fun displayAfter(): String = humanizeValue(after)
+}
+
+private fun TruckDetailChange.toLedgerEntry(): LedgerEntry = LedgerEntry(
+    field = displayFieldName.ifBlank { fieldName },
+    before = beforeValue,
+    after = afterValue,
+    kind = changeKind(beforeValue, afterValue),
+)
+
+private fun BusinessProfileChange.toLedgerEntry(): LedgerEntry = LedgerEntry(
+    field = displayFieldName.ifBlank { fieldName },
+    before = beforeValue,
+    after = afterValue,
+    kind = changeKind(beforeValue, afterValue),
+)
+
+/** A snapshot that never had the key is "new", not "changed from N/A". */
+private fun normalized(value: String?): String? {
+    val trimmed = value?.trim().orEmpty()
+    return trimmed.takeUnless {
+        it.isBlank() || it.equals("null", ignoreCase = true) || it.equals("N/A", ignoreCase = true)
+    }
+}
+
+private fun changeKind(before: String?, after: String?): ChangeKind {
+    val b = normalized(before)
+    val a = normalized(after)
+    return when {
+        b == null && a == null -> ChangeKind.SAME
+        b == null -> ChangeKind.NEW
+        a == null -> ChangeKind.CLEARED
+        b == a -> ChangeKind.SAME
+        else -> ChangeKind.UPDATED
+    }
+}
+
+/**
+ * A request is an onboarding when every submitted field is new — i.e. there was
+ * no prior record at all. That is what flips the sheet from "changes" to "new
+ * details submitted" and what puts the NEW ONBOARDING marker on the card.
+ */
+private fun List<LedgerEntry>.isOnboarding(): Boolean =
+    isNotEmpty() && all { it.kind == ChangeKind.NEW }
+
+private fun humanizeValue(value: String?): String {
+    val trimmed = value?.trim().orEmpty()
+    return when (trimmed.lowercase(Locale.getDefault())) {
+        "", "null" -> "—"
+        "true" -> "Yes"
+        "false" -> "No"
+        else -> trimmed
+    }
+}
+
+private fun buildMetaLine(fields: Int, documents: Int): String {
+    val fieldPart = "$fields field${if (fields == 1) "" else "s"}"
+    if (documents == 0) return fieldPart
+    return "$fieldPart · $documents doc${if (documents == 1) "" else "s"}"
+}
+
+private val FIELD_ACRONYMS = setOf(
+    "id", "tds", "pan", "gst", "gstin", "rc", "fc", "lr", "pod", "dob",
+    "kyc", "ifsc", "upi", "emi", "doj", "hsn", "sac",
+)
+
+private fun formatFieldName(fieldName: String): String {
+    return fieldName
+        .replace('_', ' ')
+        .replace('-', ' ')
+        .trim()
+        .split(Regex("\\s+"))
+        .filter { it.isNotBlank() }
+        .joinToString(" ") { word ->
+            if (word.lowercase(Locale.getDefault()) in FIELD_ACRONYMS) {
+                word.uppercase(Locale.getDefault())
+            } else {
+                word.replaceFirstChar { c ->
+                    if (c.isLowerCase()) c.titlecase(Locale.getDefault()) else c.toString()
+                }
+            }
+        }
+        .ifBlank { fieldName }
+}
+
+@Composable
+private fun statusAccentColor(status: VerificationRequestStatus): Color {
+    val ext = FreightThemeTokens.colors
+    return when (status) {
+        VerificationRequestStatus.PENDING -> ext.warning
+        VerificationRequestStatus.IN_REVIEW -> ext.info
+        VerificationRequestStatus.APPROVED,
+        VerificationRequestStatus.VERIFIED -> ext.success
+        VerificationRequestStatus.REJECTED -> MaterialTheme.colorScheme.error
+        VerificationRequestStatus.COMPLETED -> MaterialTheme.colorScheme.primary
+    }
+}
+
+@Composable
+private fun statusStampColors(status: VerificationRequestStatus): Pair<Color, Color> {
+    val ext = FreightThemeTokens.colors
+    val scheme = MaterialTheme.colorScheme
+    return when (status) {
+        VerificationRequestStatus.PENDING -> ext.surfaceWarning to ext.onSurfaceWarning
+        VerificationRequestStatus.IN_REVIEW -> ext.surfaceInfo to ext.onSurfaceInfo
+        VerificationRequestStatus.APPROVED,
+        VerificationRequestStatus.VERIFIED -> ext.surfaceSuccess to ext.onSurfaceSuccess
+        VerificationRequestStatus.REJECTED -> scheme.errorContainer to scheme.onErrorContainer
+        VerificationRequestStatus.COMPLETED -> scheme.primaryContainer to scheme.onPrimaryContainer
     }
 }
 
@@ -2145,34 +2514,6 @@ private fun formatRelativeTime(updatedAt: String): String {
     }.getOrElse { updatedAt }
 }
 
-@Composable
-private fun DocumentBadge(document: VerificationRequestDocument) {
-    Surface(
-        color = MaterialTheme.colorScheme.secondaryContainer,
-        shape = RoundedCornerShape(999.dp),
-    ) {
-        Text(
-            text = displayDocumentName(document.name, true),
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-        )
-    }
-}
-
-private fun VerificationRequestLocation?.displayLabel(): String {
-    return this?.displayText().orEmpty().ifBlank { "N/A" }
-}
-
-private fun displayDocumentName(name: String, shortform: Boolean): String {
-    return when (name.trim().lowercase()) {
-        "lr" -> if (shortform) "LR" else "Loading Receipt"
-        "pod" -> if (shortform) "POD" else "Proof Of Delivery"
-        else -> name.replace('_', ' ').replace('-', ' ').trim().ifBlank { "Document" }
-    }
-}
-
 @RequiresApi(Build.VERSION_CODES.O)
 private fun formatDisplayDate(updatedAt: String): String {
     return runCatching {
@@ -2183,4 +2524,42 @@ private fun formatDisplayDate(updatedAt: String): String {
             Locale.getDefault(),
         ).format(Date.from(instant))
     }.getOrElse { updatedAt }
+}
+
+private fun VerificationRequestLocation?.displayLabel(): String {
+    return this?.displayText().orEmpty().ifBlank { "N/A" }
+}
+
+private val DOCUMENT_ACRONYMS = setOf(
+    "rc", "fc", "lr", "pod", "pan", "gst", "gstin", "kyc", "noc", "coi",
+    "tds", "emi", "ifsc", "upi", "aadhar", "aadhaar", "hsn", "sac",
+)
+
+private fun displayDocumentName(name: String, shortform: Boolean): String {
+    val normalized = name.trim().lowercase(Locale.getDefault())
+    return when (normalized) {
+        "lr" -> if (shortform) "LR" else "Loading Receipt"
+        "pod" -> if (shortform) "POD" else "Proof Of Delivery"
+        else -> {
+            // The API hands back free-form keys ("rc card", "fc certificate",
+            // "insurance"). Print them as real document names rather than
+            // passing the raw lowercase key through to the reviewer.
+            val titled = normalized
+                .replace('_', ' ')
+                .replace('-', ' ')
+                .trim()
+                .split(Regex("\\s+"))
+                .filter { it.isNotBlank() }
+                .joinToString(" ") { word ->
+                    if (word in DOCUMENT_ACRONYMS) {
+                        word.uppercase(Locale.getDefault())
+                    } else {
+                        word.replaceFirstChar { c ->
+                            if (c.isLowerCase()) c.titlecase(Locale.getDefault()) else c.toString()
+                        }
+                    }
+                }
+            titled.ifBlank { "Document" }
+        }
+    }
 }
