@@ -40,7 +40,7 @@ internal class VerifyOtpViewModel
         companion object {
             private const val OTP_LENGTH = 6
             private const val RESEND_DELAY_SECONDS = 30
-            private const val VERIFY_WINDOW_SECONDS = 300
+            private const val VERIFY_WINDOW_SECONDS = OTP_VERIFY_WINDOW_SECONDS
             private val ATTEMPTS_REGEX = Regex("""(\d+)\s*attempts?\s*remaining""", RegexOption.IGNORE_CASE)
         }
 

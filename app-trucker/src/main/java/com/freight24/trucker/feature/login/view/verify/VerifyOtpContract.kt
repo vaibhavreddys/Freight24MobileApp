@@ -1,6 +1,7 @@
 package com.freight24.trucker.feature.login.view.verify
 
 import com.freight24.common.util.formatCountdownClock
+import com.freight24.common.util.formatCountdownClockPadded
 import com.freight24.common.util.formatIndianMobileNumber
 
 /**
@@ -14,6 +15,15 @@ import com.freight24.common.util.formatIndianMobileNumber
  * ViewModel and this contract stay put, keeping design churn away from the
  * `otp_input` / `verify_btn` test-tag contract the Maestro flows use.
  */
+
+/**
+ * The full validity window for a code, in seconds.
+ *
+ * Drives the expiry meter's fill, so it has to agree with the ViewModel's
+ * countdown — the ViewModel reads this constant rather than declaring its own,
+ * which is what stops the meter and the clock from disagreeing.
+ */
+internal const val OTP_VERIFY_WINDOW_SECONDS = 300
 
 internal data class VerifyOtpUiState(
     val phoneNumber: String = "",
@@ -48,16 +58,22 @@ internal data class VerifyOtpUiState(
             else -> "Resend in ${formatCountdownClock(resendSeconds)}"
         }
 
-    /** Label for the expiry line under the cells. */
-    val expiryLabel: String
-        get() = if (isExpired) {
-            "This code has expired. Send a new one."
-        } else {
-            "Code expires in ${formatCountdownClock(expirySeconds)}"
-        }
+    /**
+     * The bare countdown readout for the expiry meter, e.g. "04:44".
+     *
+     * Padded, unlike the inline [resendLabel], so the value holds the same
+     * width while it ticks and matches the Connect auth screen's readout
+     * character for character.
+     */
+    val expiryClock: String
+        get() = formatCountdownClockPadded(expirySeconds)
 
-    /** True in the final 30 seconds — the expiry line switches to the
-     *  warning colour so it is not missed. */
+    /** How much of the validity window is left, 0..1 — the meter's fill. */
+    val expiryFraction: Float
+        get() = (expirySeconds.toFloat() / OTP_VERIFY_WINDOW_SECONDS).coerceIn(0f, 1f)
+
+    /** True in the final 30 seconds — the meter and its readout switch to the
+     *  warning colour so the deadline is not missed. */
     val isExpiringSoon: Boolean get() = expirySeconds in 1..30
 
     /** Label for the primary action. */

@@ -30,8 +30,22 @@ fun formatIndianMobileNumber(phoneNumber: String, withCountryCode: Boolean = fal
     return if (withCountryCode) "+91 $grouped" else grouped
 }
 
-/** "284" -> "4:44". Used for OTP resend and expiry timers. */
+/**
+ * "284" -> "4:44". Compact clock for a countdown that sits *inside a
+ * sentence* ("Resend in 4:44"), where a leading zero would read as noise.
+ */
 fun formatCountdownClock(totalSeconds: Int): String {
     val safe = totalSeconds.coerceAtLeast(0)
     return "${safe / 60}:${(safe % 60).toString().padStart(2, '0')}"
+}
+
+/**
+ * "284" -> "04:44". Zero-padded clock for a *standalone readout* — the value
+ * opposite a label on a fixed baseline, such as the OTP expiry meter. The
+ * leading zero keeps the glyph run the same width from "05:00" down to
+ * "00:59", so the meter's baseline does not shift as it ticks.
+ */
+fun formatCountdownClockPadded(totalSeconds: Int): String {
+    val safe = totalSeconds.coerceAtLeast(0)
+    return "${(safe / 60).toString().padStart(2, '0')}:${(safe % 60).toString().padStart(2, '0')}"
 }
