@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AcUnit
+import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.People
@@ -44,6 +45,7 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
@@ -54,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.freight24.connect.feature.leads.domain.viewmodel.LeadsBadgeViewModel
 import com.freight24.connect.feature.more.MoreViewModel
 import com.freight24.ui.components.QuickActionCard
 import com.freight24.ui.components.QuickActionListItem
@@ -66,10 +69,14 @@ fun MoreScreen(
     onManageClients: () -> Unit,
     onManageTrucks: () -> Unit,
     onManageTruckOwners: () -> Unit,
+    onLeadsManagement: () -> Unit,
     onMyProfile: () -> Unit,
     onSettings: () -> Unit,
     moreViewModel: MoreViewModel = hiltViewModel(),
+    leadsBadgeViewModel: LeadsBadgeViewModel = hiltViewModel(),
 ) {
+    val leadsBadgeCount = leadsBadgeViewModel.badgeCount.collectAsStateWithLifecycle().value
+    LaunchedEffect(Unit) { leadsBadgeViewModel.refreshBadge() }
     val employeeInfo = moreViewModel.employeeInfo.collectAsStateWithLifecycle().value
     val showLogoutSheet = moreViewModel.showLogoutSheet.collectAsStateWithLifecycle().value
     val colorScheme = MaterialTheme.colorScheme
@@ -159,6 +166,33 @@ fun MoreScreen(
                         containerColor = softGreen,
                         border = BorderStroke(1.dp, tileStroke),
                         contentPadding = tileContentPadding,
+                        iconContainerColor = iconContainerColor,
+                        iconTint = brandGreen,
+                        textColor = colorScheme.onSurface,
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Lead Management Section
+            SectionContainer(title = "Lead Management") {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    val leadTilePadding = PaddingValues(vertical = 14.dp, horizontal = 4.dp)
+                    QuickActionCard(
+                        title = "Leads\nManagement",
+                        icon = Icons.Default.Call,
+                        onClick = onLeadsManagement,
+                        badgeCount = leadsBadgeCount,
+                        modifier = Modifier.weight(1f),
+                        containerColor = softGreen,
+                        border = BorderStroke(1.dp, tileStroke),
+                        contentPadding = leadTilePadding,
                         iconContainerColor = iconContainerColor,
                         iconTint = brandGreen,
                         textColor = colorScheme.onSurface,

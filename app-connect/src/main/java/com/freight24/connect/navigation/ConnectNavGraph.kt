@@ -49,6 +49,8 @@ import com.freight24.connect.feature.truckowners.profile.view.ProfileScreen
 import com.freight24.connect.feature.more.views.MoreScreen
 import com.freight24.connect.feature.more.AppSettingsViewModel
 import com.freight24.connect.feature.adhocTruck.views.QuickAdhocTruckScreen
+import com.freight24.connect.feature.leads.views.LeadDetailScreen
+import com.freight24.connect.feature.leads.views.LeadsScreen
 import com.freight24.ui.components.AppSettingsScreen
 import com.freight24.ui.theme.FreightAppTheme
 import androidx.compose.runtime.collectAsState
@@ -185,6 +187,7 @@ fun ConnectNavGraph(
                 onManageClients = { navHostController.navigate(ConnectDestination.ManageClients.route) },
                 onManageTrucks = { navHostController.navigate(ConnectDestination.ManageTrucks.route) },
                 onManageTruckOwners = { navHostController.navigate(ConnectDestination.ManageTruckOwners.route) },
+                onLeadsManagement = { navHostController.navigate(ConnectDestination.Leads.route) },
                 onMyProfile = { /* TODO: Navigate to Profile */ },
                 onSettings = { navHostController.navigate(ConnectDestination.Settings.route) },
             )
@@ -464,6 +467,24 @@ fun ConnectNavGraph(
         composable(ConnectDestination.InterestInbox.route) {
             InboxScreen(
                 onBackClick = { navHostController.popBackStack() }
+            )
+        }
+
+        composable(ConnectDestination.Leads.route) {
+            LeadsScreen(
+                onBackClick = { navHostController.popBackStack() },
+                onLeadClick = { leadId ->
+                    navHostController.navigate(ConnectDestination.LeadDetail.createRoute(leadId))
+                },
+            )
+        }
+
+        composable(
+            route = ConnectDestination.LeadDetail.route,
+            arguments = ConnectDestination.LeadDetail.arguments,
+        ) {
+            LeadDetailScreen(
+                onBackClick = { navHostController.popBackStack() },
             )
         }
 

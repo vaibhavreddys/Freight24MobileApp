@@ -18,6 +18,7 @@ import com.freight24.rest.api.TripApi
 import com.freight24.rest.api.TripHaltingApi
 import com.freight24.rest.api.TripLUChargesApi
 import com.freight24.rest.api.TruckApi
+import com.freight24.rest.api.LeadsApi
 import com.freight24.rest.api.TruckOwnerApi
 import com.freight24.rest.api.DocumentApi
 import com.freight24.rest.api.EmployeesApi
@@ -192,5 +193,15 @@ object ApiModule {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "AdhocTruckApi")
             .create(AdhocTruckApi::class.java)
+    }
+
+
+    @Provides
+    fun providesLeadsApi(
+        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
+    ): LeadsApi {
+        return retrofitFactory
+            .create(BuildConfig.BASE_URL, "LeadsApi")
+            .create(LeadsApi::class.java)
     }
 }

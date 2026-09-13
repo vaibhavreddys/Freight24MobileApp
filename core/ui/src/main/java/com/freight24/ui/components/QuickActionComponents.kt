@@ -23,6 +23,7 @@ fun QuickActionCard(
     icon: ImageVector,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    badgeCount: Int? = null,
     containerColor: Color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
     iconContainerColor: Color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
     iconTint: Color = MaterialTheme.colorScheme.primary,
@@ -47,18 +48,38 @@ fun QuickActionCard(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
-            Surface(
-                modifier = Modifier.size(48.dp),
-                shape = RoundedCornerShape(12.dp),
-                color = iconContainerColor
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = iconTint,
-                        modifier = Modifier.size(24.dp)
-                    )
+            Box {
+                Surface(
+                    modifier = Modifier.size(48.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    color = iconContainerColor
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = iconTint,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+                if (badgeCount != null && badgeCount > 0) {
+                    Surface(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .size(22.dp),
+                        shape = RoundedCornerShape(50),
+                        color = MaterialTheme.colorScheme.error
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = if (badgeCount > 99) "99+" else badgeCount.toString(),
+                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+                                fontWeight = FontWeight.ExtraBold,
+                                color = MaterialTheme.colorScheme.onError
+                            )
+                        }
+                    }
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))

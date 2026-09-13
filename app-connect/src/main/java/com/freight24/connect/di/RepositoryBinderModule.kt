@@ -6,6 +6,8 @@ import com.freight24.connect.repository.EmployeesRepository
 import com.freight24.connect.repository.EmployeesRepositoryImpl
 import com.freight24.connect.repository.FindTrucksRepository
 import com.freight24.connect.repository.FindTrucksRepositoryImpl
+import com.freight24.connect.repository.LeadsRepository
+import com.freight24.connect.repository.LeadsRepositoryImpl
 import com.freight24.connect.repository.InterestInboxRepository
 import com.freight24.connect.repository.InterestInboxRepositoryImpl
 import com.freight24.connect.repository.LocationRepository
@@ -90,6 +92,12 @@ interface RepositoryBinderModule {
     fun bindsVerificationRequestsRepository(
         verificationRequestsRepositoryImpl: VerificationRequestsRepositoryImpl,
     ): VerificationRequestsRepository
+
+    @Binds
+    @Singleton
+    fun bindsLeadsRepository(
+        leadsRepositoryImpl: LeadsRepositoryImpl,
+    ): LeadsRepository
 
     @Binds
     @Singleton
