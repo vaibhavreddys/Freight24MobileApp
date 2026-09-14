@@ -30,6 +30,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -66,6 +67,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -83,6 +87,7 @@ import com.freight24.rest.response.TruckOwnerDto
 import com.freight24.ui.R
 import com.freight24.ui.UiState
 import com.freight24.ui.components.FilterSelectionChip
+import com.freight24.ui.components.DocketCard
 import com.freight24.ui.components.FreightEmptyState
 import com.freight24.ui.theme.FreightThemeTokens
 import kotlinx.coroutines.delay
@@ -425,21 +430,25 @@ private fun OwnerCard(
         }
     }
 
-    Surface(
+    // Spine keyed to the owner's state in the partner book: green = active,
+    // amber = onboarding pending, neutral = inactive.
+    DocketCard(
+        accent = when (owner.ownerSection) {
+            OwnerSection.ACTIVE -> MaterialTheme.colorScheme.primary
+            OwnerSection.PENDING -> FreightThemeTokens.colors.warning
+            OwnerSection.INACTIVE -> MaterialTheme.colorScheme.outlineVariant
+        },
+        testTag = "owners_card_${owner.id}",
+        onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
             .graphicsLayer {
                 this.alpha = alpha
                 translationY = translateY
             },
-        onClick = onClick,
-        shape = MaterialTheme.shapes.medium,
-        color = MaterialTheme.colorScheme.surfaceContainer,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             OwnerAvatar(owner = owner)
@@ -450,23 +459,22 @@ private fun OwnerCard(
                     text = owner.full_name,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        letterSpacing = (-0.01).sp,
+                    style = MaterialTheme.typography.titleSmall.copy(
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(2.dp))
                 TagText(owner = owner)
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
-            StatusBadge(owner.ownerSection)
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(10.dp))
+            // No per-row status stamp: the section header and the spine already
+            // state the owner's state for every row in the group (D9 rule).
             Icon(
                 imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )
         }
     }
@@ -474,42 +482,30 @@ private fun OwnerCard(
 
 @Composable
 private fun OwnerAvatar(owner: TruckOwnerDto) {
-    val inactiveBackground = MaterialTheme.colorScheme.surfaceContainerHigh
-    val inactiveText = MaterialTheme.colorScheme.onSurfaceVariant
-    val extended = FreightThemeTokens.colors
-    // Five M3 container/on-container pairs that read as distinct "owners"
-    // in the list. Resolved in composable scope so MaterialTheme / extended
-    // tokens can be read, then passed into the pure helper below.
-    val avatarPalettes = listOf(
-        MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer,
-        extended.surfaceSuccess to extended.onSurfaceSuccess,
-        extended.surfaceWarning to extended.onSurfaceWarning,
-        extended.surfaceInfo to extended.onSurfaceInfo,
-        MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.onErrorContainer,
-    )
-    val palette =
-        remember(owner.full_name, owner.ownerSection, inactiveBackground, inactiveText) {
-            avatarPaletteFor(
-                owner = owner,
-                palettes = avatarPalettes,
-                inactiveBackground = inactiveBackground,
-                inactiveText = inactiveText
-            )
-        }
-
+    val inactive = owner.ownerSection == OwnerSection.INACTIVE
     Box(
         modifier = Modifier
             .size(44.dp)
-            .clip(MaterialTheme.shapes.small)
-            .background(palette.first),
+            .clip(CircleShape)
+            .background(
+                if (inactive) {
+                    MaterialTheme.colorScheme.surfaceContainerHigh
+                } else {
+                    MaterialTheme.colorScheme.primaryContainer
+                }
+            ),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = owner.full_name.initials(),
             style = MaterialTheme.typography.labelLarge.copy(
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Bold,
                 letterSpacing = 0.03.sp,
-                color = palette.second
+                color = if (inactive) {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                } else {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                }
             )
         )
     }
@@ -551,56 +547,6 @@ private fun TagText(owner: TruckOwnerDto) {
             fontFamily = FontFamily.Monospace
         )
     )
-}
-
-@Composable
-private fun StatusBadge(section: OwnerSection) {
-    val successColor = FreightThemeTokens.colors.success
-    val warningColor = FreightThemeTokens.colors.warning
-    val background: Color
-    val content: Color
-    val border: Color
-    val label: String
-
-    val extended = FreightThemeTokens.colors
-    when (section) {
-        OwnerSection.ACTIVE -> {
-            background = extended.surfaceSuccess
-            content = extended.onSurfaceSuccess
-            border = background
-            label = "Active"
-        }
-
-        OwnerSection.PENDING -> {
-            background = extended.surfaceWarning
-            content = extended.onSurfaceWarning
-            border = background
-            label = "Pending"
-        }
-
-        OwnerSection.INACTIVE -> {
-            background = MaterialTheme.colorScheme.surfaceContainerHigh
-            content = MaterialTheme.colorScheme.onSurfaceVariant
-            border = background
-            label = "Inactive"
-        }
-    }
-
-    Box(
-        modifier = Modifier
-            .background(background, MaterialTheme.shapes.small)
-            .padding(horizontal = 12.dp, vertical = 4.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontWeight = FontWeight.Medium,
-                letterSpacing = 0.02.sp,
-                color = content
-            )
-        )
-    }
 }
 
 @Composable
@@ -697,20 +643,6 @@ private val TruckOwnerDto.ownerSection: OwnerSection
             "inactive" -> OwnerSection.INACTIVE
             else -> OwnerSection.PENDING
         }
-
-private fun avatarPaletteFor(
-    owner: TruckOwnerDto,
-    palettes: List<Pair<Color, Color>>,
-    inactiveBackground: Color,
-    inactiveText: Color
-): Pair<Color, Color> {
-    if (owner.ownerSection == OwnerSection.INACTIVE) {
-        return inactiveBackground to inactiveText
-    }
-
-    val hash = owner.full_name.trim().ifBlank { owner.id }.hashCode()
-    return palettes[abs(hash) % palettes.size]
-}
 
 private fun String.initials(): String =
     trim()

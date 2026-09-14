@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -57,7 +58,6 @@ import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Refresh
@@ -66,14 +66,11 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
@@ -102,6 +99,9 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -126,6 +126,9 @@ import com.freight24.connect.feature.truckowners.profile.util.ProfileFieldValida
 import com.freight24.connect.feature.truckowners.profile.util.ValidationResult
 import com.freight24.ui.UiState
 import com.freight24.ui.components.AccountStatusCard
+import com.freight24.ui.components.DocketCard
+import com.freight24.ui.components.PanelShape
+import com.freight24.ui.components.TagShape
 import com.freight24.ui.components.AddRouteBottomSheet
 import com.freight24.ui.components.CitySearchField
 import com.freight24.ui.components.RouteChip
@@ -217,7 +220,12 @@ internal fun ProfileScreen(
                     },
                     actions = {
                         if (!isEditing) {
-                            IconButton(onClick = { viewModel.toggleEditMode() }) {
+                            IconButton(
+                                onClick = { viewModel.toggleEditMode() },
+                                modifier = Modifier
+                                    .testTag("owner_edit_button")
+                                    .semantics { testTagsAsResourceId = true },
+                            ) {
                                 Icon(
                                     imageVector = Icons.Default.Edit,
                                     contentDescription = "Edit profile",
@@ -486,13 +494,12 @@ private fun ProfileMainContent(
             }
 
             // Information Sections
-            ProfileSection(title = "PERSONAL INFORMATION", icon = Icons.Default.Person, true) {
+            ProfileSection(title = "PERSONAL INFORMATION", icon = Icons.Default.Person, true, testTag = "owner_section_personal") {
                 ProfileField(
                     label = "FULL NAME",
                     value = viewModel.editableFullName.collectAsState().value,
                     isEditing = isEditing,
                     isEditable = true,
-                    leadingIcon = Icons.Default.Person,
                     onValueChange = {
                         viewModel.editableFullName.value = it
                         viewModel.onFieldChanged()
@@ -505,7 +512,6 @@ private fun ProfileMainContent(
                     isEditing = isEditing,
                     isEditable = !isVerified,
                     validationType = ValidationType.EMAIL,
-                    leadingIcon = Icons.Default.Badge,
                     onValueChange = {
                         viewModel.editableEmailId.value = it
                         viewModel.onFieldChanged()
@@ -518,10 +524,7 @@ private fun ProfileMainContent(
                     isEditing = isEditing,
                     isEditable = false, // Phone number is never editable - primary key factor
                     showAsLabelOnly = true,
-                    leadingIcon = Icons.Default.Call,
-                    onLeadingIconClick = {
-                        launchDialer(context, viewModel.editablePhoneNo.value)
-                    },
+                    onCallClick = { launchDialer(context, viewModel.editablePhoneNo.value) },
                     onValueChange = { },
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
@@ -531,10 +534,7 @@ private fun ProfileMainContent(
                     isEditing = isEditing,
                     isEditable = true,
                     validationType = ValidationType.PHONE,
-                    leadingIcon = Icons.Default.Call,
-                    onLeadingIconClick = {
-                        launchDialer(context, viewModel.editableAlternativePhone.value)
-                    },
+                    onCallClick = { launchDialer(context, viewModel.editableAlternativePhone.value) },
                     onValueChange = {
                         viewModel.editableAlternativePhone.value = it
                         viewModel.onFieldChanged()
@@ -547,7 +547,6 @@ private fun ProfileMainContent(
                     isEditing = isEditing,
                     isEditable = !isVerified,
                     validationType = ValidationType.AADHAAR,
-                    leadingIcon = Icons.Default.Fingerprint,
                     onValueChange = {
                         viewModel.editableAadhaarNumber.value = it
                         viewModel.onFieldChanged()
@@ -560,7 +559,6 @@ private fun ProfileMainContent(
                     isEditing = isEditing,
                     isEditable = !isVerified,
                     validationType = ValidationType.PAN,
-                    leadingIcon = Icons.Default.Badge,
                     onValueChange = {
                         viewModel.editablePanNumber.value = it.uppercase()
                         viewModel.onFieldChanged()
@@ -576,14 +574,14 @@ private fun ProfileMainContent(
                 title = "BUSINESS DETAILS", 
                 icon = Icons.Default.Business, 
                 initiallyExpanded = false,
-                isVerified = profile.documentsVerificationStatus
+                isVerified = profile.documentsVerificationStatus,
+                testTag = "owner_section_business",
             ) {
                 ProfileField(
                     label = "COMPANY NAME",
                     value = viewModel.editableBusinessName.collectAsState().value,
                     isEditing = isEditing,
                     isEditable = !isVerified,
-                    leadingIcon = Icons.Default.Business,
                     onValueChange = {
                         viewModel.editableBusinessName.value = it
                         viewModel.onFieldChanged()
@@ -596,7 +594,6 @@ private fun ProfileMainContent(
                     isEditing = isEditing,
                     isEditable = !isVerified,
                     validationType = ValidationType.GST,
-                    leadingIcon = Icons.Default.Badge,
                     onValueChange = {
                         viewModel.editableGstNumber.value = it
                         viewModel.onFieldChanged()
@@ -608,24 +605,14 @@ private fun ProfileMainContent(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 14.dp),
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.LocationOn,
-                            contentDescription = "Base location",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "BASE LOCATION",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.5.sp,
-                        )
-                    }
+                    Text(
+                        text = "BASE LOCATION",
+                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.1.sp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.SemiBold,
+                    )
                     Spacer(modifier = Modifier.height(6.dp))
                     if (isEditing) {
                         CitySearchField(
@@ -657,24 +644,14 @@ private fun ProfileMainContent(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 14.dp),
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Assignment,
-                            contentDescription = "Preferred routes",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "PREFERRED ROUTES",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.5.sp,
-                        )
-                    }
+                    Text(
+                        text = "PREFERRED ROUTES",
+                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.1.sp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontWeight = FontWeight.SemiBold,
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -727,14 +704,14 @@ private fun ProfileMainContent(
                 title = "BANKING INFORMATION", 
                 icon = Icons.Default.AccountBalance, 
                 initiallyExpanded = false,
-                isVerified = profile.bankAccountVerificationStatus
+                isVerified = profile.bankAccountVerificationStatus,
+                testTag = "owner_section_banking",
             ) {
                 ProfileField(
                     label = "ACCOUNT HOLDER",
                     value = viewModel.editableAccountHolderName.collectAsState().value,
                     isEditing = isEditing,
                     isEditable = !isVerified,
-                    leadingIcon = Icons.Default.Person,
                     onValueChange = {
                         viewModel.editableAccountHolderName.value = it
                         viewModel.onFieldChanged()
@@ -748,7 +725,6 @@ private fun ProfileMainContent(
                     isSensitive = true,
                     isEditable = !isVerified,
                     validationType = ValidationType.ACCOUNT_NUMBER,
-                    leadingIcon = Icons.Default.CreditCard,
                     onValueChange = {
                         viewModel.editableAccountNumber.value = it
                         viewModel.onFieldChanged()
@@ -761,7 +737,6 @@ private fun ProfileMainContent(
                     isEditing = isEditing,
                     isEditable = !isVerified,
                     validationType = ValidationType.IFSC,
-                    leadingIcon = Icons.Default.Badge,
                     onValueChange = {
                         viewModel.editableIfscCode.value = it.uppercase()
                         viewModel.onFieldChanged()
@@ -774,7 +749,6 @@ private fun ProfileMainContent(
                     isEditing = isEditing,
                     isEditable = !isVerified,
                     validationType = ValidationType.UPI,
-                    leadingIcon = Icons.Default.Badge,
                     onValueChange = {
                         viewModel.editableUpiId.value = it.lowercase()
                         viewModel.onFieldChanged()
@@ -786,7 +760,6 @@ private fun ProfileMainContent(
                     value = viewModel.editableBankName.collectAsState().value,
                     isEditing = isEditing,
                     isEditable = !isVerified,
-                    leadingIcon = Icons.Default.AccountBalance,
                     onValueChange = {
                         viewModel.editableBankName.value = it
                         viewModel.onFieldChanged()
@@ -798,7 +771,6 @@ private fun ProfileMainContent(
                     value = viewModel.editableBranchName.collectAsState().value,
                     isEditing = isEditing,
                     isEditable = !isVerified,
-                    leadingIcon = Icons.AutoMirrored.Filled.Assignment,
                     onValueChange = {
                         viewModel.editableBranchName.value = it
                         viewModel.onFieldChanged()
@@ -813,7 +785,8 @@ private fun ProfileMainContent(
                 title = "DOCUMENTS", 
                 icon = Icons.AutoMirrored.Filled.Assignment, 
                 initiallyExpanded = false,
-                isVerified = profile.documentsVerificationStatus
+                isVerified = profile.documentsVerificationStatus,
+                testTag = "owner_section_documents",
             ) {
                 DocumentList(
                     documents = profile.documents,
@@ -892,91 +865,105 @@ private fun ProfileHeaderCard(
     verificationStatus: String,
     status: String,
 ) {
-    val warningColor = FreightThemeTokens.colors.warning
-    val isVerified = verificationStatus == "verified" || verificationStatus == "active"
-    val statusColor = when (verificationStatus) {
-        "active", "verified" -> MaterialTheme.colorScheme.primary
-        "pending" -> warningColor
-        else -> MaterialTheme.colorScheme.error 
-    }
-    val statusIcon = if (isVerified) Icons.Default.CheckCircle else Icons.Default.Warning
-
+    val scheme = MaterialTheme.colorScheme
+    val ext = FreightThemeTokens.colors
     val normalizedStatus = status.lowercase()
     val isActive = normalizedStatus == "active"
-    val chipColor = if (isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+    val isVerified = verificationStatus == "verified" || verificationStatus == "active"
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+    DocketCard(
+        // Spine keyed to the account state: open for business or shut.
+        accent = if (isActive) ext.success else scheme.error,
+        testTag = "owner_header_card",
+        onClick = null,
     ) {
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            // Avatar with Initials
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Box(contentAlignment = Alignment.BottomEnd) {
-                Box(
-                    modifier =
-                        Modifier
-                            .size(80.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
-                    contentAlignment = Alignment.Center,
+                Surface(
+                    modifier = Modifier.size(52.dp),
+                    shape = CircleShape,
+                    color = scheme.primaryContainer,
                 ) {
-                    Text(
-                        text = initials,
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold,
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            text = initials,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = scheme.onPrimaryContainer,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+                if (isVerified) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = verificationStatus,
+                        tint = ext.success,
+                        modifier = Modifier
+                            .size(18.dp)
+                            .background(scheme.surface, CircleShape)
+                            .padding(1.dp),
                     )
                 }
-                Icon(
-                    imageVector = statusIcon,
-                    contentDescription = verificationStatus,
-                    tint = statusColor,
-                    modifier =
-                        Modifier
-                            .size(22.dp)
-                            .background(MaterialTheme.colorScheme.surface, CircleShape)
-                            .padding(1.dp),
-                )
             }
 
-            Spacer(modifier = Modifier.width(20.dp))
+            Spacer(modifier = Modifier.width(14.dp))
 
             Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = role.uppercase(),
+                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.4.sp),
+                    fontWeight = FontWeight.SemiBold,
+                    color = scheme.onSurfaceVariant,
+                )
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = fullName.ifEmpty { "Member" },
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = scheme.onSurface,
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(3.dp))
                 Text(
-                    text = role,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "Partner ID: $partnerId",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.outline,
+                    text = partnerId,
+                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.1.sp),
+                    fontWeight = FontWeight.SemiBold,
+                    color = scheme.onSurfaceVariant.copy(alpha = 0.7f),
                 )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(8.dp))
 
-            VerificationChip(
-                text = if (isActive) "Active" else "Inactive",
-                color = chipColor,
+            ProfileStamp(
+                text = if (isActive) "ACTIVE" else "INACTIVE",
+                container = if (isActive) ext.surfaceSuccess else scheme.errorContainer,
+                content = if (isActive) ext.onSurfaceSuccess else scheme.onErrorContainer,
             )
         }
+    }
+}
+
+/** Small tracked-caps rubber stamp used across the owner profile. */
+@Composable
+private fun ProfileStamp(
+    text: String,
+    container: Color,
+    content: Color,
+    modifier: Modifier = Modifier,
+    bordered: Boolean = false,
+) {
+    Surface(
+        modifier = modifier,
+        shape = TagShape,
+        color = if (bordered) Color.Transparent else container,
+        border = if (bordered) BorderStroke(1.dp, container) else null,
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+            fontWeight = FontWeight.Bold,
+            color = content,
+            modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp),
+        )
     }
 }
 
@@ -986,46 +973,58 @@ private fun ProfileSection(
     icon: ImageVector,
     initiallyExpanded: Boolean,
     isVerified: Boolean = false,
+    testTag: String,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     var isExpanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
-    val warningColor = FreightThemeTokens.colors.warning
+    val scheme = MaterialTheme.colorScheme
+    val ext = FreightThemeTokens.colors
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(8.dp))
+                .testTag(testTag)
+                .semantics { testTagsAsResourceId = true }
                 .clickable { isExpanded = !isExpanded }
                 .padding(vertical = 8.dp),
         ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(18.dp),
+                modifier = Modifier.size(16.dp),
             )
             Spacer(modifier = Modifier.width(10.dp))
             Text(
                 text = title,
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.labelLarge.copy(letterSpacing = 1.sp),
+                color = scheme.onSurfaceVariant,
                 fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp,
                 modifier = Modifier.weight(1f)
             )
-            
+
             if (isVerified) {
-                VerificationChip("Verified", MaterialTheme.colorScheme.primary)
+                ProfileStamp(
+                    text = "VERIFIED",
+                    container = ext.surfaceSuccess,
+                    content = ext.onSurfaceSuccess,
+                )
             } else {
-                VerificationChip("Unverified", warningColor)
+                ProfileStamp(
+                    text = "UNVERIFIED",
+                    container = ext.surfaceWarning,
+                    content = ext.onSurfaceWarning,
+                )
             }
-            
-            Spacer(modifier = Modifier.width(8.dp))
+
+            Spacer(modifier = Modifier.width(10.dp))
             Icon(
                 imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                 contentDescription = if (isExpanded) "Collapse" else "Expand",
-                tint = MaterialTheme.colorScheme.primary
+                tint = scheme.onSurfaceVariant,
             )
         }
 
@@ -1036,14 +1035,16 @@ private fun ProfileSection(
             enter = expandVertically(),
             exit = shrinkVertically()
         ) {
-            Card(
+            // Flat paper panel — hairline border, no elevation shadow, the
+            // same treatment as the verification sheet's ledger panels.
+            Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.medium,
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                shape = PanelShape,
+                color = scheme.surface,
+                border = BorderStroke(1.dp, scheme.outlineVariant.copy(alpha = 0.5f)),
             ) {
                 Column(
-                    modifier = Modifier.padding(vertical = 8.dp),
+                    modifier = Modifier.padding(vertical = 6.dp),
                 ) {
                     content()
                 }
@@ -1058,8 +1059,7 @@ private fun ProfileField(
     value: String,
     isEditing: Boolean,
     isEditable: Boolean = true,
-    leadingIcon: ImageVector? = null,
-    onLeadingIconClick: (() -> Unit)? = null,
+    onCallClick: (() -> Unit)? = null,
     onValueChange: (String) -> Unit = {},
     isSensitive: Boolean = false,
     validationType: ValidationType = ValidationType.NONE,
@@ -1069,7 +1069,7 @@ private fun ProfileField(
 ) {
     // State for validation error
     var validationError by rememberSaveable { mutableStateOf<String?>(null) }
-    
+
     // Validate on value change
     val handleValueChange: (String) -> Unit = { newValue ->
         // Apply input filtering based on validation type
@@ -1082,9 +1082,9 @@ private fun ProfileField(
             ValidationType.GST -> newValue.uppercase().filter { it.isLetterOrDigit() }.take(15)
             else -> newValue
         }
-        
+
         onValueChange(filteredValue)
-        
+
         // Validate and show error
         validationError = when (validationType) {
             ValidationType.AADHAAR -> {
@@ -1119,179 +1119,157 @@ private fun ProfileField(
         }
     }
 
-    Row(
+    // One field, one ledger row: tracked-caps label above the value, all
+    // values on a shared left edge. Edit mode swaps the value line for the
+    // app's standard outlined field.
+    Column(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.Top,
+                .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
-        if (leadingIcon != null) {
-            val iconModifier =
-                if (onLeadingIconClick != null) {
-                    Modifier.clickable(onClick = onLeadingIconClick)
-                } else {
-                    Modifier
-                }
-            Icon(
-                imageVector = leadingIcon,
-                contentDescription = label,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = iconModifier.size(24.dp),
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.1.sp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+
+        if (isEditing && isEditable && !showAsLabelOnly) {
+            val keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                keyboardType = when (validationType) {
+                    ValidationType.AADHAAR, ValidationType.PHONE, ValidationType.ACCOUNT_NUMBER -> KeyboardType.Number
+                    ValidationType.EMAIL -> KeyboardType.Email
+                    else -> KeyboardType.Text
+                },
+                capitalization = when (validationType) {
+                    ValidationType.PAN, ValidationType.IFSC, ValidationType.GST -> KeyboardCapitalization.Characters
+                    else -> KeyboardCapitalization.Words
+                },
+                imeAction = ImeAction.Next
             )
-            Spacer(modifier = Modifier.width(20.dp))
-        }
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 0.5.sp,
-            )
-            Spacer(modifier = Modifier.height(6.dp))
 
-        if ((isEditing && isEditable) || showAsLabelOnly) {
-            if (showAsLabelOnly) {
-                // Display as read-only label (for phone number)
-                Text(
-                    text = value.ifEmpty { "Not added" },
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (value.isEmpty()) MaterialTheme.colorScheme.outlineVariant else MaterialTheme.colorScheme.onSurface,
-                )
-            } else {
-                val keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                    keyboardType = when (validationType) {
-                        ValidationType.AADHAAR, ValidationType.PHONE, ValidationType.ACCOUNT_NUMBER -> KeyboardType.Number
-                        ValidationType.EMAIL -> KeyboardType.Email
-                        else -> KeyboardType.Text
-                    },
-                    capitalization = when (validationType) {
-                        ValidationType.PAN, ValidationType.IFSC, ValidationType.GST -> KeyboardCapitalization.Characters
-                        else -> KeyboardCapitalization.Words
-                    },
-                    imeAction = ImeAction.Next
-                )
-
-                val visualTransformation = when (validationType) {
-                    ValidationType.AADHAAR -> VisualTransformation { text ->
-                        val transformed = ProfileFieldValidators.formatAadhaar(text.text)
-                        TransformedText(
-                            AnnotatedString(transformed),
-                            object : OffsetMapping {
-                                override fun originalToTransformed(offset: Int): Int {
-                                    if (offset <= 4) return offset
-                                    if (offset <= 8) return offset + 1
-                                    return offset + 2
-                                }
-                                override fun transformedToOriginal(offset: Int): Int {
-                                    if (offset <= 4) return offset
-                                    if (offset <= 9) return offset - 1
-                                    return offset - 2
-                                }
+            val visualTransformation = when (validationType) {
+                ValidationType.AADHAAR -> VisualTransformation { text ->
+                    val transformed = ProfileFieldValidators.formatAadhaar(text.text)
+                    TransformedText(
+                        AnnotatedString(transformed),
+                        object : OffsetMapping {
+                            override fun originalToTransformed(offset: Int): Int {
+                                if (offset <= 4) return offset
+                                if (offset <= 8) return offset + 1
+                                return offset + 2
                             }
-                        )
-                    }
-                    ValidationType.PHONE -> VisualTransformation { text ->
-                        val transformed = ProfileFieldValidators.formatPhone(text.text)
-                        TransformedText(
-                            AnnotatedString(transformed),
-                            object : OffsetMapping {
-                                override fun originalToTransformed(offset: Int): Int {
-                                    if (offset <= 5) return offset
-                                    return offset + 1
-                                }
-                                override fun transformedToOriginal(offset: Int): Int {
-                                    if (offset <= 5) return offset
-                                    return offset - 1
-                                }
+                            override fun transformedToOriginal(offset: Int): Int {
+                                if (offset <= 4) return offset
+                                if (offset <= 9) return offset - 1
+                                return offset - 2
                             }
-                        )
-                    }
-                    else -> VisualTransformation.None
-                }
-
-                var isFocused by remember { mutableStateOf(false) }
-                OutlinedTextField(
-                    value = value,
-                    onValueChange = handleValueChange,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .onFocusChanged { state ->
-                            if (isFocused && !state.isFocused) {
-                                onFocusLost?.invoke()
-                            }
-                            isFocused = state.isFocused
-                        },
-                    textStyle = MaterialTheme.typography.bodyLarge,
-                    singleLine = true,
-                    shape = MaterialTheme.shapes.medium,
-                    isError = validationError != null,
-                    keyboardOptions = keyboardOptions,
-                    visualTransformation = visualTransformation,
-                    supportingText = {
-                        val errorText = validationError ?: duplicateError
-                        if (errorText != null) {
-                            Text(
-                                text = errorText,
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.bodySmall
-                            )
                         }
-                    },
-                    placeholder = when (validationType) {
-                        ValidationType.AADHAAR -> { { Text("1234 5678 9012") } }
-                        ValidationType.PAN -> { { Text("ABCDE1234F") } }
-                        ValidationType.GST -> { { Text("27ABCDE1234F1Z5") } }
-                        ValidationType.IFSC -> { { Text("HDFC0001234") } }
-                        ValidationType.UPI -> { { Text("name@okhdfcbank") } }
-                        ValidationType.EMAIL -> { { Text("email@example.com") } }
-                        else -> null
-                    },
-                    colors =
-                        OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = if (validationError != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = if (validationError != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outlineVariant,
-                            errorBorderColor = MaterialTheme.colorScheme.error,
-                            errorLabelColor = MaterialTheme.colorScheme.error,
-                            errorSupportingTextColor = MaterialTheme.colorScheme.error
-                        ),
-                )
+                    )
+                }
+                ValidationType.PHONE -> VisualTransformation { text ->
+                    val transformed = ProfileFieldValidators.formatPhone(text.text)
+                    TransformedText(
+                        AnnotatedString(transformed),
+                        object : OffsetMapping {
+                            override fun originalToTransformed(offset: Int): Int {
+                                if (offset <= 5) return offset
+                                return offset + 1
+                            }
+                            override fun transformedToOriginal(offset: Int): Int {
+                                if (offset <= 5) return offset
+                                return offset - 1
+                            }
+                        }
+                    )
+                }
+                else -> VisualTransformation.None
             }
+
+            var isFocused by remember { mutableStateOf(false) }
+            OutlinedTextField(
+                value = value,
+                onValueChange = handleValueChange,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("owner_field_${label.lowercase().replace(' ', '_')}")
+                    .semantics { testTagsAsResourceId = true }
+                    .onFocusChanged { state ->
+                        if (isFocused && !state.isFocused) {
+                            onFocusLost?.invoke()
+                        }
+                        isFocused = state.isFocused
+                    },
+                textStyle = MaterialTheme.typography.bodyLarge,
+                singleLine = true,
+                shape = MaterialTheme.shapes.medium,
+                isError = validationError != null,
+                keyboardOptions = keyboardOptions,
+                visualTransformation = visualTransformation,
+                supportingText = {
+                    val errorText = validationError ?: duplicateError
+                    if (errorText != null) {
+                        Text(
+                            text = errorText,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                },
+                placeholder = when (validationType) {
+                    ValidationType.AADHAAR -> { { Text("1234 5678 9012") } }
+                    ValidationType.PAN -> { { Text("ABCDE1234F") } }
+                    ValidationType.GST -> { { Text("27ABCDE1234F1Z5") } }
+                    ValidationType.IFSC -> { { Text("HDFC0001234") } }
+                    ValidationType.UPI -> { { Text("name@okhdfcbank") } }
+                    ValidationType.EMAIL -> { { Text("email@example.com") } }
+                    else -> null
+                },
+                colors =
+                    OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = if (validationError != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = if (validationError != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outlineVariant,
+                        errorBorderColor = MaterialTheme.colorScheme.error,
+                        errorLabelColor = MaterialTheme.colorScheme.error,
+                        errorSupportingTextColor = MaterialTheme.colorScheme.error
+                    ),
+            )
         } else {
             val displayValue =
                 if (isSensitive && value.isNotEmpty()) {
-                    "•••• •••• •••• ${value.takeLast(
-                        4,
-                    )}"
+                    "•••• •••• •••• ${value.takeLast(4)}"
                 } else {
                     value.ifEmpty { "Not added" }
                 }
-            Text(
-                text = displayValue,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = if (value.isEmpty()) MaterialTheme.colorScheme.outlineVariant else MaterialTheme.colorScheme.onSurface,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = displayValue,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (value.isEmpty()) MaterialTheme.colorScheme.outlineVariant else MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.weight(1f),
+                )
+                // The only row-level affordance worth keeping: tap-to-dial.
+                if (onCallClick != null && value.isNotBlank()) {
+                    IconButton(
+                        onClick = onCallClick,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .testTag("owner_call_${label.lowercase().replace(' ', '_')}")
+                            .semantics { testTagsAsResourceId = true },
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Call,
+                            contentDescription = "Call $label",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                }
+            }
         }
-        }
-    }
-}
-
-@Composable
-private fun VerificationChip(text: String, color: Color) {
-    Surface(
-        color = color.copy(alpha = 0.1f),
-        shape = MaterialTheme.shapes.medium,
-    ) {
-        Text(
-            text = text,
-            color = color,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-        )
     }
 }
 
@@ -1367,7 +1345,11 @@ private fun DocumentList(
                                 ExistingStatusBadge(uploadState?.existingVerifyStatus, doc?.status)
                                 Spacer(modifier = Modifier.width(8.dp))
                             } else {
-                                VerificationChip("Not Uploaded", MaterialTheme.colorScheme.outline)
+                                ProfileStamp(
+                                    text = "NOT UPLOADED",
+                                    container = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                    content = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
                                 Spacer(modifier = Modifier.width(8.dp))
                             }
                         }
@@ -1402,7 +1384,11 @@ private fun DocumentList(
                         modifier = Modifier.size(20.dp),
                     )
                 } else {
-                    VerificationChip("Not Uploaded", MaterialTheme.colorScheme.outline)
+                    ProfileStamp(
+                                    text = "NOT UPLOADED",
+                                    container = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                    content = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
                 }
             }
             if (index < types.lastIndex) {
@@ -1418,63 +1404,40 @@ private fun DocumentList(
 
 @Composable
 private fun ExistingStatusBadge(existingVerifyStatus: String?, fallbackStatus: DocumentStatus?) {
+    val scheme = MaterialTheme.colorScheme
+    val ext = FreightThemeTokens.colors
     val normalizedStatus = existingVerifyStatus?.lowercase()?.trim()
-    val (text, color) = when {
-        normalizedStatus == "verified" -> "Verified" to MaterialTheme.colorScheme.primary
-        normalizedStatus == "rejected" -> "Rejected" to MaterialTheme.colorScheme.error
-        normalizedStatus == "pending" -> "Verification Pending" to MaterialTheme.colorScheme.tertiary
-        fallbackStatus == DocumentStatus.VERIFIED -> "Verified" to MaterialTheme.colorScheme.primary
-        fallbackStatus == DocumentStatus.REJECTED -> "Rejected" to MaterialTheme.colorScheme.error
-        fallbackStatus == DocumentStatus.UPLOADED -> "Verification Pending" to MaterialTheme.colorScheme.tertiary
-        fallbackStatus == DocumentStatus.PENDING -> "Pending" to MaterialTheme.colorScheme.tertiary
-        else -> "N/A" to MaterialTheme.colorScheme.onSurfaceVariant
+    val (text, container, content) = when {
+        normalizedStatus == "verified" -> Triple("VERIFIED", ext.surfaceSuccess, ext.onSurfaceSuccess)
+        normalizedStatus == "rejected" -> Triple("REJECTED", scheme.errorContainer, scheme.onErrorContainer)
+        normalizedStatus == "pending" -> Triple("VERIFICATION PENDING", ext.surfaceWarning, ext.onSurfaceWarning)
+        fallbackStatus == DocumentStatus.VERIFIED -> Triple("VERIFIED", ext.surfaceSuccess, ext.onSurfaceSuccess)
+        fallbackStatus == DocumentStatus.REJECTED -> Triple("REJECTED", scheme.errorContainer, scheme.onErrorContainer)
+        fallbackStatus == DocumentStatus.UPLOADED -> Triple("VERIFICATION PENDING", ext.surfaceWarning, ext.onSurfaceWarning)
+        fallbackStatus == DocumentStatus.PENDING -> Triple("PENDING", ext.surfaceWarning, ext.onSurfaceWarning)
+        else -> Triple("N/A", scheme.surfaceContainerHighest, scheme.onSurfaceVariant)
     }
 
-    Surface(
-        color = color.copy(alpha = 0.1f),
-        shape = RoundedCornerShape(8.dp),
-    ) {
-        Text(
-            text = text,
-            color = color,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.ExtraBold,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-        )
-    }
+    ProfileStamp(text = text, container = container, content = content)
 }
 
 @Composable
 private fun PendingSaveBadge() {
-    Surface(
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0f),
-        shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-    ) {
-        Text(
-            text = "Pending Save",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-        )
-    }
+    ProfileStamp(
+        text = "PENDING SAVE",
+        container = MaterialTheme.colorScheme.onSurfaceVariant,
+        content = MaterialTheme.colorScheme.onSurfaceVariant,
+        bordered = true,
+    )
 }
 
 @Composable
 private fun UploadFailedBadge() {
-    Surface(
-        color = MaterialTheme.colorScheme.errorContainer,
-        shape = RoundedCornerShape(8.dp),
-    ) {
-        Text(
-            text = "Upload Failed",
-            color = MaterialTheme.colorScheme.onErrorContainer,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-        )
-    }
+    ProfileStamp(
+        text = "UPLOAD FAILED",
+        container = MaterialTheme.colorScheme.errorContainer,
+        content = MaterialTheme.colorScheme.onErrorContainer,
+    )
 }
 
 @Composable
@@ -1485,33 +1448,42 @@ private fun EditActions(
     onCancel: () -> Unit,
 ) {
     Surface(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-        tonalElevation = 8.dp,
-        shape = RoundedCornerShape(16.dp),
-        shadowElevation = 12.dp,
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 8.dp,
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             OutlinedButton(
                 onClick = onCancel,
-                modifier = Modifier.weight(1f),
-                shape = MaterialTheme.shapes.medium,
-                border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(width = 1.dp),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .height(50.dp)
+                        .testTag("owner_cancel_button")
+                        .semantics { testTagsAsResourceId = true },
+                shape = RoundedCornerShape(25.dp),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                 enabled = !isSaving,
             ) {
-                Text("Cancel", fontWeight = FontWeight.Bold)
+                Text("Cancel", fontWeight = FontWeight.SemiBold)
             }
             Button(
                 onClick = onSave,
                 enabled = hasChanges && !isSaving,
-                modifier = Modifier.weight(1f),
-                shape = MaterialTheme.shapes.medium,
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .height(50.dp)
+                        .testTag("owner_save_button")
+                        .semantics { testTagsAsResourceId = true },
+                shape = RoundedCornerShape(25.dp),
             ) {
                 if (isSaving) {
                     CircularProgressIndicator(
@@ -1520,7 +1492,7 @@ private fun EditActions(
                         color = MaterialTheme.colorScheme.onPrimary,
                     )
                 } else {
-                    Text("Save Changes", fontWeight = FontWeight.Bold)
+                    Text("Save Changes", fontWeight = FontWeight.SemiBold)
                 }
             }
         }

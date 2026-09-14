@@ -10,6 +10,7 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,6 +35,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.PhotoLibrary
@@ -42,6 +46,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -72,6 +77,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -83,10 +91,11 @@ import coil3.compose.rememberAsyncImagePainter
 import com.freight24.common.model.TruckDetail
 import com.freight24.common.model.TruckDocument
 import com.freight24.ui.UiState
-import com.freight24.ui.components.DocumentStatus
-import com.freight24.ui.components.DocumentUploadItem
-import com.freight24.ui.components.TruckHeaderCard
+import com.freight24.connect.feature.trucks.views.TruckDocketCard
+import com.freight24.ui.components.PanelShape
+import com.freight24.ui.components.TagShape
 import com.freight24.ui.components.getPdfLaunchIntent
+import com.freight24.ui.theme.FreightThemeTokens
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -249,10 +258,9 @@ internal fun TruckDetailsScreen(
         },
         bottomBar = {
             Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                color = colorScheme.surface.copy(alpha = 0f)
+                modifier = Modifier.fillMaxWidth(),
+                color = colorScheme.surface,
+                shadowElevation = 8.dp,
             ) {
                 Button(
                     onClick = {
@@ -261,11 +269,17 @@ internal fun TruckDetailsScreen(
                             onEditClick(state.data.truckId)
                         }
                     },
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    shape = RoundedCornerShape(50.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .height(50.dp)
+                        .testTag("truck_edit_button")
+                        .semantics { testTagsAsResourceId = true },
+                    shape = RoundedCornerShape(25.dp),
                     enabled = uiState is UiState.Success
                 ) {
-                    Text("Edit Truck", fontWeight = FontWeight.Bold)
+                    Text("Edit Truck", fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -361,15 +375,16 @@ private fun TruckDetailsContent(
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
-            TruckHeaderCard(
+            TruckDocketCard(
                 registrationNumber = truck.registrationNumber,
                 truckType = truck.truckType,
-                availability = "AVAILABLE",
+                availability = null, // detail payload carries no availability
                 isVerified = truck.isVerified,
                 isBlacklisted = truck.isBlacklisted,
+                testTag = "truck_detail_card",
             )
         }
 
@@ -380,72 +395,70 @@ private fun TruckDetailsContent(
         item {
             DocumentsSection(truck, onViewClick, onUploadClick)
         }
+
+        item {
+            Spacer(Modifier.height(4.dp))
+        }
     }
 }
 
 @Composable
 private fun SpecificationsSection(truck: TruckDetail) {
-    Card(
-        shape = MaterialTheme.shapes.medium,
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = PanelShape,
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.Tune,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp),
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = "Specifications",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-            Spacer(Modifier.height(16.dp))
-
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    SpecItem(Modifier.weight(1f), "BODY TYPE", truck.bodyType ?: "NA")
-                    SpecItem(Modifier.weight(1f), "MAKE", truck.make ?: "NA")
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    SpecItem(Modifier.weight(1f), "MODEL", truck.model ?: "NA")
-                    SpecItem(Modifier.weight(1f), "TRUCK TYPE", truck.truckType ?: "NA")
-                }
-            }
+        Column(modifier = Modifier.padding(vertical = 10.dp)) {
+            Text(
+                text = "SPECIFICATIONS",
+                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.1.sp),
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+            )
+            LedgerRow("BODY TYPE", truck.bodyType)
+            LedgerDivider()
+            LedgerRow("MAKE", truck.make)
+            LedgerDivider()
+            LedgerRow("MODEL", truck.model)
+            LedgerDivider()
+            LedgerRow("TRUCK TYPE", truck.truckType)
         }
     }
 }
 
 @Composable
-private fun SpecItem(
-    modifier: Modifier,
-    label: String,
-    value: String,
-) {
-    Surface(
-        modifier = modifier,
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        shape = RoundedCornerShape(8.dp),
+private fun LedgerRow(label: String, value: String?) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold,
-            )
-        }
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.1.sp),
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(3.dp))
+        Text(
+            text = value?.takeIf { it.isNotBlank() } ?: "—",
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = if (value.isNullOrBlank()) MaterialTheme.colorScheme.outlineVariant else MaterialTheme.colorScheme.onSurface,
+        )
     }
+}
+
+@Composable
+private fun LedgerDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(horizontal = 16.dp),
+        thickness = 1.dp,
+        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+    )
 }
 
 @Composable
@@ -454,37 +467,31 @@ private fun DocumentsSection(
     onViewClick: (String?) -> Unit,
     onUploadClick: (String) -> Unit,
 ) {
-    Card(
-        shape = MaterialTheme.shapes.medium,
+    Surface(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = PanelShape,
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.FolderOpen,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp),
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = "Documents",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-            Spacer(Modifier.height(16.dp))
-
-            DocumentItem("RC Book", truck.rcCard, onViewClick, onUploadClick)
-            DocumentItem("Insurance Policy", truck.insurance, onViewClick, onUploadClick)
-            DocumentItem("Fitness Certificate", truck.fcCertificate, onViewClick, onUploadClick)
+        Column(modifier = Modifier.padding(vertical = 10.dp)) {
+            Text(
+                text = "DOCUMENTS",
+                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.1.sp),
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+            )
+            TruckDocumentRow("RC Book", truck.rcCard, onViewClick, onUploadClick)
+            LedgerDivider()
+            TruckDocumentRow("Insurance Policy", truck.insurance, onViewClick, onUploadClick)
+            LedgerDivider()
+            TruckDocumentRow("Fitness Certificate", truck.fcCertificate, onViewClick, onUploadClick)
         }
     }
 }
 
 @Composable
-private fun DocumentItem(
+private fun TruckDocumentRow(
     title: String,
     doc: TruckDocument?,
     onViewClick: (String?) -> Unit,
@@ -493,35 +500,113 @@ private fun DocumentItem(
     val hasUrl = !doc?.url.isNullOrEmpty()
     val statusText = doc?.status?.uppercase() ?: "NOT UPLOADED"
 
-    val subtitle = if (!hasUrl) "Not Uploaded" else
-        when (statusText) {
-        "VERIFIED", "COMPLETED" -> "Verified"
-        "PENDING" -> "Verification Pending"
-        "REJECTED" -> "Rejected. Please upload again."
-        else -> ""
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (hasUrl) {
+                    Modifier.clickable { onViewClick(doc?.url) }
+                } else {
+                    Modifier
+                }
+            )
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = when {
+                    !hasUrl -> "Not uploaded"
+                    statusText == "VERIFIED" || statusText == "COMPLETED" -> "On file"
+                    statusText == "PENDING" -> "Awaiting verification"
+                    statusText == "REJECTED" -> "Rejected — upload a fresh copy"
+                    else -> "On file"
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        when {
+            !hasUrl -> DocumentActionIconButton(
+                icon = Icons.Default.CloudUpload,
+                description = "Upload $title",
+                tint = MaterialTheme.colorScheme.primary,
+                onClick = { onUploadClick(title) },
+                testTag = "truck_doc_upload_${title.lowercase().replace(' ', '_')}",
+            )
+            statusText == "REJECTED" -> DocumentActionIconButton(
+                icon = Icons.Default.Refresh,
+                description = "Re-upload $title",
+                tint = MaterialTheme.colorScheme.error,
+                onClick = { onUploadClick(title) },
+                testTag = "truck_doc_upload_${title.lowercase().replace(' ', '_')}",
+            )
+            else -> {
+                TruckDocumentStamp(statusText)
+                Spacer(Modifier.width(6.dp))
+                DocumentActionIconButton(
+                    icon = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    description = "View $title",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    onClick = { onViewClick(doc?.url) },
+                    testTag = "truck_doc_view_${title.lowercase().replace(' ', '_')}",
+                )
+            }
+        }
     }
+}
 
-    println("")
-
-    val docStatus = if (hasUrl) {
-        DocumentStatus.Uploaded(
-            id = doc!!.url!!,
-            label = statusText,
-            backgroundColor = colorScheme.surface.copy(alpha = 0f), // Not used when chip is hidden
-            textColor = colorScheme.surface.copy(alpha = 0f),
-            canReupload = statusText == "REJECTED" || statusText == "NOT UPLOADED"
+@Composable
+private fun TruckDocumentStamp(statusText: String) {
+    val ext = FreightThemeTokens.colors
+    val scheme = MaterialTheme.colorScheme
+    val (container, content, label) = when (statusText) {
+        "VERIFIED", "COMPLETED" -> Triple(ext.surfaceSuccess, ext.onSurfaceSuccess, "VERIFIED")
+        "REJECTED" -> Triple(scheme.errorContainer, scheme.onErrorContainer, "REJECTED")
+        "PENDING" -> Triple(ext.surfaceWarning, ext.onSurfaceWarning, "PENDING")
+        else -> Triple(scheme.surfaceContainerHighest, scheme.onSurfaceVariant, "UPLOADED")
+    }
+    Surface(
+        shape = TagShape,
+        color = container,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+            fontWeight = FontWeight.Bold,
+            color = content,
+            modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp),
         )
-    } else {
-        DocumentStatus.Pending
     }
+}
 
-    DocumentUploadItem(
-        title = title,
-        subtitle = subtitle,
-        status = docStatus,
-        onUploadClick = { onUploadClick(title) },
-        onViewClick = { onViewClick(it) },
-        showStatusChip = false,
-        trailingIcon = if (hasUrl) Icons.AutoMirrored.Filled.KeyboardArrowRight else null
-    )
+@Composable
+private fun DocumentActionIconButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    description: String,
+    tint: Color,
+    onClick: () -> Unit,
+    testTag: String,
+) {
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier
+            .size(36.dp)
+            .testTag(testTag),
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = description,
+            tint = tint,
+            modifier = Modifier.size(20.dp),
+        )
+    }
 }

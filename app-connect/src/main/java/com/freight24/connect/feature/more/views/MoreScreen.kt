@@ -1,35 +1,31 @@
 package com.freight24.connect.feature.more.views
-import com.freight24.ui.components.FreightTopAppBar
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.AcUnit
 import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.LocalShipping
-import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.PeopleAlt
-import androidx.compose.material.icons.filled.PeopleOutline
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Button
@@ -42,14 +38,19 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -58,9 +59,49 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.connect.feature.leads.domain.viewmodel.LeadsBadgeViewModel
 import com.freight24.connect.feature.more.MoreViewModel
-import com.freight24.ui.components.QuickActionCard
-import com.freight24.ui.components.QuickActionListItem
-import com.freight24.ui.components.SectionContainer
+import com.freight24.ui.components.DocketCard
+import com.freight24.ui.components.MetaTag
+import com.freight24.ui.components.PerforationRule
+import com.freight24.ui.components.FreightTopAppBar
+import com.freight24.ui.theme.FreightThemeTokens
+
+// ===========================================================================
+// More — "the operations desk".
+//
+// The employee's own desk: their badge on top, then the dockets they can
+// pull — partner registries, the lead tray, settings. Same paper language as
+// the verification queue: lane spine keyed to intent (brand = registries,
+// amber = fresh leads to work, error = leaving the desk), dog-eared corners,
+// perforated row separators, tracked-caps section eyebrows.
+// ===========================================================================
+
+/** Tracked-caps label above each docket group. */
+@Composable
+private fun DeskSectionLabel(text: String) {
+    Text(
+        text = text.uppercase(),
+        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.4.sp),
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier
+            .padding(horizontal = 18.dp)
+            .padding(top = 16.dp, bottom = 7.dp),
+    )
+}
+
+@Composable
+private fun deskEyebrow() = MaterialTheme.typography.labelSmall.copy(
+    fontWeight = FontWeight.SemiBold,
+    letterSpacing = 1.4.sp,
+)
+
+/** Initials for the badge avatar: first letters of the first and last words. */
+private fun initialsOf(name: String): String =
+    name.trim().split(Regex("\\s+"))
+        .filter { it.isNotEmpty() }
+        .let { words ->
+            if (words.isEmpty()) "" else "${words.first().first()}${words.last().last()}".uppercase()
+        }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,11 +120,6 @@ fun MoreScreen(
     LaunchedEffect(Unit) { leadsBadgeViewModel.refreshBadge() }
     val employeeInfo = moreViewModel.employeeInfo.collectAsStateWithLifecycle().value
     val showLogoutSheet = moreViewModel.showLogoutSheet.collectAsStateWithLifecycle().value
-    val colorScheme = MaterialTheme.colorScheme
-    val brandGreen = colorScheme.primary
-    val softGreen = colorScheme.surfaceVariant
-    val tileStroke = colorScheme.outlineVariant
-    val iconContainerColor = colorScheme.primaryContainer
 
     Scaffold(
         topBar = {
@@ -104,123 +140,111 @@ fun MoreScreen(
                 },
             )
         },
+        containerColor = MaterialTheme.colorScheme.background,
     ) { innerPadding ->
         Column(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
                 .padding(innerPadding)
                 .padding(bottom = 32.dp),
         ) {
-
-            Spacer(modifier = Modifier.height(12.dp))
-            // Profile Header
-            ProfileHeader(
+            // -- The employee badge ------------------------------------------------
+            ProfileDocket(
                 name = employeeInfo.fullName,
                 role = employeeInfo.designation,
                 tagCode = employeeInfo.tagCode,
                 onProfileClick = onMyProfile,
+                modifier = Modifier.padding(horizontal = 16.dp),
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Quick Actions Section
-            SectionContainer(title = "Fleet & Partners") {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    val tileContentPadding = PaddingValues(vertical = 14.dp, horizontal = 4.dp)
-
-                    QuickActionCard(
-                        title = "Manage\nClients",
-                        icon = Icons.Default.Person,
-                        onClick = onManageClients,
-                        modifier = Modifier.weight(1f),
-                        containerColor = softGreen,
-                        border = BorderStroke(1.dp, tileStroke),
-                        contentPadding = tileContentPadding,
-                        iconContainerColor = colorScheme.primaryContainer,
-                        iconTint = colorScheme.primary,
-                        textColor = colorScheme.onSurface,
-                    )
-                    QuickActionCard(
-                        title = "Manage\nTrucks",
-                        icon = Icons.Default.LocalShipping,
-                        onClick = onManageTrucks,
-                        modifier = Modifier.weight(1f),
-                        containerColor = softGreen,
-                        border = BorderStroke(1.dp, tileStroke),
-                        contentPadding = tileContentPadding,
-                        iconContainerColor = iconContainerColor,
-                        iconTint = brandGreen,
-                        textColor = colorScheme.onSurface,
-                    )
-                    QuickActionCard(
-                        title = "Manage\nTruck Owners",
-                        icon = Icons.Default.PeopleAlt,
-                        onClick = onManageTruckOwners,
-                        modifier = Modifier.weight(1f),
-                        containerColor = softGreen,
-                        border = BorderStroke(1.dp, tileStroke),
-                        contentPadding = tileContentPadding,
-                        iconContainerColor = iconContainerColor,
-                        iconTint = brandGreen,
-                        textColor = colorScheme.onSurface,
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Lead Management Section
-            SectionContainer(title = "Lead Management") {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    val leadTilePadding = PaddingValues(vertical = 14.dp, horizontal = 4.dp)
-                    QuickActionCard(
-                        title = "Leads\nManagement",
-                        icon = Icons.Default.Call,
-                        onClick = onLeadsManagement,
-                        badgeCount = leadsBadgeCount,
-                        modifier = Modifier.weight(1f),
-                        containerColor = softGreen,
-                        border = BorderStroke(1.dp, tileStroke),
-                        contentPadding = leadTilePadding,
-                        iconContainerColor = iconContainerColor,
-                        iconTint = brandGreen,
-                        textColor = colorScheme.onSurface,
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // App Settings Section
-            SectionContainer(title = "App Settings") {
-                QuickActionListItem(
-                    title = "Settings",
-                    icon = Icons.Outlined.Settings,
-                    onClick = onSettings,
-                    iconContainerColor = iconContainerColor,
-                    iconTint = brandGreen,
-                    showDivider = true,
+            // -- Partner registries ------------------------------------------------
+            DeskSectionLabel("Fleet & Partners")
+            RegistryDocket(
+                accent = MaterialTheme.colorScheme.primary,
+                testTag = "more_fleet_docket",
+                modifier = Modifier.padding(horizontal = 16.dp),
+            ) {
+                DeskRow(
+                    icon = Icons.Default.Person,
+                    title = "Manage Clients",
+                    subtitle = "Onboarded client accounts",
+                    testTag = "more_clients_row",
+                    onClick = onManageClients,
                 )
+                PerforationRule()
+                DeskRow(
+                    icon = Icons.Default.LocalShipping,
+                    title = "Manage Trucks",
+                    subtitle = "Fleet registry & documents",
+                    testTag = "more_trucks_row",
+                    onClick = onManageTrucks,
+                )
+                PerforationRule()
+                DeskRow(
+                    icon = Icons.Default.PeopleAlt,
+                    title = "Manage Truck Owners",
+                    subtitle = "Owner directory & onboarding",
+                    testTag = "more_owners_row",
+                    onClick = onManageTruckOwners,
+                )
+            }
 
-                QuickActionListItem(
+            // -- The lead tray -----------------------------------------------------
+            DeskSectionLabel("Lead Pipeline")
+            RegistryDocket(
+                accent = FreightThemeTokens.colors.warning,
+                testTag = "more_leads_docket",
+                modifier = Modifier.padding(horizontal = 16.dp),
+            ) {
+                DeskRow(
+                    icon = Icons.Default.Call,
+                    title = "Leads Management",
+                    subtitle = "Cold-call pipeline & follow-ups",
+                    testTag = "more_leads_row",
+                    onClick = onLeadsManagement,
+                    trailing = {
+                        if (leadsBadgeCount > 0) {
+                            MetaTag(
+                                text = "$leadsBadgeCount NEW",
+                                container = FreightThemeTokens.colors.surfaceWarning,
+                                content = FreightThemeTokens.colors.onSurfaceWarning,
+                            )
+                        }
+                    },
+                )
+            }
+
+            // -- The desk itself ---------------------------------------------------
+            DeskSectionLabel("Desk")
+            RegistryDocket(
+                accent = FreightThemeTokens.colors.settings,
+                testTag = "more_desk_docket",
+                modifier = Modifier.padding(horizontal = 16.dp),
+            ) {
+                DeskRow(
+                    icon = Icons.Outlined.Settings,
+                    title = "Settings",
+                    subtitle = "Appearance & app preferences",
+                    testTag = "more_settings_row",
+                    onClick = onSettings,
+                )
+            }
+
+            RegistryDocket(
+                accent = MaterialTheme.colorScheme.error,
+                testTag = "more_logout_docket",
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 10.dp),
+            ) {
+                DeskRow(
+                    icon = Icons.AutoMirrored.Filled.Logout,
                     title = "Log Out",
-                    icon = Icons.AutoMirrored.Filled.ExitToApp,
+                    subtitle = "End this session on Connect",
+                    testTag = "more_logout_row",
+                    tone = DeskRowTone.DANGER,
                     onClick = moreViewModel::requestLogout,
-                    iconContainerColor = colorScheme.errorContainer,
-                    iconContainerBorder = BorderStroke(1.dp, colorScheme.error.copy(alpha = 0.2f)),
-                    iconTint = colorScheme.error,
-                    textColor = colorScheme.error,
                 )
             }
         }
@@ -237,6 +261,183 @@ fun MoreScreen(
     }
 }
 
+/** The employee badge: dog-eared docket, brand spine, initials roundel. */
+@Composable
+private fun ProfileDocket(
+    name: String,
+    role: String,
+    tagCode: String,
+    onProfileClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val scheme = MaterialTheme.colorScheme
+
+    DocketCard(
+        accent = scheme.primary,
+        testTag = "more_profile_card",
+        onClick = onProfileClick,
+        modifier = modifier
+            .padding(top = 12.dp)
+            .fillMaxWidth(),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Surface(
+                modifier = Modifier.size(52.dp),
+                shape = CircleShape,
+                color = scheme.primaryContainer,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    if (name.isNotBlank()) {
+                        Text(
+                            text = initialsOf(name),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = scheme.onPrimaryContainer,
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = null,
+                            tint = scheme.onPrimaryContainer,
+                            modifier = Modifier.size(26.dp),
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = name.ifBlank { "Connect user" },
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = scheme.onSurface,
+                    maxLines = 1,
+                )
+                Text(
+                    text = role,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = scheme.onSurfaceVariant,
+                )
+                if (tagCode.isNotBlank()) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = tagCode,
+                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.1.sp),
+                        fontWeight = FontWeight.SemiBold,
+                        color = scheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    )
+                }
+            }
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = scheme.onSurfaceVariant.copy(alpha = 0.5f),
+            )
+        }
+
+        Spacer(Modifier.height(12.dp))
+        PerforationRule()
+        Spacer(Modifier.height(9.dp))
+        Text(
+            text = "View profile",
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+            color = scheme.primary,
+        )
+    }
+}
+
+/** A docket of desk rows; rows are separated by perforation tear lines. */
+@Composable
+private fun RegistryDocket(
+    accent: Color,
+    testTag: String,
+    modifier: Modifier = Modifier,
+    content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
+) {
+    // Rows handle their own taps, so the shell is a static (non-clickable) docket.
+    DocketCard(
+        accent = accent,
+        testTag = testTag,
+        onClick = null,
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(top = 4.dp, bottom = 4.dp),
+        content = content,
+    )
+}
+
+enum class DeskRowTone { NORMAL, DANGER }
+
+/**
+ * One registry row: icon tile, title + scent line, optional trailing stamp,
+ * chevron. Whole row is the tap target.
+ */
+@Composable
+private fun DeskRow(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    testTag: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    tone: DeskRowTone = DeskRowTone.NORMAL,
+    trailing: (@Composable () -> Unit)? = null,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val danger = tone == DeskRowTone.DANGER
+    val iconContainer = if (danger) scheme.errorContainer else scheme.primaryContainer
+    val iconTint = if (danger) scheme.error else scheme.primary
+    val titleColor = if (danger) scheme.error else scheme.onSurface
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = 64.dp)
+            .testTag(testTag)
+            .semantics { testTagsAsResourceId = true }
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Surface(
+            modifier = Modifier.size(40.dp),
+            shape = RoundedCornerShape(10.dp),
+            color = iconContainer,
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconTint,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+        }
+        Spacer(Modifier.width(14.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = titleColor,
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = scheme.onSurfaceVariant,
+                maxLines = 1,
+            )
+        }
+        trailing?.invoke()
+        Spacer(Modifier.width(8.dp))
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = scheme.onSurfaceVariant.copy(alpha = 0.5f),
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LogoutConfirmationSheet(
@@ -244,10 +445,11 @@ private fun LogoutConfirmationSheet(
     onDismiss: () -> Unit,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
 ) {
+    val scheme = MaterialTheme.colorScheme
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = scheme.surface,
     ) {
         Column(
             modifier = Modifier
@@ -256,12 +458,20 @@ private fun LogoutConfirmationSheet(
                 .padding(horizontal = 24.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            Text(
+                text = "CONFIRM LOGOUT",
+                style = deskEyebrow(),
+                color = scheme.error,
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // Icon badge
             Box(
                 modifier = Modifier
                     .size(56.dp)
                     .background(
-                        color = MaterialTheme.colorScheme.error.copy(alpha = 0.18f),
+                        color = scheme.error.copy(alpha = 0.18f),
                         shape = CircleShape,
                     ),
                 contentAlignment = Alignment.Center,
@@ -269,7 +479,7 @@ private fun LogoutConfirmationSheet(
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Logout,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.error,
+                    tint = scheme.error,
                     modifier = Modifier.size(28.dp),
                 )
             }
@@ -279,7 +489,7 @@ private fun LogoutConfirmationSheet(
             Text(
                 text = "Logging out?",
                 style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = scheme.onSurface,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
             )
@@ -289,23 +499,27 @@ private fun LogoutConfirmationSheet(
             Text(
                 text = "Are you sure you want to log out of your account? You'll need to sign back in to manage your indents and trips.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = scheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Primary action: Logout
+            // Primary action: Logout — the destructive choice is the loud one.
             Button(
                 onClick = onConfirm,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)
-                    .semantics(mergeDescendants = true) { contentDescription = "logout_confirm" },
+                    .testTag("more_logout_confirm")
+                    .semantics(mergeDescendants = true) {
+                        testTagsAsResourceId = true
+                        contentDescription = "logout_confirm"
+                    },
                 shape = RoundedCornerShape(28.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    containerColor = scheme.errorContainer,
+                    contentColor = scheme.onErrorContainer,
                 ),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
             ) {
@@ -320,15 +534,19 @@ private fun LogoutConfirmationSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)
-                    .semantics(mergeDescendants = true) { contentDescription = "logout_cancel" },
+                    .testTag("more_logout_cancel")
+                    .semantics(mergeDescendants = true) {
+                        testTagsAsResourceId = true
+                        contentDescription = "logout_cancel"
+                    },
                 shape = RoundedCornerShape(28.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                border = BorderStroke(1.dp, scheme.outlineVariant),
             ) {
                 Text(
                     text = "Stay Logged In",
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 15.sp,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = scheme.onSurface,
                 )
             }
 

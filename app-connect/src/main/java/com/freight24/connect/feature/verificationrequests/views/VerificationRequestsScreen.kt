@@ -108,8 +108,17 @@ import com.freight24.connect.feature.verificationrequests.domain.model.Verificat
 import com.freight24.connect.feature.verificationrequests.domain.viewmodel.VerificationRequestsEvent
 import com.freight24.connect.feature.verificationrequests.domain.viewmodel.VerificationRequestsViewModel
 import com.freight24.connect.feature.verificationrequests.domain.viewmodel.VerificationRequestsViewModelImpl
+import com.freight24.ui.components.DocketCard
+import com.freight24.ui.components.DocketCut
+import com.freight24.ui.components.DocketShape
 import com.freight24.ui.components.DocumentLinkChip
+import com.freight24.ui.components.HatchMark
+import com.freight24.ui.components.MetaTag
+import com.freight24.ui.components.PanelShape
+import com.freight24.ui.components.PerforationRule
 import com.freight24.ui.components.RouteIndicatorWithCities
+import com.freight24.ui.components.SpineWidth
+import com.freight24.ui.components.TagShape
 import com.freight24.ui.components.getPdfLaunchIntent
 import com.freight24.ui.theme.FreightThemeTokens
 import java.text.DateFormat
@@ -135,17 +144,11 @@ import kotlinx.coroutines.launch
 //   • the LEDGER ROW  — one field per row. New onboardings drop the "Before"
 //                       column entirely and stamp the row NEW; genuine edits
 //                       read as `was → now` in a single wrapping line.
-// ===========================================================================
-
-/** Size of the dog-ear cut on the top-right of every docket card. */
-private val DocketCut = 16.dp
-
-/** Width of the status spine on the left edge of every docket card. */
-private val SpineWidth = 4.dp
-
-private val DocketShape = CutCornerShape(topEnd = DocketCut)
-private val PanelShape = RoundedCornerShape(10.dp)
-private val TagShape = RoundedCornerShape(4.dp)
+//
+// The card/stamp primitives themselves (DocketCard, PerforationRule,
+// HatchMark, MetaTag, docket shapes) live in core/ui so the More desk and the
+// Leads tray share this exact language.
+// ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
 // Page-local type helpers. Everything derives from MaterialTheme.typography so
@@ -894,106 +897,9 @@ private fun StatusFilterChip(
 }
 
 // ===========================================================================
-// Docket card shell
+// The little `›` affordance at the end of a docket footer.
 // ===========================================================================
 
-@Composable
-private fun DocketCard(
-    accent: Color,
-    testTag: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    val foldTone = MaterialTheme.colorScheme.surfaceContainerHighest
-
-    Box(modifier = modifier.fillMaxWidth()) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag(testTag)
-                .semantics { testTagsAsResourceId = true }
-                .clickable(onClick = onClick),
-            shape = DocketShape,
-            color = MaterialTheme.colorScheme.surface,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
-        ) {
-            Row(modifier = Modifier.height(IntrinsicSize.Min)) {
-                // Lane spine — status colour, full height of the card.
-                Box(
-                    modifier = Modifier
-                        .width(SpineWidth)
-                        .fillMaxHeight()
-                        .background(accent),
-                )
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(start = 14.dp, end = 14.dp, top = 13.dp, bottom = 12.dp),
-                    content = content,
-                )
-            }
-        }
-
-        // Folded corner: the visible half of the dog-ear notch, painted a shade
-        // darker so the cut reads as paper folded back rather than a clipped box.
-        Canvas(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .size(DocketCut),
-        ) {
-            val path = androidx.compose.ui.graphics.Path().apply {
-                moveTo(0f, 0f)
-                lineTo(size.width, size.height)
-                lineTo(0f, size.height)
-                close()
-            }
-            drawPath(path = path, color = foldTone)
-        }
-    }
-}
-
-/** Dashed tear line between a docket's body and its footer. */
-@Composable
-private fun PerforationRule(modifier: Modifier = Modifier) {
-    val color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.9f)
-    Canvas(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(1.dp),
-    ) {
-        drawLine(
-            color = color,
-            start = Offset(0f, size.height / 2f),
-            end = Offset(size.width, size.height / 2f),
-            strokeWidth = size.height,
-            pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 7f), 0f),
-        )
-    }
-}
-
-/** Diagonal hazard hatch used to mark new-onboarding content. */
-@Composable
-private fun HatchMark(
-    modifier: Modifier = Modifier,
-    color: Color,
-    step: Float = 5f,
-) {
-    Canvas(modifier = modifier) {
-        var x = -size.height
-        while (x < size.width + size.height) {
-            drawLine(
-                color = color,
-                start = Offset(x, size.height),
-                end = Offset(x + size.height, 0f),
-                strokeWidth = 1.6f,
-            )
-            x += step
-        }
-    }
-}
-
-/** The little `›` affordance at the end of a docket footer. */
 @Composable
 private fun ReviewCue() {
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1061,47 +967,6 @@ private fun DocketFooter(
         }
         Spacer(Modifier.width(8.dp))
         ReviewCue()
-    }
-}
-
-/** Small tracked-caps tag. Used for meta counts and NEW / REMOVED markers. */
-@Composable
-private fun MetaTag(
-    text: String,
-    container: Color,
-    content: Color,
-    modifier: Modifier = Modifier,
-    hatch: Boolean = false,
-) {
-    Surface(
-        modifier = modifier,
-        shape = TagShape,
-        color = container,
-    ) {
-        Row(
-            modifier = Modifier.height(20.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (hatch) {
-                HatchMark(
-                    modifier = Modifier
-                        .width(14.dp)
-                        .fillMaxHeight(),
-                    color = content.copy(alpha = 0.55f),
-                )
-                Spacer(Modifier.width(6.dp))
-            }
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
-                fontWeight = FontWeight.Bold,
-                color = content,
-                modifier = Modifier.padding(
-                    start = if (hatch) 0.dp else 7.dp,
-                    end = 7.dp,
-                ),
-            )
-        }
     }
 }
 

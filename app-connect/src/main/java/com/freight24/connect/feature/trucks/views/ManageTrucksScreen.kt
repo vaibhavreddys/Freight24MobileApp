@@ -2,7 +2,6 @@ package com.freight24.connect.feature.trucks.views
 import com.freight24.ui.components.FreightTopAppBar
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -51,6 +50,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -59,7 +61,7 @@ import androidx.navigation.NavController
 import com.freight24.connect.feature.trucks.domain.viewmodel.ManageTrucksViewModel
 import com.freight24.ui.UiState
 import com.freight24.ui.components.FreightEmptyState
-import com.freight24.ui.components.TruckHeaderCard
+import com.freight24.ui.components.PanelShape
 import com.freight24.ui.theme.FreightThemeTokens
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -139,44 +141,33 @@ fun ManageTrucksScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                    .background(MaterialTheme.colorScheme.background)
             ) {
-            Card(
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = viewModel::onSearchQueryChanged,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                shape = MaterialTheme.shapes.medium,
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .testTag("trucks_search")
+                    .semantics { testTagsAsResourceId = true },
+                placeholder = { Text("Search by registration number") },
+                leadingIcon = {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                shape = PanelShape,
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                    disabledBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                    errorBorderColor = MaterialTheme.colorScheme.error,
                 ),
-                border = BorderStroke(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                ),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-            ) {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = viewModel::onSearchQueryChanged,
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Search by Registration Number") },
-                    leadingIcon = {
-                        Icon(
-                            Icons.Default.Search,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    },
-                    shape = MaterialTheme.shapes.medium,
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = Color.Transparent,
-                        disabledBorderColor = Color.Transparent,
-                        errorBorderColor = MaterialTheme.colorScheme.error,
-                    ),
-                )
-            }
+            )
 
             PullToRefreshBox(
                 isRefreshing = isRefreshing,
@@ -191,22 +182,25 @@ fun ManageTrucksScreen(
                 }
                 is UiState.Error -> {
                     Column(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
-                        Icon(
-                            Icons.Default.ErrorOutline,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(40.dp)
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = state.message,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = PanelShape,
+                            color = MaterialTheme.colorScheme.errorContainer,
+                        ) {
+                            Text(
+                                text = state.message,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                            )
+                        }
                         Spacer(modifier = Modifier.height(16.dp))
                         FilledTonalButton(onClick = viewModel::retry) {
                             Text("Retry")
@@ -229,20 +223,19 @@ fun ManageTrucksScreen(
                     } else {
                         LazyColumn(
                             state = listState,
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
                             modifier = Modifier.fillMaxSize()
                         ) {
                             items(filteredTrucks, key = { it.truckId }) { truck ->
-                                TruckHeaderCard(
+                                TruckDocketCard(
                                     registrationNumber = truck.registrationNumber,
-                                    truckType = truck.truckType ?: "Unknown Type",
+                                    truckType = truck.truckType,
                                     availability = truck.availability,
                                     isVerified = truck.isVerified,
                                     isBlacklisted = truck.isBlacklisted,
-                                    modifier = Modifier.clickable { 
-                                        onTruckClick(truck.truckId)
-                                    }
+                                    testTag = "trucks_card_${truck.registrationNumber}",
+                                    onClick = { onTruckClick(truck.truckId) }
                                 )
                             }
                         }
