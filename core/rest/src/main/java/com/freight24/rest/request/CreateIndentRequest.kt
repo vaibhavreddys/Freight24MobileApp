@@ -20,6 +20,18 @@ data class CreateIndentRequest(
     @SerialName("special_requirements") val remarks: String? = null,
     @SerialName("flooring_type") val flooringType: String = "steel",
     @SerialName("locations") val locations: List<Location>,
+    /**
+     * The client's billing/operations branch for this indent. Optional — the
+     * backend defaults it to `null` and rejects a branch that does not belong to
+     * [clientId] or is not `active`. Added by backend commit 1030f9c.
+     */
+    @SerialName("client_branch_id") val clientBranchId: String? = null,
+    /**
+     * Named contacts for the indent. `placement` is required by the backend.
+     * Serialised as `null` (omitted by the JSON config) when no role is set.
+     * Added by backend commit 1030f9c.
+     */
+    @SerialName("contacts") val contacts: IndentContactsRequest? = null,
 ) {
 
     @Serializable

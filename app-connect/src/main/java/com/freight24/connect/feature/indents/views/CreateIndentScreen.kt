@@ -1,58 +1,35 @@
 package com.freight24.connect.feature.indents.views
-import com.freight24.ui.components.FreightTopAppBar
 
 import android.util.Log
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -64,8 +41,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -78,12 +53,40 @@ import com.freight24.common.util.formatIndianCurrency
 import com.freight24.common.util.negotiatedCostExceedsClientError
 import com.freight24.connect.feature.indents.domain.viewmodel.CreateIndentEvent
 import com.freight24.connect.feature.indents.domain.viewmodel.CreateIndentUiState
+import com.freight24.connect.feature.indents.domain.viewmodel.IndentContactRole
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsViewModel
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsViewModelImpl
+import com.freight24.rest.response.ClientDto
 import com.freight24.rest.response.LocationDto
+import com.freight24.rest.response.TruckCategoryDto
 import com.freight24.rest.response.TruckTypeDto
+import com.freight24.ui.components.FreightTopAppBar
+import com.freight24.ui.components.InlineErrorBanner
+import com.freight24.ui.components.MetaTag
+import com.freight24.ui.components.PerforationRule
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+
+// ===========================================================================
+// Create Indent — a blank consignment docket.
+//
+// The page is laid out as six numbered clauses rather than a column of cards,
+// and the clause spine is keyed to how far each clause has got:
+//
+//   grey  · nothing entered yet
+//   amber · started, still owes something
+//   green · every required input present
+//   red   · something is wrong and submission is blocked
+//
+// Clauses 01–04 gate submission and are tallied in the docket head. Clauses 05
+// and 06 are optional, so their spine uses the brand accent when filled rather
+// than green — colouring an optional clause green would imply it had been
+// required all along.
+//
+// Client information added by backend commit 1030f9c lives in clause 01: the
+// client's branch, and the call sheet of four contact roles. `placement` is
+// required by the backend even though it reads as optional data.
+// ===========================================================================
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -140,7 +143,7 @@ fun CreateIndentScreen(
         savedStateHandle?.getStateFlow<String?>("selected_client", null)
             ?.collect { json ->
                 json?.let {
-                    val client = Json.decodeFromString<com.freight24.rest.response.ClientDto>(it)
+                    val client = Json.decodeFromString<ClientDto>(it)
                     viewModel.onEvent(CreateIndentEvent.SelectClient(client))
                     savedStateHandle.remove<String>("selected_client")
                 }
@@ -153,7 +156,7 @@ fun CreateIndentScreen(
         onBackClick = onBackClick,
         onNavigateToSearch = onNavigateToSearch,
         onEvent = viewModel::onEvent,
-        onNavigateToReview = onNavigateToReview
+        onNavigateToReview = onNavigateToReview,
     )
 }
 
@@ -167,37 +170,37 @@ fun CreateIndentContent(
     onEvent: (CreateIndentEvent) -> Unit,
     onNavigateToReview: () -> Unit,
 ) {
-    val isDark = isSystemInDarkTheme()
     val scope = rememberCoroutineScope()
     val fieldErrors = remember { mutableStateOf(emptySet<String>()) }
-
-    // Screen background — solid M3 background, not a gradient. M3 prefers
-    // tonal hierarchy (surface / surfaceContainer) over visible gradients
-    // for page chrome, and a solid background tracks theme changes
-    // automatically (light/dark/system/dynamic).
-    val screenBackground = MaterialTheme.colorScheme.background
+    var showBranchSheet by remember { mutableStateOf(false) }
+    var contactSheetRole by remember { mutableStateOf<IndentContactRole?>(null) }
 
     fun validate(): Boolean {
         val errors = mutableSetOf<String>()
 
         if (uiState.selectedClient == null) errors.add("client")
+        if (uiState.placementContact == null) errors.add("placement")
         if (uiState.selectedFromLocation == null) errors.add("from")
         if (uiState.selectedToLocation == null) errors.add("to")
         if (uiState.selectedTruckType == null) errors.add("truck")
         if (uiState.weight.isBlank()) errors.add("weight")
         if (uiState.materialName.isBlank()) errors.add("material")
         if (uiState.tatRequired && uiState.tatHours.isBlank()) errors.add("tat")
-        if (negotiatedCostExceedsClientError(uiState.negotiatedCost, uiState.clientCost) != null) errors.add("negotiated")
+        if (negotiatedCostExceedsClientError(uiState.negotiatedCost, uiState.clientCost) != null) {
+            errors.add("negotiated")
+        }
 
         fieldErrors.value = errors
 
         if (errors.isNotEmpty()) {
             val message = when {
-                errors.contains("client") -> "Please select a client"
-                errors.contains("from") || errors.contains("to") -> "Please enter route information"
-                errors.contains("truck") -> "Please select truck type"
-                errors.contains("weight") || errors.contains("material") -> "Please enter cargo details"
-                errors.contains("tat") -> "Please enter TAT hours"
+                errors.contains("client") -> "Clause 01 — select a client"
+                errors.contains("placement") -> "Clause 01 — select a placement contact"
+                errors.contains("from") || errors.contains("to") -> "Clause 02 — enter the route"
+                errors.contains("truck") -> "Clause 03 — select a vehicle type"
+                errors.contains("weight") || errors.contains("material") ->
+                    "Clause 04 — enter the cargo details"
+                errors.contains("tat") -> "Clause 06 — enter the TAT hours"
                 errors.contains("negotiated") -> "Negotiated cost cannot exceed client cost"
                 else -> "Please fill all required fields"
             }
@@ -211,35 +214,36 @@ fun CreateIndentContent(
         fieldErrors.value -= key
     }
 
+    val errors = fieldErrors.value
+    val consignorState = consignorClauseState(uiState, errors)
+    val laneState = laneClauseState(uiState, errors)
+    val vehicleState = vehicleClauseState(uiState, errors)
+    val cargoState = cargoClauseState(uiState, errors)
+    val commercialsState = commercialsClauseState(uiState, errors)
+    val termsState = termsClauseState(uiState, errors)
+
+    // Only the gating clauses are tallied — a tally that counted optional
+    // clauses would sit permanently short of full and read as a blocker.
+    val gatingStates = listOf(consignorState, laneState, vehicleState, cargoState)
+    val gatingComplete = gatingStates.count { it == ClauseState.COMPLETE }
+
+    val clientSelected = uiState.selectedClient != null
+
     Box(Modifier.fillMaxSize()) {
-//        Box(Modifier.fillMaxSize().background(screenBackground))
-
-//        if (isDark) {
-//            Box(
-//                Modifier
-//                    .fillMaxWidth()
-//                    .fillMaxHeight(0.45f)
-//                    .align(Alignment.TopEnd)
-//                    .background(
-//                        Brush.horizontalGradient(
-//                            colors = listOf(
-//                                Color.Transparent,
-//                                MaterialTheme.colorScheme.primary.copy(alpha = 0.06f),
-//                                MaterialTheme.colorScheme.primary.copy(alpha = 0.10f),
-//                            )
-//                        )
-//                    )
-//            )
-//        }
-
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
             topBar = {
                 FreightTopAppBar(
                     title = { Text("Create Indent") },
                     navigationIcon = {
-                        IconButton(onClick = onBackClick) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        IconButton(
+                            onClick = onBackClick,
+                            modifier = Modifier.docketTag("create_indent_back"),
+                        ) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                            )
                         }
                     },
                 )
@@ -250,21 +254,20 @@ fun CreateIndentContent(
                     Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 20.dp)
-                        .padding(bottom = 20.dp, top = 10.dp)
+                        .padding(bottom = 20.dp, top = 10.dp),
                 ) {
                     Button(
-                        onClick = {
-                            if (validate()) onNavigateToReview()
-                        },
+                        onClick = { if (validate()) onNavigateToReview() },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(52.dp),
+                            .height(52.dp)
+                            .docketTag("create_indent_review_button"),
                         shape = MaterialTheme.shapes.large,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary,
                             contentColor = MaterialTheme.colorScheme.onPrimary,
                         ),
-                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp),
+                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
                     ) {
                         Text(
                             "Review Indent",
@@ -286,225 +289,374 @@ fun CreateIndentContent(
                     .fillMaxSize()
                     .padding(paddingValues)
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp)
-                    .padding(top = 16.dp)
-                    .padding(bottom = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp),
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 8.dp, bottom = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                ClientSection(
-                    selectedClient = uiState.selectedClient,
-                    onClick = {
+                DocketHead(
+                    complete = gatingComplete,
+                    total = gatingStates.size,
+                    states = gatingStates,
+                )
+
+                ConsignorClause(
+                    uiState = uiState,
+                    state = consignorState,
+                    errors = errors,
+                    onEvent = onEvent,
+                    onClientClick = {
                         clearError("client")
                         onNavigateToSearch(SearchType.CLIENT.name)
                     },
-                    isError = fieldErrors.value.contains("client"),
+                    onBranchClick = { showBranchSheet = true },
+                    onContactClick = { role ->
+                        clearError("placement")
+                        contactSheetRole = role
+                    },
                 )
 
-                RouteSection(
-                    fromLocation = uiState.selectedFromLocation?.name ?: "",
-                    toLocation = uiState.selectedToLocation?.name ?: "",
-                    onFromClick = {
-                        clearError("from")
-                        onNavigateToSearch(SearchType.LOCATION_FROM.name)
-                    },
-                    onToClick = {
-                        clearError("to")
-                        onNavigateToSearch(SearchType.LOCATION_TO.name)
-                    },
-                    fromError = fieldErrors.value.contains("from"),
-                    toError = fieldErrors.value.contains("to"),
-                )
+                ClauseDocket(
+                    number = 2,
+                    title = "Lane",
+                    state = laneState,
+                    testTag = "create_indent_clause_lane",
+                ) {
+                    LanePicker(
+                        originLabel = "Loading from",
+                        originValue = uiState.selectedFromLocation?.name.orEmpty(),
+                        onOriginClick = {
+                            clearError("from")
+                            onNavigateToSearch(SearchType.LOCATION_FROM.name)
+                        },
+                        originTestTag = "create_indent_from_picker",
+                        destinationLabel = "Unloading at",
+                        destinationValue = uiState.selectedToLocation?.name.orEmpty(),
+                        onDestinationClick = {
+                            clearError("to")
+                            onNavigateToSearch(SearchType.LOCATION_TO.name)
+                        },
+                        destinationTestTag = "create_indent_to_picker",
+                        originError = errors.contains("from"),
+                        destinationError = errors.contains("to"),
+                    )
+                }
 
-                VehicleTypeSection(
+                VehicleClause(
                     truckTypes = uiState.truckTypes,
                     selectedTruckType = uiState.selectedTruckType,
                     isLoading = uiState.isLoadingTruckTypes,
+                    isError = errors.contains("truck"),
+                    state = vehicleState,
                     onSelect = {
                         clearError("truck")
                         onEvent(CreateIndentEvent.SelectTruckType(it))
                     },
-                    isError = fieldErrors.value.contains("truck"),
                 )
 
-                CargoSection(
-                    weight = uiState.weight,
-                    materialName = uiState.materialName,
-                    onWeightChange = {
-                        clearError("weight")
-                        onEvent(CreateIndentEvent.UpdateWeight(it))
-                    },
-                    onMaterialChange = {
-                        clearError("material")
-                        onEvent(CreateIndentEvent.UpdateMaterialName(it))
-                    },
-                    weightError = fieldErrors.value.contains("weight"),
-                    materialError = fieldErrors.value.contains("material"),
-                )
+                ClauseDocket(
+                    number = 4,
+                    title = "Cargo",
+                    state = cargoState,
+                    testTag = "create_indent_clause_cargo",
+                ) {
+                    RuledField(
+                        label = "Weight",
+                        value = uiState.weight,
+                        onValueChange = {
+                            clearError("weight")
+                            onEvent(CreateIndentEvent.UpdateWeight(it))
+                        },
+                        testTag = "create_indent_weight_field",
+                        placeholder = "0.0",
+                        keyboardType = KeyboardType.Decimal,
+                        isError = errors.contains("weight"),
+                        trailingLabel = "MT",
+                    )
+                    Spacer(Modifier.height(18.dp))
+                    RuledField(
+                        label = "Material",
+                        value = uiState.materialName,
+                        onValueChange = {
+                            clearError("material")
+                            onEvent(CreateIndentEvent.UpdateMaterialName(it))
+                        },
+                        testTag = "create_indent_material_field",
+                        placeholder = "e.g. Steel coils",
+                        isError = errors.contains("material"),
+                    )
+                }
 
-                OptionalDetailsSection(
+                CommercialsClause(
                     uiState = uiState,
+                    state = commercialsState,
+                    negotiatedError = negotiatedCostExceedsClientError(
+                        uiState.negotiatedCost,
+                        uiState.clientCost,
+                    ),
                     onEvent = onEvent,
-                    tatError = fieldErrors.value.contains("tat"),
-                    onTatClear = { clearError("tat") },
                 )
 
-                Spacer(Modifier.height(24.dp))
+                TermsClause(
+                    uiState = uiState,
+                    state = termsState,
+                    tatError = errors.contains("tat"),
+                    onEvent = onEvent,
+                )
+
+                Spacer(Modifier.height(16.dp))
             }
         }
     }
-}
 
-@Composable
-private fun SectionCard(
-    modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            content = content,
+    if (showBranchSheet) {
+        BranchPickerSheet(
+            branches = uiState.branches,
+            selectedId = uiState.selectedBranch?.id,
+            onSelect = { onEvent(CreateIndentEvent.SelectBranch(it)) },
+            onDismiss = { showBranchSheet = false },
+        )
+    }
+
+    contactSheetRole?.let { role ->
+        ContactPickerSheet(
+            role = role,
+            contacts = uiState.contacts,
+            selectedId = uiState.contactFor(role)?.id,
+            onSelect = { onEvent(CreateIndentEvent.SelectContact(role, it)) },
+            onDismiss = { contactSheetRole = null },
         )
     }
 }
 
-@Composable
-private fun IndentSelectionField(
-    value: String,
-    label: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    isError: Boolean = false,
-) {
-    val borderColor = when {
-        isError -> MaterialTheme.colorScheme.error
-        value.isNotEmpty() -> MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
-        else -> MaterialTheme.colorScheme.outlineVariant
-    }
+// ---------------------------------------------------------------------------
+// Docket head
+// ---------------------------------------------------------------------------
 
-    OutlinedTextField(
-        value = value,
-        onValueChange = {},
-        label = { Text(label) },
-        readOnly = true,
-        enabled = false,
-        trailingIcon = {
-            Icon(
-                imageVector = Icons.Default.Search,
-                contentDescription = "Search",
-                tint = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+@Composable
+private fun DocketHead(
+    complete: Int,
+    total: Int,
+    states: List<ClauseState>,
+) {
+    val scheme = MaterialTheme.colorScheme
+
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "NEW INDENT · DRAFT",
+                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.5.sp),
+                fontWeight = FontWeight.Bold,
+                color = scheme.primary,
             )
+            Spacer(Modifier.weight(1f))
+            MetaTag(
+                text = "$complete / $total REQUIRED",
+                container = if (complete == total) {
+                    MaterialTheme.colorScheme.primaryContainer
+                } else {
+                    scheme.surfaceContainerHighest
+                },
+                content = if (complete == total) {
+                    scheme.onPrimaryContainer
+                } else {
+                    scheme.onSurfaceVariant
+                },
+            )
+        }
+
+        Text(
+            text = "Consignment note",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = scheme.onSurface,
+        )
+
+        Text(
+            text = "Clauses 01 to 04 have to be complete before this can be raised. " +
+                "The rest is optional.",
+            style = MaterialTheme.typography.bodySmall,
+            color = scheme.onSurfaceVariant,
+        )
+
+        ClauseTally(states = states)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Clause 01 — consignor
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun ConsignorClause(
+    uiState: CreateIndentUiState,
+    state: ClauseState,
+    errors: Set<String>,
+    onEvent: (CreateIndentEvent) -> Unit,
+    onClientClick: () -> Unit,
+    onBranchClick: () -> Unit,
+    onContactClick: (IndentContactRole) -> Unit,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val clientSelected = uiState.selectedClient != null
+
+    val clientDisplay = uiState.selectedClient?.let { client ->
+        listOfNotNull(
+            client.companyName.takeIf { it.isNotBlank() },
+            client.tagCode.takeIf { it.isNotBlank() },
+        ).joinToString(" · ")
+    }.orEmpty()
+
+    val branchDisplay = uiState.selectedBranch?.let { branch ->
+        listOfNotNull(
+            branch.branchName?.takeIf { it.isNotBlank() },
+            branch.branchCode?.takeIf { it.isNotBlank() },
+        ).joinToString(" · ")
+    }.orEmpty()
+
+    ClauseDocket(
+        number = 1,
+        title = "Consignor",
+        state = state,
+        testTag = "create_indent_clause_consignor",
+        trailing = {
+            if (uiState.isLoadingClientDirectory) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(14.dp),
+                    strokeWidth = 2.dp,
+                    color = scheme.primary,
+                )
+            }
         },
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        colors = OutlinedTextFieldDefaults.colors(
-            disabledTextColor = MaterialTheme.colorScheme.onSurface,
-            disabledBorderColor = borderColor,
-            disabledLabelColor = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-            disabledTrailingIconColor = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-            disabledContainerColor = Color.Transparent,
-        ),
-        shape = RoundedCornerShape(16.dp),
-        singleLine = true,
-        textStyle = MaterialTheme.typography.bodyMedium,
-    )
-}
-
-@Composable
-private fun SectionHeaderText(
-    text: String,
-    modifier: Modifier = Modifier,
-) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.titleSmall,
-        fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = modifier,
-    )
-}
-
-@Composable
-private fun ClientSection(
-    selectedClient: com.freight24.rest.response.ClientDto?,
-    onClick: () -> Unit,
-    isError: Boolean = false,
-) {
-    SectionCard {
-        SectionHeaderText("Client Details")
-
-        val clientDisplay = selectedClient?.run {
-            "$companyName, $tagCode"
-        } ?: ""
-
-        IndentSelectionField(
+    ) {
+        DocketPicker(
+            label = "Client",
             value = clientDisplay,
-            label = "Search Client Name",
-            onClick = onClick,
-            isError = isError,
+            onClick = onClientClick,
+            testTag = "create_indent_client_picker",
+            placeholder = "Search client",
+            isError = errors.contains("client"),
         )
-    }
-}
 
-@Composable
-private fun RouteSection(
-    fromLocation: String,
-    toLocation: String,
-    onFromClick: () -> Unit,
-    onToClick: () -> Unit,
-    fromError: Boolean = false,
-    toError: Boolean = false,
-) {
-    SectionCard {
-        SectionHeaderText("Route")
+        Spacer(Modifier.height(18.dp))
 
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            IndentSelectionField(
-                value = fromLocation,
-                label = "Loading",
-                onClick = onFromClick,
-                modifier = Modifier.weight(1f),
-                isError = fromError,
-            )
+        DocketPicker(
+            label = "Branch",
+            value = branchDisplay,
+            onClick = onBranchClick,
+            testTag = "create_indent_branch_picker",
+            placeholder = if (clientSelected) "Optional — none selected" else "Select a client first",
+            enabled = clientSelected && !uiState.isLoadingBranches && uiState.branches.isNotEmpty(),
+            supportingText = when {
+                !clientSelected -> null
+                uiState.isLoadingBranches -> "Loading branches…"
+                uiState.branches.isEmpty() -> "This client has no branches on file."
+                else -> "Optional. Inactive branches cannot be selected."
+            },
+        )
 
-            IndentSelectionField(
-                value = toLocation,
-                label = "Unloading",
-                onClick = onToClick,
-                modifier = Modifier.weight(1f),
-                isError = toError,
+        Spacer(Modifier.height(18.dp))
+        PerforationRule()
+        Spacer(Modifier.height(14.dp))
+
+        Text(
+            text = "CALL SHEET",
+            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.4.sp),
+            fontWeight = FontWeight.Bold,
+            color = scheme.onSurface,
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            text = "Who the driver rings, and for what.",
+            style = MaterialTheme.typography.bodySmall,
+            color = scheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(4.dp))
+
+        if (uiState.isLoadingContacts) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 18.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    strokeWidth = 2.dp,
+                    color = scheme.primary,
+                )
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    text = "Loading contacts…",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = scheme.onSurfaceVariant,
+                )
+            }
+        } else {
+            IndentContactRole.entries.forEachIndexed { index, role ->
+                ContactRoleSlot(
+                    role = role,
+                    contact = uiState.contactFor(role),
+                    onClick = { onContactClick(role) },
+                    onClear = { onEvent(CreateIndentEvent.SelectContact(role, null)) },
+                    testTag = "create_indent_contact_${role.wireKey}",
+                    isError = role == IndentContactRole.PLACEMENT &&
+                        errors.contains("placement"),
+                    enabled = clientSelected && !uiState.contactsUnavailable,
+                    placeholder = when {
+                        !clientSelected -> "Select a client first"
+                        uiState.contactsUnavailable -> "No contacts on file"
+                        else -> "Choose contact"
+                    },
+                )
+                if (index != IndentContactRole.entries.lastIndex) {
+                    HorizontalDivider(
+                        thickness = 1.dp,
+                        color = scheme.outlineVariant.copy(alpha = 0.45f),
+                    )
+                }
+            }
+        }
+
+        if (clientSelected && !uiState.isLoadingContacts && uiState.contactsUnavailable) {
+            Spacer(Modifier.height(10.dp))
+            InlineErrorBanner(
+                message = "This client has no active contacts. A placement contact is " +
+                    "required to raise an indent — add one to the client first.",
             )
         }
     }
 }
 
+// ---------------------------------------------------------------------------
+// Clause 03 — vehicle
+// ---------------------------------------------------------------------------
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun VehicleTypeSection(
-    truckTypes: com.freight24.rest.response.TruckCategoryDto,
+private fun VehicleClause(
+    truckTypes: TruckCategoryDto,
     selectedTruckType: TruckTypeDto?,
     isLoading: Boolean,
+    isError: Boolean,
+    state: ClauseState,
     onSelect: (TruckTypeDto) -> Unit,
-    isError: Boolean = false,
 ) {
-    SectionCard {
-        SectionHeaderText("Vehicle Type")
+    val scheme = MaterialTheme.colorScheme
 
+    ClauseDocket(
+        number = 3,
+        title = "Vehicle",
+        state = state,
+        testTag = "create_indent_clause_vehicle",
+    ) {
         if (isError) {
             Text(
-                "Please select a vehicle type",
+                text = "Select a vehicle type to continue.",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error,
+                color = scheme.error,
             )
+            Spacer(Modifier.height(10.dp))
         }
 
         if (isLoading) {
@@ -515,402 +667,365 @@ private fun VehicleTypeSection(
                 contentAlignment = Alignment.Center,
             ) {
                 CircularProgressIndicator(
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp),
+                    color = scheme.primary,
+                    modifier = Modifier.size(20.dp),
                     strokeWidth = 2.dp,
                 )
             }
         } else {
-            val openTrucks = truckTypes.open
-            val closedTrucks = truckTypes.closed
-
-            if (openTrucks.isNotEmpty()) {
-                Text(
-                    "Open",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    openTrucks.forEach { truck ->
-                        VehicleTypeChip(
-                            label = truck.displayName,
-                            isSelected = selectedTruckType?.id == truck.id,
-                            onClick = { onSelect(truck) },
-                        )
-                    }
-                }
+            TruckTypeGroup(
+                label = "Open body",
+                trucks = truckTypes.open,
+                selectedTruckType = selectedTruckType,
+                onSelect = onSelect,
+                tagPrefix = "open",
+            )
+            if (truckTypes.open.isNotEmpty() && truckTypes.closed.isNotEmpty()) {
+                Spacer(Modifier.height(14.dp))
             }
+            TruckTypeGroup(
+                label = "Closed body",
+                trucks = truckTypes.closed,
+                selectedTruckType = selectedTruckType,
+                onSelect = onSelect,
+                tagPrefix = "closed",
+            )
+        }
+    }
+}
 
-            if (closedTrucks.isNotEmpty()) {
-                Text(
-                    "Closed",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun TruckTypeGroup(
+    label: String,
+    trucks: List<TruckTypeDto>,
+    selectedTruckType: TruckTypeDto?,
+    onSelect: (TruckTypeDto) -> Unit,
+    tagPrefix: String,
+) {
+    if (trucks.isEmpty()) return
+
+    Column {
+        Text(
+            text = label.uppercase(),
+            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.1.sp),
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(8.dp))
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            trucks.forEach { truck ->
+                VehicleTypeChip(
+                    label = truck.displayName,
+                    isSelected = selectedTruckType?.id == truck.id,
+                    onClick = { onSelect(truck) },
+                    testTag = "create_indent_truck_${tagPrefix}_${truck.id}",
                 )
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    closedTrucks.forEach { truck ->
-                        VehicleTypeChip(
-                            label = truck.displayName,
-                            isSelected = selectedTruckType?.id == truck.id,
-                            onClick = { onSelect(truck) },
-                        )
-                    }
-                }
             }
         }
     }
 }
 
-@Composable
-private fun VehicleTypeChip(
-    label: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val bgColor = if (isSelected) {
-        MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
-    } else {
-        Color.Transparent
-    }
-    val borderColor = if (isSelected) {
-        MaterialTheme.colorScheme.primary
-    } else {
-        MaterialTheme.colorScheme.outlineVariant
-    }
-    val textColor = if (isSelected) {
-        MaterialTheme.colorScheme.primary
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
-    }
+// ---------------------------------------------------------------------------
+// Clause 05 — commercials
+// ---------------------------------------------------------------------------
 
-    Surface(
-        modifier = modifier.clickable(onClick = onClick),
-        shape = RoundedCornerShape(50),
-        color = bgColor,
-        border = BorderStroke(1.dp, borderColor),
+@Composable
+private fun CommercialsClause(
+    uiState: CreateIndentUiState,
+    state: ClauseState,
+    negotiatedError: String?,
+    onEvent: (CreateIndentEvent) -> Unit,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val summary = listOfNotNull(
+        uiState.clientCost.takeIf { it.isNotBlank() }?.let { "Client ₹$it" },
+        uiState.negotiatedCost.takeIf { it.isNotBlank() }?.let { "Negotiated ₹$it" },
+    ).joinToString(" · ")
+
+    ClauseDocket(
+        number = 5,
+        title = "Commercials",
+        state = state,
+        testTag = "create_indent_clause_commercials",
     ) {
-        Text(
-            text = label,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            color = textColor,
+        MoneyRuleField(
+            label = "Client cost",
+            raw = uiState.clientCost,
+            testTag = "create_indent_client_cost_field",
+            placeholder = "0",
+            onCommit = { onEvent(CreateIndentEvent.UpdateOptionalField(clientCost = it)) },
+            trailingLabel = "INR",
+        )
+        Spacer(Modifier.height(18.dp))
+        MoneyRuleField(
+            label = "Business proposed cost",
+            raw = uiState.businessProposedCost,
+            testTag = "create_indent_proposed_cost_field",
+            placeholder = "0",
+            onCommit = { onEvent(CreateIndentEvent.UpdateOptionalField(businessProposedCost = it)) },
+            trailingLabel = "INR",
+        )
+        Spacer(Modifier.height(18.dp))
+        MoneyRuleField(
+            label = "Negotiated trip cost",
+            raw = uiState.negotiatedCost,
+            testTag = "create_indent_negotiated_cost_field",
+            placeholder = "0",
+            onCommit = { onEvent(CreateIndentEvent.UpdateOptionalField(negotiatedCost = it)) },
+            trailingLabel = "INR",
+            isError = negotiatedError != null,
+            supportingText = negotiatedError,
+        )
+
+        Spacer(Modifier.height(14.dp))
+        PerforationRule()
+        Spacer(Modifier.height(4.dp))
+
+        DocketSwitchRow(
+            title = "Hide cost from the load board",
+            description = "Truck owners see the load without the rate.",
+            checked = uiState.hideCost,
+            onCheckedChange = { onEvent(CreateIndentEvent.UpdateOptionalField(hideCost = it)) },
+            testTag = "create_indent_hide_cost_switch",
+        )
+
+        if (summary.isNotBlank()) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = summary,
+                style = MaterialTheme.typography.bodySmall,
+                color = scheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Clause 06 — terms
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun TermsClause(
+    uiState: CreateIndentUiState,
+    state: ClauseState,
+    tatError: Boolean,
+    onEvent: (CreateIndentEvent) -> Unit,
+) {
+    ClauseDocket(
+        number = 6,
+        title = "Terms",
+        state = state,
+        testTag = "create_indent_clause_terms",
+    ) {
+        DocketSwitchRow(
+            title = "Turnaround time",
+            description = "Commit to a delivery window from loading.",
+            checked = uiState.tatRequired,
+            onCheckedChange = { onEvent(CreateIndentEvent.UpdateOptionalField(tatRequired = it)) },
+            testTag = "create_indent_tat_switch",
+        )
+        Spacer(Modifier.height(6.dp))
+        RuledField(
+            label = "TAT hours",
+            value = uiState.tatHours,
+            onValueChange = { onEvent(CreateIndentEvent.UpdateOptionalField(tatHours = it)) },
+            testTag = "create_indent_tat_hours_field",
+            placeholder = "0",
+            keyboardType = KeyboardType.Decimal,
+            enabled = uiState.tatRequired,
+            isError = tatError,
+            supportingText = if (!uiState.tatRequired) {
+                "Enable turnaround time to set this."
+            } else {
+                null
+            },
+            trailingLabel = "HRS",
+        )
+
+        Spacer(Modifier.height(18.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            RuledField(
+                label = "Vehicle height",
+                value = uiState.vehicleHeight,
+                onValueChange = {
+                    onEvent(CreateIndentEvent.UpdateOptionalField(vehicleHeight = it))
+                },
+                testTag = "create_indent_height_field",
+                placeholder = "0",
+                keyboardType = KeyboardType.Number,
+                trailingLabel = "FT",
+                modifier = Modifier.weight(1f),
+            )
+            RuledField(
+                label = "Flooring",
+                value = uiState.flooringType,
+                onValueChange = {
+                    onEvent(CreateIndentEvent.UpdateOptionalField(flooringType = it))
+                },
+                testTag = "create_indent_flooring_field",
+                placeholder = "steel",
+                modifier = Modifier.weight(1f),
+            )
+        }
+
+        Spacer(Modifier.height(14.dp))
+        PerforationRule()
+        Spacer(Modifier.height(4.dp))
+
+        DocketSwitchRow(
+            title = "Tarpaulin required",
+            description = "The load must be sheeted.",
+            checked = uiState.tarpaulinRequired,
+            onCheckedChange = {
+                onEvent(CreateIndentEvent.UpdateOptionalField(tarpaulinRequired = it))
+            },
+            testTag = "create_indent_tarpaulin_switch",
+        )
+
+        Spacer(Modifier.height(10.dp))
+
+        RuledField(
+            label = "Remarks",
+            value = uiState.remarks,
+            onValueChange = { onEvent(CreateIndentEvent.UpdateOptionalField(remarks = it)) },
+            testTag = "create_indent_remarks_field",
+            placeholder = "Anything the driver should know",
+            minLines = 2,
         )
     }
 }
 
-@Composable
-private fun CargoSection(
-    weight: String,
-    materialName: String,
-    onWeightChange: (String) -> Unit,
-    onMaterialChange: (String) -> Unit,
-    weightError: Boolean = false,
-    materialError: Boolean = false,
-) {
-    SectionCard {
-        SectionHeaderText("Cargo Details")
+// ---------------------------------------------------------------------------
+// Money input
+// ---------------------------------------------------------------------------
 
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedTextField(
-                value = weight,
-                onValueChange = onWeightChange,
-                label = { Text("Weight (MT)") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(16.dp),
-                singleLine = true,
-                isError = weightError,
-            )
-            OutlinedTextField(
-                value = materialName,
-                onValueChange = onMaterialChange,
-                label = { Text("Material Name") },
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(16.dp),
-                singleLine = true,
-                isError = materialError,
-            )
+/**
+ * A money field on a rule. Owns its [TextFieldValue] so the caret stays put
+ * while thousands separators are inserted — the plain-`String` overload loses
+ * the selection on every recomposition and the caret snaps to the end.
+ */
+@Composable
+fun MoneyRuleField(
+    label: String,
+    raw: String,
+    testTag: String,
+    onCommit: (String) -> Unit,
+    placeholder: String = "0",
+    isError: Boolean = false,
+    supportingText: String? = null,
+    trailingLabel: String? = null,
+) {
+    var field by remember { mutableStateOf(TextFieldValue(raw, TextRange(raw.length))) }
+    LaunchedEffect(raw) {
+        if (field.text != raw) {
+            field = TextFieldValue(raw, TextRange(raw.length))
         }
+    }
+
+    RuledAmountField(
+        label = label,
+        value = field,
+        onValueChange = { newValue ->
+            val plain = newValue.text.replace(",", "")
+            val formatted = formatIndianCurrency(plain)
+            val commaDiff = formatted.count { it == ',' } - field.text.count { it == ',' }
+            val cursor = (newValue.selection.start + commaDiff).coerceIn(0, formatted.length)
+            field = TextFieldValue(formatted, TextRange(cursor))
+            onCommit(formatted)
+        },
+        testTag = testTag,
+        placeholder = placeholder,
+        isError = isError,
+        supportingText = supportingText,
+        trailingLabel = trailingLabel,
+    )
+}
+
+// ---------------------------------------------------------------------------
+// Clause state
+//
+// Each clause reports how far it has got. Required clauses distinguish
+// COMPLETE from PARTIAL; optional clauses use FILLED instead of COMPLETE so a
+// filled-in optional clause is never mistaken for a satisfied requirement.
+// ---------------------------------------------------------------------------
+
+fun consignorClauseState(
+    state: CreateIndentUiState,
+    errors: Set<String>,
+): ClauseState = when {
+    errors.contains("client") || errors.contains("placement") -> ClauseState.ERROR
+    state.selectedClient != null && state.placementContact != null -> ClauseState.COMPLETE
+    state.selectedClient != null || state.selectedBranch != null ||
+        state.placementContact != null || state.paymentContact != null ||
+        state.operationsContact != null || state.podContact != null -> ClauseState.PARTIAL
+    else -> ClauseState.EMPTY
+}
+
+fun laneClauseState(
+    state: CreateIndentUiState,
+    errors: Set<String>,
+): ClauseState = when {
+    errors.contains("from") || errors.contains("to") -> ClauseState.ERROR
+    state.selectedFromLocation != null && state.selectedToLocation != null -> ClauseState.COMPLETE
+    state.selectedFromLocation != null || state.selectedToLocation != null -> ClauseState.PARTIAL
+    else -> ClauseState.EMPTY
+}
+
+fun vehicleClauseState(
+    state: CreateIndentUiState,
+    errors: Set<String>,
+): ClauseState = when {
+    errors.contains("truck") -> ClauseState.ERROR
+    state.selectedTruckType != null -> ClauseState.COMPLETE
+    else -> ClauseState.EMPTY
+}
+
+fun cargoClauseState(
+    state: CreateIndentUiState,
+    errors: Set<String>,
+): ClauseState {
+    val weightOk = state.weight.toDoubleOrNull()?.let { it > 0 } == true
+    val materialOk = state.materialName.isNotBlank()
+    return when {
+        errors.contains("weight") || errors.contains("material") -> ClauseState.ERROR
+        weightOk && materialOk -> ClauseState.COMPLETE
+        state.weight.isNotBlank() || state.materialName.isNotBlank() -> ClauseState.PARTIAL
+        else -> ClauseState.EMPTY
     }
 }
 
-@Composable
-private fun OptionalDetailsSection(
-    uiState: CreateIndentUiState,
-    onEvent: (CreateIndentEvent) -> Unit,
-    tatError: Boolean = false,
-    onTatClear: () -> Unit = {},
-) {
-    val negotiatedCostError = negotiatedCostExceedsClientError(uiState.negotiatedCost, uiState.clientCost)
-
-    var expanded by remember { mutableStateOf(true) }
-    var costFieldValue by remember {
-        mutableStateOf(TextFieldValue(uiState.clientCost, TextRange(uiState.clientCost.length)))
+fun commercialsClauseState(
+    state: CreateIndentUiState,
+    errors: Set<String>,
+): ClauseState {
+    val touched = state.clientCost.isNotBlank() ||
+        state.businessProposedCost.isNotBlank() ||
+        state.negotiatedCost.isNotBlank() ||
+        state.hideCost
+    return when {
+        errors.contains("negotiated") -> ClauseState.ERROR
+        touched -> ClauseState.FILLED
+        else -> ClauseState.EMPTY
     }
-    LaunchedEffect(uiState.clientCost) {
-        if (costFieldValue.text != uiState.clientCost) {
-            costFieldValue = TextFieldValue(uiState.clientCost, TextRange(uiState.clientCost.length))
-        }
-    }
-    var proposedCostFieldValue by remember {
-        mutableStateOf(TextFieldValue(uiState.businessProposedCost, TextRange(uiState.businessProposedCost.length)))
-    }
-    LaunchedEffect(uiState.businessProposedCost) {
-        if (proposedCostFieldValue.text != uiState.businessProposedCost) {
-            proposedCostFieldValue = TextFieldValue(uiState.businessProposedCost, TextRange(uiState.businessProposedCost.length))
-        }
-    }
-    var negotiatedCostFieldValue by remember {
-        mutableStateOf(TextFieldValue(uiState.negotiatedCost, TextRange(uiState.negotiatedCost.length)))
-    }
-    LaunchedEffect(uiState.negotiatedCost) {
-        if (negotiatedCostFieldValue.text != uiState.negotiatedCost) {
-            negotiatedCostFieldValue = TextFieldValue(uiState.negotiatedCost, TextRange(uiState.negotiatedCost.length))
-        }
-    }
+}
 
-    SectionCard {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { expanded = !expanded },
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                "Optional Details",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Icon(
-                imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                contentDescription = "Expand",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-
-        AnimatedVisibility(
-            visible = expanded,
-            enter = expandVertically(),
-            exit = shrinkVertically(),
-        ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                SectionHeaderText("Trip Cost Breakdown")
-
-                OutlinedTextField(
-                    value = costFieldValue,
-                    onValueChange = { newValue ->
-                        val rawText = newValue.text.replace(",", "")
-                        val formatted = formatIndianCurrency(rawText)
-
-                        // Calculate cursor shift caused by added/removed commas
-                        val commaDiff = formatted.count { it == ',' } - costFieldValue.text.count { it == ',' }
-                        val newCursor = (newValue.selection.start + commaDiff).coerceIn(0, formatted.length)
-
-                        costFieldValue = TextFieldValue(formatted, TextRange(newCursor))
-                        onEvent(CreateIndentEvent.UpdateOptionalField(clientCost = formatted))
-                    },
-                    label = {
-                        Text(
-                            text = "Client Cost (₹)",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    singleLine = true,
-                )
-
-                // Costs stack full-width — the (₹) labels cramp in half-width fields.
-                OutlinedTextField(
-                    value = proposedCostFieldValue,
-                    onValueChange = { newValue ->
-                        val rawText = newValue.text.replace(",", "")
-                        val formatted = formatIndianCurrency(rawText)
-
-                        val commaDiff = formatted.count { it == ',' } - proposedCostFieldValue.text.count { it == ',' }
-                        val newCursor = (newValue.selection.start + commaDiff).coerceIn(0, formatted.length)
-
-                        proposedCostFieldValue = TextFieldValue(formatted, TextRange(newCursor))
-                        onEvent(CreateIndentEvent.UpdateOptionalField(businessProposedCost = formatted))
-                    },
-                    label = {
-                        Text(
-                            text = "Proposed Cost (₹)",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    singleLine = true,
-                )
-                OutlinedTextField(
-                    value = negotiatedCostFieldValue,
-                    onValueChange = { newValue ->
-                        val rawText = newValue.text.replace(",", "")
-                        val formatted = formatIndianCurrency(rawText)
-
-                        val commaDiff = formatted.count { it == ',' } - negotiatedCostFieldValue.text.count { it == ',' }
-                        val newCursor = (newValue.selection.start + commaDiff).coerceIn(0, formatted.length)
-
-                        negotiatedCostFieldValue = TextFieldValue(formatted, TextRange(newCursor))
-                        onEvent(CreateIndentEvent.UpdateOptionalField(negotiatedCost = formatted))
-                    },
-                    label = {
-                        Text(
-                            text = "Negotiated Cost (₹)",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    singleLine = true,
-                    isError = negotiatedCostError != null,
-                    supportingText = negotiatedCostError?.let { msg -> { Text(msg) } },
-                )
-
-                HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                    modifier = Modifier.padding(vertical = 4.dp),
-                )
-
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OutlinedTextField(
-                        value = uiState.vehicleHeight,
-                        onValueChange = { onEvent(CreateIndentEvent.UpdateOptionalField(vehicleHeight = it)) },
-                        label = {
-                            Text(
-                                text = "Height (ft)",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(16.dp),
-                        singleLine = true,
-                    )
-                    OutlinedTextField(
-                        value = uiState.flooringType,
-                        onValueChange = { onEvent(CreateIndentEvent.UpdateOptionalField(flooringType = it)) },
-                        label = {
-                            Text(
-                                text = "Flooring Type",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(16.dp),
-                        singleLine = true,
-                    )
-                }
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Checkbox(
-                            checked = uiState.tarpaulinRequired,
-                            onCheckedChange = {
-                                onEvent(CreateIndentEvent.UpdateOptionalField(tarpaulinRequired = it))
-                            },
-                            colors = CheckboxDefaults.colors(
-                                checkedColor = MaterialTheme.colorScheme.primary,
-                            ),
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        Text(
-                            "Tarpaulin",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Checkbox(
-                            checked = uiState.hideCost,
-                            onCheckedChange = {
-                                onEvent(CreateIndentEvent.UpdateOptionalField(hideCost = it))
-                            },
-                            colors = CheckboxDefaults.colors(
-                                checkedColor = MaterialTheme.colorScheme.primary,
-                            ),
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        Text(
-                            "Hide Indent Cost",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
-                }
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Checkbox(
-                            checked = uiState.tatRequired,
-                            onCheckedChange = {
-                                onEvent(CreateIndentEvent.UpdateOptionalField(tatRequired = it))
-                            },
-                            colors = CheckboxDefaults.colors(
-                                checkedColor = MaterialTheme.colorScheme.primary,
-                            ),
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        Text(
-                            "TAT",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
-
-                    OutlinedTextField(
-                        value = uiState.tatHours,
-                        enabled = uiState.tatRequired,
-                        onValueChange = {
-                            onTatClear()
-                            onEvent(CreateIndentEvent.UpdateOptionalField(tatHours = it))
-                        },
-                        label = { Text("TAT hours") },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(16.dp),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        singleLine = true,
-                        isError = tatError,
-                    )
-                }
-
-                OutlinedTextField(
-                    value = uiState.remarks,
-                    onValueChange = { onEvent(CreateIndentEvent.UpdateOptionalField(remarks = it)) },
-                    label = { Text("Remarks") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    minLines = 2,
-                )
-            }
-        }
+fun termsClauseState(
+    state: CreateIndentUiState,
+    errors: Set<String>,
+): ClauseState {
+    val touched = state.tatRequired ||
+        state.tarpaulinRequired ||
+        state.vehicleHeight.isNotBlank() ||
+        state.remarks.isNotBlank()
+    return when {
+        errors.contains("tat") -> ClauseState.ERROR
+        touched -> ClauseState.FILLED
+        else -> ClauseState.EMPTY
     }
 }

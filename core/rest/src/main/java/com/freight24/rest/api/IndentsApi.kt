@@ -3,6 +3,7 @@ package com.freight24.rest.api
 import com.freight24.rest.request.CloneIndentRequest
 import com.freight24.rest.request.CreateIndentRequest
 import com.freight24.rest.request.IndentInterestRequest
+import com.freight24.rest.request.UpdateIndentGroupRequest
 import com.freight24.rest.request.UpdateIndentRequest
 import com.freight24.rest.response.GetIndentsResponse
 import com.freight24.rest.response.IndentResponse
@@ -64,6 +65,17 @@ interface IndentsApi {
     suspend fun updateIndent(
         @Path("id") id: String,
         @Body request: UpdateIndentRequest,
+    ): Response<IndentResponse>
+
+    /**
+     * Group-level update — the only write path that can change an indent's
+     * contact roles. Backend accepts it while the group is `OPEN` and only from
+     * the creator or an admin / operations manager.
+     */
+    @PUT("indents/groups/{groupId}")
+    suspend fun updateIndentGroup(
+        @Path("groupId") groupId: String,
+        @Body request: UpdateIndentGroupRequest,
     ): Response<IndentResponse>
 
     @GET("indents/groups")

@@ -31,6 +31,8 @@ data class IndentResponse(
         val material: String,
         val priority: String,
         val clientId: String,
+        /** Selected client branch. Null when the indent was raised without one. */
+        val clientBranchId: String? = null,
         val tatHours: Int?,
         val createdAt: String,
         val expiresAt: String,
@@ -47,7 +49,39 @@ data class IndentResponse(
         val luIncludedInTripCost: Boolean?,
         val truckType: TruckType?,
         val clientProfile: ClientProfile?,
+        /** Resolved branch record — `{ id, branchName, branchCode, status }`. */
+        val clientBranch: ClientBranch? = null,
+        /** Named contacts attached to the indent, one entry per contact role. */
+        val indentContacts: List<IndentContact> = emptyList(),
         val indentLocations: List<IndentLocation>
+    )
+
+    /**
+     * Branch as embedded on an indent. The full branch record lives at
+     * `/api/v2/client/{clientId}/branches`; this is the trimmed projection the
+     * indent endpoints return.
+     */
+    @Serializable
+    data class ClientBranch(
+        val id: String,
+        val branchName: String? = null,
+        val branchCode: String? = null,
+        val status: String? = null,
+    )
+
+    /** One named contact on an indent, keyed by [contactType]. */
+    @Serializable
+    data class IndentContact(
+        val id: String,
+        /** The underlying `client_contacts.id`. */
+        val contactId: String? = null,
+        /** `PLACEMENT` | `PAYMENT` | `OPERATIONS` | `POD`. */
+        val contactType: String? = null,
+        val contactName: String? = null,
+        val contactPhone: String? = null,
+        val contactEmail: String? = null,
+        val createdAt: String? = null,
+        val updatedAt: String? = null,
     )
 
     @Serializable

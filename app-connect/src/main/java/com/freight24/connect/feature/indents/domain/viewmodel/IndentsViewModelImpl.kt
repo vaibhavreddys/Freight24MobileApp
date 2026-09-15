@@ -3,10 +3,13 @@ package com.freight24.connect.feature.indents.domain.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.freight24.connect.feature.indents.domain.usecases.CreateIndentUseCase
+import com.freight24.connect.feature.indents.domain.usecases.GetClientBranchesUseCase
+import com.freight24.connect.feature.indents.domain.usecases.GetClientContactsUseCase
 import com.freight24.connect.feature.indents.domain.usecases.GetClientsUseCase
 import com.freight24.connect.feature.indents.domain.usecases.GetLocationsUseCase
 import com.freight24.connect.feature.indents.domain.usecases.GetTruckTypesUseCase
 import com.freight24.rest.request.CreateIndentRequest
+import com.freight24.rest.request.IndentContactsRequest
 import com.freight24.rest.response.LocationDto
 import com.freight24.rest.response.TruckCategoryDto
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,6 +31,8 @@ class IndentsViewModelImpl
         private val getClientsUseCase: GetClientsUseCase,
         private val getTruckTypesUseCase: GetTruckTypesUseCase,
         private val createIndentUseCase: CreateIndentUseCase,
+        private val getClientBranchesUseCase: GetClientBranchesUseCase,
+        private val getClientContactsUseCase: GetClientContactsUseCase,
     ) : ViewModel(), IndentsViewModel {
 
     private val _uiState = MutableStateFlow(CreateIndentUiState())
@@ -98,13 +103,39 @@ class IndentsViewModelImpl
                     )
                 }
 
-            is CreateIndentEvent.SelectClient ->
+            is CreateIndentEvent.SelectClient -> {
                 _uiState.update {
                     it.copy(
                         selectedClient = event.client,
                         clientQuery = event.client.companyName,
                         clientSearchResults = emptyList(),
+                        // Branch and contacts belong to the previous client. The
+                        // backend validates both against the selected client, so
+                        // carrying them over would guarantee a 400.
+                        selectedBranch = null,
+                        branches = emptyList(),
+                        contacts = emptyList(),
+                        placementContact = null,
+                        paymentContact = null,
+                        operationsContact = null,
+                        podContact = null,
+                        contactsUnavailable = false,
                     )
+                }
+                loadClientDirectory(event.client.clientId)
+            }
+
+            is CreateIndentEvent.SelectBranch ->
+                _uiState.update { it.copy(selectedBranch = event.branch) }
+
+            is CreateIndentEvent.SelectContact ->
+                _uiState.update { state ->
+                    when (event.role) {
+                        IndentContactRole.PLACEMENT -> state.copy(placementContact = event.contact)
+                        IndentContactRole.PAYMENT -> state.copy(paymentContact = event.contact)
+                        IndentContactRole.OPERATIONS -> state.copy(operationsContact = event.contact)
+                        IndentContactRole.POD -> state.copy(podContact = event.contact)
+                    }
                 }
 
             is CreateIndentEvent.UpdateMaterialName -> {
@@ -187,6 +218,38 @@ class IndentsViewModelImpl
             }
     }
 
+    /**
+     * Loads the selected client's branch and contact directory from the v2
+     * client API. Both calls run in one coroutine but each failure is absorbed
+     * into state rather than raised:
+     *
+     * - an unreachable directory is a *normal* state — a freshly onboarded
+     *   client legitimately has no contacts yet;
+     * - the backend hard-requires a `placement` contact, so an empty list is the
+     *   one condition that can block indent creation outright. The form renders
+     *   that inline where the picker would be, instead of letting the operator
+     *   discover it as a 400 on submit.
+     */
+    private fun loadClientDirectory(clientId: String) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingBranches = true, isLoadingContacts = true) }
+
+            val branchesResult = getClientBranchesUseCase.invoke(clientId)
+            val contactsResult = getClientContactsUseCase.invoke(clientId)
+
+            _uiState.update { state ->
+                val contacts = contactsResult.getOrNull().orEmpty()
+                state.copy(
+                    branches = branchesResult.getOrNull().orEmpty(),
+                    isLoadingBranches = false,
+                    contacts = contacts,
+                    isLoadingContacts = false,
+                    contactsUnavailable = contactsResult.isFailure || contacts.isEmpty(),
+                )
+            }
+        }
+    }
+
     private fun updateOptionalField(
         event: CreateIndentEvent.UpdateOptionalField
     ) {
@@ -245,7 +308,14 @@ class IndentsViewModelImpl
                     tarpaulingRequired = state.tarpaulinRequired,
                     remarks = state.remarks,
                     flooringType = state.flooringType.lowercase(Locale.getDefault()),
-                    locations = listOf(loadingLocation, unLoadingLocation)
+                    locations = listOf(loadingLocation, unLoadingLocation),
+                    clientBranchId = state.selectedBranch?.id,
+                    contacts = IndentContactsRequest(
+                        placement = state.placementContact?.id,
+                        payment = state.paymentContact?.id,
+                        operations = state.operationsContact?.id,
+                        pod = state.podContact?.id,
+                    ).takeUnless { it.isEmpty },
                 )
                 val result = createIndentUseCase.invoke(request)
                 if (result.isSuccess) {
@@ -291,6 +361,13 @@ class IndentsViewModelImpl
         }
         if (state.selectedClient == null) {
             _uiState.update { it.copy(errorMessage = "Please select Client") }
+            return false
+        }
+        // The backend destructures `contacts = {}` and then rejects a missing
+        // placement with a 400, so this is required even though the field reads
+        // as optional client information.
+        if (state.placementContact == null) {
+            _uiState.update { it.copy(errorMessage = "Please select a Placement contact") }
             return false
         }
         if (state.materialName.isBlank()) {

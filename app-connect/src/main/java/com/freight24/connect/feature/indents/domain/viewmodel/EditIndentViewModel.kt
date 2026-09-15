@@ -1,6 +1,7 @@
 package com.freight24.connect.feature.indents.domain.viewmodel
 
 import androidx.compose.runtime.Immutable
+import com.freight24.rest.response.ClientContactV2Dto
 import com.freight24.rest.response.IndentResponse
 import kotlinx.coroutines.flow.StateFlow
 
@@ -18,7 +19,7 @@ data class EditIndentUiState(
     val indent: IndentResponse.Indent? = null,
     val hasChanges: Boolean = false,
 
-    // Editable fields
+    // Editable fields — accepted by PUT /api/v1/indents/:id
     val clientCost: String = "",
     val negotiatedCost: String = "",
     val businessProposedCost: String = "",
@@ -28,11 +29,43 @@ data class EditIndentUiState(
     val hideCost: Boolean = false,
     val tatRequired: Boolean = false,
     val tatHours: String = "",
-    val remarks: String = ""
-)
+    val remarks: String = "",
+
+    // Contact roles — editable only through PUT /api/v1/indents/groups/:id
+    val contacts: List<ClientContactV2Dto> = emptyList(),
+    val isLoadingContacts: Boolean = false,
+    /** True when the client has no active contacts, so no role can be set. */
+    val contactsUnavailable: Boolean = false,
+    val placementContact: ClientContactV2Dto? = null,
+    val paymentContact: ClientContactV2Dto? = null,
+    val operationsContact: ClientContactV2Dto? = null,
+    val podContact: ClientContactV2Dto? = null,
+) {
+    /** Contact currently bound to [role]. */
+    fun contactFor(role: IndentContactRole): ClientContactV2Dto? = when (role) {
+        IndentContactRole.PLACEMENT -> placementContact
+        IndentContactRole.PAYMENT -> paymentContact
+        IndentContactRole.OPERATIONS -> operationsContact
+        IndentContactRole.POD -> podContact
+    }
+
+    /**
+     * The contact id recorded on the indent as loaded, for [role]. Compared
+     * against [contactFor] to decide whether the group endpoint needs calling.
+     *
+     * Falls back to the join-row id when the backend has not populated
+     * `contactId`, so a role is never treated as changed purely because of how
+     * the indent endpoint serialised it.
+     */
+    fun originalContactId(role: IndentContactRole): String? =
+        indent?.indentGroupDetails?.indentContacts
+            ?.firstOrNull { it.contactType.equals(role.name, ignoreCase = true) }
+            ?.let { it.contactId ?: it.id }
+}
 
 sealed class EditIndentEvent {
     data class LoadIndent(val indentId: String) : EditIndentEvent()
+
     data class UpdateField(
         val clientCost: String? = null,
         val negotiatedCost: String? = null,
@@ -43,8 +76,15 @@ sealed class EditIndentEvent {
         val hideCost: Boolean? = null,
         val tatRequired: Boolean? = null,
         val tatHours: String? = null,
-        val remarks: String? = null
+        val remarks: String? = null,
     ) : EditIndentEvent()
+
+    /** `null` clears the role. Placement can be cleared then re-set, but not omitted at save. */
+    data class SelectContact(
+        val role: IndentContactRole,
+        val contact: ClientContactV2Dto?,
+    ) : EditIndentEvent()
+
     object SubmitUpdate : EditIndentEvent()
     object ClearError : EditIndentEvent()
     object ClearSuccess : EditIndentEvent()

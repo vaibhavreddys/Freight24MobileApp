@@ -10,6 +10,10 @@ import com.freight24.connect.feature.indents.domain.usecases.CreateIndentUseCase
 import com.freight24.connect.feature.indents.domain.usecases.CreateIndentUseCaseImpl
 import com.freight24.connect.feature.indents.domain.usecases.GetAllIndentsUseCase
 import com.freight24.connect.feature.indents.domain.usecases.GetAllIndentsUseCaseImpl
+import com.freight24.connect.feature.indents.domain.usecases.GetClientBranchesUseCase
+import com.freight24.connect.feature.indents.domain.usecases.GetClientBranchesUseCaseImpl
+import com.freight24.connect.feature.indents.domain.usecases.GetClientContactsUseCase
+import com.freight24.connect.feature.indents.domain.usecases.GetClientContactsUseCaseImpl
 import com.freight24.connect.feature.indents.domain.usecases.GetClientsUseCase
 import com.freight24.connect.feature.indents.domain.usecases.GetClientsUseCaseImpl
 import com.freight24.connect.feature.indents.domain.usecases.GetIndentByIdUseCase
@@ -24,6 +28,8 @@ import com.freight24.connect.feature.indents.domain.usecases.SearchIndentsUseCas
 import com.freight24.connect.feature.indents.domain.usecases.SearchIndentsUseCaseImpl
 import com.freight24.connect.feature.indents.domain.usecases.TruckerInterestInboxUseCase
 import com.freight24.connect.feature.indents.domain.usecases.TruckerInterestInboxUseCaseImpl
+import com.freight24.connect.feature.indents.domain.usecases.UpdateIndentGroupUseCase
+import com.freight24.connect.feature.indents.domain.usecases.UpdateIndentGroupUseCaseImpl
 import com.freight24.connect.feature.indents.domain.usecases.UpdateIndentUseCase
 import com.freight24.connect.feature.indents.domain.usecases.UpdateIndentUseCaseImpl
 import dagger.Binds
@@ -39,6 +45,16 @@ abstract class IndentsDomainModule {
 
     @Binds
     abstract fun bindGetClientsUseCase(useCaseImpl: GetClientsUseCaseImpl): GetClientsUseCase
+
+    @Binds
+    abstract fun bindGetClientBranchesUseCase(
+        useCaseImpl: GetClientBranchesUseCaseImpl
+    ): GetClientBranchesUseCase
+
+    @Binds
+    abstract fun bindGetClientContactsUseCase(
+        useCaseImpl: GetClientContactsUseCaseImpl
+    ): GetClientContactsUseCase
 
     @Binds
     abstract fun bindGetTruckTypesUseCase(useCaseImpl: GetTruckTypesUseCaseImpl): GetTruckTypesUseCase
@@ -57,6 +73,11 @@ abstract class IndentsDomainModule {
 
     @Binds
     abstract fun bindUpdateIndentUseCase(useCaseImpl: UpdateIndentUseCaseImpl): UpdateIndentUseCase
+
+    @Binds
+    abstract fun bindUpdateIndentGroupUseCase(
+        useCaseImpl: UpdateIndentGroupUseCaseImpl
+    ): UpdateIndentGroupUseCase
 
     @Binds
     abstract fun bindGetAllIndentsUseCase(useCaseImpl: GetAllIndentsUseCaseImpl): GetAllIndentsUseCase

@@ -4,6 +4,7 @@ import com.freight24.common.di.IoDispatcher
 import com.freight24.rest.api.IndentsApi
 import com.freight24.rest.request.CloneIndentRequest
 import com.freight24.rest.request.CreateIndentRequest
+import com.freight24.rest.request.UpdateIndentGroupRequest
 import com.freight24.rest.request.UpdateIndentRequest
 import com.freight24.rest.response.GetIndentsResponse
 import com.freight24.rest.response.IndentResponse
@@ -83,6 +84,22 @@ class IndentRepositoryImpl
         withContext(ioDispatcher) {
             try {
                 val response = api.updateIndent(id, request)
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!)
+                } else {
+                    Result.failure(Exception(response.message()))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    override suspend fun updateIndentGroup(
+        groupId: String,
+        request: UpdateIndentGroupRequest,
+    ): Result<IndentResponse> =
+        withContext(ioDispatcher) {
+            try {
+                val response = api.updateIndentGroup(groupId, request)
                 if (response.isSuccessful && response.body() != null) {
                     Result.success(response.body()!!)
                 } else {

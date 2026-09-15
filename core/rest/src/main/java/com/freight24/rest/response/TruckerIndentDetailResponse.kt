@@ -28,6 +28,8 @@ data class TruckerIndentGroupDetails(
     val material: String,
     val priority: String,
     val clientId: String,
+    /** Selected client branch. Null when the indent was raised without one. */
+    val clientBranchId: String? = null,
     val tatHours: Int? = null,
     val createdAt: String,
     val expiresAt: String,
@@ -42,6 +44,10 @@ data class TruckerIndentGroupDetails(
     val luIncludedInTripCost: Boolean? = null,
     val truckType: TruckerTruckType? = null,
     val clientProfile: TruckerClientProfile? = null,
+    /** Resolved branch record. Reuses the indent-side projection. */
+    val clientBranch: IndentResponse.ClientBranch? = null,
+    /** Named contacts on the indent, one entry per contact role. */
+    val indentContacts: List<IndentResponse.IndentContact> = emptyList(),
     val indentLocations: List<TruckerIndentLocation> = emptyList(),
 )
 

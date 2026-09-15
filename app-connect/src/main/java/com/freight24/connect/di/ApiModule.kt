@@ -6,6 +6,7 @@ import com.freight24.network.RetrofitFactory
 import com.freight24.network.di.AuthenticatedNetwork
 import com.freight24.network.di.DefaultNetwork
 import com.freight24.rest.api.ClientApi
+import com.freight24.rest.api.ClientV2Api
 import com.freight24.rest.api.AuthSessionApi
 import com.freight24.rest.api.FindTrucksApi
 import com.freight24.rest.api.IndentsApi
@@ -76,6 +77,20 @@ object ApiModule {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "ClientApi")
             .create(ClientApi::class.java)
+    }
+
+    /**
+     * v2 client reads (branches + contacts) used by the indent flow's client
+     * pickers. Separate from [ClientApi], which still serves the legacy
+     * `/api/v1/client` screens.
+     */
+    @Provides
+    fun providesClientV2Api(
+        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
+    ): ClientV2Api {
+        return retrofitFactory
+            .create(BuildConfig.BASE_URL, "ClientV2Api")
+            .create(ClientV2Api::class.java)
     }
 
     @Provides

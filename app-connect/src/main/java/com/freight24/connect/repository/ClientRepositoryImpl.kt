@@ -2,7 +2,10 @@ package com.freight24.connect.repository
 
 import com.freight24.common.di.IoDispatcher
 import com.freight24.rest.api.ClientApi
+import com.freight24.rest.api.ClientV2Api
 import com.freight24.rest.request.UpdateClientRequest
+import com.freight24.rest.response.ClientBranchV2Dto
+import com.freight24.rest.response.ClientContactV2Dto
 import com.freight24.rest.response.ClientDto
 import com.freight24.rest.response.ClientProfileDto
 import kotlinx.coroutines.CoroutineDispatcher
@@ -15,6 +18,7 @@ class ClientRepositoryImpl
     @Inject
     constructor(
         private val api: ClientApi,
+        private val v2Api: ClientV2Api,
         @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) : ClientRepository {
         override suspend fun getClients(): Result<List<ClientDto>> =
@@ -84,6 +88,36 @@ class ClientRepositoryImpl
                     val body = response.body()
                     if (response.isSuccessful && body != null) {
                         Result.success(body.data)
+                    } else {
+                        Result.failure(Exception(extractErrorMessage(response, body?.message)))
+                    }
+                } catch (e: Exception) {
+                    Result.failure(e)
+                }
+            }
+
+        override suspend fun getClientBranches(clientId: String): Result<List<ClientBranchV2Dto>> =
+            withContext(ioDispatcher) {
+                try {
+                    val response = v2Api.getClientBranches(clientId)
+                    val body = response.body()
+                    if (response.isSuccessful && body != null) {
+                        Result.success(body.data?.branches.orEmpty())
+                    } else {
+                        Result.failure(Exception(extractErrorMessage(response, body?.message)))
+                    }
+                } catch (e: Exception) {
+                    Result.failure(e)
+                }
+            }
+
+        override suspend fun getClientContacts(clientId: String): Result<List<ClientContactV2Dto>> =
+            withContext(ioDispatcher) {
+                try {
+                    val response = v2Api.getClientContacts(clientId)
+                    val body = response.body()
+                    if (response.isSuccessful && body != null) {
+                        Result.success(body.data?.data.orEmpty())
                     } else {
                         Result.failure(Exception(extractErrorMessage(response, body?.message)))
                     }
