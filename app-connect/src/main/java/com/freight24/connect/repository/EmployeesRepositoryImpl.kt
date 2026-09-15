@@ -1,6 +1,8 @@
 package com.freight24.connect.repository
 
 import com.freight24.common.di.IoDispatcher
+import com.freight24.database.dao.EmployeeProfileDao
+import com.freight24.database.entity.CachedEmployeeProfileEntity
 import com.freight24.rest.api.EmployeesApi
 import com.freight24.rest.response.DashboardDataResponse
 import com.freight24.rest.response.EmployeeBasicInfo
@@ -10,6 +12,7 @@ import javax.inject.Inject
 
 class EmployeesRepositoryImpl @Inject constructor(
     private val api: EmployeesApi,
+    private val employeeProfileDao: EmployeeProfileDao,
     @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : EmployeesRepository {
 
@@ -41,4 +44,46 @@ class EmployeesRepositoryImpl @Inject constructor(
             }
         }
 
+    override suspend fun getEmployeeProfile(userId: String): Result<EmployeeBasicInfo> =
+        withContext(ioDispatcher) {
+            readCachedProfile(userId)?.let { return@withContext Result.success(it) }
+
+            val fetched = getEmployeeBasicInfo(userId)
+            fetched.onSuccess { info -> writeCachedProfile(userId, info) }
+            fetched
+        }
+
+    override suspend fun clearEmployeeProfileCache() {
+        withContext(ioDispatcher) {
+            runCatching { employeeProfileDao.clearAll() }
+        }
+    }
+
+    private suspend fun readCachedProfile(userId: String): EmployeeBasicInfo? =
+        runCatching { employeeProfileDao.get(userId) }
+            .getOrNull()
+            ?.let {
+                EmployeeBasicInfo(
+                    userId = it.userId,
+                    fullName = it.fullName,
+                    designation = it.designation,
+                    status = it.status,
+                    tagCode = it.tagCode,
+                )
+            }
+
+    private suspend fun writeCachedProfile(userId: String, info: EmployeeBasicInfo) {
+        runCatching {
+            employeeProfileDao.upsert(
+                CachedEmployeeProfileEntity(
+                    userId = userId,
+                    fullName = info.fullName,
+                    designation = info.designation,
+                    status = info.status,
+                    tagCode = info.tagCode,
+                    cachedAt = System.currentTimeMillis(),
+                )
+            )
+        }
+    }
 }

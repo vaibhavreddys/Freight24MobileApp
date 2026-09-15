@@ -59,6 +59,7 @@ import com.freight24.common.util.DateTimeUtils
 import com.freight24.connect.feature.leads.domain.viewmodel.LeadsTab
 import com.freight24.connect.feature.leads.domain.viewmodel.LeadsViewModel
 import com.freight24.rest.response.LeadDto
+import com.freight24.rest.response.LeadUserDto
 import com.freight24.ui.components.DocketCard
 import com.freight24.ui.components.FreightEmptyState
 import com.freight24.ui.components.FreightTopAppBar
@@ -129,6 +130,7 @@ fun LeadsScreen(
     val isLoadingMore = viewModel.isLoadingMore.collectAsStateWithLifecycle().value
     val hasMore = viewModel.hasMore.collectAsStateWithLifecycle().value
     val error = viewModel.error.collectAsStateWithLifecycle().value
+    val canViewAssignee = viewModel.canViewAssignee
 
     Scaffold(
         topBar = {
@@ -236,6 +238,7 @@ fun LeadsScreen(
                                 // says the state for every row, so the stamp would
                                 // be noise. Mixed tabs need their per-card verdict.
                                 showStamp = selectedTab != LeadsTab.NEW,
+                                canViewAssignee = canViewAssignee,
                                 onClick = { onLeadClick(lead.id) },
                             )
                         }
@@ -392,14 +395,16 @@ private fun LeadsRailCell(
 private fun LeadDocketCard(
     lead: LeadDto,
     showStamp: Boolean,
+    canViewAssignee: Boolean,
     onClick: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
     val accent = LeadStatusAccent(lead.status)
-    val cityLabel = lead.baseCity?.name ?: "No base city"
-    val assignedLabel = lead.assignedUser?.fullName
-        ?: lead.assignedUser?.tagCode
-        ?: "Unassigned"
+
+    // A brand-new lead has not been worked yet: no base location recorded, no calls
+    // made, no truck types captured. Printing three zeroes under the name is pure
+    // noise, so the meta line only appears once the lead has actually been touched.
+    val isFresh = isFreshLead(lead.status)
 
     DocketCard(
         accent = accent,
@@ -432,28 +437,26 @@ private fun LeadDocketCard(
             color = scheme.primary,
         )
 
-        Spacer(Modifier.height(8.dp))
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(5.dp),
-        ) {
-            Icon(
-                imageVector = Icons.Default.LocationOn,
-                contentDescription = null,
-                modifier = Modifier.size(14.dp),
-                tint = scheme.onSurfaceVariant,
-            )
-            Text(
-                text = buildString {
-                    append(cityLabel)
-                    append(" · ${lead.callAttempts} attempt${if (lead.callAttempts == 1) "" else "s"}")
-                    append(" · ${lead.truckTypes.size} truck${if (lead.truckTypes.size == 1) "" else "s"}")
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = scheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+        if (!isFresh) {
+            Spacer(Modifier.height(8.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.LocationOn,
+                    contentDescription = null,
+                    modifier = Modifier.size(14.dp),
+                    tint = scheme.onSurfaceVariant,
+                )
+                Text(
+                    text = leadMetaLine(lead),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = scheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
 
         Spacer(Modifier.height(12.dp))
@@ -471,15 +474,11 @@ private fun LeadDocketCard(
             ) {
                 if (showStamp) {
                     LeadStatusStamp(status = lead.status)
-                    Spacer(Modifier.width(8.dp))
+                    if (canViewAssignee) Spacer(Modifier.width(8.dp))
                 }
-                Text(
-                    text = assignedLabel,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = scheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                if (canViewAssignee) {
+                    AssigneeLabel(assignee = lead.assignedUser)
+                }
             }
             Spacer(Modifier.width(8.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -498,6 +497,43 @@ private fun LeadDocketCard(
             }
         }
     }
+}
+
+/**
+ * "Chennai · 2 attempts made · 3 truck types".
+ *
+ * `truckTypes` is a list of truck *types* the owner runs, not a fleet count — the old
+ * "0 trucks" label read as a count of vehicles and was wrong. Every segment is spelled
+ * out for the same reason: a bare "2 attempts" leaves the reader guessing whether the
+ * number is calls made or calls remaining.
+ */
+private fun leadMetaLine(lead: LeadDto): String = buildList {
+    add(lead.baseCity?.name ?: "No base location")
+    add("${lead.callAttempts} ${"attempt".pluralize(lead.callAttempts)} made")
+    add(
+        if (lead.truckTypes.isEmpty()) {
+            "no truck types"
+        } else {
+            "${lead.truckTypes.size} truck ${"type".pluralize(lead.truckTypes.size)}"
+        }
+    )
+}.joinToString(" · ")
+
+private fun String.pluralize(count: Int): String = if (count == 1) this else "${this}s"
+
+/** Who owns this lead — or a muted "Unassigned" when nobody does. */
+@Composable
+private fun AssigneeLabel(assignee: LeadUserDto?) {
+    val scheme = MaterialTheme.colorScheme
+    val name = assignee?.fullName ?: assignee?.tagCode
+    Text(
+        text = name ?: "Unassigned",
+        style = MaterialTheme.typography.bodySmall,
+        fontWeight = if (name == null) FontWeight.Normal else FontWeight.Medium,
+        color = if (name == null) scheme.onSurfaceVariant.copy(alpha = 0.7f) else scheme.onSurfaceVariant,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+    )
 }
 
 @Composable

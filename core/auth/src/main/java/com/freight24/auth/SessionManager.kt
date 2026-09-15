@@ -68,6 +68,40 @@ class SessionManager
                 return@runBlocking authDataStore.userId.first()
             }
 
+        /**
+         * The role this session was opened with, or null when the backend did not
+         * return one (e.g. a session seeded before roles were persisted).
+         */
+        fun getActiveRole(): String? =
+            runBlocking {
+                return@runBlocking authDataStore.activeRole.first()
+            }
+
+        /** Every role granted to this session. */
+        fun getRoles(): List<String> =
+            runBlocking {
+                return@runBlocking authDataStore.roles.first()
+            }
+
+        /**
+         * True when the session's role is a fleet executive.
+         *
+         * The backend carries this role under two names: `roles.name` is
+         * `fleet_executive` (what the auth response returns) while
+         * `employee_profiles.designation` is `fleet_exec`. Accept either so a
+         * session seeded from either source gates identically.
+         */
+        fun isFleetExecutive(): Boolean {
+            val candidates = buildList {
+                getActiveRole()?.let { add(it) }
+                addAll(getRoles())
+            }
+            return candidates.any { role ->
+                val normalized = role.trim().lowercase()
+                normalized == FLEET_EXECUTIVE_ROLE || normalized == FLEET_EXEC_ROLE
+            }
+        }
+
         suspend fun ensureInstallationId(): String = authDataStore.ensureInstallationId()
 
         suspend fun saveSession(
@@ -108,6 +142,8 @@ class SessionManager
                 refreshTokenExpiresAtMillis = refreshTokenExpiresAtMillis,
                 refreshSessionId = authData.refresh_session_id,
                 refreshFamilyId = authData.refresh_family_id,
+                activeRole = authData.user?.active_role,
+                roles = authData.user?.roles.orEmpty(),
             )
 
             _lastRefreshError.value = null
@@ -264,5 +300,13 @@ class SessionManager
             // the message would only appear on a future login screen as stale noise.
             _lastRefreshError.value = null
             authDataStore.clearAuthData()
+        }
+
+        companion object {
+            /** `roles.name` as returned by the backend auth response. */
+            const val FLEET_EXECUTIVE_ROLE = "fleet_executive"
+
+            /** `employee_profiles.designation` for the same role. */
+            const val FLEET_EXEC_ROLE = "fleet_exec"
         }
     }

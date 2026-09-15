@@ -3,6 +3,7 @@ package com.freight24.database.di
 import android.content.Context
 import androidx.room.Room
 import com.freight24.database.Freight24Database
+import com.freight24.database.dao.EmployeeProfileDao
 import com.freight24.database.dao.LeadsCacheDao
 import com.freight24.database.dao.LoadBoardDao
 import com.freight24.database.dao.TripDao
@@ -37,4 +38,7 @@ object DatabaseModule {
 
     @Provides
     fun provideLeadsCacheDao(db: Freight24Database): LeadsCacheDao = db.leadsCacheDao()
+
+    @Provides
+    fun provideEmployeeProfileDao(db: Freight24Database): EmployeeProfileDao = db.employeeProfileDao()
 }

@@ -2,12 +2,13 @@ package com.freight24.connect.feature.leads.domain.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.freight24.auth.SessionManager
 import com.freight24.connect.repository.LeadsRepository
 import com.freight24.rest.request.CallOutcomeRequest
 import com.freight24.rest.request.ConvertLeadRequest
 import com.freight24.rest.request.LeadRouteEntryRequest
 import com.freight24.rest.request.UpdateLeadDetailsRequest
-import com.freight24.rest.response.LeadCityDto
+import com.freight24.rest.response.CityResult
 import com.freight24.rest.response.LeadDetailDto
 import com.freight24.rest.response.LeadTruckTypeDto
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,7 +28,16 @@ data class LeadDetailState(
     val actionError: String? = null,
     val actionSuccess: String? = null,
     val truckTypes: List<LeadTruckTypeDto> = emptyList(),
-    val cityResults: List<LeadCityDto> = emptyList(),
+    val cityResults: List<CityResult> = emptyList(),
+    /**
+     * Which city field asked for [cityResults].
+     *
+     * There is one search per screen, so the results belong to exactly one field. Without
+     * this the same list was rendered under every city field at once — typing in Source
+     * popped a dropdown under Base Location, Source *and* Destination.
+     */
+    val cityResultsOwner: String? = null,
+    val citySearchLoading: Boolean = false,
     val convertedTagCode: String? = null,
 )
 
@@ -36,7 +46,14 @@ data class LeadDetailState(
 class LeadDetailViewModel @Inject constructor(
     private val leadsRepository: LeadsRepository,
     savedStateHandle: androidx.lifecycle.SavedStateHandle,
+    sessionManager: SessionManager,
 ) : ViewModel() {
+
+    /**
+     * Fleet executives are scoped by the backend to their own leads, so "assigned to"
+     * always names the person reading the screen. Admins and managers need it.
+     */
+    val canViewAssignee: Boolean = !sessionManager.isFleetExecutive()
 
     private val leadId: String = savedStateHandle.get<String>("leadId").orEmpty()
 
@@ -75,25 +92,42 @@ class LeadDetailViewModel @Inject constructor(
         }
     }
 
-    fun searchCities(query: String) {
+    /**
+     * Search cities for one specific field.
+     *
+     * [owner] is the field's stable key (see `LeadDetailScreen`). Results are tagged with
+     * it so only that field renders the dropdown.
+     */
+    fun searchCities(owner: String, query: String) {
         citySearchJob?.cancel()
         if (query.length < 2) {
-            _state.value = _state.value.copy(cityResults = emptyList())
+            _state.value = _state.value.copy(
+                cityResults = emptyList(),
+                cityResultsOwner = owner,
+                citySearchLoading = false,
+            )
             return
         }
+        _state.value = _state.value.copy(cityResultsOwner = owner, citySearchLoading = true)
         citySearchJob = viewModelScope.launch {
             // Instant cached results first, then live search results
             val cached = leadsRepository.searchCachedCities(query)
-            _state.value = _state.value.copy(cityResults = cached)
+            if (cached.isNotEmpty()) {
+                _state.value = _state.value.copy(cityResults = cached, citySearchLoading = false)
+            }
             delay(250)
             leadsRepository.searchCities(query).onSuccess { live ->
-                _state.value = _state.value.copy(cityResults = live)
+                _state.value = _state.value.copy(cityResults = live, citySearchLoading = false)
+            }.onFailure {
+                // Keep whatever the cache already gave us; a failed live search must not
+                // wipe suggestions the user can still act on.
+                _state.value = _state.value.copy(citySearchLoading = false)
             }
         }
     }
 
     fun clearCityResults() {
-        _state.value = _state.value.copy(cityResults = emptyList())
+        _state.value = _state.value.copy(cityResults = emptyList(), citySearchLoading = false)
     }
 
     fun recordCallOutcome(outcome: String, reason: String? = null, notes: String? = null) {

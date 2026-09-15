@@ -50,6 +50,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.ImeAction
@@ -68,6 +71,14 @@ fun CitySearchField(
     placeholder: String = "Search city...",
     enabled: Boolean = true,
     selectAllOnFocus: Boolean = false,
+    /**
+     * Optional snake_case id exposed as a resource-id for device automation.
+     *
+     * Applied to the editable node itself, never a wrapper: `testTagsAsResourceId` only
+     * surfaces the id on the node it is set on, so tagging a parent leaves the EditText's
+     * resource-id empty and the field un-drivable by id.
+     */
+    testTag: String? = null,
     modifier: Modifier = Modifier,
 ) {
     var fieldValue by remember() { mutableStateOf(TextFieldValue(query)) }
@@ -90,9 +101,17 @@ fun CitySearchField(
     Column(modifier = modifier) {
         OutlinedTextField(
             value = fieldValue,
-            onValueChange = {
-                fieldValue = it
-                onQueryChange(it.text)
+            onValueChange = { newValue ->
+                // `onValueChange` fires for more than typing. Tapping inside the existing
+                // text to move the cursor, and the IME committing or cancelling a
+                // composition when the field loses focus, both hand back a new
+                // TextFieldValue carrying the *same* text. So does the selection change
+                // `selectAllOnFocus` performs on focus gain — measured on device, tapping
+                // into a field already holding "Mumbai" re-ran the whole city search.
+                // Only a real edit is a new query.
+                val textChanged = newValue.text != fieldValue.text
+                fieldValue = newValue
+                if (textChanged) onQueryChange(newValue.text)
             },
             label = { Text(label) },
             placeholder = { Text(placeholder, style = MaterialTheme.typography.bodyMedium) },
@@ -103,6 +122,15 @@ fun CitySearchField(
             ),
             modifier = Modifier
                 .fillMaxWidth()
+                .then(
+                    if (testTag != null) {
+                        Modifier
+                            .testTag(testTag)
+                            .semantics { testTagsAsResourceId = true }
+                    } else {
+                        Modifier
+                    }
+                )
                 .onFocusChanged { state ->
                     if (selectAllOnFocus && state.isFocused && fieldValue.text.isNotEmpty()) {
                         fieldValue = fieldValue.copy(selection = TextRange(0, fieldValue.text.length))

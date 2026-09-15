@@ -2,9 +2,11 @@ package com.freight24.database
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import com.freight24.database.dao.EmployeeProfileDao
 import com.freight24.database.dao.LeadsCacheDao
 import com.freight24.database.dao.LoadBoardDao
 import com.freight24.database.dao.TripDao
+import com.freight24.database.entity.CachedEmployeeProfileEntity
 import com.freight24.database.entity.CityEntity
 import com.freight24.database.entity.CityPaginationEntity
 import com.freight24.database.entity.LeadCityEntity
@@ -22,8 +24,9 @@ import com.freight24.database.entity.TripsPaginationEntity
         TripsPaginationEntity::class,
         LeadTruckTypeEntity::class,
         LeadCityEntity::class,
+        CachedEmployeeProfileEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = false,
 )
 abstract class Freight24Database : RoomDatabase() {
@@ -32,4 +35,6 @@ abstract class Freight24Database : RoomDatabase() {
     abstract fun tripDao(): TripDao
 
     abstract fun leadsCacheDao(): LeadsCacheDao
+
+    abstract fun employeeProfileDao(): EmployeeProfileDao
 }

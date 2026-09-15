@@ -11,8 +11,8 @@ import com.freight24.rest.request.CallOutcomeRequest
 import com.freight24.rest.request.ConvertLeadRequest
 import com.freight24.rest.request.UpdateLeadDetailsRequest
 import com.freight24.rest.response.CallOutcomeData
+import com.freight24.rest.response.CityResult
 import com.freight24.rest.response.ConvertLeadData
-import com.freight24.rest.response.LeadCityDto
 import com.freight24.rest.response.LeadDetailDto
 import com.freight24.rest.response.LeadSummaryData
 import com.freight24.rest.response.LeadTruckTypeDto
@@ -162,18 +162,22 @@ class LeadsRepositoryImpl @Inject constructor(
             }
         }
 
-    override suspend fun searchCities(query: String): Result<List<LeadCityDto>> =
+    override suspend fun searchCities(query: String): Result<List<CityResult>> =
         withContext(ioDispatcher) {
             try {
                 val response = locationApi.searchCities(query, "CITY")
                 val body = response.body()
                 if (response.isSuccessful && body != null) {
-                    val cities = body.data
-                        .filter { it.type == "CITY" }
-                        .map { LeadCityDto(it.id, it.name.ifBlank { it.city }) }
+                    val cities = body.data.filter { it.type == "CITY" }
                     runCatching {
                         leadsCacheDao.upsertCities(
-                            cities.map { LeadCityEntity(it.id, it.name, System.currentTimeMillis()) }
+                            cities.map {
+                                LeadCityEntity(
+                                    id = it.id,
+                                    name = it.name.ifBlank { it.city },
+                                    cachedAt = System.currentTimeMillis(),
+                                )
+                            }
                         )
                     }
                     Result.success(cities)
@@ -185,11 +189,21 @@ class LeadsRepositoryImpl @Inject constructor(
             }
         }
 
-    override suspend fun searchCachedCities(query: String): List<LeadCityDto> =
+    override suspend fun searchCachedCities(query: String): List<CityResult> =
         withContext(ioDispatcher) {
             runCatching { leadsCacheDao.searchCachedCities(query) }
                 .getOrDefault(emptyList())
-                .map { LeadCityDto(it.id, it.name) }
+                // The cache stores only id + name, so the second line is reconstructed
+                // from the name and no parent city / state is claimed.
+                .map {
+                    CityResult(
+                        type = "CITY",
+                        id = it.id,
+                        name = it.name,
+                        city = it.name,
+                        state = "",
+                    )
+                }
         }
 
     private suspend fun fetchTruckTypesFromMaster(): List<LeadTruckTypeDto>? = try {

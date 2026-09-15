@@ -42,45 +42,52 @@ class MoreViewModel @Inject constructor(
         loadEmployeeBasicInfo()
     }
 
+    /**
+     * Cache-first: the More desk is opened repeatedly and basic info does not change
+     * within a session, so this reads the Room copy and only calls the API the first
+     * time after login (the cache is dropped on logout).
+     */
     private fun loadEmployeeBasicInfo() {
         viewModelScope.launch {
-            _employeeInfo.value = _employeeInfo.value.copy(isLoading = true, error = null)
-            try {
-                val userId = sessionManager.getUserId()
-                if (userId != null) {
-                    employeesRepository.getEmployeeBasicInfo(userId).fold(
-                        onSuccess = { basicInfo ->
-                            _employeeInfo.value = EmployeeBasicInfoState(
-                                fullName = basicInfo.fullName,
-                                designation = basicInfo.designation,
-                                tagCode = basicInfo.tagCode,
-                                isLoading = false
-                            )
-                        },
-                        onFailure = { error ->
-                            _employeeInfo.value = _employeeInfo.value.copy(
-                                isLoading = false,
-                                error = error.localizedMessage ?: "Failed to load employee info"
-                            )
-                        }
-                    )
-                } else {
-                    _employeeInfo.value = _employeeInfo.value.copy(
-                        isLoading = false,
-                        error = "User ID not found"
-                    )
-                }
-            } catch (e: Exception) {
+            val userId = sessionManager.getUserId()
+            if (userId == null) {
                 _employeeInfo.value = _employeeInfo.value.copy(
                     isLoading = false,
-                    error = e.localizedMessage ?: "Failed to load employee info"
+                    error = "User ID not found"
                 )
+                return@launch
             }
+
+            // Only show the spinner when there is nothing to show yet.
+            _employeeInfo.value = _employeeInfo.value.copy(
+                isLoading = _employeeInfo.value.fullName.isBlank(),
+                error = null,
+            )
+
+            employeesRepository.getEmployeeProfile(userId).fold(
+                onSuccess = { basicInfo ->
+                    _employeeInfo.value = EmployeeBasicInfoState(
+                        fullName = basicInfo.fullName,
+                        designation = basicInfo.designation,
+                        tagCode = basicInfo.tagCode,
+                        isLoading = false
+                    )
+                },
+                onFailure = { error ->
+                    _employeeInfo.value = _employeeInfo.value.copy(
+                        isLoading = false,
+                        error = error.localizedMessage ?: "Failed to load employee info"
+                    )
+                }
+            )
         }
     }
 
     fun logout() {
         viewModelScope.launch {
+            // The cached profile is scoped to the session; drop it so the next login
+            // fetches it again instead of serving the previous account's details.
+            employeesRepository.clearEmployeeProfileCache()
             sessionManager.logout()
         }
     }

@@ -4,8 +4,8 @@ import com.freight24.rest.request.CallOutcomeRequest
 import com.freight24.rest.request.ConvertLeadRequest
 import com.freight24.rest.request.UpdateLeadDetailsRequest
 import com.freight24.rest.response.CallOutcomeData
+import com.freight24.rest.response.CityResult
 import com.freight24.rest.response.ConvertLeadData
-import com.freight24.rest.response.LeadCityDto
 import com.freight24.rest.response.LeadDetailDto
 import com.freight24.rest.response.LeadSummaryData
 import com.freight24.rest.response.LeadTruckTypeDto
@@ -40,9 +40,16 @@ interface LeadsRepository {
     /** Truck types with 24h Room caching for instant offline form loading. */
     suspend fun getTruckTypesCached(): Result<List<LeadTruckTypeDto>>
 
-    /** Live city search; results are merged into the Room cache. */
-    suspend fun searchCities(query: String): Result<List<LeadCityDto>>
+    /**
+     * Live city search; results are merged into the Room cache.
+     *
+     * Returns the full [CityResult] rather than the trimmed `LeadCityDto` so the shared
+     * city field can render its second line (state / parent city). Collapsing to
+     * `LeadCityDto` threw that away and made the lead form's picker strictly worse than
+     * the one the truck-owner profile already uses.
+     */
+    suspend fun searchCities(query: String): Result<List<CityResult>>
 
     /** Cached cities matching [query] — instant results while offline. */
-    suspend fun searchCachedCities(query: String): List<LeadCityDto>
+    suspend fun searchCachedCities(query: String): List<CityResult>
 }

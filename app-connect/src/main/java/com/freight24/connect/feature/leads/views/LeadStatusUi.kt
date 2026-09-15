@@ -52,6 +52,18 @@ fun leadStatusLabel(status: String): String = when (status) {
     else -> status.replace('_', ' ')
 }
 
+/** The one status that means "imported, never touched". */
+const val LEAD_STATUS_NEW = "new"
+
+/**
+ * True while a lead is still untouched intake.
+ *
+ * A fresh lead has no base location, no calls and no truck types recorded — every
+ * derived field reads as zero or unknown. Both the tray and the detail docket use
+ * this to suppress those fields rather than print meaningless zeroes.
+ */
+fun isFreshLead(status: String): Boolean = status == LEAD_STATUS_NEW
+
 @Composable
 fun LeadStatusAccent(status: String): Color {
     val ext = FreightThemeTokens.colors

@@ -7,14 +7,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -26,10 +26,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
@@ -79,6 +82,14 @@ val TagShape = RoundedCornerShape(4.dp)
  * Pass a non-null [onClick] to make the whole card one tap target (list
  * dockets); pass null for a static shell (section dockets with their own
  * per-row handling).
+ *
+ * The spine is painted by an overlay sized with `matchParentSize`, deliberately
+ * **not** by a `Row(Modifier.height(IntrinsicSize.Min))` with a `fillMaxHeight`
+ * bar. Intrinsic measurement is a hard `IllegalStateException` for anything built
+ * on `SubcomposeLayout` — lazy lists, `BoxWithConstraints`, `TabRow` — so a city
+ * picker's suggestion list crashed the screen it was opened in. It also silently
+ * collapsed multi-line text fields, because `BasicTextField`'s minimum intrinsic
+ * height ignores `minLines`. Measuring content once, normally, avoids both.
  */
 @Composable
 fun DocketCard(
@@ -93,6 +104,7 @@ fun DocketCard(
 ) {
     val foldTone = MaterialTheme.colorScheme.surfaceContainerHighest
     val clickableModifier = onClick?.let { Modifier.clickable(onClick = it) } ?: Modifier
+    val layoutDirection = LocalLayoutDirection.current
 
     Box(modifier = modifier.fillMaxWidth()) {
         Surface(
@@ -105,19 +117,27 @@ fun DocketCard(
             color = MaterialTheme.colorScheme.surface,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
         ) {
-            Row(modifier = Modifier.height(IntrinsicSize.Min)) {
-                // Lane spine — status colour, full height of the card.
+            Box {
+                Column(
+                    modifier = Modifier.padding(
+                        start = contentPadding.calculateStartPadding(layoutDirection) + SpineWidth,
+                        end = contentPadding.calculateEndPadding(layoutDirection),
+                        top = contentPadding.calculateTopPadding(),
+                        bottom = contentPadding.calculateBottomPadding(),
+                    ),
+                    content = content,
+                )
+
+                // Lane spine — status colour, matched to the card's measured height.
                 Box(
                     modifier = Modifier
-                        .width(SpineWidth)
-                        .fillMaxHeight()
-                        .background(accent),
-                )
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(contentPadding),
-                    content = content,
+                        .matchParentSize()
+                        .drawBehind {
+                            drawRect(
+                                color = accent,
+                                size = Size(SpineWidth.toPx(), size.height),
+                            )
+                        },
                 )
             }
         }

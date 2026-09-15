@@ -2,6 +2,7 @@ package com.freight24.connect.feature.leads.domain.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.freight24.auth.SessionManager
 import com.freight24.connect.repository.LeadsRepository
 import com.freight24.rest.response.LeadDto
 import com.freight24.rest.response.LeadSummaryData
@@ -21,7 +22,16 @@ enum class LeadsTab(val label: String, val statuses: String?) {
 @HiltViewModel
 class LeadsViewModel @Inject constructor(
     private val leadsRepository: LeadsRepository,
+    sessionManager: SessionManager,
 ) : ViewModel() {
+
+    /**
+     * Fleet executives are hard-scoped by the backend to leads assigned to themselves,
+     * so printing the assignee on every card tells them nothing they don't already know.
+     * Admins and managers see the whole pipeline, so the column stays.
+     */
+    val canViewAssignee: Boolean = !sessionManager.isFleetExecutive()
+
 
     private val _selectedTab = MutableStateFlow(LeadsTab.NEW)
     val selectedTab = _selectedTab.asStateFlow()

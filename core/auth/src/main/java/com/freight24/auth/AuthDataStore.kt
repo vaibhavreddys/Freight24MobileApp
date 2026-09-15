@@ -46,6 +46,14 @@ class AuthDataStore
             private val REFRESH_TOKEN_EXPIRES_AT_KEY = longPreferencesKey("refresh_token_expires_at")
             private val REFRESH_SESSION_ID_KEY = stringPreferencesKey("encrypted_refresh_session_id")
             private val REFRESH_FAMILY_ID_KEY = stringPreferencesKey("encrypted_refresh_family_id")
+            private val ACTIVE_ROLE_KEY = stringPreferencesKey("encrypted_active_role")
+            private val ROLES_KEY = stringPreferencesKey("encrypted_roles")
+
+            /**
+             * Joins the persisted role list. Role names are snake_case identifiers, so
+             * a pipe can never occur inside one.
+             */
+            private const val ROLE_SEPARATOR = "|"
         }
 
         private val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
@@ -144,6 +152,25 @@ class AuthDataStore
                 prefs[REFRESH_FAMILY_ID_KEY]?.let { decrypt(it) }
             }
 
+        /**
+         * The role the session was opened with (`user.active_role` from the auth
+         * response). Drives role-gated UI — e.g. fleet executives do not see which
+         * executive a lead is assigned to, because it is always them.
+         */
+        val activeRole: Flow<String?> =
+            context.authDataStore.data.map { prefs ->
+                prefs[ACTIVE_ROLE_KEY]?.let { decrypt(it) }
+            }
+
+        /** Every role granted to the session, in the order the backend returned them. */
+        val roles: Flow<List<String>> =
+            context.authDataStore.data.map { prefs ->
+                prefs[ROLES_KEY]?.let { decrypt(it) }
+                    ?.split(ROLE_SEPARATOR)
+                    ?.filter { it.isNotBlank() }
+                    .orEmpty()
+            }
+
         suspend fun ensureInstallationId(): String {
             val existingInstallationId =
                 context.authDataStore.data.first()[INSTALLATION_ID_KEY]?.let { decrypt(it) }
@@ -169,6 +196,8 @@ class AuthDataStore
             refreshTokenExpiresAtMillis: Long? = null,
             refreshSessionId: String? = null,
             refreshFamilyId: String? = null,
+            activeRole: String? = null,
+            roles: List<String> = emptyList(),
         ) {
             context.authDataStore.edit { prefs ->
                 prefs[TOKEN_KEY] = encrypt(token)
@@ -208,6 +237,19 @@ class AuthDataStore
                 } else {
                     prefs.remove(REFRESH_FAMILY_ID_KEY)
                 }
+
+                if (!activeRole.isNullOrBlank()) {
+                    prefs[ACTIVE_ROLE_KEY] = encrypt(activeRole)
+                } else {
+                    prefs.remove(ACTIVE_ROLE_KEY)
+                }
+
+                val roleList = roles.filter { it.isNotBlank() }
+                if (roleList.isNotEmpty()) {
+                    prefs[ROLES_KEY] = encrypt(roleList.joinToString(ROLE_SEPARATOR))
+                } else {
+                    prefs.remove(ROLES_KEY)
+                }
             }
         }
 
@@ -221,6 +263,8 @@ class AuthDataStore
                 prefs.remove(REFRESH_TOKEN_EXPIRES_AT_KEY)
                 prefs.remove(REFRESH_SESSION_ID_KEY)
                 prefs.remove(REFRESH_FAMILY_ID_KEY)
+                prefs.remove(ACTIVE_ROLE_KEY)
+                prefs.remove(ROLES_KEY)
             }
         }
     }
