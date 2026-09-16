@@ -42,13 +42,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentContactRole
@@ -183,14 +186,29 @@ fun ClauseDocket(
     modifier: Modifier = Modifier,
     trailing: @Composable (() -> Unit)? = null,
     footer: @Composable (() -> Unit)? = null,
+    /**
+     * Read-only clauses (the lodged docket's details page) sit tighter than
+     * form clauses: nothing there needs room to be written in, and the page has
+     * to carry every field without becoming a scroll.
+     */
+    contentPadding: PaddingValues = PaddingValues(start = 16.dp, end = 16.dp, top = 15.dp, bottom = 15.dp),
+    /**
+     * Overrides the spine colour that [state] would give.
+     *
+     * A lodged docket's clauses are not "empty" — they are settled. Reusing
+     * [ClauseState.EMPTY] for them would paint the spine the same
+     * `outlineVariant` as the card border and make the signature vanish, so a
+     * record clause passes its own neutral here instead.
+     */
+    accent: Color? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     DocketCard(
-        accent = clauseAccent(state),
+        accent = accent ?: clauseAccent(state),
         testTag = testTag,
         onClick = null,
         modifier = modifier,
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 15.dp, bottom = 15.dp),
+        contentPadding = contentPadding,
     ) {
         IndentClauseHeader(number = number, title = title, trailing = trailing)
         Spacer(Modifier.height(16.dp))
@@ -531,6 +549,67 @@ fun LedgerDivider(modifier: Modifier = Modifier) {
 // ---------------------------------------------------------------------------
 
 /**
+ * The width every role stamp on a call sheet reserves, so the names, numbers and
+ * call buttons to their right share one left edge.
+ *
+ * A roster whose stamps are each sized to their own text staircases: `PLACEMENT`
+ * pushes its contact a third of the way across the row, `POD` barely any. The
+ * fix is a shared gutter, and the gutter has to be *measured* rather than pinned
+ * — a hardcoded width clipped `NEGOTIATED` to `NEGOTIATE` on this docket once
+ * already, and `OPERATIONS` would be next. So the widest stamp actually being
+ * drawn wins, measured in the same style it renders in.
+ *
+ * The stamp keeps its intrinsic width inside the gutter, so `POD` does not
+ * inherit `OPERATIONS`' width — only the column does.
+ */
+@Composable
+internal fun rememberRoleStampGutter(labels: List<String>): Dp {
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val stampStyle = roleStampStyle()
+    val stampPadding = RoleStampPadding * 2
+
+    return remember(labels, stampStyle, density) {
+        val widest = labels.maxOfOrNull { label ->
+            with(density) { measurer.measure(label.uppercase(), stampStyle).size.width.toDp() }
+        }
+        // 1dp of slack: text measurement and text layout agree, but rounding a
+        // measured px width down to dp must not shave a pixel off the stamp.
+        (widest ?: 0.dp) + stampPadding + 1.dp
+    }
+}
+
+/** The one style a role stamp is both measured and drawn in. */
+@Composable
+private fun roleStampStyle() = MaterialTheme.typography.labelSmall.copy(
+    letterSpacing = 0.9.sp,
+    fontWeight = FontWeight.Bold,
+)
+
+/** The one padding a role stamp is both measured and drawn with. */
+private val RoleStampPadding = 7.dp
+
+/**
+ * A role stamp — `PLACEMENT`, `PAYMENT`, `OPERATIONS`, `POD`.
+ *
+ * One composable on purpose. The gutter is measured from this stamp's own text,
+ * so a call site that restated the style could drift out of the column it is
+ * supposed to sit in; here the measured style and the drawn style are the same
+ * expression.
+ */
+@Composable
+internal fun RoleStamp(text: String, container: Color, content: Color) {
+    Surface(shape = TagShape, color = container) {
+        Text(
+            text = text.uppercase(),
+            style = roleStampStyle(),
+            color = content,
+            modifier = Modifier.padding(horizontal = RoleStampPadding, vertical = 3.dp),
+        )
+    }
+}
+
+/**
  * One contact role on the call sheet: the role as a stamp, then either the
  * chosen contact or an invitation to choose one.
  *
@@ -554,6 +633,10 @@ fun ContactRoleSlot(
     val ext = FreightThemeTokens.colors
     val filled = contact != null
 
+    // Every call site prints the whole roster, so the slot can size its own
+    // column against the other three roles without being told about them.
+    val stampGutter = rememberRoleStampGutter(IndentContactRole.entries.map { it.label })
+
     val tagContainer = when {
         isError -> scheme.errorContainer
         filled -> ext.surfaceSuccess
@@ -573,14 +656,8 @@ fun ContactRoleSlot(
             .padding(vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Surface(shape = TagShape, color = tagContainer) {
-            Text(
-                text = role.label.uppercase(),
-                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.9.sp),
-                fontWeight = FontWeight.Bold,
-                color = tagContent,
-                modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
-            )
+        Box(modifier = Modifier.width(stampGutter)) {
+            RoleStamp(role.label, tagContainer, tagContent)
         }
 
         // The one role the backend will not accept an indent without. Flagged on
@@ -658,6 +735,7 @@ fun CallSheetReadout(
 ) {
     val scheme = MaterialTheme.colorScheme
     val ext = FreightThemeTokens.colors
+    val stampGutter = rememberRoleStampGutter(IndentContactRole.entries.map { it.label })
 
     Column(modifier = modifier.fillMaxWidth()) {
         IndentContactRole.entries.forEachIndexed { index, role ->
@@ -670,16 +748,19 @@ fun CallSheetReadout(
                     .padding(vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Surface(
-                    shape = TagShape,
-                    color = if (contact != null) ext.surfaceSuccess else scheme.surfaceContainerHighest,
-                ) {
-                    Text(
-                        text = role.label.uppercase(),
-                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.9.sp),
-                        fontWeight = FontWeight.Bold,
-                        color = if (contact != null) ext.onSurfaceSuccess else scheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                Box(modifier = Modifier.width(stampGutter)) {
+                    RoleStamp(
+                        text = role.label,
+                        container = if (contact != null) {
+                            ext.surfaceSuccess
+                        } else {
+                            scheme.surfaceContainerHighest
+                        },
+                        content = if (contact != null) {
+                            ext.onSurfaceSuccess
+                        } else {
+                            scheme.onSurfaceVariant
+                        },
                     )
                 }
                 Spacer(Modifier.width(12.dp))

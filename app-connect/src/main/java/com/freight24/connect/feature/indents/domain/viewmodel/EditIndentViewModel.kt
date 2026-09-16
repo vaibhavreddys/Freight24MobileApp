@@ -18,13 +18,35 @@ data class EditIndentUiState(
     val successMessage: String? = null,
     val indent: IndentResponse.Indent? = null,
     val hasChanges: Boolean = false,
+    /**
+     * How many fields differ from the indent as loaded. Drives the header tally.
+     *
+     * All three of these are derived in one place — [EditIndentUiState.withDiff].
+     * They used to be duplicated: a copy here driving the save button, another in
+     * the screen driving the tally. The two drifted, and the screen's copy
+     * reported a phantom edit on open.
+     */
+    val changedFieldCount: Int = 0,
+    /** True when a contact role differs — the only change the group endpoint carries. */
+    val contactsChanged: Boolean = false,
+    /** True when the commercial fields differ. Colours clause 05's spine. */
+    val commercialsChanged: Boolean = false,
+    /** True when the term fields differ. Colours clause 06's spine. */
+    val termsChanged: Boolean = false,
 
     // Editable fields — accepted by PUT /api/v1/indents/:id
     val clientCost: String = "",
     val negotiatedCost: String = "",
     val businessProposedCost: String = "",
     val vehicleHeight: String = "",
-    val flooringType: String = "",
+    /**
+     * Prefilled with [DEFAULT_FLOORING_TYPE] — an indent that records no flooring
+     * is implicitly steel (Create always writes it), so an empty field would
+     * misrepresent the indent and force the operator to retype the default.
+     * [EditIndentUiState.withDiff] compares against the same default, so the
+     * prefill is not counted as an edit.
+     */
+    val flooringType: String = DEFAULT_FLOORING_TYPE,
     val tarpaulinRequired: Boolean = false,
     val hideCost: Boolean = false,
     val tatRequired: Boolean = false,

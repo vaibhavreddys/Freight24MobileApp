@@ -5,11 +5,12 @@ import com.freight24.rest.request.CreateIndentRequest
 import com.freight24.rest.request.IndentInterestRequest
 import com.freight24.rest.request.UpdateIndentGroupRequest
 import com.freight24.rest.request.UpdateIndentRequest
+import com.freight24.rest.response.BaseResponse
 import com.freight24.rest.response.GetIndentsResponse
-import com.freight24.rest.response.IndentResponse
 import com.freight24.rest.response.IndentInterestResponse
-import com.freight24.rest.response.IndentsListResponse
+import com.freight24.rest.response.IndentResponse
 import com.freight24.rest.response.LoadBoardResponse
+import com.freight24.rest.response.MaterialsResponse
 import com.freight24.rest.response.PaginatedLoadBoardResponse
 import com.freight24.rest.response.TruckTypeResponse
 import com.freight24.rest.response.TruckerIndentDetailResponse
@@ -44,6 +45,14 @@ interface IndentsApi {
     @GET("truck-types")
     suspend fun getTruckTypes(): Response<TruckTypeResponse>
 
+    /**
+     * Cargo categories for the indent's material. Served from a constant on the
+     * backend for now, so the list is short enough to hand to a picker whole —
+     * no paging, no search endpoint.
+     */
+    @GET("materials")
+    suspend fun getMaterials(): Response<MaterialsResponse>
+
     @POST("indents/groups")
     suspend fun createIndent(
         @Body request: CreateIndentRequest,
@@ -52,8 +61,8 @@ interface IndentsApi {
     @GET("indents/my-indents")
     suspend fun getMyIndents(
         @Query("status") status: String,
-        @Query("page") page: Int ?= null,
-        @Query("limit") limit: Int ?= null,
+        @Query("page") page: Int? = null,
+        @Query("limit") limit: Int? = null,
     ): Response<GetIndentsResponse>
 
     @GET("indents/child/{id}")
@@ -71,12 +80,20 @@ interface IndentsApi {
      * Group-level update — the only write path that can change an indent's
      * contact roles. Backend accepts it while the group is `OPEN` and only from
      * the creator or an admin / operations manager.
+     *
+     * The body is a write confirmation, not an indent projection: unlike
+     * `POST indents/groups` (which maps through `mapIndentResponse`) this route
+     * returns the raw `indent_groups` row, snake_case and without the child-indent
+     * fields (`indentCode`, `assignedTo`, `negotiatedTripCost`, …). Nothing here
+     * reads it, so it is decoded as [BaseResponse] and the payload is ignored —
+     * see [com.freight24.connect.repository.IndentRepository.updateIndentGroup].
+     * Callers that need the updated state re-read `GET indents/child/{id}`.
      */
     @PUT("indents/groups/{groupId}")
     suspend fun updateIndentGroup(
         @Path("groupId") groupId: String,
         @Body request: UpdateIndentGroupRequest,
-    ): Response<IndentResponse>
+    ): Response<BaseResponse>
 
     @GET("indents/groups")
     suspend fun getAllIndents(

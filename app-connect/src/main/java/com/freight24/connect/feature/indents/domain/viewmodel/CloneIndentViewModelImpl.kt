@@ -55,7 +55,7 @@ class CloneIndentViewModelImpl @Inject constructor(
                 submitClone()
             }
             is CloneIndentEvent.ClearError -> _uiState.update { it.copy(errorMessage = null) }
-            is CloneIndentEvent.ClearSuccess -> _uiState.update { it.copy(successMessage = null, createdIndentId = null, createdIndentCode = null, createdDate = null) }
+            is CloneIndentEvent.ClearSuccess -> _uiState.update { it.copy(successMessage = null, createdIndentId = null, createdIndentCode = null) }
         }
     }
 

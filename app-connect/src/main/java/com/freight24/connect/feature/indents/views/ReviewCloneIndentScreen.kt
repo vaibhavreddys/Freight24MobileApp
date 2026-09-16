@@ -28,7 +28,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -135,15 +134,22 @@ fun ReviewCloneIndentScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
-                // General Info Section
-                GeneralInfoSection(
-                    clientName = groupDetails.clientProfile?.companyName ?: groupDetails.clientProfile?.fullName ?: "Unknown",
-                    clientPhone = groupDetails.clientProfile?.phoneNumber,
+                // Consignor clause
+                ConsignorClause(
+                    number = 1,
+                    clientName = groupDetails.clientProfile?.companyName
+                        ?: groupDetails.clientProfile?.fullName
+                        ?: "Unknown",
                     tagCode = groupDetails.clientProfile?.tagCode,
+                    branchName = groupDetails.clientBranch?.branchName,
+                    branchCode = groupDetails.clientBranch?.branchCode,
+                    clientPhone = groupDetails.clientProfile?.phoneNumber,
+                    callLines = groupDetails.indentContacts.toDocketCallLines(),
                 )
 
                 // Route & Financials Section
                 RouteAndFinancialsSection(
+                    number = 2,
                     originCity = loadingLocation?.let {
                         "${it.areaName ?: it.cityName}"
                     } ?: "Unknown",
@@ -158,6 +164,7 @@ fun ReviewCloneIndentScreen(
 
                 // Specifications Section
                 SpecificationsSection(
+                    number = 3,
                     weight = groupDetails.loadWeight.toString(),
                     weightUnit = "MT",
                     materialType = groupDetails.material,
@@ -171,6 +178,7 @@ fun ReviewCloneIndentScreen(
                 // Remarks Section
                 if (uiState.remarks.isNotBlank()) {
                     RemarksSection(
+                        number = 4,
                         remarks = uiState.remarks,
                     )
                 }

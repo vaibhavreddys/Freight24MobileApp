@@ -2,7 +2,6 @@ package com.freight24.connect.feature.indents.domain.usecases
 
 import com.freight24.connect.repository.IndentRepository
 import com.freight24.rest.request.UpdateIndentGroupRequest
-import com.freight24.rest.response.IndentResponse
 import javax.inject.Inject
 
 data class UpdateIndentGroupUseCaseParams(
@@ -14,9 +13,13 @@ data class UpdateIndentGroupUseCaseParams(
  * Group-level indent update. The only way to change an indent's contact roles.
  * Rejected by the backend unless the group is still `OPEN` and the caller is the
  * group's creator or an admin / operations manager.
+ *
+ * Carries no payload: the route responds with the raw `indent_groups` row, and
+ * the group write has already committed by then, so the caller only needs to
+ * know whether it succeeded.
  */
 interface UpdateIndentGroupUseCase {
-    suspend fun invoke(params: UpdateIndentGroupUseCaseParams): Result<IndentResponse>
+    suspend fun invoke(params: UpdateIndentGroupUseCaseParams): Result<Unit>
 }
 
 class UpdateIndentGroupUseCaseImpl
@@ -26,5 +29,5 @@ class UpdateIndentGroupUseCaseImpl
     ) : UpdateIndentGroupUseCase {
         override suspend fun invoke(
             params: UpdateIndentGroupUseCaseParams,
-        ): Result<IndentResponse> = repository.updateIndentGroup(params.groupId, params.request)
+        ): Result<Unit> = repository.updateIndentGroup(params.groupId, params.request)
     }

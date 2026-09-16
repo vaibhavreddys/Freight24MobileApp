@@ -7,6 +7,7 @@ import com.freight24.connect.feature.indents.domain.usecases.GetClientBranchesUs
 import com.freight24.connect.feature.indents.domain.usecases.GetClientContactsUseCase
 import com.freight24.connect.feature.indents.domain.usecases.GetClientsUseCase
 import com.freight24.connect.feature.indents.domain.usecases.GetLocationsUseCase
+import com.freight24.connect.feature.indents.domain.usecases.GetMaterialsUseCase
 import com.freight24.connect.feature.indents.domain.usecases.GetTruckTypesUseCase
 import com.freight24.rest.request.CreateIndentRequest
 import com.freight24.rest.request.IndentContactsRequest
@@ -30,6 +31,7 @@ class IndentsViewModelImpl
         private val getLocationsUseCase: GetLocationsUseCase,
         private val getClientsUseCase: GetClientsUseCase,
         private val getTruckTypesUseCase: GetTruckTypesUseCase,
+        private val getMaterialsUseCase: GetMaterialsUseCase,
         private val createIndentUseCase: CreateIndentUseCase,
         private val getClientBranchesUseCase: GetClientBranchesUseCase,
         private val getClientContactsUseCase: GetClientContactsUseCase,
@@ -43,6 +45,7 @@ class IndentsViewModelImpl
 
     init {
         loadTruckTypes()
+        loadMaterials()
     }
 
     private fun loadTruckTypes() {
@@ -70,6 +73,27 @@ class IndentsViewModelImpl
                         errorMessage = result.exceptionOrNull()?.message,
                     )
                 }
+            }
+        }
+    }
+
+    /**
+     * Cargo categories for the material picker.
+     *
+     * A failure here is deliberately quiet: `errorMessage` drives a banner for
+     * things that block the indent, and this does not block anything. The picker
+     * falls back to accepting a typed value, which is what the field did before
+     * the list existed.
+     */
+    private fun loadMaterials() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingMaterials = true) }
+            val result = getMaterialsUseCase.invoke()
+            _uiState.update {
+                it.copy(
+                    materials = result.getOrElse { emptyList() },
+                    isLoadingMaterials = false,
+                )
             }
         }
     }
@@ -155,7 +179,15 @@ class IndentsViewModelImpl
                 _uiState.update { it.copy(errorMessage = null) }
             }
             is CreateIndentEvent.ClearSuccess -> {
-                _uiState.update { it.copy(successMessage = null, createdIndentId = null, createdIndentCode = null, createdDate = null) }
+                // `createdDate` deliberately survives this reset.
+                //
+                // ReviewIndentScreen navigates to the counterfoil and fires
+                // ClearSuccess in the same breath, so clearing the timestamp
+                // here erased it before the counterfoil could print it — the
+                // page showed the code, lane and cargo but silently lost its
+                // "Created <time>" line. It is overwritten on every submit and
+                // read only by that one screen, so leaving it costs nothing.
+                _uiState.update { it.copy(successMessage = null, createdIndentId = null, createdIndentCode = null) }
             }
         }
     }

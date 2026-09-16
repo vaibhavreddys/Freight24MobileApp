@@ -1,13 +1,11 @@
 package com.freight24.connect.feature.indents.views
 
-import java.text.SimpleDateFormat
-import java.util.Locale
-import java.util.TimeZone
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -26,7 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
@@ -42,6 +40,7 @@ import androidx.navigation.NavController
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsEvent
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsViewModel
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsViewModelImpl
+import com.freight24.common.util.DateTimeUtils
 import com.freight24.common.util.formatIndianCurrency
 import com.freight24.common.util.negotiatedCostExceedsClientError
 import com.freight24.ui.components.FreightTopAppBar
@@ -60,6 +59,7 @@ fun IndentDetailsScreen(
     onViewProfileClick: (String) -> Unit = { _ -> },
     viewModel: IndentDetailsViewModel = hiltViewModel<IndentDetailsViewModelImpl>()
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val colorScheme = MaterialTheme.colorScheme
     val extended = FreightThemeTokens.colors
@@ -285,7 +285,7 @@ fun IndentDetailsScreen(
                         )
                         indent?.createdAt?.let { createdAt ->
                             Text(
-                                text = "Created ${formatCreatedAt(createdAt)}",
+                                text = "Created ${DateTimeUtils.formatIndentTimestamp(createdAt)}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colorScheme.onSurfaceVariant,
                             )
@@ -388,7 +388,7 @@ fun IndentDetailsScreen(
                             .fillMaxSize()
                             .verticalScroll(rememberScrollState())
                             .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         if (costError) {
                             val missingParts = buildList {
@@ -422,13 +422,26 @@ fun IndentDetailsScreen(
                             }
                         }
 
-                        GeneralInfoSection(
-                            clientName = groupDetails.clientProfile?.companyName ?: groupDetails.clientProfile?.fullName ?: "Unknown",
-                            clientPhone = groupDetails.clientProfile?.phoneNumber,
+                        ConsignorClause(
+                            number = 1,
+                            clientName = groupDetails.clientProfile?.companyName
+                                ?: groupDetails.clientProfile?.fullName
+                                ?: "Unknown",
                             tagCode = groupDetails.clientProfile?.tagCode,
+                            branchName = groupDetails.clientBranch?.branchName,
+                            branchCode = groupDetails.clientBranch?.branchCode,
+                            clientPhone = groupDetails.clientProfile?.phoneNumber,
+                            callLines = groupDetails.indentContacts.toDocketCallLines(),
                             onViewProfileClick = {
-                                val userId = groupDetails.clientProfile?.userId ?: groupDetails.clientProfile?.id ?: return@GeneralInfoSection
+                                val userId = groupDetails.clientProfile?.userId
+                                    ?: groupDetails.clientProfile?.id
+                                    ?: return@ConsignorClause
                                 onViewProfileClick(userId)
+                            },
+                            onCall = { dialNumber ->
+                                context.startActivity(
+                                    Intent(Intent.ACTION_DIAL, Uri.parse("tel:$dialNumber"))
+                                )
                             },
                         )
 
@@ -448,6 +461,7 @@ fun IndentDetailsScreen(
                         }
 
                         RouteAndFinancialsSection(
+                            number = 2,
                             originCity = loadingLocation?.let {
                                 "${it.areaName ?: it.cityName}${it.address?.let { addr -> ", $addr" } ?: ""}"
                             } ?: "Unknown",
@@ -462,6 +476,7 @@ fun IndentDetailsScreen(
                         )
 
                         SpecificationsSection(
+                            number = 3,
                             weight = groupDetails.loadWeight.toString(),
                             weightUnit = "MT",
                             materialType = groupDetails.material,
@@ -473,6 +488,7 @@ fun IndentDetailsScreen(
                         )
 
                         RemarksSection(
+                            number = 4,
                             remarks = groupDetails.specialRequirements ?: "",
                         )
                     }
@@ -507,6 +523,7 @@ private fun BottomActionBar(
                 modifier = Modifier
                     .size(48.dp)
                     .background(colorScheme.surfaceVariant, CircleShape)
+                    .docketTag("indent_details_edit_button")
                     .semantics { contentDescription = "Edit indent" }
             ) {
                 Icon(
@@ -637,17 +654,7 @@ private fun formatCurrencyDetails(amount: Double?): String {
     return "%,.0f".format(amount)
 }
 
-private fun formatCreatedAt(isoTimestamp: String): String {
-    return try {
-        // Parse as UTC (Supabase timestamps) and render in IST — the raw digit
-        // slicing used before displayed UTC time as local, 5.5h off for IST users.
-        val utcDate = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault()).apply {
-            timeZone = TimeZone.getTimeZone("UTC")
-        }.parse(isoTimestamp.substringBefore(".")) ?: return isoTimestamp
-        SimpleDateFormat("MMM d, yyyy 'at' h:mm a", Locale.getDefault()).apply {
-            timeZone = TimeZone.getTimeZone("Asia/Kolkata")
-        }.format(utcDate)
-    } catch (e: Exception) {
-        isoTimestamp
-    }
-}
+// Timestamp formatting lives in DateTimeUtils.formatIndentTimestamp — it was
+// duplicated here and in IndentSuccessScreen, and only this copy handled the
+// offset/microseconds Supabase actually sends, so the counterfoil printed a raw
+// ISO string. One implementation, one answer.

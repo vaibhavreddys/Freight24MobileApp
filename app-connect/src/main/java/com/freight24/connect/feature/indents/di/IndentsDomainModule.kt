@@ -20,6 +20,8 @@ import com.freight24.connect.feature.indents.domain.usecases.GetIndentByIdUseCas
 import com.freight24.connect.feature.indents.domain.usecases.GetIndentByIdUseCaseImpl
 import com.freight24.connect.feature.indents.domain.usecases.GetLocationsUseCase
 import com.freight24.connect.feature.indents.domain.usecases.GetLocationsUseCaseImpl
+import com.freight24.connect.feature.indents.domain.usecases.GetMaterialsUseCase
+import com.freight24.connect.feature.indents.domain.usecases.GetMaterialsUseCaseImpl
 import com.freight24.connect.feature.indents.domain.usecases.GetMyIndentsUseCase
 import com.freight24.connect.feature.indents.domain.usecases.GetMyIndentsUseCaseImpl
 import com.freight24.connect.feature.indents.domain.usecases.GetTruckTypesUseCase
@@ -58,6 +60,9 @@ abstract class IndentsDomainModule {
 
     @Binds
     abstract fun bindGetTruckTypesUseCase(useCaseImpl: GetTruckTypesUseCaseImpl): GetTruckTypesUseCase
+
+    @Binds
+    abstract fun bindGetMaterialsUseCase(useCaseImpl: GetMaterialsUseCaseImpl): GetMaterialsUseCase
 
     @Binds
     abstract fun bindCreateIndentUseCase(useCaseImpl: CreateIndentUseCaseImpl): CreateIndentUseCase

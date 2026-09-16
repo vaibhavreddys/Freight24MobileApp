@@ -54,7 +54,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.freight24.common.util.DateTimeUtils.formatRelativeTime
 import com.freight24.connect.feature.indents.domain.viewmodel.SearchIndentsEvent
 import com.freight24.rest.response.IndentResponse
-import com.freight24.ui.components.IndentCard
 import com.freight24.connect.feature.indents.domain.viewmodel.SearchIndentsUiState
 import com.freight24.connect.feature.indents.domain.viewmodel.SearchIndentsViewModel
 import com.freight24.connect.feature.indents.domain.viewmodel.SearchIndentsViewModelImpl
@@ -225,10 +224,11 @@ fun SearchIndentsContent(
                         val fleetExecutive = indent.fleetExecutive
                         val showAdmin = indent.indentOwnership == "OTHER"
 
-                        IndentCard(
+                        ConnectIndentCard(
                             companyName = clientProfile?.companyName ?: clientProfile?.fullName ?: "Unknown",
                             indentCode = indent.indentCode,
                             postedTime = formatRelativeTime(indent.createdAt),
+                            status = indent.status,
                             fromCity = loadingLocation?.areaName ?: loadingLocation?.cityName ?: "Unknown",
                             toCity = unloadingLocation?.areaName ?: unloadingLocation?.cityName ?: "Unknown",
                             clientCostFormatted = formatCurrency(indent.indentGroupDetails.clientTripCost),

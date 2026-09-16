@@ -173,6 +173,7 @@ fun CreateIndentContent(
     val scope = rememberCoroutineScope()
     val fieldErrors = remember { mutableStateOf(emptySet<String>()) }
     var showBranchSheet by remember { mutableStateOf(false) }
+    var showMaterialSheet by remember { mutableStateOf(false) }
     var contactSheetRole by remember { mutableStateOf<IndentContactRole?>(null) }
 
     fun validate(): Boolean {
@@ -373,15 +374,15 @@ fun CreateIndentContent(
                         trailingLabel = "MT",
                     )
                     Spacer(Modifier.height(18.dp))
-                    RuledField(
+                    DocketPicker(
                         label = "Material",
                         value = uiState.materialName,
-                        onValueChange = {
+                        onClick = {
                             clearError("material")
-                            onEvent(CreateIndentEvent.UpdateMaterialName(it))
+                            showMaterialSheet = true
                         },
                         testTag = "create_indent_material_field",
-                        placeholder = "e.g. Steel coils",
+                        placeholder = "Choose or type a category",
                         isError = errors.contains("material"),
                     )
                 }
@@ -414,6 +415,16 @@ fun CreateIndentContent(
             selectedId = uiState.selectedBranch?.id,
             onSelect = { onEvent(CreateIndentEvent.SelectBranch(it)) },
             onDismiss = { showBranchSheet = false },
+        )
+    }
+
+    if (showMaterialSheet) {
+        MaterialPickerSheet(
+            materials = uiState.materials,
+            selectedName = uiState.materialName,
+            isLoading = uiState.isLoadingMaterials,
+            onSelect = { onEvent(CreateIndentEvent.UpdateMaterialName(it)) },
+            onDismiss = { showMaterialSheet = false },
         )
     }
 

@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -59,7 +60,7 @@ class EditIndentViewModelImpl
                         tatHours = event.tatHours ?: state.tatHours,
                         remarks = event.remarks ?: state.remarks,
                     )
-                    next.copy(hasChanges = computeHasChanges(next))
+                    next.withDiff()
                 }
             }
             is EditIndentEvent.SelectContact -> {
@@ -71,7 +72,7 @@ class EditIndentViewModelImpl
                             state.copy(operationsContact = event.contact)
                         IndentContactRole.POD -> state.copy(podContact = event.contact)
                     }
-                    next.copy(hasChanges = computeHasChanges(next))
+                    next.withDiff()
                 }
             }
             is EditIndentEvent.SubmitUpdate -> submitUpdate()
@@ -100,7 +101,7 @@ class EditIndentViewModelImpl
                             businessProposedCost = details.businessProposedCost?.toInt()?.toString()
                                 ?.let(::formatIndianCurrency) ?: "",
                             vehicleHeight = details.vehicleHeight?.toString() ?: "",
-                            flooringType = details.flooringType ?: "steel",
+                            flooringType = details.flooringType.normalizedFlooringType(),
                             tarpaulinRequired = details.tarpaulingRequired,
                             hideCost = indent.hideCostInfo,
                             tatRequired = details.tatEnabled,
@@ -153,7 +154,7 @@ class EditIndentViewModelImpl
                         contactsUnavailable = result.isFailure || available.isEmpty(),
                     )
                     .withPreselectedContacts(recorded, available)
-                next.copy(hasChanges = computeHasChanges(next))
+                next.withDiff()
             }
         }
     }
@@ -171,7 +172,7 @@ class EditIndentViewModelImpl
             // the group must still be OPEN and the caller must be the creator or
             // an admin / operations manager — so firing it first means a refusal
             // leaves the indent untouched instead of half-corrected.
-            if (contactsChanged(currentState)) {
+            if (currentState.contactsChanged) {
                 val groupResult = updateIndentGroupUseCase.invoke(
                     UpdateIndentGroupUseCaseParams(
                         groupId = originalDetails.id,
@@ -222,7 +223,10 @@ class EditIndentViewModelImpl
                     originalDetails.tarpaulingRequired,
                 ),
                 remarks = compareFields(currentState.remarks, originalDetails.specialRequirements),
-                flooringType = compareFields(currentState.flooringType, originalDetails.flooringType),
+                flooringType = compareFields(
+                    currentState.flooringType.normalizedFlooringType(),
+                    originalDetails.flooringType.normalizedFlooringType(),
+                ),
             )
 
             // Contacts may have been the only edit; the group call already saved them.
@@ -249,39 +253,6 @@ class EditIndentViewModelImpl
                 }
             }
         }
-    }
-
-    private fun contactsChanged(state: EditIndentUiState): Boolean =
-        IndentContactRole.entries.any { role ->
-            state.contactFor(role)?.id != state.originalContactId(role)
-        }
-
-    private fun computeHasChanges(state: EditIndentUiState): Boolean {
-        val original = state.indent?.indentGroupDetails ?: return false
-        val originalIndent = state.indent
-        return compareFields(
-            state.clientCost.replace(",", "").toIntOrNull(),
-            original.clientTripCost?.toInt(),
-        ) != null ||
-            compareFields(
-                state.negotiatedCost.replace(",", "").toIntOrNull(),
-                originalIndent.negotiatedTripCost?.toInt(),
-            ) != null ||
-            compareFields(
-                state.businessProposedCost.replace(",", "").toIntOrNull(),
-                original.businessProposedCost?.toInt(),
-            ) != null ||
-            compareFields(
-                state.vehicleHeight.toFloatOrNull(),
-                original.vehicleHeight?.toFloat(),
-            ) != null ||
-            compareFields(state.flooringType, original.flooringType) != null ||
-            compareFields(state.tarpaulinRequired, original.tarpaulingRequired) != null ||
-            compareFields(state.hideCost, originalIndent.hideCostInfo) != null ||
-            compareFields(state.tatRequired, original.tatEnabled) != null ||
-            compareFields(state.tatHours.toIntOrNull(), original.tatHours) != null ||
-            compareFields(state.remarks, original.specialRequirements) != null ||
-            contactsChanged(state)
     }
 
     private fun <T> compareFields(current: T?, original: T?): T? =
@@ -331,5 +302,89 @@ private fun EditIndentUiState.withPreselectedContacts(
         paymentContact = pick(IndentContactRole.PAYMENT),
         operationsContact = pick(IndentContactRole.OPERATIONS),
         podContact = pick(IndentContactRole.POD),
+    )
+}
+
+/** Blank and null mean the same thing to this form: absent text renders as `""`. */
+private fun textChanged(current: String?, original: String?): Boolean =
+    current?.trim().orEmpty() != original?.trim().orEmpty()
+
+/**
+ * One canonical spelling of "this indent's flooring", used by both the diff and
+ * the submit payload so they can never disagree.
+ *
+ * Blank, `null` and the [DEFAULT_FLOORING_TYPE] prefill all collapse to the same
+ * value: Create always writes a flooring type, so an indent recording none was
+ * raised before the field existed and is implicitly steel rather than unknown.
+ * Lowercased to match what Create submits, so `"WOOD"` typed here and `"wood"`
+ * typed there reach the column as the same value.
+ */
+private fun String?.normalizedFlooringType(): String =
+    this?.trim()?.takeIf { it.isNotEmpty() }?.lowercase(Locale.getDefault())
+        ?: DEFAULT_FLOORING_TYPE.lowercase(Locale.getDefault())
+
+/**
+ * Recomputes everything the screen derives from "has the operator changed
+ * anything": the save button, the header tally, the call-sheet marker and
+ * clause 05's spine.
+ *
+ * All four are computed here, once. They used to be computed twice — a copy in
+ * the ViewModel and another in `EditIndentScreen` — and the two drifted apart.
+ * The screen's copy compared raw values, so:
+ *
+ *  - every text field the indent left null counted as an edit, because the form
+ *    renders absent text as `""`, and
+ *  - `flooringType` counted as an edit on every indent raised without one, since
+ *    the form pre-fills [DEFAULT_FLOORING_TYPE] while the indent records nothing.
+ *    That is still the case — the form does pre-fill it — so the flooring
+ *    comparison runs through [normalizedFlooringType] instead of comparing the
+ *    raw strings.
+ *
+ * Between them the header read "1 EDITED" the moment Edit opened, the save
+ * button went live, and a submit would have fired a pointless group PUT.
+ */
+private fun EditIndentUiState.withDiff(): EditIndentUiState {
+    val details = indent?.indentGroupDetails ?: return this
+
+    val clientCostChanged =
+        clientCost.replace(",", "").toIntOrNull() != details.clientTripCost?.toInt()
+    val businessCostChanged =
+        businessProposedCost.replace(",", "").toIntOrNull() != details.businessProposedCost?.toInt()
+    val negotiatedChanged =
+        negotiatedCost.replace(",", "").toIntOrNull() != indent.negotiatedTripCost?.toInt()
+    val hideCostChanged = hideCost != indent.hideCostInfo
+    val tatRequiredChanged = tatRequired != details.tatEnabled
+    val tatHoursChanged = tatHours.toIntOrNull() != details.tatHours
+    val tarpaulinChanged = tarpaulinRequired != details.tarpaulingRequired
+    val vehicleHeightChanged = vehicleHeight.toFloatOrNull() != details.vehicleHeight?.toFloat()
+    val flooringChanged =
+        flooringType.normalizedFlooringType() != details.flooringType.normalizedFlooringType()
+    val remarksChanged = textChanged(remarks, details.specialRequirements)
+
+    val rolesChanged = IndentContactRole.entries.any { role ->
+        contactFor(role)?.id != originalContactId(role)
+    }
+
+    val fieldCount = listOf(
+        clientCostChanged,
+        businessCostChanged,
+        negotiatedChanged,
+        hideCostChanged,
+        tatRequiredChanged,
+        tatHoursChanged,
+        tarpaulinChanged,
+        vehicleHeightChanged,
+        flooringChanged,
+        remarksChanged,
+    ).count { it } + if (rolesChanged) 1 else 0
+
+    return copy(
+        hasChanges = fieldCount > 0,
+        changedFieldCount = fieldCount,
+        contactsChanged = rolesChanged,
+        commercialsChanged = clientCostChanged || businessCostChanged ||
+            negotiatedChanged || hideCostChanged,
+        termsChanged = tatRequiredChanged || tatHoursChanged || tarpaulinChanged ||
+            vehicleHeightChanged || flooringChanged || remarksChanged,
     )
 }

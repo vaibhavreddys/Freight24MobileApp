@@ -44,7 +44,6 @@ import com.freight24.connect.feature.indents.domain.viewmodel.IndentsListViewMod
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsListViewModelImpl
 import com.freight24.rest.response.IndentResponse
 import com.freight24.ui.components.FreightEmptyState
-import com.freight24.ui.components.IndentCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -270,10 +269,11 @@ fun IndentsList(
             val fleetExecutive = indent.fleetExecutive
             val showAdmin = indent.indentOwnership == "OTHER"
 
-            IndentCard(
+            ConnectIndentCard(
                 companyName = clientProfile?.companyName ?: clientProfile?.fullName ?: "Unknown",
                 indentCode = indent.indentCode,
                 postedTime = formatRelativeTime(indent.createdAt),
+                status = indent.status,
                 fromCity = loadingLocation?.areaName ?: loadingLocation?.cityName ?: "Unknown",
                 toCity = unloadingLocation?.areaName ?: unloadingLocation?.cityName ?: "Unknown",
                 clientCostFormatted = formatCurrency(indent.indentGroupDetails.clientTripCost),

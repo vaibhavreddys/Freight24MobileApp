@@ -5,6 +5,7 @@ import com.freight24.rest.response.ClientBranchV2Dto
 import com.freight24.rest.response.ClientContactV2Dto
 import com.freight24.rest.response.ClientDto
 import com.freight24.rest.response.LocationDto
+import com.freight24.rest.response.MaterialDto
 import com.freight24.rest.response.TruckCategoryDto
 import com.freight24.rest.response.TruckTypeDto
 import kotlinx.coroutines.flow.StateFlow
@@ -27,6 +28,17 @@ enum class IndentContactRole(
     OPERATIONS("operations", "Operations", false),
     POD("pod", "POD", false),
 }
+
+/**
+ * Flooring the form shows when nothing has been chosen, and the value Create
+ * submits (lowercased) when the operator leaves it alone.
+ *
+ * Create has always written this, so an indent whose `flooring_type` is null was
+ * raised before flooring was captured — it is implicitly steel, not unknown.
+ * Edit prefills the same value for that reason, and compares against it rather
+ * than against `null` so the prefill does not read as an edit.
+ */
+const val DEFAULT_FLOORING_TYPE = "STEEL"
 
 interface IndentsViewModel {
 
@@ -72,12 +84,21 @@ data class CreateIndentUiState(
         ),
     val isLoadingTruckTypes: Boolean = false,
     val selectedTruckType: TruckTypeDto? = null,
+    /**
+     * Cargo categories for the material picker, straight from the backend.
+     *
+     * Empty until the load lands. The picker still accepts a typed value while
+     * this is empty, so a failed materials call degrades to the old free-text
+     * behaviour instead of blocking the indent.
+     */
+    val materials: List<MaterialDto> = emptyList(),
+    val isLoadingMaterials: Boolean = false,
     // Optional
     val clientCost: String = "",
     val negotiatedCost: String = "",
     val businessProposedCost: String = "",
     val vehicleHeight: String = "",
-    val flooringType: String = "STEEL", // Default
+    val flooringType: String = DEFAULT_FLOORING_TYPE,
     val tatRequired: Boolean = false,
     val tatHours: String = "",
     val tarpaulinRequired: Boolean = false,

@@ -1,44 +1,25 @@
 package com.freight24.connect.feature.indents.views
 
-import android.content.Intent
-import android.net.Uri
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Route
-
-import androidx.compose.material.icons.outlined.Inventory2
-import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material.icons.outlined.People
-import androidx.compose.material.icons.outlined.Scale
-import androidx.compose.material.icons.outlined.Schedule
-import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -46,195 +27,64 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.freight24.ui.components.RouteIndicatorWithCities
+import com.freight24.ui.components.PanelShape
 import com.freight24.ui.theme.FreightThemeTokens
 import java.text.NumberFormat
 import java.util.Locale
 
+// ===========================================================================
+// The lodged docket — the details page's clauses.
+//
+// Same paperwork as Create / Review / Edit, read back instead of written on:
+// every section is a numbered clause with a spine down its left edge, and every
+// fact inside it is a [LedgerLine] — label, dotted leader, value, one line.
+//
+// That last part is the point of this file. The page used to spend an icon
+// badge, a label and a value on three stacked lines per fact; a ledger line says
+// the same thing in one, which is what lets the page carry the branch, the call
+// sheet and every specification without turning into a scroll. Nothing was
+// dropped to buy the density — only the icons were.
+// ===========================================================================
+
+/**
+ * One clause of a lodged docket: [ClauseDocket] with a neutral record spine.
+ *
+ * Not [ClauseState.EMPTY] — that would paint the spine the same colour as the
+ * card border. A record clause passes [accent] explicitly; only an error state
+ * overrides it.
+ */
 @Composable
 fun IndentDetailSection(
-    image: ImageVector? = null,
+    number: Int,
     title: String,
+    testTag: String,
     hasError: Boolean = false,
-    trailing: @Composable () -> Unit = {},
-    content: @Composable () -> Unit,
+    trailing: (@Composable () -> Unit)? = null,
+    content: @Composable ColumnScope.() -> Unit,
 ) {
-    val colorScheme = MaterialTheme.colorScheme
+    val scheme = MaterialTheme.colorScheme
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainer),
-        border = if (hasError) BorderStroke(1.dp, colorScheme.error) else null,
-    ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (image != null) {
-                    Surface(
-                        modifier = Modifier.size(24.dp),
-                        shape = CircleShape,
-                        color = colorScheme.primaryContainer,
-                        contentColor = colorScheme.onPrimaryContainer,
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = image,
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-
-                Text(
-                    text = title.uppercase(),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = if (hasError) colorScheme.error else colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Medium,
-                    letterSpacing = 0.8.sp,
-                    modifier = Modifier.weight(1f),
-                )
-
-                trailing()
-            }
-
-            content()
-        }
-    }
+    ClauseDocket(
+        number = number,
+        title = title,
+        state = if (hasError) ClauseState.ERROR else ClauseState.EMPTY,
+        testTag = testTag,
+        contentPadding = ReadoutClausePadding,
+        accent = if (hasError) scheme.error else scheme.outline,
+        trailing = trailing,
+        content = content,
+    )
 }
 
-@Composable
-fun GeneralInfoSection(
-    clientName: String,
-    clientPhone: String?,
-    tagCode: String?,
-    onViewProfileClick: (() -> Unit)? = null,
-) {
-    val colorScheme = MaterialTheme.colorScheme
-    val extended = FreightThemeTokens.colors
-    val phone = clientPhone?.takeIf { it.isNotBlank() }
-    val context = LocalContext.current
-    val displayTagCode = tagCode?.takeIf { it.isNotBlank() } ?: "—"
-
-    IndentDetailSection(
-        image = Icons.Default.Person,
-        title = "CLIENT",
-        trailing = {
-            Surface(
-                shape = RoundedCornerShape(50),
-                color = colorScheme.surfaceVariant.copy(alpha = 0.6f),
-            ) {
-                Text(
-                    text = displayTagCode,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                )
-            }
-        },
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(
-                text = clientName,
-                style = MaterialTheme.typography.titleLarge,
-                color = colorScheme.onSurface,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (phone != null) {
-                    val formattedNumber = formatPhoneNumber(phone)
-                    Button(
-                        onClick = {
-                            context.startActivity(
-                                Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone"))
-                            )
-                        },
-                        modifier = Modifier.semantics { contentDescription = "Call $formattedNumber" },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = extended.success,
-                            contentColor = extended.onSuccess,
-                        ),
-                        shape = MaterialTheme.shapes.large,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Call,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = "Call",
-                            style = MaterialTheme.typography.titleMedium,
-                        )
-                    }
-                } else {
-                    Text(
-                        text = "Not available",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = colorScheme.onSurfaceVariant,
-                    )
-                }
-
-                if (onViewProfileClick != null) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        Spacer(modifier = Modifier.width(32.dp))
-                        Surface(
-                            shape = RoundedCornerShape(50),
-                            color = colorScheme.surfaceVariant.copy(alpha = 0.6f),
-                            modifier = Modifier.clickable { onViewProfileClick() },
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            ) {
-                                Text(
-                                    text = "View profile",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = colorScheme.onSurfaceVariant,
-                                )
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp),
-                                    tint = colorScheme.onSurfaceVariant,
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
+// ---------------------------------------------------------------------------
+// Metrics
+// ---------------------------------------------------------------------------
 
 @Composable
 fun IndentMetricsSection(
@@ -350,33 +200,37 @@ fun CostVisibilityIndicator(
     isVisible: Boolean,
 ) {
     val extended = FreightThemeTokens.colors
-    val backgroundColor = if (isVisible) extended.surfaceSuccess else MaterialTheme.colorScheme.surfaceVariant
-    val contentColor = if (isVisible) extended.onSurfaceSuccess else MaterialTheme.colorScheme.onSurfaceVariant
+    val contentColor = if (isVisible) extended.success else MaterialTheme.colorScheme.onSurfaceVariant
     val icon = if (isVisible) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff
     val label = if (isVisible) "Cost visible" else "Cost hidden"
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(5.dp),
         modifier = Modifier.semantics { contentDescription = label }
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
             tint = contentColor,
-            modifier = Modifier.size(16.dp),
+            modifier = Modifier.size(15.dp),
         )
         Text(
             text = label,
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Medium,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
             color = contentColor,
         )
     }
 }
 
+// ---------------------------------------------------------------------------
+// Clause 02 — route & financials
+// ---------------------------------------------------------------------------
+
 @Composable
 fun RouteAndFinancialsSection(
+    number: Int,
     originCity: String,
     destinationCity: String,
     clientCost: String,
@@ -385,73 +239,54 @@ fun RouteAndFinancialsSection(
     isCostVisible: Boolean,
     hasError: Boolean = false,
 ) {
-    val extended = FreightThemeTokens.colors
     val marginAmount = calculateMargin(clientCost, negotiatedCost)
     val hasMargin = marginAmount > 0
+    val hasCosts = clientCost.isNotBlank() || negotiatedCost.isNotBlank()
 
     IndentDetailSection(
-        image = Icons.Default.Route,
-        title = "ROUTE & FINANCIALS",
+        number = number,
+        title = "Route & Financials",
+        testTag = "indent_details_route",
         hasError = hasError,
+        trailing = { CostVisibilityIndicator(isVisible = isCostVisible) },
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            RouteIndicatorWithCities(
-                fromCity = originCity,
-                toCity = destinationCity,
+        LaneStrip(
+            originLabel = "Collect from",
+            originValue = originCity,
+            destinationLabel = "Deliver to",
+            destinationValue = destinationCity,
+            originTestTag = "indent_details_origin",
+            destinationTestTag = "indent_details_destination",
+        )
+
+        if (hasCosts) {
+            Spacer(modifier = Modifier.height(8.dp))
+            LedgerLine(
+                label = "Client budget",
+                value = if (isCostVisible) formatInr(clientCost) else "₹ ••••",
             )
-
-            if (clientCost.isNotBlank() || negotiatedCost.isNotBlank()) {
-                HorizontalDivider(
-                    thickness = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant,
+            LedgerLine(
+                label = "Negotiated",
+                value = if (isCostVisible) formatInr(negotiatedCost) else "₹ ••••",
+                emphasis = true,
+            )
+            if (hasMargin && isCostVisible) {
+                LedgerLine(
+                    label = "Margin",
+                    value = "₹${formatNumber(marginAmount)}",
                 )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    CostTile(
-                        label = "CLIENT BUDGET",
-                        value = if (isCostVisible) formatInr(clientCost) else "₹ ••••",
-                        modifier = Modifier.weight(1f)
-                    )
-                    CostTile(
-                        label = "NEGOTIATED COST",
-                        value = if (isCostVisible) formatInr(negotiatedCost) else "₹ ••••",
-                        emphasized = true,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    CostVisibilityIndicator(isVisible = isCostVisible)
-
-                    if (hasMargin && isCostVisible) {
-                        Surface(
-                            shape = RoundedCornerShape(50),
-                            color = extended.surfaceSuccess,
-                        ) {
-                            Text(
-                                text = "Margin ₹${formatNumber(marginAmount)}",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = extended.onSurfaceSuccess,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            )
-                        }
-                    }
-                }
             }
         }
     }
 }
 
+// ---------------------------------------------------------------------------
+// Clause 03 — specifications
+// ---------------------------------------------------------------------------
+
 @Composable
 fun SpecificationsSection(
+    number: Int,
     weight: String,
     weightUnit: String,
     materialType: String,
@@ -461,266 +296,63 @@ fun SpecificationsSection(
     tatHours: String,
     tarpaulinRequired: Boolean,
 ) {
-    val colorScheme = MaterialTheme.colorScheme
-
     IndentDetailSection(
-        image = Icons.Outlined.Tune,
-        title = "SPECIFICATIONS",
+        number = number,
+        title = "Specifications",
+        testTag = "indent_details_specs",
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
-            val rows = listOf(
-                SpecRowData(
-                    icon = Icons.Outlined.LocalShipping,
-                    label = "Truck Type",
-                    value = if (truckType != null) "$truckType • $truckTypeUnit" else "Not selected",
-                    iconTint = FreightThemeTokens.colors.info,
-                    subdued = truckType == null,
-                ),
-                SpecRowData(
-                    icon = Icons.Outlined.Scale,
-                    label = "Weight",
-                    value = "$weight $weightUnit",
-                    iconTint = FreightThemeTokens.colors.success,
-                ),
-                SpecRowData(
-                    icon = Icons.Outlined.Inventory2,
-                    label = "Material",
-                    value = titleCase(materialType),
-                    iconTint = FreightThemeTokens.colors.warning,
-                ),
-                BooleanSpecRowData(
-                    label = "TAT mentioned",
-                    description = if (tatRequired) "$tatHours hrs" else null,
-                    isEnabled = tatRequired,
-                ),
-                BooleanSpecRowData(
-                    label = "Tarpaulin required",
-                    description = null,
-                    isEnabled = tarpaulinRequired,
-                ),
-            )
-
-            rows.forEachIndexed { index, rowData ->
-                when (rowData) {
-                    is SpecRowData -> SpecRow(
-                        icon = rowData.icon,
-                        label = rowData.label,
-                        value = rowData.value,
-                        iconTint = rowData.iconTint,
-                        subdued = rowData.subdued,
-                    )
-                    is BooleanSpecRowData -> BooleanSpecRow(
-                        label = rowData.label,
-                        description = rowData.description,
-                        isEnabled = rowData.isEnabled,
-                    )
-                }
-
-                if (index < rows.lastIndex) {
-                    HorizontalDivider(
-                        thickness = 0.5.dp,
-                        color = colorScheme.outlineVariant,
-                        modifier = Modifier.padding(vertical = 10.dp),
-                    )
-                }
-            }
-        }
+        LedgerLine(
+            label = "Truck type",
+            value = truckType?.let { "$it • $truckTypeUnit" },
+        )
+        LedgerLine(label = "Weight", value = "$weight $weightUnit")
+        LedgerLine(label = "Material", value = titleCase(materialType))
+        LedgerLine(
+            label = "TAT",
+            value = if (tatRequired) "$tatHours hrs" else "Not required",
+        )
+        LedgerLine(
+            label = "Tarpaulin",
+            value = if (tarpaulinRequired) "Required" else "Not required",
+        )
     }
 }
 
-private data class SpecRowData(
-    val icon: ImageVector,
-    val label: String,
-    val value: String,
-    val iconTint: Color = Color.Unspecified,
-    val subdued: Boolean = false,
-)
-
-private data class BooleanSpecRowData(
-    val label: String,
-    val description: String?,
-    val isEnabled: Boolean,
-)
+// ---------------------------------------------------------------------------
+// Clause 04 — remarks
+// ---------------------------------------------------------------------------
 
 @Composable
 fun RemarksSection(
+    number: Int,
     remarks: String,
 ) {
+    val scheme = MaterialTheme.colorScheme
+
     IndentDetailSection(
-        image = Icons.Outlined.Tune,
-        title = "REMARKS",
+        number = number,
+        title = "Remarks",
+        testTag = "indent_details_remarks",
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.surfaceContainerHighest,
+            shape = PanelShape,
+            color = scheme.surfaceContainerHighest,
         ) {
             Text(
                 text = remarks.takeIf { it.isNotBlank() } ?: "No special requirements specified.",
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                color = if (remarks.isNotBlank()) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(10.dp)
+                fontWeight = if (remarks.isNotBlank()) FontWeight.Medium else FontWeight.Normal,
+                color = if (remarks.isNotBlank()) scheme.onSurface else scheme.onSurfaceVariant,
+                modifier = Modifier.padding(10.dp),
             )
         }
     }
 }
 
-@Composable
-private fun SpecRow(
-    icon: ImageVector,
-    label: String,
-    value: String,
-    iconTint: Color = Color.Unspecified,
-    subdued: Boolean = false,
-) {
-    val colorScheme = MaterialTheme.colorScheme
-    val extended = FreightThemeTokens.colors
-    val resolvedTint = if (iconTint != Color.Unspecified) iconTint else extended.success
-    val valueColor = if (subdued) colorScheme.onSurfaceVariant else colorScheme.onSurface
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Surface(
-            modifier = Modifier.size(28.dp),
-            shape = CircleShape,
-            color = resolvedTint.copy(alpha = 0.12f),
-            contentColor = resolvedTint,
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                )
-            }
-        }
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = colorScheme.onSurfaceVariant,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.weight(1f),
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleMedium,
-            color = valueColor,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
-}
-
-@Composable
-private fun BooleanSpecRow(
-    label: String,
-    description: String?,
-    isEnabled: Boolean,
-) {
-    val colorScheme = MaterialTheme.colorScheme
-    val extended = FreightThemeTokens.colors
-    val tint = if (isEnabled) extended.success else colorScheme.onSurfaceVariant
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Surface(
-            modifier = Modifier.size(28.dp),
-            shape = CircleShape,
-            color = tint.copy(alpha = 0.12f),
-            contentColor = tint,
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = if (isEnabled) Icons.Default.Check else Icons.Default.Close,
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                )
-            }
-        }
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = colorScheme.onSurfaceVariant,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.weight(1f),
-        )
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.End,
-        ) {
-            if (description != null) {
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = colorScheme.onSurface,
-                    modifier = Modifier.padding(end = 4.dp),
-                )
-            }
-            Surface(
-                shape = RoundedCornerShape(50),
-                color = tint.copy(alpha = 0.12f),
-            ) {
-                Text(
-                    text = if (isEnabled) "Yes" else "No",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = tint,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun DetailLabel(
-    text: String,
-    modifier: Modifier = Modifier
-) {
-    Text(
-        text = text.uppercase(),
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        fontWeight = FontWeight.Medium,
-        letterSpacing = 0.6.sp,
-        modifier = modifier
-    )
-}
-
-@Composable
-private fun CostTile(
-    label: String,
-    value: String,
-    emphasized: Boolean = false,
-    modifier: Modifier = Modifier
-) {
-    val colorScheme = MaterialTheme.colorScheme
-
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
-        color = colorScheme.surfaceContainerHighest,
-    ) {
-        Column(
-            modifier = Modifier.padding(10.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            DetailLabel(text = label)
-            Text(
-                text = value,
-                style = MaterialTheme.typography.titleMedium,
-                color = if (emphasized) colorScheme.primary else colorScheme.onSurface
-            )
-        }
-    }
-}
+// ---------------------------------------------------------------------------
+// Formatters
+// ---------------------------------------------------------------------------
 
 private fun formatInr(amount: String): String {
     val number = amount.replace(",", "").toDoubleOrNull()
@@ -746,29 +378,4 @@ private fun calculateMargin(clientCost: String, negotiatedCost: String): Double 
 private fun titleCase(text: String): String {
     return text.lowercase()
         .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-}
-
-private fun formatPhoneNumber(phone: String): String {
-    val digits = phone.replace(Regex("[^0-9]"), "")
-    return when {
-        digits.length == 10 -> "+91 ${digits.substring(0, 5)} ${digits.substring(5)}"
-        digits.length == 12 && digits.startsWith("91") -> "+91 ${digits.substring(2, 7)} ${digits.substring(7)}"
-        digits.length == 13 && digits.startsWith("91") -> "+91 ${digits.substring(3, 8)} ${digits.substring(8)}"
-        else -> phone
-    }
-}
-
-private fun formatCreatedAt(isoTimestamp: String): String {
-    return try {
-        // Parse as UTC (Supabase timestamps) and render in IST — the raw digit
-        // slicing used before displayed UTC time as local, 5.5h off for IST users.
-        val utcDate = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.getDefault()).apply {
-            timeZone = java.util.TimeZone.getTimeZone("UTC")
-        }.parse(isoTimestamp.substringBefore(".")) ?: return isoTimestamp
-        java.text.SimpleDateFormat("MMM d, yyyy 'at' h:mm a", java.util.Locale.getDefault()).apply {
-            timeZone = java.util.TimeZone.getTimeZone("Asia/Kolkata")
-        }.format(utcDate)
-    } catch (e: Exception) {
-        isoTimestamp
-    }
 }

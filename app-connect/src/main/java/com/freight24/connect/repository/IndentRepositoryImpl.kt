@@ -9,6 +9,7 @@ import com.freight24.rest.request.UpdateIndentRequest
 import com.freight24.rest.response.GetIndentsResponse
 import com.freight24.rest.response.IndentResponse
 import com.freight24.rest.response.IndentsListResponse
+import com.freight24.rest.response.MaterialDto
 import com.freight24.rest.response.TruckCategoryDto
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -96,12 +97,26 @@ class IndentRepositoryImpl
     override suspend fun updateIndentGroup(
         groupId: String,
         request: UpdateIndentGroupRequest,
-    ): Result<IndentResponse> =
+    ): Result<Unit> =
         withContext(ioDispatcher) {
             try {
                 val response = api.updateIndentGroup(groupId, request)
+                if (response.isSuccessful) {
+                    Result.success(Unit)
+                } else {
+                    Result.failure(Exception(response.message()))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    override suspend fun getMaterials(): Result<List<MaterialDto>> =
+        withContext(ioDispatcher) {
+            try {
+                val response = api.getMaterials()
                 if (response.isSuccessful && response.body() != null) {
-                    Result.success(response.body()!!)
+                    Result.success(response.body()!!.data)
                 } else {
                     Result.failure(Exception(response.message()))
                 }

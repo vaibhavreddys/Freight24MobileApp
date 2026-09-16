@@ -13,6 +13,33 @@ object DateTimeUtils {
     // No locale captured here - we'll create formatters with current locale when needed
     private const val SUPABASE_PATTERN = "yyyy-MM-dd'T'HH:mm:ss"
     private const val DISPLAY_PATTERN = "dd MMM | hh:mm a"
+    private const val ABSOLUTE_PATTERN = "MMM d, yyyy 'at' h:mm a"
+
+    /**
+     * An absolute timestamp for display, rendered in IST.
+     *
+     * Supabase returns values like `2026-09-15T19:01:40.057752+00:00` —
+     * microseconds *and* an offset. `LocalDateTime.parse` rejects that outright,
+     * so a formatter built on it silently fell through to printing the raw ISO
+     * string on screen. Truncating at the decimal and reading the remainder as
+     * UTC is the same idiom [formatRelativeTime] uses, and handles both shapes.
+     */
+    fun formatIndentTimestamp(timestamp: String?): String {
+        if (timestamp.isNullOrBlank()) return "--"
+        return try {
+            val utcFormat = SimpleDateFormat(SUPABASE_PATTERN, Locale.getDefault()).apply {
+                timeZone = UTC_TIMEZONE
+            }
+            val utcDate = utcFormat.parse(timestamp.substringBefore(".")) ?: return timestamp
+            val displayFormat = SimpleDateFormat(ABSOLUTE_PATTERN, Locale.getDefault()).apply {
+                timeZone = IST_TIMEZONE
+            }
+            displayFormat.format(utcDate)
+        } catch (e: Exception) {
+            Log.e("DateTimeUtils", "Invalid UTC timestamp: $timestamp", e)
+            timestamp
+        }
+    }
 
     fun formatRelativeTime(timestamp: String?): String {
         if (timestamp.isNullOrBlank()) return "--"

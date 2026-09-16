@@ -109,8 +109,8 @@ fun EditIndentScreen(
 
     if (showConfirmDialog) {
         ConfirmCorrectionDialog(
-            changedCount = changedFieldCount(uiState),
-            contactsChanged = contactsChanged(uiState),
+            changedCount = uiState.changedFieldCount,
+            contactsChanged = uiState.contactsChanged,
             onConfirm = {
                 showConfirmDialog = false
                 viewModel.onEvent(EditIndentEvent.SubmitUpdate)
@@ -301,8 +301,8 @@ private fun EditSlip(
     val details = indent.indentGroupDetails
     val loadingLocation = details.indentLocations.find { it.locationType == "loading" }
     val unloadingLocation = details.indentLocations.find { it.locationType == "unloading" }
-    val changed = changedFieldCount(uiState)
-    val callSheetChanged = contactsChanged(uiState)
+    val changed = uiState.changedFieldCount
+    val callSheetChanged = uiState.contactsChanged
 
     Column(
         modifier = Modifier
@@ -488,7 +488,7 @@ private fun EditSlip(
         ClauseDocket(
             number = 5,
             title = "Commercials",
-            state = if (commercialsChanged(uiState)) ClauseState.FILLED else ClauseState.EMPTY,
+            state = if (uiState.commercialsChanged) ClauseState.FILLED else ClauseState.EMPTY,
             testTag = "edit_indent_clause_commercials",
         ) {
             MoneyRuleField(
@@ -537,7 +537,7 @@ private fun EditSlip(
         ClauseDocket(
             number = 6,
             title = "Terms",
-            state = if (termsChanged(uiState)) ClauseState.FILLED else ClauseState.EMPTY,
+            state = if (uiState.termsChanged) ClauseState.FILLED else ClauseState.EMPTY,
             testTag = "edit_indent_clause_terms",
         ) {
             DocketSwitchRow(
@@ -672,55 +672,14 @@ private fun EditHead(
 }
 
 // ---------------------------------------------------------------------------
-// Change detection — drives the head stamp and the clause spines.
+// Change detection
+//
+// Deliberately not implemented here. The head stamp, the clause spines and the
+// save button all read `changedFieldCount` / `contactsChanged` /
+// `commercialsChanged` off the UI state, which the ViewModel fills in one place
+// (`EditIndentUiState.withDiff`).
+//
+// This file used to carry its own copies of that logic. They drifted from the
+// ViewModel's, compared raw nulls and the form's invented defaults, and made the
+// page announce "1 EDITED" on open. One implementation, one answer.
 // ---------------------------------------------------------------------------
-
-private fun contactsChanged(state: EditIndentUiState): Boolean =
-    IndentContactRole.entries.any { role ->
-        state.contactFor(role)?.id != state.originalContactId(role)
-    }
-
-private fun commercialsChanged(state: EditIndentUiState): Boolean {
-    val details = state.indent?.indentGroupDetails ?: return false
-    val indent = state.indent
-    return state.clientCost.replace(",", "").toIntOrNull() != details.clientTripCost?.toInt() ||
-        state.businessProposedCost.replace(",", "").toIntOrNull() !=
-        details.businessProposedCost?.toInt() ||
-        state.negotiatedCost.replace(",", "").toIntOrNull() !=
-        indent.negotiatedTripCost?.toInt() ||
-        state.hideCost != indent.hideCostInfo
-}
-
-private fun termsChanged(state: EditIndentUiState): Boolean {
-    val details = state.indent?.indentGroupDetails ?: return false
-    return state.tatRequired != details.tatEnabled ||
-        state.tatHours.toIntOrNull() != details.tatHours ||
-        state.tarpaulinRequired != details.tarpaulingRequired ||
-        state.vehicleHeight.toFloatOrNull() != details.vehicleHeight?.toFloat() ||
-        state.flooringType != details.flooringType ||
-        state.remarks != details.specialRequirements
-}
-
-private fun changedFieldCount(state: EditIndentUiState): Int {
-    val details = state.indent?.indentGroupDetails ?: return 0
-    val indent = state.indent
-    var count = 0
-    if (state.clientCost.replace(",", "").toIntOrNull() != details.clientTripCost?.toInt()) count++
-    if (state.businessProposedCost.replace(",", "").toIntOrNull() !=
-        details.businessProposedCost?.toInt()
-    ) {
-        count++
-    }
-    if (state.negotiatedCost.replace(",", "").toIntOrNull() != indent.negotiatedTripCost?.toInt()) {
-        count++
-    }
-    if (state.hideCost != indent.hideCostInfo) count++
-    if (state.tatRequired != details.tatEnabled) count++
-    if (state.tatHours.toIntOrNull() != details.tatHours) count++
-    if (state.tarpaulinRequired != details.tarpaulingRequired) count++
-    if (state.vehicleHeight.toFloatOrNull() != details.vehicleHeight?.toFloat()) count++
-    if (state.flooringType != details.flooringType) count++
-    if (state.remarks != details.specialRequirements) count++
-    if (contactsChanged(state)) count++
-    return count
-}
