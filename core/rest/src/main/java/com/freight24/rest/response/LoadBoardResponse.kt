@@ -7,19 +7,14 @@ import kotlinx.serialization.Serializable
  * row per operational city with its most recent loads inlined.
  *
  * `data` is an object, not an array, and carries the city groups alongside the
- * board totals and the paging cursor.
+ * board totals and the paging cursor. Load rows themselves live in
+ * [LoadBoardLoad], shared with [PaginatedLoadBoardResponse].
  */
 @Serializable
 data class LoadBoardResponse(
     val success: Boolean,
     val data: LoadBoardData? = null,
 ) {
-
-    @Serializable
-    data class LoadBoardData (
-        val groups: List<CityLoadSummary>?,
-    )
-
     @Serializable
     data class LoadBoardData(
         val groups: List<CityGroup> = emptyList(),
@@ -54,42 +49,4 @@ data class LoadBoardResponse(
         val hasNextPage: Boolean = false,
         val totalGroups: Int = 0,
     )
-
-    @Serializable
-    data class Tat(
-        val hours: Int?,
-        val enabled: Boolean?,
-    )
-
-    @Serializable
-    data class TruckType(
-        val id: Int,
-        val name: String,
-        val bodyType: String,
-        val displayName: String,
-    )
-
-
-    @Serializable
-    data class Loading(
-        val area: String?,
-        val city: String?,
-        val address: String?,
-        val contactPhone: String?,
-        val contactPerson: String?,
-    )
-
-    @Serializable
-    data class Employee(
-        val name: String?,
-        val phone: String?
-    )
-
-    @Serializable
-    data class UnLoading(
-        val area: String?,
-        val city: String?,
-    )
-
-
 }

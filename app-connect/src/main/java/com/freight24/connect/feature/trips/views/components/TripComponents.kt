@@ -26,6 +26,13 @@ import com.freight24.common.util.formatLoadWeight
 import com.freight24.connect.utils.toDate
 import com.freight24.rest.response.TripDataResponse
 
+/**
+ * Client label for a trip. [TripDataResponse.Client.name] is null for
+ * organisation-only clients, so fall back to the company name.
+ */
+private val TripDataResponse.Client.label: String
+    get() = name ?: companyName.orEmpty()
+
 @Composable
 fun TripCard(
     trip: TripDataResponse,
@@ -195,9 +202,7 @@ fun TripCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = trip.client.let {
-                        it.name?.uppercase() ?: it.companyName?.uppercase().orEmpty()
-                    } ,
+                    text = trip.client.label.uppercase(),
                     style = MaterialTheme.typography.labelSmall,
                     color = colorScheme.onSurfaceVariant
                 )
@@ -258,9 +263,7 @@ fun TripListItem(
                         color = colorScheme.outline
                     )
                     Text(
-                        text = trip.client.let {
-                            it.name?.uppercase() ?: it.companyName?.uppercase().orEmpty()
-                        },
+                        text = trip.client.label,
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = colorScheme.onSurface,

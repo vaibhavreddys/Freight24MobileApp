@@ -25,9 +25,8 @@ fun LoadBoardLoad.toLoad(fallbackCity: String): Load =
                 ?: unloading?.city
                 ?: "--",
         material = material ?: "--",
-        truckInfo = NameFormatter.shortenTruckName(truckType.displayName),
         weight = weight?.let { formatLoadWeight(it, "Tons") } ?: "--",
-        truckInfo = NameFormatter.shortenTruckName(truckType.displayName),
+        truckInfo = NameFormatter.shortenTruckName(truckType?.displayName),
         price = price?.let { "₹$it" } ?: "--",
         createdTime = DateTimeUtils.formatRelativeTime(createdAt),
         agentName = employee?.name ?: "Freight24",
