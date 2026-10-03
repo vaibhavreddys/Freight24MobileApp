@@ -125,6 +125,50 @@ object RelativeTimeFormatter {
     }
 
     /**
+     * Formats a Supabase/Postgres UTC timestamp into how long ago it
+     * happened: "Just now", "12 mins ago", "5 hours ago", "3 days ago",
+     * "2 weeks ago".
+     *
+     * The diff is computed on the absolute instants (both sides parsed as
+     * UTC), so the result is timezone-independent — unlike [formatExpiry],
+     * which has to re-anchor into IST because it reads a wall clock.
+     *
+     * @return "" when [timestamp] is blank or unparseable so callers can
+     *         hide the row rather than print a placeholder.
+     */
+    fun formatElapsed(timestamp: String?): String {
+        if (timestamp.isNullOrBlank()) return ""
+        return try {
+            val parser = SimpleDateFormat(SUPABASE_PATTERN, Locale.getDefault()).apply {
+                timeZone = UTC
+            }
+            val instant = parser.parse(stripFractionalAndZone(timestamp)) ?: return ""
+
+            val elapsedMillis = System.currentTimeMillis() - instant.time
+            if (elapsedMillis < 0) return ""
+
+            val totalMinutes = elapsedMillis / 60_000
+            val totalHours = totalMinutes / 60
+            val totalDays = totalHours / 24
+
+            when {
+                totalMinutes < 1 -> "Just now"
+                totalMinutes == 1L -> "1 min ago"
+                totalMinutes < 60 -> "$totalMinutes mins ago"
+                totalHours == 1L -> "1 hour ago"
+                totalHours < 24 -> "$totalHours hours ago"
+                totalDays == 1L -> "Yesterday"
+                totalDays < 7 -> "$totalDays days ago"
+                totalDays < 14 -> "1 week ago"
+                else -> "${totalDays / 7} weeks ago"
+            }
+        } catch (e: Exception) {
+            Log.e("RelativeTimeFormatter", "Invalid UTC timestamp: $timestamp", e)
+            ""
+        }
+    }
+
+    /**
      * Re-anchors a [utcInstant] (the absolute moment in time) into the
      * IST timezone so the diff against `now` in IST stays timezone-safe.
      */

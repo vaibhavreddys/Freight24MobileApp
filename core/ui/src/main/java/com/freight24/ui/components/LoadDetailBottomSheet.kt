@@ -1,6 +1,12 @@
 package com.freight24.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,9 +58,16 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
@@ -67,6 +80,7 @@ import com.freight24.ui.theme.FreightThemeTokens
 import com.freight24.ui.theme.monoSpace
 import com.freight24.ui.trucker.TruckerColors
 import com.freight24.ui.trucker.rememberTruckerColors
+import kotlinx.coroutines.delay
 
 // ──────────────────────────────────────────────────────────────────────────────
 //  UI model
@@ -130,6 +144,30 @@ sealed interface LoadDetailState {
     data class Error(val message: String) : LoadDetailState
 }
 
+/**
+ * Per-element visibility switches for the indent detail sheet.
+ *
+ * Product asked for a handful of regions to come out of the sheet without
+ * the underlying code being deleted, so each is a flag here rather than a
+ * deleted composable. Defaults encode the current product decision — flip a
+ * single field to bring an element back.
+ *
+ * Note: [showIndentId] also moves the posted-time row. With the id chip on,
+ * the timing sits to its right; with it off, the timing leads the header.
+ */
+data class LoadDetailSheetConfig(
+    val showIndentId: Boolean = false,
+    val showPricingNote: Boolean = false,
+    val showShipperAccount: Boolean = false,
+    val showExpiry: Boolean = false,
+    val showInterestCount: Boolean = false,
+) {
+    companion object {
+        /** The shipped configuration. */
+        val Default = LoadDetailSheetConfig()
+    }
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 //  Sheet
 // ──────────────────────────────────────────────────────────────────────────────
@@ -143,6 +181,7 @@ fun LoadDetailBottomSheet(
     onToggleInterest: () -> Unit,
     sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
     modifier: Modifier = Modifier,
+    config: LoadDetailSheetConfig = LoadDetailSheetConfig.Default,
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -165,6 +204,7 @@ fun LoadDetailBottomSheet(
                 onClose = onDismiss,
                 onCallAgent = onCallAgent,
                 onToggleInterest = onToggleInterest,
+                config = config,
             )
         }
     }
@@ -193,6 +233,7 @@ private fun LoadDetailContent(
     onClose: () -> Unit,
     onCallAgent: (String) -> Unit,
     onToggleInterest: () -> Unit,
+    config: LoadDetailSheetConfig,
 ) {
     Column(
         modifier = Modifier
@@ -206,17 +247,35 @@ private fun LoadDetailContent(
         // passed down: the sheet's hero moments speak brand, the supporting
         // surfaces stay in the Material container system.
         val trucker = rememberTruckerColors()
-        Header(code = detail.indentCode, onClose = onClose, trucker = trucker)
-        PostedRow(createdAt = detail.createdAt)
-        RouteCard(detail = detail, onCallAgent = onCallAgent, trucker = trucker)
+        // The posted-time row moved into the header: it reads as identity
+        // metadata ("this indent, posted 12 mins ago") rather than as a
+        // separate content block, and the close button anchors the right.
+        Header(
+            code = detail.indentCode,
+            createdAt = detail.createdAt,
+            onClose = onClose,
+            trucker = trucker,
+            showIndentId = config.showIndentId,
+        )
+        RouteCard(
+            detail = detail,
+            onCallAgent = onCallAgent,
+            trucker = trucker,
+            showPricingNote = config.showPricingNote,
+        )
         SpecsChips(detail = detail)
-        if (detail.client?.companyName != null) {
+        SpecialRequirementsCard(detail = detail)
+        if (config.showShipperAccount && detail.client?.companyName != null) {
             ShipperCard(companyName = detail.client.companyName, trucker = trucker)
         }
         if (detail.agent != null) {
             DispatchAgentCard(agent = detail.agent, onCallAgent = onCallAgent, trucker = trucker)
         }
-        EngagementLine(detail = detail)
+        EngagementLine(
+            detail = detail,
+            showExpiry = config.showExpiry,
+            showInterestCount = config.showInterestCount,
+        )
         ExpressInterestButton(
             isInterested = detail.isInterested,
             isLoading = detail.isInterestLoading,
@@ -233,14 +292,21 @@ private fun LoadDetailContent(
 @Composable
 private fun Header(
     code: String,
+    createdAt: String,
     onClose: () -> Unit,
     trucker: TruckerColors,
+    showIndentId: Boolean,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IndentIdChip(code = code, trucker = trucker)
+        // When the id chip is shown the timing tucks in beside it; when it is
+        // hidden the timing leads, so the header is never left empty on the left.
+        if (showIndentId) {
+            IndentIdChip(code = code, trucker = trucker)
+        }
+        PostedRow(createdAt = createdAt)
         Spacer(Modifier.weight(1f))
         IconButton(
             onClick = onClose,
@@ -283,19 +349,44 @@ private fun IndentIdChip(code: String, trucker: TruckerColors) {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-//  Posted row — human-friendly IST creation time ("Today, 10:30 AM IST").
-//  Hidden entirely when the backend timestamp is blank or unparseable.
+//  Posted row — elapsed time since creation ("Posted 12 mins ago").
+//  Tapping reveals the exact IST wall clock beneath it, which auto-hides
+//  again. Hidden entirely when the backend timestamp is blank or unparseable.
 // ──────────────────────────────────────────────────────────────────────────────
+
+/** How long the exact-time hint stays expanded after a tap. */
+private const val POSTED_EXACT_HINT_MS = 4_000L
 
 @Composable
 private fun PostedRow(createdAt: String) {
-    val postedText = RelativeTimeFormatter.formatCreatedIst(createdAt)
-    if (postedText.isNotEmpty()) {
+    val elapsed = RelativeTimeFormatter.formatElapsed(createdAt)
+    val exact = RelativeTimeFormatter.formatCreatedIst(createdAt)
+    var showExact by remember { mutableStateOf(false) }
+
+    // Auto-collapse: the hint is a peek, not a mode. Re-arms on every tap so
+    // repeated taps each get the full read window.
+    LaunchedEffect(showExact) {
+        if (showExact) {
+            delay(POSTED_EXACT_HINT_MS)
+            showExact = false
+        }
+    }
+
+    if (elapsed.isEmpty()) return
+
+    Column(modifier = Modifier.padding(horizontal = 4.dp)) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp)
+                .clip(RoundedCornerShape(999.dp))
+                .clickable(
+                    enabled = exact.isNotEmpty(),
+                    role = Role.Button,
+                ) { showExact = !showExact }
+                .padding(horizontal = 8.dp, vertical = 6.dp)
+                // Tag the tappable Row, not the Column: `testTagsAsResourceId`
+                // only exposes the id on the node it is applied to, and the
+                // Column has no semantics of its own to carry it.
                 .testTag("sheet_posted_on")
                 .semantics { testTagsAsResourceId = true },
         ) {
@@ -307,11 +398,26 @@ private fun PostedRow(createdAt: String) {
             )
             Spacer(Modifier.width(8.dp))
             Text(
-                text = "Posted $postedText",
+                text = "Posted $elapsed",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+            )
+        }
+
+        // Inline rather than a popup: a dropdown inside a scrolling
+        // ModalBottomSheet gets clipped by the sheet bounds.
+        AnimatedVisibility(
+            visible = showExact && exact.isNotEmpty(),
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically(),
+        ) {
+            Text(
+                text = exact,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
             )
         }
     }
@@ -328,9 +434,21 @@ private fun RouteCard(
     detail: LoadDetail,
     onCallAgent: (String) -> Unit,
     trucker: TruckerColors,
+    showPricingNote: Boolean,
 ) {
     val fromCity = bestCityLabel(detail.loadingLocation, fallback = "Pickup")
     val toCity = bestCityLabel(detail.unloadingLocation, fallback = "Drop")
+
+    // The pricing row is conditional in three ways, so decide it once here
+    // rather than re-deriving it inside the layout. A ₹0 amount with the note
+    // switched off leaves the hero with nothing below the route — the divider
+    // goes with it so we never strand a rule above empty space.
+    val priceRow = when {
+        detail.hideCostInfo -> PriceRow.HideCost
+        isZeroAmount(detail.tripPrice) && !showPricingNote -> PriceRow.None
+        isZeroAmount(detail.tripPrice) -> PriceRow.ContactAgent
+        else -> PriceRow.Amount
+    }
 
     Box(
         modifier = Modifier
@@ -354,21 +472,28 @@ private fun RouteCard(
                 toCity = toCity,
                 trucker = trucker,
             )
-            HorizontalDivider(color = trucker.onBrand.copy(alpha = 0.25f))
-            if (detail.hideCostInfo) {
-                HideCostInline(trucker = trucker)
-            } else if (isZeroAmount(detail.tripPrice)) {
-                PricingNote(
+            if (priceRow != PriceRow.None) {
+                HorizontalDivider(color = trucker.onBrand.copy(alpha = 0.25f))
+            }
+            when (priceRow) {
+                PriceRow.HideCost -> HideCostInline(trucker = trucker)
+                PriceRow.ContactAgent -> PricingNote(
                     agentPhone = detail.agent?.phone.orEmpty(),
                     onCallAgent = onCallAgent,
                     trucker = trucker,
                 )
-            } else {
-                AmountChip(priceText = formatCurrency(detail.tripPrice), trucker = trucker)
+                PriceRow.Amount -> AmountChip(
+                    priceText = formatCurrency(detail.tripPrice),
+                    trucker = trucker,
+                )
+                PriceRow.None -> Unit
             }
         }
     }
 }
+
+/** What the hero's pricing slot shows, if anything. */
+private enum class PriceRow { Amount, ContactAgent, HideCost, None }
 
 /** True when the backend sent no usable amount (blank, "--", or numeric 0). */
 private fun isZeroAmount(tripPrice: String): Boolean =
@@ -596,6 +721,62 @@ private fun SpecsChips(detail: LoadDetail) {
         detail.vehicleHeight?.takeIf { it.isNotBlank() }?.let {
             SpecChip(text = "Height $it", icon = Icons.Filled.Height)
         }
+        // Turn-around time only when the backend says it applies — a
+        // "TAT: not required" chip would be noise on a sheet full of facts.
+        if (detail.tatEnabled) {
+            detail.tatHours?.takeIf { it > 0 }?.let {
+                SpecChip(text = "TAT $it hrs", icon = Icons.Filled.Schedule)
+            }
+        }
+        if (detail.tarpaulingRequired) {
+            SpecChip(text = "Tarpaulin required", icon = Icons.Filled.Inventory2)
+        }
+    }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+//  Special requirements — free-text notes panel. Only rendered when the
+//  indent actually carries text; PartnerCard's surface/border treatment is
+//  reused so the two read as the same family of panel.
+// ──────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun SpecialRequirementsCard(detail: LoadDetail) {
+    val notes = detail.specialRequirements?.trim().orEmpty()
+    if (notes.isEmpty()) return
+
+    SectionColumn(label = "Special requirements") {
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceContainerLowest,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            shape = MaterialTheme.shapes.medium,
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("sheet_special_requirements")
+                .semantics { testTagsAsResourceId = true },
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+                verticalAlignment = Alignment.Top,
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.Notes,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    text = notes,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+        }
     }
 }
 
@@ -776,7 +957,15 @@ private fun CallPillButton(
 // ──────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun EngagementLine(detail: LoadDetail) {
+private fun EngagementLine(
+    detail: LoadDetail,
+    showExpiry: Boolean,
+    showInterestCount: Boolean,
+) {
+    // Both halves can be switched off independently; with neither on the
+    // row is skipped entirely rather than left as an empty band.
+    if (!showExpiry && !showInterestCount) return
+
     val expiryText = RelativeTimeFormatter.formatExpiry(detail.expiresAt)
     val isExpired = expiryText == "Expired"
     val hasInterest = detail.interestCount > 0
@@ -793,65 +982,71 @@ private fun EngagementLine(detail: LoadDetail) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // Left: clock + relative expiry
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.weight(1f, fill = false),
-        ) {
-            Icon(
-                imageVector = Icons.Default.AccessTime,
-                contentDescription = null,
-                tint = if (isExpired) {
-                    MaterialTheme.colorScheme.error
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
-                modifier = Modifier.size(16.dp),
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(
-                text = expiryText,
-                style = MaterialTheme.typography.labelMedium,
-                color = if (isExpired) {
-                    MaterialTheme.colorScheme.error
-                } else {
-                    MaterialTheme.colorScheme.onSurface
-                },
-                maxLines = 1,
-            )
+        if (showExpiry) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f, fill = false),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.AccessTime,
+                    contentDescription = null,
+                    tint = if (isExpired) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                    modifier = Modifier.size(16.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = expiryText,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (isExpired) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    },
+                    maxLines = 1,
+                )
+            }
         }
 
-        Spacer(Modifier.width(12.dp))
+        if (showExpiry && showInterestCount) {
+            Spacer(Modifier.width(12.dp))
+        }
 
         // Right: status dot + interest count
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.End,
-            modifier = Modifier.weight(1f, fill = false),
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(8.dp)
-                    .background(
-                        color = if (hasInterest) {
-                            FreightThemeTokens.colors.success
-                        } else {
-                            MaterialTheme.colorScheme.outlineVariant
-                        },
-                        shape = CircleShape,
-                    ),
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(
-                text = interestText,
-                style = MaterialTheme.typography.labelMedium,
-                color = if (hasInterest) {
-                    FreightThemeTokens.colors.success
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+        if (showInterestCount) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End,
+                modifier = Modifier.weight(1f, fill = false),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .background(
+                            color = if (hasInterest) {
+                                FreightThemeTokens.colors.success
+                            } else {
+                                MaterialTheme.colorScheme.outlineVariant
+                            },
+                            shape = CircleShape,
+                        ),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = interestText,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (hasInterest) {
+                        FreightThemeTokens.colors.success
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }
