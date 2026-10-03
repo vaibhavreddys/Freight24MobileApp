@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.freight24.notifications.AppNotification
 import com.freight24.notifications.NotificationDispatcher
 import com.freight24.trucker.feature.login.data.models.LoginResult
+import com.freight24.trucker.feature.login.domain.AuthErrorMessage
 import com.freight24.trucker.feature.login.domain.usecase.LoginUseCase
 import com.freight24.trucker.feature.login.domain.usecase.LoginUseCaseParams
 import com.freight24.ui.UiState
@@ -61,19 +62,30 @@ internal class LoginViewModel
                 loginUseCase.invoke(LoginUseCaseParams(fullPhone)).fold(
                     onSuccess = { response ->
                         Log.e("LoginViewModel", "Response: $response")
-                        if (response is LoginResult.Success) {
-                            notificationDispatcher.show(
-                                AppNotification.Critical(
-                                    message = "OTP for $fullPhone is ${response.otp}",
-                                ),
-                            )
-                            Log.e("LoginViewModel", "Notification sent")
-                            _uiState.value = UiState.Success(Unit)
-                            _navigateToVerifyOtp.value = fullPhone
+                        // LoginUseCaseImpl wraps failures as LoginResult.Error
+                        // inside a *successful* Result, so both branches of
+                        // the sealed type must be handled here. Matching only
+                        // Success left _uiState on Loading and the CTA spun
+                        // forever whenever the backend was unreachable.
+                        when (response) {
+                            is LoginResult.Success -> {
+                                notificationDispatcher.show(
+                                    AppNotification.Critical(
+                                        message = "OTP for $fullPhone is ${response.otp}",
+                                    ),
+                                )
+                                Log.e("LoginViewModel", "Notification sent")
+                                _uiState.value = UiState.Success(Unit)
+                                _navigateToVerifyOtp.value = fullPhone
+                            }
+                            is LoginResult.Error ->
+                                _uiState.value = UiState.Error(response.message)
                         }
                     },
                     onFailure = { exception ->
-                        _uiState.value = UiState.Error(exception.message ?: "Failed to send OTP")
+                        _uiState.value = UiState.Error(
+                            AuthErrorMessage.from(exception),
+                        )
                     },
                 )
             }

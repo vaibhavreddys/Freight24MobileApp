@@ -3,6 +3,7 @@ package com.freight24.trucker.feature.login.domain.usecase
 import com.freight24.rest.response.LoginResponse
 import com.freight24.trucker.feature.login.data.models.VerifyOtpResult
 import com.freight24.trucker.feature.login.data.repository.LoginRepository
+import com.freight24.trucker.feature.login.domain.AuthErrorMessage
 import kotlinx.serialization.json.Json
 import retrofit2.HttpException
 import javax.inject.Inject
@@ -49,7 +50,9 @@ internal class VerifyOtpUseCaseImpl
                         try {
                             val errorResponse = errorJson
                                 .decodeFromString<LoginResponse>(errorBody)
-                            val message = errorResponse.message
+                            // Server-authored copy is fine to show, but a body with no
+                            // message would render an empty error block.
+                            val message = AuthErrorMessage.orGeneric(errorResponse.message)
                             return@recover when {
                                 message.contains("Invalid", ignoreCase = true) ->
                                     VerifyOtpResult.InvalidOtp(message)
@@ -62,6 +65,10 @@ internal class VerifyOtpUseCaseImpl
                         }
                     }
                 }
-                VerifyOtpResult.Error(e.message.orEmpty())
+                // Transport failure. e.message is the raw OkHttp/Retrofit
+                // string and used to reach the screen verbatim — the OTP page
+                // was printing "Failed to connect to <our base URL>" at the
+                // driver. Route it through the mapper instead.
+                VerifyOtpResult.Error(AuthErrorMessage.from(e))
             }
     }

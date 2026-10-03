@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import com.freight24.trucker.feature.login.domain.AuthErrorMessage
 import com.freight24.trucker.feature.login.view.signin.LoginViewModel.Companion.MAX_PHONE_LENGTH
 import com.freight24.trucker.navigation.TruckerDestination
 import com.freight24.ui.UiState
@@ -94,8 +95,11 @@ internal fun LoginScreen(
 
     LaunchedEffect(uiState) {
         if (uiState is UiState.Error) {
+            // Last line of defence: the ViewModel already maps failures to
+            // driver-safe copy, so a blank here means something upstream
+            // produced nothing. Never render an empty error block.
             errorMessage = (uiState as UiState.Error).message
-                .ifBlank { "Couldn't send the code. Check your signal and try again." }
+                .ifBlank { AuthErrorMessage.UNREACHABLE }
             viewModel.resetUiState()
         }
     }

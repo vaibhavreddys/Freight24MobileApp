@@ -8,6 +8,7 @@ import com.freight24.notifications.AppNotification
 import com.freight24.notifications.NotificationDispatcher
 import com.freight24.trucker.feature.login.data.models.LoginResult
 import com.freight24.trucker.feature.login.data.models.VerifyOtpResult
+import com.freight24.trucker.feature.login.domain.AuthErrorMessage
 import com.freight24.trucker.feature.login.domain.usecase.LoginUseCase
 import com.freight24.trucker.feature.login.domain.usecase.LoginUseCaseParams
 import com.freight24.trucker.feature.login.domain.usecase.VerifyOtpUseCase
@@ -168,7 +169,7 @@ internal class VerifyOtpViewModel
                     },
                     onFailure = { exception ->
                         Log.e("VerifyOtpViewModel", "Error resending OTP: ${exception.message}")
-                        _errorMessage.value = exception.message ?: "Failed to resend code"
+                        _errorMessage.value = AuthErrorMessage.from(exception)
                         _isResendEnabled.value = true
                     },
                 )
@@ -218,7 +219,7 @@ internal class VerifyOtpViewModel
                     },
                     onFailure = { exception ->
                         Log.e("VerifyOtpViewModel", "Error verifying OTP : " + exception.message)
-                        _errorMessage.value = exception.message ?: "Something went wrong"
+                        _errorMessage.value = AuthErrorMessage.from(exception)
                         _buttonState.value = ButtonState.Failure
                         triggerShake()
                     },

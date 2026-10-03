@@ -1611,8 +1611,8 @@ private fun LogoutConfirmationSheet(
                 shape = RoundedCornerShape(28.dp),
                 colors =
                     ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
                     ),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
             ) {
