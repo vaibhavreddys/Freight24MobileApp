@@ -21,6 +21,7 @@ import com.freight24.connect.feature.verificationrequests.domain.usecase.UpdateV
 import com.freight24.connect.feature.verificationrequests.domain.usecase.UpdateVerificationRequestStatusUseCaseParams
 import com.freight24.connect.feature.verificationrequests.domain.model.TruckVerificationRequest
 import com.freight24.connect.feature.verificationrequests.domain.model.VerificationRequest
+import com.freight24.connect.feature.verificationrequests.domain.model.VerificationRequestDocument
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -110,9 +111,9 @@ internal class VerificationRequestsViewModelImpl @Inject constructor(
         }
     }
 
-    override fun getSignedUrl(s3Url: String, onUrlReady: (String) -> Unit) {
+    override fun getSignedUrl(document: VerificationRequestDocument, onUrlReady: (String) -> Unit) {
         viewModelScope.launch {
-            getVerificationSignedUrlUseCase(s3Url)
+            getVerificationSignedUrlUseCase(document.entity, document.requestId, document.name)
                 .onSuccess(onUrlReady)
         }
     }

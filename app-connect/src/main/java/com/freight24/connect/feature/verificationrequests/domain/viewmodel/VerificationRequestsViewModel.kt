@@ -4,6 +4,7 @@ import com.freight24.connect.feature.verificationrequests.domain.model.ClientVer
 import com.freight24.connect.feature.verificationrequests.domain.model.TruckOwnerVerificationRequest
 import com.freight24.connect.feature.verificationrequests.domain.model.TruckVerificationRequest
 import com.freight24.connect.feature.verificationrequests.domain.model.VerificationRequest
+import com.freight24.connect.feature.verificationrequests.domain.model.VerificationRequestDocument
 import com.freight24.connect.feature.verificationrequests.domain.model.VerificationRequestStatus
 import com.freight24.connect.feature.verificationrequests.domain.model.VerificationRequestTab
 import kotlinx.coroutines.flow.StateFlow
@@ -101,5 +102,5 @@ sealed class VerificationRequestsEvent {
 interface VerificationRequestsViewModel {
     val uiState: StateFlow<VerificationRequestsUiState>
     fun onEvent(event: VerificationRequestsEvent)
-    fun getSignedUrl(s3Url: String, onUrlReady: (String) -> Unit)
+    fun getSignedUrl(document: VerificationRequestDocument, onUrlReady: (String) -> Unit)
 }

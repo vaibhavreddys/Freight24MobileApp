@@ -4,13 +4,13 @@ import com.freight24.connect.feature.truckowners.profile.domain.ProfileRepositor
 import javax.inject.Inject
 
 interface GetProfileSignedUrlUseCase {
-    suspend operator fun invoke(s3Url: String): Result<String>
+    suspend operator fun invoke(documentId: String): Result<String>
 }
 
 class GetProfileSignedUrlUseCaseImpl @Inject constructor(
     private val repository: ProfileRepository
 ) : GetProfileSignedUrlUseCase {
-    override suspend fun invoke(s3Url: String): Result<String> {
-        return repository.getGenericSignedUrl(s3Url)
+    override suspend fun invoke(documentId: String): Result<String> {
+        return repository.getIdentityDocumentSignedUrl(documentId)
     }
 }

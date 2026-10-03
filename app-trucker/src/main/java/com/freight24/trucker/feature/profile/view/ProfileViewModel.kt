@@ -802,9 +802,9 @@ internal class ProfileViewModel
             return _routesToAdd.value.isNotEmpty() || _routeIdsToDelete.value.isNotEmpty()
         }
 
-        fun getSignedUrl(s3Url: String, onUrlReady: (String) -> Unit) {
+        fun getSignedUrl(documentId: String, onUrlReady: (String) -> Unit) {
             viewModelScope.launch(Dispatchers.IO) {
-                getProfileSignedUrlUseCase.invoke(s3Url)
+                getProfileSignedUrlUseCase.invoke(documentId)
                     .onSuccess { signedUrl ->
                         onUrlReady(signedUrl)
                     }

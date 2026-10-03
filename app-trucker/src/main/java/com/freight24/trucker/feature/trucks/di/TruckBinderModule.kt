@@ -10,8 +10,8 @@ import com.freight24.trucker.feature.trucks.domain.usecase.FetchTruckDetailUseCa
 import com.freight24.trucker.feature.trucks.domain.usecase.FetchTruckDetailUseCaseImpl
 import com.freight24.trucker.feature.trucks.domain.usecase.FetchTrucksUseCase
 import com.freight24.trucker.feature.trucks.domain.usecase.FetchTrucksUseCaseImpl
-import com.freight24.trucker.feature.trucks.domain.usecase.GetGenericSignedUrlUseCase
-import com.freight24.trucker.feature.trucks.domain.usecase.GetGenericSignedUrlUseCaseImpl
+import com.freight24.trucker.feature.trucks.domain.usecase.GetTruckDocumentSignedUrlUseCase
+import com.freight24.trucker.feature.trucks.domain.usecase.GetTruckDocumentSignedUrlUseCaseImpl
 import com.freight24.trucker.feature.trucks.domain.usecase.UpdateTruckDocumentsUseCase
 import com.freight24.trucker.feature.trucks.domain.usecase.UpdateTruckDocumentsUseCaseImpl
 import dagger.Binds
@@ -45,7 +45,9 @@ internal interface TruckBinderModule {
 
     @Binds
     @Singleton
-    fun bindGetGenericSignedUrlUseCase(impl: GetGenericSignedUrlUseCaseImpl): GetGenericSignedUrlUseCase
+    fun bindGetTruckDocumentSignedUrlUseCase(
+        impl: GetTruckDocumentSignedUrlUseCaseImpl,
+    ): GetTruckDocumentSignedUrlUseCase
 
     @Binds
     @Singleton

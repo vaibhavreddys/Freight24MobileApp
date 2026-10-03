@@ -596,8 +596,8 @@ private fun DocumentsStep(viewModel: EditTruckViewModel) {
                 currentTargetPrefix = "RC"
                 showSourcePicker = true
             },
-            onViewClick = { url ->
-                viewModel.fetchSignedUrl(url) { signedUrl ->
+            onViewClick = {
+                viewModel.fetchSignedUrl("rc") { signedUrl ->
                     context.startActivity(getPdfLaunchIntent(signedUrl, context))
                 }
             },
@@ -615,8 +615,8 @@ private fun DocumentsStep(viewModel: EditTruckViewModel) {
                 currentTargetPrefix = "INSURANCE"
                 showSourcePicker = true
             },
-            onViewClick = { url ->
-                viewModel.fetchSignedUrl(url) { signedUrl ->
+            onViewClick = {
+                viewModel.fetchSignedUrl("insurance") { signedUrl ->
                     context.startActivity(getPdfLaunchIntent(signedUrl, context))
                 }
             },
@@ -634,8 +634,8 @@ private fun DocumentsStep(viewModel: EditTruckViewModel) {
                 currentTargetPrefix = "FC"
                 showSourcePicker = true
             },
-            onViewClick = { url ->
-                viewModel.fetchSignedUrl(url) { signedUrl ->
+            onViewClick = {
+                viewModel.fetchSignedUrl("fc") { signedUrl ->
                     context.startActivity(getPdfLaunchIntent(signedUrl, context))
                 }
             },

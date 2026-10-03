@@ -485,8 +485,8 @@ private fun ClientProfileContent(
                 documents = client.documents,
                 documentStates = documentStates,
                 isEditing = isEditing,
-                onDocumentView = { s3Url ->
-                    viewModel.getSignedUrl(s3Url) { signedUrl ->
+                onDocumentView = { documentId ->
+                    viewModel.getSignedUrl(documentId) { signedUrl ->
                         context.startActivity(com.freight24.ui.components.getPdfLaunchIntent(signedUrl, context))
                     }
                 },
@@ -1356,8 +1356,8 @@ private fun DocumentList(
                     .clickable {
                         if (isEditing) {
                             onDocumentUpload(type.fieldKey)
-                        } else if (!existingUrl.isNullOrEmpty()) {
-                            onDocumentView(existingUrl)
+                        } else if (!existingUrl.isNullOrEmpty() && !doc?.documentId.isNullOrBlank()) {
+                            onDocumentView(doc!!.documentId)
                         }
                     }
                     .padding(horizontal = 20.dp, vertical = 18.dp),

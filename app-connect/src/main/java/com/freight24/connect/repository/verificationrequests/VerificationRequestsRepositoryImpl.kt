@@ -166,10 +166,14 @@ class VerificationRequestsRepositoryImpl @Inject constructor(
             }
         }
 
-    override suspend fun getSignedUrl(s3Url: String): Result<String> =
+    override suspend fun getSignedUrl(entity: String, requestId: String, documentKey: String): Result<String> =
         withContext(ioDispatcher) {
             try {
-                val response = documentApi.getGenericSignedUrl(s3Url)
+                val response = documentApi.getVerificationRequestDocumentSignedUrl(
+                    entity = entity,
+                    requestId = requestId,
+                    documentKey = documentKey,
+                )
                 if (response.isSuccessful && response.body() != null) {
                     Result.success(response.body()!!.data.signedUrl)
                 } else {

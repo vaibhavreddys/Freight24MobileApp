@@ -2361,8 +2361,8 @@ private fun openVerificationDocument(
     viewModel: VerificationRequestsViewModel,
     document: VerificationRequestDocument,
 ) {
-    val s3Url = document.s3Url ?: return
-    viewModel.getSignedUrl(s3Url) { signedUrl ->
+    if (document.s3Url.isNullOrBlank()) return
+    viewModel.getSignedUrl(document) { signedUrl ->
         context.startActivity(getPdfLaunchIntent(signedUrl, context))
     }
 }

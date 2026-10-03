@@ -1,6 +1,7 @@
 package com.freight24.connect.repository
 
 import com.freight24.common.di.IoDispatcher
+import com.freight24.rest.api.DocumentApi
 import com.freight24.rest.api.TruckApi
 import com.freight24.rest.response.AddTruckResponse
 import com.freight24.rest.response.SearchTruckResponse
@@ -15,6 +16,7 @@ class TruckRepositoryImpl
 @Inject
 constructor(
     private val api: TruckApi,
+    private val documentApi: DocumentApi,
     @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) : TruckRepository {
 
@@ -24,6 +26,20 @@ constructor(
                 val response = api.searchTrucks(query)
                 if (response.isSuccessful && response.body() != null) {
                     Result.success(response.body()!!.data)
+                } else {
+                    Result.failure(Exception(response.message()))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    override suspend fun getTruckDocumentSignedUrl(truckId: String, documentType: String): Result<String> =
+        withContext(ioDispatcher) {
+            try {
+                val response = documentApi.getTruckDocumentSignedUrl(truckId, documentType)
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!.data.signedUrl)
                 } else {
                     Result.failure(Exception(response.message()))
                 }

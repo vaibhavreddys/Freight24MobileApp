@@ -11,8 +11,8 @@ import android.net.Uri
 import com.freight24.common.model.TruckDetail
 import com.freight24.trucker.feature.trucks.domain.usecase.FetchTruckDetailParams
 import com.freight24.trucker.feature.trucks.domain.usecase.FetchTruckDetailUseCase
-import com.freight24.trucker.feature.trucks.domain.usecase.GetGenericSignedUrlParams
-import com.freight24.trucker.feature.trucks.domain.usecase.GetGenericSignedUrlUseCase
+import com.freight24.trucker.feature.trucks.domain.usecase.GetTruckDocumentSignedUrlParams
+import com.freight24.trucker.feature.trucks.domain.usecase.GetTruckDocumentSignedUrlUseCase
 import com.freight24.trucker.feature.trucks.domain.usecase.UpdateTruckDocumentsParams
 import com.freight24.trucker.feature.trucks.domain.usecase.UpdateTruckDocumentsUseCase
 import com.freight24.ui.UiState
@@ -37,7 +37,7 @@ internal class TruckDetailsViewModel
     constructor(
         private val fetchTruckDetailUseCase: FetchTruckDetailUseCase,
         private val updateTruckDocumentsUseCase: UpdateTruckDocumentsUseCase,
-        private val getGenericSignedUrlUseCase: GetGenericSignedUrlUseCase,
+        private val getTruckDocumentSignedUrlUseCase: GetTruckDocumentSignedUrlUseCase,
         @ApplicationContext private val context: Context,
         savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
@@ -199,9 +199,9 @@ internal class TruckDetailsViewModel
             }
         }
 
-        fun fetchSignedUrl(s3Url: String, onUrlReady: (String) -> Unit) {
+        fun fetchSignedUrl(documentType: String, onUrlReady: (String) -> Unit) {
             viewModelScope.launch {
-                getGenericSignedUrlUseCase(GetGenericSignedUrlParams(s3Url))
+                getTruckDocumentSignedUrlUseCase(GetTruckDocumentSignedUrlParams(truckId, documentType))
                     .onSuccess { url ->
                         onUrlReady(url)
                     }
