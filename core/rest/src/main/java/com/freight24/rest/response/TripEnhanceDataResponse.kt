@@ -46,7 +46,8 @@ data class TripDataResponse(
     @Serializable
     data class Client(
         val id: String,
-        val name: String,
+        val name: String? = null,
+        val companyName: String? = null,
     )
 
     @Serializable
