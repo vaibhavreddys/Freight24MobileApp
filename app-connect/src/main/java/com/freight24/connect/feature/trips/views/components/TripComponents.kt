@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.freight24.common.util.formatLoadWeight
 import com.freight24.connect.utils.toDate
 import com.freight24.rest.response.TripDataResponse
 
@@ -84,7 +85,7 @@ fun TripCard(
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = "${trip.truck.truckType.displayName} • ${trip.indentDetails.loadWeight} MT • ${trip.indentDetails.material}",
+                text = "${trip.truck.truckType.displayName} • ${formatLoadWeight(trip.indentDetails.loadWeight, "MT")} • ${trip.indentDetails.material}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = colorScheme.onSurfaceVariant,
                 maxLines = 1,
@@ -284,7 +285,7 @@ fun TripListItem(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "${trip.truck.truckType.displayName} • ${trip.indentDetails.loadWeight} MT • ${trip.indentDetails.material}",
+                    text = "${trip.truck.truckType.displayName} • ${formatLoadWeight(trip.indentDetails.loadWeight, "MT")} • ${trip.indentDetails.material}",
                     style = MaterialTheme.typography.bodySmall,
                     color = colorScheme.onSurfaceVariant,
                     maxLines = 1,

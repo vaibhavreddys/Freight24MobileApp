@@ -54,7 +54,8 @@ data class TripDataResponse(
         val material: String,
         val priority: String,
         val tatHours: Int?,
-        val loadWeight: Int,
+        /** Backend column is `DECIMAL(10,2)` — fractional weights such as `2.5` are valid. */
+        val loadWeight: Double,
         val tatEnabled: Boolean,
         val flooringType: String?,
         val vehicleHeight: Double?,

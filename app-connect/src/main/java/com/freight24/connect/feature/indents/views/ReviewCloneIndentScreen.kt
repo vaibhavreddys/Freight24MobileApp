@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.freight24.common.util.formatWeightValue
 import com.freight24.connect.feature.indents.domain.viewmodel.CloneIndentEvent
 import com.freight24.connect.feature.indents.domain.viewmodel.CloneIndentViewModel
 import com.freight24.connect.feature.indents.domain.viewmodel.CloneIndentViewModelImpl
@@ -165,7 +166,7 @@ fun ReviewCloneIndentScreen(
                 // Specifications Section
                 SpecificationsSection(
                     number = 3,
-                    weight = groupDetails.loadWeight.toString(),
+                    weight = formatWeightValue(groupDetails.loadWeight),
                     weightUnit = "MT",
                     materialType = groupDetails.material,
                     truckType = groupDetails.truckType?.displayName,

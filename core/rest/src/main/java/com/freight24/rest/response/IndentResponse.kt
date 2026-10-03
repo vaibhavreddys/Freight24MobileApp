@@ -36,7 +36,8 @@ data class IndentResponse(
         val tatHours: Int?,
         val createdAt: String,
         val expiresAt: String,
-        val loadWeight: Int,
+        /** Backend column is `DECIMAL(10,2)` — fractional weights such as `2.5` are valid. */
+        val loadWeight: Double,
         val tatEnabled: Boolean,
         val expiryHours: Int,
         val flooringType: String?,

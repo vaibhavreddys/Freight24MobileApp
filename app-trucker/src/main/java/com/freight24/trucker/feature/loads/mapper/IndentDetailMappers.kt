@@ -1,5 +1,6 @@
 package com.freight24.trucker.feature.loads.mapper
 
+import com.freight24.common.util.formatLoadWeight
 import com.freight24.rest.response.TruckerIndentDetail
 import com.freight24.rest.response.TruckerIndentDetailResponse
 import com.freight24.ui.components.LoadDetail
@@ -37,7 +38,7 @@ fun TruckerIndentDetail.toLoadDetail(
         createdAt = createdAt,
         tripPrice = tripPrice,
         hideCostInfo = hideCostInfo,
-        loadWeight = "${group.loadWeight} Tons",
+        loadWeight = formatLoadWeight(group.loadWeight, "Tons"),
         material = group.material,
         commodity = group.material,
         truckType = group.truckType?.let {

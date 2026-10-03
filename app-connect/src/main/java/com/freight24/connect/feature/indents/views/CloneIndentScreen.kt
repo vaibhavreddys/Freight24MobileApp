@@ -23,6 +23,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.freight24.common.util.formatLoadWeight
 import com.freight24.connect.feature.indents.domain.viewmodel.CloneIndentEvent
 import com.freight24.connect.feature.indents.domain.viewmodel.CloneIndentUiState
 import com.freight24.connect.feature.indents.domain.viewmodel.CloneIndentViewModel
@@ -169,7 +170,7 @@ fun CloneIndentContent(
 
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     OutlinedTextField(
-                        value = "${groupDetails.loadWeight} MT",
+                        value = formatLoadWeight(groupDetails.loadWeight, "MT"),
                         onValueChange = {},
                         label = { Text("Weight") },
                         readOnly = true,

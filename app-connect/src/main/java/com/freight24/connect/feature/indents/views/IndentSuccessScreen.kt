@@ -60,6 +60,7 @@ import com.freight24.connect.feature.indents.domain.viewmodel.IndentContactRole
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsViewModel
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsViewModelImpl
 import com.freight24.common.util.DateTimeUtils
+import com.freight24.common.util.formatWeightValue
 import com.freight24.connect.navigation.ConnectDestination
 import com.freight24.ui.components.DocketCard
 import com.freight24.ui.components.PerforationRule
@@ -141,7 +142,7 @@ fun IndentSuccessScreen(
 
             IndentSuccessComponent(
                 indentCode = indentCode ?: uiState.createdIndentCode ?: uiState.createdIndentId ?: indentId,
-                weight = groupDetails?.loadWeight?.toString() ?: "",
+                weight = formatWeightValue(groupDetails?.loadWeight),
                 material = groupDetails?.material ?: "",
                 fromLocation = loadingLocation?.areaName ?: loadingLocation?.cityName ?: "",
                 toLocation = unloadingLocation?.areaName ?: unloadingLocation?.cityName ?: "",

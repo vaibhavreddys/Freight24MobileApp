@@ -2,7 +2,6 @@ package com.freight24.connect.feature.indents.views
 
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -27,6 +26,8 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -36,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.common.util.DateTimeUtils.formatRelativeTime
+import com.freight24.common.util.formatLoadWeight
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentTab
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentStatusFilter
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsListEvent
@@ -43,6 +45,7 @@ import com.freight24.connect.feature.indents.domain.viewmodel.IndentsListUiState
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsListViewModel
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsListViewModelImpl
 import com.freight24.rest.response.IndentResponse
+import com.freight24.ui.components.FilterSelectionChip
 import com.freight24.ui.components.FreightEmptyState
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -116,7 +119,7 @@ fun IndentsContent(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 IndentTabSwitcher(
@@ -189,48 +192,21 @@ fun IndentTabSwitcher(
 ) {
     Row(
         modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        TabButton(
-            text = "Mine",
+        FilterSelectionChip(
+            label = "Mine",
             isSelected = selectedTab == IndentTab.MINE,
             onClick = { onTabSelected(IndentTab.MINE) },
-            modifier = Modifier.width(100.dp)
+            modifier = Modifier.docketTag("indents_filter_mine")
+                .semantics { selected = selectedTab == IndentTab.MINE },
         )
-
-        Spacer(modifier = Modifier.width(12.dp))
-
-        TabButton(
-            text = "All",
+        FilterSelectionChip(
+            label = "All",
             isSelected = selectedTab == IndentTab.ALL,
             onClick = { onTabSelected(IndentTab.ALL) },
-            modifier = Modifier.width(100.dp)
-        )
-    }
-}
-
-@Composable
-fun TabButton(
-    text: String,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Button(
-        onClick = onClick,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
-            contentColor = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-        ),
-        shape = RoundedCornerShape(24.dp),
-        border = if (!isSelected) BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant) else null,
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-        modifier = modifier.height(32.dp)
-    ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelLarge.copy(
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-            )
+            modifier = Modifier.docketTag("indents_filter_all")
+                .semantics { selected = selectedTab == IndentTab.ALL },
         )
     }
 }
@@ -279,7 +255,7 @@ fun IndentsList(
                 clientCostFormatted = formatCurrency(indent.indentGroupDetails.clientTripCost),
                 negotiatedCostFormatted = formatCurrency(indent.negotiatedTripCost),
                 truckDisplay = indent.indentGroupDetails.truckType?.displayName ?: "N/A",
-                weightDisplay = "${indent.indentGroupDetails.loadWeight} MT",
+                weightDisplay = formatLoadWeight(indent.indentGroupDetails.loadWeight, "MT"),
                 materialDisplay = indent.indentGroupDetails.material.replaceFirstChar { it.uppercase() },
                 showAdmin = showAdmin,
                 adminName = fleetExecutive?.name,

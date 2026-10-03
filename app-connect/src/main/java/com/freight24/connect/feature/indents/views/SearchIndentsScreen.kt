@@ -52,6 +52,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.freight24.common.util.DateTimeUtils.formatRelativeTime
+import com.freight24.common.util.formatLoadWeight
 import com.freight24.connect.feature.indents.domain.viewmodel.SearchIndentsEvent
 import com.freight24.rest.response.IndentResponse
 import com.freight24.connect.feature.indents.domain.viewmodel.SearchIndentsUiState
@@ -234,7 +235,7 @@ fun SearchIndentsContent(
                             clientCostFormatted = formatCurrency(indent.indentGroupDetails.clientTripCost),
                             negotiatedCostFormatted = formatCurrency(indent.negotiatedTripCost),
                             truckDisplay = indent.indentGroupDetails.truckType?.displayName ?: "N/A",
-                            weightDisplay = "${indent.indentGroupDetails.loadWeight} MT",
+                            weightDisplay = formatLoadWeight(indent.indentGroupDetails.loadWeight, "MT"),
                             materialDisplay = indent.indentGroupDetails.material.replaceFirstChar { it.uppercase() },
                             showAdmin = showAdmin,
                             adminName = fleetExecutive?.name,

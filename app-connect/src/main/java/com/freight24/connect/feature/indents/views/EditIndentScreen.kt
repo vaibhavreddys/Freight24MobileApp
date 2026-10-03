@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.freight24.common.util.formatLoadWeight
 import com.freight24.common.util.negotiatedCostExceedsClientError
 import com.freight24.connect.feature.indents.domain.viewmodel.EditIndentEvent
 import com.freight24.connect.feature.indents.domain.viewmodel.EditIndentUiState
@@ -474,7 +475,7 @@ private fun EditSlip(
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 LedgerRow(
                     label = "Weight",
-                    value = "${details.loadWeight} MT",
+                    value = formatLoadWeight(details.loadWeight, "MT"),
                     modifier = Modifier.weight(1f),
                 )
                 LedgerRow(

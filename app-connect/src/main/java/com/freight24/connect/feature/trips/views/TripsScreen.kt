@@ -1,6 +1,5 @@
 package com.freight24.connect.feature.trips.views
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -19,17 +18,20 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.freight24.connect.feature.indents.views.docketTag
 import com.freight24.connect.feature.trips.domain.usecase.TripTypes
 import com.freight24.connect.feature.trips.domain.viewmodel.TripsListEvent
 import com.freight24.connect.feature.trips.domain.viewmodel.TripsListViewModel
 import com.freight24.connect.feature.trips.domain.viewmodel.TripsListViewModelImpl
 import com.freight24.connect.feature.trips.views.components.TripCard
 import com.freight24.connect.feature.trips.views.components.TripListItem
+import com.freight24.ui.components.FilterSelectionChip
 import com.freight24.ui.components.FreightEmptyState
 import kotlinx.coroutines.flow.collect
 
@@ -69,21 +71,20 @@ fun TripsScreen(
             .padding(paddingValues),
         containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
     ) { _ ->
-    PullToRefreshBox(
-        isRefreshing = uiState.isLoading,
-        onRefresh = { viewModel.onEvent(TripsListEvent.Refresh) },
-        state = pullToRefreshState,
-        indicator = {},             // Hide default circular indicator
-        modifier = Modifier.fillMaxSize(),
-    ) {
-        LazyColumn(
+        PullToRefreshBox(
+            isRefreshing = uiState.isLoading,
+            onRefresh = { viewModel.onEvent(TripsListEvent.Refresh) },
+            state = pullToRefreshState,
+            indicator = {},             // Hide default circular indicator
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            item {
+            Column(modifier = Modifier.fillMaxSize()) {
+                // Filter rail is pinned above the list (outside the LazyColumn)
+                // so it stays fixed while trips scroll underneath it.
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 4.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     LazyRow(
@@ -91,102 +92,80 @@ fun TripsScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         items(TripTypes.entries) { type ->
-                            TripFilterChip(
-                                text = type.displayText,
+                            FilterSelectionChip(
+                                label = type.displayText,
                                 isSelected = uiState.selectedFilter == type,
-                                onClick = { viewModel.onEvent(TripsListEvent.SelectFilter(type)) }
-                            )
-                        }
-                    }
-                }
-            }
-
-                when {
-                uiState.isLoading && uiState.trips.isEmpty() -> {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillParentMaxSize()
-                                .padding(top = 96.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
-                        }
-                    }
-                }
-
-                uiState.errorMessage != null && uiState.trips.isEmpty() -> {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillParentMaxSize()
-                            .padding(top = 96.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(text = uiState.errorMessage ?: "Unknown error", color = colorScheme.error)
-                        }
-                    }
-                }
-
-                uiState.trips.isEmpty() -> {
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .fillParentMaxSize()
-                                .padding(top = 96.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            FreightEmptyState(
-                                icon = Icons.Outlined.LocalShipping,
-                                title = "No trips here yet",
-                                subtitle = "Trips matching this filter will appear in this list.",
+                                onClick = { viewModel.onEvent(TripsListEvent.SelectFilter(type)) },
+                                modifier = Modifier.docketTag("trips_filter_${type.name.lowercase()}")
+                                    .semantics { selected = uiState.selectedFilter == type },
                             )
                         }
                     }
                 }
 
-                else -> {
-                    items(
-                        items = uiState.trips,
-                        key = { trip -> trip.id },
-                    ) { trip ->
-                        TripListItem(
-                            trip = trip,
-                            onClick = { onTripClick(trip.id) },
-                        )
-                    }
-                }
-            }
-        }
-    }
-    }
-}
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 24.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    when {
+                        uiState.isLoading && uiState.trips.isEmpty() -> {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillParentMaxSize()
+                                        .padding(top = 96.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator()
+                                }
+                            }
+                        }
 
-@Composable
-fun TripFilterChip(
-    text: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Surface(
-        onClick = onClick,
-        shape = MaterialTheme.shapes.medium,
-        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
-        border = if (isSelected) null
-        else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        modifier = Modifier.height(34.dp)
-    ) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.padding(horizontal = 14.dp)
-        ) {
-            Text(
-                text = text,
-                style = MaterialTheme.typography.labelLarge.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        uiState.errorMessage != null && uiState.trips.isEmpty() -> {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillParentMaxSize()
+                                        .padding(top = 96.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(text = uiState.errorMessage ?: "Unknown error", color = colorScheme.error)
+                                }
+                            }
+                        }
+
+                        uiState.trips.isEmpty() -> {
+                            item {
+                                Box(
+                                    modifier = Modifier
+                                        .fillParentMaxSize()
+                                        .padding(top = 96.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    FreightEmptyState(
+                                        icon = Icons.Outlined.LocalShipping,
+                                        title = "No trips here yet",
+                                        subtitle = "Trips matching this filter will appear in this list.",
                                     )
-            )
+                                }
+                            }
+                        }
+
+                        else -> {
+                            items(
+                                items = uiState.trips,
+                                key = { trip -> trip.id },
+                            ) { trip ->
+                                TripListItem(
+                                    trip = trip,
+                                    onClick = { onTripClick(trip.id) },
+                                )
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

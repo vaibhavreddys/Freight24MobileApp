@@ -42,6 +42,7 @@ import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsViewM
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsViewModelImpl
 import com.freight24.common.util.DateTimeUtils
 import com.freight24.common.util.formatIndianCurrency
+import com.freight24.common.util.formatWeightValue
 import com.freight24.common.util.negotiatedCostExceedsClientError
 import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.theme.FreightThemeTokens
@@ -477,7 +478,7 @@ fun IndentDetailsScreen(
 
                         SpecificationsSection(
                             number = 3,
-                            weight = groupDetails.loadWeight.toString(),
+                            weight = formatWeightValue(groupDetails.loadWeight),
                             weightUnit = "MT",
                             materialType = groupDetails.material,
                             truckType = groupDetails.truckType?.displayName,
