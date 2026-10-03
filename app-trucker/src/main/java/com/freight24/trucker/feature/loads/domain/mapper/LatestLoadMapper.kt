@@ -4,25 +4,32 @@ import com.freight24.common.model.Load
 import com.freight24.common.util.DateTimeUtils
 import com.freight24.common.util.NameFormatter
 import com.freight24.common.util.formatLoadWeight
-import com.freight24.rest.response.LoadBoardResponse
+import com.freight24.rest.response.LoadBoardLoad
 
-fun LoadBoardResponse.LatestLoad.toLoad(fallbackCity: String): Load =
+/**
+ * Shared by the collapsed board (`load-board-summary`, rows nested under a city
+ * group) and the expanded feed (`load-board-paginated`) — both return
+ * [LoadBoardLoad]. [fallbackCity] is the group name, used when the load itself
+ * carries no loading area or city.
+ */
+fun LoadBoardLoad.toLoad(fallbackCity: String): Load =
     Load(
         id = indentId.orEmpty(),
         sourceCity =
-            loadingArea
-                ?: loadingCity
+            loading?.area
+                ?: loading?.city
+                ?: operationalCity
                 ?: fallbackCity,
         destinationCity =
-            unloadingArea
-                ?: unloadingCity
+            unloading?.area
+                ?: unloading?.city
                 ?: "--",
         material = material ?: "--",
         weight = weight?.let { formatLoadWeight(it, "Tons") } ?: "--",
-        truckInfo = NameFormatter.shortenTruckName(truckType),
+        truckInfo = NameFormatter.shortenTruckName(truckType?.displayName),
         price = price?.let { "₹$it" } ?: "--",
         createdTime = DateTimeUtils.formatRelativeTime(createdAt),
-        agentName = employeeName ?: "Freight24",
-        agentPhone = employeePhone ?: "--",
+        agentName = employee?.name ?: "Freight24",
+        agentPhone = employee?.phone ?: "--",
         isInterested = isInterested == true || interestStatus.equals("INTERESTED", ignoreCase = true),
     )

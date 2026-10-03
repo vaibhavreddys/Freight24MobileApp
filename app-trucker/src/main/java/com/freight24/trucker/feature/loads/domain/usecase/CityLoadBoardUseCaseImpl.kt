@@ -14,16 +14,14 @@ class CityLoadBoardUseCaseImpl
         override suspend fun invoke(params: CityLoadBoardUseCaseParams): Result<PaginatedLoads> {
             return runCatching {
                 val response = fetchLoadsForCity(params.cityId, params.page, params.forceRefresh)
-                val fallbackCity =
-                    response.data?.loads?.firstOrNull()?.loadingCity
-                        ?: response.data?.loads?.firstOrNull()?.loadingArea
-                        ?: "--"
+                val loads = response.data?.loads.orEmpty()
+                val pagination = response.data?.pagination
 
                 PaginatedLoads(
-                    loads = response.data?.loads?.map { it.toLoad(fallbackCity) } ?: emptyList(),
-                    page = response.data?.pagination?.page ?: 0,
-                    hasMore = response.data?.pagination?.has_more ?: false,
-                    totalLoads = response.data?.pagination?.total_loads ?: 0,
+                    loads = loads.map { it.toLoad(fallbackCity = it.operationalCity ?: "--") },
+                    page = pagination?.page ?: 0,
+                    hasMore = pagination?.hasMore ?: false,
+                    totalLoads = pagination?.totalLoads ?: 0,
                 )
             }
         }
