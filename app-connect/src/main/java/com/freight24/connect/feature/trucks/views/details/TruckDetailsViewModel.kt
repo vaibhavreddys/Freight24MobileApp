@@ -10,6 +10,8 @@ import com.freight24.common.model.TruckDetail
 import com.freight24.common.model.TruckDocument
 import com.freight24.connect.feature.trucks.domain.usecases.GetTruckByIdUseCase
 import com.freight24.connect.feature.trucks.domain.usecases.GetTruckByIdUseCaseParams
+import com.freight24.connect.feature.trucks.domain.usecases.GetTruckDocumentSignedUrlParams
+import com.freight24.connect.feature.trucks.domain.usecases.GetTruckDocumentSignedUrlUseCase
 import com.freight24.ui.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -24,6 +26,7 @@ internal class TruckDetailsViewModel
     @Inject
     constructor(
         private val getTruckByIdUseCase: GetTruckByIdUseCase,
+        private val getTruckDocumentSignedUrlUseCase: GetTruckDocumentSignedUrlUseCase,
         @ApplicationContext private val context: Context,
         savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
@@ -99,9 +102,15 @@ internal class TruckDetailsViewModel
             // Not supported
         }
 
-        fun fetchSignedUrl(s3Url: String, onUrlReady: (String) -> Unit) {
-            // Get generic signed url not bound here yet
-            _errorEvent.tryEmit("View document not supported here")
+        fun fetchSignedUrl(documentType: String, onUrlReady: (String) -> Unit) {
+            viewModelScope.launch {
+                getTruckDocumentSignedUrlUseCase(
+                    GetTruckDocumentSignedUrlParams(truckId, documentType),
+                ).onSuccess(onUrlReady)
+                    .onFailure { error ->
+                        _errorEvent.emit(error.message ?: "Failed to open document")
+                    }
+            }
         }
     }
 

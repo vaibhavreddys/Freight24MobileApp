@@ -33,6 +33,8 @@ class GetVerificationTruckRequestsUseCaseImpl @Inject constructor(
                 add(
                     VerificationRequestDocument(
                         name = key,
+                        entity = "truck",
+                        requestId = id,
                         s3Url = snapshotDocuments[key]?.fileUrl,
                     ),
                 )

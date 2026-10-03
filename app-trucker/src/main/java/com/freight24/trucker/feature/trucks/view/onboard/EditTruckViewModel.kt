@@ -8,8 +8,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.SavedStateHandle
 import com.freight24.rest.response.AddTruckDto
 import com.freight24.trucker.feature.trucks.domain.usecase.FetchTruckDetailUseCase
-import com.freight24.trucker.feature.trucks.domain.usecase.GetGenericSignedUrlParams
-import com.freight24.trucker.feature.trucks.domain.usecase.GetGenericSignedUrlUseCase
+import com.freight24.trucker.feature.trucks.domain.usecase.GetTruckDocumentSignedUrlParams
+import com.freight24.trucker.feature.trucks.domain.usecase.GetTruckDocumentSignedUrlUseCase
 import com.freight24.trucker.feature.trucks.domain.usecase.UpdateTruckParams
 import com.freight24.trucker.feature.trucks.domain.usecase.UpdateTruckUseCase
 import com.freight24.ui.UiState
@@ -37,7 +37,7 @@ internal class EditTruckViewModel
         private val fetchTruckDetailUseCase: FetchTruckDetailUseCase,
         private val updateTruckUseCase: UpdateTruckUseCase,
         private val checkTruckAvailabilityUseCase: com.freight24.trucker.feature.trucks.domain.usecase.CheckTruckAvailabilityUseCase,
-        private val getGenericSignedUrlUseCase: GetGenericSignedUrlUseCase,
+        private val getTruckDocumentSignedUrlUseCase: GetTruckDocumentSignedUrlUseCase,
     ) : ViewModel() {
         private val truckId = savedStateHandle.get<String>("truckId") ?: ""
  
@@ -268,9 +268,9 @@ internal class EditTruckViewModel
             }
         }
 
-        fun fetchSignedUrl(s3Url: String, onUrlReady: (String) -> Unit) {
+        fun fetchSignedUrl(documentType: String, onUrlReady: (String) -> Unit) {
             viewModelScope.launch {
-                getGenericSignedUrlUseCase(GetGenericSignedUrlParams(s3Url))
+                getTruckDocumentSignedUrlUseCase(GetTruckDocumentSignedUrlParams(truckId, documentType))
                     .onSuccess { url -> onUrlReady(url) }
                     .onFailure { Log.e(TAG, "Failed to fetch signed URL", it) }
             }

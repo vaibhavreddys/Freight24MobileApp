@@ -68,9 +68,9 @@ internal class ProfileRepositoryImpl
             }.map { it.success }
         }
 
-        override suspend fun getGenericSignedUrl(s3Url: String): Result<String> {
+        override suspend fun getIdentityDocumentSignedUrl(documentId: String): Result<String> {
             return safeCallProvider.safeApiCall(ioDispatcher) {
-                documentApi.getGenericSignedUrl(s3Url)
+                documentApi.getIdentityDocumentSignedUrl(documentId)
             }.map { it.data.signedUrl }
         }
 

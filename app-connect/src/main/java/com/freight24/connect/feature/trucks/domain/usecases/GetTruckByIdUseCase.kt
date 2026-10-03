@@ -19,3 +19,17 @@ class GetTruckByIdUseCaseImpl @Inject constructor(
         return repository.getTruckDetail(input.truckId)
     }
 }
+
+data class GetTruckDocumentSignedUrlParams(
+    val truckId: String,
+    val documentType: String,
+) : UseCaseParams
+
+interface GetTruckDocumentSignedUrlUseCase : UseCase<GetTruckDocumentSignedUrlParams, String>
+
+class GetTruckDocumentSignedUrlUseCaseImpl @Inject constructor(
+    private val repository: TruckRepository,
+) : GetTruckDocumentSignedUrlUseCase {
+    override suspend fun invoke(input: GetTruckDocumentSignedUrlParams): Result<String> =
+        repository.getTruckDocumentSignedUrl(input.truckId, input.documentType)
+}

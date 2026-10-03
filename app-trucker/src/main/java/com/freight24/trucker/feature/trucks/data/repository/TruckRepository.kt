@@ -40,7 +40,7 @@ interface TruckRepository {
         insurance: MultipartBody.Part? = null,
     ): Result<AddTruckResponse>
 
-    suspend fun getGenericSignedUrl(s3Url: String): Result<String>
+    suspend fun getTruckDocumentSignedUrl(truckId: String, documentType: String): Result<String>
  
     suspend fun checkTruckAvailability(registrationNumber: String): Result<String?>
 }

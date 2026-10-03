@@ -97,9 +97,9 @@ internal class TruckRepositoryImpl
             }
         }
 
-        override suspend fun getGenericSignedUrl(s3Url: String): Result<String> {
+        override suspend fun getTruckDocumentSignedUrl(truckId: String, documentType: String): Result<String> {
             return safeCallProvider.safeApiCall(ioDispatcher) {
-                documentApi.getGenericSignedUrl(s3Url)
+                documentApi.getTruckDocumentSignedUrl(truckId, documentType)
             }.map { it.data.signedUrl }
         }
  

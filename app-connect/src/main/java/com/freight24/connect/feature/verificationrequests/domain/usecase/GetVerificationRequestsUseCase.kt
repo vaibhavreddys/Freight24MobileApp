@@ -31,6 +31,8 @@ class GetVerificationRequestsUseCaseImpl @Inject constructor(
                     add(
                         VerificationRequestDocument(
                             name = key,
+                            entity = "trip",
+                            requestId = id,
                             s3Url = snapshotDocuments[key]?.fileUrl
                         )
                     )
@@ -42,6 +44,8 @@ class GetVerificationRequestsUseCaseImpl @Inject constructor(
                     add(
                         VerificationRequestDocument(
                             name = key,
+                            entity = "trip",
+                            requestId = id,
                             s3Url = document.fileUrl
                         )
                     )

@@ -4,13 +4,13 @@ import com.freight24.connect.repository.verificationrequests.VerificationRequest
 import javax.inject.Inject
 
 interface GetVerificationSignedUrlUseCase {
-    suspend operator fun invoke(s3Url: String): Result<String>
+    suspend operator fun invoke(entity: String, requestId: String, documentKey: String): Result<String>
 }
 
 class GetVerificationSignedUrlUseCaseImpl @Inject constructor(
     private val repository: VerificationRequestsRepository,
 ) : GetVerificationSignedUrlUseCase {
-    override suspend fun invoke(s3Url: String): Result<String> {
-        return repository.getSignedUrl(s3Url)
+    override suspend fun invoke(entity: String, requestId: String, documentKey: String): Result<String> {
+        return repository.getSignedUrl(entity, requestId, documentKey)
     }
 }

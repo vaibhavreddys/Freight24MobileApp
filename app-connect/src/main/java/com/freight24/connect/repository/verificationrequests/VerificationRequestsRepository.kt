@@ -38,5 +38,5 @@ interface VerificationRequestsRepository {
         resolutionNotes: String? = null,
     ): Result<Unit>
 
-    suspend fun getSignedUrl(s3Url: String): Result<String>
+    suspend fun getSignedUrl(entity: String, requestId: String, documentKey: String): Result<String>
 }

@@ -450,9 +450,9 @@ class ClientProfileViewModel
             updateBranch(branchId) { it.copy(trackingContactNumber = value) }
         }
 
-        fun getSignedUrl(s3Url: String, onUrlReady: (String) -> Unit) {
+        fun getSignedUrl(documentId: String, onUrlReady: (String) -> Unit) {
             viewModelScope.launch(Dispatchers.IO) {
-                getProfileSignedUrlUseCase(s3Url)
+                getProfileSignedUrlUseCase(documentId)
                     .onSuccess { signedUrl ->
                         onUrlReady(signedUrl)
                     }

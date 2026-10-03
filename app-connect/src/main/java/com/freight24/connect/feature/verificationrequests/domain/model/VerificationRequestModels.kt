@@ -56,6 +56,8 @@ data class VerificationRequestLocation(
 
 data class VerificationRequestDocument(
     val name: String,
+    val entity: String,
+    val requestId: String,
     val s3Url: String? = null,
 ) {
     val displayName: String

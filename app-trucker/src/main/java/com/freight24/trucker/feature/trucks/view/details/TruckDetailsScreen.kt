@@ -313,8 +313,14 @@ internal fun TruckDetailsScreen(
                         truck = state.data,
                         colors = colors,
                         onViewClick = { s3Url ->
-                            if (!s3Url.isNullOrEmpty()) {
-                                viewModel.fetchSignedUrl(s3Url) { signedUrl ->
+                            val documentType = when (s3Url) {
+                                state.data.rcCard?.url -> "rc"
+                                state.data.fcCertificate?.url -> "fc"
+                                state.data.insurance?.url -> "insurance"
+                                else -> null
+                            }
+                            if (documentType != null) {
+                                viewModel.fetchSignedUrl(documentType) { signedUrl ->
                                     context.startActivity(getPdfLaunchIntent(signedUrl, context))
                                 }
                             }
