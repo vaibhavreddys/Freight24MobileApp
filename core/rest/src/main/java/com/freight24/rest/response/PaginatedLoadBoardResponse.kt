@@ -1,5 +1,7 @@
 package com.freight24.rest.response
 
+import com.freight24.rest.response.LoadBoardResponse.CityLoadSummary
+import com.freight24.rest.response.LoadBoardResponse.LatestLoad
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -10,7 +12,7 @@ data class PaginatedLoadBoardResponse(
 ) {
     @Serializable
     data class LoadData(
-        val loads: List<LoadBoardResponse.LatestLoad>,
+        val loads: List<LatestLoad>,
         val pagination: Pagination,
     )
 
@@ -18,9 +20,7 @@ data class PaginatedLoadBoardResponse(
     data class Pagination(
         val page: Int,
         val limit: Int,
-        @SerialName("total_loads")
-        val total_loads: Int,
-        @SerialName("has_more")
-        val has_more: Boolean,
+        val hasMore: Boolean,
+        val totalLoads: Int,
     )
 }

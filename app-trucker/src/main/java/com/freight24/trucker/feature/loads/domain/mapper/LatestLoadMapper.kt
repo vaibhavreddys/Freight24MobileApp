@@ -10,19 +10,23 @@ fun LoadBoardResponse.LatestLoad.toLoad(fallbackCity: String): Load =
     Load(
         id = indentId.orEmpty(),
         sourceCity =
-            loadingArea
-                ?: loadingCity
-                ?: fallbackCity,
+            loading.let {
+                it.area
+                ?: it.city
+                ?: fallbackCity
+            },
         destinationCity =
-            unloadingArea
-                ?: unloadingCity
-                ?: "--",
+            unloading.let {
+                it.area
+                    ?: it.city
+                    ?: "--"
+            },
         material = material ?: "--",
+        truckInfo = NameFormatter.shortenTruckName(truckType.displayName),
         weight = weight?.let { formatLoadWeight(it, "Tons") } ?: "--",
-        truckInfo = NameFormatter.shortenTruckName(truckType),
         price = price?.let { "₹$it" } ?: "--",
         createdTime = DateTimeUtils.formatRelativeTime(createdAt),
-        agentName = employeeName ?: "Freight24",
-        agentPhone = employeePhone ?: "--",
+        agentName = employee?.name ?: "Freight24",
+        agentPhone = employee?.phone ?: "--",
         isInterested = isInterested == true || interestStatus.equals("INTERESTED", ignoreCase = true),
     )

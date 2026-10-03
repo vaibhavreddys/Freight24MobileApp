@@ -195,7 +195,9 @@ fun TripCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = trip.client.name.uppercase(),
+                    text = trip.client.let {
+                        it.name?.uppercase() ?: it.companyName?.uppercase().orEmpty()
+                    } ,
                     style = MaterialTheme.typography.labelSmall,
                     color = colorScheme.onSurfaceVariant
                 )
@@ -256,7 +258,9 @@ fun TripListItem(
                         color = colorScheme.outline
                     )
                     Text(
-                        text = trip.client.name,
+                        text = trip.client.let {
+                            it.name?.uppercase() ?: it.companyName?.uppercase().orEmpty()
+                        },
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = colorScheme.onSurface,

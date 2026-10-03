@@ -6,7 +6,7 @@ import kotlin.collections.map
 import kotlin.collections.orEmpty
 
 fun LoadBoardResponse.toCityLoadSummary(): List<CityLoadSummary> {
-    return data.orEmpty().mapIndexed { index, dto ->
+    return data?.groups.orEmpty().mapIndexed { index, dto ->
         CityLoadSummary(
             // Use index-based negative ID to guarantee uniqueness among items with null IDs
             cityId = dto.operationalCityId ?: (-(index + 1)),

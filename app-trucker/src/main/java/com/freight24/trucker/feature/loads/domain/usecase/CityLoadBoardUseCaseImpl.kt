@@ -15,15 +15,15 @@ class CityLoadBoardUseCaseImpl
             return runCatching {
                 val response = fetchLoadsForCity(params.cityId, params.page, params.forceRefresh)
                 val fallbackCity =
-                    response.data?.loads?.firstOrNull()?.loadingCity
-                        ?: response.data?.loads?.firstOrNull()?.loadingArea
+                    response.data?.loads?.firstOrNull()?.loading?.city
+                        ?: response.data?.loads?.firstOrNull()?.loading?.city
                         ?: "--"
 
                 PaginatedLoads(
                     loads = response.data?.loads?.map { it.toLoad(fallbackCity) } ?: emptyList(),
                     page = response.data?.pagination?.page ?: 0,
-                    hasMore = response.data?.pagination?.has_more ?: false,
-                    totalLoads = response.data?.pagination?.total_loads ?: 0,
+                    hasMore = response.data?.pagination?.hasMore ?: false,
+                    totalLoads = response.data?.pagination?.totalLoads ?: 0,
                 )
             }
         }

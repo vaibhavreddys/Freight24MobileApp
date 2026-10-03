@@ -6,51 +6,80 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class LoadBoardResponse(
     val success: Boolean,
-    val data: List<CityLoadSummary>?,
+    val data: LoadBoardData?,
 ) {
+
+    @Serializable
+    data class LoadBoardData (
+        val groups: List<CityLoadSummary>?,
+    )
+
     @Serializable
     data class CityLoadSummary(
-        @SerialName("operational_city")
+        @SerialName("groupName")
         val operationalCity: String?,
-        @SerialName("operational_city_id")
+        @SerialName("operationalCityId")
         val operationalCityId: Int?,
-        @SerialName("total_loads")
+        @SerialName("totalLoads")
         val totalLoads: Int?,
-        @SerialName("latest_loads")
+        @SerialName("latestLoads")
         val latestLoads: List<LatestLoad>?,
     )
 
     @Serializable
     data class LatestLoad(
-        @SerialName("indent_id")
         val indentId: String?,
         val price: Double?,
         val weight: Double?,
         val material: String?,
         val priority: String?,
-        @SerialName("tat_hours")
-        val tatHours: Int?,
-        @SerialName("created_at")
+        val tat: Tat?,
         val createdAt: String,
-        @SerialName("truck_type")
-        val truckType: String,
-        @SerialName("tat_enabled")
-        val tatEnabled: Boolean,
-        @SerialName("loading_area")
-        val loadingArea: String?,
-        @SerialName("loading_city")
-        val loadingCity: String?,
-        @SerialName("unloading_area")
-        val unloadingArea: String?,
-        @SerialName("unloading_city")
-        val unloadingCity: String?,
-        @SerialName("employee_name")
-        val employeeName: String?,
-        @SerialName("employee_phone")
-        val employeePhone: String?,
-        @SerialName("is_interested")
+        val truckType: TruckType,
+        val loading: Loading,
+        val unloading: UnLoading,
+        val employee: Employee?,
+        //@SerialName("is_interested")
         val isInterested: Boolean? = null,
-        @SerialName("interest_status")
+        //@SerialName("interest_status")
         val interestStatus: String? = null,
     )
+
+    @Serializable
+    data class Tat(
+        val hours: Int?,
+        val enabled: Boolean?,
+    )
+
+    @Serializable
+    data class TruckType(
+        val id: Int,
+        val name: String,
+        val bodyType: String,
+        val displayName: String,
+    )
+
+
+    @Serializable
+    data class Loading(
+        val area: String?,
+        val city: String?,
+        val address: String?,
+        val contactPhone: String?,
+        val contactPerson: String?,
+    )
+
+    @Serializable
+    data class Employee(
+        val name: String?,
+        val phone: String?
+    )
+
+    @Serializable
+    data class UnLoading(
+        val area: String?,
+        val city: String?,
+    )
+
+
 }
