@@ -13,6 +13,8 @@ import com.freight24.trucker.feature.trips.domain.usecase.GetSignedDocumentParam
 import com.freight24.trucker.feature.trips.domain.usecase.GetSignedDocumentUseCase
 import com.freight24.trucker.feature.trips.domain.usecase.UploadLrUseCase
 import com.freight24.trucker.feature.trips.domain.usecase.UploadLrUseCaseDataParams
+import com.freight24.trucker.feature.trips.domain.usecase.UploadPodUseCase
+import com.freight24.trucker.feature.trips.domain.usecase.UploadPodUseCaseDataParams
 import com.freight24.ui.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -39,6 +41,7 @@ internal class TripDetailsViewModel
         private val fetchTripDetailUseCase: FetchTripDetailUseCase,
         private val updateTripStatusUseCase: com.freight24.trucker.feature.trips.domain.usecase.UpdateTripStatusUseCase,
         private val uploadLrUseCase: UploadLrUseCase,
+        private val uploadPodUseCase: UploadPodUseCase,
         private val getSignedDocumentUseCase: GetSignedDocumentUseCase,
         @param:ApplicationContext private val context: Context,
         savedStateHandle: SavedStateHandle,
@@ -148,6 +151,19 @@ internal class TripDetailsViewModel
         }
 
         fun uploadLR() {
+            uploadDocument(isPod = false)
+        }
+
+        fun uploadPOD() {
+            uploadDocument(isPod = true)
+        }
+
+        /**
+         * LR and POD share the pick → confirm → convert-to-PDF pipeline; only the
+         * endpoint differs. A POD already on file (pending/rejected) is replaced
+         * through the PUT route — the POST one enforces a single ePOD per trip.
+         */
+        private fun uploadDocument(isPod: Boolean) {
             val uris = _selectedUris.value
             if (uris.isEmpty()) return
             val isPdfSelection = _isPdf.value
@@ -169,13 +185,26 @@ internal class TripDetailsViewModel
                         return@launch
                     }
 
-                    val result = uploadLrUseCase(
-                        UploadLrUseCaseDataParams(
-                            tripId = tripId,
-                            file = file,
-                            notes = "LR uploaded via Trucker App",
-                        ),
-                    )
+                    val result = if (isPod) {
+                        val existingPodId = cachedTripDetail?.tripDocuments
+                            ?.find { it.documentType.lowercase() == "pod" }?.id
+                        uploadPodUseCase(
+                            UploadPodUseCaseDataParams(
+                                tripId = tripId,
+                                file = file,
+                                notes = "POD uploaded via Trucker App",
+                                replaceDocumentId = existingPodId,
+                            ),
+                        )
+                    } else {
+                        uploadLrUseCase(
+                            UploadLrUseCaseDataParams(
+                                tripId = tripId,
+                                file = file,
+                                notes = "LR uploaded via Trucker App",
+                            ),
+                        )
+                    }
 
                     result.onSuccess { tripDetail ->
                         cachedTripDetail = tripDetail

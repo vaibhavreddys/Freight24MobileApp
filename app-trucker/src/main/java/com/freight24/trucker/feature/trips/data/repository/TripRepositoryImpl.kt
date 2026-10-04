@@ -106,6 +106,32 @@ internal class TripRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * A trip carries at most one ePOD, so a re-upload (rejected copy) has to go
+     * through the replace endpoint — the create endpoint refuses a second one.
+     */
+    override suspend fun uploadPod(
+        tripId: String,
+        filePart: okhttp3.MultipartBody.Part,
+        podType: okhttp3.RequestBody,
+        notes: okhttp3.RequestBody?,
+        replaceDocumentId: String?,
+    ): Result<TripDetail> {
+        val uploadResult = safeCallProvider.safeApiCall(ioDispatcher) {
+            if (replaceDocumentId != null) {
+                tripApi.replacePod(tripId, replaceDocumentId, filePart, notes)
+            } else {
+                tripApi.uploadPod(tripId, filePart, podType, notes)
+            }
+        }
+
+        return if (uploadResult.isSuccess) {
+            fetchTripDetail(tripId, forceRefresh = true)
+        } else {
+            Result.failure(uploadResult.exceptionOrNull() ?: Exception("Failed to upload POD"))
+        }
+    }
+
     override suspend fun getSignedDocument(
         tripId: String,
         documentId: String,

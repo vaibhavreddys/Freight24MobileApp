@@ -117,7 +117,7 @@ import java.io.File
 //
 //   HERO      trip code, the lane, the truck, where it is along the siding
 //   DOCUMENTS what has been lodged and what is still owed, as stamps
-//   FREIGHT   the bill: earnings, deductions, net payable, balance
+//   FREIGHT   revenue + advances until the trip is billed; then the full bill
 //   TRIP LOG  every checkpoint, with who moved it and when
 //
 // Sections are separated by the dock hatch rather than a hairline, and the
@@ -145,6 +145,8 @@ internal fun TripDetailsScreen(
     val context = LocalContext.current
 
     var showSourcePicker by rememberSaveable { mutableStateOf(false) }
+    // Which document the current pick → confirm cycle is for: "lr" or "pod".
+    var uploadTargetDoc by rememberSaveable { mutableStateOf("lr") }
     var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
     val sourceSheetState = androidx.compose.material3.rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -258,7 +260,11 @@ internal fun TripDetailsScreen(
             isUploading = isUploading,
             uploadButtonText = "Confirm Upload",
             onUploadClick = {
-                viewModel.uploadLR()
+                if (uploadTargetDoc == "pod") {
+                    viewModel.uploadPOD()
+                } else {
+                    viewModel.uploadLR()
+                }
                 viewModel.clearSelection()
             },
             onDismiss = {
@@ -454,8 +460,12 @@ internal fun TripDetailsScreen(
                         TripDossier(
                             trip = state.data,
                             uploadStatus = uploadStatus,
+                            uploadTargetDoc = uploadTargetDoc,
                             colors = colors,
-                            onUploadClick = { showSourcePicker = true },
+                            onUploadClick = { docType ->
+                                uploadTargetDoc = docType
+                                showSourcePicker = true
+                            },
                             onViewClick = { documentId ->
                                 viewModel.fetchSignedUrl(documentId) { url ->
                                     context.startActivity(getPdfLaunchIntent(url, context))
@@ -508,8 +518,9 @@ private fun openAppSettings(context: Context) {
 internal fun TripDossier(
     trip: TripDetail,
     uploadStatus: UploadStatus,
+    uploadTargetDoc: String,
     colors: TruckerColors,
-    onUploadClick: () -> Unit,
+    onUploadClick: (String) -> Unit,
     onViewClick: (String) -> Unit,
 ) {
     Column(
@@ -526,6 +537,7 @@ internal fun TripDossier(
         DocumentsSection(
             trip = trip,
             uploadStatus = uploadStatus,
+            uploadTargetDoc = uploadTargetDoc,
             colors = colors,
             onUploadClick = onUploadClick,
             onViewClick = onViewClick,
@@ -536,6 +548,7 @@ internal fun TripDossier(
         FreightBillSection(
             financials = trip.financials,
             payments = trip.truckerPayments,
+            status = trip.truckerStatus ?: trip.status,
             colors = colors,
         )
 
@@ -624,18 +637,28 @@ private fun TripHero(
 private fun DocumentsSection(
     trip: TripDetail,
     uploadStatus: UploadStatus,
+    uploadTargetDoc: String,
     colors: TruckerColors,
-    onUploadClick: () -> Unit,
+    onUploadClick: (String) -> Unit,
     onViewClick: (String) -> Unit,
 ) {
     val lrDoc = trip.tripDocuments.find { it.documentType.lowercase() == "lr" }
+    val podDoc = trip.tripDocuments.find { it.documentType.lowercase() == "pod" }
     val lrMissing = lrDoc == null
     val lrRejected = lrDoc?.verificationStatus?.lowercase() == "rejected"
-    val lrUploading = uploadStatus == UploadStatus.UPLOADING
-    val lrFailed = uploadStatus == UploadStatus.ERROR
+    // Upload progress belongs to whichever document the current pick → confirm
+    // cycle is for — the other rows must not flicker to "Sending"/"Failed".
+    val isPodUpload = uploadTargetDoc == "pod"
+    val lrUploading = uploadStatus == UploadStatus.UPLOADING && !isPodUpload
+    val lrFailed = uploadStatus == UploadStatus.ERROR && !isPodUpload
+    val podUploading = uploadStatus == UploadStatus.UPLOADING && isPodUpload
+    val podFailed = uploadStatus == UploadStatus.ERROR && isPodUpload
     // The LR slot is offered whenever the trip can still take one and none
     // is on file. A rejected LR is handled in place, on its own row.
     val showLrSlot = lrMissing && trip.status.uppercase() != "ASSIGNED"
+    // The POD is the trucker's last lodgement: it exists only after unloading,
+    // and the backend refuses one before it.
+    val showPodSlot = podDoc == null && trip.truckerStatus?.uppercase() == "UNLOADED"
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         FleetSectionHeader(
@@ -655,16 +678,19 @@ private fun DocumentsSection(
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             trip.tripDocuments.forEach { doc ->
                 val isLr = doc.documentType.equals("lr", ignoreCase = true)
+                val isPod = doc.documentType.equals("pod", ignoreCase = true)
                 val effectiveStatus =
                     when {
                         isLr && lrUploading -> "uploading"
                         isLr && lrFailed -> "error"
+                        isPod && podUploading -> "uploading"
+                        isPod && podFailed -> "error"
                         else -> doc.verificationStatus.lowercase()
                     }
 
                 val (sealText, sealTone, subtitle) =
                     when (effectiveStatus) {
-                        "uploading" -> Triple("Sending", FleetTone.ACCENT, "Uploading the LR now…")
+                        "uploading" -> Triple("Sending", FleetTone.ACCENT, "Uploading the ${if (isPod) "POD" else "LR"} now…")
                         "error" -> Triple("Failed", FleetTone.ERROR, "Upload failed. Try again.")
                         "verified" -> {
                             // No generic filler: the stamp already says it.
@@ -686,9 +712,15 @@ private fun DocumentsSection(
                     }
 
                 val needsUpload = effectiveStatus == "rejected" || effectiveStatus == "error"
+                val docTitle =
+                    when {
+                        isLr -> "Lorry Receipt (LR)"
+                        isPod -> "Proof of Delivery (POD)"
+                        else -> doc.documentType.uppercase()
+                    }
 
                 DocWalletRow(
-                    title = if (isLr) "Lorry Receipt (LR)" else doc.documentType.uppercase(),
+                    title = docTitle,
                     subtitle = subtitle,
                     icon = Icons.AutoMirrored.Filled.InsertDriveFile,
                     colors = colors,
@@ -701,7 +733,11 @@ private fun DocumentsSection(
                             else -> null
                         },
                     actionContentDescription = if (needsUpload) "Upload again" else null,
-                    onActionClick = if (needsUpload) onUploadClick else null,
+                    onActionClick = if (needsUpload) {
+                        { onUploadClick(doc.documentType.lowercase()) }
+                    } else {
+                        null
+                    },
                     onRowClick = if (!needsUpload && effectiveStatus != "uploading") {
                         { doc.id?.let(onViewClick) }
                     } else {
@@ -738,11 +774,40 @@ private fun DocumentsSection(
                     sealTone = if (lrRejected) FleetTone.ERROR else FleetTone.ACCENT,
                     actionIcon = if (lrUploading) null else Icons.Filled.CloudUpload,
                     actionContentDescription = "Upload LR",
-                    onActionClick = if (lrUploading) null else onUploadClick,
+                    onActionClick = if (lrUploading) {
+                        null
+                    } else {
+                        { onUploadClick("lr") }
+                    },
                 )
             }
 
-            if (trip.tripDocuments.isEmpty() && !showLrSlot) {
+            // The POD slot — offered once the consignment is unloaded and no
+            // POD is on file. A rejected POD is handled on its own row above.
+            if (showPodSlot) {
+                DocWalletRow(
+                    title = "Proof of Delivery (POD)",
+                    subtitle =
+                        when {
+                            podUploading -> "Uploading the POD now…"
+                            podFailed -> "Upload failed. Try again."
+                            else -> "Upload the POD for verification."
+                        },
+                    icon = if (podUploading) Icons.Filled.HourglassEmpty else Icons.Filled.CloudUpload,
+                    colors = colors,
+                    sealText = "Required",
+                    sealTone = FleetTone.ACCENT,
+                    actionIcon = if (podUploading) null else Icons.Filled.CloudUpload,
+                    actionContentDescription = "Upload POD",
+                    onActionClick = if (podUploading) {
+                        null
+                    } else {
+                        { onUploadClick("pod") }
+                    },
+                )
+            }
+
+            if (trip.tripDocuments.isEmpty() && !showLrSlot && !showPodSlot) {
                 Text(
                     text = "Nothing to lodge yet. Documents appear here once the trip is booked.",
                     style = TruckerType.body,
@@ -761,6 +826,7 @@ private fun DocumentsSection(
 private fun FreightBillSection(
     financials: TripFinancials?,
     payments: List<TruckerPayment>,
+    status: String,
     colors: TruckerColors,
 ) {
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -768,9 +834,18 @@ private fun FreightBillSection(
 
         Spacer(modifier = Modifier.height(14.dp))
 
+        // The itemised bill (deductions, net payable, balance) is raised once
+        // the trip is billed — INVOICED onward. Until then the driver sees the
+        // two figures that concern them: the revenue and any advance received.
+        val showDetailedBill = tripStageIndex(status) >= tripStageIndex("INVOICED")
+
         if (financials == null) {
             Text(
-                text = "The bill is prepared once the trip is unloaded.",
+                text = if (showDetailedBill) {
+                    "The bill is prepared once the trip is unloaded."
+                } else {
+                    "Trip revenue will appear here once the freight is confirmed."
+                },
                 style = TruckerType.body,
                 color = colors.inkMuted,
             )
@@ -788,214 +863,281 @@ private fun FreightBillSection(
                     .border(1.5.dp, colors.line, FleetCardShape)
                     .padding(16.dp),
         ) {
-            // Earnings
-            BillGroupLabel(text = "Earnings", colors = colors)
-            Spacer(modifier = Modifier.height(10.dp))
-            LedgerRow(
-                label = "Trip freight",
-                amount = inr(financials.truckerTripCost),
-                colors = colors,
-            )
+            if (!showDetailedBill) {
+                SimpleBill(
+                    financials = financials,
+                    payments = payments,
+                    colors = colors,
+                )
+            } else {
+                DetailedBill(
+                    financials = financials,
+                    payments = payments,
+                    colors = colors,
+                )
+            }
+        }
+    }
+}
+
+/** Pre-bill view: what the trip earns and what has already landed. */
+@Composable
+private fun SimpleBill(
+    financials: TripFinancials,
+    payments: List<TruckerPayment>,
+    colors: TruckerColors,
+) {
+    BillGroupLabel(text = "Earnings", colors = colors)
+    Spacer(modifier = Modifier.height(10.dp))
+    LedgerRow(
+        label = "Trip Revenue",
+        amount = inr(financials.truckerTripCost),
+        colors = colors,
+    )
+
+    val advances = payments.filter { it.type.equals("advance_to_trucker", ignoreCase = true) }
+    if (advances.isEmpty()) return
+
+    Spacer(modifier = Modifier.height(14.dp))
+    FleetRule(colors = colors)
+    Spacer(modifier = Modifier.height(16.dp))
+    BillGroupLabel(text = "Advance Payments", colors = colors)
+    Spacer(modifier = Modifier.height(10.dp))
+    advances.forEachIndexed { index, payment ->
+        LedgerRow(
+            label = paymentTitle(payment),
+            amount = inr(payment.amount),
+            colors = colors,
+            detail = paymentDetail(payment),
+        )
+        if (index != advances.lastIndex) {
             Spacer(modifier = Modifier.height(12.dp))
-            if (financials.halting.loading.totalAmount > 0) {
-                LedgerRow(
-                    label = "Halting — loading",
-                    amount = "+ ${inr(financials.halting.loading.totalAmount)}",
-                    colors = colors,
-                    tone = FleetTone.BRAND,
-                    detail = "${financials.halting.loading.days} days × ${inr(financials.halting.loading.perDayAmount)}",
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-            if (financials.halting.unloading.totalAmount > 0) {
-                LedgerRow(
-                    label = "Halting — unloading",
-                    amount = "+ ${inr(financials.halting.unloading.totalAmount)}",
-                    colors = colors,
-                    tone = FleetTone.BRAND,
-                    detail = "${financials.halting.unloading.days} days × ${inr(financials.halting.unloading.perDayAmount)}",
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-            if (financials.luCharges.loading.total > 0) {
-                LedgerRow(
-                    label = "Loading charges",
-                    amount = "+ ${inr(financials.luCharges.loading.total)}",
-                    colors = colors,
-                    tone = FleetTone.BRAND,
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-            if (financials.luCharges.unloading.total > 0) {
-                LedgerRow(
-                    label = "Unloading charges",
-                    amount = "+ ${inr(financials.luCharges.unloading.total)}",
-                    colors = colors,
-                    tone = FleetTone.BRAND,
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-            }
+        }
+    }
+    if (advances.size > 1) {
+        Spacer(modifier = Modifier.height(12.dp))
+        LedgerRow(
+            label = "Advance received",
+            amount = inr(advances.sumOf { it.amount }),
+            colors = colors,
+            emphasis = true,
+        )
+    }
+}
 
-            Spacer(modifier = Modifier.height(8.dp))
-            FleetRule(colors = colors)
-            Spacer(modifier = Modifier.height(16.dp))
+/** The itemised invoice — shown once the trip is billed (INVOICED onward). */
+@Composable
+private fun DetailedBill(
+    financials: TripFinancials,
+    payments: List<TruckerPayment>,
+    colors: TruckerColors,
+) {
+    // Earnings
+    BillGroupLabel(text = "Earnings", colors = colors)
+    Spacer(modifier = Modifier.height(10.dp))
+    LedgerRow(
+        label = "Trip Revenue",
+        amount = inr(financials.truckerTripCost),
+        colors = colors,
+    )
+    Spacer(modifier = Modifier.height(12.dp))
+    if (financials.halting.loading.totalAmount > 0) {
+        LedgerRow(
+            label = "Halting — loading",
+            amount = "+ ${inr(financials.halting.loading.totalAmount)}",
+            colors = colors,
+            tone = FleetTone.BRAND,
+            detail = "${financials.halting.loading.days} days × ${inr(financials.halting.loading.perDayAmount)}",
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+    }
+    if (financials.halting.unloading.totalAmount > 0) {
+        LedgerRow(
+            label = "Halting — unloading",
+            amount = "+ ${inr(financials.halting.unloading.totalAmount)}",
+            colors = colors,
+            tone = FleetTone.BRAND,
+            detail = "${financials.halting.unloading.days} days × ${inr(financials.halting.unloading.perDayAmount)}",
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+    }
+    if (financials.luCharges.loading.total > 0) {
+        LedgerRow(
+            label = "Loading charges",
+            amount = "+ ${inr(financials.luCharges.loading.total)}",
+            colors = colors,
+            tone = FleetTone.BRAND,
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+    }
+    if (financials.luCharges.unloading.total > 0) {
+        LedgerRow(
+            label = "Unloading charges",
+            amount = "+ ${inr(financials.luCharges.unloading.total)}",
+            colors = colors,
+            tone = FleetTone.BRAND,
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+    }
 
-            // Deductions sit in a soft tint so the red column scans apart
-            // from the gross earnings above it.
-            BillGroupLabel(text = "Deductions", colors = colors)
-            Spacer(modifier = Modifier.height(8.dp))
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .background(colors.line.copy(alpha = 0.22f), FleetCellShape)
-                        .padding(horizontal = 14.dp, vertical = 12.dp),
-            ) {
-                LedgerRow(
-                    label = "Platform fee${if (financials.platformFee.percent > 0) " (${financials.platformFee.percent}%)" else ""}",
-                    amount = "− ${inr(financials.platformFee.amount)}",
-                    colors = colors,
-                    tone = FleetTone.ERROR,
-                )
+    Spacer(modifier = Modifier.height(8.dp))
+    FleetRule(colors = colors)
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // Deductions sit in a soft tint so the red column scans apart
+    // from the gross earnings above it.
+    BillGroupLabel(text = "Deductions", colors = colors)
+    Spacer(modifier = Modifier.height(8.dp))
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(colors.line.copy(alpha = 0.22f), FleetCellShape)
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+    ) {
+        LedgerRow(
+            label = "Platform fee${if (financials.platformFee.percent > 0) " (${financials.platformFee.percent}%)" else ""}",
+            amount = "− ${inr(financials.platformFee.amount)}",
+            colors = colors,
+            tone = FleetTone.ERROR,
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        LedgerRow(
+            label = "TDS${if (financials.tds.percent > 0f) " (${financials.tds.percent}%)" else ""}",
+            amount = "− ${inr(financials.tds.amount)}",
+            colors = colors,
+            tone = FleetTone.ERROR,
+        )
+        if (financials.otherDeductions > 0) {
+            Spacer(modifier = Modifier.height(12.dp))
+            LedgerRow(
+                label = "Other deductions",
+                amount = "− ${inr(financials.otherDeductions)}",
+                colors = colors,
+                tone = FleetTone.ERROR,
+                detail = financials.deductionRemarks,
+            )
+        }
+    }
+
+    Spacer(modifier = Modifier.height(18.dp))
+
+    // Net payable — the anchor figure of the bill.
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Bottom,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = "Net payable",
+                style = TruckerType.title,
+                color = colors.ink,
+                maxLines = 1,
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = "Gross earnings minus deductions",
+                style = TruckerType.caption,
+                color = colors.inkMuted,
+            )
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = inr(financials.netPayable),
+            style = TruckerType.digit,
+            color = colors.ink,
+            maxLines = 1,
+            textAlign = TextAlign.End,
+        )
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
+    FleetRule(colors = colors)
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // Payments made — one row per transfer, so the driver can match an
+    // amount to the UTR on their own bank statement. Aggregates that
+    // hide which payment carried which reference are useless for that.
+    BillGroupLabel(text = "Payments Made", colors = colors)
+    Spacer(modifier = Modifier.height(10.dp))
+    if (payments.isEmpty()) {
+        Text(
+            text = "No payments made yet.",
+            style = TruckerType.body,
+            color = colors.inkMuted,
+        )
+    } else {
+        payments.forEachIndexed { index, payment ->
+            LedgerRow(
+                label = paymentTitle(payment),
+                amount = inr(payment.amount),
+                colors = colors,
+                detail = paymentDetail(payment),
+            )
+            if (index != payments.lastIndex) {
                 Spacer(modifier = Modifier.height(12.dp))
-                LedgerRow(
-                    label = "TDS${if (financials.tds.percent > 0f) " (${financials.tds.percent}%)" else ""}",
-                    amount = "− ${inr(financials.tds.amount)}",
-                    colors = colors,
-                    tone = FleetTone.ERROR,
-                )
-                if (financials.otherDeductions > 0) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    LedgerRow(
-                        label = "Other deductions",
-                        amount = "− ${inr(financials.otherDeductions)}",
-                        colors = colors,
-                        tone = FleetTone.ERROR,
-                        detail = financials.deductionRemarks,
+            }
+        }
+        Spacer(modifier = Modifier.height(12.dp))
+        LedgerRow(
+            label = "Paid so far",
+            amount = inr(payments.sumOf { it.amount }),
+            colors = colors,
+            emphasis = true,
+        )
+    }
+
+    val balanceDue = financials.netPayable - financials.totalPaidAmount
+    if (balanceDue > 0) {
+        Spacer(modifier = Modifier.height(14.dp))
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .background(FleetTone.ACCENT.wash(colors), FleetCardShape)
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Balance due",
+                        style = TruckerType.bodyStrong,
+                        color = colors.ink,
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Box(
+                        modifier =
+                            Modifier
+                                .size(6.dp)
+                                .clip(androidx.compose.foundation.shape.CircleShape)
+                                .background(colors.accent),
                     )
                 }
-            }
-
-            Spacer(modifier = Modifier.height(18.dp))
-
-            // Net payable — the anchor figure of the bill.
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Bottom,
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Net payable",
-                        style = TruckerType.title,
-                        color = colors.ink,
-                        maxLines = 1,
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Filled.Info,
+                        contentDescription = null,
+                        tint = colors.inkMuted,
+                        modifier = Modifier.size(14.dp),
                     )
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "Gross earnings minus deductions",
+                        text = "Settled after POD is verified",
                         style = TruckerType.caption,
                         color = colors.inkMuted,
                     )
                 }
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = inr(financials.netPayable),
-                    style = TruckerType.digit,
-                    color = colors.ink,
-                    maxLines = 1,
-                    textAlign = TextAlign.End,
-                )
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-            FleetRule(colors = colors)
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Payments made — one row per transfer, so the driver can match an
-            // amount to the UTR on their own bank statement. Aggregates that
-            // hide which payment carried which reference are useless for that.
-            BillGroupLabel(text = "Payments Made", colors = colors)
-            Spacer(modifier = Modifier.height(10.dp))
-            if (payments.isEmpty()) {
-                Text(
-                    text = "No payments made yet.",
-                    style = TruckerType.body,
-                    color = colors.inkMuted,
-                )
-            } else {
-                payments.forEachIndexed { index, payment ->
-                    LedgerRow(
-                        label = paymentTitle(payment),
-                        amount = inr(payment.amount),
-                        colors = colors,
-                        detail = paymentDetail(payment),
-                    )
-                    if (index != payments.lastIndex) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                    }
-                }
-                Spacer(modifier = Modifier.height(12.dp))
-                LedgerRow(
-                    label = "Paid so far",
-                    amount = inr(payments.sumOf { it.amount }),
-                    colors = colors,
-                    emphasis = true,
-                )
-            }
-
-            val balanceDue = financials.netPayable - financials.totalPaidAmount
-            if (balanceDue > 0) {
-                Spacer(modifier = Modifier.height(14.dp))
-                Row(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .background(FleetTone.ACCENT.wash(colors), FleetCardShape)
-                            .padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "Balance due",
-                                style = TruckerType.bodyStrong,
-                                color = colors.ink,
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .size(6.dp)
-                                        .clip(androidx.compose.foundation.shape.CircleShape)
-                                        .background(colors.accent),
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Filled.Info,
-                                contentDescription = null,
-                                tint = colors.inkMuted,
-                                modifier = Modifier.size(14.dp),
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "Settled after POD is verified",
-                                style = TruckerType.caption,
-                                color = colors.inkMuted,
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = inr(balanceDue),
-                        style = TruckerType.title,
-                        color = colors.accent,
-                        maxLines = 1,
-                        textAlign = TextAlign.End,
-                    )
-                }
-            }
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = inr(balanceDue),
+                style = TruckerType.title,
+                color = colors.accent,
+                maxLines = 1,
+                textAlign = TextAlign.End,
+            )
         }
     }
 }

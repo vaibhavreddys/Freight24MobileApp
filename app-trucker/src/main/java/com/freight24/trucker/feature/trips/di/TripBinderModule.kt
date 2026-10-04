@@ -8,6 +8,8 @@ import com.freight24.trucker.feature.trips.domain.usecase.FetchTripsUseCase
 import com.freight24.trucker.feature.trips.domain.usecase.FetchTripsUseCaseImpl
 import com.freight24.trucker.feature.trips.domain.usecase.UploadLrUseCase
 import com.freight24.trucker.feature.trips.domain.usecase.UploadLrUseCaseImpl
+import com.freight24.trucker.feature.trips.domain.usecase.UploadPodUseCase
+import com.freight24.trucker.feature.trips.domain.usecase.UploadPodUseCaseImpl
 import com.freight24.trucker.feature.trips.domain.usecase.GetSignedDocumentUseCase
 import com.freight24.trucker.feature.trips.domain.usecase.GetSignedDocumentUseCaseImpl
 import dagger.Binds
@@ -38,6 +40,10 @@ internal interface TripBinderModule {
     @Binds
     @Singleton
     fun bindUploadLrUseCase(impl: UploadLrUseCaseImpl): UploadLrUseCase
+
+    @Binds
+    @Singleton
+    fun bindUploadPodUseCase(impl: UploadPodUseCaseImpl): UploadPodUseCase
 
     @Binds
     @Singleton

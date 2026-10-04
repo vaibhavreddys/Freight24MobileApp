@@ -34,6 +34,14 @@ internal interface TripRepository {
         notes: okhttp3.RequestBody? = null
     ): Result<TripDetail>
 
+    suspend fun uploadPod(
+        tripId: String,
+        filePart: okhttp3.MultipartBody.Part,
+        podType: okhttp3.RequestBody,
+        notes: okhttp3.RequestBody? = null,
+        replaceDocumentId: String? = null,
+    ): Result<TripDetail>
+
     suspend fun getSignedDocument(
         tripId: String,
         documentId: String,
