@@ -43,6 +43,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -53,6 +54,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.freight24.common.util.formatIndianCurrency
 import com.freight24.common.util.negotiatedCostExceedsClientError
+import com.freight24.connect.R
 import com.freight24.connect.feature.indents.domain.viewmodel.CreateIndentEvent
 import com.freight24.connect.feature.indents.domain.viewmodel.CreateIndentUiState
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentContactRole
@@ -312,19 +314,19 @@ fun CreateIndentContent(
 
                     ClauseDocket(
                         number = 2,
-                        title = "Lane",
+                        title = stringResource(R.string.lane),
                         state = laneState,
                         testTag = "create_indent_clause_lane",
                     ) {
                         LanePicker(
-                            originLabel = "Loading from",
+                            originLabel = stringResource(R.string.location_from),
                             originValue = uiState.selectedFromLocation?.name.orEmpty(),
                             onOriginClick = {
                                 clearError("from")
                                 onNavigateToSearch(SearchType.LOCATION_FROM.name)
                             },
                             originTestTag = "create_indent_from_picker",
-                            destinationLabel = "Unloading at",
+                            destinationLabel = stringResource(R.string.location_to),
                             destinationValue = uiState.selectedToLocation?.name.orEmpty(),
                             onDestinationClick = {
                                 clearError("to")
@@ -350,12 +352,12 @@ fun CreateIndentContent(
 
                     ClauseDocket(
                         number = 4,
-                        title = "Cargo",
+                        title = stringResource(R.string.cargo),
                         state = cargoState,
                         testTag = "create_indent_clause_cargo",
                     ) {
                         RuledField(
-                            label = "Weight",
+                            label = stringResource(R.string.weight),
                             value = uiState.weight,
                             onValueChange = {
                                 clearError("weight")
@@ -365,11 +367,11 @@ fun CreateIndentContent(
                             placeholder = "0.0",
                             keyboardType = KeyboardType.Decimal,
                             isError = errors.contains("weight"),
-                            trailingLabel = "MT",
+                            trailingLabel = stringResource(R.string.weight_mt),
                         )
                         Spacer(Modifier.height(18.dp))
                         DocketPicker(
-                            label = "Material",
+                            label = stringResource(R.string.material),
                             value = uiState.materialName,
                             onClick = {
                                 clearError("material")
@@ -557,7 +559,7 @@ private fun ConsignorClause(
 
     ClauseDocket(
         number = 1,
-        title = "Consignor",
+        title = stringResource(R.string.consignor),
         state = state,
         testTag = "create_indent_clause_consignor",
         trailing = {
@@ -571,7 +573,7 @@ private fun ConsignorClause(
         },
     ) {
         DocketPicker(
-            label = "Client",
+            label = stringResource(R.string.client),
             value = clientDisplay,
             onClick = onClientClick,
             testTag = "create_indent_client_picker",
@@ -582,7 +584,7 @@ private fun ConsignorClause(
         Spacer(Modifier.height(18.dp))
 
         DocketPicker(
-            label = "Branch",
+            label = stringResource(R.string.branch),
             value = branchDisplay,
             onClick = onBranchClick,
             testTag = "create_indent_branch_picker",
@@ -688,7 +690,7 @@ private fun VehicleClause(
 
     ClauseDocket(
         number = 3,
-        title = "Vehicle",
+        title = stringResource(R.string.vehicle),
         state = state,
         testTag = "create_indent_clause_vehicle",
     ) {
@@ -791,12 +793,12 @@ private fun CommercialsClause(
 
     ClauseDocket(
         number = 5,
-        title = "Commercials",
+        title = stringResource(R.string.commercials),
         state = state,
         testTag = "create_indent_clause_commercials",
     ) {
         MoneyRuleField(
-            label = "Client cost",
+            label = stringResource(R.string.client_cost),
             raw = uiState.clientCost,
             testTag = "create_indent_client_cost_field",
             placeholder = "0",
@@ -805,7 +807,7 @@ private fun CommercialsClause(
         )
         Spacer(Modifier.height(18.dp))
         MoneyRuleField(
-            label = "Business proposed cost",
+            label = stringResource(R.string.business_proposed_cost),
             raw = uiState.businessProposedCost,
             testTag = "create_indent_proposed_cost_field",
             placeholder = "0",
@@ -814,7 +816,7 @@ private fun CommercialsClause(
         )
         Spacer(Modifier.height(18.dp))
         MoneyRuleField(
-            label = "Negotiated trip cost",
+            label = stringResource(R.string.target_cost),
             raw = uiState.negotiatedCost,
             testTag = "create_indent_negotiated_cost_field",
             placeholder = "0",
@@ -829,8 +831,8 @@ private fun CommercialsClause(
         Spacer(Modifier.height(4.dp))
 
         DocketSwitchRow(
-            title = "Hide cost from the load board",
-            description = "Truck owners see the load without the rate.",
+            title = stringResource(R.string.hide_cost_from_load_board),
+            description = stringResource(R.string.truck_owners_see_the_load_without_the_rate),
             checked = uiState.hideCost,
             onCheckedChange = { onEvent(CreateIndentEvent.UpdateOptionalField(hideCost = it)) },
             testTag = "create_indent_hide_cost_switch",
@@ -860,12 +862,12 @@ private fun TermsClause(
 ) {
     ClauseDocket(
         number = 6,
-        title = "Terms",
+        title = stringResource(R.string.terms),
         state = state,
         testTag = "create_indent_clause_terms",
     ) {
         DocketSwitchRow(
-            title = "Turnaround time",
+            title = stringResource(R.string.turn_around_time),
             description = "Commit to a delivery window from loading.",
             checked = uiState.tatRequired,
             onCheckedChange = { onEvent(CreateIndentEvent.UpdateOptionalField(tatRequired = it)) },
@@ -873,7 +875,7 @@ private fun TermsClause(
         )
         Spacer(Modifier.height(6.dp))
         RuledField(
-            label = "TAT hours",
+            label = stringResource(R.string.tat_hours),
             value = uiState.tatHours,
             onValueChange = { onEvent(CreateIndentEvent.UpdateOptionalField(tatHours = it)) },
             testTag = "create_indent_tat_hours_field",
@@ -893,7 +895,7 @@ private fun TermsClause(
 
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             RuledField(
-                label = "Vehicle height",
+                label = stringResource(R.string.vehicle_height),
                 value = uiState.vehicleHeight,
                 onValueChange = {
                     onEvent(CreateIndentEvent.UpdateOptionalField(vehicleHeight = it))
@@ -905,7 +907,7 @@ private fun TermsClause(
                 modifier = Modifier.weight(1f),
             )
             RuledField(
-                label = "Flooring",
+                label = stringResource(R.string.flooring),
                 value = uiState.flooringType,
                 onValueChange = {
                     onEvent(CreateIndentEvent.UpdateOptionalField(flooringType = it))
@@ -921,7 +923,7 @@ private fun TermsClause(
         Spacer(Modifier.height(4.dp))
 
         DocketSwitchRow(
-            title = "Tarpaulin required",
+            title = stringResource(R.string.tarpaulin_required),
             description = "The load must be sheeted.",
             checked = uiState.tarpaulinRequired,
             onCheckedChange = {
@@ -933,7 +935,7 @@ private fun TermsClause(
         Spacer(Modifier.height(10.dp))
 
         RuledField(
-            label = "Remarks",
+            label = stringResource(R.string.remarks),
             value = uiState.remarks,
             onValueChange = { onEvent(CreateIndentEvent.UpdateOptionalField(remarks = it)) },
             testTag = "create_indent_remarks_field",

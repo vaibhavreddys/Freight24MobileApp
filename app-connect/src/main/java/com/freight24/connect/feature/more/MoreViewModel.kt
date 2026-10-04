@@ -14,6 +14,10 @@ data class EmployeeBasicInfoState(
     val fullName: String = "",
     val designation: String = "",
     val tagCode: String = "",
+    val department: String = "",
+    val phone: String = "",
+    val email: String = "",
+    val status: String = "",
     val isLoading: Boolean = false,
     val error: String? = null
 )
@@ -70,6 +74,10 @@ class MoreViewModel @Inject constructor(
                         fullName = basicInfo.fullName,
                         designation = basicInfo.designation,
                         tagCode = basicInfo.tagCode,
+                        department = basicInfo.department.orEmpty(),
+                        phone = basicInfo.phone.orEmpty(),
+                        email = basicInfo.email.orEmpty(),
+                        status = basicInfo.status,
                         isLoading = false
                     )
                 },

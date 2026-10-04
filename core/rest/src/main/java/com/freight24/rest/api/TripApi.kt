@@ -10,6 +10,7 @@ import com.freight24.rest.response.BaseResponse
 import com.freight24.rest.response.CreatedTripResponse
 import com.freight24.rest.response.TripDetailResponse
 import com.freight24.rest.response.MyTripsDataResponse
+import com.freight24.rest.response.PaymentTransactionsResponse
 import com.freight24.rest.response.PodUploadResponse
 import com.freight24.rest.response.SignedDocument
 import com.freight24.rest.response.TripDetailDataResponse
@@ -72,6 +73,13 @@ interface TripApi {
     suspend fun getEmpTripDetails(
         @Path("tripId") tripId: String,
     ): Response<TripDetailDataResponse>
+
+    @GET("trips/{tripId}/payment-summary")
+    suspend fun getPaymentTransactions(
+        @Path("tripId") tripId: String,
+        @Query("userType") userType: String,
+        @Query("view") view: String = "transactions"
+    ): Response<PaymentTransactionsResponse>
 
     @Multipart
     @POST("trips/{tripId}/lr")

@@ -17,4 +17,7 @@ data class EmployeeBasicInfo(
     @SerialName("designation") val designation: String,
     @SerialName("status") val status: String,
     @SerialName("tag_code") val tagCode: String = "",
+    @SerialName("department") val department: String? = null,
+    @SerialName("phone") val phone: String? = null,
+    @SerialName("email") val email: String? = null,
 )

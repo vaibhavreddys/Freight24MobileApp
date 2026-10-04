@@ -69,6 +69,9 @@ class EmployeesRepositoryImpl @Inject constructor(
                     designation = it.designation,
                     status = it.status,
                     tagCode = it.tagCode,
+                    department = it.department,
+                    phone = it.phone,
+                    email = it.email,
                 )
             }
 
@@ -81,6 +84,9 @@ class EmployeesRepositoryImpl @Inject constructor(
                     designation = info.designation,
                     status = info.status,
                     tagCode = info.tagCode,
+                    department = info.department,
+                    phone = info.phone,
+                    email = info.email,
                     cachedAt = System.currentTimeMillis(),
                 )
             )

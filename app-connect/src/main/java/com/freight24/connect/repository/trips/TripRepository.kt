@@ -3,6 +3,7 @@ package com.freight24.connect.repository.trips
 import com.freight24.rest.response.BaseResponse
 import com.freight24.rest.response.CreatedTripResponse
 import com.freight24.rest.response.MyTripsDataResponse
+import com.freight24.rest.response.PaymentTransaction
 import com.freight24.rest.response.SignedDocument
 import com.freight24.rest.response.TripDataResponse
 import com.freight24.rest.response.UpdateOtherDeductionsResponse
@@ -27,6 +28,11 @@ interface TripRepository {
     suspend fun getTripDetails(
         tripId: String,
     ): Result<TripDataResponse>
+
+    suspend fun getPaymentTransactions(
+        tripId: String,
+        userType: String
+    ): Result<List<PaymentTransaction>>
 
     suspend fun updateTruckerStatus(
         tripId: String,

@@ -21,6 +21,7 @@ data class FindTrucksUiState(
 sealed class FindTrucksEvent {
     data class SelectLoadingLocation(val location: LocationDto) : FindTrucksEvent()
     data class SelectUnloadingLocation(val location: LocationDto) : FindTrucksEvent()
+    data object SwapLocations : FindTrucksEvent()
     data class ToggleTruckType(val truckType: TruckTypeDto) : FindTrucksEvent()
     data object ClearTruckTypes : FindTrucksEvent()
     data object SearchTrucks : FindTrucksEvent()

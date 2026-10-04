@@ -1,9 +1,9 @@
 package com.freight24.notifications
 
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.media.AudioAttributes
 import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
@@ -11,10 +11,16 @@ import android.os.Build
 object NotificationChannels {
     const val CRITICAL = "critical_events"
     const val GENERAL = "general_updates"
+    val VIBRATION_PATTERN = longArrayOf(0, 500, 200, 500)
 
     fun create(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val soundUri: Uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            val soundAttributes =
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
             val critical =
                 NotificationChannel(
                     CRITICAL,
@@ -22,7 +28,8 @@ object NotificationChannels {
                     NotificationManager.IMPORTANCE_HIGH,
                 ).apply {
                     enableVibration(true)
-                    setSound(soundUri, Notification.AUDIO_ATTRIBUTES_DEFAULT)
+                    vibrationPattern = VIBRATION_PATTERN
+                    setSound(soundUri, soundAttributes)
                     setBypassDnd(true)
                 }
 
@@ -31,7 +38,11 @@ object NotificationChannels {
                     GENERAL,
                     "General Updates",
                     NotificationManager.IMPORTANCE_DEFAULT,
-                )
+                ).apply {
+                    enableVibration(true)
+                    vibrationPattern = VIBRATION_PATTERN
+                    setSound(soundUri, soundAttributes)
+                }
 
             val manager = context.getSystemService(NotificationManager::class.java)
             manager.createNotificationChannel(critical)

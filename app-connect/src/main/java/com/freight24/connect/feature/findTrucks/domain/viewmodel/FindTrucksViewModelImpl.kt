@@ -57,6 +57,14 @@ internal class FindTrucksViewModelImpl @Inject constructor(
             is FindTrucksEvent.SelectUnloadingLocation -> {
                 _uiState.update { it.copy(unloadingLocation = event.location) }
             }
+            FindTrucksEvent.SwapLocations -> {
+                _uiState.update { state ->
+                    if (state.isSearching) state else state.copy(
+                        loadingLocation = state.unloadingLocation,
+                        unloadingLocation = state.loadingLocation
+                    )
+                }
+            }
             is FindTrucksEvent.ToggleTruckType -> {
                 _uiState.update { state ->
                     val current = state.selectedTruckTypes

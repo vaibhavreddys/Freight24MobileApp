@@ -883,11 +883,6 @@ fun LaneReadout(
             testTag = destinationTestTag,
         )
         Spacer(Modifier.height(2.dp))
-        Text(
-            text = "Route is fixed once the indent is raised.",
-            style = MaterialTheme.typography.bodySmall,
-            color = scheme.onSurfaceVariant,
-        )
     }
 }
 

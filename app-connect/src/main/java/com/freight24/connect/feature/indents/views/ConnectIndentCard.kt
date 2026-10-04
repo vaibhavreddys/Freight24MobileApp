@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
@@ -32,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.freight24.connect.R
 import com.freight24.ui.components.DocketCard
 import com.freight24.ui.components.MetaTag
 import com.freight24.ui.components.PerforationRule
@@ -148,9 +150,9 @@ fun ConnectIndentCard(
             Spacer(Modifier.width(10.dp))
 
             Column(horizontalAlignment = Alignment.End) {
-                CostLine(label = "Client cost", value = clientCostFormatted)
+                CostLine(label = stringResource(R.string.client_cost), value = clientCostFormatted)
                 Spacer(Modifier.height(4.dp))
-                CostLine(label = "Negotiated", value = negotiatedCostFormatted, emphasised = true)
+                CostLine(label = stringResource(R.string.target_cost), value = negotiatedCostFormatted, emphasised = true)
             }
         }
 

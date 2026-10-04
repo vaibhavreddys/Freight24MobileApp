@@ -40,6 +40,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -48,6 +49,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.common.util.formatLoadWeight
 import com.freight24.common.util.negotiatedCostExceedsClientError
+import com.freight24.connect.R
 import com.freight24.connect.feature.indents.domain.viewmodel.EditIndentEvent
 import com.freight24.connect.feature.indents.domain.viewmodel.EditIndentUiState
 import com.freight24.connect.feature.indents.domain.viewmodel.EditIndentViewModel
@@ -325,12 +327,12 @@ private fun EditSlip(
 
         ClauseDocket(
             number = 1,
-            title = "Consignor",
+            title = stringResource(R.string.consignor),
             state = if (callSheetChanged) ClauseState.FILLED else ClauseState.COMPLETE,
             testTag = "edit_indent_clause_consignor",
         ) {
             LedgerRow(
-                label = "Client",
+                label = stringResource(R.string.client),
                 value = details.clientProfile?.companyName
                     ?: details.clientProfile?.fullName,
             )
@@ -341,7 +343,7 @@ private fun EditSlip(
             )
             LedgerDivider()
             LedgerRow(
-                label = "Branch",
+                label = stringResource(R.string.branch),
                 value = details.clientBranch?.let { branch ->
                     listOfNotNull(
                         branch.branchName?.takeIf { it.isNotBlank() },
@@ -439,16 +441,16 @@ private fun EditSlip(
 
         ClauseDocket(
             number = 2,
-            title = "Lane",
+            title = stringResource(R.string.lane),
             state = ClauseState.COMPLETE,
             testTag = "edit_indent_clause_lane",
             trailing = { LockedStamp() },
         ) {
             LaneReadout(
-                originLabel = "Loading from",
+                originLabel = stringResource(R.string.location_from),
                 originValue = loadingLocation?.areaName
                     ?: loadingLocation?.cityName.orEmpty(),
-                destinationLabel = "Unloading at",
+                destinationLabel = stringResource(R.string.location_to),
                 destinationValue = unloadingLocation?.areaName
                     ?: unloadingLocation?.cityName.orEmpty(),
                 originTestTag = "edit_indent_from",
@@ -458,31 +460,37 @@ private fun EditSlip(
 
         ClauseDocket(
             number = 3,
-            title = "Vehicle",
+            title = stringResource(R.string.vehicle),
             state = ClauseState.COMPLETE,
             testTag = "edit_indent_clause_vehicle",
             trailing = { LockedStamp() },
         ) {
-            LedgerRow(label = "Vehicle type", value = details.truckType?.displayName)
+            LedgerRow(
+                label = stringResource(R.string.vehicle_type),
+                value = details.truckType?.displayName
+            )
             LedgerDivider()
-            LedgerRow(label = "Body type", value = details.truckType?.bodyType)
+            LedgerRow(
+                label = stringResource(R.string.body_type),
+                value = details.truckType?.bodyType
+            )
         }
 
         ClauseDocket(
             number = 4,
-            title = "Cargo",
+            title = stringResource(R.string.cargo),
             state = ClauseState.COMPLETE,
             testTag = "edit_indent_clause_cargo",
             trailing = { LockedStamp() },
         ) {
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 LedgerRow(
-                    label = "Weight",
+                    label = stringResource(R.string.weight),
                     value = formatLoadWeight(details.loadWeight, "MT"),
                     modifier = Modifier.weight(1f),
                 )
                 LedgerRow(
-                    label = "Material",
+                    label = stringResource(R.string.material),
                     value = details.material,
                     modifier = Modifier.weight(1f),
                 )
@@ -491,12 +499,12 @@ private fun EditSlip(
 
         ClauseDocket(
             number = 5,
-            title = "Commercials",
+            title = stringResource(R.string.commercials),
             state = if (uiState.commercialsChanged) ClauseState.FILLED else ClauseState.EMPTY,
             testTag = "edit_indent_clause_commercials",
         ) {
             MoneyRuleField(
-                label = "Client cost",
+                label = stringResource(R.string.client_cost),
                 raw = uiState.clientCost,
                 testTag = "edit_indent_client_cost_field",
                 onCommit = { onEvent(EditIndentEvent.UpdateField(clientCost = it)) },
@@ -504,7 +512,7 @@ private fun EditSlip(
             )
             Spacer(Modifier.height(18.dp))
             MoneyRuleField(
-                label = "Business proposed cost",
+                label = stringResource(R.string.business_proposed_cost),
                 raw = uiState.businessProposedCost,
                 testTag = "edit_indent_proposed_cost_field",
                 onCommit = { onEvent(EditIndentEvent.UpdateField(businessProposedCost = it)) },
@@ -512,7 +520,7 @@ private fun EditSlip(
             )
             Spacer(Modifier.height(18.dp))
             MoneyRuleField(
-                label = "Negotiated trip cost",
+                label = stringResource(R.string.target_cost),
                 raw = uiState.negotiatedCost,
                 testTag = "edit_indent_negotiated_cost_field",
                 onCommit = { onEvent(EditIndentEvent.UpdateField(negotiatedCost = it)) },
@@ -530,8 +538,9 @@ private fun EditSlip(
             PerforationRule()
             Spacer(Modifier.height(4.dp))
             DocketSwitchRow(
-                title = "Hide cost from the load board",
-                description = "Truck owners see the load without the rate.",
+                title = stringResource(R.string.hide_cost_from_load_board),
+                description =
+                    stringResource(R.string.truck_owners_see_the_load_without_the_rate),
                 checked = uiState.hideCost,
                 onCheckedChange = { onEvent(EditIndentEvent.UpdateField(hideCost = it)) },
                 testTag = "edit_indent_hide_cost_switch",
@@ -540,20 +549,20 @@ private fun EditSlip(
 
         ClauseDocket(
             number = 6,
-            title = "Terms",
+            title = stringResource(R.string.terms),
             state = if (uiState.termsChanged) ClauseState.FILLED else ClauseState.EMPTY,
             testTag = "edit_indent_clause_terms",
         ) {
             DocketSwitchRow(
-                title = "Turnaround time",
-                description = "Commit to a delivery window from loading.",
+                title = stringResource(R.string.turn_around_time),
+                description = stringResource(R.string.commit_to_delivery_window),
                 checked = uiState.tatRequired,
                 onCheckedChange = { onEvent(EditIndentEvent.UpdateField(tatRequired = it)) },
                 testTag = "edit_indent_tat_switch",
             )
             Spacer(Modifier.height(6.dp))
             RuledField(
-                label = "TAT hours",
+                label = stringResource(R.string.tat_hours),
                 value = uiState.tatHours,
                 onValueChange = { onEvent(EditIndentEvent.UpdateField(tatHours = it)) },
                 testTag = "edit_indent_tat_hours_field",
@@ -565,7 +574,7 @@ private fun EditSlip(
             Spacer(Modifier.height(18.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 RuledField(
-                    label = "Vehicle height",
+                    label = stringResource(R.string.vehicle_height),
                     value = uiState.vehicleHeight,
                     onValueChange = { onEvent(EditIndentEvent.UpdateField(vehicleHeight = it)) },
                     testTag = "edit_indent_height_field",
@@ -575,7 +584,7 @@ private fun EditSlip(
                     modifier = Modifier.weight(1f),
                 )
                 RuledField(
-                    label = "Flooring",
+                    label = stringResource(R.string.flooring),
                     value = uiState.flooringType,
                     onValueChange = { onEvent(EditIndentEvent.UpdateField(flooringType = it)) },
                     testTag = "edit_indent_flooring_field",
@@ -587,7 +596,7 @@ private fun EditSlip(
             PerforationRule()
             Spacer(Modifier.height(4.dp))
             DocketSwitchRow(
-                title = "Tarpaulin required",
+                title = stringResource(R.string.tarpaulin_required),
                 description = "The load must be sheeted.",
                 checked = uiState.tarpaulinRequired,
                 onCheckedChange = { onEvent(EditIndentEvent.UpdateField(tarpaulinRequired = it)) },
@@ -595,7 +604,7 @@ private fun EditSlip(
             )
             Spacer(Modifier.height(10.dp))
             RuledField(
-                label = "Remarks",
+                label = stringResource(R.string.remarks),
                 value = uiState.remarks,
                 onValueChange = { onEvent(EditIndentEvent.UpdateField(remarks = it)) },
                 testTag = "edit_indent_remarks_field",

@@ -28,11 +28,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.freight24.connect.R
 import com.freight24.ui.components.PanelShape
 import com.freight24.ui.theme.FreightThemeTokens
 import java.text.NumberFormat
@@ -202,7 +204,10 @@ fun CostVisibilityIndicator(
     val extended = FreightThemeTokens.colors
     val contentColor = if (isVisible) extended.success else MaterialTheme.colorScheme.onSurfaceVariant
     val icon = if (isVisible) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff
-    val label = if (isVisible) "Cost visible" else "Cost hidden"
+    val label = if (isVisible)
+        stringResource(R.string.cost_visible)
+    else
+        stringResource(R.string.cost_hidden)
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -245,15 +250,15 @@ fun RouteAndFinancialsSection(
 
     IndentDetailSection(
         number = number,
-        title = "Route & Financials",
+        title = stringResource(R.string.route_and_financials),
         testTag = "indent_details_route",
         hasError = hasError,
         trailing = { CostVisibilityIndicator(isVisible = isCostVisible) },
     ) {
         LaneStrip(
-            originLabel = "Collect from",
+            originLabel = stringResource(R.string.location_from),
             originValue = originCity,
-            destinationLabel = "Deliver to",
+            destinationLabel = stringResource(R.string.location_to),
             destinationValue = destinationCity,
             originTestTag = "indent_details_origin",
             destinationTestTag = "indent_details_destination",
@@ -262,17 +267,17 @@ fun RouteAndFinancialsSection(
         if (hasCosts) {
             Spacer(modifier = Modifier.height(8.dp))
             LedgerLine(
-                label = "Client budget",
-                value = if (isCostVisible) formatInr(clientCost) else "₹ ••••",
+                label = stringResource(R.string.client_cost),
+                value = formatInr(clientCost),
             )
             LedgerLine(
-                label = "Negotiated",
-                value = if (isCostVisible) formatInr(negotiatedCost) else "₹ ••••",
+                label = stringResource(R.string.target_cost),
+                value = formatInr(negotiatedCost),
                 emphasis = true,
             )
             if (hasMargin && isCostVisible) {
                 LedgerLine(
-                    label = "Margin",
+                    label = stringResource(R.string.margin),
                     value = "₹${formatNumber(marginAmount)}",
                 )
             }
@@ -298,22 +303,34 @@ fun SpecificationsSection(
 ) {
     IndentDetailSection(
         number = number,
-        title = "Specifications",
+        title = stringResource(R.string.specifications),
         testTag = "indent_details_specs",
     ) {
         LedgerLine(
-            label = "Truck type",
+            label = stringResource(R.string.truck_type),
             value = truckType?.let { "$it • $truckTypeUnit" },
         )
-        LedgerLine(label = "Weight", value = "$weight $weightUnit")
-        LedgerLine(label = "Material", value = titleCase(materialType))
         LedgerLine(
-            label = "TAT",
-            value = if (tatRequired) "$tatHours hrs" else "Not required",
+            label = stringResource(R.string.weight),
+            value = "$weight $weightUnit"
         )
         LedgerLine(
-            label = "Tarpaulin",
-            value = if (tarpaulinRequired) "Required" else "Not required",
+            label = stringResource(R.string.material),
+            value = titleCase(materialType)
+        )
+        LedgerLine(
+            label = stringResource(R.string.tat),
+            value = if (tatRequired)
+                "$tatHours hrs"
+            else
+                stringResource(R.string.not_applicable),
+        )
+        LedgerLine(
+            label = stringResource(R.string.tarpaulin),
+            value = if (tarpaulinRequired)
+                stringResource(R.string.required)
+            else
+                stringResource(R.string.not_applicable),
         )
     }
 }
@@ -331,7 +348,7 @@ fun RemarksSection(
 
     IndentDetailSection(
         number = number,
-        title = "Remarks",
+        title = stringResource(R.string.remarks),
         testTag = "indent_details_remarks",
     ) {
         Surface(
@@ -340,7 +357,8 @@ fun RemarksSection(
             color = scheme.surfaceContainerHighest,
         ) {
             Text(
-                text = remarks.takeIf { it.isNotBlank() } ?: "No special requirements specified.",
+                text = remarks.takeIf { it.isNotBlank() }
+                    ?: stringResource(R.string.no_special_requirements_specified),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = if (remarks.isNotBlank()) FontWeight.Medium else FontWeight.Normal,
                 color = if (remarks.isNotBlank()) scheme.onSurface else scheme.onSurfaceVariant,

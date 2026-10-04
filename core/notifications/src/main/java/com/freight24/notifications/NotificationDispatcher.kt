@@ -2,6 +2,7 @@ package com.freight24.notifications
 
 import android.app.PendingIntent
 import android.content.Context
+import android.media.RingtoneManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -31,6 +32,8 @@ class NotificationDispatcher
                     .setContentText(notification.message)
                     .setAutoCancel(true)
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
+                    .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+                    .setVibrate(NotificationChannels.VIBRATION_PATTERN)
                     .setDefaults(NotificationCompat.DEFAULT_ALL)
 
             if (pendingIntent != null) {

@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
@@ -44,6 +45,7 @@ import com.freight24.common.util.DateTimeUtils
 import com.freight24.common.util.formatIndianCurrency
 import com.freight24.common.util.formatWeightValue
 import com.freight24.common.util.negotiatedCostExceedsClientError
+import com.freight24.connect.R
 import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.components.formViewportInsets
 import com.freight24.ui.theme.FreightThemeTokens
@@ -135,7 +137,7 @@ fun IndentDetailsScreen(
                             assignClientCostFieldValue = TextFieldValue(formatted, TextRange(newCursor))
                             viewModel.onEvent(IndentDetailsEvent.UpdateAssignField(clientCost = formatted))
                         },
-                        label = { Text("Client Cost") },
+                        label = { Text(stringResource(R.string.client_cost)) },
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -144,7 +146,7 @@ fun IndentDetailsScreen(
                             checked = uiState.isNegotiatedSameAsClient,
                             onCheckedChange = { viewModel.onEvent(IndentDetailsEvent.UpdateAssignField(isNegotiatedSameAsClient = it)) }
                         )
-                        Text("Negotiated cost same as client cost")
+                        Text(stringResource(R.string.neg_cost_same_as_client))
                     }
                     OutlinedTextField(
                         value = assignNegotiatedCostFieldValue,
@@ -158,7 +160,7 @@ fun IndentDetailsScreen(
                             assignNegotiatedCostFieldValue = TextFieldValue(formatted, TextRange(newCursor))
                             viewModel.onEvent(IndentDetailsEvent.UpdateAssignField(negotiatedCost = formatted))
                         },
-                        label = { Text("Negotiated Cost") },
+                        label = { stringResource(R.string.target_cost) },
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Number),
                         enabled = !uiState.isNegotiatedSameAsClient,
                         isError = assignNegotiatedCostError != null,
@@ -168,7 +170,7 @@ fun IndentDetailsScreen(
                     OutlinedTextField(
                         value = uiState.assignNotes,
                         onValueChange = { viewModel.onEvent(IndentDetailsEvent.UpdateAssignField(notes = it)) },
-                        label = { Text("Notes") },
+                        label = { Text(stringResource(R.string.notes)) },
                         modifier = Modifier.fillMaxWidth(),
                         minLines = 3
                     )
@@ -186,12 +188,12 @@ fun IndentDetailsScreen(
                             strokeWidth = 2.dp
                         )
                     }
-                    Text("Confirm")
+                    Text(stringResource(R.string.confirm))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.onEvent(IndentDetailsEvent.HideAssignDialog) }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )

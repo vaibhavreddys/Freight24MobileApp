@@ -8,23 +8,30 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.freight24.connect.R
 import com.freight24.connect.feature.trips.domain.viewmodel.PdfViewerEvent
 import com.freight24.connect.feature.trips.domain.viewmodel.PdfViewerViewModel
 import com.freight24.ui.components.PdfRendererView
 import com.freight24.ui.theme.FreightThemeTokens
 import java.io.File
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,6 +43,13 @@ internal fun PdfViewerScreen(
     val uiState by viewModel.uiState.collectAsState()
     val colorScheme = MaterialTheme.colorScheme
     val extendedColors = FreightThemeTokens.colors
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val isLrDocument = uiState.documentType.equals("lr", ignoreCase = true)
+    val shareTitle = stringResource(
+        if (isLrDocument) R.string.trip_share_lr else R.string.trip_share_loading_memo
+    )
     
     // Navigate back when approval/rejection is successful
     LaunchedEffect(uiState.shouldNavigateBack) {
@@ -45,39 +59,88 @@ internal fun PdfViewerScreen(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            FreightTopAppBar(
-                title = { Text("Lorry Receipt", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    // Show approval status if already approved/verified
-                    if (uiState.isApproved || uiState.documentStatus?.lowercase() == "approved" || uiState.documentStatus?.lowercase() == "verified") {
+            Column {
+                FreightTopAppBar(
+                    title = {
                         Text(
-                            "Approved",
-                            modifier = Modifier.padding(end = 16.dp),
-                            color = extendedColors.success,
-                            style = MaterialTheme.typography.labelLarge,
+                            stringResource(if (isLrDocument) R.string.trip_lr_preview_title else R.string.trip_loading_memo),
                             fontWeight = FontWeight.Bold
                         )
-                    } else if (uiState.documentStatus?.lowercase() == "rejected") {
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onBackClick) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    },
+                    actions = {
+                        TooltipBox(
+                            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                            tooltip = { PlainTooltip { Text(shareTitle) } },
+                            state = rememberTooltipState()
+                        ) {
+                            IconButton(
+                                enabled = uiState.pdfFile != null && !uiState.isLoading,
+                                onClick = {
+                                    uiState.pdfFile?.let { file ->
+                                        if (shareTripDocumentPdf(context, file, shareTitle).isFailure) {
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar(context.getString(R.string.trip_share_document_failed))
+                                            }
+                                        }
+                                    }
+                                }
+                            ) {
+                                Icon(Icons.Outlined.Share, contentDescription = shareTitle)
+                            }
+                        }
+                        // Show approval status if already approved/verified
+                        if (uiState.isApproved || uiState.documentStatus?.lowercase() == "approved" || uiState.documentStatus?.lowercase() == "verified") {
+                            Text(
+                                "Approved",
+                                modifier = Modifier.padding(end = 16.dp),
+                                color = extendedColors.success,
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                        } else if (uiState.documentStatus?.lowercase() == "rejected") {
+                            Text(
+                                "Rejected",
+                                modifier = Modifier.padding(end = 16.dp),
+                                color = colorScheme.error,
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    },
+                )
+                Surface(color = colorScheme.surfaceContainerLow) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
                         Text(
-                            "Rejected",
-                            modifier = Modifier.padding(end = 16.dp),
-                            color = colorScheme.error,
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold
+                            text = stringResource(R.string.client),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = uiState.clientName ?: stringResource(
+                                if (uiState.isLoadingClient) R.string.trip_review_client_loading
+                                else R.string.trip_review_client_unavailable
+                            ),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = colorScheme.onSurface
                         )
                     }
-                },
-            )
+                }
+            }
         },
         floatingActionButton = {
             // Show FABs only if document is pending and not yet approved/rejected
-            if (uiState.documentStatus?.lowercase() == "pending" && !uiState.isApproved && uiState.documentStatus?.lowercase() != "rejected") {
+            if (isLrDocument && uiState.documentStatus?.lowercase() == "pending" && !uiState.isApproved) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
@@ -143,7 +206,7 @@ internal fun PdfViewerScreen(
         }
         
         // Approve Dialog
-        if (uiState.showApproveDialog) {
+        if (isLrDocument && uiState.showApproveDialog) {
             RemarksDialog(
                 title = "Approve LR",
                 remarksValue = uiState.remarksInput,
@@ -155,7 +218,7 @@ internal fun PdfViewerScreen(
         }
         
         // Reject Dialog
-        if (uiState.showRejectDialog) {
+        if (isLrDocument && uiState.showRejectDialog) {
             RemarksDialog(
                 title = "Reject LR",
                 remarksValue = uiState.remarksInput,

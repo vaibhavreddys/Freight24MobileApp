@@ -8,6 +8,8 @@ import com.freight24.connect.feature.trips.domain.usecase.GetHaltingRateUseCase
 import com.freight24.connect.feature.trips.domain.usecase.GetHaltingRateUseCaseImpl
 import com.freight24.connect.feature.trips.domain.usecase.GetMyTripsUseCase
 import com.freight24.connect.feature.trips.domain.usecase.GetMyTripsUseCaseImpl
+import com.freight24.connect.feature.trips.domain.usecase.GetPaymentTransactionsUseCase
+import com.freight24.connect.feature.trips.domain.usecase.GetPaymentTransactionsUseCaseImpl
 import com.freight24.connect.feature.trips.domain.usecase.SignedDocumentUseCase
 import com.freight24.connect.feature.trips.domain.usecase.SignedDocumentUseCaseImpl
 import com.freight24.connect.feature.trips.domain.usecase.SlipUrlSignedDocumentUseCase
@@ -45,6 +47,11 @@ internal abstract class TripsDomainModule {
 
     @Binds
     abstract fun bindTripDetailsUseCase(useCaseImpl: TripDetailsUseCaseImpl): TripDetailsUseCase
+
+    @Binds
+    abstract fun bindGetPaymentTransactionsUseCase(
+        useCaseImpl: GetPaymentTransactionsUseCaseImpl
+    ): GetPaymentTransactionsUseCase
 
     @Binds
     abstract fun bindUpdateTruckerUseCase(useCaseImpl: UpdateTruckerUseCaseImpl): UpdateTruckerUseCase

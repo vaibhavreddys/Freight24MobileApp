@@ -203,14 +203,14 @@ fun AttentionNeededSection(
                 valueColor = colorScheme.tertiary,
                 onClick = { onTripFilterClick(TripTypes.LR_NOT_UPLOADED) }
             )
-            // Payment Enquiry (Mocked for UI)
-            AttentionCard(
-                modifier = Modifier.weight(1f),
-                title = "Payment\nEnquiry",
-                value = "1 Urgent",
-                backgroundColor = colorScheme.errorContainer,
-                valueColor = colorScheme.error
-            )
+//            // Payment Enquiry (Mocked for UI)
+//            AttentionCard(
+//                modifier = Modifier.weight(1f),
+//                title = "Payment\nEnquiry",
+//                value = "1 Urgent",
+//                backgroundColor = colorScheme.errorContainer,
+//                valueColor = colorScheme.error
+//            )
         }
     }
 }

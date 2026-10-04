@@ -55,7 +55,7 @@ internal class EditTripViewModelImpl @Inject constructor(
                             truckId = response.truck.id,
                             driverName = response.driverName ?: "",
                             driverPhone = response.driverPhone ?: "",
-                            clientTripCost = response.clientTripCost ?: "",
+                            clientTripCost = response.clientTripCost?.toPlainString().orEmpty(),
                             truckerTripCost = response.truckerTripCost ?: "",
                             luIncluded = response.financials?.luCharges?.loading?.includedInTripCost ?: false,
                             truckerStatus = response.truckerStatus,
@@ -65,7 +65,7 @@ internal class EditTripViewModelImpl @Inject constructor(
                             initialTruckNumber = response.truck.registrationNumber,
                             initialDriverName = response.driverName ?: "",
                             initialDriverPhone = response.driverPhone ?: "",
-                            initialClientTripCost = response.clientTripCost ?: "",
+                            initialClientTripCost = response.clientTripCost?.toPlainString().orEmpty(),
                             initialTruckerTripCost = response.truckerTripCost ?: "",
                             initialLuIncluded = response.financials?.luCharges?.loading?.includedInTripCost ?: false,
                             

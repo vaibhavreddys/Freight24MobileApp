@@ -20,5 +20,8 @@ data class CachedEmployeeProfileEntity(
     val designation: String,
     val status: String,
     val tagCode: String,
+    val department: String?,
+    val phone: String?,
+    val email: String?,
     val cachedAt: Long,
 )

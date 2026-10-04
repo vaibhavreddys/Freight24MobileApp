@@ -188,7 +188,6 @@ fun ConnectNavGraph(
                 onManageTrucks = { navHostController.navigate(ConnectDestination.ManageTrucks.route) },
                 onManageTruckOwners = { navHostController.navigate(ConnectDestination.ManageTruckOwners.route) },
                 onLeadsManagement = { navHostController.navigate(ConnectDestination.Leads.route) },
-                onMyProfile = { /* TODO: Navigate to Profile */ },
                 onSettings = { navHostController.navigate(ConnectDestination.Settings.route) },
             )
         }
@@ -414,9 +413,9 @@ fun ConnectNavGraph(
                 onEditClick = { id ->
                     navHostController.navigate(ConnectDestination.EditTrip.createRoute(id))
                 },
-                onDocumentView = { tripId, docId, status ->
+                onDocumentView = { tripId, docId, status, documentType ->
                     navHostController.navigate(
-                        ConnectDestination.PdfViewer.createRoute(tripId, docId, status)
+                        ConnectDestination.PdfViewer.createRoute(tripId, docId, status, documentType = documentType)
                     )
                 },
                 onHaltingClick = { tripId, truckTypeId, loadingDays, unloadingDays, notes ->

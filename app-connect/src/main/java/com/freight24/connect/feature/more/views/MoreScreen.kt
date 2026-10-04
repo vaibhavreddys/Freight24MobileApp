@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -111,7 +112,6 @@ fun MoreScreen(
     onManageTrucks: () -> Unit,
     onManageTruckOwners: () -> Unit,
     onLeadsManagement: () -> Unit,
-    onMyProfile: () -> Unit,
     onSettings: () -> Unit,
     moreViewModel: MoreViewModel = hiltViewModel(),
     leadsBadgeViewModel: LeadsBadgeViewModel = hiltViewModel(),
@@ -154,7 +154,10 @@ fun MoreScreen(
                 name = employeeInfo.fullName,
                 role = employeeInfo.designation,
                 tagCode = employeeInfo.tagCode,
-                onProfileClick = onMyProfile,
+                department = employeeInfo.department,
+                phone = employeeInfo.phone,
+                email = employeeInfo.email,
+                status = employeeInfo.status,
                 modifier = Modifier.padding(horizontal = 16.dp),
             )
 
@@ -267,7 +270,10 @@ private fun ProfileDocket(
     name: String,
     role: String,
     tagCode: String,
-    onProfileClick: () -> Unit,
+    department: String,
+    phone: String,
+    email: String,
+    status: String,
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
@@ -275,7 +281,7 @@ private fun ProfileDocket(
     DocketCard(
         accent = scheme.primary,
         testTag = "more_profile_card",
-        onClick = onProfileClick,
+        onClick = null,
         modifier = modifier
             .padding(top = 12.dp)
             .fillMaxWidth(),
@@ -328,21 +334,58 @@ private fun ProfileDocket(
                     )
                 }
             }
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = null,
-                tint = scheme.onSurfaceVariant.copy(alpha = 0.5f),
-            )
+            status.takeIf { it.isNotBlank() }?.let {
+                MetaTag(
+                    text = it.uppercase(),
+                    container = scheme.primaryContainer,
+                    content = scheme.onPrimaryContainer,
+                )
+            }
         }
 
         Spacer(Modifier.height(12.dp))
         PerforationRule()
-        Spacer(Modifier.height(9.dp))
+        Spacer(Modifier.height(12.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            ProfileDetail(
+                label = "Employee code",
+                value = tagCode,
+                modifier = Modifier.weight(1f),
+            )
+            ProfileDetail(
+                label = "Department",
+                value = department,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        Spacer(Modifier.height(12.dp))
+        ProfileDetail(label = "Phone", value = phone)
+        Spacer(Modifier.height(12.dp))
+        ProfileDetail(label = "Email", value = email)
+    }
+}
+
+@Composable
+private fun ProfileDetail(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier) {
         Text(
-            text = "View profile",
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            color = scheme.primary,
+            text = label.uppercase(),
+            style = deskEyebrow(),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            text = value.ifBlank { "Not available" },
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurface,
         )
     }
 }

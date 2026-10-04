@@ -32,9 +32,12 @@ import androidx.compose.material.icons.outlined.BorderColor
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
@@ -46,6 +49,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -53,6 +57,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.freight24.connect.R
 import com.freight24.connect.feature.trips.domain.viewmodel.TripDetailsEvent
 import com.freight24.connect.feature.trips.domain.viewmodel.TripDetailsViewModel
 import com.freight24.connect.feature.trips.domain.viewmodel.TripDetailsViewModelImpl
@@ -60,6 +65,7 @@ import com.freight24.connect.feature.trips.views.components.TripCard
 import com.freight24.connect.feature.trips.views.components.formatAmount
 import com.freight24.ui.components.FileConfirmationSheet
 import com.freight24.ui.components.FileSourcePickerSheet
+import com.freight24.ui.components.rememberCallAction
 import com.freight24.connect.utils.toDateTime
 import com.freight24.rest.response.TripDataResponse
 import com.freight24.ui.components.formViewportInsets
@@ -73,7 +79,7 @@ fun TripDetailsScreen(
     tripId: String,
     onBackClick: () -> Unit,
     onEditClick: (String) -> Unit,
-    onDocumentView : (String, String, String) -> Unit,
+    onDocumentView : (String, String, String, String) -> Unit,
     onHaltingClick: (String, String, Int, Int, String?) -> Unit,
     onLuClick: (String, String, String?, String?, String?, String?, String?) -> Unit,
     onOtherDeductionsClick: (String, String?, String?) -> Unit,
@@ -102,6 +108,22 @@ fun TripDetailsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+
+    LaunchedEffect(uiState.sharedDocumentFile, uiState.documentShareFailed) {
+        val file = uiState.sharedDocumentFile
+        if (file != null || uiState.documentShareFailed) {
+            val shareTitle = context.getString(
+                if (uiState.sharedDocumentType.equals("loading_memo", ignoreCase = true))
+                    R.string.trip_share_loading_memo else R.string.trip_share_lr
+            )
+            val failed = uiState.documentShareFailed ||
+                (file != null && shareTripDocumentPdf(context, file, shareTitle).isFailure)
+            if (failed) {
+                snackbarHostState.showSnackbar(context.getString(R.string.trip_share_document_failed))
+            }
+            viewModel.onEvent(TripDetailsEvent.DocumentShareHandled)
+        }
+    }
 
     val sourceSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showSourcePicker by rememberSaveable { mutableStateOf(false) }
@@ -255,6 +277,17 @@ fun TripDetailsScreen(
         )
     }
 
+    uiState.transactionUserType?.let { userType ->
+        PaymentTransactionsSheet(
+            userType = userType,
+            transactions = uiState.transactions,
+            isLoading = uiState.isTransactionsLoading,
+            errorMessage = uiState.transactionsError,
+            onRetry = { viewModel.onEvent(TripDetailsEvent.RetryPaymentTransactions) },
+            onDismiss = { viewModel.onEvent(TripDetailsEvent.DismissPaymentTransactions) }
+        )
+    }
+
     FileSourcePickerSheet(
         showSheet = showSourcePicker,
         onDismissRequest = { showSourcePicker = false },
@@ -342,8 +375,8 @@ fun TripDetailsScreen(
             val truckerStatus = trip?.truckerStatus ?: ""
             val showTripStatus = (trip?.status ?: "").equals("active", true)
             val (buttonText, nextStatus) = when (truckerStatus.uppercase()) {
-                "ASSIGNED" -> "Update to LOADING" to "LOADING"
-                "LOADING" -> "Upload LR" to "UPLOAD_LR"
+                "ASSIGNED" -> stringResource(R.string.trip_update_to_loading) to "LOADING"
+                "LOADING" -> stringResource(R.string.trip_upload_lr) to "UPLOAD_LR"
                 "IN_TRANSIT" -> "Update to UNLOADED" to "UNLOADED"
                 else -> null to null
             }
@@ -353,27 +386,37 @@ fun TripDetailsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     shadowElevation = 8.dp,
                 ) {
-                    Button(
-                        onClick = {
-                            if (nextStatus == "UPLOAD_LR") {
-                                showSourcePicker = true
-                            } else {
-                                pendingStatus = nextStatus
-                                pendingButtonText = buttonText
-                                showConfirmationDialog = true
-                            }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp)
-                            .height(52.dp),
-                        shape = MaterialTheme.shapes.medium,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colorScheme.primary,
-                            contentColor = colorScheme.onPrimary
-                        )
-                    ) {
-                        Text(buttonText, style = MaterialTheme.typography.titleMedium)
+                    Column {
+                        if (truckerStatus.equals("ASSIGNED", ignoreCase = true)) {
+                            Text(
+                                text = stringResource(R.string.trip_loading_lr_hint),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp)
+                            )
+                        }
+                        Button(
+                            onClick = {
+                                if (nextStatus == "UPLOAD_LR") {
+                                    showSourcePicker = true
+                                } else {
+                                    pendingStatus = nextStatus
+                                    pendingButtonText = buttonText
+                                    showConfirmationDialog = true
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 12.dp)
+                                .height(52.dp),
+                            shape = MaterialTheme.shapes.medium,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = colorScheme.primary,
+                                contentColor = colorScheme.onPrimary
+                            )
+                        ) {
+                            Text(buttonText, style = MaterialTheme.typography.titleMedium)
+                        }
                     }
                 }
             }
@@ -401,8 +444,8 @@ fun TripDetailsScreen(
                     TripDetailsContent(
                         trip = uiState.trip!!,
                         onUploadLrClick = { showSourcePicker = true },
-                        onDocClick = { docId, status ->
-                            onDocumentView(tripId, docId, status)
+                        onDocClick = { docId, status, documentType ->
+                            onDocumentView(tripId, docId, status, documentType)
                         },
                         onHaltingClick = { tripId, truckTypeId, loadingDays, unloadingDays, notes ->
                             onHaltingClick(tripId, truckTypeId, loadingDays, unloadingDays, notes)
@@ -410,7 +453,12 @@ fun TripDetailsScreen(
                         onLuClick = { loading, unloading, loadingSlipUrl, unloadingSlipUrl, loadingId, unloadingId, notes ->
                             onLuClick(loading, unloading, loadingSlipUrl, unloadingSlipUrl, loadingId, unloadingId, notes)
                         },
-                        onOtherDeductionsClick = onOtherDeductionsClick
+                        onOtherDeductionsClick = onOtherDeductionsClick,
+                        onShareDocumentClick = { viewModel.onEvent(TripDetailsEvent.ShareDocument(it)) },
+                        onViewPaymentTransactions = {
+                            viewModel.onEvent(TripDetailsEvent.ViewPaymentTransactions(it))
+                        },
+                        sharingDocumentId = uiState.sharingDocumentId
                     )
                 }
             }
@@ -422,10 +470,13 @@ fun TripDetailsScreen(
 fun TripDetailsContent(
     trip: TripDataResponse,
     onUploadLrClick: () -> Unit,
-    onDocClick: (String, String) -> Unit,
+    onDocClick: (String, String, String) -> Unit,
     onHaltingClick: (String, String, Int, Int, String?) -> Unit,
     onLuClick: (String, String, String?, String?, String?, String?, String?) -> Unit,
     onOtherDeductionsClick: (String, String?, String?) -> Unit,
+    onShareDocumentClick: (String) -> Unit,
+    onViewPaymentTransactions: (String) -> Unit,
+    sharingDocumentId: String?,
 ) {
     Column(
         modifier = Modifier
@@ -437,6 +488,24 @@ fun TripDetailsContent(
         // Reused Trip Card
         TripCard(trip = trip)
 
+        ExpandableSection(
+            title = "Trip Contacts",
+            icon = Icons.Outlined.Phone,
+            iconBg = colorScheme.primaryContainer,
+            iconTint = colorScheme.primary,
+            initiallyExpanded = true,
+        ) {
+            TripContactsContent(trip = trip)
+        }
+
+        ExpandableSection(
+            title = "Client Contacts",
+            icon = Icons.Outlined.Phone,
+            iconBg = colorScheme.primaryContainer,
+            iconTint = colorScheme.primary,
+        ) {
+            ClientContactsContent(contacts = trip.client.contacts)
+        }
 
         // Trip Documents — auto-expand to cue the user when LR needs attention
         val lrDoc = (trip.documents ?: emptyList()).find { it.type.equals("lr", ignoreCase = true) }
@@ -454,7 +523,9 @@ fun TripDetailsContent(
                 truckerStatus = trip.truckerStatus,
                 documents = trip.documents ?: emptyList(),
                 onUploadLrClick = onUploadLrClick,
-                onDocClick = onDocClick
+                onDocClick = onDocClick,
+                onShareDocumentClick = onShareDocumentClick,
+                sharingDocumentId = sharingDocumentId
             )
         }
 
@@ -483,12 +554,27 @@ fun TripDetailsContent(
 
         // Payment Breakdown
         ExpandableSection(
-            title = "Payment Breakdown",
+            title = stringResource(R.string.trip_trucker_payment_breakdown),
             icon = Icons.Outlined.Payments,
             iconBg = colorScheme.primaryContainer,
             iconTint = colorScheme.primary
         ) {
-            PaymentBreakdownContent(trip.financials)
+            PaymentBreakdownContent(
+                financials = trip.financials,
+                onViewTransactions = { onViewPaymentTransactions("trucker") }
+            )
+        }
+
+        ExpandableSection(
+            title = stringResource(R.string.trip_client_payment_breakdown),
+            icon = Icons.Outlined.Payments,
+            iconBg = colorScheme.primaryContainer,
+            iconTint = colorScheme.primary
+        ) {
+            ClientPaymentBreakdownContent(
+                trip = trip,
+                onViewTransactions = { onViewPaymentTransactions("client") }
+            )
         }
 
         // Trip Timeline
@@ -505,13 +591,126 @@ fun TripDetailsContent(
     }
 }
 
+@Composable
+private fun TripContactsContent(trip: TripDataResponse) {
+    Column(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        TripContactRow(
+            label = "Truck owner",
+            name = trip.trucker?.name,
+            tagCode = trip.trucker?.tagCode,
+            phone = trip.trucker?.phone,
+        )
+        HorizontalDivider(color = colorScheme.outlineVariant)
+        TripContactRow(
+            label = "Driver",
+            name = trip.driverName,
+            phone = trip.driverPhone,
+        )
+    }
+}
+
+@Composable
+private fun ClientContactsContent(contacts: TripDataResponse.Contacts?) {
+    Column(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        TripContactRow(
+            label = "Placement",
+            name = contacts?.placement?.name,
+            phone = contacts?.placement?.phone,
+        )
+        HorizontalDivider(color = colorScheme.outlineVariant)
+        TripContactRow(
+            label = "POD",
+            name = contacts?.pod?.name,
+            phone = contacts?.pod?.phone,
+        )
+        HorizontalDivider(color = colorScheme.outlineVariant)
+        TripContactRow(
+            label = "Payment",
+            name = contacts?.payment?.name,
+            phone = contacts?.payment?.phone,
+        )
+        HorizontalDivider(color = colorScheme.outlineVariant)
+        TripContactRow(
+            label = "Operations",
+            name = contacts?.operations?.name,
+            phone = contacts?.operations?.phone,
+        )
+    }
+}
+
+@Composable
+private fun TripContactRow(
+    label: String,
+    name: String?,
+    phone: String?,
+    tagCode: String? = null,
+) {
+    val hasName = !name.isNullOrBlank()
+    val hasPhone = !phone.isNullOrBlank()
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label.uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                color = colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = name?.takeIf { it.isNotBlank() } ?: "Not available",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = if (hasName) colorScheme.onSurface else colorScheme.onSurfaceVariant,
+            )
+            tagCode?.takeIf { it.isNotBlank() }?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = colorScheme.primary,
+                )
+            }
+            phone?.takeIf { it.isNotBlank() }?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
+        if (hasPhone) {
+            val call = rememberCallAction(phone!!)
+            TextButton(onClick = call) {
+                Icon(
+                    imageVector = Icons.Outlined.Phone,
+                    contentDescription = "Call $label",
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Call")
+            }
+        }
+    }
+}
+
 
 @Composable
 fun TripDocumentsSection(
     truckerStatus: String,
     documents: List<TripDataResponse.Document>,
     onUploadLrClick: () -> Unit,
-    onDocClick: (String, String) -> Unit
+    onDocClick: (String, String, String) -> Unit,
+    onShareDocumentClick: (String) -> Unit,
+    sharingDocumentId: String?
 ) {
     Column(
         modifier = Modifier.padding(16.dp),
@@ -520,20 +719,35 @@ fun TripDocumentsSection(
 
         val lrDoc = documents.find { it.type.lowercase() == "lr" }
         val memoDoc = documents.find { it.type.lowercase() == "loading_memo" }
+        val isLrUploadEnabled = truckerStatus.equals("LOADING", ignoreCase = true) ||
+            (lrDoc != null && (lrDoc.status.equals("pending", ignoreCase = true) ||
+                lrDoc.status.equals("rejected", ignoreCase = true)))
 
         DocumentCard(
-            title = "Lorry Receipt (LR)",
+            title = stringResource(R.string.trip_lorry_receipt),
             doc = lrDoc,
             showUploadButton = true,
-            isUploadEnabled = truckerStatus == "LOADING" || (lrDoc != null && (lrDoc.status.lowercase() == "pending" || lrDoc.status.lowercase() == "rejected")),
+            showEmptyStatus = false,
+            isUploadEnabled = isLrUploadEnabled,
+            uploadDisabledReason = if (truckerStatus.equals("ASSIGNED", ignoreCase = true) &&
+                !isLrUploadEnabled && lrDoc == null
+            ) stringResource(R.string.trip_lr_upload_disabled_reason) else null,
             onUploadClick = onUploadLrClick,
-            onCardClick = { docId, status -> onDocClick(docId, status) }
+            onCardClick = { docId, status -> onDocClick(docId, status, "lr") },
+            onShareClick = lrDoc?.let { { onShareDocumentClick(it.id) } },
+            isPreparingShare = lrDoc != null && sharingDocumentId == lrDoc.id,
+            isShareEnabled = sharingDocumentId == null
         )
 
         DocumentCard(
-            title = "Trip Memo",
+            title = stringResource(R.string.trip_loading_memo),
             doc = memoDoc,
-            showUploadButton = false
+            showUploadButton = false,
+            onCardClick = { docId, status -> onDocClick(docId, status, "loading_memo") },
+            onShareClick = memoDoc?.let { { onShareDocumentClick(it.id) } },
+            isPreparingShare = memoDoc != null && sharingDocumentId == memoDoc.id,
+            isShareEnabled = sharingDocumentId == null,
+            shareLabel = stringResource(R.string.trip_share_loading_memo)
         )
     }
 }
@@ -545,15 +759,18 @@ fun DocumentCard(
     showUploadButton: Boolean = false,
     isUploadEnabled: Boolean = false,
     onUploadClick: () -> Unit = {},
-    onCardClick: (String, String) -> Unit = { _, _ -> }
+    onCardClick: (String, String) -> Unit = { _, _ -> },
+    uploadDisabledReason: String? = null,
+    showEmptyStatus: Boolean = true,
+    onShareClick: (() -> Unit)? = null,
+    isPreparingShare: Boolean = false,
+    isShareEnabled: Boolean = true,
+    shareLabel: String? = null
 ) {
 
     fun onCardClick() {
         doc?.let {
-            val status = it.status.lowercase()
-            if (status == "verified" || status == "rejected" || status == "pending") {
-                onCardClick(it.id, it.status)
-            }
+            onCardClick(it.id, it.status)
         }
     }
 
@@ -566,71 +783,110 @@ fun DocumentCard(
             onCardClick()
         }
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = colorScheme.primaryContainer,
-                modifier = Modifier.size(40.dp)
+        Column {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Outlined.Description,
-                        contentDescription = null,
-                        tint = colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = colorScheme.onSurface
-                )
-                
-                if (doc == null) {
-                    Text(
-                        text = "Not generated yet",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            val docStatus = doc?.status?.lowercase()
-            val isPending = docStatus == "pending"
-            val isRejected = docStatus == "rejected"
-            val showUpload = showUploadButton && (doc == null || isPending || isRejected)
-
-            if (showUpload) {
-                val buttonText = if (isPending) "Verify" else "Upload LR"
-                val handleButtonClick = if (isPending) { { onCardClick() } } else onUploadClick
-
-                Button(
-                    onClick = handleButtonClick,
-                    enabled = isUploadEnabled,
-                    shape = MaterialTheme.shapes.small,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = colorScheme.primaryContainer,
-                        contentColor = colorScheme.onPrimaryContainer,
-                        disabledContainerColor = colorScheme.primaryContainer.copy(alpha = 0.5f),
-                        disabledContentColor = colorScheme.onPrimaryContainer.copy(alpha = 0.5f)
-                    ),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    modifier = Modifier.height(36.dp)
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = colorScheme.primaryContainer,
+                    modifier = Modifier.size(40.dp)
                 ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Outlined.Description,
+                            contentDescription = null,
+                            tint = colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = buttonText,
-                        style = MaterialTheme.typography.labelLarge
+                        text = title,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = colorScheme.onSurface
+                    )
+                    if (doc == null && showEmptyStatus) {
+                        Text(
+                            text = stringResource(R.string.trip_document_not_generated),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                val docStatus = doc?.status?.lowercase()
+                val isPending = docStatus == "pending"
+                val isRejected = docStatus == "rejected"
+                val showUpload = showUploadButton && (doc == null || isPending || isRejected)
+
+                if (showUpload) {
+                    val buttonText = stringResource(
+                        if (isPending) R.string.trip_verify_document else R.string.trip_upload_lr
+                    )
+                    val handleButtonClick = if (isPending) { { onCardClick() } } else onUploadClick
+
+                    Button(
+                        onClick = handleButtonClick,
+                        enabled = isUploadEnabled,
+                        shape = MaterialTheme.shapes.small,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colorScheme.primaryContainer,
+                            contentColor = colorScheme.onPrimaryContainer,
+                            disabledContainerColor = colorScheme.primaryContainer.copy(alpha = 0.5f),
+                            disabledContentColor = colorScheme.onPrimaryContainer.copy(alpha = 0.5f)
+                        ),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        modifier = Modifier.height(36.dp)
+                    ) {
+                        Text(
+                            text = buttonText,
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                    }
+                } else if (doc != null) {
+                    StatusBadgeSmall(status = doc.status)
+                }
+            }
+            if (doc != null && onShareClick != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(onClick = onShareClick, enabled = isShareEnabled && !isPreparingShare) {
+                        if (isPreparingShare) {
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        } else {
+                            Icon(Icons.Outlined.Share, contentDescription = null, modifier = Modifier.size(18.dp))
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        Text(shareLabel ?: stringResource(R.string.trip_share_lr))
+                    }
+                }
+            }
+            if (uploadDisabledReason != null) {
+                Row(
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Info,
+                        contentDescription = null,
+                        tint = colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Text(
+                        text = uploadDisabledReason,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f)
                     )
                 }
-            } else if (doc != null) {
-                StatusBadgeSmall(status = doc.status)
             }
         }
     }
@@ -737,7 +993,8 @@ fun ChargesAndDeductionsContent(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         val luTotal = (financials.luCharges.loading.total + financials.luCharges.unloading.total).toDouble()
-        val haltingTotal = (financials.halting.loading.totalAmount + financials.halting.unloading.totalAmount)
+        val haltingTotal = (financials.halting.loading.totalAmount?.toDouble() ?: 0.0) +
+            (financials.halting.unloading.totalAmount?.toDouble() ?: 0.0)
         
         ChargesSubRow("Loading & Unloading", luTotal, onClick = {
             onLuClick(
@@ -752,8 +1009,8 @@ fun ChargesAndDeductionsContent(
         })
         ChargesSubRow("Halting", haltingTotal, onClick = onHaltingClick)
         val otherDeductionsNotes = financials.deductionRemarks
-        ChargesSubRow("Other Deductions", financials.otherDeductions, isDeduction = true, onClick = {
-            onOtherDeductionsClick(financials.otherDeductions, otherDeductionsNotes)
+        ChargesSubRow("Other Deductions", financials.otherDeductions?.toDouble() ?: 0.0, isDeduction = true, onClick = {
+            onOtherDeductionsClick(financials.otherDeductions?.toDouble() ?: 0.0, otherDeductionsNotes)
         })
     }
 }
@@ -813,7 +1070,10 @@ fun ChargesSubRow(
 }
 
 @Composable
-fun PaymentBreakdownContent(financials: TripDataResponse.FinanceDetails?) {
+fun PaymentBreakdownContent(
+    financials: TripDataResponse.FinanceDetails?,
+    onViewTransactions: () -> Unit
+) {
     if (financials == null) {
         Text("Financial data not available", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodySmall)
         return
@@ -828,9 +1088,9 @@ fun PaymentBreakdownContent(financials: TripDataResponse.FinanceDetails?) {
         // Halting Loading
         PaymentDetailRow(
             label = "Loading",
-            amount = financials.halting.loading.totalAmount,
+            amount = financials.halting.loading.totalAmount?.toDouble() ?: 0.0,
             isAddition = true,
-            detailText = "(${financials.halting.loading.days} Days x ₹${formatAmount(financials.halting.loading.perDayAmount.toString())})",
+            detailText = "(${financials.halting.loading.days} Days x ₹${formatAmount(financials.halting.loading.perDayAmount?.toPlainString() ?: "0")})",
             addHeader = true,
             headerName = "Halting Charges"
         )
@@ -838,9 +1098,9 @@ fun PaymentBreakdownContent(financials: TripDataResponse.FinanceDetails?) {
         // Halting Unloading
         PaymentDetailRow(
             label = "Unloading",
-            amount = financials.halting.unloading.totalAmount,
+            amount = financials.halting.unloading.totalAmount?.toDouble() ?: 0.0,
             isAddition = true,
-            detailText = "(${financials.halting.unloading.days} Days x ₹${formatAmount(financials.halting.unloading.perDayAmount.toString())})"
+            detailText = "(${financials.halting.unloading.days} Days x ₹${formatAmount(financials.halting.unloading.perDayAmount?.toPlainString() ?: "0")})"
         )
 
         // Loading Charges (from LU)
@@ -857,7 +1117,7 @@ fun PaymentBreakdownContent(financials: TripDataResponse.FinanceDetails?) {
             isAddition = true
         )
 
-        PaymentDetailRow("Other Deductions", financials.otherDeductions, isDeduction = true)
+        PaymentDetailRow("Other Deductions", financials.otherDeductions?.toDouble() ?: 0.0, isDeduction = true)
         PaymentDetailRow("Advance Paid", financials.advance.paidAmount)
         PaymentDetailRow("Platform Fee", financials.platformFee.amount, isDeduction = true)
         PaymentDetailRow("TDS", financials.tds.amount, isDeduction = true)
@@ -909,6 +1169,9 @@ fun PaymentBreakdownContent(financials: TripDataResponse.FinanceDetails?) {
                     style = MaterialTheme.typography.titleMedium
                 )
             }
+        }
+        TextButton(onClick = onViewTransactions, modifier = Modifier.align(Alignment.End)) {
+            Text(stringResource(R.string.trip_view_transactions))
         }
     }
 }

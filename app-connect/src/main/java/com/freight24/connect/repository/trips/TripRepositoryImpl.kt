@@ -11,6 +11,7 @@ import com.freight24.rest.request.UpdateTruckerStatus
 import com.freight24.rest.response.BaseResponse
 import com.freight24.rest.response.CreatedTripResponse
 import com.freight24.rest.response.MyTripsDataResponse
+import com.freight24.rest.response.PaymentTransaction
 import com.freight24.rest.response.SignedDocument
 import com.freight24.rest.response.TripDataResponse
 import com.freight24.rest.response.UpdateOtherDeductionsResponse
@@ -81,6 +82,24 @@ class TripRepositoryImpl @Inject constructor(
                 val response = api.getEmpTripDetails(tripId)
                 if (response.isSuccessful && response.body() != null) {
                     Result.success(response.body()!!.data)
+                } else {
+                    Result.failure(Exception(response.message()))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    override suspend fun getPaymentTransactions(
+        tripId: String,
+        userType: String
+    ): Result<List<PaymentTransaction>> =
+        withContext(ioDispatcher) {
+            try {
+                val response = api.getPaymentTransactions(tripId, userType)
+                val body = response.body()
+                if (response.isSuccessful && body != null) {
+                    Result.success(body.data)
                 } else {
                     Result.failure(Exception(response.message()))
                 }

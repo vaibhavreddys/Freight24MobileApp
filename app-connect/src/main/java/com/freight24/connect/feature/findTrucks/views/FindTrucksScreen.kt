@@ -6,6 +6,9 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,6 +26,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material.icons.outlined.Call
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
@@ -33,14 +37,17 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.freight24.connect.R
 import com.freight24.connect.feature.findTrucks.domain.viewmodel.FindTrucksEvent
 import com.freight24.connect.feature.findTrucks.domain.viewmodel.FindTrucksViewModel
 import com.freight24.connect.feature.findTrucks.domain.viewmodel.FindTrucksViewModelImpl
@@ -67,6 +74,12 @@ fun FindTrucksScreen(
     val colorScheme = MaterialTheme.colorScheme
     val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
+    var swapRotationTarget by remember { mutableFloatStateOf(0f) }
+    val swapRotation by animateFloatAsState(
+        targetValue = swapRotationTarget,
+        animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
+        label = "Location swap rotation"
+    )
 
     // Observe SavedStateHandle for location selections
     val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
@@ -122,7 +135,38 @@ fun FindTrucksScreen(
                         onClick = { onNavigateToSearch(SearchType.LOCATION_FROM.name) }
                     )
                     
-                    HorizontalDivider(color = colorScheme.outlineVariant)
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        contentAlignment = Alignment.CenterEnd
+                    ) {
+                        HorizontalDivider(color = colorScheme.outlineVariant)
+                        TooltipBox(
+                            positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                            tooltip = { PlainTooltip { Text(stringResource(R.string.find_trucks_swap_locations)) } },
+                            state = rememberTooltipState()
+                        ) {
+                            FilledIconButton(
+                                onClick = {
+                                    swapRotationTarget += 180f
+                                    viewModel.onEvent(FindTrucksEvent.SwapLocations)
+                                },
+                                enabled = !uiState.isSearching &&
+                                    (uiState.loadingLocation != null || uiState.unloadingLocation != null),
+                                modifier = Modifier.size(48.dp),
+                                shape = CircleShape,
+                                colors = IconButtonDefaults.filledIconButtonColors(
+                                    containerColor = colorScheme.onSurfaceVariant,
+                                    contentColor = colorScheme.surface
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.SwapVert,
+                                    contentDescription = stringResource(R.string.find_trucks_swap_locations),
+                                    modifier = Modifier.size(24.dp).rotate(swapRotation)
+                                )
+                            }
+                        }
+                    }
                     
                     LocationItem(
                         label = "Unloading Point",

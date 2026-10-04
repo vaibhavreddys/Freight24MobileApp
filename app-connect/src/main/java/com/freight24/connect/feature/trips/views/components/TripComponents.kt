@@ -18,12 +18,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.freight24.common.util.formatLoadWeight
 import com.freight24.connect.utils.toDate
+import com.freight24.connect.R
 import com.freight24.rest.response.TripDataResponse
 
 /**
@@ -149,14 +151,14 @@ fun TripCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "CLIENT COST",
+                        text = stringResource(R.string.client_cost).uppercase(),
                         style = MaterialTheme.typography.labelSmall,
                         color = colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     FinancialItem(
                         icon = Icons.Outlined.Payments,
-                        amount = trip.clientTripCost.orEmpty()
+                        amount = trip.clientTripCost?.toPlainString().orEmpty()
                     )
                 }
 
@@ -172,7 +174,7 @@ fun TripCard(
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(
-                        text = "NEGOTIATED",
+                        text = stringResource(R.string.trucker_cost).uppercase(),
                         style = MaterialTheme.typography.labelSmall,
                         color = colorScheme.onSurfaceVariant
                     )
@@ -201,11 +203,29 @@ fun TripCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = trip.client.label.uppercase(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = colorScheme.onSurfaceVariant
-                )
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = trip.client.label.uppercase(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    trip.client.tagCode?.takeIf { it.isNotBlank() }?.let { tagCode ->
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = tagCode.uppercase(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = colorScheme.primary,
+                            maxLines = 1
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = trip.createdAt.toDate(),
                     style = MaterialTheme.typography.labelSmall,
@@ -340,12 +360,18 @@ fun TripListItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "CLIENT  ₹${formatAmount(trip.clientTripCost.orEmpty())}",
+                text = stringResource(
+                    R.string.client_amount,
+                    formatAmount(trip.clientTripCost?.toPlainString().orEmpty())
+                ),
                 style = MaterialTheme.typography.labelMedium,
                 color = colorScheme.onPrimaryContainer
             )
             Text(
-                text = "NEGOTIATED  ₹${formatAmount(trip.truckerTripCost.orEmpty())}",
+                text = stringResource(
+                    R.string.trucker_amount,
+                    formatAmount(trip.truckerTripCost.orEmpty())
+                ),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
                 color = colorScheme.primary

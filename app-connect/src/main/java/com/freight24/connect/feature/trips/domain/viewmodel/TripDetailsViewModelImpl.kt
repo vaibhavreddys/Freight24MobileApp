@@ -9,8 +9,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.freight24.connect.feature.trips.domain.usecase.CancelTripUseCase
 import com.freight24.connect.feature.trips.domain.usecase.CancelTripUseCaseDataParams
+import com.freight24.connect.feature.trips.domain.usecase.GetPaymentTransactionsParams
+import com.freight24.connect.feature.trips.domain.usecase.GetPaymentTransactionsUseCase
 import com.freight24.connect.feature.trips.domain.usecase.TripDetailsUseCase
 import com.freight24.connect.feature.trips.domain.usecase.TripDetailsUseCaseDataParams
+import com.freight24.connect.feature.trips.domain.usecase.LoadTripDocumentFile
 import com.freight24.connect.feature.trips.domain.usecase.UpdateTruckerUseCase
 import com.freight24.connect.feature.trips.domain.usecase.UpdateTruckerUseCaseDataParams
 import com.freight24.connect.feature.trips.domain.usecase.UploadLrUseCase
@@ -22,6 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
@@ -32,7 +36,9 @@ internal class TripDetailsViewModelImpl @Inject constructor(
     private val updateTruckerUseCase: UpdateTruckerUseCase,
     private val uploadLrUseCase: UploadLrUseCase,
     private val cancelTripUseCase: CancelTripUseCase,
-    @ApplicationContext private val context: Context,
+    private val loadTripDocumentFile: LoadTripDocumentFile,
+    private val getPaymentTransactionsUseCase: GetPaymentTransactionsUseCase,
+    @param:ApplicationContext private val context: Context,
     savedStateHandle: SavedStateHandle
 ) : ViewModel(), TripDetailsViewModel {
 
@@ -40,6 +46,7 @@ internal class TripDetailsViewModelImpl @Inject constructor(
 
     private val _uiState = MutableStateFlow(TripDetailsUiState())
     override val uiState: StateFlow<TripDetailsUiState> = _uiState.asStateFlow()
+    private var paymentTransactionsJob: Job? = null
 
     init {
         loadTrip()
@@ -64,6 +71,10 @@ internal class TripDetailsViewModelImpl @Inject constructor(
                 uploadLR()
             }
             TripDetailsEvent.Refresh -> loadTrip()
+            is TripDetailsEvent.ShareDocument -> shareDocument(event.documentId)
+            TripDetailsEvent.DocumentShareHandled -> {
+                _uiState.update { it.copy(sharedDocumentFile = null, documentShareFailed = false, sharingDocumentId = null) }
+            }
             TripDetailsEvent.ShowCancelDialog -> {
                 val status = _uiState.value.trip?.truckerStatus?.uppercase() ?: ""
                 if (status == "ASSIGNED" || status == "LOADING") {
@@ -84,6 +95,68 @@ internal class TripDetailsViewModelImpl @Inject constructor(
             }
             is TripDetailsEvent.UpdateCancelReason -> {
                 _uiState.update { it.copy(cancelReason = event.reason) }
+            }
+            is TripDetailsEvent.ViewPaymentTransactions -> loadPaymentTransactions(event.userType)
+            TripDetailsEvent.RetryPaymentTransactions -> {
+                _uiState.value.transactionUserType?.let(::loadPaymentTransactions)
+            }
+            TripDetailsEvent.DismissPaymentTransactions -> {
+                paymentTransactionsJob?.cancel()
+                _uiState.update {
+                    it.copy(
+                        transactionUserType = null,
+                        transactions = emptyList(),
+                        isTransactionsLoading = false,
+                        transactionsError = null
+                    )
+                }
+            }
+        }
+    }
+
+    private fun loadPaymentTransactions(userType: String) {
+        paymentTransactionsJob?.cancel()
+        paymentTransactionsJob = viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    transactionUserType = userType,
+                    transactions = emptyList(),
+                    isTransactionsLoading = true,
+                    transactionsError = null
+                )
+            }
+            getPaymentTransactionsUseCase(GetPaymentTransactionsParams(tripId, userType)).fold(
+                onSuccess = { transactions ->
+                    _uiState.update {
+                        it.copy(transactions = transactions, isTransactionsLoading = false)
+                    }
+                },
+                onFailure = { error ->
+                    _uiState.update {
+                        it.copy(
+                            isTransactionsLoading = false,
+                            transactionsError = error.message ?: "Unable to load transactions"
+                        )
+                    }
+                }
+            )
+        }
+    }
+
+    private fun shareDocument(documentId: String) {
+        if (_uiState.value.sharingDocumentId != null) return
+        val document = _uiState.value.trip?.documents
+            ?.firstOrNull { it.id == documentId } ?: return
+        _uiState.update {
+            it.copy(sharingDocumentId = document.id, sharedDocumentType = document.type, documentShareFailed = false)
+        }
+        viewModelScope.launch {
+            val result = loadTripDocumentFile(tripId, document.id)
+            _uiState.update {
+                it.copy(
+                    sharedDocumentFile = result.getOrNull(),
+                    documentShareFailed = result.isFailure
+                )
             }
         }
     }

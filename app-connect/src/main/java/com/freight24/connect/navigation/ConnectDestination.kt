@@ -222,21 +222,24 @@ sealed class ConnectDestination(val route: String) {
         fun createRoute(tripId: String) = "edit_trip/$tripId"
     }
 
-    data object PdfViewer : ConnectDestination("pdf_viewer/{tripId}/{documentId}?status={status}&localPath={localPath}") {
+    data object PdfViewer : ConnectDestination("pdf_viewer/{tripId}/{documentId}?status={status}&localPath={localPath}&documentType={documentType}") {
         const val TRIP_ID_ARG = "tripId"
         const val DOCUMENT_ID_ARG = "documentId"
         const val STATUS_ARG = "status"
         const val LOCAL_PATH_ARG = "localPath"
+        const val DOCUMENT_TYPE_ARG = "documentType"
         override val arguments = listOf(
             navArgument(TRIP_ID_ARG) { type = NavType.StringType },
             navArgument(DOCUMENT_ID_ARG) { type = NavType.StringType },
             navArgument(STATUS_ARG) { type = NavType.StringType; nullable = true; defaultValue = null },
-            navArgument(LOCAL_PATH_ARG) { type = NavType.StringType; nullable = true; defaultValue = null }
+            navArgument(LOCAL_PATH_ARG) { type = NavType.StringType; nullable = true; defaultValue = null },
+            navArgument(DOCUMENT_TYPE_ARG) { type = NavType.StringType; defaultValue = "lr" }
         )
-        fun createRoute(tripId: String, documentId: String, status: String? = null, localPath: String? = null) = 
+        fun createRoute(tripId: String, documentId: String, status: String? = null, localPath: String? = null, documentType: String = "lr") =
             "pdf_viewer/$tripId/$documentId" + 
             "?status=${status ?: ""}" + 
-            "&localPath=${localPath ?: ""}"
+            "&localPath=${localPath ?: ""}" +
+            "&documentType=${android.net.Uri.encode(documentType)}"
     }
 
     data object CommonPdfViewer : ConnectDestination("common_pdf_viewer?title={title}&url={url}&localPath={localPath}") {

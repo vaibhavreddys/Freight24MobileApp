@@ -1,5 +1,8 @@
+@file:kotlinx.serialization.UseSerializers(com.freight24.rest.serialization.BigDecimalSerializer::class)
+
 package com.freight24.rest.response
 
+import java.math.BigDecimal
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -15,17 +18,19 @@ data class TripDataResponse(
     val indentGroupId: String,
     val status: String,
     val truckerStatus: String,
-    val clientTripCost: String?,
+    val clientTripCost: BigDecimal? = null,
     val truckerTripCost: String?,
     val truckerNetAmount: String?,
     val indentDetails: IndentDetails,
     val client: Client,
+    val trucker: Trucker? = null,
     val truck: Truck,
     val loadingLocation: Location,
     val unLoadingLocation: Location,
     val financials: FinanceDetails? = null,
     val documents: List<Document>? = null,
     @SerialName("timeline") val timelines: List<Timeline>? = null,
+    val clientPaymentBreakdown: ClientPaymentBreakdown? = null,
 ) {
 
     @Serializable
@@ -48,6 +53,34 @@ data class TripDataResponse(
         val id: String,
         val name: String? = null,
         val companyName: String? = null,
+        val displayName: String? = null,
+        val tagCode: String? = null,
+        val contacts: Contacts? = null,
+    )
+
+    @Serializable
+    data class Trucker(
+        val id: String? = null,
+        val name: String? = null,
+        val phone: String? = null,
+        val tagCode: String? = null,
+    )
+
+    @Serializable
+    data class Contacts(
+        val placement: Contact? = null,
+        val pod: Contact? = null,
+        val payment: Contact? = null,
+        val operations: Contact? = null,
+    )
+
+    @Serializable
+    data class Contact(
+        val id: String? = null,
+        val contactId: String? = null,
+        val name: String? = null,
+        val phone: String? = null,
+        val email: String? = null,
     )
 
     @Serializable
@@ -77,7 +110,7 @@ data class TripDataResponse(
     data class FinanceDetails(
         val netPayable: Double,
         val clientTripCost: Double,
-        val otherDeductions: Double,
+        val otherDeductions: BigDecimal? = null,
         val deductionRemarks: String? = null,
         val truckerTripCost: Double,
         val totalPaidAmount: Double,
@@ -87,6 +120,8 @@ data class TripDataResponse(
         val halting: Halting,
         val platformFee: PlatformFee,
         val luCharges: LuCharges,
+        val disputeResolved: Boolean = false,
+        val disputeResolutionAmount: BigDecimal? = null,
     )
 
     @Serializable
@@ -119,8 +154,8 @@ data class TripDataResponse(
     @Serializable
     data class HaltingCharges(
         val days: Int,
-        val totalAmount: Double,
-        val perDayAmount: Double,
+        val totalAmount: BigDecimal? = null,
+        val perDayAmount: BigDecimal? = null,
         val notes: String? = null,
     )
 
@@ -140,7 +175,7 @@ data class TripDataResponse(
     data class Charges(
         val id: String? = null,
         val total: Int,
-        val reimbursable: Double,
+        val reimbursable: BigDecimal? = null,
         val includedInTripCost: Boolean = false,
         val slipUrl: String? = null,
         val notes: String? = null,

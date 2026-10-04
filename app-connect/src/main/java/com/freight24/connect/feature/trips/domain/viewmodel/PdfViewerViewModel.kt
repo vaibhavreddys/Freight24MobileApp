@@ -1,25 +1,20 @@
 package com.freight24.connect.feature.trips.domain.viewmodel
 
-import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.freight24.connect.feature.trips.domain.usecase.SignedDocumentUseCase
-import com.freight24.connect.feature.trips.domain.usecase.SignedDocumentUseCaseDataParams
+import com.freight24.connect.feature.trips.domain.usecase.LoadTripDocumentFile
+import com.freight24.connect.feature.trips.domain.usecase.TripDetailsUseCase
+import com.freight24.connect.feature.trips.domain.usecase.TripDetailsUseCaseDataParams
 import com.freight24.connect.feature.trips.domain.usecase.VerifyLrUseCase
 import com.freight24.connect.feature.trips.domain.usecase.VerifyLrUseCaseDataParams
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.File
-import java.io.FileOutputStream
-import java.net.HttpURLConnection
-import java.net.URL
 import javax.inject.Inject
 
 data class PdfViewerUiState(
@@ -33,7 +28,10 @@ data class PdfViewerUiState(
     val showApproveDialog: Boolean = false,
     val showRejectDialog: Boolean = false,
     val remarksInput: String = "",
-    val shouldNavigateBack: Boolean = false
+    val shouldNavigateBack: Boolean = false,
+    val clientName: String? = null,
+    val isLoadingClient: Boolean = true,
+    val documentType: String = "lr"
 )
 
 sealed class PdfViewerEvent {
@@ -48,9 +46,9 @@ sealed class PdfViewerEvent {
 
 @HiltViewModel
 internal class PdfViewerViewModel @Inject constructor(
-    private val signedDocumentUseCase: SignedDocumentUseCase,
+    private val loadTripDocumentFile: LoadTripDocumentFile,
     private val verifyLrUseCase: VerifyLrUseCase,
-    @param:ApplicationContext private val context: Context,
+    private val tripDetailsUseCase: TripDetailsUseCase,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -59,10 +57,14 @@ internal class PdfViewerViewModel @Inject constructor(
     private val initialStatus: String? = savedStateHandle["status"]
     private val localPath: String? = savedStateHandle["localPath"]
 
-    private val _uiState = MutableStateFlow(PdfViewerUiState(documentStatus = initialStatus))
+    private val _uiState = MutableStateFlow(PdfViewerUiState(
+        documentStatus = initialStatus,
+        documentType = savedStateHandle.get<String>("documentType") ?: "lr"
+    ))
     val uiState: StateFlow<PdfViewerUiState> = _uiState.asStateFlow()
 
     init {
+        loadClient()
         if (!localPath.isNullOrBlank() && localPath != "null") {
             val file = File(localPath)
             if (file.exists()) {
@@ -77,59 +79,45 @@ internal class PdfViewerViewModel @Inject constructor(
 
     fun onEvent(event: PdfViewerEvent) {
         when (event) {
-            PdfViewerEvent.LoadPdf -> loadPdf()
-            PdfViewerEvent.ShowApproveDialog -> _uiState.update { it.copy(showApproveDialog = true, remarksInput = "") }
-            PdfViewerEvent.ShowRejectDialog -> _uiState.update { it.copy(showRejectDialog = true, remarksInput = "") }
+            PdfViewerEvent.LoadPdf -> {
+                loadClient()
+                loadPdf()
+            }
+            PdfViewerEvent.ShowApproveDialog -> if (isLrDocument) _uiState.update { it.copy(showApproveDialog = true, remarksInput = "") }
+            PdfViewerEvent.ShowRejectDialog -> if (isLrDocument) _uiState.update { it.copy(showRejectDialog = true, remarksInput = "") }
             PdfViewerEvent.DismissDialog -> _uiState.update { it.copy(showApproveDialog = false, showRejectDialog = false, remarksInput = "") }
             is PdfViewerEvent.UpdateRemarks -> _uiState.update { it.copy(remarksInput = event.remarks) }
-            PdfViewerEvent.ApproveLr -> approveLr()
-            PdfViewerEvent.RejectLr -> rejectLr()
+            PdfViewerEvent.ApproveLr -> if (isLrDocument) approveLr()
+            PdfViewerEvent.RejectLr -> if (isLrDocument) rejectLr()
+        }
+    }
+
+    private val isLrDocument: Boolean
+        get() = _uiState.value.documentType.equals("lr", ignoreCase = true)
+
+    private fun loadClient() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingClient = true) }
+            val result = tripDetailsUseCase(TripDetailsUseCaseDataParams(tripId))
+            val client = result.getOrNull()?.client
+            val clientName = sequenceOf(client?.displayName, client?.companyName, client?.name)
+                .mapNotNull { it?.trim()?.takeIf(String::isNotEmpty) }
+                .firstOrNull()
+            _uiState.update { it.copy(clientName = clientName, isLoadingClient = false) }
         }
     }
 
     private fun loadPdf() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            val result = signedDocumentUseCase(
-                SignedDocumentUseCaseDataParams(tripId = tripId, documentId = documentId)
-            )
-            result.fold(
-                onSuccess = { signedDoc ->
-                    downloadPdf(signedDoc.data.signedUrl)
+            loadTripDocumentFile(tripId, documentId).fold(
+                onSuccess = { file ->
+                    _uiState.update { it.copy(isLoading = false, pdfFile = file) }
                 },
                 onFailure = { error ->
                     _uiState.update { it.copy(isLoading = false, errorMessage = error.message ?: "Failed to load document") }
                 }
             )
-        }
-    }
-    
-    private fun downloadPdf(url: String) {
-        viewModelScope.launch {
-            try {
-                withContext(kotlinx.coroutines.Dispatchers.IO) {
-                    val connection = URL(url).openConnection() as HttpURLConnection
-                    connection.connect()
-                    
-                    if (connection.responseCode != HttpURLConnection.HTTP_OK) {
-                        throw Exception("Server returned HTTP ${connection.responseCode} ${connection.responseMessage}")
-                    }
-                    
-                    val inputStream = connection.inputStream
-                    val file = File(context.cacheDir, "temp_pdf_${System.currentTimeMillis()}.pdf")
-                    val outputStream = FileOutputStream(file)
-                    
-                    inputStream.use { input ->
-                        outputStream.use { output ->
-                            input.copyTo(output)
-                        }
-                    }
-                    
-                    _uiState.update { it.copy(isLoading = false, pdfFile = file) }
-                }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, errorMessage = "Failed to download PDF: ${e.message}") }
-            }
         }
     }
 
