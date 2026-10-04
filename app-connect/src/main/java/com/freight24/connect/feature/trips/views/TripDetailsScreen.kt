@@ -644,13 +644,17 @@ fun StatusBadgeSmall(status: String) {
         "rejected" -> MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.error
         else -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
     }
+    val label = when (status.lowercase()) {
+        "pending" -> "In Review"
+        else -> status.replaceFirstChar { it.uppercase() }
+    }
 
     Surface(
         color = color,
         shape = MaterialTheme.shapes.small
     ) {
         Text(
-            text = status.replaceFirstChar { it.uppercase() },
+            text = label,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, color = ticketColor)
         )
