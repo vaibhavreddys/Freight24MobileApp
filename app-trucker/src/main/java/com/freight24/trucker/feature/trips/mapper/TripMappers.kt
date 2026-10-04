@@ -14,8 +14,10 @@ import com.freight24.common.model.TripDetail
 import com.freight24.common.model.TripDocument
 import com.freight24.common.model.TripFinancials
 import com.freight24.common.model.TripLocation
+import com.freight24.common.model.TruckerPayment
 import com.freight24.common.util.DateTimeUtils
 import com.freight24.common.util.NameFormatter
+import com.freight24.database.entity.TripEntity
 import com.freight24.rest.response.AdvanceBlockDto
 import com.freight24.rest.response.BalanceBlockDto
 import com.freight24.rest.response.FeeBlockDto
@@ -30,6 +32,7 @@ import com.freight24.rest.response.TripDocumentDto
 import com.freight24.rest.response.TripDto
 import com.freight24.rest.response.TripFinancialsDto
 import com.freight24.rest.response.TripLocationDto
+import com.freight24.rest.response.TruckerPaymentDto
 
 fun TripDto.toDomain(): Trip {
     return Trip(
@@ -45,9 +48,45 @@ fun TripDto.toDomain(): Trip {
     )
 }
 
+fun TripDto.toEntity(ownerId: String): TripEntity =
+    TripEntity(
+        id = id,
+        ownerId = ownerId,
+        registrationNumber = registration_number,
+        truckType = NameFormatter.shortenTruckName(truck_type),
+        status = trucker_status,
+        createdAt = DateTimeUtils.formatRelativeTime(created_at),
+        tripCost = trucker_trip_cost,
+        totalPaidAmount = trucker_paid_amount,
+        origin = origin.toDisplayString(),
+        destination = destination.toDisplayString(),
+    )
+
+fun TripEntity.toDomain(): Trip =
+    Trip(
+        id = id,
+        registrationNumber = registrationNumber,
+        truckType = truckType,
+        status = status,
+        createdAt = createdAt,
+        tripCost = tripCost,
+        totalPaidAmount = totalPaidAmount,
+        origin = origin,
+        destination = destination,
+    )
+
+/**
+ * The loading memo is an office document — it is raised by freight ops against
+ * the consignment, never by the driver. Truck owners have nothing to do with
+ * it, so it is dropped here rather than filtered in the view: the "n lodged"
+ * count and the rows it counts then agree.
+ */
+private val HIDDEN_TRUCKER_DOC_TYPES = setOf("loading_memo")
+
 fun TripDetailDto.toDomain(): TripDetail {
     val mappedFinancials = financials?.toDomain()
     val latestDocuments = trip_documents
+        .filterNot { it.document_type.lowercase() in HIDDEN_TRUCKER_DOC_TYPES }
         .groupBy { it.document_type }
         .map { (_, docs) -> docs.maxByOrNull { it.uploaded_at ?: "" }!! }
         .map { it.toDomain() }
@@ -66,8 +105,18 @@ fun TripDetailDto.toDomain(): TripDetail {
         tripDocuments = latestDocuments,
         financials = mappedFinancials,
         truckerStatus = trucker_status,
+        truckerPayments = trucker_payments.map { it.toDomain() },
     )
 }
+
+fun TruckerPaymentDto.toDomain(): TruckerPayment =
+    TruckerPayment(
+        type = payment_type.orEmpty(),
+        amount = amount,
+        method = payment_method,
+        utrNumber = payment_reference?.takeIf { it.isNotBlank() },
+        paidOn = payment_date,
+    )
 
 fun TripFinancialsDto.toDomain(): TripFinancials {
     return TripFinancials(

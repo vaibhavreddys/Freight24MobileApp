@@ -11,22 +11,21 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TripDao {
-    @Query("SELECT * FROM trips ORDER BY createdAt DESC")
-    fun observeTrips(): Flow<List<TripEntity>>
+    @Query("SELECT * FROM trips WHERE ownerId = :ownerId ORDER BY createdAt DESC")
+    fun observeTrips(ownerId: String): Flow<List<TripEntity>>
 
-    @Query("SELECT * FROM trips WHERE page = :page ORDER BY createdAt DESC")
-    suspend fun getTripsByPage(page: Int): List<TripEntity>
-
-    @Query("SELECT * FROM trips ORDER BY createdAt DESC")
-    suspend fun getAllTrips(): List<TripEntity>
-
+    /**
+     * Page 1 is the driver's whole manifest, so it replaces the owner's cached
+     * rows; later pages append.
+     */
     @Transaction
     suspend fun refreshTrips(
+        ownerId: String,
         page: Int,
         trips: List<TripEntity>,
     ) {
         if (page == 1) {
-            clearTrips()
+            clearTrips(ownerId)
         }
         insertTrips(trips)
     }
@@ -34,8 +33,8 @@ interface TripDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTrips(trips: List<TripEntity>)
 
-    @Query("DELETE FROM trips")
-    suspend fun clearTrips()
+    @Query("DELETE FROM trips WHERE ownerId = :ownerId")
+    suspend fun clearTrips(ownerId: String)
 
     @Query("SELECT * FROM trips_pagination LIMIT 1")
     suspend fun getPagination(): TripsPaginationEntity?

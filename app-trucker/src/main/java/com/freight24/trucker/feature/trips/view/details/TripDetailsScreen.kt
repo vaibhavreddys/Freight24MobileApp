@@ -45,6 +45,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -70,6 +71,7 @@ import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.freight24.common.model.TripDetail
 import com.freight24.common.model.TripFinancials
+import com.freight24.common.model.TruckerPayment
 import com.freight24.common.util.DateTimeUtils
 import com.freight24.ui.UiState
 import com.freight24.ui.components.FileConfirmationSheet
@@ -139,6 +141,7 @@ internal fun TripDetailsScreen(
     val isPdf by viewModel.isPdf.collectAsState()
     val isUploading by viewModel.isUploading.collectAsState()
     val uploadStatus by viewModel.uploadStatus.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
     val context = LocalContext.current
 
     var showSourcePicker by rememberSaveable { mutableStateOf(false) }
@@ -402,58 +405,66 @@ internal fun TripDetailsScreen(
             }
         },
     ) { paddingValues ->
-        Box(
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = viewModel::onRefresh,
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
-                    .background(colors.canvas),
+                    .padding(paddingValues),
         ) {
-            when (val state = uiState) {
-                is UiState.Loading -> {
-                    CircularProgressIndicator(
-                        color = colors.brand,
-                        modifier = Modifier.align(Alignment.Center),
-                    )
-                }
-                is UiState.Error -> {
-                    Box(
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .padding(horizontal = 16.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            FleetEmptyState(
-                                title = "Could not load this trip",
-                                subtitle = state.message,
-                                colors = colors,
-                                shape = RigShape.OPEN,
-                            )
-                            TruckerPrimaryButton(
-                                text = "Retry",
-                                enabled = true,
-                                colors = colors,
-                                onClick = { viewModel.retry() },
-                            )
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .background(colors.canvas),
+            ) {
+                when (val state = uiState) {
+                    is UiState.Loading -> {
+                        CircularProgressIndicator(
+                            color = colors.brand,
+                            modifier = Modifier.align(Alignment.Center),
+                        )
+                    }
+                    is UiState.Error -> {
+                        Box(
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 16.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                FleetEmptyState(
+                                    title = "Could not load this trip",
+                                    subtitle = state.message,
+                                    colors = colors,
+                                    shape = RigShape.OPEN,
+                                )
+                                TruckerPrimaryButton(
+                                    text = "Retry",
+                                    enabled = true,
+                                    colors = colors,
+                                    onClick = { viewModel.retry() },
+                                )
+                            }
                         }
                     }
+                    is UiState.Success -> {
+                        TripDossier(
+                            trip = state.data,
+                            uploadStatus = uploadStatus,
+                            colors = colors,
+                            onUploadClick = { showSourcePicker = true },
+                            onViewClick = { documentId ->
+                                viewModel.fetchSignedUrl(documentId) { url ->
+                                    context.startActivity(getPdfLaunchIntent(url, context))
+                                }
+                            },
+                        )
+                    }
+                    UiState.Idle -> Unit
                 }
-                is UiState.Success -> {
-                    TripDossier(
-                        trip = state.data,
-                        uploadStatus = uploadStatus,
-                        colors = colors,
-                        onUploadClick = { showSourcePicker = true },
-                        onViewClick = { documentId ->
-                            viewModel.fetchSignedUrl(documentId) { url ->
-                                context.startActivity(getPdfLaunchIntent(url, context))
-                            }
-                        },
-                    )
-                }
-                UiState.Idle -> Unit
             }
         }
     }
@@ -524,6 +535,7 @@ internal fun TripDossier(
 
         FreightBillSection(
             financials = trip.financials,
+            payments = trip.truckerPayments,
             colors = colors,
         )
 
@@ -748,6 +760,7 @@ private fun DocumentsSection(
 @Composable
 private fun FreightBillSection(
     financials: TripFinancials?,
+    payments: List<TruckerPayment>,
     colors: TruckerColors,
 ) {
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -898,40 +911,35 @@ private fun FreightBillSection(
             FleetRule(colors = colors)
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Payments made — advances and part-payments live here, not in
-            // deductions. A trip can settle in parts, so this section grows
-            // while deductions stay fixed.
+            // Payments made — one row per transfer, so the driver can match an
+            // amount to the UTR on their own bank statement. Aggregates that
+            // hide which payment carried which reference are useless for that.
             BillGroupLabel(text = "Payments Made", colors = colors)
             Spacer(modifier = Modifier.height(10.dp))
-            val otherPayments = (financials.totalPaidAmount - financials.advance.paidAmount).coerceAtLeast(0.0)
-            if (financials.advance.paidAmount > 0) {
-                LedgerRow(
-                    label = "Advance",
-                    amount = inr(financials.advance.paidAmount),
-                    colors = colors,
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-            if (otherPayments > 0) {
-                LedgerRow(
-                    label = "Other payments",
-                    amount = inr(otherPayments),
-                    colors = colors,
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-            if (financials.totalPaidAmount > 0) {
-                LedgerRow(
-                    label = "Paid so far",
-                    amount = inr(financials.totalPaidAmount),
-                    colors = colors,
-                    emphasis = true,
-                )
-            } else if (financials.advance.paidAmount <= 0) {
+            if (payments.isEmpty()) {
                 Text(
                     text = "No payments made yet.",
                     style = TruckerType.body,
                     color = colors.inkMuted,
+                )
+            } else {
+                payments.forEachIndexed { index, payment ->
+                    LedgerRow(
+                        label = paymentTitle(payment),
+                        amount = inr(payment.amount),
+                        colors = colors,
+                        detail = paymentDetail(payment),
+                    )
+                    if (index != payments.lastIndex) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                LedgerRow(
+                    label = "Paid so far",
+                    amount = inr(payments.sumOf { it.amount }),
+                    colors = colors,
+                    emphasis = true,
                 )
             }
 
@@ -990,6 +998,27 @@ private fun FreightBillSection(
             }
         }
     }
+}
+
+/** "Advance" / "Balance" — the leg the payment settled. */
+private fun paymentTitle(payment: TruckerPayment): String =
+    when (payment.type.lowercase()) {
+        "advance_to_trucker" -> "Advance"
+        "balance_to_trucker" -> "Balance"
+        else -> "Payment"
+    }
+
+/**
+ * UTR first — it is the number the driver reconciles against. The method and
+ * date are supporting context, so they only appear when finance recorded them.
+ */
+private fun paymentDetail(payment: TruckerPayment): String? {
+    val utr = payment.utrNumber?.let { "UTR $it" }
+    val context = listOfNotNull(
+        payment.method?.replace('_', ' ')?.replaceFirstChar { it.uppercase() },
+        payment.paidOn?.takeIf { it.isNotBlank() }?.let { DateTimeUtils.formatRelativeTime(it) },
+    ).joinToString(" · ")
+    return listOfNotNull(utr, context.takeIf { it.isNotBlank() }).joinToString(" · ").takeIf { it.isNotBlank() }
 }
 
 /** Small caps group label used inside the bill card. */

@@ -23,6 +23,21 @@ data class TripDetailDto(
     val status_events: List<StatusEventDto> = emptyList(),
     val trip_documents: List<TripDocumentDto> = emptyList(),
     val financials: TripFinancialsDto? = null,
+    val trucker_payments: List<TruckerPaymentDto> = emptyList(),
+)
+
+/**
+ * One payment made to the trucker. [payment_reference] is the UTR the bank
+ * returned — it is how the driver ties an amount to their own statement.
+ */
+@Serializable
+data class TruckerPaymentDto(
+    val payment_type: String? = null,
+    val amount: Double = 0.0,
+    val payment_method: String? = null,
+    val payment_reference: String? = null,
+    val payment_date: String? = null,
+    val payment_status: String? = null,
 )
 
 @Serializable

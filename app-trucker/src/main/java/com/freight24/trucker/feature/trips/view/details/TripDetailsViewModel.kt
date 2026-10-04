@@ -65,6 +65,9 @@ internal class TripDetailsViewModel
         private val _errorEvent = MutableSharedFlow<String>()
         val errorEvent: SharedFlow<String> = _errorEvent.asSharedFlow()
 
+        private val _isRefreshing = MutableStateFlow(false)
+        val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
         private var cachedTripDetail: TripDetail? = null
 
         init {
@@ -73,26 +76,47 @@ internal class TripDetailsViewModel
 
         private fun fetchTripDetail(forceRefresh: Boolean = false) {
             viewModelScope.launch(Dispatchers.IO) {
-                if (cachedTripDetail == null) {
-                    _uiState.value = UiState.Loading
-                }
-
-                fetchTripDetailUseCase(FetchTripDetailParams(tripId, forceRefresh))
-                    .onSuccess { tripDetail: TripDetail ->
-                        cachedTripDetail = tripDetail
-                        _uiState.value = UiState.Success(tripDetail)
-                    }
-                    .onFailure { error: Throwable ->
-                        val message = toDisplayMessage(error, "Failed to load trip details")
-                        _errorEvent.emit(message)
-                        cachedTripDetail?.let { _uiState.value = UiState.Success(it) }
-                            ?: run { _uiState.value = UiState.Error("Unable to load trip details") }
-                    }
+                loadTripDetail(forceRefresh)
             }
+        }
+
+        /** Suspends until the fetch settles, so callers can hold a spinner over it. */
+        private suspend fun loadTripDetail(forceRefresh: Boolean) {
+            if (cachedTripDetail == null) {
+                _uiState.value = UiState.Loading
+            }
+
+            fetchTripDetailUseCase(FetchTripDetailParams(tripId, forceRefresh))
+                .onSuccess { tripDetail: TripDetail ->
+                    cachedTripDetail = tripDetail
+                    _uiState.value = UiState.Success(tripDetail)
+                }
+                .onFailure { error: Throwable ->
+                    val message = toDisplayMessage(error, "Failed to load trip details")
+                    _errorEvent.emit(message)
+                    cachedTripDetail?.let { _uiState.value = UiState.Success(it) }
+                        ?: run { _uiState.value = UiState.Error("Unable to load trip details") }
+                }
         }
 
         fun retry() {
             fetchTripDetail(forceRefresh = true)
+        }
+
+        /**
+         * Pull-to-refresh. The dossier already on screen stays put — the spinner
+         * replaces it only when this fetch fails and there is nothing cached to
+         * fall back to.
+         */
+        fun onRefresh() {
+            viewModelScope.launch(Dispatchers.IO) {
+                _isRefreshing.value = true
+                try {
+                    loadTripDetail(forceRefresh = true)
+                } finally {
+                    _isRefreshing.value = false
+                }
+            }
         }
 
         fun updateTripStatus(status: String) {

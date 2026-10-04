@@ -1,15 +1,19 @@
 package com.freight24.trucker.feature.trips.domain.usecase
 
 import com.freight24.common.model.PaginatedTrips
+import com.freight24.common.model.Trip
 import com.freight24.trucker.feature.trips.data.repository.TripRepository
 import com.freight24.trucker.feature.trips.mapper.toDomain
 import javax.inject.Inject
+import kotlinx.coroutines.flow.Flow
 
 internal class FetchTripsUseCaseImpl
     @Inject
     constructor(
         private val repository: TripRepository,
     ) : FetchTripsUseCase {
+        override fun observeTrips(): Flow<List<Trip>> = repository.observeCachedTrips()
+
         override suspend fun invoke(params: FetchTripsUseCaseParams): Result<PaginatedTrips> {
             return repository.fetchTrips(params.page).mapCatching { response ->
                 PaginatedTrips(

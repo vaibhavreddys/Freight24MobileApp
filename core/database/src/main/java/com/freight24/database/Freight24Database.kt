@@ -26,7 +26,7 @@ import com.freight24.database.entity.TripsPaginationEntity
         LeadCityEntity::class,
         CachedEmployeeProfileEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = false,
 )
 abstract class Freight24Database : RoomDatabase() {

@@ -27,6 +27,19 @@ data class TripDetail(
     val tripDocuments: List<TripDocument>,
     val financials: TripFinancials? = null,
     val truckerStatus: String? = null,
+    val truckerPayments: List<TruckerPayment> = emptyList(),
+)
+
+/**
+ * A payment made to the driver. [utrNumber] is finance's payment reference —
+ * the bank UTR for a transfer, the cheque/UPI id otherwise.
+ */
+data class TruckerPayment(
+    val type: String,
+    val amount: Double,
+    val method: String?,
+    val utrNumber: String?,
+    val paidOn: String?,
 )
 
 data class TripFinancials(

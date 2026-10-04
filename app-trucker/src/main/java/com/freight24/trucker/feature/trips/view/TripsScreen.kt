@@ -76,29 +76,34 @@ fun TripsScreen(
                 onFilterSelected = { viewModel.onFilterSelected(it) },
             )
 
-            if (trips.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    if (isInitialLoading) {
-                        CircularProgressIndicator(color = colors.brand)
-                    } else {
-                        FleetEmptyState(
-                            title = emptyTitleFor(selectedFilter),
-                            subtitle = "Trips assigned to you will show up here",
-                            colors = colors,
-                            shape = RigShape.TRAILER,
-                        )
+            // The list is always the scroll container — including when it holds
+            // nothing. Pull-to-refresh rides on nested scroll, so an empty tab
+            // still has to be a scrollable surface or the gesture is dead.
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(top = 2.dp, bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(0.dp),
+            ) {
+                if (trips.isEmpty()) {
+                    item(key = "empty") {
+                        Box(
+                            modifier = Modifier.fillParentMaxHeight(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            if (isInitialLoading) {
+                                CircularProgressIndicator(color = colors.brand)
+                            } else {
+                                FleetEmptyState(
+                                    title = emptyTitleFor(selectedFilter),
+                                    subtitle = "Trips assigned to you will show up here",
+                                    colors = colors,
+                                    shape = RigShape.TRAILER,
+                                )
+                            }
+                        }
                     }
-                }
-            } else {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(top = 2.dp, bottom = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(0.dp),
-                ) {
+                } else {
                     items(
                         items = trips,
                         key = { it.id },
