@@ -20,8 +20,13 @@ data class IndentInterestInboxResponse(
 
     @Serializable
     data class LoadDetails(
+       // `load_weight` is DECIMAL(10,2) and the cost columns are numeric on
+       // the backend, so these arrive as JSON numbers. They were typed as
+       // String here, which only parsed because the shared Json instance runs
+       // isLenient = true — and it cost us Indian digit grouping, since
+       // "₹$clientCost" renders 40000 rather than ₹40,000.
        val material: String,
-       val weight: String,
+       val weight: Double? = null,
        val indentCode: String,
        val truck: TruckDetails,
        val pricing: Pricing,
@@ -34,9 +39,9 @@ data class IndentInterestInboxResponse(
 
     @Serializable
     data class Pricing(
-        val clientCost: String?,
-        val businessProposedCost: String?,
-        val negotiatedCost: String?
+        val clientCost: Double? = null,
+        val businessProposedCost: Double? = null,
+        val negotiatedCost: Double? = null
     )
 
     @Serializable

@@ -70,12 +70,19 @@ fun ConnectIndentCard(
     truckDisplay: String,
     weightDisplay: String,
     materialDisplay: String,
-    showAdmin: Boolean,
-    adminName: String?,
+    showAdmin: Boolean = false,
+    adminName: String? = null,
     onClick: () -> Unit,
-    onCloneClick: () -> Unit,
+    onCloneClick: () -> Unit = {},
     modifier: Modifier = Modifier,
     onCallClick: (() -> Unit)? = null,
+    /**
+     * Optional detachable footer, rendered below the cargo row behind its own
+     * [PerforationRule]. The Interest Inbox uses this to hang its expandable
+     * trucker list off the docket, so both screens share one card rather than
+     * the inbox growing a second, divergent card of its own.
+     */
+    footer: (@Composable () -> Unit)? = null,
 ) {
     val scheme = MaterialTheme.colorScheme
 
@@ -231,6 +238,16 @@ fun ConnectIndentCard(
                     }
                 }
             }
+        }
+
+        // --- Caller-supplied footer ----------------------------------------
+        // Same tear-line treatment as the admin footer above, so a card that
+        // grows a footer still reads as one detachable docket.
+        footer?.let {
+            Spacer(Modifier.height(9.dp))
+            PerforationRule()
+            Spacer(Modifier.height(7.dp))
+            it()
         }
     }
 }
