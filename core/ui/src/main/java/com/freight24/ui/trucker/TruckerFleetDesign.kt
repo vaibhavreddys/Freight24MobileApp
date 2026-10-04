@@ -434,6 +434,40 @@ fun FleetRule(
     )
 }
 
+/**
+ * A quiet inline chip for supporting detail inside a row — the settlement rail
+ * a payment travelled by, a document's state when a stamp would be too loud.
+ *
+ * Distinct from [StampSeal], which is an outline and tilted because it marks a
+ * *document*. This is a fill: it qualifies a number the driver is already
+ * looking at, so it stays low-contrast and never competes for the line.
+ */
+@Composable
+fun FleetChip(
+    text: String,
+    colors: TruckerColors,
+    modifier: Modifier = Modifier,
+    tone: FleetTone = FleetTone.BRAND,
+) {
+    val color = tone.color(colors)
+    Box(
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(6.dp))
+                .background(color.copy(alpha = 0.12f))
+                .border(width = 1.dp, color = color.copy(alpha = 0.42f), shape = RoundedCornerShape(6.dp))
+                .padding(horizontal = 8.dp, vertical = 3.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = text,
+            style = TruckerType.caption,
+            color = color,
+            maxLines = 1,
+        )
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Stage rail — the trip's progress along the siding
 // ---------------------------------------------------------------------------

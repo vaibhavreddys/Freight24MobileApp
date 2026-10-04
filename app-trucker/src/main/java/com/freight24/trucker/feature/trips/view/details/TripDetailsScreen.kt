@@ -82,6 +82,7 @@ import com.freight24.ui.components.tripStageTone
 import com.freight24.ui.trucker.DocWalletRow
 import com.freight24.ui.trucker.FleetCardShape
 import com.freight24.ui.trucker.FleetCellShape
+import com.freight24.ui.trucker.FleetChip
 import com.freight24.ui.trucker.FleetEmptyState
 import com.freight24.ui.trucker.FleetNotice
 import com.freight24.ui.trucker.FleetRule
@@ -904,15 +905,10 @@ private fun SimpleBill(
     BillGroupLabel(text = "Advance Payments", colors = colors)
     Spacer(modifier = Modifier.height(10.dp))
     advances.forEachIndexed { index, payment ->
-        LedgerRow(
-            label = paymentTitle(payment),
-            amount = inr(payment.amount),
-            colors = colors,
-            detail = paymentDetail(payment),
-        )
-        if (index != advances.lastIndex) {
-            Spacer(modifier = Modifier.height(12.dp))
+        if (index != 0) {
+            Spacer(modifier = Modifier.height(10.dp))
         }
+        PaymentCell(payment = payment, colors = colors)
     }
     if (advances.size > 1) {
         Spacer(modifier = Modifier.height(12.dp))
@@ -1055,9 +1051,10 @@ private fun DetailedBill(
     FleetRule(colors = colors)
     Spacer(modifier = Modifier.height(16.dp))
 
-    // Payments made — one row per transfer, so the driver can match an
-    // amount to the UTR on their own bank statement. Aggregates that
-    // hide which payment carried which reference are useless for that.
+    // Payments made. Each transfer gets its own tinted cell rather than a bare
+    // ledger line: the UTR and the settlement rail are what the driver
+    // reconciles against, and a trip can settle across several payments.
+    // Stacked as plain rows the reference was unreadable at arm's length.
     BillGroupLabel(text = "Payments Made", colors = colors)
     Spacer(modifier = Modifier.height(10.dp))
     if (payments.isEmpty()) {
@@ -1068,15 +1065,10 @@ private fun DetailedBill(
         )
     } else {
         payments.forEachIndexed { index, payment ->
-            LedgerRow(
-                label = paymentTitle(payment),
-                amount = inr(payment.amount),
-                colors = colors,
-                detail = paymentDetail(payment),
-            )
-            if (index != payments.lastIndex) {
-                Spacer(modifier = Modifier.height(12.dp))
+            if (index != 0) {
+                Spacer(modifier = Modifier.height(10.dp))
             }
+            PaymentCell(payment = payment, colors = colors)
         }
         Spacer(modifier = Modifier.height(12.dp))
         LedgerRow(
@@ -1142,6 +1134,84 @@ private fun DetailedBill(
     }
 }
 
+/**
+ * One transfer, as its own cell: what it settled, how it moved, and the UTR
+ * that ties it to the driver's bank statement.
+ *
+ * The amount leads because it is the figure being checked. The UTR sits below it
+ * in the body-strong face with tabular figures — a reference number is read
+ * character by character to compare against a bank statement, not skimmed, so
+ * it must not be set in the muted face the surrounding metadata uses.
+ *
+ * A payment with nothing but an amount renders as a single ledger line: the
+ * rules and metadata rows collapse rather than leaving empty scaffolding.
+ */
+@Composable
+private fun PaymentCell(
+    payment: TruckerPayment,
+    colors: TruckerColors,
+) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(FleetTone.BRAND.wash(colors), FleetCellShape)
+                .padding(horizontal = 14.dp, vertical = 13.dp),
+    ) {
+        LedgerRow(
+            label = paymentTitle(payment),
+            amount = inr(payment.amount),
+            colors = colors,
+        )
+
+        val utr = payment.utrNumber
+        val method = payment.method?.takeIf { it.isNotBlank() }?.let(::paymentMethodLabel)
+        // Only claim a timestamp when there is one — "Paid on --" is worse than
+        // leaving the line out entirely.
+        val paidOn = payment.paidOn?.let(DateTimeUtils::formatPaymentTimestamp)?.takeIf { it != "--" }
+
+        if (utr != null) {
+            Spacer(modifier = Modifier.height(11.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "UTR",
+                    style = TruckerType.caption.copy(letterSpacing = 1.2.sp),
+                    color = colors.inkMuted,
+                )
+                Spacer(modifier = Modifier.width(9.dp))
+                Text(
+                    text = utr,
+                    style = TruckerType.bodyStrong.copy(fontFeatureSettings = "tnum"),
+                    color = colors.ink,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+
+        if (method != null || paidOn != null) {
+            Spacer(modifier = Modifier.height(9.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (method != null) {
+                    FleetChip(text = method, colors = colors)
+                }
+                if (method != null && paidOn != null) {
+                    Spacer(modifier = Modifier.width(10.dp))
+                }
+                if (paidOn != null) {
+                    Text(
+                        text = paidOn,
+                        style = TruckerType.caption,
+                        color = colors.inkMuted,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+        }
+    }
+}
+
 /** "Advance" / "Balance" — the leg the payment settled. */
 private fun paymentTitle(payment: TruckerPayment): String =
     when (payment.type.lowercase()) {
@@ -1151,17 +1221,15 @@ private fun paymentTitle(payment: TruckerPayment): String =
     }
 
 /**
- * UTR first — it is the number the driver reconciles against. The method and
- * date are supporting context, so they only appear when finance recorded them.
+ * The wire sends snake_case rails (`bank_transfer`, `upi`). Spelled out for the
+ * driver — "Bank transfer" is the wording a bank statement itself uses. UPI is
+ * an acronym and stays capitalised.
  */
-private fun paymentDetail(payment: TruckerPayment): String? {
-    val utr = payment.utrNumber?.let { "UTR $it" }
-    val context = listOfNotNull(
-        payment.method?.replace('_', ' ')?.replaceFirstChar { it.uppercase() },
-        payment.paidOn?.takeIf { it.isNotBlank() }?.let { DateTimeUtils.formatRelativeTime(it) },
-    ).joinToString(" · ")
-    return listOfNotNull(utr, context.takeIf { it.isNotBlank() }).joinToString(" · ").takeIf { it.isNotBlank() }
-}
+private fun paymentMethodLabel(method: String): String =
+    when (method.lowercase()) {
+        "upi" -> "UPI"
+        else -> method.replace('_', ' ').replaceFirstChar { it.uppercase() }
+    }
 
 /** Small caps group label used inside the bill card. */
 @Composable
