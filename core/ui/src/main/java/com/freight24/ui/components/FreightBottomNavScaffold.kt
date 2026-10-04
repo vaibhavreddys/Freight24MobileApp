@@ -20,6 +20,12 @@ fun <T : NavTabItem> FreightBottomNavScaffold(
     modifier: Modifier = Modifier,
     topBar: @Composable (() -> Unit)? = null,
     floatingActionButton: @Composable (() -> Unit)? = null,
+    /**
+     * When false the bar stays visible but inert. Used while a screen is in a
+     * destructive mode (e.g. profile edit) where navigating away would
+     * silently discard work.
+     */
+    bottomBarEnabled: Boolean = true,
     content: @Composable (PaddingValues, T) -> Unit,
 ) {
     Scaffold(
@@ -32,6 +38,7 @@ fun <T : NavTabItem> FreightBottomNavScaffold(
                 items = items,
                 selectedItem = selectedItem,
                 onItemSelected = onItemSelected,
+                enabled = bottomBarEnabled,
             )
         },
         floatingActionButton = {

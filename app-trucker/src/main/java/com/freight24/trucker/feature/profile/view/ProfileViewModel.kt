@@ -85,6 +85,22 @@ internal data class DisplayRoute(
     val isStaged: Boolean,
 )
 
+/**
+ * Document-completion summary derived on the client from upload state.
+ *
+ * A document counts as [uploaded] once it has either a server-side file or a
+ * freshly staged temporary upload — the latter so the meter responds the
+ * moment a user picks a file, before they hit Save.
+ */
+internal data class ProfileCompletion(
+    val uploaded: Int,
+    val total: Int,
+) {
+    val missing: Int get() = (total - uploaded).coerceAtLeast(0)
+    val isComplete: Boolean get() = total > 0 && missing == 0
+    val percent: Int get() = if (total <= 0) 0 else (uploaded * 100) / total
+}
+
 @OptIn(FlowPreview::class)
 @HiltViewModel
 internal class ProfileViewModel
@@ -209,17 +225,29 @@ internal class ProfileViewModel
         private val _documentStates = MutableStateFlow<Map<String, DocumentUploadState>>(emptyMap())
         val documentStates: StateFlow<Map<String, DocumentUploadState>> = _documentStates.asStateFlow()
 
+        /**
+         * Document types this partner must provide, TDS already filtered out
+         * when it does not apply. Drives both the visible list and the
+         * completion denominator.
+         */
+        private val _documentTypes = MutableStateFlow<List<DocumentType>>(emptyList())
+        val documentTypes: StateFlow<List<DocumentType>> = _documentTypes.asStateFlow()
+
+        private val _completion = MutableStateFlow(ProfileCompletion(uploaded = 0, total = 0))
+        val completion: StateFlow<ProfileCompletion> = _completion.asStateFlow()
+
         private val _hasChanges = MutableStateFlow(false)
         val hasChanges: StateFlow<Boolean> = _hasChanges.asStateFlow()
+
+        /** How many edits are staged. Drives the action bar's status line. */
+        private val _changeCount = MutableStateFlow(0)
+        val changeCount: StateFlow<Int> = _changeCount.asStateFlow()
 
         private val _hasPendingTemporaryUploads = MutableStateFlow(false)
         val hasPendingTemporaryUploads: StateFlow<Boolean> = _hasPendingTemporaryUploads.asStateFlow()
 
         private val _isSaving = MutableStateFlow(false)
         val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
-
-        private val _errorEvent = MutableSharedFlow<String>()
-        val errorEvent = _errorEvent.asSharedFlow()
 
         private val _panDuplicateError = MutableStateFlow<String?>(null)
         val panDuplicateError: StateFlow<String?> = _panDuplicateError.asStateFlow()
@@ -286,7 +314,10 @@ internal class ProfileViewModel
             val previous = _documentStates.value
             val docsByType = profile.documents.associateBy { it.type }
 
-            _documentStates.value = ProfileDocumentTypeIds.editableDocumentTypes.associate { type ->
+            val requiredTypes = ProfileDocumentTypeIds.requiredDocumentTypes(profile.isTdsApplicable)
+            _documentTypes.value = requiredTypes
+
+            val nextStates = requiredTypes.associate { type ->
                 val fieldKey = ProfileDocumentTypeIds.fieldKey(type)
                 val existing = docsByType[type]
                 val oldState = previous[fieldKey]
@@ -306,8 +337,11 @@ internal class ProfileViewModel
                     },
                 )
             }
+            // Drop state for types that are no longer applicable (e.g. TDS was
+            // switched off server-side) so they cannot be finalised by accident.
+            _documentStates.value = nextStates
 
-            _hasPendingTemporaryUploads.value = hasTemporaryUploads()
+            recomputeDocumentDerivedState()
         }
 
         private fun populateBaseCity(profile: Profile) {
@@ -587,7 +621,6 @@ internal class ProfileViewModel
                         val profileSaveResult = updateProfileUseCase.invoke(UpdateProfileParams(targetUserId, request))
                         if (profileSaveResult.isFailure) {
                             val message = profileSaveResult.exceptionOrNull()?.message ?: "Failed to save profile"
-                            _errorEvent.emit(message)
                             _saveEvent.emit(Result.failure(IllegalStateException(message)))
                             return@launch
                         }
@@ -610,8 +643,9 @@ internal class ProfileViewModel
                     recomputeHasChanges()
                     _saveEvent.emit(Result.success(Unit))
                 } catch (e: Exception) {
-                    val message = e.message ?: "Save failed"
-                    _errorEvent.emit(message)
+                    // _saveEvent is the single failure channel the screen collects;
+                    // an earlier parallel _errorEvent flow was emitted here but never
+                    // collected, so these messages were silently dropped.
                     _saveEvent.emit(Result.failure(e))
                 } finally {
                     _isSaving.value = false
@@ -756,43 +790,77 @@ internal class ProfileViewModel
                 val current = this[fieldKey] ?: return@apply
                 this[fieldKey] = transformer(current)
             }
-            _hasPendingTemporaryUploads.value = hasTemporaryUploads()
+            recomputeDocumentDerivedState()
         }
 
         private fun clearTemporaryFileKeys() {
             _documentStates.value = _documentStates.value.mapValues { (_, state) ->
                 state.copy(temporaryFileKey = null, uploadStatus = UploadStatus.IDLE)
             }
-            _hasPendingTemporaryUploads.value = false
+            recomputeDocumentDerivedState()
+        }
+
+        /**
+         * Single writer for the two values derived from document state.
+         * [recomputeHasChanges] also touches them; routing both through here
+         * stops the two call sites drifting apart.
+         */
+        private fun recomputeDocumentDerivedState() {
+            _hasPendingTemporaryUploads.value = hasTemporaryUploads()
+            _completion.value = ProfileCompletion(
+                uploaded =
+                    _documentStates.value.values.count { state ->
+                        !state.existingFileUrl.isNullOrBlank() || !state.temporaryFileKey.isNullOrBlank()
+                    },
+                total = _documentTypes.value.size,
+            )
         }
 
         private fun recomputeHasChanges() {
             val original = originalProfile
-            val textChanged = if (original == null) false else hasProfileFieldChanges(original)
-
-            val hasTemporaryUploads = hasTemporaryUploads()
-            val routeChanges = hasRouteChanges()
-            _hasPendingTemporaryUploads.value = hasTemporaryUploads
-            _hasChanges.value = textChanged || hasTemporaryUploads || routeChanges
+            val count = if (original == null) 0 else countChanges(original)
+            recomputeDocumentDerivedState()
+            _changeCount.value = count
+            _hasChanges.value = count > 0
         }
 
-        private fun hasProfileFieldChanges(original: Profile): Boolean {
-            return editableFullName.value != original.fullName.orEmpty() ||
-                editableEmailId.value != original.emailId.orEmpty() ||
-                editablePhoneNo.value != original.phoneNo.orEmpty() ||
-                editableAadhaarNumber.value != original.aadhaarNumber.orEmpty() ||
-                editablePanNumber.value != original.panNumber.orEmpty() ||
-                editableAlternativePhone.value != original.alternativePhoneNo.firstOrNull().orEmpty() ||
-                editableBusinessName.value != original.businessName.orEmpty() ||
-                editableGstNumber.value != original.gstNumber.orEmpty() ||
-                editableAccountHolderName.value != original.bankAccountDetails?.accountHolderName.orEmpty() ||
-                editableAccountNumber.value != original.bankAccountDetails?.accountNumber.orEmpty() ||
-                editableIfscCode.value != original.bankAccountDetails?.ifscCode.orEmpty() ||
-                editableUpiId.value != original.bankAccountDetails?.upiId.orEmpty() ||
-                editableBankName.value != original.bankAccountDetails?.bankName.orEmpty() ||
-                editableBranchName.value != original.bankAccountDetails?.branchName.orEmpty() ||
-                _baseCity.value?.id != original.baseCityId
+        /**
+         * Total number of pending edits, so the action bar can say *how many*
+         * things Save will write rather than just enabling the button.
+         */
+        private fun countChanges(original: Profile): Int =
+            countProfileFieldChanges(original) +
+                stagedDocumentCount() +
+                _routesToAdd.value.size +
+                _routeIdsToDelete.value.size
+
+        private fun countProfileFieldChanges(original: Profile): Int {
+            val bank = original.bankAccountDetails
+            val editedVsStored =
+                listOf(
+                    editableFullName.value to original.fullName.orEmpty(),
+                    editableEmailId.value to original.emailId.orEmpty(),
+                    editablePhoneNo.value to original.phoneNo.orEmpty(),
+                    editableAadhaarNumber.value to original.aadhaarNumber.orEmpty(),
+                    editablePanNumber.value to original.panNumber.orEmpty(),
+                    editableAlternativePhone.value to original.alternativePhoneNo.firstOrNull().orEmpty(),
+                    editableBusinessName.value to original.businessName.orEmpty(),
+                    editableGstNumber.value to original.gstNumber.orEmpty(),
+                    editableAccountHolderName.value to bank?.accountHolderName.orEmpty(),
+                    editableAccountNumber.value to bank?.accountNumber.orEmpty(),
+                    editableIfscCode.value to bank?.ifscCode.orEmpty(),
+                    editableUpiId.value to bank?.upiId.orEmpty(),
+                    editableBankName.value to bank?.bankName.orEmpty(),
+                    editableBranchName.value to bank?.branchName.orEmpty(),
+                )
+            return editedVsStored.count { (edited, stored) -> edited != stored } +
+                if (_baseCity.value?.id != original.baseCityId) 1 else 0
         }
+
+        private fun hasProfileFieldChanges(original: Profile): Boolean = countProfileFieldChanges(original) > 0
+
+        private fun stagedDocumentCount(): Int =
+            _documentStates.value.values.count { !it.temporaryFileKey.isNullOrBlank() }
 
         private fun hasTemporaryUploads(): Boolean {
             return _documentStates.value.values.any { !it.temporaryFileKey.isNullOrBlank() }
@@ -831,9 +899,4 @@ internal class ProfileViewModel
                 "Medium" -> 2
                 else -> 3
             }
-
-        private fun Throwable?.isRouteNotFound(): Boolean {
-            val http = this as? com.freight24.network.error.NetworkException.HttpException ?: return false
-            return http.code == 404 && http.errorBody?.contains("Route not found", ignoreCase = true) == true
-        }
     }

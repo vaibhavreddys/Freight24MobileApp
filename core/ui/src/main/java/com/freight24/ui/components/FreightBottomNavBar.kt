@@ -21,6 +21,7 @@ fun <T : NavTabItem> FreightBottomNavBar(
     selectedItem: T,
     onItemSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     val haptic = LocalHapticFeedback.current
 
@@ -35,8 +36,17 @@ fun <T : NavTabItem> FreightBottomNavBar(
         items.forEach { item ->
             val selected = item.id == selectedItem.id
 
+            // The active item wears the PRIMARY container, not secondary.
+            // Secondary is the brand's brick-red accent in the Logistics
+            // palette, which rendered the selected tab as a pink lozenge on a
+            // forest-green bar. Primary/onPrimaryContainer keeps the selection
+            // indicator on-brand in every palette.
+            val disabledAlpha = 0.38f
+            val muted = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = disabledAlpha)
+
             NavigationBarItem(
                 selected = selected,
+                enabled = enabled,
                 onClick = {
                     onItemSelected(item)
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -60,17 +70,30 @@ fun <T : NavTabItem> FreightBottomNavBar(
                         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                     )
                 },
-                // M3 spec mapping: the active item uses a soft secondary
-                // container wash with the matching on-container icon and
-                // on-surface label — softer than a full primary block and
-                // reads as the "active" affordance without dominating.
                 colors =
                     NavigationBarItemDefaults.colors(
-                        selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                        selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                        selectedIconColor =
+                            if (enabled) {
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            } else {
+                                muted
+                            },
+                        selectedTextColor =
+                            if (enabled) {
+                                MaterialTheme.colorScheme.onSurface
+                            } else {
+                                muted
+                            },
                         unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
+                        indicatorColor =
+                            if (enabled) {
+                                MaterialTheme.colorScheme.primaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)
+                            },
+                        disabledIconColor = muted,
+                        disabledTextColor = muted,
                     ),
             )
         }

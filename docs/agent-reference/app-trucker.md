@@ -115,7 +115,7 @@ The `Main` route renders a `FreightBottomNavScaffold` with `TruckerTab.entries` 
   - `Cancel` button at `bounds=[242,1964][356,2017]` in edit mode.
   - `LOGOUT` button is a `View` at the bottom; tapping it calls `ProfileViewModel.requestLogout()` which opens a confirmation `ModalBottomSheet`. The sheet has two actions: `logout_confirm` (Logout) calls `viewModel.logout()` → `SessionManager.logout()`; `logout_cancel` (Stay Logged In) calls `viewModel.dismissLogoutSheet()`.
   - `App Settings` row opens `TruckerDestination.Settings.route`.
-- **Source:** `app-trucker/.../feature/profile/view/ProfileScreen.kt` (~1400 lines, the biggest file in the module), `ProfileViewModel.kt`, `AppSettingsViewModel.kt`. Sections use `core/ui/components/ProfileUtilityRow.kt`, `PODAddressCard.kt`, `AccountStatusCard.kt`.
+- **Source:** `app-trucker/.../feature/profile/view/` — split across `ProfileScreen.kt` (orchestration, upload/sheet wiring), `ProfileSection.kt` (collapsible section + field row), `ProfileField.kt` (field row + `ValidationType`), `ProfileDocuments.kt` (document evidence tray + banner/badge), `ProfileIdentity.kt` (identity header + completion meter), `ProfileStatus.kt` (`StatusTone`/`DocumentTone`/`SectionBadge` + `StatusChip`), plus `ProfileViewModel.kt` and `AppSettingsViewModel.kt`. Uses `core/ui/components/ProfileUtilityRow.kt` and `AccountStatusCard.kt`.
 - **API:** `GET /api/v1/truck-owners/profile` (per `TruckOwnerApi.kt`); PATCH calls go to `/api/v1/truck-owners/:id`.
 
 ---

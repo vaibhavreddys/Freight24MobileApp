@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Debug builds only — shadows src/main/res/xml/network_security_config.xml.
+
+    Allow cleartext to any host so the app reaches local dev backends at
+    whatever LAN IP local.properties currently has (it changes whenever the
+    network changes), plus localhost and 10.0.2.2 (emulator host loopback).
+    Release builds keep the strict main config: HTTPS only.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

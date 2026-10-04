@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,12 +40,21 @@ fun TruckerHomeScreen(navController: NavHostController) {
     val profileViewModel: ProfileViewModel = hiltViewModel()
     val isProfileEditing by profileViewModel.isEditing.collectAsState()
 
-    // 👇 HOIST SCROLL STATE
+    // HOIST SCROLL STATE
     val loadBoardListState = rememberLazyListState()
     val tripsListState = rememberLazyListState()
 
+    val isProfileTab = selectedTab == TruckerTab.Profile
 
-    BackHandler(selectedTab != TruckerTab.Loads) {
+    // Single back handler, priority-ordered. Editing is a destructive mode, so
+    // back cancels the edit rather than falling through to the tab switch that
+    // would silently discard staged uploads. Two separate BackHandlers would
+    // both be enabled on the Profile tab while editing and rely on
+    // last-registered-wins, which is too implicit to rely on.
+    BackHandler(enabled = isProfileTab && isProfileEditing) {
+        profileViewModel.cancelEdit()
+    }
+    BackHandler(enabled = selectedTab != TruckerTab.Loads) {
         selectedTab = TruckerTab.Loads
     }
 
@@ -52,17 +62,25 @@ fun TruckerHomeScreen(navController: NavHostController) {
         items = TruckerTab.entries,
         selectedItem = selectedTab,
         onItemSelected = { selectedTab = it },
+        bottomBarEnabled = !(isProfileTab && isProfileEditing),
         topBar = {
             AppTopBar(
-                title = getFormattedTabName(selectedTab.id),
+                // The title is the primary edit-mode signal now that the pencil
+                // becomes a close affordance.
+                title = if (isProfileTab && isProfileEditing) "Edit profile" else getFormattedTabName(selectedTab.id),
                 showSearch = selectedTab.id == "loads",
                 onSearchClick = {
                     // TODO: trigger search
                 },
-                trailingActionIcon = if (selectedTab == TruckerTab.Profile && !isProfileEditing) Icons.Default.Edit else null,
-                trailingActionContentDescription = "Edit profile",
+                trailingActionIcon =
+                    when {
+                        !isProfileTab -> null
+                        isProfileEditing -> Icons.Default.Close
+                        else -> Icons.Default.Edit
+                    },
+                trailingActionContentDescription = if (isProfileEditing) "Close edit profile" else "Edit profile",
                 onTrailingActionClick = {
-                    if (selectedTab == TruckerTab.Profile) {
+                    if (isProfileTab) {
                         profileViewModel.toggleEditMode()
                     }
                 },

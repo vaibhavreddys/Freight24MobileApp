@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    Default (release) policy: HTTPS only — cleartext HTTP is blocked everywhere.
+
+    Debug builds replace this file with src/debug/res/xml/network_security_config.xml
+    so they can talk to local dev backends (LAN IPs change with the network, e.g.
+    http://192.168.x.x:3000 from local.properties, plus 10.0.2.2 on the emulator).
+    This config cannot express IP ranges/CIDRs like 192.168.*.*, so debug allows
+    cleartext broadly instead of enumerating hosts.
+-->
 <network-security-config>
-    <!-- Configure cleartext rules for specific domains -->
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">localhost</domain>
-        <domain includeSubdomains="true">192.168.1.33</domain> <!-- Android Emulator Localhost IP -->
-        <domain includeSubdomains="true">://domain.com</domain>
-    </domain-config>
+    <base-config cleartextTrafficPermitted="false" />
 </network-security-config>

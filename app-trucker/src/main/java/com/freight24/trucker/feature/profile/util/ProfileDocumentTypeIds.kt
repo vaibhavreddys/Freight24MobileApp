@@ -14,7 +14,12 @@ object ProfileDocumentTypeIds {
     const val TDS_CERTIFICATE = 8
     const val CANCELLED_CHEQUE = 9
 
-    val editableDocumentTypes: List<DocumentType> = listOf(
+    /**
+     * Every document type the Profile screen surfaces, before applicability
+     * filtering. TDS is gated separately because the backend tells us whether
+     * the partner is actually subject to TDS.
+     */
+    private val allDocumentTypes: List<DocumentType> = listOf(
         DocumentType.AADHAAR,
         DocumentType.PAN,
         DocumentType.GST_CERTIFICATE,
@@ -22,6 +27,15 @@ object ProfileDocumentTypeIds {
         DocumentType.TDS_CERTIFICATE,
         DocumentType.CANCELLED_CHEQUE,
     )
+
+    /**
+     * The documents this partner is actually expected to provide.
+     *
+     * TDS is omitted when [isTdsApplicable] is false so we never ask for — or
+     * let them upload — a certificate that does not apply to them.
+     */
+    fun requiredDocumentTypes(isTdsApplicable: Boolean): List<DocumentType> =
+        allDocumentTypes.filterNot { it == DocumentType.TDS_CERTIFICATE && !isTdsApplicable }
 
     fun documentTypeId(type: DocumentType): Int? = when (type) {
         DocumentType.AADHAAR -> AADHAAR
