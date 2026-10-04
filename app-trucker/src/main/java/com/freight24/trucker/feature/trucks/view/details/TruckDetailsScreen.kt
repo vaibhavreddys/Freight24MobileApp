@@ -595,7 +595,7 @@ private fun TruckDocumentRow(
             status == "REJECTED" ->
                 Triple("Rejected", FleetTone.ERROR, "Rejected. Upload a fresh copy.")
             status == "PENDING" ->
-                Triple("Pending", FleetTone.ACCENT, "Lodged. Waiting on verification.")
+                Triple("In Review", FleetTone.ACCENT, "Lodged. Waiting on verification.")
             else ->
                 Triple("Lodged", FleetTone.MUTED, "On file.")
         }

@@ -677,7 +677,7 @@ private fun DocumentsSection(
                                     ?.takeIf { it.isNotBlank() && it != "--" }
                             Triple("Verified", FleetTone.BRAND, stampedAt?.let { "Verified · $it" } ?: "")
                         }
-                        "pending" -> Triple("Pending", FleetTone.ACCENT, "Lodged. Waiting on verification.")
+                        "pending" -> Triple("In Review", FleetTone.ACCENT, "Lodged. Waiting on verification.")
                         "rejected" -> {
                             val remarks = doc.verificationRemarks?.takeIf { it.isNotBlank() }
                             Triple("Rejected", FleetTone.ERROR, remarks ?: "Rejected. Upload a fresh copy.")
