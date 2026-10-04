@@ -3,6 +3,7 @@ import com.freight24.ui.components.FreightTopAppBar
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -18,7 +19,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -28,6 +33,11 @@ import com.freight24.connect.feature.trucks.domain.viewmodel.AssignTruckViewMode
 import com.freight24.connect.feature.trucks.enums.TruckStatus
 import com.freight24.ui.theme.FreightThemeTokens
 import com.freight24.rest.response.SearchTruckResponse
+
+// Indian vehicle registration number (e.g. KA01AB1234): 2 state letters, 2 district
+// digits, up to 3 series letters, 1-4 number digits. The optional groups also accept
+// partial queries like "KA", "KA01" or "KA01AB" while the user is still typing.
+private val VEHICLE_NO_REGEX = Regex("^(?:[A-Z]{2}\\d{2}[A-Z]{0,2}\\d{1,4}|\\d{2}BH\\d{4}[A-Z]{1,2})$")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,10 +72,18 @@ fun AssignTruckScreen(
             // Search Bar
             OutlinedTextField(
                 value = uiState.query,
-                onValueChange = { viewModel.onEvent(AssignTruckEvent.UpdateQuery(it)) },
+                onValueChange = { query ->
+                    val filtered = query.uppercase().filter { it.isLetterOrDigit() }.take(11)
+                    if (VEHICLE_NO_REGEX.matches(filtered)) {
+                        viewModel.onEvent(AssignTruckEvent.UpdateQuery(filtered))
+                    }
+                },
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(colorScheme.surface, MaterialTheme.shapes.medium),
+                    .background(colorScheme.surface, MaterialTheme.shapes.medium)
+                    .testTag("assign_truck_search_input")
+                    .semantics { testTagsAsResourceId = true },
                 placeholder = { 
                     Text(
                         "Enter vehicle no. (e.g. KA01AB1234)",
