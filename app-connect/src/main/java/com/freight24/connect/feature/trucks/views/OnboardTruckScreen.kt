@@ -98,6 +98,7 @@ import com.freight24.ui.UiState
 import com.freight24.ui.components.AppDropdown
 import com.freight24.ui.components.DashedUploadCard
 import com.freight24.ui.theme.FreightThemeTokens
+import com.freight24.ui.components.formViewportInsets
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -222,7 +223,8 @@ fun OnboardTruckScreen(
                 }
             },
         ) { paddingValues ->
-            Box(modifier = Modifier.padding(paddingValues)) {
+            // Keyboard-aware viewport; see FormInsets.kt.
+            Box(modifier = Modifier.formViewportInsets(paddingValues)) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     StepIndicator(currentStep)
 

@@ -56,6 +56,7 @@ import com.freight24.connect.feature.indents.domain.viewmodel.IndentContactRole
 import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.components.MetaTag
 import com.freight24.ui.components.PerforationRule
+import com.freight24.ui.components.formViewportInsets
 import kotlinx.coroutines.launch
 
 // ===========================================================================
@@ -308,7 +309,9 @@ private fun EditSlip(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(paddingValues)
+            // Keyboard-aware viewport: without this the scroll bounds run behind the keyboard
+            // and bring-into-view leaves the focused field hidden. See FormInsets.kt.
+            .formViewportInsets(paddingValues)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp)
             .padding(top = 8.dp, bottom = 8.dp),

@@ -28,6 +28,7 @@ import com.freight24.connect.feature.indents.domain.viewmodel.CloneIndentEvent
 import com.freight24.connect.feature.indents.domain.viewmodel.CloneIndentUiState
 import com.freight24.connect.feature.indents.domain.viewmodel.CloneIndentViewModel
 import com.freight24.connect.feature.indents.domain.viewmodel.CloneIndentViewModelImpl
+import com.freight24.ui.components.formViewportInsets
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -109,7 +110,9 @@ fun CloneIndentContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(paddingValues)
+            // Keyboard-aware viewport: without this the scroll bounds run behind the keyboard
+            // and bring-into-view leaves the focused field hidden. See FormInsets.kt.
+            .formViewportInsets(paddingValues)
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),

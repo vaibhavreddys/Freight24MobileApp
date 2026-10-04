@@ -111,6 +111,7 @@ import com.freight24.ui.components.AddRouteBottomSheet
 import com.freight24.ui.components.CitySearchField
 import com.freight24.ui.components.RouteChip
 import com.freight24.ui.theme.FreightThemeTokens
+import com.freight24.ui.components.formViewportInsets
 
 
 private enum class InputValidationType {
@@ -221,7 +222,9 @@ fun OnboardTruckOwnerScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                // Keyboard-aware viewport: without this the scroll bounds run behind the
+                // keyboard and bring-into-view leaves the focused field hidden. See FormInsets.kt.
+                .formViewportInsets(paddingValues)
         ) {
             Column(
                 modifier = Modifier

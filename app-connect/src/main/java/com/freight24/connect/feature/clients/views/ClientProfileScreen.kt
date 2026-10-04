@@ -72,6 +72,7 @@ import com.freight24.rest.response.ClientDocumentDto
 import com.freight24.ui.UiState
 import com.freight24.ui.components.DashedUploadCard
 import com.freight24.ui.theme.FreightThemeTokens
+import com.freight24.ui.components.formViewportInsets
 import java.io.File
 import android.Manifest
 import android.content.pm.PackageManager
@@ -162,7 +163,9 @@ fun ClientProfileScreen(
             onRefresh = viewModel::onRefresh,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
+                // Keyboard-aware viewport: without this the scroll bounds run behind the
+                // keyboard and bring-into-view leaves the focused field hidden. See FormInsets.kt.
+                .formViewportInsets(paddingValues),
         ) {
             if (showCancelConfirmDialog) {
                 AlertDialog(

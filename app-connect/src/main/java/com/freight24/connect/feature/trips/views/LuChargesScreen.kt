@@ -48,6 +48,7 @@ import com.freight24.connect.feature.trips.domain.viewmodel.LuDocType
 import com.freight24.ui.components.FileConfirmationSheet
 import com.freight24.ui.components.FileSourcePickerSheet
 import com.freight24.ui.theme.FreightThemeTokens
+import com.freight24.ui.components.formViewportInsets
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -234,7 +235,9 @@ fun LuChargesScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                // Keyboard-aware viewport: without this the scroll bounds run behind the
+                // keyboard and bring-into-view leaves the focused field hidden. See FormInsets.kt.
+                .formViewportInsets(padding)
                 .verticalScroll(scrollState)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)

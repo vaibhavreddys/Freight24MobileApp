@@ -121,6 +121,7 @@ import com.freight24.ui.components.SpineWidth
 import com.freight24.ui.components.TagShape
 import com.freight24.ui.components.getPdfLaunchIntent
 import com.freight24.ui.theme.FreightThemeTokens
+import com.freight24.ui.components.formViewportInsets
 import java.text.DateFormat
 import java.time.OffsetDateTime
 import java.util.Date
@@ -281,7 +282,9 @@ fun VerificationRequestsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
+                // Keyboard-aware viewport: without this the scroll bounds run behind the
+                // keyboard and bring-into-view leaves the focused field hidden. See FormInsets.kt.
+                .formViewportInsets(paddingValues),
         ) {
             VerificationQueueRail(
                 selectedTab = uiState.selectedTab,

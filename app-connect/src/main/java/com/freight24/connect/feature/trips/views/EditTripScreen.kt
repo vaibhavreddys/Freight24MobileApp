@@ -33,6 +33,7 @@ import com.freight24.connect.feature.trips.domain.viewmodel.EditTripEvent
 import com.freight24.connect.feature.trips.domain.viewmodel.EditTripViewModel
 import com.freight24.connect.feature.trips.domain.viewmodel.EditTripViewModelImpl
 import com.freight24.ui.theme.FreightThemeTokens
+import com.freight24.ui.components.formViewportInsets
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -132,7 +133,8 @@ fun EditTripScreen(
         },
         containerColor = colorScheme.background
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+        // Keyboard-aware viewport; see FormInsets.kt.
+    Box(modifier = Modifier.fillMaxSize().formViewportInsets(paddingValues)) {
             if (uiState.isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             } else {

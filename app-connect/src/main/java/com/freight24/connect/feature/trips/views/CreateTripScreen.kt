@@ -35,6 +35,7 @@ import com.freight24.connect.feature.trips.domain.viewmodel.CreateTripEvent
 import com.freight24.connect.feature.trips.domain.viewmodel.CreateTripUiState
 import com.freight24.connect.feature.trips.domain.viewmodel.CreateTripViewModel
 import com.freight24.ui.theme.FreightThemeTokens
+import com.freight24.ui.components.formViewportInsets
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -120,7 +121,8 @@ internal fun CreateTripScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                // Keyboard-aware viewport; see FormInsets.kt.
+                .formViewportInsets(paddingValues)
         ) {
             if (uiState.isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))

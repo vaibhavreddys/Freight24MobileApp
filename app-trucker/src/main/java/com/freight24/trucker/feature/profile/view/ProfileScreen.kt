@@ -141,6 +141,7 @@ import com.freight24.ui.components.PODAddressCard
 import com.freight24.ui.components.ProfileUtilityRow
 import com.freight24.ui.components.RouteChip
 import com.freight24.ui.theme.FreightThemeTokens
+import com.freight24.ui.components.formViewportInsets
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -217,7 +218,8 @@ internal fun ProfileScreen(
         modifier =
             Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
+                // Keyboard-aware viewport; see FormInsets.kt.
+                .formViewportInsets(paddingValues),
     ) {
         androidx.compose.material3.Scaffold(
             snackbarHost = { androidx.compose.material3.SnackbarHost(hostState = snackbarHostState) },

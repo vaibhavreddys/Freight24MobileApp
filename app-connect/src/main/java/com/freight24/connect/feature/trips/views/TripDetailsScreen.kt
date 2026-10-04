@@ -62,6 +62,7 @@ import com.freight24.ui.components.FileConfirmationSheet
 import com.freight24.ui.components.FileSourcePickerSheet
 import com.freight24.connect.utils.toDateTime
 import com.freight24.rest.response.TripDataResponse
+import com.freight24.ui.components.formViewportInsets
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -381,7 +382,8 @@ fun TripDetailsScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                // Keyboard-aware viewport; see FormInsets.kt.
+                .formViewportInsets(paddingValues)
                 .background(colorScheme.background)
         ) {
             when {

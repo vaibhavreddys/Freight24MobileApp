@@ -8,9 +8,11 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -230,6 +232,8 @@ fun CreateIndentContent(
 
     val clientSelected = uiState.selectedClient != null
 
+    val scrollState = rememberScrollState()
+
     Box(Modifier.fillMaxSize()) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
@@ -250,9 +254,157 @@ fun CreateIndentContent(
                 )
             },
             snackbarHost = { SnackbarHost(snackbarHostState) },
-            bottomBar = {
+        ) { paddingValues ->
+            // The window is edge-to-edge, so the IME is an overlay this layout knows nothing
+            // about: the scroll viewport ran the full height of the window, behind the
+            // keyboard. Compose's bring-into-view then measured the focused field (Remarks,
+            // Cargo Weight, …) against that phantom viewport, decided it was "already
+            // visible" and never scrolled — so the field being typed into sat under the
+            // keyboard with no way to reach it. imePadding() here, *outside* verticalScroll,
+            // shrinks everything below to the part of the screen the user can actually see,
+            // so focusing a field scrolls it into view and the CTA rides above the keyboard
+            // instead of hiding behind it.
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    // The scaffold's insets are already spent above; without this the IME
+                    // inset below would be counted a second time and the CTA would float a
+                    // navigation bar's height too high.
+                    .consumeWindowInsets(paddingValues)
+                    .imePadding(),
+            ) {
+                Column(Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier
+                        // weight(1f), not fillMaxSize: the CTA below is a sibling in normal
+                        // flow, so the scroll viewport ends where the CTA begins. An
+                        // overlapping CTA plus trailing scroll padding is not enough — the
+                        // field still scrolls into the strip the button covers, because
+                        // bring-into-view only knows the scroll container's own bounds.
+                        .weight(1f)
+                        .verticalScroll(scrollState)
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 8.dp, bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    DocketHead(
+                        complete = gatingComplete,
+                        total = gatingStates.size,
+                        states = gatingStates,
+                    )
+
+                    ConsignorClause(
+                        uiState = uiState,
+                        state = consignorState,
+                        errors = errors,
+                        onEvent = onEvent,
+                        onClientClick = {
+                            clearError("client")
+                            onNavigateToSearch(SearchType.CLIENT.name)
+                        },
+                        onBranchClick = { showBranchSheet = true },
+                        onContactClick = { role ->
+                            clearError("placement")
+                            contactSheetRole = role
+                        },
+                    )
+
+                    ClauseDocket(
+                        number = 2,
+                        title = "Lane",
+                        state = laneState,
+                        testTag = "create_indent_clause_lane",
+                    ) {
+                        LanePicker(
+                            originLabel = "Loading from",
+                            originValue = uiState.selectedFromLocation?.name.orEmpty(),
+                            onOriginClick = {
+                                clearError("from")
+                                onNavigateToSearch(SearchType.LOCATION_FROM.name)
+                            },
+                            originTestTag = "create_indent_from_picker",
+                            destinationLabel = "Unloading at",
+                            destinationValue = uiState.selectedToLocation?.name.orEmpty(),
+                            onDestinationClick = {
+                                clearError("to")
+                                onNavigateToSearch(SearchType.LOCATION_TO.name)
+                            },
+                            destinationTestTag = "create_indent_to_picker",
+                            originError = errors.contains("from"),
+                            destinationError = errors.contains("to"),
+                        )
+                    }
+
+                    VehicleClause(
+                        truckTypes = uiState.truckTypes,
+                        selectedTruckType = uiState.selectedTruckType,
+                        isLoading = uiState.isLoadingTruckTypes,
+                        isError = errors.contains("truck"),
+                        state = vehicleState,
+                        onSelect = {
+                            clearError("truck")
+                            onEvent(CreateIndentEvent.SelectTruckType(it))
+                        },
+                    )
+
+                    ClauseDocket(
+                        number = 4,
+                        title = "Cargo",
+                        state = cargoState,
+                        testTag = "create_indent_clause_cargo",
+                    ) {
+                        RuledField(
+                            label = "Weight",
+                            value = uiState.weight,
+                            onValueChange = {
+                                clearError("weight")
+                                onEvent(CreateIndentEvent.UpdateWeight(it))
+                            },
+                            testTag = "create_indent_weight_field",
+                            placeholder = "0.0",
+                            keyboardType = KeyboardType.Decimal,
+                            isError = errors.contains("weight"),
+                            trailingLabel = "MT",
+                        )
+                        Spacer(Modifier.height(18.dp))
+                        DocketPicker(
+                            label = "Material",
+                            value = uiState.materialName,
+                            onClick = {
+                                clearError("material")
+                                showMaterialSheet = true
+                            },
+                            testTag = "create_indent_material_field",
+                            placeholder = "Choose or type a category",
+                            isError = errors.contains("material"),
+                        )
+                    }
+
+                    CommercialsClause(
+                        uiState = uiState,
+                        state = commercialsState,
+                        negotiatedError = negotiatedCostExceedsClientError(
+                            uiState.negotiatedCost,
+                            uiState.clientCost,
+                        ),
+                        onEvent = onEvent,
+                    )
+
+                    TermsClause(
+                        uiState = uiState,
+                        state = termsState,
+                        tatError = errors.contains("tat"),
+                        onEvent = onEvent,
+                    )
+                    }
+
+                // Pinned CTA. A sibling in normal flow inside the imePadding() container
+                // rather than Scaffold's bottomBar slot: it rides up with the keyboard
+                // instead of sitting at the window bottom behind it, and it keeps the
+                // scroll viewport's bottom edge honest.
                 Box(
-                    Modifier
+                    modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 20.dp)
                         .padding(bottom = 20.dp, top = 10.dp),
@@ -283,128 +435,7 @@ fun CreateIndentContent(
                         )
                     }
                 }
-            },
-        ) { paddingValues ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp)
-                    .padding(top = 8.dp, bottom = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                DocketHead(
-                    complete = gatingComplete,
-                    total = gatingStates.size,
-                    states = gatingStates,
-                )
-
-                ConsignorClause(
-                    uiState = uiState,
-                    state = consignorState,
-                    errors = errors,
-                    onEvent = onEvent,
-                    onClientClick = {
-                        clearError("client")
-                        onNavigateToSearch(SearchType.CLIENT.name)
-                    },
-                    onBranchClick = { showBranchSheet = true },
-                    onContactClick = { role ->
-                        clearError("placement")
-                        contactSheetRole = role
-                    },
-                )
-
-                ClauseDocket(
-                    number = 2,
-                    title = "Lane",
-                    state = laneState,
-                    testTag = "create_indent_clause_lane",
-                ) {
-                    LanePicker(
-                        originLabel = "Loading from",
-                        originValue = uiState.selectedFromLocation?.name.orEmpty(),
-                        onOriginClick = {
-                            clearError("from")
-                            onNavigateToSearch(SearchType.LOCATION_FROM.name)
-                        },
-                        originTestTag = "create_indent_from_picker",
-                        destinationLabel = "Unloading at",
-                        destinationValue = uiState.selectedToLocation?.name.orEmpty(),
-                        onDestinationClick = {
-                            clearError("to")
-                            onNavigateToSearch(SearchType.LOCATION_TO.name)
-                        },
-                        destinationTestTag = "create_indent_to_picker",
-                        originError = errors.contains("from"),
-                        destinationError = errors.contains("to"),
-                    )
                 }
-
-                VehicleClause(
-                    truckTypes = uiState.truckTypes,
-                    selectedTruckType = uiState.selectedTruckType,
-                    isLoading = uiState.isLoadingTruckTypes,
-                    isError = errors.contains("truck"),
-                    state = vehicleState,
-                    onSelect = {
-                        clearError("truck")
-                        onEvent(CreateIndentEvent.SelectTruckType(it))
-                    },
-                )
-
-                ClauseDocket(
-                    number = 4,
-                    title = "Cargo",
-                    state = cargoState,
-                    testTag = "create_indent_clause_cargo",
-                ) {
-                    RuledField(
-                        label = "Weight",
-                        value = uiState.weight,
-                        onValueChange = {
-                            clearError("weight")
-                            onEvent(CreateIndentEvent.UpdateWeight(it))
-                        },
-                        testTag = "create_indent_weight_field",
-                        placeholder = "0.0",
-                        keyboardType = KeyboardType.Decimal,
-                        isError = errors.contains("weight"),
-                        trailingLabel = "MT",
-                    )
-                    Spacer(Modifier.height(18.dp))
-                    DocketPicker(
-                        label = "Material",
-                        value = uiState.materialName,
-                        onClick = {
-                            clearError("material")
-                            showMaterialSheet = true
-                        },
-                        testTag = "create_indent_material_field",
-                        placeholder = "Choose or type a category",
-                        isError = errors.contains("material"),
-                    )
-                }
-
-                CommercialsClause(
-                    uiState = uiState,
-                    state = commercialsState,
-                    negotiatedError = negotiatedCostExceedsClientError(
-                        uiState.negotiatedCost,
-                        uiState.clientCost,
-                    ),
-                    onEvent = onEvent,
-                )
-
-                TermsClause(
-                    uiState = uiState,
-                    state = termsState,
-                    tatError = errors.contains("tat"),
-                    onEvent = onEvent,
-                )
-
-                Spacer(Modifier.height(16.dp))
             }
         }
     }

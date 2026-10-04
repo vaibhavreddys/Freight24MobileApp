@@ -133,6 +133,7 @@ import com.freight24.ui.components.AddRouteBottomSheet
 import com.freight24.ui.components.CitySearchField
 import com.freight24.ui.components.RouteChip
 import com.freight24.ui.theme.FreightThemeTokens
+import com.freight24.ui.components.formViewportInsets
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -236,7 +237,8 @@ internal fun ProfileScreen(
                 )
             }
         ) { innerPadding ->
-            Box(modifier = Modifier.padding(innerPadding)) {
+            // Keyboard-aware viewport; see FormInsets.kt.
+            Box(modifier = Modifier.formViewportInsets(innerPadding)) {
                 when (val state = uiState) {
                     is UiState.Loading -> {
                         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

@@ -26,6 +26,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.connect.feature.trips.domain.viewmodel.HaltingChargesEvent
 import com.freight24.connect.feature.trips.domain.viewmodel.HaltingChargesViewModel
 import com.freight24.connect.feature.trips.domain.viewmodel.HaltingChargesViewModelImpl
+import com.freight24.ui.components.formViewportInsets
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,7 +90,9 @@ fun HaltingChargesScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                // Keyboard-aware viewport: without this the scroll bounds run behind the
+                // keyboard and bring-into-view leaves the focused field hidden. See FormInsets.kt.
+                .formViewportInsets(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)

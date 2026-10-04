@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<network-security-config>
-    <!-- Configure cleartext rules for specific domains -->
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">localhost</domain>
-        <domain includeSubdomains="true">192.168.1.33</domain> <!-- Android Emulator Localhost IP -->
-        <domain includeSubdomains="true">://domain.com</domain>
-    </domain-config>
-</network-security-config>

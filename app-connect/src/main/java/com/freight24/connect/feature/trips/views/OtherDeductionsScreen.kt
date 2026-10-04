@@ -26,6 +26,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.freight24.connect.feature.trips.domain.viewmodel.OtherDeductionsEvent
 import com.freight24.connect.feature.trips.domain.viewmodel.OtherDeductionsViewModel
 import com.freight24.connect.feature.trips.domain.viewmodel.OtherDeductionsViewModelImpl
+import com.freight24.ui.components.formViewportInsets
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -91,7 +92,9 @@ fun OtherDeductionsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                // Keyboard-aware viewport: without this the scroll bounds run behind the
+                // keyboard and bring-into-view leaves the focused field hidden. See FormInsets.kt.
+                .formViewportInsets(padding)
                 .verticalScroll(scrollState)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)

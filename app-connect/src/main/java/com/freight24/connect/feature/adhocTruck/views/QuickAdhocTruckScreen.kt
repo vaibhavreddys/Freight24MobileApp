@@ -32,6 +32,7 @@ import com.freight24.connect.feature.adhocTruck.domain.viewmodel.QuickAdhocTruck
 import com.freight24.rest.response.LocationDto
 import com.freight24.rest.response.TruckTypeDto
 import com.freight24.ui.components.FilterSelectionChip
+import com.freight24.ui.components.formViewportInsets
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -97,7 +98,9 @@ fun QuickAdhocTruckScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                // Keyboard-aware viewport: without this the scroll bounds run behind the
+                // keyboard and bring-into-view leaves the focused field hidden. See FormInsets.kt.
+                .formViewportInsets(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),

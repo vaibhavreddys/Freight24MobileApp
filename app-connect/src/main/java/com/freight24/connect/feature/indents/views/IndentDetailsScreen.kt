@@ -45,6 +45,7 @@ import com.freight24.common.util.formatIndianCurrency
 import com.freight24.common.util.formatWeightValue
 import com.freight24.common.util.negotiatedCostExceedsClientError
 import com.freight24.ui.components.FreightTopAppBar
+import com.freight24.ui.components.formViewportInsets
 import com.freight24.ui.theme.FreightThemeTokens
 import kotlinx.coroutines.flow.first
 
@@ -360,7 +361,10 @@ fun IndentDetailsScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                // Keyboard-aware viewport: without this the scroll bounds run behind the
+                // keyboard and bring-into-view leaves the focused field hidden.
+                // See FormInsets.kt.
+                .formViewportInsets(paddingValues)
         ) {
             when {
                 uiState.isLoading -> {
