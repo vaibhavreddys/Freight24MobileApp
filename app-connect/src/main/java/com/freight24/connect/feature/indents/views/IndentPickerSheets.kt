@@ -123,14 +123,16 @@ private fun PickerSheetScaffold(
         // and nav bars only.
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .imePadding(),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .imePadding(),
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = SheetGutter, end = 14.dp, top = 4.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(start = SheetGutter, end = 14.dp, top = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
@@ -169,19 +171,21 @@ private fun PickerSheetScaffold(
 @Composable
 private fun SheetDragHandle() {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 12.dp, bottom = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp, bottom = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
         Box(
-            modifier = Modifier
-                .size(width = 40.dp, height = 4.dp)
-                .background(
-                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
-                    RoundedCornerShape(2.dp),
-                )
-                .semantics { contentDescription = "Drag sheet" },
+            modifier =
+                Modifier
+                    .size(width = 40.dp, height = 4.dp)
+                    .background(
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                        RoundedCornerShape(2.dp),
+                    )
+                    .semantics { contentDescription = "Drag sheet" },
         )
     }
 }
@@ -194,15 +198,19 @@ private fun SheetDragHandle() {
  * touch target stays at the 48dp the accessibility rules require.
  */
 @Composable
-private fun SheetCloseButton(onDismiss: () -> Unit, testTag: String) {
+private fun SheetCloseButton(
+    onDismiss: () -> Unit,
+    testTag: String,
+) {
     val scheme = MaterialTheme.colorScheme
 
     IconButton(
         onClick = onDismiss,
-        modifier = Modifier
-            .docketTag(testTag)
-            .size(40.dp)
-            .background(scheme.surfaceContainerHigh, CircleShape),
+        modifier =
+            Modifier
+                .docketTag(testTag)
+                .size(40.dp)
+                .background(scheme.surfaceContainerHigh, CircleShape),
     ) {
         Icon(
             imageVector = Icons.Default.Close,
@@ -238,18 +246,19 @@ private fun SheetSearchField(
     var focused by remember { mutableStateOf(false) }
 
     Row(
-        modifier = Modifier
-            .padding(horizontal = SheetGutter)
-            .fillMaxWidth()
-            .heightIn(min = 54.dp)
-            .clip(shape)
-            .background(scheme.surfaceContainerHighest)
-            .border(
-                width = if (focused) 1.5.dp else 1.dp,
-                color = if (focused) scheme.primary else scheme.outlineVariant.copy(alpha = 0.5f),
-                shape = shape,
-            )
-            .padding(start = 16.dp, end = 4.dp),
+        modifier =
+            Modifier
+                .padding(horizontal = SheetGutter)
+                .fillMaxWidth()
+                .heightIn(min = 54.dp)
+                .clip(shape)
+                .background(scheme.surfaceContainerHighest)
+                .border(
+                    width = if (focused) 1.5.dp else 1.dp,
+                    color = if (focused) scheme.primary else scheme.outlineVariant.copy(alpha = 0.5f),
+                    shape = shape,
+                )
+                .padding(start = 16.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
@@ -266,10 +275,11 @@ private fun SheetSearchField(
             textStyle = MaterialTheme.typography.bodyLarge.copy(color = scheme.onSurface),
             cursorBrush = SolidColor(scheme.primary),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            modifier = Modifier
-                .weight(1f)
-                .docketTag(testTag)
-                .onFocusChanged { focused = it.isFocused },
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .docketTag(testTag)
+                    .onFocusChanged { focused = it.isFocused },
             decorationBox = { innerTextField ->
                 Box {
                     if (value.isEmpty()) {
@@ -288,9 +298,10 @@ private fun SheetSearchField(
         if (value.isNotEmpty()) {
             IconButton(
                 onClick = { onValueChange("") },
-                modifier = Modifier
-                    .docketTag(clearTestTag)
-                    .size(40.dp),
+                modifier =
+                    Modifier
+                        .docketTag(clearTestTag)
+                        .size(40.dp),
             ) {
                 Icon(
                     imageVector = Icons.Default.Close,
@@ -331,19 +342,20 @@ private fun PickerOptionRow(
     val scheme = MaterialTheme.colorScheme
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .docketTag(testTag)
-            .background(
-                if (selected) scheme.primaryContainer.copy(alpha = 0.55f) else Color.Transparent,
-            )
-            .selectable(
-                selected = selected,
-                enabled = enabled,
-                role = Role.RadioButton,
-                onClick = onClick,
-            )
-            .padding(horizontal = SheetGutter, vertical = OptionRowPadding),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .docketTag(testTag)
+                .background(
+                    if (selected) scheme.primaryContainer.copy(alpha = 0.55f) else Color.Transparent,
+                )
+                .selectable(
+                    selected = selected,
+                    enabled = enabled,
+                    role = Role.RadioButton,
+                    onClick = onClick,
+                )
+                .padding(horizontal = SheetGutter, vertical = OptionRowPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
@@ -380,26 +392,31 @@ private fun PickerOptionRow(
  * the check would have disappeared into its own row.
  */
 @Composable
-private fun ChoiceDisc(selected: Boolean, enabled: Boolean) {
+private fun ChoiceDisc(
+    selected: Boolean,
+    enabled: Boolean,
+) {
     val scheme = MaterialTheme.colorScheme
 
     if (!selected) {
         Box(
-            modifier = Modifier
-                .size(20.dp)
-                .border(
-                    width = 1.5.dp,
-                    color = if (enabled) scheme.outlineVariant else scheme.outlineVariant.copy(alpha = 0.5f),
-                    shape = CircleShape,
-                ),
+            modifier =
+                Modifier
+                    .size(20.dp)
+                    .border(
+                        width = 1.5.dp,
+                        color = if (enabled) scheme.outlineVariant else scheme.outlineVariant.copy(alpha = 0.5f),
+                        shape = CircleShape,
+                    ),
         )
         return
     }
 
     Box(
-        modifier = Modifier
-            .size(22.dp)
-            .background(scheme.primary, CircleShape),
+        modifier =
+            Modifier
+                .size(22.dp)
+                .background(scheme.primary, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
@@ -441,12 +458,13 @@ fun BranchPickerSheet(
         LazyColumn(modifier = Modifier.heightIn(max = 320.dp)) {
             items(branches, key = { it.id }) { branch ->
                 val active = branch.status.equals("active", true)
-                val detail = listOfNotNull(
-                    branch.branchCode?.takeIf { it.isNotBlank() },
-                    branch.branchType?.name?.takeIf { it.isNotBlank() },
-                    branch.address?.city?.name?.takeIf { it.isNotBlank() },
-                    if (active) null else "INACTIVE",
-                ).joinToString(" · ").takeIf { it.isNotBlank() }
+                val detail =
+                    listOfNotNull(
+                        branch.branchCode?.takeIf { it.isNotBlank() },
+                        branch.branchType?.name?.takeIf { it.isNotBlank() },
+                        branch.address?.city?.name?.takeIf { it.isNotBlank() },
+                        if (active) null else "INACTIVE",
+                    ).joinToString(" · ").takeIf { it.isNotBlank() }
 
                 PickerOptionRow(
                     title = branch.branchName?.takeIf { it.isNotBlank() } ?: "Unnamed branch",
@@ -486,24 +504,27 @@ fun ContactPickerSheet(
         ) {
             MetaTag(
                 text = if (role.required) "REQUIRED" else "OPTIONAL",
-                container = if (role.required) {
-                    MaterialTheme.colorScheme.errorContainer
-                } else {
-                    MaterialTheme.colorScheme.surfaceContainerHighest
-                },
-                content = if (role.required) {
-                    MaterialTheme.colorScheme.onErrorContainer
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
+                container =
+                    if (role.required) {
+                        MaterialTheme.colorScheme.errorContainer
+                    } else {
+                        MaterialTheme.colorScheme.surfaceContainerHighest
+                    },
+                content =
+                    if (role.required) {
+                        MaterialTheme.colorScheme.onErrorContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
             )
             Spacer(Modifier.width(8.dp))
             Text(
-                text = if (role.required) {
-                    "The driver needs someone to ring on arrival."
-                } else {
-                    "Leave empty if the client has not nominated one."
-                },
+                text =
+                    if (role.required) {
+                        "The driver needs someone to ring on arrival."
+                    } else {
+                        "Leave empty if the client has not nominated one."
+                    },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -514,19 +535,21 @@ fun ContactPickerSheet(
             FreightEmptyState(
                 icon = Icons.Default.Person,
                 title = "No contacts on file",
-                subtitle = "This client has no active contacts, so no role can be filled. " +
-                    "Add a contact to the client before raising an indent.",
+                subtitle =
+                    "This client has no active contacts, so no role can be filled. " +
+                        "Add a contact to the client before raising an indent.",
             )
             return@PickerSheetScaffold
         }
 
         LazyColumn(modifier = Modifier.heightIn(max = 320.dp)) {
             items(contacts, key = { it.id }) { contact ->
-                val detail = listOfNotNull(
-                    contact.designation?.takeIf { it.isNotBlank() },
-                    contact.phone?.takeIf { it.isNotBlank() },
-                    contact.email?.takeIf { it.isNotBlank() },
-                ).joinToString(" · ").takeIf { it.isNotBlank() }
+                val detail =
+                    listOfNotNull(
+                        contact.designation?.takeIf { it.isNotBlank() },
+                        contact.phone?.takeIf { it.isNotBlank() },
+                        contact.email?.takeIf { it.isNotBlank() },
+                    ).joinToString(" · ").takeIf { it.isNotBlank() }
 
                 PickerOptionRow(
                     title = contact.fullName?.takeIf { it.isNotBlank() } ?: "Unnamed contact",
@@ -569,13 +592,14 @@ fun MaterialPickerSheet(
     var query by remember { mutableStateOf("") }
     val typed = query.trim()
 
-    val matches = remember(materials, typed) {
-        if (typed.isEmpty()) {
-            materials
-        } else {
-            materials.filter { it.name.contains(typed, ignoreCase = true) }
+    val matches =
+        remember(materials, typed) {
+            if (typed.isEmpty()) {
+                materials
+            } else {
+                materials.filter { it.name.contains(typed, ignoreCase = true) }
+            }
         }
-    }
 
     // Typing a category's exact name should not also offer to "create" it.
     val typedIsCategory = materials.any { it.name.equals(typed, ignoreCase = true) }
@@ -601,12 +625,13 @@ fun MaterialPickerSheet(
             FreightEmptyState(
                 icon = Icons.Default.Inventory2,
                 title = if (isLoading) "Loading categories" else "Categories unavailable",
-                subtitle = if (isLoading) {
-                    "Fetching the material list from the backend."
-                } else {
-                    "The material list could not be loaded. Type the material above and " +
-                        "it will be saved as entered."
-                },
+                subtitle =
+                    if (isLoading) {
+                        "Fetching the material list from the backend."
+                    } else {
+                        "The material list could not be loaded. Type the material above and " +
+                            "it will be saved as entered."
+                    },
             )
             // The copy above promises that what was typed is still usable, so the
             // row that commits it has to exist here too. It previously did not —
@@ -647,8 +672,9 @@ fun MaterialPickerSheet(
                     FreightEmptyState(
                         icon = Icons.Default.Inventory2,
                         title = "No materials found",
-                        subtitle = "Nothing here matches \u201C$typed\u201D. Try a different " +
-                            "keyword, or save it as typed.",
+                        subtitle =
+                            "Nothing here matches \u201C$typed\u201D. Try a different " +
+                                "keyword, or save it as typed.",
                     )
                 }
             }
@@ -719,11 +745,12 @@ private fun TypedMaterialRow(
     val scheme = MaterialTheme.colorScheme
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .docketTag("create_indent_material_use_typed")
-            .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = SheetGutter, vertical = OptionRowPadding),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .docketTag("create_indent_material_use_typed")
+                .clickable(role = Role.Button, onClick = onClick)
+                .padding(horizontal = SheetGutter, vertical = OptionRowPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
@@ -737,11 +764,12 @@ private fun TypedMaterialRow(
             )
             Spacer(Modifier.height(2.dp))
             Text(
-                text = if (hasMatches) {
-                    "Not the one you meant — save as typed"
-                } else {
-                    "Not in the category list — save as typed"
-                },
+                text =
+                    if (hasMatches) {
+                        "Not the one you meant — save as typed"
+                    } else {
+                        "Not in the category list — save as typed"
+                    },
                 style = MaterialTheme.typography.bodySmall,
                 color = scheme.onSurfaceVariant,
             )

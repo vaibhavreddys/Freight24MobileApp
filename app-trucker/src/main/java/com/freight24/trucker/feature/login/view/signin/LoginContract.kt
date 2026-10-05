@@ -32,7 +32,9 @@ internal data class LoginUiState(
 
 internal interface LoginActions {
     fun onPhoneChange(value: String)
+
     fun onSendCode()
+
     fun onCallHelpline()
 }
 
@@ -40,6 +42,8 @@ internal interface LoginActions {
  *  has nothing to fire yet. */
 internal object LoginActionsNoop : LoginActions {
     override fun onPhoneChange(value: String) = Unit
+
     override fun onSendCode() = Unit
+
     override fun onCallHelpline() = Unit
 }

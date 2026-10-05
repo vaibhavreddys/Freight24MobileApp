@@ -1,8 +1,7 @@
 package com.freight24.ui.components
 
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -97,9 +96,13 @@ fun DocketCard(
     testTag: String,
     onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(
-        start = 14.dp, end = 14.dp, top = 13.dp, bottom = 12.dp,
-    ),
+    contentPadding: PaddingValues =
+        PaddingValues(
+            start = 14.dp,
+            end = 14.dp,
+            top = 13.dp,
+            bottom = 12.dp,
+        ),
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val foldTone = MaterialTheme.colorScheme.surfaceContainerHighest
@@ -108,36 +111,39 @@ fun DocketCard(
 
     Box(modifier = modifier.fillMaxWidth()) {
         Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag(testTag)
-                .semantics { testTagsAsResourceId = true }
-                .then(clickableModifier),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .testTag(testTag)
+                    .semantics { testTagsAsResourceId = true }
+                    .then(clickableModifier),
             shape = DocketShape,
             color = MaterialTheme.colorScheme.surface,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
         ) {
             Box {
                 Column(
-                    modifier = Modifier.padding(
-                        start = contentPadding.calculateStartPadding(layoutDirection) + SpineWidth,
-                        end = contentPadding.calculateEndPadding(layoutDirection),
-                        top = contentPadding.calculateTopPadding(),
-                        bottom = contentPadding.calculateBottomPadding(),
-                    ),
+                    modifier =
+                        Modifier.padding(
+                            start = contentPadding.calculateStartPadding(layoutDirection) + SpineWidth,
+                            end = contentPadding.calculateEndPadding(layoutDirection),
+                            top = contentPadding.calculateTopPadding(),
+                            bottom = contentPadding.calculateBottomPadding(),
+                        ),
                     content = content,
                 )
 
                 // Lane spine — status colour, matched to the card's measured height.
                 Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .drawBehind {
-                            drawRect(
-                                color = accent,
-                                size = Size(SpineWidth.toPx(), size.height),
-                            )
-                        },
+                    modifier =
+                        Modifier
+                            .matchParentSize()
+                            .drawBehind {
+                                drawRect(
+                                    color = accent,
+                                    size = Size(SpineWidth.toPx(), size.height),
+                                )
+                            },
                 )
             }
         }
@@ -145,16 +151,18 @@ fun DocketCard(
         // Folded corner: the visible half of the dog-ear notch, painted a shade
         // darker so the cut reads as paper folded back rather than a clipped box.
         Canvas(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .size(DocketCut),
+            modifier =
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .size(DocketCut),
         ) {
-            val path = Path().apply {
-                moveTo(0f, 0f)
-                lineTo(size.width, size.height)
-                lineTo(0f, size.height)
-                close()
-            }
+            val path =
+                Path().apply {
+                    moveTo(0f, 0f)
+                    lineTo(size.width, size.height)
+                    lineTo(0f, size.height)
+                    close()
+                }
             drawPath(path = path, color = foldTone)
         }
     }
@@ -165,9 +173,10 @@ fun DocketCard(
 fun PerforationRule(modifier: Modifier = Modifier) {
     val color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.9f)
     Canvas(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(1.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(1.dp),
     ) {
         drawLine(
             color = color,
@@ -220,9 +229,10 @@ fun MetaTag(
         ) {
             if (hatch) {
                 HatchMark(
-                    modifier = Modifier
-                        .width(14.dp)
-                        .fillMaxHeight(),
+                    modifier =
+                        Modifier
+                            .width(14.dp)
+                            .fillMaxHeight(),
                     color = content.copy(alpha = 0.55f),
                 )
                 Spacer(Modifier.width(6.dp))
@@ -232,10 +242,11 @@ fun MetaTag(
                 style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
                 fontWeight = FontWeight.Bold,
                 color = content,
-                modifier = Modifier.padding(
-                    start = if (hatch) 0.dp else 7.dp,
-                    end = 7.dp,
-                ),
+                modifier =
+                    Modifier.padding(
+                        start = if (hatch) 0.dp else 7.dp,
+                        end = 7.dp,
+                    ),
             )
         }
     }

@@ -4,11 +4,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.LocalShipping
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
@@ -17,11 +16,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.connect.feature.indents.views.docketTag
@@ -29,7 +26,6 @@ import com.freight24.connect.feature.trips.domain.usecase.TripTypes
 import com.freight24.connect.feature.trips.domain.viewmodel.TripsListEvent
 import com.freight24.connect.feature.trips.domain.viewmodel.TripsListViewModel
 import com.freight24.connect.feature.trips.domain.viewmodel.TripsListViewModelImpl
-import com.freight24.connect.feature.trips.views.components.TripCard
 import com.freight24.connect.feature.trips.views.components.TripListItem
 import com.freight24.ui.components.FilterSelectionChip
 import com.freight24.ui.components.FreightEmptyState
@@ -42,7 +38,7 @@ fun TripsScreen(
     initialFilter: TripTypes? = null,
     onRefreshingChange: (Boolean) -> Unit = {},
     onPullFractionChange: (Float) -> Unit = {},
-    viewModel: TripsListViewModel = hiltViewModel<TripsListViewModelImpl>()
+    viewModel: TripsListViewModel = hiltViewModel<TripsListViewModelImpl>(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val colorScheme = MaterialTheme.colorScheme
@@ -66,25 +62,27 @@ fun TripsScreen(
     }
 
     Scaffold(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
         containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
     ) { _ ->
         PullToRefreshBox(
             isRefreshing = uiState.isLoading,
             onRefresh = { viewModel.onEvent(TripsListEvent.Refresh) },
             state = pullToRefreshState,
-            indicator = {},             // Hide default circular indicator
+            indicator = {}, // Hide default circular indicator
             modifier = Modifier.fillMaxSize(),
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 // Filter rail is pinned above the list (outside the LazyColumn)
                 // so it stays fixed while trips scroll underneath it.
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     LazyRow(
@@ -96,8 +94,9 @@ fun TripsScreen(
                                 label = type.displayText,
                                 isSelected = uiState.selectedFilter == type,
                                 onClick = { viewModel.onEvent(TripsListEvent.SelectFilter(type)) },
-                                modifier = Modifier.docketTag("trips_filter_${type.name.lowercase()}")
-                                    .semantics { selected = uiState.selectedFilter == type },
+                                modifier =
+                                    Modifier.docketTag("trips_filter_${type.name.lowercase()}")
+                                        .semantics { selected = uiState.selectedFilter == type },
                             )
                         }
                     }
@@ -106,16 +105,17 @@ fun TripsScreen(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     when {
                         uiState.isLoading && uiState.trips.isEmpty() -> {
                             item {
                                 Box(
-                                    modifier = Modifier
-                                        .fillParentMaxSize()
-                                        .padding(top = 96.dp),
-                                    contentAlignment = Alignment.Center
+                                    modifier =
+                                        Modifier
+                                            .fillParentMaxSize()
+                                            .padding(top = 96.dp),
+                                    contentAlignment = Alignment.Center,
                                 ) {
                                     CircularProgressIndicator()
                                 }
@@ -125,10 +125,11 @@ fun TripsScreen(
                         uiState.errorMessage != null && uiState.trips.isEmpty() -> {
                             item {
                                 Box(
-                                    modifier = Modifier
-                                        .fillParentMaxSize()
-                                        .padding(top = 96.dp),
-                                    contentAlignment = Alignment.Center
+                                    modifier =
+                                        Modifier
+                                            .fillParentMaxSize()
+                                            .padding(top = 96.dp),
+                                    contentAlignment = Alignment.Center,
                                 ) {
                                     Text(text = uiState.errorMessage ?: "Unknown error", color = colorScheme.error)
                                 }
@@ -138,10 +139,11 @@ fun TripsScreen(
                         uiState.trips.isEmpty() -> {
                             item {
                                 Box(
-                                    modifier = Modifier
-                                        .fillParentMaxSize()
-                                        .padding(top = 96.dp),
-                                    contentAlignment = Alignment.Center
+                                    modifier =
+                                        Modifier
+                                            .fillParentMaxSize()
+                                            .padding(top = 96.dp),
+                                    contentAlignment = Alignment.Center,
                                 ) {
                                     FreightEmptyState(
                                         icon = Icons.Outlined.LocalShipping,

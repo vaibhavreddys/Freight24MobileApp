@@ -22,11 +22,12 @@ fun RouteIndicatorWithCities(
     toLabel: String? = null,
 ) {
     val extended = FreightThemeTokens.colors
-    val labelStyle = MaterialTheme.typography.labelSmall.copy(
-        fontWeight = FontWeight.Medium,
-        letterSpacing = 0.6.sp,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
+    val labelStyle =
+        MaterialTheme.typography.labelSmall.copy(
+            fontWeight = FontWeight.Medium,
+            letterSpacing = 0.6.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     Row(
         verticalAlignment = Alignment.Top,
     ) {

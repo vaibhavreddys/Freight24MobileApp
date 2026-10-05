@@ -70,29 +70,32 @@ fun BoundaryBadge(
     // Zero state: a muted pill reads as "nothing to act on" rather than a
     // loud Info/Urgent count — so count 0 always downgrades to Muted.
     val effectiveTone = if (count == 0) BoundaryBadgeTone.Muted else tone
-    val (containerColor, contentColor) = when (effectiveTone) {
-        BoundaryBadgeTone.Info -> colorScheme.tertiary to colorScheme.onTertiary
-        BoundaryBadgeTone.Urgent -> colorScheme.error to colorScheme.onError
-        BoundaryBadgeTone.Muted -> colorScheme.surfaceVariant to colorScheme.onSurfaceVariant
-    }
+    val (containerColor, contentColor) =
+        when (effectiveTone) {
+            BoundaryBadgeTone.Info -> colorScheme.tertiary to colorScheme.onTertiary
+            BoundaryBadgeTone.Urgent -> colorScheme.error to colorScheme.onError
+            BoundaryBadgeTone.Muted -> colorScheme.surfaceVariant to colorScheme.onSurfaceVariant
+        }
     val stadium = RoundedCornerShape(100.dp)
 
     Surface(
         // Border first = outermost, so the ring sits between the badge fill and
         // the card underneath, creating the "cutout" boundary-breaking illusion.
-        modifier = modifier
-            .border(2.dp, colorScheme.surface, stadium)
-            .semantics { contentDescription = "$count notifications" },
+        modifier =
+            modifier
+                .border(2.dp, colorScheme.surface, stadium)
+                .semantics { contentDescription = "$count notifications" },
         shape = stadium,
         color = containerColor,
         contentColor = contentColor,
         shadowElevation = 3.dp,
     ) {
         Box(
-            modifier = Modifier
-                .widthIn(min = minSize)
-                .heightIn(min = minSize)
-                .padding(horizontal = 6.dp),
+            modifier =
+                Modifier
+                    .widthIn(min = minSize)
+                    .heightIn(min = minSize)
+                    .padding(horizontal = 6.dp),
             contentAlignment = Alignment.Center,
         ) {
             AnimatedContent(
@@ -115,8 +118,12 @@ fun BoundaryBadge(
     }
 }
 
-private fun formatCount(count: Int, formatStyle: BadgeFormatStyle): String = when {
-    count > 99 -> "99+"
-    formatStyle == BadgeFormatStyle.Padded -> count.toString().padStart(2, '0')
-    else -> count.toString()
-}
+private fun formatCount(
+    count: Int,
+    formatStyle: BadgeFormatStyle,
+): String =
+    when {
+        count > 99 -> "99+"
+        formatStyle == BadgeFormatStyle.Padded -> count.toString().padStart(2, '0')
+        else -> count.toString()
+    }

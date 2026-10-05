@@ -1,15 +1,15 @@
 package com.freight24.connect.feature.truckowners.profile.data
 
 import com.freight24.common.di.IoDispatcher
+import com.freight24.connect.feature.truckowners.profile.domain.Profile
+import com.freight24.connect.feature.truckowners.profile.domain.ProfileRepository
+import com.freight24.connect.feature.truckowners.profile.mapper.toDomain
 import com.freight24.network.provider.SafeCallProvider
 import com.freight24.rest.api.ProfileApi
 import com.freight24.rest.api.TruckOwnerApi
 import com.freight24.rest.request.FinalSaveRequest
 import com.freight24.rest.request.UpdateTruckOwnerStatusRequest
 import com.freight24.rest.response.IdentityDocumentUploadResponse
-import com.freight24.connect.feature.truckowners.profile.domain.Profile
-import com.freight24.connect.feature.truckowners.profile.domain.ProfileRepository
-import com.freight24.connect.feature.truckowners.profile.mapper.toDomain
 import kotlinx.coroutines.CoroutineDispatcher
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -32,19 +32,30 @@ internal class ProfileRepositoryImpl
             }
         }
 
-        override suspend fun updateProfile(id: String, request: com.freight24.rest.request.UpdateProfileRequest): Result<Boolean> {
+        override suspend fun updateProfile(
+            id: String,
+            request: com.freight24.rest.request.UpdateProfileRequest,
+        ): Result<Boolean> {
             return safeCallProvider.safeApiCall(ioDispatcher) {
                 api.updateProfile(id, request)
             }.map { it.success }
         }
 
-        override suspend fun updateTruckOwnerStatus(userId: String, status: String): Result<Boolean> {
+        override suspend fun updateTruckOwnerStatus(
+            userId: String,
+            status: String,
+        ): Result<Boolean> {
             return safeCallProvider.safeApiCall(ioDispatcher) {
                 truckOwnerApi.updateTruckOwnerStatus(userId, UpdateTruckOwnerStatusRequest(status))
             }.map { it.success }
         }
 
-        override suspend fun uploadIdentityDocument(userId: String, documentTypeId: Int, documentNumber: String, file: okhttp3.MultipartBody.Part): Result<String> {
+        override suspend fun uploadIdentityDocument(
+            userId: String,
+            documentTypeId: Int,
+            documentNumber: String,
+            file: okhttp3.MultipartBody.Part,
+        ): Result<String> {
             return safeCallProvider.safeApiCall(ioDispatcher) {
                 val documentNumberBody = documentNumber.toRequestBody("text/plain".toMediaTypeOrNull())
                 api.uploadIdentityDocumentWithTemporaryKey(file, documentTypeId, userId, documentNumberBody)
@@ -53,7 +64,12 @@ internal class ProfileRepositoryImpl
             }
         }
 
-        override suspend fun updateIdentityDocument(docId: String, userId: String, documentNumber: String, file: okhttp3.MultipartBody.Part): Result<String> {
+        override suspend fun updateIdentityDocument(
+            docId: String,
+            userId: String,
+            documentNumber: String,
+            file: okhttp3.MultipartBody.Part,
+        ): Result<String> {
             return safeCallProvider.safeApiCall(ioDispatcher) {
                 val documentNumberBody = documentNumber.toRequestBody("text/plain".toMediaTypeOrNull())
                 api.updateIdentityDocumentWithTemporaryKey(docId, userId, file, documentNumberBody)
@@ -78,5 +94,4 @@ internal class ProfileRepositoryImpl
             val key = data?.temporaryFileKey ?: data?.fileKey
             return key ?: throw IllegalStateException("temporaryFileKey missing in upload response")
         }
-
     }

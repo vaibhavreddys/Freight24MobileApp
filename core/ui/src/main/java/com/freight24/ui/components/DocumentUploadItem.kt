@@ -1,6 +1,5 @@
 package com.freight24.ui.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -30,7 +29,9 @@ import androidx.compose.ui.unit.sp
 
 sealed class DocumentStatus {
     object Pending : DocumentStatus()
+
     object Uploading : DocumentStatus()
+
     object UploadError : DocumentStatus()
 
     data class Uploaded(

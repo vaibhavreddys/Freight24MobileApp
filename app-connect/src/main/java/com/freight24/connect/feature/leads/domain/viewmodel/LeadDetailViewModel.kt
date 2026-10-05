@@ -43,163 +43,178 @@ data class LeadDetailState(
 
 @OptIn(FlowPreview::class)
 @HiltViewModel
-class LeadDetailViewModel @Inject constructor(
-    private val leadsRepository: LeadsRepository,
-    savedStateHandle: androidx.lifecycle.SavedStateHandle,
-    sessionManager: SessionManager,
-) : ViewModel() {
+class LeadDetailViewModel
+    @Inject
+    constructor(
+        private val leadsRepository: LeadsRepository,
+        savedStateHandle: androidx.lifecycle.SavedStateHandle,
+        sessionManager: SessionManager,
+    ) : ViewModel() {
+        /**
+         * Fleet executives are scoped by the backend to their own leads, so "assigned to"
+         * always names the person reading the screen. Admins and managers need it.
+         */
+        val canViewAssignee: Boolean = !sessionManager.isFleetExecutive()
 
-    /**
-     * Fleet executives are scoped by the backend to their own leads, so "assigned to"
-     * always names the person reading the screen. Admins and managers need it.
-     */
-    val canViewAssignee: Boolean = !sessionManager.isFleetExecutive()
+        private val leadId: String = savedStateHandle.get<String>("leadId").orEmpty()
 
-    private val leadId: String = savedStateHandle.get<String>("leadId").orEmpty()
+        private val _state = MutableStateFlow(LeadDetailState())
+        val state = _state.asStateFlow()
 
-    private val _state = MutableStateFlow(LeadDetailState())
-    val state = _state.asStateFlow()
+        private var citySearchJob: Job? = null
 
-    private var citySearchJob: Job? = null
-
-    init {
-        load()
-        loadTruckTypes()
-    }
-
-    fun load() {
-        if (leadId.isBlank()) {
-            _state.value = _state.value.copy(isLoading = false, error = "Missing lead id")
-            return
+        init {
+            load()
+            loadTruckTypes()
         }
-        _state.value = _state.value.copy(isLoading = true, error = null)
-        viewModelScope.launch {
-            leadsRepository.getLeadDetail(leadId)
-                .onSuccess { detail ->
-                    _state.value = _state.value.copy(detail = detail, isLoading = false, error = null)
+
+        fun load() {
+            if (leadId.isBlank()) {
+                _state.value = _state.value.copy(isLoading = false, error = "Missing lead id")
+                return
+            }
+            _state.value = _state.value.copy(isLoading = true, error = null)
+            viewModelScope.launch {
+                leadsRepository.getLeadDetail(leadId)
+                    .onSuccess { detail ->
+                        _state.value = _state.value.copy(detail = detail, isLoading = false, error = null)
+                    }
+                    .onFailure { throwable ->
+                        _state.value = _state.value.copy(isLoading = false, error = throwable.message ?: "Failed to load lead")
+                    }
+            }
+        }
+
+        private fun loadTruckTypes() {
+            viewModelScope.launch {
+                leadsRepository.getTruckTypesCached().onSuccess { types ->
+                    _state.value = _state.value.copy(truckTypes = types)
                 }
-                .onFailure { throwable ->
-                    _state.value = _state.value.copy(isLoading = false, error = throwable.message ?: "Failed to load lead")
-                }
-        }
-    }
-
-    private fun loadTruckTypes() {
-        viewModelScope.launch {
-            leadsRepository.getTruckTypesCached().onSuccess { types ->
-                _state.value = _state.value.copy(truckTypes = types)
             }
         }
-    }
 
-    /**
-     * Search cities for one specific field.
-     *
-     * [owner] is the field's stable key (see `LeadDetailScreen`). Results are tagged with
-     * it so only that field renders the dropdown.
-     */
-    fun searchCities(owner: String, query: String) {
-        citySearchJob?.cancel()
-        if (query.length < 2) {
-            _state.value = _state.value.copy(
-                cityResults = emptyList(),
-                cityResultsOwner = owner,
-                citySearchLoading = false,
-            )
-            return
-        }
-        _state.value = _state.value.copy(cityResultsOwner = owner, citySearchLoading = true)
-        citySearchJob = viewModelScope.launch {
-            // Instant cached results first, then live search results
-            val cached = leadsRepository.searchCachedCities(query)
-            if (cached.isNotEmpty()) {
-                _state.value = _state.value.copy(cityResults = cached, citySearchLoading = false)
-            }
-            delay(250)
-            leadsRepository.searchCities(query).onSuccess { live ->
-                _state.value = _state.value.copy(cityResults = live, citySearchLoading = false)
-            }.onFailure {
-                // Keep whatever the cache already gave us; a failed live search must not
-                // wipe suggestions the user can still act on.
-                _state.value = _state.value.copy(citySearchLoading = false)
-            }
-        }
-    }
-
-    fun clearCityResults() {
-        _state.value = _state.value.copy(cityResults = emptyList(), citySearchLoading = false)
-    }
-
-    fun recordCallOutcome(outcome: String, reason: String? = null, notes: String? = null) {
-        runAction("call_outcome") {
-            val request = when (outcome) {
-                "not_interested" -> CallOutcomeRequest(outcome = outcome, notInterestedReason = reason, notes = notes)
-                "invalid" -> CallOutcomeRequest(outcome = outcome, invalidReason = reason, notes = notes)
-                else -> CallOutcomeRequest(outcome = outcome, notes = notes)
-            }
-            leadsRepository.recordCallOutcome(leadId, request)
-        }
-    }
-
-    fun saveOnboarding(
-        name: String,
-        baseCityId: Int?,
-        truckTypeIds: List<Int>,
-        routes: List<LeadRouteEntryRequest>,
-        notes: String?,
-    ) {
-        if (name.isBlank()) {
-            _state.value = _state.value.copy(actionError = "Name is required")
-            return
-        }
-        if (truckTypeIds.isEmpty()) {
-            _state.value = _state.value.copy(actionError = "Select at least one truck type")
-            return
-        }
-        runAction("save_onboarding") {
-            leadsRepository.updateLeadDetails(
-                leadId,
-                UpdateLeadDetailsRequest(
-                    name = name,
-                    baseCityId = baseCityId,
-                    truckTypeIds = truckTypeIds,
-                    routes = routes,
-                    notes = notes,
-                )
-            )
-        }
-    }
-
-    fun convertLead() {
-        runAction("convert") {
-            leadsRepository.convertLead(leadId, ConvertLeadRequest())
-        }
-    }
-
-    fun reopenLead() {
-        runAction("reopen") {
-            leadsRepository.reopenLead(leadId)
-        }
-    }
-
-    fun clearActionMessages() {
-        _state.value = _state.value.copy(actionError = null, actionSuccess = null)
-    }
-
-    private fun runAction(key: String, block: suspend () -> Result<*>) {
-        _state.value = _state.value.copy(actionBusy = key, actionError = null, actionSuccess = null)
-        viewModelScope.launch {
-            block().onSuccess { _state.value = _state.value.copy(actionBusy = null) }
-                .onFailure { throwable ->
-                    _state.value = _state.value.copy(
-                        actionBusy = null,
-                        actionError = throwable.message ?: "Action failed"
+        /**
+         * Search cities for one specific field.
+         *
+         * [owner] is the field's stable key (see `LeadDetailScreen`). Results are tagged with
+         * it so only that field renders the dropdown.
+         */
+        fun searchCities(
+            owner: String,
+            query: String,
+        ) {
+            citySearchJob?.cancel()
+            if (query.length < 2) {
+                _state.value =
+                    _state.value.copy(
+                        cityResults = emptyList(),
+                        cityResultsOwner = owner,
+                        citySearchLoading = false,
                     )
+                return
+            }
+            _state.value = _state.value.copy(cityResultsOwner = owner, citySearchLoading = true)
+            citySearchJob =
+                viewModelScope.launch {
+                    // Instant cached results first, then live search results
+                    val cached = leadsRepository.searchCachedCities(query)
+                    if (cached.isNotEmpty()) {
+                        _state.value = _state.value.copy(cityResults = cached, citySearchLoading = false)
+                    }
+                    delay(250)
+                    leadsRepository.searchCities(query).onSuccess { live ->
+                        _state.value = _state.value.copy(cityResults = live, citySearchLoading = false)
+                    }.onFailure {
+                        // Keep whatever the cache already gave us; a failed live search must not
+                        // wipe suggestions the user can still act on.
+                        _state.value = _state.value.copy(citySearchLoading = false)
+                    }
                 }
-            // Reload detail to reflect the new status/activity
-            leadsRepository.getLeadDetail(leadId).onSuccess { detail ->
-                _state.value = _state.value.copy(detail = detail)
+        }
+
+        fun clearCityResults() {
+            _state.value = _state.value.copy(cityResults = emptyList(), citySearchLoading = false)
+        }
+
+        fun recordCallOutcome(
+            outcome: String,
+            reason: String? = null,
+            notes: String? = null,
+        ) {
+            runAction("call_outcome") {
+                val request =
+                    when (outcome) {
+                        "not_interested" -> CallOutcomeRequest(outcome = outcome, notInterestedReason = reason, notes = notes)
+                        "invalid" -> CallOutcomeRequest(outcome = outcome, invalidReason = reason, notes = notes)
+                        else -> CallOutcomeRequest(outcome = outcome, notes = notes)
+                    }
+                leadsRepository.recordCallOutcome(leadId, request)
+            }
+        }
+
+        fun saveOnboarding(
+            name: String,
+            baseCityId: Int?,
+            truckTypeIds: List<Int>,
+            routes: List<LeadRouteEntryRequest>,
+            notes: String?,
+        ) {
+            if (name.isBlank()) {
+                _state.value = _state.value.copy(actionError = "Name is required")
+                return
+            }
+            if (truckTypeIds.isEmpty()) {
+                _state.value = _state.value.copy(actionError = "Select at least one truck type")
+                return
+            }
+            runAction("save_onboarding") {
+                leadsRepository.updateLeadDetails(
+                    leadId,
+                    UpdateLeadDetailsRequest(
+                        name = name,
+                        baseCityId = baseCityId,
+                        truckTypeIds = truckTypeIds,
+                        routes = routes,
+                        notes = notes,
+                    ),
+                )
+            }
+        }
+
+        fun convertLead() {
+            runAction("convert") {
+                leadsRepository.convertLead(leadId, ConvertLeadRequest())
+            }
+        }
+
+        fun reopenLead() {
+            runAction("reopen") {
+                leadsRepository.reopenLead(leadId)
+            }
+        }
+
+        fun clearActionMessages() {
+            _state.value = _state.value.copy(actionError = null, actionSuccess = null)
+        }
+
+        private fun runAction(
+            key: String,
+            block: suspend () -> Result<*>,
+        ) {
+            _state.value = _state.value.copy(actionBusy = key, actionError = null, actionSuccess = null)
+            viewModelScope.launch {
+                block().onSuccess { _state.value = _state.value.copy(actionBusy = null) }
+                    .onFailure { throwable ->
+                        _state.value =
+                            _state.value.copy(
+                                actionBusy = null,
+                                actionError = throwable.message ?: "Action failed",
+                            )
+                    }
+                // Reload detail to reflect the new status/activity
+                leadsRepository.getLeadDetail(leadId).onSuccess { detail ->
+                    _state.value = _state.value.copy(detail = detail)
+                }
             }
         }
     }
-}

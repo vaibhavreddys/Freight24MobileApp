@@ -26,19 +26,14 @@ data class ProfileDto(
     val emailId: String?,
     val phoneNo: String?,
     val alternativePhoneNo: List<String>?,
-    
     @SerialName("panNumber")
     val panNumber: String? = null,
-    
     @SerialName("panCard")
     val panCard: String? = null,
-    
     @SerialName("aadhaarNumber")
     val aadhaarNumber: String? = null,
-    
     @SerialName("aadharCard") // API uses "aadharCard" (single 'a' after 'd')
     val aadharCard: String? = null,
-    
     val isTdsApplicable: Boolean?,
     val tagCode: String?,
     val documents: List<ProfileDocumentDto>?,

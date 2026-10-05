@@ -126,16 +126,19 @@ class ClientRepositoryImpl
                 }
             }
 
-    private fun extractErrorMessage(response: Response<*>, bodyMessage: String? = null): String {
-        bodyMessage?.takeIf { it.isNotBlank() }?.let { return it }
+        private fun extractErrorMessage(
+            response: Response<*>,
+            bodyMessage: String? = null,
+        ): String {
+            bodyMessage?.takeIf { it.isNotBlank() }?.let { return it }
 
-        val rawError = response.errorBody()?.string().orEmpty()
-        if (rawError.isNotBlank()) {
-            runCatching {
-                JSONObject(rawError).optString("message")
-            }.getOrNull()?.takeIf { it.isNotBlank() }?.let { return it }
+            val rawError = response.errorBody()?.string().orEmpty()
+            if (rawError.isNotBlank()) {
+                runCatching {
+                    JSONObject(rawError).optString("message")
+                }.getOrNull()?.takeIf { it.isNotBlank() }?.let { return it }
+            }
+
+            return response.message().ifBlank { "Request failed" }
         }
-
-        return response.message().ifBlank { "Request failed" }
-    }
     }

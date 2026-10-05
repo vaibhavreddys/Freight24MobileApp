@@ -4,13 +4,12 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class SearchTruckerResponse(
-    val data: TruckerData
+    val data: TruckerData,
 ) : BaseResponse() {
-
     @Serializable
     data class TruckerData(
         val truckers: List<Trucker>,
-        val totalOwners: Int
+        val totalOwners: Int,
     )
 
     @Serializable

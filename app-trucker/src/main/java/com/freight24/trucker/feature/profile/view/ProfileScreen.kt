@@ -10,11 +10,11 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -61,8 +61,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
@@ -71,7 +70,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -83,25 +81,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.OffsetMapping
-import androidx.compose.ui.text.input.TransformedText
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -113,20 +103,17 @@ import com.freight24.trucker.R
 import com.freight24.trucker.feature.profile.domain.DocumentType
 import com.freight24.trucker.feature.profile.domain.Profile
 import com.freight24.trucker.feature.profile.util.ProfileDocumentTypeIds
-import com.freight24.trucker.feature.profile.util.ProfileFieldValidators
-import com.freight24.trucker.feature.profile.util.ValidationResult
 import com.freight24.trucker.ui.components.rememberCallAction
 import com.freight24.ui.UiState
 import com.freight24.ui.components.AddRouteBottomSheet
 import com.freight24.ui.components.CitySearchField
 import com.freight24.ui.components.ProfileUtilityRow
 import com.freight24.ui.components.RouteChip
-import com.freight24.ui.theme.FreightThemeTokens
 import com.freight24.ui.components.formViewportInsets
+import com.freight24.ui.theme.FreightThemeTokens
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
-
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -250,7 +237,6 @@ internal fun ProfileScreen(
             }
         }
     }
-
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -291,67 +277,72 @@ private fun ProfileMainContent(
     var showCancelConfirmDialog by rememberSaveable { mutableStateOf(false) }
 
     val sourceSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val selectedUploadStatus = pickingDocumentType
-        ?.let { type -> documentStates[com.freight24.trucker.feature.profile.util.ProfileDocumentTypeIds.fieldKey(type)]?.uploadStatus }
-        ?: UploadStatus.IDLE
+    val selectedUploadStatus =
+        pickingDocumentType
+            ?.let { type -> documentStates[com.freight24.trucker.feature.profile.util.ProfileDocumentTypeIds.fieldKey(type)]?.uploadStatus }
+            ?: UploadStatus.IDLE
 
-    val documentPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument(),
-    ) { uri ->
-        if (uri != null) {
-            pickingUris = listOf(uri)
-            isPdfPending = true
-        } else {
-            pickingDocumentType = null
+    val documentPickerLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.OpenDocument(),
+        ) { uri ->
+            if (uri != null) {
+                pickingUris = listOf(uri)
+                isPdfPending = true
+            } else {
+                pickingDocumentType = null
+            }
         }
-    }
 
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia(),
-    ) { uris ->
-        if (uris.isNotEmpty()) {
-            pickingUris = uris
-            isPdfPending = false
-        } else {
-            pickingDocumentType = null
-        }
-    }
-
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture(),
-        onResult = { success ->
-            if (success && tempCameraUri != null) {
-                pickingUris = listOf(tempCameraUri!!)
+    val imagePickerLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.PickMultipleVisualMedia(),
+        ) { uris ->
+            if (uris.isNotEmpty()) {
+                pickingUris = uris
                 isPdfPending = false
             } else {
                 pickingDocumentType = null
             }
-            tempCameraUri = null
-        },
-    )
+        }
 
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { isGranted ->
-            if (isGranted) {
-                val imageUri = createTempImageUri(context)
-                tempCameraUri = imageUri
-                cameraLauncher.launch(imageUri)
-            } else {
-                scope.launch {
-                    val result =
-                        snackbarHostState.showSnackbar(
-                            message = "Camera permission denied. Grant it from app settings to use camera upload.",
-                            actionLabel = "Settings",
-                            duration = SnackbarDuration.Long,
-                        )
-                    if (result == SnackbarResult.ActionPerformed) {
-                        openAppSettings(context)
+    val cameraLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.TakePicture(),
+            onResult = { success ->
+                if (success && tempCameraUri != null) {
+                    pickingUris = listOf(tempCameraUri!!)
+                    isPdfPending = false
+                } else {
+                    pickingDocumentType = null
+                }
+                tempCameraUri = null
+            },
+        )
+
+    val cameraPermissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+            onResult = { isGranted ->
+                if (isGranted) {
+                    val imageUri = createTempImageUri(context)
+                    tempCameraUri = imageUri
+                    cameraLauncher.launch(imageUri)
+                } else {
+                    scope.launch {
+                        val result =
+                            snackbarHostState.showSnackbar(
+                                message = "Camera permission denied. Grant it from app settings to use camera upload.",
+                                actionLabel = "Settings",
+                                duration = SnackbarDuration.Long,
+                            )
+                        if (result == SnackbarResult.ActionPerformed) {
+                            openAppSettings(context)
+                        }
                     }
                 }
-            }
-        },
-    )
+            },
+        )
 
     fun startCameraCapture() {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
@@ -582,9 +573,10 @@ private fun ProfileMainContent(
                             )
                         } else {
                             Text(
-                                text = baseLocation?.takeIf { it.isNotBlank() }
-                                    ?: baseCity?.city
-                                    ?: "Not added",
+                                text =
+                                    baseLocation?.takeIf { it.isNotBlank() }
+                                        ?: baseCity?.city
+                                        ?: "Not added",
                                 style = MaterialTheme.typography.bodyLarge,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface,
@@ -611,11 +603,12 @@ private fun ProfileMainContent(
                                     fromCity = route.sourceCityName,
                                     toCity = route.destCityName,
                                     isStaged = route.isStaged,
-                                    onDelete = if (isEditing) {
-                                        { viewModel.onStageRouteDelete(route.id, route.isStaged) }
-                                    } else {
-                                        null
-                                    },
+                                    onDelete =
+                                        if (isEditing) {
+                                            { viewModel.onStageRouteDelete(route.id, route.isStaged) }
+                                        } else {
+                                            null
+                                        },
                                 )
                             }
                         }
@@ -636,10 +629,11 @@ private fun ProfileMainContent(
                                     onClick = viewModel::openAddRouteSheet,
                                     label = { Text("+ Add route", style = MaterialTheme.typography.labelMedium) },
                                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)),
-                                    colors = AssistChipDefaults.assistChipColors(
-                                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                        labelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    ),
+                                    colors =
+                                        AssistChipDefaults.assistChipColors(
+                                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                            labelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        ),
                                 )
                             }
                         }
@@ -713,10 +707,11 @@ private fun ProfileMainContent(
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 ProfileField(
                     label = "Bank and branch",
-                    value = listOfNotNull(
-                        viewModel.editableBankName.collectAsState().value.takeIf { it.isNotBlank() },
-                        viewModel.editableBranchName.collectAsState().value.takeIf { it.isNotBlank() },
-                    ).joinToString(" · ").ifEmpty { "Not added" },
+                    value =
+                        listOfNotNull(
+                            viewModel.editableBankName.collectAsState().value.takeIf { it.isNotBlank() },
+                            viewModel.editableBranchName.collectAsState().value.takeIf { it.isNotBlank() },
+                        ).joinToString(" · ").ifEmpty { "Not added" },
                     isEditing = false,
                     isEditable = false,
                     onValueChange = { },
@@ -754,18 +749,18 @@ private fun ProfileMainContent(
                         showSourcePicker = true
                     },
                 )
-
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
             CourierAddressCard(
                 companyName = "Freight24",
-                addressLines = listOf(
-                    "4th Floor, #3, Srirampur Cross Road,",
-                    "Jakkuru, Bengaluru,",
-                    "Karnataka - 560064",
-                ),
+                addressLines =
+                    listOf(
+                        "4th Floor, #3, Srirampur Cross Road,",
+                        "Jakkuru, Bengaluru,",
+                        "Karnataka - 560064",
+                    ),
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -880,9 +875,10 @@ private fun CourierAddressCard(
     val clipboardManager = LocalClipboardManager.current
     var isCopied by remember { mutableStateOf(false) }
 
-    val fullAddress = remember(companyName, addressLines) {
-        "$companyName\n${addressLines.joinToString("\n")}"
-    }
+    val fullAddress =
+        remember(companyName, addressLines) {
+            "$companyName\n${addressLines.joinToString("\n")}"
+        }
 
     LaunchedEffect(isCopied) {
         if (isCopied) {
@@ -929,13 +925,14 @@ private fun CourierAddressCard(
                         clipboardManager.setText(AnnotatedString(fullAddress))
                         isCopied = true
                     },
-                    modifier = Modifier
-                        .size(40.dp)
-                        .testTag("profile_copy_address")
-                        .semantics(mergeDescendants = true) {
-                            testTagsAsResourceId = true
-                            contentDescription = "Copy courier address"
-                        },
+                    modifier =
+                        Modifier
+                            .size(40.dp)
+                            .testTag("profile_copy_address")
+                            .semantics(mergeDescendants = true) {
+                                testTagsAsResourceId = true
+                                contentDescription = "Copy courier address"
+                            },
                 ) {
                     Icon(
                         imageVector = if (isCopied) Icons.Default.Check else Icons.Default.ContentCopy,
@@ -1010,7 +1007,6 @@ private fun LogoutButton(onLogout: () -> Unit) {
         Text(text = "Log out", fontWeight = FontWeight.SemiBold)
     }
 }
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

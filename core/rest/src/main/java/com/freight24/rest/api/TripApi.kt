@@ -8,12 +8,12 @@ import com.freight24.rest.request.UpdateTripRequest
 import com.freight24.rest.request.UpdateTruckerStatus
 import com.freight24.rest.response.BaseResponse
 import com.freight24.rest.response.CreatedTripResponse
-import com.freight24.rest.response.TripDetailResponse
 import com.freight24.rest.response.MyTripsDataResponse
 import com.freight24.rest.response.PaymentTransactionsResponse
 import com.freight24.rest.response.PodUploadResponse
 import com.freight24.rest.response.SignedDocument
 import com.freight24.rest.response.TripDetailDataResponse
+import com.freight24.rest.response.TripDetailResponse
 import com.freight24.rest.response.TripResponse
 import com.freight24.rest.response.TripSearchResponse
 import com.freight24.rest.response.UpdateOtherDeductionsResponse
@@ -33,7 +33,6 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface TripApi {
-
     @GET("trips/trucker/list")
     suspend fun getTrips(
         @Query("page") page: Int,
@@ -53,7 +52,7 @@ interface TripApi {
 
     @POST("trips")
     suspend fun createTrip(
-        @Body createTripRequest: CreateTripRequest
+        @Body createTripRequest: CreateTripRequest,
     ): Response<CreatedTripResponse>
 
     @GET("employee/trips/my-trips")
@@ -78,7 +77,7 @@ interface TripApi {
     suspend fun getPaymentTransactions(
         @Path("tripId") tripId: String,
         @Query("userType") userType: String,
-        @Query("view") view: String = "transactions"
+        @Query("view") view: String = "transactions",
     ): Response<PaymentTransactionsResponse>
 
     @Multipart
@@ -86,7 +85,7 @@ interface TripApi {
     suspend fun uploadLr(
         @Path("tripId") tripId: String,
         @Part file: MultipartBody.Part,
-        @Part("notes") description: RequestBody? = null
+        @Part("notes") description: RequestBody? = null,
     ): Response<UploadedDataResponse>
 
     @Multipart
@@ -95,7 +94,7 @@ interface TripApi {
         @Path("trip_id") tripId: String,
         @Part file: MultipartBody.Part,
         @Part("pod_type") podType: RequestBody,
-        @Part("notes") notes: RequestBody? = null
+        @Part("notes") notes: RequestBody? = null,
     ): Response<PodUploadResponse>
 
     @Multipart
@@ -104,7 +103,7 @@ interface TripApi {
         @Path("trip_id") tripId: String,
         @Path("pod_id") podId: String,
         @Part file: MultipartBody.Part,
-        @Part("notes") notes: RequestBody? = null
+        @Part("notes") notes: RequestBody? = null,
     ): Response<PodUploadResponse>
 
     @GET("trips/{trip_id}/documents/{document_id}/signed-url")
@@ -116,25 +115,24 @@ interface TripApi {
     @PATCH("trips/{tripId}/lr/verify")
     suspend fun verifyLr(
         @Path("tripId") tripId: String,
-        @Body lrVerifyRequest: LrVerifyRequest
+        @Body lrVerifyRequest: LrVerifyRequest,
     ): Response<TripDetailDataResponse>
 
     @PATCH("trips/{trip_id}/other-deductions")
     suspend fun updateOtherDeductions(
         @Path("trip_id") tripId: String,
-        @Body updateOtherDeductionsRequest: UpdateOtherDeductionsRequest
+        @Body updateOtherDeductionsRequest: UpdateOtherDeductionsRequest,
     ): Response<UpdateOtherDeductionsResponse>
 
     @PATCH("trips/{trip_id}/edit-basic")
     suspend fun updateTrip(
         @Path("trip_id") tripId: String,
-        @Body updateTripRequest: UpdateTripRequest
+        @Body updateTripRequest: UpdateTripRequest,
     ): Response<UpdateTripResponse>
 
     @POST("trips/{trip_id}/cancel")
     suspend fun cancelTrip(
         @Path("trip_id") tripId: String,
-        @Body cancelTripRequest: CancelTripRequest
+        @Body cancelTripRequest: CancelTripRequest,
     ): Response<BaseResponse>
-
 }

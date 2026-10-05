@@ -21,6 +21,7 @@ interface TruckRepository {
         fcCertificate: MultipartBody.Part?,
         insurance: MultipartBody.Part?,
     ): Result<AddTruckResponse>
+
     suspend fun updateTruckDocuments(
         truckId: String,
         rcCard: MultipartBody.Part? = null,
@@ -40,7 +41,10 @@ interface TruckRepository {
         insurance: MultipartBody.Part? = null,
     ): Result<AddTruckResponse>
 
-    suspend fun getTruckDocumentSignedUrl(truckId: String, documentType: String): Result<String>
- 
+    suspend fun getTruckDocumentSignedUrl(
+        truckId: String,
+        documentType: String,
+    ): Result<String>
+
     suspend fun checkTruckAvailability(registrationNumber: String): Result<String?>
 }

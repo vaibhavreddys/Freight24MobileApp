@@ -56,36 +56,37 @@ data class FreightExtendedColors(
     val onStatusPending: Color,
 )
 
-internal val LocalFreightExtendedColors = staticCompositionLocalOf<FreightExtendedColors> {
-    // Defaults are Color.Unspecified so previews & unprovided content see no
-    // surprise colors bleeding in — explicit Freight24Theme wraps are the only
-    // path to real values.
-    FreightExtendedColors(
-        success = Color.Unspecified,
-        onSuccess = Color.Unspecified,
-        surfaceSuccess = Color.Unspecified,
-        onSurfaceSuccess = Color.Unspecified,
-        warning = Color.Unspecified,
-        onWarning = Color.Unspecified,
-        surfaceWarning = Color.Unspecified,
-        onSurfaceWarning = Color.Unspecified,
-        info = Color.Unspecified,
-        onInfo = Color.Unspecified,
-        surfaceInfo = Color.Unspecified,
-        onSurfaceInfo = Color.Unspecified,
-        settings = Color.Unspecified,
-        onSettings = Color.Unspecified,
-        dialogScrim = Color.Unspecified,
-        routeOrigin = Color.Unspecified,
-        onRouteOrigin = Color.Unspecified,
-        routeDestination = Color.Unspecified,
-        onRouteDestination = Color.Unspecified,
-        statusAvailable = Color.Unspecified,
-        onStatusAvailable = Color.Unspecified,
-        statusPending = Color.Unspecified,
-        onStatusPending = Color.Unspecified,
-    )
-}
+internal val LocalFreightExtendedColors =
+    staticCompositionLocalOf<FreightExtendedColors> {
+        // Defaults are Color.Unspecified so previews & unprovided content see no
+        // surprise colors bleeding in — explicit Freight24Theme wraps are the only
+        // path to real values.
+        FreightExtendedColors(
+            success = Color.Unspecified,
+            onSuccess = Color.Unspecified,
+            surfaceSuccess = Color.Unspecified,
+            onSurfaceSuccess = Color.Unspecified,
+            warning = Color.Unspecified,
+            onWarning = Color.Unspecified,
+            surfaceWarning = Color.Unspecified,
+            onSurfaceWarning = Color.Unspecified,
+            info = Color.Unspecified,
+            onInfo = Color.Unspecified,
+            surfaceInfo = Color.Unspecified,
+            onSurfaceInfo = Color.Unspecified,
+            settings = Color.Unspecified,
+            onSettings = Color.Unspecified,
+            dialogScrim = Color.Unspecified,
+            routeOrigin = Color.Unspecified,
+            onRouteOrigin = Color.Unspecified,
+            routeDestination = Color.Unspecified,
+            onRouteDestination = Color.Unspecified,
+            statusAvailable = Color.Unspecified,
+            onStatusAvailable = Color.Unspecified,
+            statusPending = Color.Unspecified,
+            onStatusPending = Color.Unspecified,
+        )
+    }
 
 object FreightThemeTokens {
     val colors: FreightExtendedColors

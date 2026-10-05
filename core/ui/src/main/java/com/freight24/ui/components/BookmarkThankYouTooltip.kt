@@ -20,13 +20,13 @@ import androidx.compose.ui.unit.dp
 fun BookmarkThankYouTooltip(
     visible: Boolean,
     modifier: Modifier = Modifier,
-    text: String = "Thanks for showing interest!"
+    text: String = "Thanks for showing interest!",
 ) {
     androidx.compose.animation.AnimatedVisibility(
         visible = visible,
         enter = fadeIn(tween(200)) + slideInVertically(initialOffsetY = { -8 }) + scaleIn(initialScale = 0.85f),
         exit = fadeOut(tween(200)) + slideOutVertically(targetOffsetY = { -8 }) + scaleOut(targetScale = 0.85f),
-        modifier = modifier
+        modifier = modifier,
     ) {
         Surface(
             shape = RoundedCornerShape(12.dp),

@@ -33,7 +33,7 @@ val Context.authDataStore: DataStore<Preferences> by preferencesDataStore(name =
 @Singleton
 class AuthDataStore
     @Inject
-        constructor(
+    constructor(
         @param:ApplicationContext private val context: Context,
     ) {
         companion object {

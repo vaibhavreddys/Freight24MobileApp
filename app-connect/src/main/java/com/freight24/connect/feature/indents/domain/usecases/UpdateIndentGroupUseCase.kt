@@ -27,7 +27,6 @@ class UpdateIndentGroupUseCaseImpl
     constructor(
         private val repository: IndentRepository,
     ) : UpdateIndentGroupUseCase {
-        override suspend fun invoke(
-            params: UpdateIndentGroupUseCaseParams,
-        ): Result<Unit> = repository.updateIndentGroup(params.groupId, params.request)
+        override suspend fun invoke(params: UpdateIndentGroupUseCaseParams): Result<Unit> =
+            repository.updateIndentGroup(params.groupId, params.request)
     }

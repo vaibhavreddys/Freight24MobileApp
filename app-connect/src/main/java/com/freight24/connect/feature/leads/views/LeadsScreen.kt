@@ -33,10 +33,10 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -79,42 +79,47 @@ import com.freight24.ui.theme.FreightThemeTokens
 // ===========================================================================
 
 /** Short rail labels — the rail is a fixed grid, so labels stay one word. */
-private fun LeadsTab.railLabel(): String = when (this) {
-    LeadsTab.NEW -> "New"
-    LeadsTab.FOLLOW_UP -> "Follow-up"
-    LeadsTab.COMPLETED -> "Onboarded"
-    LeadsTab.NOT_INTERESTED -> "Closed"
-}
+private fun LeadsTab.railLabel(): String =
+    when (this) {
+        LeadsTab.NEW -> "New"
+        LeadsTab.FOLLOW_UP -> "Follow-up"
+        LeadsTab.COMPLETED -> "Onboarded"
+        LeadsTab.NOT_INTERESTED -> "Closed"
+    }
 
 /** Rail accent = the tab's dominant status colour, shared with the card spines. */
 @Composable
-private fun LeadsTabAccent(tab: LeadsTab): Color = when (tab) {
-    LeadsTab.NEW -> FreightThemeTokens.colors.info
-    LeadsTab.FOLLOW_UP -> FreightThemeTokens.colors.warning
-    LeadsTab.COMPLETED -> FreightThemeTokens.colors.success
-    LeadsTab.NOT_INTERESTED -> MaterialTheme.colorScheme.error
-}
+private fun LeadsTabAccent(tab: LeadsTab): Color =
+    when (tab) {
+        LeadsTab.NEW -> FreightThemeTokens.colors.info
+        LeadsTab.FOLLOW_UP -> FreightThemeTokens.colors.warning
+        LeadsTab.COMPLETED -> FreightThemeTokens.colors.success
+        LeadsTab.NOT_INTERESTED -> MaterialTheme.colorScheme.error
+    }
 
-private fun LeadsTab.railIcon(): ImageVector = when (this) {
-    LeadsTab.NEW -> Icons.Default.PersonAddAlt1
-    LeadsTab.FOLLOW_UP -> Icons.Default.PhoneCallback
-    LeadsTab.COMPLETED -> Icons.Default.HowToReg
-    LeadsTab.NOT_INTERESTED -> Icons.Default.PersonOff
-}
+private fun LeadsTab.railIcon(): ImageVector =
+    when (this) {
+        LeadsTab.NEW -> Icons.Default.PersonAddAlt1
+        LeadsTab.FOLLOW_UP -> Icons.Default.PhoneCallback
+        LeadsTab.COMPLETED -> Icons.Default.HowToReg
+        LeadsTab.NOT_INTERESTED -> Icons.Default.PersonOff
+    }
 
-private fun LeadsTab.emptyTitle(): String = when (this) {
-    LeadsTab.NEW -> "No new leads"
-    LeadsTab.FOLLOW_UP -> "No follow-ups in progress"
-    LeadsTab.COMPLETED -> "Nobody onboarded yet"
-    LeadsTab.NOT_INTERESTED -> "No closed leads"
-}
+private fun LeadsTab.emptyTitle(): String =
+    when (this) {
+        LeadsTab.NEW -> "No new leads"
+        LeadsTab.FOLLOW_UP -> "No follow-ups in progress"
+        LeadsTab.COMPLETED -> "Nobody onboarded yet"
+        LeadsTab.NOT_INTERESTED -> "No closed leads"
+    }
 
-private fun LeadsTab.emptySubtitle(): String = when (this) {
-    LeadsTab.NEW -> "Freshly imported leads wait here for their first call."
-    LeadsTab.FOLLOW_UP -> "Leads you are actively working will appear here."
-    LeadsTab.COMPLETED -> "Soft-onboarded and converted leads are filed here."
-    LeadsTab.NOT_INTERESTED -> "Declined, invalid and do-not-contact leads are filed here."
-}
+private fun LeadsTab.emptySubtitle(): String =
+    when (this) {
+        LeadsTab.NEW -> "Freshly imported leads wait here for their first call."
+        LeadsTab.FOLLOW_UP -> "Leads you are actively working will appear here."
+        LeadsTab.COMPLETED -> "Soft-onboarded and converted leads are filed here."
+        LeadsTab.NOT_INTERESTED -> "Declined, invalid and do-not-contact leads are filed here."
+    }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -154,9 +159,10 @@ fun LeadsScreen(
         containerColor = MaterialTheme.colorScheme.background,
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
         ) {
             LeadsQueueRail(
                 selectedTab = selectedTab,
@@ -169,9 +175,10 @@ fun LeadsScreen(
 
             if (error != null && leads.isEmpty()) {
                 Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
                     shape = PanelShape,
                     color = MaterialTheme.colorScheme.errorContainer,
                 ) {
@@ -188,9 +195,10 @@ fun LeadsScreen(
             PullToRefreshBox(
                 isRefreshing = isRefreshing,
                 onRefresh = { viewModel.refresh() },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .semantics { contentDescription = "leads_list" },
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .semantics { contentDescription = "leads_list" },
             ) {
                 if (isLoading) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -215,13 +223,15 @@ fun LeadsScreen(
                     }
                 } else {
                     val listState = rememberLazyListState()
-                    val shouldLoadMore = remember {
-                        derivedStateOf {
-                            val last = listState.layoutInfo.visibleItemsInfo.lastOrNull()
-                                ?: return@derivedStateOf false
-                            last.index >= listState.layoutInfo.totalItemsCount - 3
+                    val shouldLoadMore =
+                        remember {
+                            derivedStateOf {
+                                val last =
+                                    listState.layoutInfo.visibleItemsInfo.lastOrNull()
+                                        ?: return@derivedStateOf false
+                                last.index >= listState.layoutInfo.totalItemsCount - 3
+                            }
                         }
-                    }
                     LaunchedEffect(shouldLoadMore.value) {
                         if (shouldLoadMore.value && hasMore) viewModel.loadMore()
                     }
@@ -245,9 +255,10 @@ fun LeadsScreen(
                         if (isLoadingMore) {
                             item {
                                 Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 12.dp),
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .padding(vertical = 12.dp),
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     CircularProgressIndicator(modifier = Modifier.size(24.dp))
@@ -274,22 +285,25 @@ private fun LeadsQueueRail(
     completedCount: Int,
     closedCount: Int,
 ) {
-    val counts = mapOf(
-        LeadsTab.NEW to newCount,
-        LeadsTab.FOLLOW_UP to followUpCount,
-        LeadsTab.COMPLETED to completedCount,
-        LeadsTab.NOT_INTERESTED to closedCount,
-    )
+    val counts =
+        mapOf(
+            LeadsTab.NEW to newCount,
+            LeadsTab.FOLLOW_UP to followUpCount,
+            LeadsTab.COMPLETED to completedCount,
+            LeadsTab.NOT_INTERESTED to closedCount,
+        )
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             LeadsTab.entries.forEach { tab ->
@@ -337,19 +351,21 @@ private fun LeadsRailCell(
     val tallyContent = if (isSelected) scheme.onPrimary else accent
 
     Surface(
-        modifier = modifier
-            .heightIn(min = 56.dp)
-            .testTag(testTag)
-            .semantics { testTagsAsResourceId = true }
-            .selectable(selected = isSelected, onClick = onClick, role = Role.Tab),
+        modifier =
+            modifier
+                .heightIn(min = 56.dp)
+                .testTag(testTag)
+                .semantics { testTagsAsResourceId = true }
+                .selectable(selected = isSelected, onClick = onClick, role = Role.Tab),
         shape = PanelShape,
         color = container,
         border = BorderStroke(1.dp, outline),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp, vertical = 9.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 9.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(5.dp),
         ) {
@@ -507,17 +523,18 @@ private fun LeadDocketCard(
  * out for the same reason: a bare "2 attempts" leaves the reader guessing whether the
  * number is calls made or calls remaining.
  */
-private fun leadMetaLine(lead: LeadDto): String = buildList {
-    add(lead.baseCity?.name ?: "No base location")
-    add("${lead.callAttempts} ${"attempt".pluralize(lead.callAttempts)} made")
-    add(
-        if (lead.truckTypes.isEmpty()) {
-            "no truck types"
-        } else {
-            "${lead.truckTypes.size} truck ${"type".pluralize(lead.truckTypes.size)}"
-        }
-    )
-}.joinToString(" · ")
+private fun leadMetaLine(lead: LeadDto): String =
+    buildList {
+        add(lead.baseCity?.name ?: "No base location")
+        add("${lead.callAttempts} ${"attempt".pluralize(lead.callAttempts)} made")
+        add(
+            if (lead.truckTypes.isEmpty()) {
+                "no truck types"
+            } else {
+                "${lead.truckTypes.size} truck ${"type".pluralize(lead.truckTypes.size)}"
+            },
+        )
+    }.joinToString(" · ")
 
 private fun String.pluralize(count: Int): String = if (count == 1) this else "${this}s"
 
@@ -545,8 +562,9 @@ private fun AgeStamp(updatedAt: String?) {
         fontWeight = FontWeight.Medium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         maxLines = 1,
-        modifier = Modifier
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh, TagShape)
-            .padding(horizontal = 8.dp, vertical = 4.dp),
+        modifier =
+            Modifier
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh, TagShape)
+                .padding(horizontal = 8.dp, vertical = 4.dp),
     )
 }

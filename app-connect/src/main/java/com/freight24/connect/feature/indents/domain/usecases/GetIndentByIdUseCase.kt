@@ -12,12 +12,12 @@ data class GetIndentByIdUseCaseParams(
 
 interface GetIndentByIdUseCase : UseCase<GetIndentByIdUseCaseParams, IndentResponse>
 
-class GetIndentByIdUseCaseImpl @Inject constructor(
-    private val repository: IndentRepository
-): GetIndentByIdUseCase {
-
-    override suspend fun invoke(params: GetIndentByIdUseCaseParams): Result<IndentResponse> {
-        return repository.getIndentById(params.identId)
+class GetIndentByIdUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: IndentRepository,
+    ) : GetIndentByIdUseCase {
+        override suspend fun invoke(params: GetIndentByIdUseCaseParams): Result<IndentResponse> {
+            return repository.getIndentById(params.identId)
+        }
     }
-
-}

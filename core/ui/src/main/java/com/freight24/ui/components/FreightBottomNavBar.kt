@@ -5,13 +5,13 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
@@ -51,12 +51,13 @@ fun <T : NavTabItem> FreightBottomNavBar(
                     onItemSelected(item)
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 },
-                modifier = Modifier
-                    .testTag("tab_${item.id}")
-                    .semantics(mergeDescendants = true) {
-                        testTagsAsResourceId = true
-                        contentDescription = "tab_${item.id}"
-                    },
+                modifier =
+                    Modifier
+                        .testTag("tab_${item.id}")
+                        .semantics(mergeDescendants = true) {
+                            testTagsAsResourceId = true
+                            contentDescription = "tab_${item.id}"
+                        },
                 icon = {
                     Icon(
                         imageVector = item.icon,

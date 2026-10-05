@@ -76,12 +76,13 @@ internal fun VerifyOtpContent(
     LaunchedEffect(Unit) { revealed = true }
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(colors.paper)
-            .imePadding()
-            .verticalScroll(rememberScrollState())
-            .navigationBarsPadding(),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .background(colors.paper)
+                .imePadding()
+                .verticalScroll(rememberScrollState())
+                .navigationBarsPadding(),
     ) {
         AuthMasthead(
             colors = colors,

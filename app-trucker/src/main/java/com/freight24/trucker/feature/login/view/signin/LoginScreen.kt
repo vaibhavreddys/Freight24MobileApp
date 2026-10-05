@@ -98,8 +98,9 @@ internal fun LoginScreen(
             // Last line of defence: the ViewModel already maps failures to
             // driver-safe copy, so a blank here means something upstream
             // produced nothing. Never render an empty error block.
-            errorMessage = (uiState as UiState.Error).message
-                .ifBlank { AuthErrorMessage.UNREACHABLE }
+            errorMessage =
+                (uiState as UiState.Error).message
+                    .ifBlank { AuthErrorMessage.UNREACHABLE }
             viewModel.resetUiState()
         }
     }
@@ -117,31 +118,36 @@ internal fun LoginScreen(
 
     // Notification permission — fire-and-forget. We deliberately don't
     // surface a denial here: the auth screen is the wrong place to nag.
-    val notificationPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { /* ignored — the driver can still use the app */ }
+    val notificationPermissionLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestPermission(),
+        ) { /* ignored — the driver can still use the app */ }
     LaunchedEffect(Unit) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 
-    val actions = remember(viewModel, context) {
-        object : LoginActions {
-            override fun onPhoneChange(value: String) = viewModel.onPhoneNumberChange(value)
-            override fun onSendCode() = viewModel.onSendOtpClick()
-            override fun onCallHelpline() = dialSupport(context)
+    val actions =
+        remember(viewModel, context) {
+            object : LoginActions {
+                override fun onPhoneChange(value: String) = viewModel.onPhoneNumberChange(value)
+
+                override fun onSendCode() = viewModel.onSendOtpClick()
+
+                override fun onCallHelpline() = dialSupport(context)
+            }
         }
-    }
 
     LoginContent(
-        state = LoginUiState(
-            phoneNumber = phoneNumber,
-            isSending = isSending,
-            errorMessage = errorMessage,
-            isPhoneComplete = isPhoneComplete,
-            autoSendProgress = fillProgress.value,
-        ),
+        state =
+            LoginUiState(
+                phoneNumber = phoneNumber,
+                isSending = isSending,
+                errorMessage = errorMessage,
+                isPhoneComplete = isPhoneComplete,
+                autoSendProgress = fillProgress.value,
+            ),
         actions = actions,
     )
 }

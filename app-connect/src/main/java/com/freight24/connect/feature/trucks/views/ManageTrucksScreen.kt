@@ -1,6 +1,4 @@
 package com.freight24.connect.feature.trucks.views
-import com.freight24.ui.components.FreightTopAppBar
-
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,22 +12,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,8 +35,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -53,16 +44,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.freight24.connect.feature.trucks.domain.viewmodel.ManageTrucksViewModel
 import com.freight24.ui.UiState
 import com.freight24.ui.components.FreightEmptyState
+import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.components.PanelShape
-import com.freight24.ui.theme.FreightThemeTokens
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,7 +62,7 @@ fun ManageTrucksScreen(
     viewModel: ManageTrucksViewModel = hiltViewModel(),
     onAddTruckClick: () -> Unit,
     onTruckClick: (String) -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
@@ -110,14 +101,14 @@ fun ManageTrucksScreen(
                     Text(
                         text = "Trucks",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = { navigateBack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                }
+                },
             )
         },
         floatingActionButton = {
@@ -128,135 +119,142 @@ fun ManageTrucksScreen(
             ) {
                 Icon(
                     Icons.Default.Add,
-                    contentDescription = "Onboard Truck"
+                    contentDescription = "Onboard Truck",
                 )
             }
-        }
+        },
     ) { paddingValues ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.background),
             ) {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = viewModel::onSearchQueryChanged,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .testTag("trucks_search")
-                    .semantics { testTagsAsResourceId = true },
-                placeholder = { Text("Search by registration number") },
-                leadingIcon = {
-                    Icon(
-                        Icons.Default.Search,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                },
-                shape = PanelShape,
-                singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                    disabledBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                    errorBorderColor = MaterialTheme.colorScheme.error,
-                ),
-            )
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = viewModel::onSearchQueryChanged,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                            .testTag("trucks_search")
+                            .semantics { testTagsAsResourceId = true },
+                    placeholder = { Text("Search by registration number") },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    },
+                    shape = PanelShape,
+                    singleLine = true,
+                    colors =
+                        OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                            disabledBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                            errorBorderColor = MaterialTheme.colorScheme.error,
+                        ),
+                )
 
-            PullToRefreshBox(
-                isRefreshing = isRefreshing,
-                onRefresh = viewModel::onRefresh,
-                modifier = Modifier.fillMaxSize()
-            ) {
-            when (val state = uiState) {
-                is UiState.Loading, UiState.Idle -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
-                }
-                is UiState.Error -> {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = PanelShape,
-                            color = MaterialTheme.colorScheme.errorContainer,
-                        ) {
-                            Text(
-                                text = state.message,
-                                color = MaterialTheme.colorScheme.onErrorContainer,
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(16.dp))
-                        FilledTonalButton(onClick = viewModel::retry) {
-                            Text("Retry")
-                        }
-                    }
-                }
-                is UiState.Success -> {
-                    if (filteredTrucks.isEmpty()) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            FreightEmptyState(
-                                icon = Icons.Default.LocalShipping,
-                                title = if (searchQuery.isEmpty()) "No trucks yet" else "No matching trucks",
-                                subtitle = if (searchQuery.isEmpty()) {
-                                    "Onboard your first truck to start assigning trips"
-                                } else {
-                                    "Try a different registration number"
-                                },
-                            )
-                        }
-                    } else {
-                        LazyColumn(
-                            state = listState,
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            items(filteredTrucks, key = { it.truckId }) { truck ->
-                                TruckDocketCard(
-                                    registrationNumber = truck.registrationNumber,
-                                    truckType = truck.truckType,
-                                    availability = truck.availability,
-                                    isVerified = truck.isVerified,
-                                    isBlacklisted = truck.isBlacklisted,
-                                    testTag = "trucks_card_${truck.registrationNumber}",
-                                    onClick = { onTruckClick(truck.truckId) }
-                                )
+                PullToRefreshBox(
+                    isRefreshing = isRefreshing,
+                    onRefresh = viewModel::onRefresh,
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    when (val state = uiState) {
+                        is UiState.Loading, UiState.Idle -> {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator()
                             }
                         }
+                        is UiState.Error -> {
+                            Column(
+                                modifier =
+                                    Modifier
+                                        .fillMaxSize()
+                                        .padding(horizontal = 16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                            ) {
+                                Surface(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = PanelShape,
+                                    color = MaterialTheme.colorScheme.errorContainer,
+                                ) {
+                                    Text(
+                                        text = state.message,
+                                        color = MaterialTheme.colorScheme.onErrorContainer,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.SemiBold,
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(16.dp))
+                                FilledTonalButton(onClick = viewModel::retry) {
+                                    Text("Retry")
+                                }
+                            }
+                        }
+                        is UiState.Success -> {
+                            if (filteredTrucks.isEmpty()) {
+                                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                    FreightEmptyState(
+                                        icon = Icons.Default.LocalShipping,
+                                        title = if (searchQuery.isEmpty()) "No trucks yet" else "No matching trucks",
+                                        subtitle =
+                                            if (searchQuery.isEmpty()) {
+                                                "Onboard your first truck to start assigning trips"
+                                            } else {
+                                                "Try a different registration number"
+                                            },
+                                    )
+                                }
+                            } else {
+                                LazyColumn(
+                                    state = listState,
+                                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                                    modifier = Modifier.fillMaxSize(),
+                                ) {
+                                    items(filteredTrucks, key = { it.truckId }) { truck ->
+                                        TruckDocketCard(
+                                            registrationNumber = truck.registrationNumber,
+                                            truckType = truck.truckType,
+                                            availability = truck.availability,
+                                            isVerified = truck.isVerified,
+                                            isBlacklisted = truck.isBlacklisted,
+                                            testTag = "trucks_card_${truck.registrationNumber}",
+                                            onClick = { onTruckClick(truck.truckId) },
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        else -> {}
                     }
                 }
-                else -> {}
-            }
-            }
             }
             // Topmost scrim: once BACK is pressed this screen is animating out,
             // but its list items would still win hit-tests against the page
             // underneath (More). This overlay consumes those taps instead.
             if (isNavigatingBack) {
                 Box(
-                    modifier = Modifier
-                        .matchParentSize()
-                        .clickable(
-                            interactionSource = navigationInteractionSource,
-                            indication = null,
-                            onClick = {},
-                        )
+                    modifier =
+                        Modifier
+                            .matchParentSize()
+                            .clickable(
+                                interactionSource = navigationInteractionSource,
+                                indication = null,
+                                onClick = {},
+                            ),
                 )
             }
         }

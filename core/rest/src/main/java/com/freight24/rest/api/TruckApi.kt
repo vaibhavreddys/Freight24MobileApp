@@ -60,6 +60,4 @@ interface TruckApi {
     suspend fun searchTrucks(
         @Query("q") query: String,
     ): Response<SearchTruckResponse>
-
-
 }

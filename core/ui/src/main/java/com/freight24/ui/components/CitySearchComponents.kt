@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,8 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Place
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -54,8 +51,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.freight24.rest.response.CityResult
 import kotlin.collections.isNotEmpty
@@ -81,20 +78,22 @@ fun CitySearchField(
     testTag: String? = null,
     modifier: Modifier = Modifier,
 ) {
-    var fieldValue by remember() { mutableStateOf(TextFieldValue(query)) }
+    var fieldValue by remember { mutableStateOf(TextFieldValue(query)) }
     var isFocused by remember { mutableStateOf(false) }
     // ✅ Only syncs when query changes EXTERNALLY (e.g. city selected, field cleared)
     // During typing: fieldValue.text == query, so this block never fires
     LaunchedEffect(query) {
         if (fieldValue.text != query) {
-            fieldValue = TextFieldValue(
-                text = query,
-                selection = if (selectAllOnFocus && isFocused && query.isNotEmpty()) {
-                    TextRange(0, query.length)
-                } else {
-                    TextRange(query.length) // cursor at end
-                }
-            )
+            fieldValue =
+                TextFieldValue(
+                    text = query,
+                    selection =
+                        if (selectAllOnFocus && isFocused && query.isNotEmpty()) {
+                            TextRange(0, query.length)
+                        } else {
+                            TextRange(query.length) // cursor at end
+                        },
+                )
         }
     }
 
@@ -117,40 +116,44 @@ fun CitySearchField(
             placeholder = { Text(placeholder, style = MaterialTheme.typography.bodyMedium) },
             enabled = enabled,
             singleLine = true,
-            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                imeAction = ImeAction.Search,
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .then(
-                    if (testTag != null) {
-                        Modifier
-                            .testTag(testTag)
-                            .semantics { testTagsAsResourceId = true }
-                    } else {
-                        Modifier
-                    }
-                )
-                .onFocusChanged { state ->
-                    if (selectAllOnFocus && state.isFocused && fieldValue.text.isNotEmpty()) {
-                        fieldValue = fieldValue.copy(selection = TextRange(0, fieldValue.text.length))
-                    }
-                },
+            keyboardOptions =
+                androidx.compose.foundation.text.KeyboardOptions(
+                    imeAction = ImeAction.Search,
+                ),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .then(
+                        if (testTag != null) {
+                            Modifier
+                                .testTag(testTag)
+                                .semantics { testTagsAsResourceId = true }
+                        } else {
+                            Modifier
+                        },
+                    )
+                    .onFocusChanged { state ->
+                        if (selectAllOnFocus && state.isFocused && fieldValue.text.isNotEmpty()) {
+                            fieldValue = fieldValue.copy(selection = TextRange(0, fieldValue.text.length))
+                        }
+                    },
             shape = RoundedCornerShape(10.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                disabledBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            ),
+            colors =
+                OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    disabledBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                    disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                    disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
         )
 
         if (isLoading) {
             LinearProgressIndicator(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 2.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 2.dp),
                 color = MaterialTheme.colorScheme.primary,
                 trackColor = MaterialTheme.colorScheme.surfaceVariant,
             )
@@ -159,19 +162,21 @@ fun CitySearchField(
         if (suggestions.isNotEmpty() && enabled) {
             Spacer(Modifier.height(2.dp))
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 200.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .border(0.5.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(10.dp))
-                    .background(MaterialTheme.colorScheme.surface),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 200.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .border(0.5.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(10.dp))
+                        .background(MaterialTheme.colorScheme.surface),
             ) {
                 items(suggestions, key = { it.id }) { city ->
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onCitySelected(city) }
-                            .padding(horizontal = 14.dp, vertical = 11.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable { onCitySelected(city) }
+                                .padding(horizontal = 14.dp, vertical = 11.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Icon(
@@ -182,11 +187,12 @@ fun CitySearchField(
                         )
                         Spacer(Modifier.width(10.dp))
 
-                        val (line1, line2) = if(city.type.equals("area", true)) {
-                            Pair(city.name, city.city)
-                        } else {
-                            Pair(city.name, city.state)
-                        }
+                        val (line1, line2) =
+                            if (city.type.equals("area", true)) {
+                                Pair(city.name, city.city)
+                            } else {
+                                Pair(city.name, city.state)
+                            }
 
                         Column {
                             Text(
@@ -224,28 +230,31 @@ fun RouteChip(
     Surface(
         shape = RoundedCornerShape(20.dp),
         color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-        modifier = modifier.border(
-            width = if (isStaged) 1.dp else 0.5.dp,
-            color = MaterialTheme.colorScheme.primary.copy(alpha = if (isStaged) 0.6f else 0.4f),
-            shape = RoundedCornerShape(20.dp),
-        ),
+        modifier =
+            modifier.border(
+                width = if (isStaged) 1.dp else 0.5.dp,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = if (isStaged) 0.6f else 0.4f),
+                shape = RoundedCornerShape(20.dp),
+            ),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(
-                start = 10.dp,
-                end = if (onDelete != null) 4.dp else 10.dp,
-                top = 6.dp,
-                bottom = 6.dp,
-            ),
+            modifier =
+                Modifier.padding(
+                    start = 10.dp,
+                    end = if (onDelete != null) 4.dp else 10.dp,
+                    top = 6.dp,
+                    bottom = 6.dp,
+                ),
         ) {
             Box(
-                modifier = Modifier
-                    .size(6.dp)
-                    .background(
-                        color = MaterialTheme.colorScheme.primary,
-                        shape = RoundedCornerShape(3.dp),
-                    ),
+                modifier =
+                    Modifier
+                        .size(6.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.primary,
+                            shape = RoundedCornerShape(3.dp),
+                        ),
             )
             Spacer(Modifier.width(5.dp))
             Text(
@@ -303,18 +312,20 @@ fun AddRouteBottomSheet(
     onDismiss: () -> Unit,
     errorMessage: String? = null,
 ) {
-    val canConfirm = selectedFromCity != null && selectedToCity != null &&
-        selectedFromCity.id != selectedToCity.id
+    val canConfirm =
+        selectedFromCity != null && selectedToCity != null &&
+            selectedFromCity.id != selectedToCity.id
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(horizontal = 20.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 20.dp),
         ) {
             Text(
                 "Add preferred route",
@@ -387,11 +398,12 @@ fun AddRouteBottomSheet(
                         Text(
                             toLabel,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = if (toLabel == "...") {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            } else {
-                                MaterialTheme.colorScheme.onSecondaryContainer
-                            },
+                            color =
+                                if (toLabel == "...") {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                } else {
+                                    MaterialTheme.colorScheme.onSecondaryContainer
+                                },
                         )
                     }
                 }
@@ -410,12 +422,13 @@ fun AddRouteBottomSheet(
                         selected = option == selectedPriority,
                         onClick = { onPrioritySelected(option) },
                         label = { Text(option, style = MaterialTheme.typography.labelMedium) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        ),
+                        colors =
+                            FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            ),
                     )
                 }
             }

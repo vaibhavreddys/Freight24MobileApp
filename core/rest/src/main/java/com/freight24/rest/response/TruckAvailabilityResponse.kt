@@ -4,5 +4,5 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class TruckAvailabilityResponse(
-    val data: String? = null
+    val data: String? = null,
 ) : BaseResponse()

@@ -6,7 +6,6 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 
 interface FindTrucksApi {
-
     @GET("search/matching/trucks")
     suspend fun searchTrucks(
         @Query("sourceAreaId") areaId: String?,
@@ -14,5 +13,4 @@ interface FindTrucksApi {
         @Query("destinationCityId") destinationCityId: String?,
         @Query("truckTypeId") truckTypeIds: String,
     ): Response<SearchTruckerResponse>
-
 }

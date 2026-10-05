@@ -12,13 +12,15 @@ data class UploadIdentityDocumentParams(
     val userId: String,
     val documentTypeId: Int,
     val documentNumber: String,
-    val file: MultipartBody.Part
+    val file: MultipartBody.Part,
 )
 
-class UploadIdentityDocumentUseCaseImpl @Inject constructor(
-    private val repository: ProfileRepository
-) : UploadIdentityDocumentUseCase {
-    override suspend fun invoke(params: UploadIdentityDocumentParams): Result<String> {
-        return repository.uploadIdentityDocument(params.userId, params.documentTypeId, params.documentNumber, params.file)
+class UploadIdentityDocumentUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: ProfileRepository,
+    ) : UploadIdentityDocumentUseCase {
+        override suspend fun invoke(params: UploadIdentityDocumentParams): Result<String> {
+            return repository.uploadIdentityDocument(params.userId, params.documentTypeId, params.documentNumber, params.file)
+        }
     }
-}

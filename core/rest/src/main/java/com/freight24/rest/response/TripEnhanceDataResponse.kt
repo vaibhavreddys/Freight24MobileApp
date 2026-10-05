@@ -2,9 +2,9 @@
 
 package com.freight24.rest.response
 
-import java.math.BigDecimal
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import java.math.BigDecimal
 
 @Serializable
 data class TripDataResponse(
@@ -32,7 +32,6 @@ data class TripDataResponse(
     @SerialName("timeline") val timelines: List<Timeline>? = null,
     val clientPaymentBreakdown: ClientPaymentBreakdown? = null,
 ) {
-
     @Serializable
     data class Truck(
         val id: String,
@@ -103,7 +102,7 @@ data class TripDataResponse(
     data class Location(
         val id: String,
         val area: String?,
-        val city: String?
+        val city: String?,
     )
 
     @Serializable
@@ -128,7 +127,7 @@ data class TripDataResponse(
     data class TDS(
         val amount: Double,
         val percent: Float,
-        val applicable: Boolean
+        val applicable: Boolean,
     )
 
     @Serializable
@@ -136,13 +135,13 @@ data class TripDataResponse(
         val paid: Boolean,
         val amount: Double,
         val percent: Int,
-        val paidAmount: Double
+        val paidAmount: Double,
     )
 
     @Serializable
     data class Balance(
         val amount: Double,
-        val paidAmount: Double
+        val paidAmount: Double,
     )
 
     @Serializable
@@ -162,7 +161,7 @@ data class TripDataResponse(
     @Serializable
     data class PlatformFee(
         val amount: Double,
-        val percent: Int
+        val percent: Int,
     )
 
     @Serializable
@@ -205,5 +204,4 @@ data class TripDataResponse(
         val statusType: String,
         val isCompleted: Boolean,
     )
-
 }

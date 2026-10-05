@@ -1,6 +1,4 @@
 package com.freight24.connect.feature.trips.views
-import com.freight24.ui.components.FreightTopAppBar
-
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -49,6 +47,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.freight24.ui.components.FreightTopAppBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

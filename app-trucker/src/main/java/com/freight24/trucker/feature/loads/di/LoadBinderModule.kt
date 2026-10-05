@@ -43,7 +43,5 @@ interface LoadBinderModule {
 
     @Binds
     @Singleton
-    fun bindGetTruckerIndentDetailUseCase(
-        impl: GetTruckerIndentDetailUseCaseImpl,
-    ): GetTruckerIndentDetailUseCase
+    fun bindGetTruckerIndentDetailUseCase(impl: GetTruckerIndentDetailUseCaseImpl): GetTruckerIndentDetailUseCase
 }

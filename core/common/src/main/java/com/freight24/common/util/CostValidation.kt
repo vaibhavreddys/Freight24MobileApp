@@ -6,7 +6,10 @@ package com.freight24.common.util
  * the negotiated value is within the client cost. The check tolerates formatted input
  * (commas) since these fields are formatted as Indian currency.
  */
-fun negotiatedCostExceedsClientError(negotiatedCost: String, clientCost: String): String? {
+fun negotiatedCostExceedsClientError(
+    negotiatedCost: String,
+    clientCost: String,
+): String? {
     val negotiated = negotiatedCost.replace(",", "").toDoubleOrNull() ?: return null
     val client = clientCost.replace(",", "").toDoubleOrNull() ?: return null
     return if (negotiated > client) "This cost can not exceed Client Cost" else null

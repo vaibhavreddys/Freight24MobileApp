@@ -60,33 +60,40 @@ internal fun VerifyOtpScreen(
         keyboardController?.show()
     }
 
-    val actions = remember(viewModel, context, onBackClick, onWrongNumberClick) {
-        object : VerifyOtpActions {
-            override fun onOtpChange(value: String) = viewModel.onOtpChange(value)
-            override fun onVerify() = viewModel.onVerifyClick(phoneNumber)
-            override fun onResend() = viewModel.onResendClick(phoneNumber)
-            override fun onChangeNumber() = onWrongNumberClick()
-            override fun onBack() = onBackClick()
-            override fun onCallHelpline() = dialSupport(context)
+    val actions =
+        remember(viewModel, context, onBackClick, onWrongNumberClick) {
+            object : VerifyOtpActions {
+                override fun onOtpChange(value: String) = viewModel.onOtpChange(value)
+
+                override fun onVerify() = viewModel.onVerifyClick(phoneNumber)
+
+                override fun onResend() = viewModel.onResendClick(phoneNumber)
+
+                override fun onChangeNumber() = onWrongNumberClick()
+
+                override fun onBack() = onBackClick()
+
+                override fun onCallHelpline() = dialSupport(context)
+            }
         }
-    }
 
     VerifyOtpContent(
-        state = VerifyOtpUiState(
-            phoneNumber = phoneNumber,
-            otp = otp,
-            otpLength = 6,
-            isVerifying = buttonState == ButtonState.Loading,
-            isResending = isResending,
-            errorMessage = errorMessage,
-            attemptsRemaining = attemptsRemaining,
-            resendSeconds = if (isResendEnabled) 0 else resendSeconds,
-            expirySeconds = expirySeconds,
-            shake = shake,
-            // The ViewModel's verify flag only tracks length; the contract
-            // also needs a live, non-expired code and nothing in flight.
-            canVerify = canVerify && expirySeconds > 0 && buttonState != ButtonState.Loading,
-        ),
+        state =
+            VerifyOtpUiState(
+                phoneNumber = phoneNumber,
+                otp = otp,
+                otpLength = 6,
+                isVerifying = buttonState == ButtonState.Loading,
+                isResending = isResending,
+                errorMessage = errorMessage,
+                attemptsRemaining = attemptsRemaining,
+                resendSeconds = if (isResendEnabled) 0 else resendSeconds,
+                expirySeconds = expirySeconds,
+                shake = shake,
+                // The ViewModel's verify flag only tracks length; the contract
+                // also needs a live, non-expired code and nothing in flight.
+                canVerify = canVerify && expirySeconds > 0 && buttonState != ButtonState.Loading,
+            ),
         actions = actions,
     )
 }

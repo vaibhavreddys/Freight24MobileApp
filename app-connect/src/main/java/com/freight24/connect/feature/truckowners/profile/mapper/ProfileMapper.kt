@@ -1,15 +1,15 @@
 package com.freight24.connect.feature.truckowners.profile.mapper
 
-import com.freight24.rest.response.BankAccountDetailsDto
-import com.freight24.rest.response.ProfileDocumentDto
-import com.freight24.rest.response.PreferredRouteDto
-import com.freight24.rest.response.ProfileDto
 import com.freight24.connect.feature.truckowners.profile.domain.BankAccountDetails
 import com.freight24.connect.feature.truckowners.profile.domain.DocumentStatus
 import com.freight24.connect.feature.truckowners.profile.domain.DocumentType
 import com.freight24.connect.feature.truckowners.profile.domain.PreferredRoute
 import com.freight24.connect.feature.truckowners.profile.domain.Profile
 import com.freight24.connect.feature.truckowners.profile.domain.ProfileDocument
+import com.freight24.rest.response.BankAccountDetailsDto
+import com.freight24.rest.response.PreferredRouteDto
+import com.freight24.rest.response.ProfileDocumentDto
+import com.freight24.rest.response.ProfileDto
 
 fun ProfileDto.toDomain(): Profile =
     Profile(
@@ -55,12 +55,13 @@ fun ProfileDocumentDto.toDomain(): ProfileDocument =
         docId = documentId,
         type = documentType?.toDocumentType() ?: DocumentType.UNKNOWN,
         url = url,
-        status = when (status?.uppercase()) {
-            "VERIFIED" -> DocumentStatus.VERIFIED
-            "REJECTED" -> DocumentStatus.REJECTED
-            "UPLOADED" -> DocumentStatus.UPLOADED
-            else -> if (!url.isNullOrEmpty()) DocumentStatus.UPLOADED else DocumentStatus.PENDING
-        },
+        status =
+            when (status?.uppercase()) {
+                "VERIFIED" -> DocumentStatus.VERIFIED
+                "REJECTED" -> DocumentStatus.REJECTED
+                "UPLOADED" -> DocumentStatus.UPLOADED
+                else -> if (!url.isNullOrEmpty()) DocumentStatus.UPLOADED else DocumentStatus.PENDING
+            },
     )
 
 private fun String.toDocumentType(): DocumentType =

@@ -85,11 +85,12 @@ private val HIDDEN_TRUCKER_DOC_TYPES = setOf("loading_memo")
 
 fun TripDetailDto.toDomain(): TripDetail {
     val mappedFinancials = financials?.toDomain()
-    val latestDocuments = trip_documents
-        .filterNot { it.document_type.lowercase() in HIDDEN_TRUCKER_DOC_TYPES }
-        .groupBy { it.document_type }
-        .map { (_, docs) -> docs.maxByOrNull { it.uploaded_at ?: "" }!! }
-        .map { it.toDomain() }
+    val latestDocuments =
+        trip_documents
+            .filterNot { it.document_type.lowercase() in HIDDEN_TRUCKER_DOC_TYPES }
+            .groupBy { it.document_type }
+            .map { (_, docs) -> docs.maxByOrNull { it.uploaded_at ?: "" }!! }
+            .map { it.toDomain() }
     return TripDetail(
         id = id,
         tripCode = trip_code,
@@ -138,43 +139,49 @@ fun FeeBlockDto.toDomain(): FeeBlock = FeeBlock(amount = amount, percent = perce
 
 fun TdsBlockDto.toDomain(): TdsBlock = TdsBlock(amount = amount, percent = percent, applicable = applicable)
 
-fun HaltingBlockDto.toDomain(): HaltingBlock = HaltingBlock(
-    loading = loading.toDomain(),
-    unloading = unloading.toDomain(),
-)
+fun HaltingBlockDto.toDomain(): HaltingBlock =
+    HaltingBlock(
+        loading = loading.toDomain(),
+        unloading = unloading.toDomain(),
+    )
 
-fun HaltingLegDto.toDomain(): HaltingLeg = HaltingLeg(
-    days = days,
-    totalAmount = totalAmount,
-    perDayAmount = perDayAmount,
-    notes = notes,
-)
+fun HaltingLegDto.toDomain(): HaltingLeg =
+    HaltingLeg(
+        days = days,
+        totalAmount = totalAmount,
+        perDayAmount = perDayAmount,
+        notes = notes,
+    )
 
-fun LuBlockDto.toDomain(): LuBlock = LuBlock(
-    loading = loading.toDomain(),
-    unloading = unloading.toDomain(),
-)
+fun LuBlockDto.toDomain(): LuBlock =
+    LuBlock(
+        loading = loading.toDomain(),
+        unloading = unloading.toDomain(),
+    )
 
-fun LuLegDto.toDomain(): LuLeg = LuLeg(
-    id = id,
-    total = total,
-    reimbursable = reimbursable,
-    isLUIncluded = isLUIncluded ?: false,
-    slipUrl = slipUrl,
-    notes = notes,
-)
+fun LuLegDto.toDomain(): LuLeg =
+    LuLeg(
+        id = id,
+        total = total,
+        reimbursable = reimbursable,
+        isLUIncluded = isLUIncluded ?: false,
+        slipUrl = slipUrl,
+        notes = notes,
+    )
 
-fun AdvanceBlockDto.toDomain(): AdvanceBlock = AdvanceBlock(
-    percent = percent,
-    amount = amount,
-    paid = paid,
-    paidAmount = paidAmount,
-)
+fun AdvanceBlockDto.toDomain(): AdvanceBlock =
+    AdvanceBlock(
+        percent = percent,
+        amount = amount,
+        paid = paid,
+        paidAmount = paidAmount,
+    )
 
-fun BalanceBlockDto.toDomain(): BalanceBlock = BalanceBlock(
-    amount = amount,
-    paidAmount = paidAmount,
-)
+fun BalanceBlockDto.toDomain(): BalanceBlock =
+    BalanceBlock(
+        amount = amount,
+        paidAmount = paidAmount,
+    )
 
 fun TripLocationDto?.toDomain(): TripLocation {
     return TripLocation(

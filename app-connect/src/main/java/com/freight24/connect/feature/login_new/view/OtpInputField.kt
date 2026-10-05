@@ -83,20 +83,21 @@ fun OtpInputField(
     // Hidden TextField for input capture, overlaid on the visual cells so the
     // strip is exactly one cell tall — no phantom gap above the boxes.
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag("otp_input")
-            .semantics { testTagsAsResourceId = true }
-            .offset(x = shakeOffset.value.dp)
-            .clickable(
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() },
-            ) {
-                if (enabled) {
-                    focusRequester.requestFocus()
-                    keyboardController?.show()
-                }
-            },
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .testTag("otp_input")
+                .semantics { testTagsAsResourceId = true }
+                .offset(x = shakeOffset.value.dp)
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() },
+                ) {
+                    if (enabled) {
+                        focusRequester.requestFocus()
+                        keyboardController?.show()
+                    }
+                },
         contentAlignment = Alignment.Center,
     ) {
         TextField(
@@ -107,21 +108,23 @@ fun OtpInputField(
                     onOtpChange(digitsOnly)
                 }
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .alpha(0.01f)
-                .focusRequester(focusRequester),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .alpha(0.01f)
+                    .focusRequester(focusRequester),
             enabled = enabled,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
             singleLine = true,
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = colors.surface.copy(alpha = 0f),
-                unfocusedContainerColor = colors.surface.copy(alpha = 0f),
-                focusedIndicatorColor = colors.surface.copy(alpha = 0f),
-                unfocusedIndicatorColor = colors.surface.copy(alpha = 0f),
-                disabledContainerColor = colors.surface.copy(alpha = 0f),
-                cursorColor = colors.primary,
-            ),
+            colors =
+                TextFieldDefaults.colors(
+                    focusedContainerColor = colors.surface.copy(alpha = 0f),
+                    unfocusedContainerColor = colors.surface.copy(alpha = 0f),
+                    focusedIndicatorColor = colors.surface.copy(alpha = 0f),
+                    unfocusedIndicatorColor = colors.surface.copy(alpha = 0f),
+                    disabledContainerColor = colors.surface.copy(alpha = 0f),
+                    cursorColor = colors.primary,
+                ),
         )
 
         Row(
@@ -134,51 +137,57 @@ fun OtpInputField(
                 val isFilled = char.isNotEmpty()
 
                 Box(
-                    modifier = Modifier
-                        .size(width = 46.dp, height = 56.dp)
-                        .clip(AuthFieldShape)
-                        .background(
-                            if (isFilled) colors.primaryContainer else hero.paper
-                        )
-                        .border(
-                            width = when {
-                                isActive -> 1.5.dp
-                                isFilled && isError -> 1.5.dp
-                                else -> 1.dp
-                            },
-                            color = when {
-                                isActive -> colors.primary
-                                isFilled && isError -> colors.error
-                                isFilled -> colors.primaryContainer
-                                else -> colors.outlineVariant
-                            },
-                            shape = AuthFieldShape,
-                        ),
+                    modifier =
+                        Modifier
+                            .size(width = 46.dp, height = 56.dp)
+                            .clip(AuthFieldShape)
+                            .background(
+                                if (isFilled) colors.primaryContainer else hero.paper,
+                            )
+                            .border(
+                                width =
+                                    when {
+                                        isActive -> 1.5.dp
+                                        isFilled && isError -> 1.5.dp
+                                        else -> 1.dp
+                                    },
+                                color =
+                                    when {
+                                        isActive -> colors.primary
+                                        isFilled && isError -> colors.error
+                                        isFilled -> colors.primaryContainer
+                                        else -> colors.outlineVariant
+                                    },
+                                shape = AuthFieldShape,
+                            ),
                     contentAlignment = Alignment.Center,
                 ) {
                     when {
                         isFilled -> {
                             Text(
                                 text = char,
-                                style = MaterialTheme.typography.titleLarge.copy(
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 22.sp,
-                                    fontFeatureSettings = "tnum",
-                                ),
-                                color = if (isError) {
-                                    colors.onErrorContainer
-                                } else {
-                                    colors.onPrimaryContainer
-                                },
+                                style =
+                                    MaterialTheme.typography.titleLarge.copy(
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 22.sp,
+                                        fontFeatureSettings = "tnum",
+                                    ),
+                                color =
+                                    if (isError) {
+                                        colors.onErrorContainer
+                                    } else {
+                                        colors.onPrimaryContainer
+                                    },
                             )
                         }
                         isActive -> {
                             // Caret, not a dot — the cell reads as a live
                             // input rather than a status indicator.
                             Box(
-                                modifier = Modifier
-                                    .size(width = 2.dp, height = 22.dp)
-                                    .background(colors.primary),
+                                modifier =
+                                    Modifier
+                                        .size(width = 2.dp, height = 22.dp)
+                                        .background(colors.primary),
                             )
                         }
                     }

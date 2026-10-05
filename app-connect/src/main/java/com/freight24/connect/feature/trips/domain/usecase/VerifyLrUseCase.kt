@@ -7,23 +7,23 @@ import com.freight24.rest.response.TripDataResponse
 import javax.inject.Inject
 
 data class VerifyLrUseCaseDataParams(
-    val tripId : String,
+    val tripId: String,
     val status: String,
-    val remarks: String?
-): UseCaseParams
+    val remarks: String?,
+) : UseCaseParams
 
 internal interface VerifyLrUseCase : UseCase<VerifyLrUseCaseDataParams, TripDataResponse>
 
-
-class VerifyLrUseCaseImpl @Inject constructor(
-    private val repository: TripRepository
-) : VerifyLrUseCase {
-
-    override suspend fun invoke(params: VerifyLrUseCaseDataParams): Result<TripDataResponse> {
-        return repository.verifyLr(
-            params.tripId,
-            params.status,
-            params.remarks
-        )
+class VerifyLrUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: TripRepository,
+    ) : VerifyLrUseCase {
+        override suspend fun invoke(params: VerifyLrUseCaseDataParams): Result<TripDataResponse> {
+            return repository.verifyLr(
+                params.tripId,
+                params.status,
+                params.remarks,
+            )
+        }
     }
-}

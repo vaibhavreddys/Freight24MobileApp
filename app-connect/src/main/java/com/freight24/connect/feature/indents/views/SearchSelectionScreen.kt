@@ -1,7 +1,4 @@
 package com.freight24.connect.feature.indents.views
-import com.freight24.ui.components.FreightTopAppBar
-
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
@@ -33,10 +29,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.freight24.connect.feature.indents.domain.viewmodel.SearchSelectionEvent
@@ -44,6 +38,7 @@ import com.freight24.connect.feature.indents.domain.viewmodel.SearchSelectionVie
 import com.freight24.connect.feature.indents.domain.viewmodel.SearchSelectionViewModelImpl
 import com.freight24.rest.response.ClientDto
 import com.freight24.rest.response.LocationDto
+import com.freight24.ui.components.FreightTopAppBar
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -59,7 +54,7 @@ fun SearchSelectionScreen(
     searchType: SearchType,
     onBackClick: () -> Unit,
     navController: NavController,
-    viewModel: SearchSelectionViewModel = hiltViewModel<SearchSelectionViewModelImpl>()
+    viewModel: SearchSelectionViewModel = hiltViewModel<SearchSelectionViewModelImpl>(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val focusRequester = remember { FocusRequester() }
@@ -99,9 +94,9 @@ fun SearchSelectionScreen(
                 modifier = Modifier.padding(start = 16.dp, top = 16.dp),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
-                color = colorScheme.primary
+                color = colorScheme.primary,
             )
-            
+
             OutlinedTextField(
                 value = uiState.query,
                 onValueChange = { newQuery ->
@@ -118,12 +113,13 @@ fun SearchSelectionScreen(
                 trailingIcon = {
                     Icon(Icons.Default.Search, contentDescription = null, tint = colorScheme.onSurfaceVariant)
                 },
-                colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = colorScheme.primary,
-                    unfocusedBorderColor = colorScheme.outlineVariant,
-                    focusedContainerColor = colorScheme.surface,
-                    unfocusedContainerColor = colorScheme.surface
-                )
+                colors =
+                    androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = colorScheme.primary,
+                        unfocusedBorderColor = colorScheme.outlineVariant,
+                        focusedContainerColor = colorScheme.surface,
+                        unfocusedContainerColor = colorScheme.surface,
+                    ),
             )
 
             if (uiState.isLoading) {
@@ -165,11 +161,12 @@ fun SearchSelectionScreen(
                                     LocationListItem(
                                         location = item,
                                         onClick = {
-                                            val key = when (searchType) {
-                                                SearchType.LOCATION_FROM -> "selected_from_location"
-                                                SearchType.LOCATION_TO -> "selected_to_location"
-                                                else -> ""
-                                            }
+                                            val key =
+                                                when (searchType) {
+                                                    SearchType.LOCATION_FROM -> "selected_from_location"
+                                                    SearchType.LOCATION_TO -> "selected_to_location"
+                                                    else -> ""
+                                                }
                                             navController.previousBackStackEntry?.savedStateHandle?.set(key, Json.encodeToString(item))
                                             onBackClick()
                                         },
@@ -179,7 +176,10 @@ fun SearchSelectionScreen(
                                     ClientListItem(
                                         client = item,
                                         onClick = {
-                                            navController.previousBackStackEntry?.savedStateHandle?.set("selected_client", Json.encodeToString(item))
+                                            navController.previousBackStackEntry?.savedStateHandle?.set(
+                                                "selected_client",
+                                                Json.encodeToString(item),
+                                            )
                                             onBackClick()
                                         },
                                     )
@@ -230,15 +230,14 @@ private fun ClientListItem(
                 Text(
                     text = client.companyName,
                     style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
                 Text(
                     text = client.tagCode,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-
         },
     )
 }

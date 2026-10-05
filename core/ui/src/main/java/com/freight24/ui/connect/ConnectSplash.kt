@@ -44,9 +44,7 @@ import kotlin.math.roundToInt
  * Purely visual. No navigation implications. All color from Connect tokens.
  */
 @Composable
-fun ConnectSplashScreen(
-    modifier: Modifier = Modifier,
-) {
+fun ConnectSplashScreen(modifier: Modifier = Modifier) {
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val background = connectSplashBackground(isDark)
     val wordmarkColor = if (isDark) ConnectOnSurfaceDark90 else ConnectPrimary10
@@ -76,23 +74,26 @@ fun ConnectSplashScreen(
         }
     }
 
-    val wordmarkStyle = MaterialTheme.typography.headlineMedium.copy(
-        fontWeight = FontWeight.Bold,
-    )
+    val wordmarkStyle =
+        MaterialTheme.typography.headlineMedium.copy(
+            fontWeight = FontWeight.Bold,
+        )
 
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(background),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .background(background),
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.graphicsLayer {
-                    alpha = markAlpha.value
-                    translationY = markOffsetY.value.dp.toPx()
-                },
+                modifier =
+                    Modifier.graphicsLayer {
+                        alpha = markAlpha.value
+                        translationY = markOffsetY.value.dp.toPx()
+                    },
             ) {
                 Text(text = "F", style = wordmarkStyle, color = wordmarkColor)
                 Text(
@@ -104,17 +105,19 @@ fun ConnectSplashScreen(
                     // Reveal only the leading `unfurl` fraction of the natural
                     // text width; the Row re-centres every frame, so "F" and
                     // "24" glide outward as the middle letters stream in.
-                    modifier = Modifier
-                        .clipToBounds()
-                        .layout { measurable, constraints ->
-                            val placeable = measurable.measure(
-                                constraints.copy(minWidth = 0),
-                            )
-                            val width = (placeable.width * unfurl.value).roundToInt()
-                            layout(width, placeable.height) {
-                                placeable.placeRelative(0, 0)
-                            }
-                        },
+                    modifier =
+                        Modifier
+                            .clipToBounds()
+                            .layout { measurable, constraints ->
+                                val placeable =
+                                    measurable.measure(
+                                        constraints.copy(minWidth = 0),
+                                    )
+                                val width = (placeable.width * unfurl.value).roundToInt()
+                                layout(width, placeable.height) {
+                                    placeable.placeRelative(0, 0)
+                                }
+                            },
                 )
                 Text(text = "24", style = wordmarkStyle, color = accentColor)
             }
@@ -123,18 +126,20 @@ fun ConnectSplashScreen(
 
             // Road line: draws out from centre once, then rests.
             Box(
-                modifier = Modifier
-                    .size(width = 96.dp, height = 2.dp)
-                    .clip(RoundedCornerShape(1.dp)),
+                modifier =
+                    Modifier
+                        .size(width = 96.dp, height = 2.dp)
+                        .clip(RoundedCornerShape(1.dp)),
             ) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .graphicsLayer { scaleX = roadScale.value }
-                        .background(
-                            color = roadColor,
-                            shape = RoundedCornerShape(1.dp),
-                        ),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .graphicsLayer { scaleX = roadScale.value }
+                            .background(
+                                color = roadColor,
+                                shape = RoundedCornerShape(1.dp),
+                            ),
                 )
             }
         }

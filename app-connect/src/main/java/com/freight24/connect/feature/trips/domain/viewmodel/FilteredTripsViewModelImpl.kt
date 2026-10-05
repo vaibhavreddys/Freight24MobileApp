@@ -16,49 +16,51 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class FilteredTripsViewModelImpl @Inject constructor(
-    private val getMyTripsUseCase: GetMyTripsUseCase,
-    savedStateHandle: SavedStateHandle
-) : ViewModel(), TripsListViewModel {
+class FilteredTripsViewModelImpl
+    @Inject
+    constructor(
+        private val getMyTripsUseCase: GetMyTripsUseCase,
+        savedStateHandle: SavedStateHandle,
+    ) : ViewModel(), TripsListViewModel {
+        private val filterTypeString: String = savedStateHandle[ConnectDestination.FilteredTrips.FILTER_TYPE_ARG] ?: TripTypes.ALL.name
+        private val initialFilter = TripTypes.entries.find { it.name == filterTypeString } ?: TripTypes.ALL
 
-    private val filterTypeString: String = savedStateHandle[ConnectDestination.FilteredTrips.FILTER_TYPE_ARG] ?: TripTypes.ALL.name
-    private val initialFilter = TripTypes.entries.find { it.name == filterTypeString } ?: TripTypes.ALL
+        private val _uiState = MutableStateFlow(TripsListUiState(selectedFilter = initialFilter))
+        override val uiState: StateFlow<TripsListUiState> = _uiState.asStateFlow()
 
-    private val _uiState = MutableStateFlow(TripsListUiState(selectedFilter = initialFilter))
-    override val uiState: StateFlow<TripsListUiState> = _uiState.asStateFlow()
-
-    init {
-        fetchTrips()
-    }
-
-    override fun onEvent(event: TripsListEvent) {
-        when (event) {
-            is TripsListEvent.SelectFilter -> {
-                _uiState.update { it.copy(selectedFilter = event.filter) }
-                fetchTrips()
-            }
-            TripsListEvent.Refresh -> fetchTrips()
+        init {
+            fetchTrips()
         }
-    }
 
-    private fun fetchTrips() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            val result = getMyTripsUseCase(
-                GetMyTripsUseCaseDataParams(
-                    tripTypes = _uiState.value.selectedFilter,
-                    page = 1,
-                    limit = 50
-                )
-            )
-            result.fold(
-                onSuccess = { response ->
-                    _uiState.update { it.copy(isLoading = false, trips = response.data) }
-                },
-                onFailure = { error ->
-                    _uiState.update { it.copy(isLoading = false, errorMessage = error.message) }
+        override fun onEvent(event: TripsListEvent) {
+            when (event) {
+                is TripsListEvent.SelectFilter -> {
+                    _uiState.update { it.copy(selectedFilter = event.filter) }
+                    fetchTrips()
                 }
-            )
+                TripsListEvent.Refresh -> fetchTrips()
+            }
+        }
+
+        private fun fetchTrips() {
+            viewModelScope.launch {
+                _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+                val result =
+                    getMyTripsUseCase(
+                        GetMyTripsUseCaseDataParams(
+                            tripTypes = _uiState.value.selectedFilter,
+                            page = 1,
+                            limit = 50,
+                        ),
+                    )
+                result.fold(
+                    onSuccess = { response ->
+                        _uiState.update { it.copy(isLoading = false, trips = response.data) }
+                    },
+                    onFailure = { error ->
+                        _uiState.update { it.copy(isLoading = false, errorMessage = error.message) }
+                    },
+                )
+            }
         }
     }
-}

@@ -14,8 +14,8 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -38,14 +38,14 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsEvent
-import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsViewModel
-import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsViewModelImpl
 import com.freight24.common.util.DateTimeUtils
 import com.freight24.common.util.formatIndianCurrency
 import com.freight24.common.util.formatWeightValue
 import com.freight24.common.util.negotiatedCostExceedsClientError
 import com.freight24.connect.R
+import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsEvent
+import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsViewModel
+import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsViewModelImpl
 import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.components.formViewportInsets
 import com.freight24.ui.theme.FreightThemeTokens
@@ -61,7 +61,7 @@ fun IndentDetailsScreen(
     onEditClick: (String) -> Unit,
     onCreateTripClick: (String) -> Unit,
     onViewProfileClick: (String) -> Unit = { _ -> },
-    viewModel: IndentDetailsViewModel = hiltViewModel<IndentDetailsViewModelImpl>()
+    viewModel: IndentDetailsViewModel = hiltViewModel<IndentDetailsViewModelImpl>(),
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -69,10 +69,11 @@ fun IndentDetailsScreen(
     val extended = FreightThemeTokens.colors
     val snackbarHostState = remember { SnackbarHostState() }
 
-    val refreshTrigger = navController.currentBackStackEntry
-        ?.savedStateHandle
-        ?.getStateFlow("refresh", false)
-        ?.collectAsStateWithLifecycle()
+    val refreshTrigger =
+        navController.currentBackStackEntry
+            ?.savedStateHandle
+            ?.getStateFlow("refresh", false)
+            ?.collectAsStateWithLifecycle()
 
     LaunchedEffect(indentId, refreshTrigger) {
         if (refreshTrigger?.value == true) {
@@ -104,8 +105,8 @@ fun IndentDetailsScreen(
         mutableStateOf(
             TextFieldValue(
                 uiState.assignNegotiatedCost,
-                TextRange(uiState.assignNegotiatedCost.length)
-            )
+                TextRange(uiState.assignNegotiatedCost.length),
+            ),
         )
     }
     LaunchedEffect(uiState.assignNegotiatedCost) {
@@ -113,11 +114,12 @@ fun IndentDetailsScreen(
             assignNegotiatedCostFieldValue = TextFieldValue(uiState.assignNegotiatedCost, TextRange(uiState.assignNegotiatedCost.length))
         }
     }
-    val assignNegotiatedCostError = if (uiState.isNegotiatedSameAsClient) {
-        null
-    } else {
-        negotiatedCostExceedsClientError(uiState.assignNegotiatedCost, uiState.assignClientCost)
-    }
+    val assignNegotiatedCostError =
+        if (uiState.isNegotiatedSameAsClient) {
+            null
+        } else {
+            negotiatedCostExceedsClientError(uiState.assignNegotiatedCost, uiState.assignClientCost)
+        }
 
     if (uiState.isAssignDialogVisible) {
         AlertDialog(
@@ -139,12 +141,12 @@ fun IndentDetailsScreen(
                         },
                         label = { Text(stringResource(R.string.client_cost)) },
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Checkbox(
                             checked = uiState.isNegotiatedSameAsClient,
-                            onCheckedChange = { viewModel.onEvent(IndentDetailsEvent.UpdateAssignField(isNegotiatedSameAsClient = it)) }
+                            onCheckedChange = { viewModel.onEvent(IndentDetailsEvent.UpdateAssignField(isNegotiatedSameAsClient = it)) },
                         )
                         Text(stringResource(R.string.neg_cost_same_as_client))
                     }
@@ -165,27 +167,27 @@ fun IndentDetailsScreen(
                         enabled = !uiState.isNegotiatedSameAsClient,
                         isError = assignNegotiatedCostError != null,
                         supportingText = assignNegotiatedCostError?.let { msg -> { Text(msg) } },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     )
                     OutlinedTextField(
                         value = uiState.assignNotes,
                         onValueChange = { viewModel.onEvent(IndentDetailsEvent.UpdateAssignField(notes = it)) },
                         label = { Text(stringResource(R.string.notes)) },
                         modifier = Modifier.fillMaxWidth(),
-                        minLines = 3
+                        minLines = 3,
                     )
                 }
             },
             confirmButton = {
                 Button(
                     onClick = { viewModel.onEvent(IndentDetailsEvent.ConfirmAssignment) },
-                    enabled = !uiState.isAssigning && assignNegotiatedCostError == null
+                    enabled = !uiState.isAssigning && assignNegotiatedCostError == null,
                 ) {
                     if (uiState.isAssigning) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp).padding(end = 8.dp),
                             color = colorScheme.onPrimary,
-                            strokeWidth = 2.dp
+                            strokeWidth = 2.dp,
                         )
                     }
                     Text(stringResource(R.string.confirm))
@@ -195,7 +197,7 @@ fun IndentDetailsScreen(
                 TextButton(onClick = { viewModel.onEvent(IndentDetailsEvent.HideAssignDialog) }) {
                     Text(stringResource(R.string.cancel))
                 }
-            }
+            },
         )
     }
 
@@ -208,13 +210,13 @@ fun IndentDetailsScreen(
                 Button(
                     onClick = { viewModel.onEvent(IndentDetailsEvent.ConfirmCancel) },
                     enabled = !uiState.isCanceling,
-                    colors = ButtonDefaults.buttonColors(containerColor = colorScheme.error)
+                    colors = ButtonDefaults.buttonColors(containerColor = colorScheme.error),
                 ) {
                     if (uiState.isCanceling) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp).padding(end = 8.dp),
                             color = colorScheme.onError,
-                            strokeWidth = 2.dp
+                            strokeWidth = 2.dp,
                         )
                     }
                     Text("Yes, Cancel")
@@ -224,7 +226,7 @@ fun IndentDetailsScreen(
                 TextButton(onClick = { viewModel.onEvent(IndentDetailsEvent.HideCancelDialog) }) {
                     Text("No")
                 }
-            }
+            },
         )
     }
 
@@ -237,7 +239,7 @@ fun IndentDetailsScreen(
             onDismissRequest = { viewModel.onEvent(IndentDetailsEvent.HideTruckerSheet) },
             sheetState = sheetState,
             containerColor = colorScheme.surface,
-            dragHandle = { BottomSheetDefaults.DragHandle() }
+            dragHandle = { BottomSheetDefaults.DragHandle() },
         ) {
             TruckerInterestSheetContent(
                 truckerList = uiState.truckerList,
@@ -245,7 +247,7 @@ fun IndentDetailsScreen(
                 onClose = { viewModel.onEvent(IndentDetailsEvent.HideTruckerSheet) },
                 onReject = { interestId ->
                     viewModel.onEvent(IndentDetailsEvent.RejectTruckerInterest(interestId))
-                }
+                },
             )
         }
     }
@@ -256,7 +258,7 @@ fun IndentDetailsScreen(
             onDismissRequest = { viewModel.onEvent(IndentDetailsEvent.HideSuitableTrucksSheet) },
             sheetState = sheetState,
             containerColor = colorScheme.surface,
-            dragHandle = { BottomSheetDefaults.DragHandle() }
+            dragHandle = { BottomSheetDefaults.DragHandle() },
         ) {
             if (uiState.isSuitableTrucksLoading) {
                 Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
@@ -269,9 +271,10 @@ fun IndentDetailsScreen(
     }
 
     val indent = uiState.indent
-    val indentCode = indent?.indentCode?.let {
-        if (it.startsWith("#")) it else "#$it"
-    } ?: ""
+    val indentCode =
+        indent?.indentCode?.let {
+            if (it.startsWith("#")) it else "#$it"
+        } ?: ""
 
     Scaffold(
         topBar = {
@@ -285,7 +288,7 @@ fun IndentDetailsScreen(
                             fontWeight = FontWeight.SemiBold,
                             color = colorScheme.onSurface,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
                         )
                         indent?.createdAt?.let { createdAt ->
                             Text(
@@ -301,7 +304,7 @@ fun IndentDetailsScreen(
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back",
-                            tint = colorScheme.onSurface
+                            tint = colorScheme.onSurface,
                         )
                     }
                 },
@@ -316,7 +319,7 @@ fun IndentDetailsScreen(
                         DropdownMenu(
                             expanded = menuExpanded,
                             onDismissRequest = { menuExpanded = false },
-                            modifier = Modifier.background(colorScheme.surface)
+                            modifier = Modifier.background(colorScheme.surface),
                         ) {
                             DropdownMenuItem(
                                 text = { Text("Cancel Indent", color = colorScheme.error) },
@@ -324,13 +327,13 @@ fun IndentDetailsScreen(
                                     Icon(
                                         Icons.Outlined.Delete,
                                         contentDescription = "Cancel Indent",
-                                        tint = colorScheme.error
+                                        tint = colorScheme.error,
                                     )
                                 },
                                 onClick = {
                                     menuExpanded = false
                                     viewModel.onEvent(IndentDetailsEvent.ShowCancelDialog)
-                                }
+                                },
                             )
                         }
                     }
@@ -358,15 +361,16 @@ fun IndentDetailsScreen(
                     )
                 }
             }
-        }
+        },
     ) { paddingValues ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                // Keyboard-aware viewport: without this the scroll bounds run behind the
-                // keyboard and bring-into-view leaves the focused field hidden.
-                // See FormInsets.kt.
-                .formViewportInsets(paddingValues)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    // Keyboard-aware viewport: without this the scroll bounds run behind the
+                    // keyboard and bring-into-view leaves the focused field hidden.
+                    // See FormInsets.kt.
+                    .formViewportInsets(paddingValues),
         ) {
             when {
                 uiState.isLoading -> {
@@ -375,7 +379,7 @@ fun IndentDetailsScreen(
                 uiState.errorMessage != null -> {
                     Column(
                         modifier = Modifier.align(Alignment.Center).padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Text(text = uiState.errorMessage ?: "Unknown Error", color = colorScheme.error)
                         Spacer(modifier = Modifier.height(8.dp))
@@ -391,19 +395,21 @@ fun IndentDetailsScreen(
                     val unloadingLocation = groupDetails.indentLocations.find { it.locationType == "unloading" }
 
                     Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
                         if (costError) {
-                            val missingParts = buildList {
-                                val clientMissing = currentIndent.indentGroupDetails.clientTripCost?.let { it <= 0 } ?: true
-                                val negotiatedMissing = currentIndent.negotiatedTripCost?.let { it <= 0 } ?: true
-                                if (clientMissing) add("Client trip cost")
-                                if (negotiatedMissing) add("Negotiated trip cost")
-                            }
+                            val missingParts =
+                                buildList {
+                                    val clientMissing = currentIndent.indentGroupDetails.clientTripCost?.let { it <= 0 } ?: true
+                                    val negotiatedMissing = currentIndent.negotiatedTripCost?.let { it <= 0 } ?: true
+                                    if (clientMissing) add("Client trip cost")
+                                    if (negotiatedMissing) add("Negotiated trip cost")
+                                }
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = CardDefaults.cardColors(containerColor = colorScheme.errorContainer),
@@ -431,23 +437,25 @@ fun IndentDetailsScreen(
 
                         ConsignorClause(
                             number = 1,
-                            clientName = groupDetails.clientProfile?.companyName
-                                ?: groupDetails.clientProfile?.fullName
-                                ?: "Unknown",
+                            clientName =
+                                groupDetails.clientProfile?.companyName
+                                    ?: groupDetails.clientProfile?.fullName
+                                    ?: "Unknown",
                             tagCode = groupDetails.clientProfile?.tagCode,
                             branchName = groupDetails.clientBranch?.branchName,
                             branchCode = groupDetails.clientBranch?.branchCode,
                             clientPhone = groupDetails.clientProfile?.phoneNumber,
                             callLines = groupDetails.indentContacts.toDocketCallLines(),
                             onViewProfileClick = {
-                                val userId = groupDetails.clientProfile?.userId
-                                    ?: groupDetails.clientProfile?.id
-                                    ?: return@ConsignorClause
+                                val userId =
+                                    groupDetails.clientProfile?.userId
+                                        ?: groupDetails.clientProfile?.id
+                                        ?: return@ConsignorClause
                                 onViewProfileClick(userId)
                             },
                             onCall = { dialNumber ->
                                 context.startActivity(
-                                    Intent(Intent.ACTION_DIAL, Uri.parse("tel:$dialNumber"))
+                                    Intent(Intent.ACTION_DIAL, Uri.parse("tel:$dialNumber")),
                                 )
                             },
                         )
@@ -462,19 +470,21 @@ fun IndentDetailsScreen(
                                     },
                                     onSuitableTrucksClick = {
                                         viewModel.onEvent(IndentDetailsEvent.ShowSuitableTrucksSheet)
-                                    }
+                                    },
                                 )
                             }
                         }
 
                         RouteAndFinancialsSection(
                             number = 2,
-                            originCity = loadingLocation?.let {
-                                "${it.areaName ?: it.cityName}${it.address?.let { addr -> ", $addr" } ?: ""}"
-                            } ?: "Unknown",
-                            destinationCity = unloadingLocation?.let {
-                                "${it.areaName ?: it.cityName}${it.address?.let { addr -> ", $addr" } ?: ""}"
-                            } ?: "Unknown",
+                            originCity =
+                                loadingLocation?.let {
+                                    "${it.areaName ?: it.cityName}${it.address?.let { addr -> ", $addr" } ?: ""}"
+                                } ?: "Unknown",
+                            destinationCity =
+                                unloadingLocation?.let {
+                                    "${it.areaName ?: it.cityName}${it.address?.let { addr -> ", $addr" } ?: ""}"
+                                } ?: "Unknown",
                             clientCost = formatCurrencyDetails(groupDetails.clientTripCost),
                             negotiatedCost = formatCurrencyDetails(currentIndent.negotiatedTripCost),
                             hideCost = currentIndent.hideCostInfo,
@@ -519,20 +529,22 @@ private fun BottomActionBar(
         shadowElevation = 8.dp,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 20.dp, top = 10.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 20.dp, top = 10.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(
                 onClick = onEditClick,
-                modifier = Modifier
-                    .size(48.dp)
-                    .background(colorScheme.surfaceVariant, CircleShape)
-                    .docketTag("indent_details_edit_button")
-                    .semantics { contentDescription = "Edit indent" }
+                modifier =
+                    Modifier
+                        .size(48.dp)
+                        .background(colorScheme.surfaceVariant, CircleShape)
+                        .docketTag("indent_details_edit_button")
+                        .semantics { contentDescription = "Edit indent" },
             ) {
                 Icon(
                     Icons.Default.Edit,
@@ -548,14 +560,16 @@ private fun BottomActionBar(
                 onClick = {
                     if (status.equals("open", true)) onAssignClick() else onCreateTripClick()
                 },
-                modifier = Modifier
-                    .weight(1f)
-                    .height(52.dp),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .height(52.dp),
                 shape = MaterialTheme.shapes.large,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colorScheme.primary,
-                    contentColor = colorScheme.onPrimary
-                ),
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = colorScheme.primary,
+                        contentColor = colorScheme.onPrimary,
+                    ),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp),
             ) {
                 Text(
@@ -578,43 +592,46 @@ private fun TruckerInterestSheetContent(
     val colorScheme = MaterialTheme.colorScheme
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 32.dp)
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(bottom = 32.dp),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "Interest Expressed",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = colorScheme.onSurface
+                    color = colorScheme.onSurface,
                 )
                 val count = truckerList.size
                 Text(
-                    text = if (count == 1) {
-                        "$count trucker has shown interest"
-                    } else {
-                        "$count truckers have shown interest"
-                    },
+                    text =
+                        if (count == 1) {
+                            "$count trucker has shown interest"
+                        } else {
+                            "$count truckers have shown interest"
+                        },
                     style = MaterialTheme.typography.bodySmall,
-                    color = colorScheme.onSurfaceVariant
+                    color = colorScheme.onSurfaceVariant,
                 )
             }
             IconButton(
                 onClick = onClose,
-                modifier = Modifier.background(colorScheme.surfaceVariant, CircleShape).size(32.dp)
+                modifier = Modifier.background(colorScheme.surfaceVariant, CircleShape).size(32.dp),
             ) {
                 Icon(
                     Icons.Default.Close,
                     contentDescription = "Close",
                     modifier = Modifier.size(18.dp),
-                    tint = colorScheme.onSurfaceVariant
+                    tint = colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -636,7 +653,7 @@ private fun TruckerInterestSheetContent(
                         name = trucker.name,
                         phone = trucker.phone ?: "",
                         expressedAt = trucker.expressedAt,
-                        onReject = { onReject(trucker.interestId) }
+                        onReject = { onReject(trucker.interestId) },
                     )
                 }
             }
@@ -645,9 +662,7 @@ private fun TruckerInterestSheetContent(
 }
 
 @Composable
-private fun SuitsableTrucksContent(
-    trucks: com.freight24.rest.response.SearchTruckerResponse.TruckerData?
-) {
+private fun SuitsableTrucksContent(trucks: com.freight24.rest.response.SearchTruckerResponse.TruckerData?) {
     if (trucks == null) {
         Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
             Text("No suitable trucks found", color = MaterialTheme.colorScheme.onSurfaceVariant)

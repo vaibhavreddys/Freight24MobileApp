@@ -19,7 +19,6 @@ import retrofit2.http.Path
  * `/api/v1/` while these routes are mounted at `/api/v2/client`.
  */
 interface ClientV2Api {
-
     /** Active and inactive branches alike — the caller filters on [status]. */
     @GET("/api/v2/client/{clientId}/branches")
     suspend fun getClientBranches(

@@ -6,7 +6,6 @@ import com.freight24.rest.response.TripResponse
 import kotlinx.coroutines.flow.Flow
 
 internal interface TripRepository {
-
     /**
      * The driver's last known manifest, straight from the local cache. Emits
      * again whenever a fetch writes fresher rows.
@@ -31,7 +30,7 @@ internal interface TripRepository {
     suspend fun uploadLr(
         tripId: String,
         filePart: okhttp3.MultipartBody.Part,
-        notes: okhttp3.RequestBody? = null
+        notes: okhttp3.RequestBody? = null,
     ): Result<TripDetail>
 
     suspend fun uploadPod(
@@ -46,5 +45,4 @@ internal interface TripRepository {
         tripId: String,
         documentId: String,
     ): Result<String>
-
 }

@@ -30,133 +30,147 @@ data class CreateTripUiState(
     val driverPhone: String = "",
     val expectedLoadingDate: String = "", // UI only for now as API doesn't support it
     val createdTrip: CreatedTripResponse.TripData? = null,
-    val snackbarMessage: String? = null
+    val snackbarMessage: String? = null,
 )
 
 sealed class CreateTripEvent {
     data class LoadData(val indentId: String, val truckId: String) : CreateTripEvent()
+
     data class UpdateDriverName(val name: String) : CreateTripEvent()
+
     data class UpdateDriverPhone(val phone: String) : CreateTripEvent()
+
     data class UpdateExpectedLoadingDate(val date: String) : CreateTripEvent()
+
     object CreateTrip : CreateTripEvent()
+
     object ClearError : CreateTripEvent()
+
     object ClearSnackbar : CreateTripEvent()
 }
 
 @HiltViewModel
-internal class CreateTripViewModel @Inject constructor(
-    private val getIndentByIdUseCase: GetIndentByIdUseCase,
-    private val getTruckByIdUseCase: GetTruckByIdUseCase,
-    private val createTripUseCase: CreateTripUseCase,
-    savedStateHandle: SavedStateHandle
-) : ViewModel() {
+internal class CreateTripViewModel
+    @Inject
+    constructor(
+        private val getIndentByIdUseCase: GetIndentByIdUseCase,
+        private val getTruckByIdUseCase: GetTruckByIdUseCase,
+        private val createTripUseCase: CreateTripUseCase,
+        savedStateHandle: SavedStateHandle,
+    ) : ViewModel() {
+        private val _uiState = MutableStateFlow(CreateTripUiState())
+        val uiState: StateFlow<CreateTripUiState> = _uiState.asStateFlow()
 
-    private val _uiState = MutableStateFlow(CreateTripUiState())
-    val uiState: StateFlow<CreateTripUiState> = _uiState.asStateFlow()
+        private var indentId: String? = null
+        private var truckId: String? = null
 
-    private var indentId: String? = null
-    private var truckId: String? = null
-
-    init {
-        // Initialize if arguments are passed via savedStateHandle directly (optional, but good practice)
-        // However, we are passing checks in LoadData event from Screen composable usually.
-    }
-
-    fun onEvent(event: CreateTripEvent) {
-        when (event) {
-            is CreateTripEvent.LoadData -> {
-                indentId = event.indentId
-                truckId = event.truckId
-                loadData(event.indentId, event.truckId)
-            }
-            is CreateTripEvent.UpdateDriverName -> {
-                _uiState.update { it.copy(driverName = event.name) }
-            }
-            is CreateTripEvent.UpdateDriverPhone -> {
-                _uiState.update { it.copy(driverPhone = event.phone) }
-            }
-            is CreateTripEvent.UpdateExpectedLoadingDate -> {
-                _uiState.update { it.copy(expectedLoadingDate = event.date) }
-            }
-            is CreateTripEvent.CreateTrip -> {
-                createTrip()
-            }
-            is CreateTripEvent.ClearError -> {
-                _uiState.update { it.copy(errorMessage = null) }
-            }
-            is CreateTripEvent.ClearSnackbar -> {
-                _uiState.update { it.copy(snackbarMessage = null) }
-            }
-        }
-    }
-
-    private fun loadData(indentId: String, truckId: String) {
-        if (indentId.isEmpty() || indentId == "{indentId}" || truckId.isEmpty() || truckId == "{truckId}") {
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    errorMessage = "Invalid indent or truck selected"
-                )
-            }
-            return
-        }
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-
-            // Fetch Indent
-            val indentResult = getIndentByIdUseCase(GetIndentByIdUseCaseParams(indentId))
-            val truckResult = getTruckByIdUseCase(GetTruckByIdUseCaseParams(truckId))
-
-            _uiState.update {
-                it.copy(
-                    isLoading = false,
-                    indent = indentResult.getOrNull()?.data,
-                    truck = truckResult.getOrNull()?.data,
-                    errorMessage = if (indentResult.isFailure || truckResult.isFailure) {
-                        "Failed to load details: ${indentResult.exceptionOrNull()?.message ?: ""} ${truckResult.exceptionOrNull()?.message ?: ""}"
-                    } else null
-                )
-            }
-        }
-    }
-
-    private fun createTrip() {
-        val iId = indentId ?: return
-        val tId = truckId ?: return
-        val state = _uiState.value
-
-        if (state.driverPhone.isEmpty()) {
-            _uiState.update { it.copy(snackbarMessage = "Please update driver phone number") }
-            return
+        init {
+            // Initialize if arguments are passed via savedStateHandle directly (optional, but good practice)
+            // However, we are passing checks in LoadData event from Screen composable usually.
         }
 
-        viewModelScope.launch {
-            _uiState.update { it.copy(isCreating = true, errorMessage = null) }
+        fun onEvent(event: CreateTripEvent) {
+            when (event) {
+                is CreateTripEvent.LoadData -> {
+                    indentId = event.indentId
+                    truckId = event.truckId
+                    loadData(event.indentId, event.truckId)
+                }
+                is CreateTripEvent.UpdateDriverName -> {
+                    _uiState.update { it.copy(driverName = event.name) }
+                }
+                is CreateTripEvent.UpdateDriverPhone -> {
+                    _uiState.update { it.copy(driverPhone = event.phone) }
+                }
+                is CreateTripEvent.UpdateExpectedLoadingDate -> {
+                    _uiState.update { it.copy(expectedLoadingDate = event.date) }
+                }
+                is CreateTripEvent.CreateTrip -> {
+                    createTrip()
+                }
+                is CreateTripEvent.ClearError -> {
+                    _uiState.update { it.copy(errorMessage = null) }
+                }
+                is CreateTripEvent.ClearSnackbar -> {
+                    _uiState.update { it.copy(snackbarMessage = null) }
+                }
+            }
+        }
 
-            val result = createTripUseCase(
-                CreateTripUseCaseDataParams(
-                    indentId = iId,
-                    truckId = tId,
-                    driverName = state.driverName,
-                    driverPhone = state.driverPhone
-                )
-            )
-
-            if (result.isSuccess) {
+        private fun loadData(
+            indentId: String,
+            truckId: String,
+        ) {
+            if (indentId.isEmpty() || indentId == "{indentId}" || truckId.isEmpty() || truckId == "{truckId}") {
                 _uiState.update {
                     it.copy(
-                        isCreating = false,
-                        createdTrip = result.getOrNull()
+                        isLoading = false,
+                        errorMessage = "Invalid indent or truck selected",
                     )
                 }
-            } else {
+                return
+            }
+            viewModelScope.launch {
+                _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+
+                // Fetch Indent
+                val indentResult = getIndentByIdUseCase(GetIndentByIdUseCaseParams(indentId))
+                val truckResult = getTruckByIdUseCase(GetTruckByIdUseCaseParams(truckId))
+
                 _uiState.update {
                     it.copy(
-                        isCreating = false,
-                        errorMessage = result.exceptionOrNull()?.message ?: "Failed to create trip"
+                        isLoading = false,
+                        indent = indentResult.getOrNull()?.data,
+                        truck = truckResult.getOrNull()?.data,
+                        errorMessage =
+                            if (indentResult.isFailure || truckResult.isFailure) {
+                                "Failed to load details: ${indentResult.exceptionOrNull()?.message ?: ""} ${truckResult.exceptionOrNull()?.message ?: ""}"
+                            } else {
+                                null
+                            },
                     )
                 }
             }
         }
+
+        private fun createTrip() {
+            val iId = indentId ?: return
+            val tId = truckId ?: return
+            val state = _uiState.value
+
+            if (state.driverPhone.isEmpty()) {
+                _uiState.update { it.copy(snackbarMessage = "Please update driver phone number") }
+                return
+            }
+
+            viewModelScope.launch {
+                _uiState.update { it.copy(isCreating = true, errorMessage = null) }
+
+                val result =
+                    createTripUseCase(
+                        CreateTripUseCaseDataParams(
+                            indentId = iId,
+                            truckId = tId,
+                            driverName = state.driverName,
+                            driverPhone = state.driverPhone,
+                        ),
+                    )
+
+                if (result.isSuccess) {
+                    _uiState.update {
+                        it.copy(
+                            isCreating = false,
+                            createdTrip = result.getOrNull(),
+                        )
+                    }
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            isCreating = false,
+                            errorMessage = result.exceptionOrNull()?.message ?: "Failed to create trip",
+                        )
+                    }
+                }
+            }
+        }
     }
-}

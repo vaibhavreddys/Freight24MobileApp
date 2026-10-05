@@ -17,5 +17,5 @@ data class UpdateIndentRequest(
     @SerialName("tarpauling_required") val tarpaulingRequired: Boolean? = null,
     @SerialName("tat_enabled") val tatEnabled: Boolean? = null,
     @SerialName("tat_hours") val tatHours: Int? = null,
-    @SerialName("special_requirements") val remarks: String?= null
+    @SerialName("special_requirements") val remarks: String? = null,
 )

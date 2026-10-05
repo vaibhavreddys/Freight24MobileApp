@@ -18,30 +18,32 @@ import androidx.core.net.toUri
 @Composable
 fun rememberCallAction(phone: String): () -> Unit {
     val context = LocalContext.current
-    val callIntent = remember(phone) {
-        Intent(Intent.ACTION_CALL).apply {
-            data = "tel:$phone".toUri()
+    val callIntent =
+        remember(phone) {
+            Intent(Intent.ACTION_CALL).apply {
+                data = "tel:$phone".toUri()
+            }
         }
-    }
 
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            try {
-                context.startActivity(callIntent)
-            } catch (e: Exception) {
-                Toast.makeText(context, "Cannot make call: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
-            }
-        } else {
-            try {
-                val dialIntent = Intent(Intent.ACTION_DIAL).apply { data = "tel:$phone".toUri() }
-                context.startActivity(dialIntent)
-            } catch (e: Exception) {
-                Toast.makeText(context, "Cannot open dialer: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+    val permissionLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestPermission(),
+        ) { isGranted ->
+            if (isGranted) {
+                try {
+                    context.startActivity(callIntent)
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Cannot make call: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                try {
+                    val dialIntent = Intent(Intent.ACTION_DIAL).apply { data = "tel:$phone".toUri() }
+                    context.startActivity(dialIntent)
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Cannot open dialer: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+                }
             }
         }
-    }
 
     return {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED) {

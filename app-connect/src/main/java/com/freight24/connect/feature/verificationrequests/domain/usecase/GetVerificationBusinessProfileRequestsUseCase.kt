@@ -16,67 +16,73 @@ interface GetVerificationTruckOwnerRequestsUseCase {
     suspend operator fun invoke(status: VerificationRequestStatus? = null): Result<List<TruckOwnerVerificationRequest>>
 }
 
-class GetVerificationTruckOwnerRequestsUseCaseImpl @Inject constructor(
-    private val repository: VerificationRequestsRepository,
-) : GetVerificationTruckOwnerRequestsUseCase {
-    override suspend fun invoke(status: VerificationRequestStatus?): Result<List<TruckOwnerVerificationRequest>> {
-        return repository.getVerificationTruckOwners(status?.apiValue).map { response ->
-            response.data.map { it.toDomain() }
+class GetVerificationTruckOwnerRequestsUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: VerificationRequestsRepository,
+    ) : GetVerificationTruckOwnerRequestsUseCase {
+        override suspend fun invoke(status: VerificationRequestStatus?): Result<List<TruckOwnerVerificationRequest>> {
+            return repository.getVerificationTruckOwners(status?.apiValue).map { response ->
+                response.data.map { it.toDomain() }
+            }
+        }
+
+        private fun VerificationTruckOwnerDto.toDomain(): TruckOwnerVerificationRequest {
+            val changedKeys = changedFields?.businessProfile.orEmpty().filter { it != "_ref" }
+            return TruckOwnerVerificationRequest(
+                id = id,
+                referenceId = referenceId,
+                fullName = fullName.orEmpty().ifBlank { "Truck Owner" },
+                phone = phone,
+                changedFields = changedKeys,
+                changedBusinessProfile =
+                    buildBusinessProfileChanges(
+                        changedKeys = changedKeys,
+                        oldProfile = oldSnapshot?.businessProfile.orEmpty(),
+                        newProfile = newSnapshot?.businessProfile.orEmpty(),
+                    ),
+                status = VerificationRequestStatus.fromApiValue(status) ?: VerificationRequestStatus.PENDING,
+                resolutionNotes = resolutionNotes,
+                updatedAt = updatedAt,
+            )
         }
     }
-
-    private fun VerificationTruckOwnerDto.toDomain(): TruckOwnerVerificationRequest {
-        val changedKeys = changedFields?.businessProfile.orEmpty().filter { it != "_ref" }
-        return TruckOwnerVerificationRequest(
-            id = id,
-            referenceId = referenceId,
-            fullName = fullName.orEmpty().ifBlank { "Truck Owner" },
-            phone = phone,
-            changedFields = changedKeys,
-            changedBusinessProfile = buildBusinessProfileChanges(
-                changedKeys = changedKeys,
-                oldProfile = oldSnapshot?.businessProfile.orEmpty(),
-                newProfile = newSnapshot?.businessProfile.orEmpty(),
-            ),
-            status = VerificationRequestStatus.fromApiValue(status) ?: VerificationRequestStatus.PENDING,
-            resolutionNotes = resolutionNotes,
-            updatedAt = updatedAt,
-        )
-    }
-}
 
 interface GetVerificationClientRequestsUseCase {
     suspend operator fun invoke(status: VerificationRequestStatus? = null): Result<List<ClientVerificationRequest>>
 }
 
-class GetVerificationClientRequestsUseCaseImpl @Inject constructor(
-    private val repository: VerificationRequestsRepository,
-) : GetVerificationClientRequestsUseCase {
-    override suspend fun invoke(status: VerificationRequestStatus?): Result<List<ClientVerificationRequest>> {
-        return repository.getVerificationClients(status?.apiValue).map { response ->
-            response.data.map { it.toDomain() }
+class GetVerificationClientRequestsUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: VerificationRequestsRepository,
+    ) : GetVerificationClientRequestsUseCase {
+        override suspend fun invoke(status: VerificationRequestStatus?): Result<List<ClientVerificationRequest>> {
+            return repository.getVerificationClients(status?.apiValue).map { response ->
+                response.data.map { it.toDomain() }
+            }
+        }
+
+        private fun VerificationClientDto.toDomain(): ClientVerificationRequest {
+            val changedKeys = changedFields?.businessProfile.orEmpty().filter { it != "_ref" }
+            return ClientVerificationRequest(
+                id = id,
+                referenceId = referenceId,
+                fullName = fullName.orEmpty().ifBlank { "Client" },
+                companyName = companyName.orEmpty().ifBlank { "Client Company" },
+                changedFields = changedKeys,
+                changedBusinessProfile =
+                    buildBusinessProfileChanges(
+                        changedKeys = changedKeys,
+                        oldProfile = oldSnapshot?.businessProfile.orEmpty(),
+                        newProfile = newSnapshot?.businessProfile.orEmpty(),
+                    ),
+                status = VerificationRequestStatus.fromApiValue(status) ?: VerificationRequestStatus.PENDING,
+                resolutionNotes = resolutionNotes,
+                updatedAt = updatedAt,
+            )
         }
     }
-
-    private fun VerificationClientDto.toDomain(): ClientVerificationRequest {
-        val changedKeys = changedFields?.businessProfile.orEmpty().filter { it != "_ref" }
-        return ClientVerificationRequest(
-            id = id,
-            referenceId = referenceId,
-            fullName = fullName.orEmpty().ifBlank { "Client" },
-            companyName = companyName.orEmpty().ifBlank { "Client Company" },
-            changedFields = changedKeys,
-            changedBusinessProfile = buildBusinessProfileChanges(
-                changedKeys = changedKeys,
-                oldProfile = oldSnapshot?.businessProfile.orEmpty(),
-                newProfile = newSnapshot?.businessProfile.orEmpty(),
-            ),
-            status = VerificationRequestStatus.fromApiValue(status) ?: VerificationRequestStatus.PENDING,
-            resolutionNotes = resolutionNotes,
-            updatedAt = updatedAt,
-        )
-    }
-}
 
 private fun buildBusinessProfileChanges(
     changedKeys: List<String>,

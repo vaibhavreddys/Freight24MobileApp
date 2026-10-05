@@ -6,5 +6,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class UpdateTripStatusRequest(
     @SerialName("trucker_status")
-    val trucker_status: String
+    val trucker_status: String,
 )

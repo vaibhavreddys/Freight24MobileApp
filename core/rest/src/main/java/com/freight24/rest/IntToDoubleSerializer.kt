@@ -11,7 +11,10 @@ object IntToDoubleSerializer : KSerializer<Double> {
     override val descriptor: SerialDescriptor =
         PrimitiveSerialDescriptor("IntToDouble", PrimitiveKind.DOUBLE) //
 
-    override fun serialize(encoder: Encoder, value: Double) {
+    override fun serialize(
+        encoder: Encoder,
+        value: Double,
+    ) {
         encoder.encodeDouble(value)
     }
 

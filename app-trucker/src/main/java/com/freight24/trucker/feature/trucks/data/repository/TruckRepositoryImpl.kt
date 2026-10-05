@@ -55,18 +55,19 @@ internal class TruckRepositoryImpl
                 )
             }
         }
+
         override suspend fun updateTruckDocuments(
             truckId: String,
             rcCard: MultipartBody.Part?,
             fcCertificate: MultipartBody.Part?,
-            insurance: MultipartBody.Part?
+            insurance: MultipartBody.Part?,
         ): Result<AddTruckResponse> {
             return safeCallProvider.safeApiCall(ioDispatcher) {
                 api.updateTruck(
                     id = truckId,
                     rc_card = rcCard,
                     fc_certificate = fcCertificate,
-                    insurance = insurance
+                    insurance = insurance,
                 )
             }
         }
@@ -80,7 +81,7 @@ internal class TruckRepositoryImpl
             year: MultipartBody.Part?,
             rcCard: MultipartBody.Part?,
             fcCertificate: MultipartBody.Part?,
-            insurance: MultipartBody.Part?
+            insurance: MultipartBody.Part?,
         ): Result<AddTruckResponse> {
             return safeCallProvider.safeApiCall(ioDispatcher) {
                 api.updateTruck(
@@ -92,17 +93,20 @@ internal class TruckRepositoryImpl
                     year = year,
                     rc_card = rcCard,
                     fc_certificate = fcCertificate,
-                    insurance = insurance
+                    insurance = insurance,
                 )
             }
         }
 
-        override suspend fun getTruckDocumentSignedUrl(truckId: String, documentType: String): Result<String> {
+        override suspend fun getTruckDocumentSignedUrl(
+            truckId: String,
+            documentType: String,
+        ): Result<String> {
             return safeCallProvider.safeApiCall(ioDispatcher) {
                 documentApi.getTruckDocumentSignedUrl(truckId, documentType)
             }.map { it.data.signedUrl }
         }
- 
+
         override suspend fun checkTruckAvailability(registrationNumber: String): Result<String?> {
             return safeCallProvider.safeApiCall(ioDispatcher) {
                 api.checkTruckAvailability(registrationNumber)

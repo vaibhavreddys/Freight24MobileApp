@@ -60,7 +60,7 @@ import com.freight24.ui.components.FreightTopAppBar
 @Composable
 fun InboxScreen(
     onBackClick: () -> Unit,
-    viewModel: InboxViewModel = hiltViewModel<InboxViewModelImpl>()
+    viewModel: InboxViewModel = hiltViewModel<InboxViewModelImpl>(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val colorScheme = MaterialTheme.colorScheme
@@ -76,14 +76,14 @@ fun InboxScreen(
                             Surface(
                                 color = colorScheme.errorContainer,
                                 shape = CircleShape,
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(24.dp),
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Text(
                                         text = uiState.totalIndents.toString(),
                                         color = colorScheme.error,
                                         style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.Bold,
                                     )
                                 }
                             }
@@ -97,7 +97,7 @@ fun InboxScreen(
                 },
             )
         },
-        containerColor = colorScheme.background
+        containerColor = colorScheme.background,
     ) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues).fillMaxSize()) {
             if (uiState.isLoading) {
@@ -106,7 +106,7 @@ fun InboxScreen(
                 Text(
                     text = uiState.errorMessage!!,
                     color = colorScheme.error,
-                    modifier = Modifier.align(Alignment.Center).padding(16.dp)
+                    modifier = Modifier.align(Alignment.Center).padding(16.dp),
                 )
             } else if (uiState.data.isEmpty()) {
                 FreightEmptyState(
@@ -118,14 +118,14 @@ fun InboxScreen(
             } else {
                 LazyColumn(
                     contentPadding = PaddingValues(vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     items(uiState.data) { indentData ->
                         IndentInterestCard(
                             indentData = indentData,
                             onRejectInterest = { interestId ->
                                 viewModel.onEvent(InboxEvent.RejectInterest(interestId = interestId))
-                            }
+                            },
                         )
                     }
                 }
@@ -151,7 +151,7 @@ fun InboxScreen(
 @Composable
 fun IndentInterestCard(
     indentData: IndentInterestInboxResponse.IndentInterestInboxData,
-    onRejectInterest: (String) -> Unit
+    onRejectInterest: (String) -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
     var isExpanded by remember { mutableStateOf(false) }
@@ -170,12 +170,14 @@ fun IndentInterestCard(
         postedTime = "${indentData.interestCount} interested",
         // Area over city, matching the indents page — "Nelamangala" tells an
         // operator more than "Bengaluru" when the payload carries both.
-        fromCity = indentData.load.loading.area
-            ?: indentData.load.loading.city
-            ?: "Unknown",
-        toCity = indentData.load.unloading.area
-            ?: indentData.load.unloading.city
-            ?: "Unknown",
+        fromCity =
+            indentData.load.loading.area
+                ?: indentData.load.loading.city
+                ?: "Unknown",
+        toCity =
+            indentData.load.unloading.area
+                ?: indentData.load.unloading.city
+                ?: "Unknown",
         clientCostFormatted = formatCurrency(indentData.load.pricing.clientCost),
         negotiatedCostFormatted = formatCurrency(indentData.load.pricing.negotiatedCost),
         truckDisplay = indentData.load.truck.displayName,
@@ -186,20 +188,23 @@ fun IndentInterestCard(
             Surface(
                 onClick = { isExpanded = !isExpanded },
                 color = Color.Transparent,
-                modifier = Modifier
-                    .docketTag("interest_card_expand")
-                    .semantics {
-                        contentDescription = if (isExpanded) {
-                            "Hide interested truck owners"
-                        } else {
-                            "Show interested truck owners"
-                        }
-                    },
+                modifier =
+                    Modifier
+                        .docketTag("interest_card_expand")
+                        .semantics {
+                            contentDescription =
+                                if (isExpanded) {
+                                    "Hide interested truck owners"
+                                } else {
+                                    "Show interested truck owners"
+                                }
+                        },
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 3.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 3.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
@@ -217,11 +222,12 @@ fun IndentInterestCard(
                         modifier = Modifier.weight(1f),
                     )
                     Icon(
-                        imageVector = if (isExpanded) {
-                            Icons.Default.KeyboardArrowUp
-                        } else {
-                            Icons.Default.KeyboardArrowDown
-                        },
+                        imageVector =
+                            if (isExpanded) {
+                                Icons.Default.KeyboardArrowUp
+                            } else {
+                                Icons.Default.KeyboardArrowDown
+                            },
                         contentDescription = null,
                         tint = scheme.onSurfaceVariant,
                         modifier = Modifier.size(18.dp),
@@ -274,5 +280,4 @@ fun IndentInterestCard(
     }
 }
 
-private fun interestsLabel(count: Int): String =
-    "$count Interest${if (count == 1) "" else "s"} Expressed"
+private fun interestsLabel(count: Int): String = "$count Interest${if (count == 1) "" else "s"} Expressed"

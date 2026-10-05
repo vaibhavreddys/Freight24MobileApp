@@ -12,13 +12,15 @@ data class UpdateIdentityDocumentParams(
     val docId: String,
     val userId: String,
     val documentNumber: String,
-    val file: MultipartBody.Part
+    val file: MultipartBody.Part,
 )
 
-class UpdateIdentityDocumentUseCaseImpl @Inject constructor(
-    private val repository: ProfileRepository
-) : UpdateIdentityDocumentUseCase {
-    override suspend fun invoke(params: UpdateIdentityDocumentParams): Result<String> {
-        return repository.updateIdentityDocument(params.docId, params.userId, params.documentNumber, params.file)
+class UpdateIdentityDocumentUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: ProfileRepository,
+    ) : UpdateIdentityDocumentUseCase {
+        override suspend fun invoke(params: UpdateIdentityDocumentParams): Result<String> {
+            return repository.updateIdentityDocument(params.docId, params.userId, params.documentNumber, params.file)
+        }
     }
-}

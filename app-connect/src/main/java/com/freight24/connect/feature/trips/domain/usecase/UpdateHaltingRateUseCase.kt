@@ -11,23 +11,23 @@ data class UpdateHaltingRateUseCaseDataParams(
     val loadingDays: Int?,
     val unloadingDays: Int?,
     val ratePerDay: Int? = null,
-    val notes: String?
-): UseCaseParams
+    val notes: String?,
+) : UseCaseParams
 
 internal interface UpdateHaltingRateUseCase : UseCase<UpdateHaltingRateUseCaseDataParams, UpdateHaltingRatesResponse.UpdateHaltingRatesData>
 
-
-class UpdateHaltingRateUseCaseImpl @Inject constructor(
-    private val repository: TripHaltingRepository
-) : UpdateHaltingRateUseCase {
-
-    override suspend fun invoke(params: UpdateHaltingRateUseCaseDataParams): Result<UpdateHaltingRatesResponse.UpdateHaltingRatesData> {
-        return repository.addHaltingCharges(
-            params.tripId,
-            params.loadingDays,
-            params.unloadingDays,
-            params.ratePerDay,
-            params.notes
-        )
+class UpdateHaltingRateUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: TripHaltingRepository,
+    ) : UpdateHaltingRateUseCase {
+        override suspend fun invoke(params: UpdateHaltingRateUseCaseDataParams): Result<UpdateHaltingRatesResponse.UpdateHaltingRatesData> {
+            return repository.addHaltingCharges(
+                params.tripId,
+                params.loadingDays,
+                params.unloadingDays,
+                params.ratePerDay,
+                params.notes,
+            )
+        }
     }
-}

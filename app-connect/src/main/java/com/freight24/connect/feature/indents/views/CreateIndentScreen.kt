@@ -198,17 +198,18 @@ fun CreateIndentContent(
         fieldErrors.value = errors
 
         if (errors.isNotEmpty()) {
-            val message = when {
-                errors.contains("client") -> "Clause 01 — select a client"
-                errors.contains("placement") -> "Clause 01 — select a placement contact"
-                errors.contains("from") || errors.contains("to") -> "Clause 02 — enter the route"
-                errors.contains("truck") -> "Clause 03 — select a vehicle type"
-                errors.contains("weight") || errors.contains("material") ->
-                    "Clause 04 — enter the cargo details"
-                errors.contains("tat") -> "Clause 06 — enter the TAT hours"
-                errors.contains("negotiated") -> "Negotiated cost cannot exceed client cost"
-                else -> "Please fill all required fields"
-            }
+            val message =
+                when {
+                    errors.contains("client") -> "Clause 01 — select a client"
+                    errors.contains("placement") -> "Clause 01 — select a placement contact"
+                    errors.contains("from") || errors.contains("to") -> "Clause 02 — enter the route"
+                    errors.contains("truck") -> "Clause 03 — select a vehicle type"
+                    errors.contains("weight") || errors.contains("material") ->
+                        "Clause 04 — enter the cargo details"
+                    errors.contains("tat") -> "Clause 06 — enter the TAT hours"
+                    errors.contains("negotiated") -> "Negotiated cost cannot exceed client cost"
+                    else -> "Please fill all required fields"
+                }
             scope.launch { snackbarHostState.showSnackbar(message) }
             return false
         }
@@ -267,176 +268,182 @@ fun CreateIndentContent(
             // so focusing a field scrolls it into view and the CTA rides above the keyboard
             // instead of hiding behind it.
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    // The scaffold's insets are already spent above; without this the IME
-                    // inset below would be counted a second time and the CTA would float a
-                    // navigation bar's height too high.
-                    .consumeWindowInsets(paddingValues)
-                    .imePadding(),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        // The scaffold's insets are already spent above; without this the IME
+                        // inset below would be counted a second time and the CTA would float a
+                        // navigation bar's height too high.
+                        .consumeWindowInsets(paddingValues)
+                        .imePadding(),
             ) {
                 Column(Modifier.fillMaxSize()) {
-                Column(
-                    modifier = Modifier
-                        // weight(1f), not fillMaxSize: the CTA below is a sibling in normal
-                        // flow, so the scroll viewport ends where the CTA begins. An
-                        // overlapping CTA plus trailing scroll padding is not enough — the
-                        // field still scrolls into the strip the button covers, because
-                        // bring-into-view only knows the scroll container's own bounds.
-                        .weight(1f)
-                        .verticalScroll(scrollState)
-                        .padding(horizontal = 16.dp)
-                        .padding(top = 8.dp, bottom = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
-                ) {
-                    DocketHead(
-                        complete = gatingComplete,
-                        total = gatingStates.size,
-                        states = gatingStates,
-                    )
-
-                    ConsignorClause(
-                        uiState = uiState,
-                        state = consignorState,
-                        errors = errors,
-                        onEvent = onEvent,
-                        onClientClick = {
-                            clearError("client")
-                            onNavigateToSearch(SearchType.CLIENT.name)
-                        },
-                        onBranchClick = { showBranchSheet = true },
-                        onContactClick = { role ->
-                            clearError("placement")
-                            contactSheetRole = role
-                        },
-                    )
-
-                    ClauseDocket(
-                        number = 2,
-                        title = stringResource(R.string.lane),
-                        state = laneState,
-                        testTag = "create_indent_clause_lane",
+                    Column(
+                        modifier =
+                            Modifier
+                                // weight(1f), not fillMaxSize: the CTA below is a sibling in normal
+                                // flow, so the scroll viewport ends where the CTA begins. An
+                                // overlapping CTA plus trailing scroll padding is not enough — the
+                                // field still scrolls into the strip the button covers, because
+                                // bring-into-view only knows the scroll container's own bounds.
+                                .weight(1f)
+                                .verticalScroll(scrollState)
+                                .padding(horizontal = 16.dp)
+                                .padding(top = 8.dp, bottom = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
-                        LanePicker(
-                            originLabel = stringResource(R.string.location_from),
-                            originValue = uiState.selectedFromLocation?.name.orEmpty(),
-                            onOriginClick = {
-                                clearError("from")
-                                onNavigateToSearch(SearchType.LOCATION_FROM.name)
+                        DocketHead(
+                            complete = gatingComplete,
+                            total = gatingStates.size,
+                            states = gatingStates,
+                        )
+
+                        ConsignorClause(
+                            uiState = uiState,
+                            state = consignorState,
+                            errors = errors,
+                            onEvent = onEvent,
+                            onClientClick = {
+                                clearError("client")
+                                onNavigateToSearch(SearchType.CLIENT.name)
                             },
-                            originTestTag = "create_indent_from_picker",
-                            destinationLabel = stringResource(R.string.location_to),
-                            destinationValue = uiState.selectedToLocation?.name.orEmpty(),
-                            onDestinationClick = {
-                                clearError("to")
-                                onNavigateToSearch(SearchType.LOCATION_TO.name)
+                            onBranchClick = { showBranchSheet = true },
+                            onContactClick = { role ->
+                                clearError("placement")
+                                contactSheetRole = role
                             },
-                            destinationTestTag = "create_indent_to_picker",
-                            originError = errors.contains("from"),
-                            destinationError = errors.contains("to"),
+                        )
+
+                        ClauseDocket(
+                            number = 2,
+                            title = stringResource(R.string.lane),
+                            state = laneState,
+                            testTag = "create_indent_clause_lane",
+                        ) {
+                            LanePicker(
+                                originLabel = stringResource(R.string.location_from),
+                                originValue = uiState.selectedFromLocation?.name.orEmpty(),
+                                onOriginClick = {
+                                    clearError("from")
+                                    onNavigateToSearch(SearchType.LOCATION_FROM.name)
+                                },
+                                originTestTag = "create_indent_from_picker",
+                                destinationLabel = stringResource(R.string.location_to),
+                                destinationValue = uiState.selectedToLocation?.name.orEmpty(),
+                                onDestinationClick = {
+                                    clearError("to")
+                                    onNavigateToSearch(SearchType.LOCATION_TO.name)
+                                },
+                                destinationTestTag = "create_indent_to_picker",
+                                originError = errors.contains("from"),
+                                destinationError = errors.contains("to"),
+                            )
+                        }
+
+                        VehicleClause(
+                            truckTypes = uiState.truckTypes,
+                            selectedTruckType = uiState.selectedTruckType,
+                            isLoading = uiState.isLoadingTruckTypes,
+                            isError = errors.contains("truck"),
+                            state = vehicleState,
+                            onSelect = {
+                                clearError("truck")
+                                onEvent(CreateIndentEvent.SelectTruckType(it))
+                            },
+                        )
+
+                        ClauseDocket(
+                            number = 4,
+                            title = stringResource(R.string.cargo),
+                            state = cargoState,
+                            testTag = "create_indent_clause_cargo",
+                        ) {
+                            RuledField(
+                                label = stringResource(R.string.weight),
+                                value = uiState.weight,
+                                onValueChange = {
+                                    clearError("weight")
+                                    onEvent(CreateIndentEvent.UpdateWeight(it))
+                                },
+                                testTag = "create_indent_weight_field",
+                                placeholder = "0.0",
+                                keyboardType = KeyboardType.Decimal,
+                                isError = errors.contains("weight"),
+                                trailingLabel = stringResource(R.string.weight_mt),
+                            )
+                            Spacer(Modifier.height(18.dp))
+                            DocketPicker(
+                                label = stringResource(R.string.material),
+                                value = uiState.materialName,
+                                onClick = {
+                                    clearError("material")
+                                    showMaterialSheet = true
+                                },
+                                testTag = "create_indent_material_field",
+                                placeholder = "Choose or type a category",
+                                isError = errors.contains("material"),
+                            )
+                        }
+
+                        CommercialsClause(
+                            uiState = uiState,
+                            state = commercialsState,
+                            negotiatedError =
+                                negotiatedCostExceedsClientError(
+                                    uiState.negotiatedCost,
+                                    uiState.clientCost,
+                                ),
+                            onEvent = onEvent,
+                        )
+
+                        TermsClause(
+                            uiState = uiState,
+                            state = termsState,
+                            tatError = errors.contains("tat"),
+                            onEvent = onEvent,
                         )
                     }
 
-                    VehicleClause(
-                        truckTypes = uiState.truckTypes,
-                        selectedTruckType = uiState.selectedTruckType,
-                        isLoading = uiState.isLoadingTruckTypes,
-                        isError = errors.contains("truck"),
-                        state = vehicleState,
-                        onSelect = {
-                            clearError("truck")
-                            onEvent(CreateIndentEvent.SelectTruckType(it))
-                        },
-                    )
-
-                    ClauseDocket(
-                        number = 4,
-                        title = stringResource(R.string.cargo),
-                        state = cargoState,
-                        testTag = "create_indent_clause_cargo",
+                    // Pinned CTA. A sibling in normal flow inside the imePadding() container
+                    // rather than Scaffold's bottomBar slot: it rides up with the keyboard
+                    // instead of sitting at the window bottom behind it, and it keeps the
+                    // scroll viewport's bottom edge honest.
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp)
+                                .padding(bottom = 20.dp, top = 10.dp),
                     ) {
-                        RuledField(
-                            label = stringResource(R.string.weight),
-                            value = uiState.weight,
-                            onValueChange = {
-                                clearError("weight")
-                                onEvent(CreateIndentEvent.UpdateWeight(it))
-                            },
-                            testTag = "create_indent_weight_field",
-                            placeholder = "0.0",
-                            keyboardType = KeyboardType.Decimal,
-                            isError = errors.contains("weight"),
-                            trailingLabel = stringResource(R.string.weight_mt),
-                        )
-                        Spacer(Modifier.height(18.dp))
-                        DocketPicker(
-                            label = stringResource(R.string.material),
-                            value = uiState.materialName,
-                            onClick = {
-                                clearError("material")
-                                showMaterialSheet = true
-                            },
-                            testTag = "create_indent_material_field",
-                            placeholder = "Choose or type a category",
-                            isError = errors.contains("material"),
-                        )
+                        Button(
+                            onClick = { if (validate()) onNavigateToReview() },
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(52.dp)
+                                    .docketTag("create_indent_review_button"),
+                            shape = MaterialTheme.shapes.large,
+                            colors =
+                                ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                                ),
+                            elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
+                        ) {
+                            Text(
+                                "Review Indent",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
                     }
-
-                    CommercialsClause(
-                        uiState = uiState,
-                        state = commercialsState,
-                        negotiatedError = negotiatedCostExceedsClientError(
-                            uiState.negotiatedCost,
-                            uiState.clientCost,
-                        ),
-                        onEvent = onEvent,
-                    )
-
-                    TermsClause(
-                        uiState = uiState,
-                        state = termsState,
-                        tatError = errors.contains("tat"),
-                        onEvent = onEvent,
-                    )
-                    }
-
-                // Pinned CTA. A sibling in normal flow inside the imePadding() container
-                // rather than Scaffold's bottomBar slot: it rides up with the keyboard
-                // instead of sitting at the window bottom behind it, and it keeps the
-                // scroll viewport's bottom edge honest.
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp)
-                        .padding(bottom = 20.dp, top = 10.dp),
-                ) {
-                    Button(
-                        onClick = { if (validate()) onNavigateToReview() },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp)
-                            .docketTag("create_indent_review_button"),
-                        shape = MaterialTheme.shapes.large,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                        ),
-                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
-                    ) {
-                        Text(
-                            "Review Indent",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowForward,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
-                }
                 }
             }
         }
@@ -495,16 +502,18 @@ private fun DocketHead(
             Spacer(Modifier.weight(1f))
             MetaTag(
                 text = "$complete / $total REQUIRED",
-                container = if (complete == total) {
-                    MaterialTheme.colorScheme.primaryContainer
-                } else {
-                    scheme.surfaceContainerHighest
-                },
-                content = if (complete == total) {
-                    scheme.onPrimaryContainer
-                } else {
-                    scheme.onSurfaceVariant
-                },
+                container =
+                    if (complete == total) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        scheme.surfaceContainerHighest
+                    },
+                content =
+                    if (complete == total) {
+                        scheme.onPrimaryContainer
+                    } else {
+                        scheme.onSurfaceVariant
+                    },
             )
         }
 
@@ -516,8 +525,9 @@ private fun DocketHead(
         )
 
         Text(
-            text = "Clauses 01 to 04 have to be complete before this can be raised. " +
-                "The rest is optional.",
+            text =
+                "Clauses 01 to 04 have to be complete before this can be raised. " +
+                    "The rest is optional.",
             style = MaterialTheme.typography.bodySmall,
             color = scheme.onSurfaceVariant,
         )
@@ -543,19 +553,21 @@ private fun ConsignorClause(
     val scheme = MaterialTheme.colorScheme
     val clientSelected = uiState.selectedClient != null
 
-    val clientDisplay = uiState.selectedClient?.let { client ->
-        listOfNotNull(
-            client.companyName.takeIf { it.isNotBlank() },
-            client.tagCode.takeIf { it.isNotBlank() },
-        ).joinToString(" · ")
-    }.orEmpty()
+    val clientDisplay =
+        uiState.selectedClient?.let { client ->
+            listOfNotNull(
+                client.companyName.takeIf { it.isNotBlank() },
+                client.tagCode.takeIf { it.isNotBlank() },
+            ).joinToString(" · ")
+        }.orEmpty()
 
-    val branchDisplay = uiState.selectedBranch?.let { branch ->
-        listOfNotNull(
-            branch.branchName?.takeIf { it.isNotBlank() },
-            branch.branchCode?.takeIf { it.isNotBlank() },
-        ).joinToString(" · ")
-    }.orEmpty()
+    val branchDisplay =
+        uiState.selectedBranch?.let { branch ->
+            listOfNotNull(
+                branch.branchName?.takeIf { it.isNotBlank() },
+                branch.branchCode?.takeIf { it.isNotBlank() },
+            ).joinToString(" · ")
+        }.orEmpty()
 
     ClauseDocket(
         number = 1,
@@ -590,12 +602,13 @@ private fun ConsignorClause(
             testTag = "create_indent_branch_picker",
             placeholder = if (clientSelected) "Optional — none selected" else "Select a client first",
             enabled = clientSelected && !uiState.isLoadingBranches && uiState.branches.isNotEmpty(),
-            supportingText = when {
-                !clientSelected -> null
-                uiState.isLoadingBranches -> "Loading branches…"
-                uiState.branches.isEmpty() -> "This client has no branches on file."
-                else -> "Optional. Inactive branches cannot be selected."
-            },
+            supportingText =
+                when {
+                    !clientSelected -> null
+                    uiState.isLoadingBranches -> "Loading branches…"
+                    uiState.branches.isEmpty() -> "This client has no branches on file."
+                    else -> "Optional. Inactive branches cannot be selected."
+                },
         )
 
         Spacer(Modifier.height(18.dp))
@@ -618,9 +631,10 @@ private fun ConsignorClause(
 
         if (uiState.isLoadingContacts) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 18.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 18.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
             ) {
@@ -644,14 +658,16 @@ private fun ConsignorClause(
                     onClick = { onContactClick(role) },
                     onClear = { onEvent(CreateIndentEvent.SelectContact(role, null)) },
                     testTag = "create_indent_contact_${role.wireKey}",
-                    isError = role == IndentContactRole.PLACEMENT &&
-                        errors.contains("placement"),
+                    isError =
+                        role == IndentContactRole.PLACEMENT &&
+                            errors.contains("placement"),
                     enabled = clientSelected && !uiState.contactsUnavailable,
-                    placeholder = when {
-                        !clientSelected -> "Select a client first"
-                        uiState.contactsUnavailable -> "No contacts on file"
-                        else -> "Choose contact"
-                    },
+                    placeholder =
+                        when {
+                            !clientSelected -> "Select a client first"
+                            uiState.contactsUnavailable -> "No contacts on file"
+                            else -> "Choose contact"
+                        },
                 )
                 if (index != IndentContactRole.entries.lastIndex) {
                     HorizontalDivider(
@@ -665,8 +681,9 @@ private fun ConsignorClause(
         if (clientSelected && !uiState.isLoadingContacts && uiState.contactsUnavailable) {
             Spacer(Modifier.height(10.dp))
             InlineErrorBanner(
-                message = "This client has no active contacts. A placement contact is " +
-                    "required to raise an indent — add one to the client first.",
+                message =
+                    "This client has no active contacts. A placement contact is " +
+                        "required to raise an indent — add one to the client first.",
             )
         }
     }
@@ -705,9 +722,10 @@ private fun VehicleClause(
 
         if (isLoading) {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 CircularProgressIndicator(
@@ -786,10 +804,11 @@ private fun CommercialsClause(
     onEvent: (CreateIndentEvent) -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val summary = listOfNotNull(
-        uiState.clientCost.takeIf { it.isNotBlank() }?.let { "Client ₹$it" },
-        uiState.negotiatedCost.takeIf { it.isNotBlank() }?.let { "Negotiated ₹$it" },
-    ).joinToString(" · ")
+    val summary =
+        listOfNotNull(
+            uiState.clientCost.takeIf { it.isNotBlank() }?.let { "Client ₹$it" },
+            uiState.negotiatedCost.takeIf { it.isNotBlank() }?.let { "Negotiated ₹$it" },
+        ).joinToString(" · ")
 
     ClauseDocket(
         number = 5,
@@ -883,11 +902,12 @@ private fun TermsClause(
             keyboardType = KeyboardType.Decimal,
             enabled = uiState.tatRequired,
             isError = tatError,
-            supportingText = if (!uiState.tatRequired) {
-                "Enable turnaround time to set this."
-            } else {
-                null
-            },
+            supportingText =
+                if (!uiState.tatRequired) {
+                    "Enable turnaround time to set this."
+                } else {
+                    null
+                },
             trailingLabel = "HRS",
         )
 
@@ -1002,33 +1022,36 @@ fun MoneyRuleField(
 fun consignorClauseState(
     state: CreateIndentUiState,
     errors: Set<String>,
-): ClauseState = when {
-    errors.contains("client") || errors.contains("placement") -> ClauseState.ERROR
-    state.selectedClient != null && state.placementContact != null -> ClauseState.COMPLETE
-    state.selectedClient != null || state.selectedBranch != null ||
-        state.placementContact != null || state.paymentContact != null ||
-        state.operationsContact != null || state.podContact != null -> ClauseState.PARTIAL
-    else -> ClauseState.EMPTY
-}
+): ClauseState =
+    when {
+        errors.contains("client") || errors.contains("placement") -> ClauseState.ERROR
+        state.selectedClient != null && state.placementContact != null -> ClauseState.COMPLETE
+        state.selectedClient != null || state.selectedBranch != null ||
+            state.placementContact != null || state.paymentContact != null ||
+            state.operationsContact != null || state.podContact != null -> ClauseState.PARTIAL
+        else -> ClauseState.EMPTY
+    }
 
 fun laneClauseState(
     state: CreateIndentUiState,
     errors: Set<String>,
-): ClauseState = when {
-    errors.contains("from") || errors.contains("to") -> ClauseState.ERROR
-    state.selectedFromLocation != null && state.selectedToLocation != null -> ClauseState.COMPLETE
-    state.selectedFromLocation != null || state.selectedToLocation != null -> ClauseState.PARTIAL
-    else -> ClauseState.EMPTY
-}
+): ClauseState =
+    when {
+        errors.contains("from") || errors.contains("to") -> ClauseState.ERROR
+        state.selectedFromLocation != null && state.selectedToLocation != null -> ClauseState.COMPLETE
+        state.selectedFromLocation != null || state.selectedToLocation != null -> ClauseState.PARTIAL
+        else -> ClauseState.EMPTY
+    }
 
 fun vehicleClauseState(
     state: CreateIndentUiState,
     errors: Set<String>,
-): ClauseState = when {
-    errors.contains("truck") -> ClauseState.ERROR
-    state.selectedTruckType != null -> ClauseState.COMPLETE
-    else -> ClauseState.EMPTY
-}
+): ClauseState =
+    when {
+        errors.contains("truck") -> ClauseState.ERROR
+        state.selectedTruckType != null -> ClauseState.COMPLETE
+        else -> ClauseState.EMPTY
+    }
 
 fun cargoClauseState(
     state: CreateIndentUiState,
@@ -1048,10 +1071,11 @@ fun commercialsClauseState(
     state: CreateIndentUiState,
     errors: Set<String>,
 ): ClauseState {
-    val touched = state.clientCost.isNotBlank() ||
-        state.businessProposedCost.isNotBlank() ||
-        state.negotiatedCost.isNotBlank() ||
-        state.hideCost
+    val touched =
+        state.clientCost.isNotBlank() ||
+            state.businessProposedCost.isNotBlank() ||
+            state.negotiatedCost.isNotBlank() ||
+            state.hideCost
     return when {
         errors.contains("negotiated") -> ClauseState.ERROR
         touched -> ClauseState.FILLED
@@ -1063,10 +1087,11 @@ fun termsClauseState(
     state: CreateIndentUiState,
     errors: Set<String>,
 ): ClauseState {
-    val touched = state.tatRequired ||
-        state.tarpaulinRequired ||
-        state.vehicleHeight.isNotBlank() ||
-        state.remarks.isNotBlank()
+    val touched =
+        state.tatRequired ||
+            state.tarpaulinRequired ||
+            state.vehicleHeight.isNotBlank() ||
+            state.remarks.isNotBlank()
     return when {
         errors.contains("tat") -> ClauseState.ERROR
         touched -> ClauseState.FILLED

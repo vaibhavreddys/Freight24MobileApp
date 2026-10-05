@@ -1,6 +1,4 @@
 package com.freight24.connect.feature.truckowners.profile.view
-import com.freight24.ui.components.FreightTopAppBar
-
 import android.Manifest
 import android.content.Context
 import android.content.Intent
@@ -42,14 +40,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Assignment
-import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Business
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Call
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Description
@@ -59,9 +55,7 @@ import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
@@ -72,7 +66,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -126,14 +119,15 @@ import com.freight24.connect.feature.truckowners.profile.util.ProfileFieldValida
 import com.freight24.connect.feature.truckowners.profile.util.ValidationResult
 import com.freight24.ui.UiState
 import com.freight24.ui.components.AccountStatusCard
-import com.freight24.ui.components.DocketCard
-import com.freight24.ui.components.PanelShape
-import com.freight24.ui.components.TagShape
 import com.freight24.ui.components.AddRouteBottomSheet
 import com.freight24.ui.components.CitySearchField
+import com.freight24.ui.components.DocketCard
+import com.freight24.ui.components.FreightTopAppBar
+import com.freight24.ui.components.PanelShape
 import com.freight24.ui.components.RouteChip
-import com.freight24.ui.theme.FreightThemeTokens
+import com.freight24.ui.components.TagShape
 import com.freight24.ui.components.formViewportInsets
+import com.freight24.ui.theme.FreightThemeTokens
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -211,7 +205,7 @@ internal fun ProfileScreen(
                         Text(
                             text = "Truck Owner Profile",
                             style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
                         )
                     },
                     navigationIcon = {
@@ -223,9 +217,10 @@ internal fun ProfileScreen(
                         if (!isEditing) {
                             IconButton(
                                 onClick = { viewModel.toggleEditMode() },
-                                modifier = Modifier
-                                    .testTag("owner_edit_button")
-                                    .semantics { testTagsAsResourceId = true },
+                                modifier =
+                                    Modifier
+                                        .testTag("owner_edit_button")
+                                        .semantics { testTagsAsResourceId = true },
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Edit,
@@ -235,7 +230,7 @@ internal fun ProfileScreen(
                         }
                     },
                 )
-            }
+            },
         ) { innerPadding ->
             // Keyboard-aware viewport; see FormInsets.kt.
             Box(modifier = Modifier.formViewportInsets(innerPadding)) {
@@ -286,7 +281,6 @@ internal fun ProfileScreen(
             }
         }
     }
-
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -322,67 +316,72 @@ private fun ProfileMainContent(
     var isPdfPending by rememberSaveable { mutableStateOf(false) }
     var showCancelConfirmDialog by rememberSaveable { mutableStateOf(false) }
     val sourceSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val selectedUploadStatus = pickingDocumentType
-        ?.let { type -> documentStates[ProfileDocumentTypeIds.fieldKey(type)]?.uploadStatus }
-        ?: UploadStatus.IDLE
+    val selectedUploadStatus =
+        pickingDocumentType
+            ?.let { type -> documentStates[ProfileDocumentTypeIds.fieldKey(type)]?.uploadStatus }
+            ?: UploadStatus.IDLE
 
-    val documentPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument(),
-    ) { uri ->
-        if (uri != null) {
-            pickingUris = listOf(uri)
-            isPdfPending = true
-        } else {
-            pickingDocumentType = null
+    val documentPickerLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.OpenDocument(),
+        ) { uri ->
+            if (uri != null) {
+                pickingUris = listOf(uri)
+                isPdfPending = true
+            } else {
+                pickingDocumentType = null
+            }
         }
-    }
 
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia(),
-    ) { uris ->
-        if (uris.isNotEmpty()) {
-            pickingUris = uris
-            isPdfPending = false
-        } else {
-            pickingDocumentType = null
-        }
-    }
-
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture(),
-        onResult = { success ->
-            if (success && tempCameraUri != null) {
-                pickingUris = listOf(tempCameraUri!!)
+    val imagePickerLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.PickMultipleVisualMedia(),
+        ) { uris ->
+            if (uris.isNotEmpty()) {
+                pickingUris = uris
                 isPdfPending = false
             } else {
                 pickingDocumentType = null
             }
-            tempCameraUri = null
-        },
-    )
+        }
 
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { isGranted ->
-            if (isGranted) {
-                val imageUri = createTempImageUri(context)
-                tempCameraUri = imageUri
-                cameraLauncher.launch(imageUri)
-            } else {
-                scope.launch {
-                    val result =
-                        snackbarHostState.showSnackbar(
-                            message = "Camera permission denied. Grant it from app settings to use camera upload.",
-                            actionLabel = "Settings",
-                            duration = SnackbarDuration.Long,
-                        )
-                    if (result == SnackbarResult.ActionPerformed) {
-                        openAppSettings(context)
+    val cameraLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.TakePicture(),
+            onResult = { success ->
+                if (success && tempCameraUri != null) {
+                    pickingUris = listOf(tempCameraUri!!)
+                    isPdfPending = false
+                } else {
+                    pickingDocumentType = null
+                }
+                tempCameraUri = null
+            },
+        )
+
+    val cameraPermissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+            onResult = { isGranted ->
+                if (isGranted) {
+                    val imageUri = createTempImageUri(context)
+                    tempCameraUri = imageUri
+                    cameraLauncher.launch(imageUri)
+                } else {
+                    scope.launch {
+                        val result =
+                            snackbarHostState.showSnackbar(
+                                message = "Camera permission denied. Grant it from app settings to use camera upload.",
+                                actionLabel = "Settings",
+                                duration = SnackbarDuration.Long,
+                            )
+                        if (result == SnackbarResult.ActionPerformed) {
+                            openAppSettings(context)
+                        }
                     }
                 }
-            }
-        },
-    )
+            },
+        )
 
     fun startCameraCapture() {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
@@ -573,8 +572,8 @@ private fun ProfileMainContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             ProfileSection(
-                title = "BUSINESS DETAILS", 
-                icon = Icons.Default.Business, 
+                title = "BUSINESS DETAILS",
+                icon = Icons.Default.Business,
                 initiallyExpanded = false,
                 isVerified = profile.documentsVerificationStatus,
                 testTag = "owner_section_business",
@@ -605,9 +604,10 @@ private fun ProfileMainContent(
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
                 ) {
                     Text(
                         text = "BASE LOCATION",
@@ -633,20 +633,22 @@ private fun ProfileMainContent(
                             text = locationLabel ?: "—",
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.SemiBold,
-                            color = if (!locationLabel.isNullOrBlank()) {
-                                MaterialTheme.colorScheme.onSurface
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            },
+                            color =
+                                if (!locationLabel.isNullOrBlank()) {
+                                    MaterialTheme.colorScheme.onSurface
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
                         )
                     }
                 }
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f), thickness = 1.dp)
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
                 ) {
                     Text(
                         text = "PREFERRED ROUTES",
@@ -665,11 +667,12 @@ private fun ProfileMainContent(
                                 fromCity = route.sourceCityName,
                                 toCity = route.destCityName,
                                 isStaged = route.isStaged,
-                                onDelete = if (isEditing) {
-                                    { viewModel.onStageRouteDelete(route.id, route.isStaged) }
-                                } else {
-                                    null
-                                },
+                                onDelete =
+                                    if (isEditing) {
+                                        { viewModel.onStageRouteDelete(route.id, route.isStaged) }
+                                    } else {
+                                        null
+                                    },
                             )
                         }
                     }
@@ -690,10 +693,11 @@ private fun ProfileMainContent(
                                 onClick = viewModel::openAddRouteSheet,
                                 label = { Text("+ Add route", style = MaterialTheme.typography.labelMedium) },
                                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)),
-                                colors = AssistChipDefaults.assistChipColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f),
-                                    labelColor = MaterialTheme.colorScheme.primary,
-                                ),
+                                colors =
+                                    AssistChipDefaults.assistChipColors(
+                                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f),
+                                        labelColor = MaterialTheme.colorScheme.primary,
+                                    ),
                             )
                         }
                     }
@@ -703,8 +707,8 @@ private fun ProfileMainContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             ProfileSection(
-                title = "BANKING INFORMATION", 
-                icon = Icons.Default.AccountBalance, 
+                title = "BANKING INFORMATION",
+                icon = Icons.Default.AccountBalance,
                 initiallyExpanded = false,
                 isVerified = profile.bankAccountVerificationStatus,
                 testTag = "owner_section_banking",
@@ -784,8 +788,8 @@ private fun ProfileMainContent(
 
             // Documents Section
             ProfileSection(
-                title = "DOCUMENTS", 
-                icon = Icons.AutoMirrored.Filled.Assignment, 
+                title = "DOCUMENTS",
+                icon = Icons.AutoMirrored.Filled.Assignment,
                 initiallyExpanded = false,
                 isVerified = profile.documentsVerificationStatus,
                 testTag = "owner_section_documents",
@@ -900,10 +904,11 @@ private fun ProfileHeaderCard(
                         imageVector = Icons.Default.CheckCircle,
                         contentDescription = verificationStatus,
                         tint = ext.success,
-                        modifier = Modifier
-                            .size(18.dp)
-                            .background(scheme.surface, CircleShape)
-                            .padding(1.dp),
+                        modifier =
+                            Modifier
+                                .size(18.dp)
+                                .background(scheme.surface, CircleShape)
+                                .padding(1.dp),
                     )
                 }
             }
@@ -985,13 +990,14 @@ private fun ProfileSection(
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(8.dp))
-                .testTag(testTag)
-                .semantics { testTagsAsResourceId = true }
-                .clickable { isExpanded = !isExpanded }
-                .padding(vertical = 8.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .testTag(testTag)
+                    .semantics { testTagsAsResourceId = true }
+                    .clickable { isExpanded = !isExpanded }
+                    .padding(vertical = 8.dp),
         ) {
             Icon(
                 imageVector = icon,
@@ -1005,7 +1011,7 @@ private fun ProfileSection(
                 style = MaterialTheme.typography.labelLarge.copy(letterSpacing = 1.sp),
                 color = scheme.onSurfaceVariant,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
             )
 
             if (isVerified) {
@@ -1035,7 +1041,7 @@ private fun ProfileSection(
         AnimatedVisibility(
             visible = isExpanded,
             enter = expandVertically(),
-            exit = shrinkVertically()
+            exit = shrinkVertically(),
         ) {
             // Flat paper panel — hairline border, no elevation shadow, the
             // same treatment as the verification sheet's ledger panels.
@@ -1075,50 +1081,52 @@ private fun ProfileField(
     // Validate on value change
     val handleValueChange: (String) -> Unit = { newValue ->
         // Apply input filtering based on validation type
-        val filteredValue = when (validationType) {
-            ValidationType.AADHAAR -> newValue.filter { it.isDigit() }.take(12)
-            ValidationType.PHONE -> newValue.filter { it.isDigit() }.take(10)
-            ValidationType.ACCOUNT_NUMBER -> newValue.filter { it.isDigit() }.take(18)
-            ValidationType.IFSC -> newValue.uppercase().filter { it.isLetterOrDigit() }.take(11)
-            ValidationType.PAN -> newValue.uppercase().filter { it.isLetterOrDigit() }.take(10)
-            ValidationType.GST -> newValue.uppercase().filter { it.isLetterOrDigit() }.take(15)
-            else -> newValue
-        }
+        val filteredValue =
+            when (validationType) {
+                ValidationType.AADHAAR -> newValue.filter { it.isDigit() }.take(12)
+                ValidationType.PHONE -> newValue.filter { it.isDigit() }.take(10)
+                ValidationType.ACCOUNT_NUMBER -> newValue.filter { it.isDigit() }.take(18)
+                ValidationType.IFSC -> newValue.uppercase().filter { it.isLetterOrDigit() }.take(11)
+                ValidationType.PAN -> newValue.uppercase().filter { it.isLetterOrDigit() }.take(10)
+                ValidationType.GST -> newValue.uppercase().filter { it.isLetterOrDigit() }.take(15)
+                else -> newValue
+            }
 
         onValueChange(filteredValue)
 
         // Validate and show error
-        validationError = when (validationType) {
-            ValidationType.AADHAAR -> {
-                val result = ProfileFieldValidators.validateAadhaar(filteredValue)
-                if (result is ValidationResult.Error) result.message else null
+        validationError =
+            when (validationType) {
+                ValidationType.AADHAAR -> {
+                    val result = ProfileFieldValidators.validateAadhaar(filteredValue)
+                    if (result is ValidationResult.Error) result.message else null
+                }
+                ValidationType.PAN -> {
+                    val result = ProfileFieldValidators.validatePan(filteredValue)
+                    if (result is ValidationResult.Error) result.message else null
+                }
+                ValidationType.GST -> {
+                    val result = ProfileFieldValidators.validateGst(filteredValue)
+                    if (result is ValidationResult.Error) result.message else null
+                }
+                ValidationType.IFSC -> {
+                    val result = ProfileFieldValidators.validateIfsc(filteredValue)
+                    if (result is ValidationResult.Error) result.message else null
+                }
+                ValidationType.UPI -> {
+                    val result = ProfileFieldValidators.validateUpiId(filteredValue)
+                    if (result is ValidationResult.Error) result.message else null
+                }
+                ValidationType.EMAIL -> {
+                    val result = ProfileFieldValidators.validateEmail(filteredValue)
+                    if (result is ValidationResult.Error) result.message else null
+                }
+                ValidationType.ACCOUNT_NUMBER -> {
+                    val result = ProfileFieldValidators.validateAccountNumber(filteredValue)
+                    if (result is ValidationResult.Error) result.message else null
+                }
+                else -> null
             }
-            ValidationType.PAN -> {
-                val result = ProfileFieldValidators.validatePan(filteredValue)
-                if (result is ValidationResult.Error) result.message else null
-            }
-            ValidationType.GST -> {
-                val result = ProfileFieldValidators.validateGst(filteredValue)
-                if (result is ValidationResult.Error) result.message else null
-            }
-            ValidationType.IFSC -> {
-                val result = ProfileFieldValidators.validateIfsc(filteredValue)
-                if (result is ValidationResult.Error) result.message else null
-            }
-            ValidationType.UPI -> {
-                val result = ProfileFieldValidators.validateUpiId(filteredValue)
-                if (result is ValidationResult.Error) result.message else null
-            }
-            ValidationType.EMAIL -> {
-                val result = ProfileFieldValidators.validateEmail(filteredValue)
-                if (result is ValidationResult.Error) result.message else null
-            }
-            ValidationType.ACCOUNT_NUMBER -> {
-                val result = ProfileFieldValidators.validateAccountNumber(filteredValue)
-                if (result is ValidationResult.Error) result.message else null
-            }
-            else -> null
-        }
     }
 
     // One field, one ledger row: tracked-caps label above the value, all
@@ -1139,71 +1147,80 @@ private fun ProfileField(
         Spacer(modifier = Modifier.height(6.dp))
 
         if (isEditing && isEditable && !showAsLabelOnly) {
-            val keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                keyboardType = when (validationType) {
-                    ValidationType.AADHAAR, ValidationType.PHONE, ValidationType.ACCOUNT_NUMBER -> KeyboardType.Number
-                    ValidationType.EMAIL -> KeyboardType.Email
-                    else -> KeyboardType.Text
-                },
-                capitalization = when (validationType) {
-                    ValidationType.PAN, ValidationType.IFSC, ValidationType.GST -> KeyboardCapitalization.Characters
-                    else -> KeyboardCapitalization.Words
-                },
-                imeAction = ImeAction.Next
-            )
+            val keyboardOptions =
+                androidx.compose.foundation.text.KeyboardOptions(
+                    keyboardType =
+                        when (validationType) {
+                            ValidationType.AADHAAR, ValidationType.PHONE, ValidationType.ACCOUNT_NUMBER -> KeyboardType.Number
+                            ValidationType.EMAIL -> KeyboardType.Email
+                            else -> KeyboardType.Text
+                        },
+                    capitalization =
+                        when (validationType) {
+                            ValidationType.PAN, ValidationType.IFSC, ValidationType.GST -> KeyboardCapitalization.Characters
+                            else -> KeyboardCapitalization.Words
+                        },
+                    imeAction = ImeAction.Next,
+                )
 
-            val visualTransformation = when (validationType) {
-                ValidationType.AADHAAR -> VisualTransformation { text ->
-                    val transformed = ProfileFieldValidators.formatAadhaar(text.text)
-                    TransformedText(
-                        AnnotatedString(transformed),
-                        object : OffsetMapping {
-                            override fun originalToTransformed(offset: Int): Int {
-                                if (offset <= 4) return offset
-                                if (offset <= 8) return offset + 1
-                                return offset + 2
-                            }
-                            override fun transformedToOriginal(offset: Int): Int {
-                                if (offset <= 4) return offset
-                                if (offset <= 9) return offset - 1
-                                return offset - 2
-                            }
+            val visualTransformation =
+                when (validationType) {
+                    ValidationType.AADHAAR ->
+                        VisualTransformation { text ->
+                            val transformed = ProfileFieldValidators.formatAadhaar(text.text)
+                            TransformedText(
+                                AnnotatedString(transformed),
+                                object : OffsetMapping {
+                                    override fun originalToTransformed(offset: Int): Int {
+                                        if (offset <= 4) return offset
+                                        if (offset <= 8) return offset + 1
+                                        return offset + 2
+                                    }
+
+                                    override fun transformedToOriginal(offset: Int): Int {
+                                        if (offset <= 4) return offset
+                                        if (offset <= 9) return offset - 1
+                                        return offset - 2
+                                    }
+                                },
+                            )
                         }
-                    )
-                }
-                ValidationType.PHONE -> VisualTransformation { text ->
-                    val transformed = ProfileFieldValidators.formatPhone(text.text)
-                    TransformedText(
-                        AnnotatedString(transformed),
-                        object : OffsetMapping {
-                            override fun originalToTransformed(offset: Int): Int {
-                                if (offset <= 5) return offset
-                                return offset + 1
-                            }
-                            override fun transformedToOriginal(offset: Int): Int {
-                                if (offset <= 5) return offset
-                                return offset - 1
-                            }
+                    ValidationType.PHONE ->
+                        VisualTransformation { text ->
+                            val transformed = ProfileFieldValidators.formatPhone(text.text)
+                            TransformedText(
+                                AnnotatedString(transformed),
+                                object : OffsetMapping {
+                                    override fun originalToTransformed(offset: Int): Int {
+                                        if (offset <= 5) return offset
+                                        return offset + 1
+                                    }
+
+                                    override fun transformedToOriginal(offset: Int): Int {
+                                        if (offset <= 5) return offset
+                                        return offset - 1
+                                    }
+                                },
+                            )
                         }
-                    )
+                    else -> VisualTransformation.None
                 }
-                else -> VisualTransformation.None
-            }
 
             var isFocused by remember { mutableStateOf(false) }
             OutlinedTextField(
                 value = value,
                 onValueChange = handleValueChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("owner_field_${label.lowercase().replace(' ', '_')}")
-                    .semantics { testTagsAsResourceId = true }
-                    .onFocusChanged { state ->
-                        if (isFocused && !state.isFocused) {
-                            onFocusLost?.invoke()
-                        }
-                        isFocused = state.isFocused
-                    },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .testTag("owner_field_${label.lowercase().replace(' ', '_')}")
+                        .semantics { testTagsAsResourceId = true }
+                        .onFocusChanged { state ->
+                            if (isFocused && !state.isFocused) {
+                                onFocusLost?.invoke()
+                            }
+                            isFocused = state.isFocused
+                        },
                 textStyle = MaterialTheme.typography.bodyLarge,
                 singleLine = true,
                 shape = MaterialTheme.shapes.medium,
@@ -1216,26 +1233,39 @@ private fun ProfileField(
                         Text(
                             text = errorText,
                             color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall
+                            style = MaterialTheme.typography.bodySmall,
                         )
                     }
                 },
-                placeholder = when (validationType) {
-                    ValidationType.AADHAAR -> { { Text("1234 5678 9012") } }
-                    ValidationType.PAN -> { { Text("ABCDE1234F") } }
-                    ValidationType.GST -> { { Text("27ABCDE1234F1Z5") } }
-                    ValidationType.IFSC -> { { Text("HDFC0001234") } }
-                    ValidationType.UPI -> { { Text("name@okhdfcbank") } }
-                    ValidationType.EMAIL -> { { Text("email@example.com") } }
-                    else -> null
-                },
+                placeholder =
+                    when (validationType) {
+                        ValidationType.AADHAAR -> {
+                            { Text("1234 5678 9012") }
+                        }
+                        ValidationType.PAN -> {
+                            { Text("ABCDE1234F") }
+                        }
+                        ValidationType.GST -> {
+                            { Text("27ABCDE1234F1Z5") }
+                        }
+                        ValidationType.IFSC -> {
+                            { Text("HDFC0001234") }
+                        }
+                        ValidationType.UPI -> {
+                            { Text("name@okhdfcbank") }
+                        }
+                        ValidationType.EMAIL -> {
+                            { Text("email@example.com") }
+                        }
+                        else -> null
+                    },
                 colors =
                     OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = if (validationError != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                         unfocusedBorderColor = if (validationError != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outlineVariant,
                         errorBorderColor = MaterialTheme.colorScheme.error,
                         errorLabelColor = MaterialTheme.colorScheme.error,
-                        errorSupportingTextColor = MaterialTheme.colorScheme.error
+                        errorSupportingTextColor = MaterialTheme.colorScheme.error,
                     ),
             )
         } else {
@@ -1257,10 +1287,11 @@ private fun ProfileField(
                 if (onCallClick != null && value.isNotBlank()) {
                     IconButton(
                         onClick = onCallClick,
-                        modifier = Modifier
-                            .size(36.dp)
-                            .testTag("owner_call_${label.lowercase().replace(' ', '_')}")
-                            .semantics { testTagsAsResourceId = true },
+                        modifier =
+                            Modifier
+                                .size(36.dp)
+                                .testTag("owner_call_${label.lowercase().replace(' ', '_')}")
+                                .semantics { testTagsAsResourceId = true },
                     ) {
                         Icon(
                             imageVector = Icons.Default.Call,
@@ -1362,17 +1393,19 @@ private fun DocumentList(
                         enabled = (uploadState?.uploadStatus ?: UploadStatus.IDLE) != UploadStatus.UPLOADING,
                     ) {
                         Icon(
-                            imageVector = if ((uploadState?.uploadStatus ?: UploadStatus.IDLE) == UploadStatus.ERROR) {
-                                Icons.Default.Refresh
-                            } else {
-                                Icons.Default.CloudUpload
-                            },
+                            imageVector =
+                                if ((uploadState?.uploadStatus ?: UploadStatus.IDLE) == UploadStatus.ERROR) {
+                                    Icons.Default.Refresh
+                                } else {
+                                    Icons.Default.CloudUpload
+                                },
                             contentDescription = "Upload",
-                            tint = if ((uploadState?.uploadStatus ?: UploadStatus.IDLE) == UploadStatus.ERROR) {
-                                MaterialTheme.colorScheme.error
-                            } else {
-                                MaterialTheme.colorScheme.primary
-                            },
+                            tint =
+                                if ((uploadState?.uploadStatus ?: UploadStatus.IDLE) == UploadStatus.ERROR) {
+                                    MaterialTheme.colorScheme.error
+                                } else {
+                                    MaterialTheme.colorScheme.primary
+                                },
                             modifier = Modifier.size(24.dp),
                         )
                     }
@@ -1387,10 +1420,10 @@ private fun DocumentList(
                     )
                 } else {
                     ProfileStamp(
-                                    text = "NOT UPLOADED",
-                                    container = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                    content = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
+                        text = "NOT UPLOADED",
+                        container = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        content = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
             if (index < types.lastIndex) {
@@ -1405,20 +1438,24 @@ private fun DocumentList(
 }
 
 @Composable
-private fun ExistingStatusBadge(existingVerifyStatus: String?, fallbackStatus: DocumentStatus?) {
+private fun ExistingStatusBadge(
+    existingVerifyStatus: String?,
+    fallbackStatus: DocumentStatus?,
+) {
     val scheme = MaterialTheme.colorScheme
     val ext = FreightThemeTokens.colors
     val normalizedStatus = existingVerifyStatus?.lowercase()?.trim()
-    val (text, container, content) = when {
-        normalizedStatus == "verified" -> Triple("VERIFIED", ext.surfaceSuccess, ext.onSurfaceSuccess)
-        normalizedStatus == "rejected" -> Triple("REJECTED", scheme.errorContainer, scheme.onErrorContainer)
-        normalizedStatus == "pending" -> Triple("VERIFICATION PENDING", ext.surfaceWarning, ext.onSurfaceWarning)
-        fallbackStatus == DocumentStatus.VERIFIED -> Triple("VERIFIED", ext.surfaceSuccess, ext.onSurfaceSuccess)
-        fallbackStatus == DocumentStatus.REJECTED -> Triple("REJECTED", scheme.errorContainer, scheme.onErrorContainer)
-        fallbackStatus == DocumentStatus.UPLOADED -> Triple("VERIFICATION PENDING", ext.surfaceWarning, ext.onSurfaceWarning)
-        fallbackStatus == DocumentStatus.PENDING -> Triple("PENDING", ext.surfaceWarning, ext.onSurfaceWarning)
-        else -> Triple("N/A", scheme.surfaceContainerHighest, scheme.onSurfaceVariant)
-    }
+    val (text, container, content) =
+        when {
+            normalizedStatus == "verified" -> Triple("VERIFIED", ext.surfaceSuccess, ext.onSurfaceSuccess)
+            normalizedStatus == "rejected" -> Triple("REJECTED", scheme.errorContainer, scheme.onErrorContainer)
+            normalizedStatus == "pending" -> Triple("VERIFICATION PENDING", ext.surfaceWarning, ext.onSurfaceWarning)
+            fallbackStatus == DocumentStatus.VERIFIED -> Triple("VERIFIED", ext.surfaceSuccess, ext.onSurfaceSuccess)
+            fallbackStatus == DocumentStatus.REJECTED -> Triple("REJECTED", scheme.errorContainer, scheme.onErrorContainer)
+            fallbackStatus == DocumentStatus.UPLOADED -> Triple("VERIFICATION PENDING", ext.surfaceWarning, ext.onSurfaceWarning)
+            fallbackStatus == DocumentStatus.PENDING -> Triple("PENDING", ext.surfaceWarning, ext.onSurfaceWarning)
+            else -> Triple("N/A", scheme.surfaceContainerHighest, scheme.onSurfaceVariant)
+        }
 
     ProfileStamp(text = text, container = container, content = content)
 }
@@ -1536,7 +1573,10 @@ private fun getDocIcon(type: DocumentType) =
         else -> Icons.Default.Description
     }
 
-private fun launchDialer(context: Context, rawPhone: String) {
+private fun launchDialer(
+    context: Context,
+    rawPhone: String,
+) {
     val phone = rawPhone.trim()
     if (phone.isBlank()) return
     val dialIntent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${Uri.encode(phone)}"))

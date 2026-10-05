@@ -28,34 +28,46 @@ data class LuChargesUiState(
     val unloadingProcessing: Boolean = false,
     val loadingShowReupload: Boolean = false,
     val unloadingShowReupload: Boolean = false,
-
     // Initial values for comparison
     val initialLoadingAmount: String = "",
     val initialUnloadingAmount: String = "",
     val initialNotes: String = "",
-    val hasChanges: Boolean = false
+    val hasChanges: Boolean = false,
 )
 
 sealed class LuChargesEvent {
     data class OnLoadingAmountChange(val value: String) : LuChargesEvent()
+
     data class OnUnloadingAmountChange(val value: String) : LuChargesEvent()
+
     data class OnNotesChange(val value: String) : LuChargesEvent()
+
     data class OnShowSourcePicker(val docType: LuDocType) : LuChargesEvent()
+
     data class OnFilePicked(val uris: List<Uri>, val isPdf: Boolean) : LuChargesEvent()
+
     data object OnConfirmUpload : LuChargesEvent()
+
     data object OnClearSelection : LuChargesEvent()
+
     data class OnDeleteDoc(val type: LuDocType) : LuChargesEvent()
+
     data class OnRemoteDocClick(val docType: String) : LuChargesEvent()
+
     data object OnSubmit : LuChargesEvent()
+
     data object OnDismissSourcePicker : LuChargesEvent()
+
     data object OnSignedUrlConsumed : LuChargesEvent()
 }
 
 enum class LuDocType {
-    LOADING, UNLOADING
+    LOADING,
+    UNLOADING,
 }
 
 interface LuChargesViewModel {
     val uiState: StateFlow<LuChargesUiState>
+
     fun onEvent(event: LuChargesEvent)
 }

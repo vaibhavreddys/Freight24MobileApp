@@ -29,9 +29,6 @@ import com.freight24.rest.response.ClientProfileDto
 import com.freight24.ui.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.io.File
-import java.util.UUID
-import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,6 +41,9 @@ import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
+import java.io.File
+import java.util.UUID
+import javax.inject.Inject
 
 @HiltViewModel
 class ClientProfileViewModel
@@ -59,7 +59,6 @@ class ClientProfileViewModel
         private val clientApi: ClientApi,
         @param:ApplicationContext private val context: Context,
     ) : ViewModel() {
-
         private val userId: String = checkNotNull(savedStateHandle["userId"])
         val sessionId: String = UUID.randomUUID().toString()
 
@@ -145,32 +144,39 @@ class ClientProfileViewModel
             editableGstNumber.value = client.gst_number.orEmpty()
             editablePanCard.value = client.pan_card.orEmpty()
             editableAadhaarCard.value = client.aadhar_card.orEmpty()
-            editableBranches.value = client.client_branches.mapIndexed { index, branch ->
-                branch.toEditableBranch(fallbackId = "branch_$index")
-            }
+            editableBranches.value =
+                client.client_branches.mapIndexed { index, branch ->
+                    branch.toEditableBranch(fallbackId = "branch_$index")
+                }
         }
 
-        private fun initializeDocumentStates(client: ClientProfileDto, preserveTemporary: Boolean) {
+        private fun initializeDocumentStates(
+            client: ClientProfileDto,
+            preserveTemporary: Boolean,
+        ) {
             val previous = _documentStates.value
 
-            _documentStates.value = documentConfigs.associate { config ->
-                val existing = client.documents.findDocument(config.documentName)
-                val oldState = previous[config.fieldKey]
+            _documentStates.value =
+                documentConfigs.associate { config ->
+                    val existing = client.documents.findDocument(config.documentName)
+                    val oldState = previous[config.fieldKey]
 
-                config.fieldKey to DocumentUploadState(
-                    fieldKey = config.fieldKey,
-                    documentTypeId = config.documentTypeId,
-                    existingDocId = existing?.documentId?.takeIf { it.isNotBlank() },
-                    existingFileUrl = existing?.documentUrl?.takeIf { it.isNotBlank() },
-                    existingVerifyStatus = existing?.documentStatus?.lowercase()?.trim(),
-                    temporaryFileKey = if (preserveTemporary) oldState?.temporaryFileKey else null,
-                    uploadStatus = if (preserveTemporary && oldState?.temporaryFileKey != null) {
-                        if (oldState.uploadStatus == UploadStatus.ERROR) UploadStatus.ERROR else UploadStatus.DONE
-                    } else {
-                        UploadStatus.IDLE
-                    },
-                )
-            }
+                    config.fieldKey to
+                        DocumentUploadState(
+                            fieldKey = config.fieldKey,
+                            documentTypeId = config.documentTypeId,
+                            existingDocId = existing?.documentId?.takeIf { it.isNotBlank() },
+                            existingFileUrl = existing?.documentUrl?.takeIf { it.isNotBlank() },
+                            existingVerifyStatus = existing?.documentStatus?.lowercase()?.trim(),
+                            temporaryFileKey = if (preserveTemporary) oldState?.temporaryFileKey else null,
+                            uploadStatus =
+                                if (preserveTemporary && oldState?.temporaryFileKey != null) {
+                                    if (oldState.uploadStatus == UploadStatus.ERROR) UploadStatus.ERROR else UploadStatus.DONE
+                                } else {
+                                    UploadStatus.IDLE
+                                },
+                        )
+                }
 
             _hasPendingTemporaryUploads.value = hasTemporaryUploads()
         }
@@ -234,9 +240,10 @@ class ClientProfileViewModel
         }
 
         fun getInitials(): String {
-            val name = editableFullName.value
-                .ifBlank { originalClient?.full_name.orEmpty() }
-                .ifBlank { editableCompanyName.value.ifBlank { originalClient?.company_name.orEmpty() } }
+            val name =
+                editableFullName.value
+                    .ifBlank { originalClient?.full_name.orEmpty() }
+                    .ifBlank { editableCompanyName.value.ifBlank { originalClient?.company_name.orEmpty() } }
             val letters = name.split(" ").filter { it.isNotBlank() }.map { it.first().uppercaseChar() }
             return when {
                 letters.isEmpty() -> "CL"
@@ -245,7 +252,11 @@ class ClientProfileViewModel
             }
         }
 
-        fun uploadDocument(fieldKey: String, uris: List<Uri>, isPdf: Boolean) {
+        fun uploadDocument(
+            fieldKey: String,
+            uris: List<Uri>,
+            isPdf: Boolean,
+        ) {
             if (uris.isEmpty()) return
             val original = originalClient ?: return
             val currentState = _documentStates.value[fieldKey] ?: return
@@ -257,35 +268,37 @@ class ClientProfileViewModel
                 recomputeHasChanges()
 
                 try {
-                    val file = createPdfFile(uris = uris, isPdf = isPdf)
-                        ?: throw IllegalStateException("Unable to process selected file")
+                    val file =
+                        createPdfFile(uris = uris, isPdf = isPdf)
+                            ?: throw IllegalStateException("Unable to process selected file")
 
                     val requestFile = file.asRequestBody("application/pdf".toMediaTypeOrNull())
                     val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
 
-                    val result = when (val uploadMode = resolveUploadMode(currentState)) {
-                        UploadMode.ADD -> {
-                            uploadIdentityDocumentUseCase.invoke(
-                                UploadIdentityDocumentParams(
-                                    userId = original.user_id,
-                                    documentTypeId = currentState.documentTypeId,
-                                    documentNumber = "SESSION_$sessionId",
-                                    file = body,
-                                ),
-                            )
-                        }
+                    val result =
+                        when (val uploadMode = resolveUploadMode(currentState)) {
+                            UploadMode.ADD -> {
+                                uploadIdentityDocumentUseCase.invoke(
+                                    UploadIdentityDocumentParams(
+                                        userId = original.user_id,
+                                        documentTypeId = currentState.documentTypeId,
+                                        documentNumber = "SESSION_$sessionId",
+                                        file = body,
+                                    ),
+                                )
+                            }
 
-                        is UploadMode.UPDATE -> {
-                            updateIdentityDocumentUseCase.invoke(
-                                UpdateIdentityDocumentParams(
-                                    docId = uploadMode.existingDocId,
-                                    userId = original.user_id,
-                                    documentNumber = "SESSION_$sessionId",
-                                    file = body,
-                                ),
-                            )
+                            is UploadMode.UPDATE -> {
+                                updateIdentityDocumentUseCase.invoke(
+                                    UpdateIdentityDocumentParams(
+                                        docId = uploadMode.existingDocId,
+                                        userId = original.user_id,
+                                        documentNumber = "SESSION_$sessionId",
+                                        file = body,
+                                    ),
+                                )
+                            }
                         }
-                    }
 
                     result.onSuccess { temporaryKey ->
                         updateDocumentState(fieldKey) { state ->
@@ -391,14 +404,15 @@ class ClientProfileViewModel
         fun buildFinalSaveRequest(targetUserId: String): FinalSaveRequest {
             return FinalSaveRequest(
                 user_id = targetUserId,
-                files = documentStates.value.values
-                    .filter { it.temporaryFileKey != null }
-                    .map { doc ->
-                        FinalSaveFileRequest(
-                            temporaryKey = doc.temporaryFileKey!!,
-                            document_type_id = doc.documentTypeId,
-                        )
-                    },
+                files =
+                    documentStates.value.values
+                        .filter { it.temporaryFileKey != null }
+                        .map { doc ->
+                            FinalSaveFileRequest(
+                                temporaryKey = doc.temporaryFileKey!!,
+                                document_type_id = doc.documentTypeId,
+                            )
+                        },
             )
         }
 
@@ -410,47 +424,80 @@ class ClientProfileViewModel
             fetchClient(forceRefresh = false)
         }
 
-        fun onBranchNameChanged(branchId: String, value: String) {
+        fun onBranchNameChanged(
+            branchId: String,
+            value: String,
+        ) {
             updateBranch(branchId) { it.copy(branchName = value) }
         }
 
-        fun onBranchAddressChanged(branchId: String, value: String) {
+        fun onBranchAddressChanged(
+            branchId: String,
+            value: String,
+        ) {
             updateBranch(branchId) { it.copy(branchAddress = value) }
         }
 
-        fun onPodContactNameChanged(branchId: String, value: String) {
+        fun onPodContactNameChanged(
+            branchId: String,
+            value: String,
+        ) {
             updateBranch(branchId) { it.copy(podContactName = value) }
         }
 
-        fun onPodContactNumberChanged(branchId: String, value: String) {
+        fun onPodContactNumberChanged(
+            branchId: String,
+            value: String,
+        ) {
             updateBranch(branchId) { it.copy(podContactNumber = value) }
         }
 
-        fun onPaymentContactNameChanged(branchId: String, value: String) {
+        fun onPaymentContactNameChanged(
+            branchId: String,
+            value: String,
+        ) {
             updateBranch(branchId) { it.copy(paymentContactName = value) }
         }
 
-        fun onPaymentContactNumberChanged(branchId: String, value: String) {
+        fun onPaymentContactNumberChanged(
+            branchId: String,
+            value: String,
+        ) {
             updateBranch(branchId) { it.copy(paymentContactNumber = value) }
         }
 
-        fun onTrafficContactNameChanged(branchId: String, value: String) {
+        fun onTrafficContactNameChanged(
+            branchId: String,
+            value: String,
+        ) {
             updateBranch(branchId) { it.copy(trafficContactName = value) }
         }
 
-        fun onTrafficContactNumberChanged(branchId: String, value: String) {
+        fun onTrafficContactNumberChanged(
+            branchId: String,
+            value: String,
+        ) {
             updateBranch(branchId) { it.copy(trafficContactNumber = value) }
         }
 
-        fun onTrackingContactNameChanged(branchId: String, value: String) {
+        fun onTrackingContactNameChanged(
+            branchId: String,
+            value: String,
+        ) {
             updateBranch(branchId) { it.copy(trackingContactName = value) }
         }
 
-        fun onTrackingContactNumberChanged(branchId: String, value: String) {
+        fun onTrackingContactNumberChanged(
+            branchId: String,
+            value: String,
+        ) {
             updateBranch(branchId) { it.copy(trackingContactNumber = value) }
         }
 
-        fun getSignedUrl(documentId: String, onUrlReady: (String) -> Unit) {
+        fun getSignedUrl(
+            documentId: String,
+            onUrlReady: (String) -> Unit,
+        ) {
             viewModelScope.launch(Dispatchers.IO) {
                 getProfileSignedUrlUseCase(documentId)
                     .onSuccess { signedUrl ->
@@ -462,7 +509,10 @@ class ClientProfileViewModel
             }
         }
 
-        private suspend fun createPdfFile(uris: List<Uri>, isPdf: Boolean): File? {
+        private suspend fun createPdfFile(
+            uris: List<Uri>,
+            isPdf: Boolean,
+        ): File? {
             return if (isPdf) {
                 FileUtils.getFileFromUri(context, uris.first())
             } else {
@@ -482,18 +532,23 @@ class ClientProfileViewModel
             onFieldChanged()
         }
 
-        private fun updateDocumentState(fieldKey: String, transformer: (DocumentUploadState) -> DocumentUploadState) {
-            _documentStates.value = _documentStates.value.toMutableMap().apply {
-                val current = this[fieldKey] ?: return@apply
-                this[fieldKey] = transformer(current)
-            }
+        private fun updateDocumentState(
+            fieldKey: String,
+            transformer: (DocumentUploadState) -> DocumentUploadState,
+        ) {
+            _documentStates.value =
+                _documentStates.value.toMutableMap().apply {
+                    val current = this[fieldKey] ?: return@apply
+                    this[fieldKey] = transformer(current)
+                }
             _hasPendingTemporaryUploads.value = hasTemporaryUploads()
         }
 
         private fun clearTemporaryFileKeys() {
-            _documentStates.value = _documentStates.value.mapValues { (_, state) ->
-                state.copy(temporaryFileKey = null, uploadStatus = UploadStatus.IDLE)
-            }
+            _documentStates.value =
+                _documentStates.value.mapValues { (_, state) ->
+                    state.copy(temporaryFileKey = null, uploadStatus = UploadStatus.IDLE)
+                }
             _hasPendingTemporaryUploads.value = false
         }
 
@@ -544,7 +599,11 @@ class ClientProfileViewModel
                 var trafficContactNumber: String? = null
                 var trackingContactNumber: String? = null
 
-                fun applyChange(currentValue: String, originalValue: String?, assign: (String?) -> Unit) {
+                fun applyChange(
+                    currentValue: String,
+                    originalValue: String?,
+                    assign: (String?) -> Unit,
+                ) {
                     val current = currentValue.trim()
                     val old = originalValue.orEmpty().trim()
                     if (current != old) {
@@ -678,9 +737,10 @@ class ClientProfileViewModel
             val AADHAAR_REGEX = Regex("^[0-9]{12}$")
             val GST_REGEX = Regex("^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][0-9A-Z]Z[0-9A-Z]$")
 
-            val documentConfigs = listOf(
-                ClientDocumentConfig(fieldKey = "aadhaar", documentTypeId = 1, documentName = "Aadhaar Card"),
-                ClientDocumentConfig(fieldKey = "pan", documentTypeId = 2, documentName = "PAN Card"),
-            )
+            val documentConfigs =
+                listOf(
+                    ClientDocumentConfig(fieldKey = "aadhaar", documentTypeId = 1, documentName = "Aadhaar Card"),
+                    ClientDocumentConfig(fieldKey = "pan", documentTypeId = 2, documentName = "PAN Card"),
+                )
         }
     }

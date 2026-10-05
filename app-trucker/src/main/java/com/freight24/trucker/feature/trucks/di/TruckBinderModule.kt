@@ -45,13 +45,13 @@ internal interface TruckBinderModule {
 
     @Binds
     @Singleton
-    fun bindGetTruckDocumentSignedUrlUseCase(
-        impl: GetTruckDocumentSignedUrlUseCaseImpl,
-    ): GetTruckDocumentSignedUrlUseCase
+    fun bindGetTruckDocumentSignedUrlUseCase(impl: GetTruckDocumentSignedUrlUseCaseImpl): GetTruckDocumentSignedUrlUseCase
 
     @Binds
     @Singleton
-    fun bindUpdateTruckUseCase(impl: com.freight24.trucker.feature.trucks.domain.usecase.UpdateTruckUseCaseImpl): com.freight24.trucker.feature.trucks.domain.usecase.UpdateTruckUseCase
+    fun bindUpdateTruckUseCase(
+        impl: com.freight24.trucker.feature.trucks.domain.usecase.UpdateTruckUseCaseImpl,
+    ): com.freight24.trucker.feature.trucks.domain.usecase.UpdateTruckUseCase
 
     @Binds
     @Singleton

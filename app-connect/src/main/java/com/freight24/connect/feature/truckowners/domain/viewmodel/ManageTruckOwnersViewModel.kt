@@ -16,96 +16,98 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class ManageTruckOwnersViewModel @Inject constructor(
-    private val getTruckOwnersUseCase: GetTruckOwnersUseCase
-) : ViewModel() {
-
-    enum class OwnerFilter(val label: String) {
-        ALL("All"),
-        ACTIVE("Active"),
-        INACTIVE("Inactive"),
-        PENDING("Pending")
-    }
-
-    private val _uiState = MutableStateFlow<UiState<List<TruckOwnerDto>>>(UiState.Loading)
-    val uiState: StateFlow<UiState<List<TruckOwnerDto>>> = _uiState.asStateFlow()
-
-    private val _searchQuery = MutableStateFlow("")
-    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
-
-    private val _selectedFilter = MutableStateFlow(OwnerFilter.ALL)
-    val selectedFilter: StateFlow<OwnerFilter> = _selectedFilter.asStateFlow()
-
-    private val _isRefreshing = MutableStateFlow(false)
-    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
-
-    val filteredOwners: StateFlow<List<TruckOwnerDto>> = combine(
-        _uiState,
-        _searchQuery,
-        _selectedFilter
-    ) { state, query, filter ->
-        if (state is UiState.Success) {
-            state.data.filter { owner ->
-                val matchesQuery =
-                    query.isBlank() ||
-                        owner.full_name.contains(query, ignoreCase = true) ||
-                        owner.tag_code.orEmpty().contains(query, ignoreCase = true)
-                val matchesFilter =
-                    when (filter) {
-                        OwnerFilter.ALL -> true
-                        OwnerFilter.ACTIVE -> owner.statusKey == OwnerFilter.ACTIVE
-                        OwnerFilter.INACTIVE -> owner.statusKey == OwnerFilter.INACTIVE
-                        OwnerFilter.PENDING -> owner.statusKey == OwnerFilter.PENDING
-                    }
-                matchesQuery && matchesFilter
-            }
-        } else {
-            emptyList()
+class ManageTruckOwnersViewModel
+    @Inject
+    constructor(
+        private val getTruckOwnersUseCase: GetTruckOwnersUseCase,
+    ) : ViewModel() {
+        enum class OwnerFilter(val label: String) {
+            ALL("All"),
+            ACTIVE("Active"),
+            INACTIVE("Inactive"),
+            PENDING("Pending"),
         }
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-    init {
-        loadTruckOwners()
-    }
+        private val _uiState = MutableStateFlow<UiState<List<TruckOwnerDto>>>(UiState.Loading)
+        val uiState: StateFlow<UiState<List<TruckOwnerDto>>> = _uiState.asStateFlow()
 
-    fun onSearchQueryChanged(query: String) {
-        _searchQuery.value = query
-    }
+        private val _searchQuery = MutableStateFlow("")
+        val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
-    fun onFilterChanged(filter: OwnerFilter) {
-        _selectedFilter.value = filter
-    }
+        private val _selectedFilter = MutableStateFlow(OwnerFilter.ALL)
+        val selectedFilter: StateFlow<OwnerFilter> = _selectedFilter.asStateFlow()
 
-    fun onRefresh() {
-        loadTruckOwners(isRefresh = true)
-    }
+        private val _isRefreshing = MutableStateFlow(false)
+        val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
-    fun retry() {
-        loadTruckOwners()
-    }
-
-    private fun loadTruckOwners(isRefresh: Boolean = false) {
-        viewModelScope.launch {
-            if (isRefresh) {
-                _isRefreshing.value = true
-            } else {
-                _uiState.value = UiState.Loading
-            }
-
-            getTruckOwnersUseCase()
-                .onSuccess { owners ->
-                    _uiState.value = UiState.Success(owners)
-                    _isRefreshing.value = false
-                }
-                .onFailure { error ->
-                    if (!isRefresh) {
-                        _uiState.value = UiState.Error(error.message ?: "Failed to load truck owners")
+        val filteredOwners: StateFlow<List<TruckOwnerDto>> =
+            combine(
+                _uiState,
+                _searchQuery,
+                _selectedFilter,
+            ) { state, query, filter ->
+                if (state is UiState.Success) {
+                    state.data.filter { owner ->
+                        val matchesQuery =
+                            query.isBlank() ||
+                                owner.full_name.contains(query, ignoreCase = true) ||
+                                owner.tag_code.orEmpty().contains(query, ignoreCase = true)
+                        val matchesFilter =
+                            when (filter) {
+                                OwnerFilter.ALL -> true
+                                OwnerFilter.ACTIVE -> owner.statusKey == OwnerFilter.ACTIVE
+                                OwnerFilter.INACTIVE -> owner.statusKey == OwnerFilter.INACTIVE
+                                OwnerFilter.PENDING -> owner.statusKey == OwnerFilter.PENDING
+                            }
+                        matchesQuery && matchesFilter
                     }
-                    _isRefreshing.value = false
+                } else {
+                    emptyList()
                 }
+            }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+        init {
+            loadTruckOwners()
+        }
+
+        fun onSearchQueryChanged(query: String) {
+            _searchQuery.value = query
+        }
+
+        fun onFilterChanged(filter: OwnerFilter) {
+            _selectedFilter.value = filter
+        }
+
+        fun onRefresh() {
+            loadTruckOwners(isRefresh = true)
+        }
+
+        fun retry() {
+            loadTruckOwners()
+        }
+
+        private fun loadTruckOwners(isRefresh: Boolean = false) {
+            viewModelScope.launch {
+                if (isRefresh) {
+                    _isRefreshing.value = true
+                } else {
+                    _uiState.value = UiState.Loading
+                }
+
+                getTruckOwnersUseCase()
+                    .onSuccess { owners ->
+                        _uiState.value = UiState.Success(owners)
+                        _isRefreshing.value = false
+                    }
+                    .onFailure { error ->
+                        if (!isRefresh) {
+                            _uiState.value = UiState.Error(error.message ?: "Failed to load truck owners")
+                        }
+                        _isRefreshing.value = false
+                    }
+            }
         }
     }
-}
 
 private val TruckOwnerDto.statusKey: ManageTruckOwnersViewModel.OwnerFilter
     get() =

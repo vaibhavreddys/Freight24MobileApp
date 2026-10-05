@@ -28,7 +28,10 @@ internal class ProfileRepositoryImpl
             }
         }
 
-        override suspend fun updateProfile(id: String, request: com.freight24.rest.request.UpdateProfileRequest): Result<Boolean> {
+        override suspend fun updateProfile(
+            id: String,
+            request: com.freight24.rest.request.UpdateProfileRequest,
+        ): Result<Boolean> {
             return safeCallProvider.safeApiCall(ioDispatcher) {
                 api.updateProfile(id, request)
             }.map { it.success }
@@ -78,5 +81,4 @@ internal class ProfileRepositoryImpl
             val key = data?.temporaryFileKey ?: data?.fileKey
             return key ?: throw IllegalStateException("temporaryFileKey missing in upload response")
         }
-
     }

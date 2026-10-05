@@ -1,6 +1,4 @@
 package com.freight24.connect.feature.trips.views
-import com.freight24.ui.components.FreightTopAppBar
-
 import android.Manifest
 import android.content.Context
 import android.content.Intent
@@ -15,27 +13,22 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -47,8 +40,9 @@ import com.freight24.connect.feature.trips.domain.viewmodel.LuChargesViewModelIm
 import com.freight24.connect.feature.trips.domain.viewmodel.LuDocType
 import com.freight24.ui.components.FileConfirmationSheet
 import com.freight24.ui.components.FileSourcePickerSheet
-import com.freight24.ui.theme.FreightThemeTokens
+import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.components.formViewportInsets
+import com.freight24.ui.theme.FreightThemeTokens
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -59,7 +53,7 @@ fun LuChargesScreen(
     onBackClick: () -> Unit,
     onSuccess: () -> Unit,
     onPdfPreview: (String, String?, String?) -> Unit,
-    viewModel: LuChargesViewModel = hiltViewModel<LuChargesViewModelImpl>()
+    viewModel: LuChargesViewModel = hiltViewModel<LuChargesViewModelImpl>(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
@@ -92,57 +86,62 @@ fun LuChargesScreen(
         }
     }
 
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia(),
-        onResult = { uris ->
-            if (uris.isNotEmpty()) {
-                viewModel.onEvent(LuChargesEvent.OnFilePicked(uris, isPdf = false))
-            }
-        }
-    )
-
-    val pdfPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent(),
-        onResult = { uri ->
-            uri?.let {
-                viewModel.onEvent(LuChargesEvent.OnFilePicked(listOf(it), isPdf = true))
-            }
-        }
-    )
-
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture(),
-        onResult = { success ->
-            if (success) {
-                tempCameraUri?.let {
-                    viewModel.onEvent(LuChargesEvent.OnFilePicked(listOf(it), isPdf = false))
+    val imagePickerLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.PickMultipleVisualMedia(),
+            onResult = { uris ->
+                if (uris.isNotEmpty()) {
+                    viewModel.onEvent(LuChargesEvent.OnFilePicked(uris, isPdf = false))
                 }
-            }
-            tempCameraUri = null
-        }
-    )
+            },
+        )
 
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { isGranted ->
-            if (isGranted) {
-                val imageUri = createTempImageUri(context)
-                tempCameraUri = imageUri
-                cameraLauncher.launch(imageUri)
-            } else {
-                scope.launch {
-                    val result = snackbarHostState.showSnackbar(
-                        message = "Camera permission denied. Grant it from app settings.",
-                        actionLabel = "Settings",
-                        duration = SnackbarDuration.Long,
-                    )
-                    if (result == SnackbarResult.ActionPerformed) {
-                        openAppSettings(context)
+    val pdfPickerLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.GetContent(),
+            onResult = { uri ->
+                uri?.let {
+                    viewModel.onEvent(LuChargesEvent.OnFilePicked(listOf(it), isPdf = true))
+                }
+            },
+        )
+
+    val cameraLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.TakePicture(),
+            onResult = { success ->
+                if (success) {
+                    tempCameraUri?.let {
+                        viewModel.onEvent(LuChargesEvent.OnFilePicked(listOf(it), isPdf = false))
                     }
                 }
-            }
-        }
-    )
+                tempCameraUri = null
+            },
+        )
+
+    val cameraPermissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+            onResult = { isGranted ->
+                if (isGranted) {
+                    val imageUri = createTempImageUri(context)
+                    tempCameraUri = imageUri
+                    cameraLauncher.launch(imageUri)
+                } else {
+                    scope.launch {
+                        val result =
+                            snackbarHostState.showSnackbar(
+                                message = "Camera permission denied. Grant it from app settings.",
+                                actionLabel = "Settings",
+                                duration = SnackbarDuration.Long,
+                            )
+                        if (result == SnackbarResult.ActionPerformed) {
+                            openAppSettings(context)
+                        }
+                    }
+                }
+            },
+        )
 
     fun startCameraCapture() {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
@@ -208,16 +207,18 @@ fun LuChargesScreen(
         bottomBar = {
             Button(
                 onClick = { viewModel.onEvent(LuChargesEvent.OnSubmit) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .height(56.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .height(56.dp),
                 shape = MaterialTheme.shapes.medium,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colorScheme.primary,
-                    contentColor = colorScheme.onPrimary,
-                ),
-                enabled = !uiState.isSubmitting && uiState.hasChanges
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = colorScheme.primary,
+                        contentColor = colorScheme.onPrimary,
+                    ),
+                enabled = !uiState.isSubmitting && uiState.hasChanges,
             ) {
                 if (uiState.isSubmitting) {
                     CircularProgressIndicator(color = colorScheme.onPrimary, modifier = Modifier.size(24.dp))
@@ -230,41 +231,42 @@ fun LuChargesScreen(
                 }
             }
         },
-        containerColor = colorScheme.background
+        containerColor = colorScheme.background,
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                // Keyboard-aware viewport: without this the scroll bounds run behind the
-                // keyboard and bring-into-view leaves the focused field hidden. See FormInsets.kt.
-                .formViewportInsets(padding)
-                .verticalScroll(scrollState)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    // Keyboard-aware viewport: without this the scroll bounds run behind the
+                    // keyboard and bring-into-view leaves the focused field hidden. See FormInsets.kt.
+                    .formViewportInsets(padding)
+                    .verticalScroll(scrollState)
+                    .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             // Info Message
             Surface(
                 color = colorScheme.primaryContainer,
                 shape = MaterialTheme.shapes.medium,
                 border = androidx.compose.foundation.BorderStroke(1.dp, colorScheme.primary.copy(alpha = 0.2f)),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.Top
+                    verticalAlignment = Alignment.Top,
                 ) {
                     Icon(
                         Icons.Default.Info,
                         contentDescription = null,
                         tint = colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(20.dp),
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = "All submitted charges and documents are subject to administrative verification and internal audit. Please ensure all details are accurate.",
                         style = MaterialTheme.typography.bodySmall,
                         color = colorScheme.onSurfaceVariant,
-                        lineHeight = 18.sp
+                        lineHeight = 18.sp,
                     )
                 }
             }
@@ -273,22 +275,22 @@ fun LuChargesScreen(
             Card(
                 colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
                 shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                    verticalArrangement = Arrangement.spacedBy(20.dp),
                 ) {
                     LuAmountInput(
                         label = "Loading Amount",
                         value = uiState.loadingAmount,
-                        onValueChange = { viewModel.onEvent(LuChargesEvent.OnLoadingAmountChange(it)) }
+                        onValueChange = { viewModel.onEvent(LuChargesEvent.OnLoadingAmountChange(it)) },
                     )
 
                     LuAmountInput(
                         label = "Unloading Amount",
                         value = uiState.unloadingAmount,
-                        onValueChange = { viewModel.onEvent(LuChargesEvent.OnUnloadingAmountChange(it)) }
+                        onValueChange = { viewModel.onEvent(LuChargesEvent.OnUnloadingAmountChange(it)) },
                     )
 
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -296,20 +298,27 @@ fun LuChargesScreen(
                             "Notes",
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.SemiBold,
-                            color = colorScheme.onSurfaceVariant
+                            color = colorScheme.onSurfaceVariant,
                         )
                         OutlinedTextField(
                             value = uiState.notes,
                             onValueChange = { viewModel.onEvent(LuChargesEvent.OnNotesChange(it)) },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(120.dp),
-                            placeholder = { Text("Enter any additional details or remarks here...", color = colorScheme.onSurfaceVariant) },
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(120.dp),
+                            placeholder = {
+                                Text(
+                                    "Enter any additional details or remarks here...",
+                                    color = colorScheme.onSurfaceVariant,
+                                )
+                            },
                             shape = MaterialTheme.shapes.medium,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = colorScheme.primary,
-                                unfocusedBorderColor = colorScheme.outlineVariant
-                            )
+                            colors =
+                                OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = colorScheme.primary,
+                                    unfocusedBorderColor = colorScheme.outlineVariant,
+                                ),
                         )
                     }
                 }
@@ -319,38 +328,41 @@ fun LuChargesScreen(
             Card(
                 colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
                 shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Text(
                         "Supporting Documents",
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleMedium,
-                        color = colorScheme.onSurface
+                        color = colorScheme.onSurface,
                     )
 
                     Spacer(modifier = Modifier.height(8.dp))
 
                     val loadingHasDoc = uiState.loadingDocument != null || uiState.loadingSlipUrl != null
-                    val loadingFileSize = uiState.loadingDocument?.length()
-                        ?.let { formatBytes(it) } ?: ""
+                    val loadingFileSize =
+                        uiState.loadingDocument?.length()
+                            ?.let { formatBytes(it) } ?: ""
 
                     LuDocumentRow(
-                        title = when {
-                            uiState.loadingProcessing -> "Loading Charges Proof"
-                            loadingHasDoc && !uiState.loadingShowReupload -> "View Loading Charges Proof"
-                            uiState.loadingShowReupload -> "Reupload Loading Charges Proof"
-                            else -> "Upload Loading Charges Proof"
-                        },
-                        subtitle = when {
-                            uiState.loadingProcessing -> "Processing file..."
-                            uiState.loadingSlipUrl != null -> "Uploaded on server"
-                            uiState.loadingDocument != null -> "Ready to upload ($loadingFileSize)"
-                            else -> "Tap to upload"
-                        },
+                        title =
+                            when {
+                                uiState.loadingProcessing -> "Loading Charges Proof"
+                                loadingHasDoc && !uiState.loadingShowReupload -> "View Loading Charges Proof"
+                                uiState.loadingShowReupload -> "Reupload Loading Charges Proof"
+                                else -> "Upload Loading Charges Proof"
+                            },
+                        subtitle =
+                            when {
+                                uiState.loadingProcessing -> "Processing file..."
+                                uiState.loadingSlipUrl != null -> "Uploaded on server"
+                                uiState.loadingDocument != null -> "Ready to upload ($loadingFileSize)"
+                                else -> "Tap to upload"
+                            },
                         isProcessing = uiState.loadingProcessing,
                         hasDocument = loadingHasDoc,
                         onUploadClick = {
@@ -374,22 +386,25 @@ fun LuChargesScreen(
                     HorizontalDivider(color = colorScheme.outlineVariant.copy(alpha = 0.5f))
 
                     val unloadingHasDoc = uiState.unloadingDocument != null || uiState.unloadingSlipUrl != null
-                    val unloadingFileSize = uiState.unloadingDocument?.length()
-                        ?.let { formatBytes(it) } ?: ""
+                    val unloadingFileSize =
+                        uiState.unloadingDocument?.length()
+                            ?.let { formatBytes(it) } ?: ""
 
                     LuDocumentRow(
-                        title = when {
-                            uiState.unloadingProcessing -> "Unloading Charges Proof"
-                            unloadingHasDoc && !uiState.unloadingShowReupload -> "View Unloading Charges Proof"
-                            uiState.unloadingShowReupload -> "Reupload Unloading Charges Proof"
-                            else -> "Upload Unloading Charges Proof"
-                        },
-                        subtitle = when {
-                            uiState.unloadingProcessing -> "Processing file..."
-                            uiState.unloadingSlipUrl != null -> "Uploaded on server"
-                            uiState.unloadingDocument != null -> "Ready to upload ($unloadingFileSize)"
-                            else -> "Tap to upload"
-                        },
+                        title =
+                            when {
+                                uiState.unloadingProcessing -> "Unloading Charges Proof"
+                                unloadingHasDoc && !uiState.unloadingShowReupload -> "View Unloading Charges Proof"
+                                uiState.unloadingShowReupload -> "Reupload Unloading Charges Proof"
+                                else -> "Upload Unloading Charges Proof"
+                            },
+                        subtitle =
+                            when {
+                                uiState.unloadingProcessing -> "Processing file..."
+                                uiState.unloadingSlipUrl != null -> "Uploaded on server"
+                                uiState.unloadingDocument != null -> "Ready to upload ($unloadingFileSize)"
+                                else -> "Tap to upload"
+                            },
                         isProcessing = uiState.unloadingProcessing,
                         hasDocument = unloadingHasDoc,
                         onUploadClick = {
@@ -419,7 +434,7 @@ fun LuChargesScreen(
 fun LuAmountInput(
     label: String,
     value: String,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val extendedColors = FreightThemeTokens.colors
@@ -428,7 +443,7 @@ fun LuAmountInput(
             label,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold,
-            color = colorScheme.onSurfaceVariant
+            color = colorScheme.onSurfaceVariant,
         )
         OutlinedTextField(
             value = value,
@@ -440,11 +455,12 @@ fun LuAmountInput(
             placeholder = { Text("0.00", color = colorScheme.onSurfaceVariant) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             shape = MaterialTheme.shapes.medium,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = colorScheme.primary,
-                unfocusedBorderColor = colorScheme.outlineVariant
-            ),
-            singleLine = true
+            colors =
+                OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = colorScheme.primary,
+                    unfocusedBorderColor = colorScheme.outlineVariant,
+                ),
+            singleLine = true,
         )
     }
 }
@@ -462,10 +478,11 @@ private fun LuDocumentRow(
     val colorScheme = MaterialTheme.colorScheme
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(enabled = hasDocument && !isProcessing) { onViewClick() }
-            .padding(vertical = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(enabled = hasDocument && !isProcessing) { onViewClick() }
+                .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
@@ -539,12 +556,15 @@ private fun createTempImageUri(context: Context): Uri {
 }
 
 @Composable
-fun border(width: androidx.compose.ui.unit.Dp, color: Color) =
-    androidx.compose.foundation.BorderStroke(width, color)
+fun border(
+    width: androidx.compose.ui.unit.Dp,
+    color: Color,
+) = androidx.compose.foundation.BorderStroke(width, color)
 
 private fun openAppSettings(context: Context) {
-    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-        data = Uri.fromParts("package", context.packageName, null)
-    }
+    val intent =
+        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", context.packageName, null)
+        }
     context.startActivity(intent)
 }

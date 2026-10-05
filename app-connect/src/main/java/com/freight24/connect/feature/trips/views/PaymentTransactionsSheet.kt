@@ -38,47 +38,51 @@ internal fun PaymentTransactionsSheet(
     isLoading: Boolean,
     errorMessage: String?,
     onRetry: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(modifier = Modifier.padding(horizontal = 20.dp)) {
             Text(
                 text = if (userType == "client") "Client transactions" else "Trucker transactions",
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
             Spacer(Modifier.height(16.dp))
             when {
                 isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-                errorMessage != null -> Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = errorMessage,
-                        color = MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.Center
-                    )
-                    TextButton(onClick = onRetry) { Text("Retry") }
-                }
-                transactions.isEmpty() -> Text(
-                    text = if (userType == "client") {
-                        "No client collections recorded."
-                    } else {
-                        "No trucker payouts recorded."
-                    },
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                else -> LazyColumn(
-                    modifier = Modifier.heightIn(max = 560.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    items(transactions, key = { it.id }) { transaction ->
-                        PaymentTransactionItem(transaction)
+                errorMessage != null ->
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(
+                            text = errorMessage,
+                            color = MaterialTheme.colorScheme.error,
+                            textAlign = TextAlign.Center,
+                        )
+                        TextButton(onClick = onRetry) { Text("Retry") }
                     }
-                }
+                transactions.isEmpty() ->
+                    Text(
+                        text =
+                            if (userType == "client") {
+                                "No client collections recorded."
+                            } else {
+                                "No trucker payouts recorded."
+                            },
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                else ->
+                    LazyColumn(
+                        modifier = Modifier.heightIn(max = 560.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        items(transactions, key = { it.id }) { transaction ->
+                            PaymentTransactionItem(transaction)
+                        }
+                    }
             }
             Spacer(Modifier.height(24.dp))
         }
@@ -90,7 +94,7 @@ private fun PaymentTransactionItem(transaction: PaymentTransaction) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.small,
-        color = MaterialTheme.colorScheme.surfaceContainerLow
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -99,7 +103,7 @@ private fun PaymentTransactionItem(transaction: PaymentTransaction) {
                     Text(
                         transaction.paymentDate.displayTransactionDate(),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End) {
@@ -107,14 +111,14 @@ private fun PaymentTransactionItem(transaction: PaymentTransaction) {
                         transaction.paymentMethod.paymentLabel(),
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.End,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
                     )
                     Text(
                         transaction.paymentReference.orEmpty().ifBlank { "-" },
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.End,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -124,27 +128,28 @@ private fun PaymentTransactionItem(transaction: PaymentTransaction) {
                     "Updated by ${transaction.verifiedBy?.name ?: "-"}",
                     modifier = Modifier.weight(1f),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
                     transaction.createdAt.displayTransactionDate(),
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.End,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
     }
 }
 
-private fun String?.paymentLabel(): String = when (this) {
-    "bank_transfer" -> "Bank transfer"
-    "upi" -> "UPI"
-    "cheque" -> "Cheque"
-    "cash" -> "Cash"
-    else -> this?.replace('_', ' ')?.replaceFirstChar { it.uppercase() } ?: "-"
-}
+private fun String?.paymentLabel(): String =
+    when (this) {
+        "bank_transfer" -> "Bank transfer"
+        "upi" -> "UPI"
+        "cheque" -> "Cheque"
+        "cash" -> "Cash"
+        else -> this?.replace('_', ' ')?.replaceFirstChar { it.uppercase() } ?: "-"
+    }
 
 private fun String?.displayTransactionDate(): String {
     if (this.isNullOrBlank()) return "-"

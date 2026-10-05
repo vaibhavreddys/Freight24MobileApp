@@ -33,17 +33,14 @@ data class CreateIndentRequest(
      */
     @SerialName("contacts") val contacts: IndentContactsRequest? = null,
 ) {
-
     @Serializable
     data class Location(
-        @SerialName("location_type")  val locationType: String,
-        @SerialName("area_id") val areaId: Int?= null,
+        @SerialName("location_type") val locationType: String,
+        @SerialName("area_id") val areaId: Int? = null,
         @SerialName("city_id") val cityId: Int? = null,
         @SerialName("address") val address: String? = null,
         @SerialName("contact_person") val contactPerson: String? = null,
         @SerialName("contact_phone") val contactPhone: String? = null,
-        @SerialName("sequence_order") val sequenceOrder: Int
+        @SerialName("sequence_order") val sequenceOrder: Int,
     )
 }
-
-

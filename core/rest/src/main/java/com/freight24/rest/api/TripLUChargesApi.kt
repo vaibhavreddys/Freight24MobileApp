@@ -13,7 +13,6 @@ import retrofit2.http.PartMap
 import retrofit2.http.Path
 
 interface TripLUChargesApi {
-
     @Multipart
     @POST("trips/{tripId}/lu-charge/bulk")
     suspend fun updateLUCharges(
@@ -28,5 +27,4 @@ interface TripLUChargesApi {
         @Path("trip_id") tripId: String,
         @Path("charge_id") chargeId: String,
     ): Response<SignedDocument>
-
 }

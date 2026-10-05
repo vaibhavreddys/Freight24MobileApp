@@ -9,20 +9,22 @@ data class OtherDeductionsUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val isSuccess: Boolean = false,
-    
     // Initial values for comparison
     val initialAmount: String = "0.00",
     val initialNotes: String = "",
-    val hasChanges: Boolean = false
+    val hasChanges: Boolean = false,
 )
 
 sealed class OtherDeductionsEvent {
     data class OnAmountChange(val amount: String) : OtherDeductionsEvent()
+
     data class OnReasonChange(val reason: String) : OtherDeductionsEvent()
+
     data object OnUpdateClick : OtherDeductionsEvent()
 }
 
 interface OtherDeductionsViewModel {
     val uiState: StateFlow<OtherDeductionsUiState>
+
     fun onEvent(event: OtherDeductionsEvent)
 }

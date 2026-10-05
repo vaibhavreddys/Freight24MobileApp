@@ -1,6 +1,4 @@
 package com.freight24.connect.feature.trucks.views.details
-import com.freight24.ui.components.FreightTopAppBar
-
 import android.Manifest
 import android.content.Context
 import android.content.Intent
@@ -11,7 +9,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,40 +16,29 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.FolderOpen
-import androidx.compose.material.icons.filled.PhotoLibrary
-import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -60,7 +46,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -75,7 +60,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
@@ -83,15 +67,14 @@ import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import coil3.compose.rememberAsyncImagePainter
 import com.freight24.common.model.TruckDetail
 import com.freight24.common.model.TruckDocument
-import com.freight24.ui.UiState
 import com.freight24.connect.feature.trucks.views.TruckDocketCard
+import com.freight24.ui.UiState
+import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.components.PanelShape
 import com.freight24.ui.components.TagShape
 import com.freight24.ui.components.getPdfLaunchIntent
@@ -132,61 +115,65 @@ internal fun TruckDetailsScreen(
     var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
     val sourceSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    val photoPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia(),
-        onResult = { uris ->
-            if (uris.isNotEmpty()) {
-                viewModel.onFilesPicked(uris, false, currentDocumentType ?: "")
-                currentDocumentType = null
-            }
-        }
-    )
-
-    val documentPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument(),
-        onResult = { uri ->
-            uri?.let {
-                viewModel.onFilesPicked(listOf(it), true, currentDocumentType ?: "")
-                currentDocumentType = null
-            }
-        }
-    )
-
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture(),
-        onResult = { success ->
-            if (success) {
-                tempCameraUri?.let {
-                    viewModel.onFilesPicked(listOf(it), false, currentDocumentType ?: "")
+    val photoPickerLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.PickMultipleVisualMedia(),
+            onResult = { uris ->
+                if (uris.isNotEmpty()) {
+                    viewModel.onFilesPicked(uris, false, currentDocumentType ?: "")
+                    currentDocumentType = null
                 }
-            }
-            tempCameraUri = null
-            currentDocumentType = null
-        }
-    )
+            },
+        )
 
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { isGranted ->
-            if (isGranted) {
-                val imageUri = createTempImageUri(context)
-                tempCameraUri = imageUri
-                cameraLauncher.launch(imageUri)
-            } else {
-                scope.launch {
-                    val result =
-                        snackbarHostState.showSnackbar(
-                            message = "Camera permission denied. Grant it from app settings to use camera upload.",
-                            actionLabel = "Settings",
-                            duration = SnackbarDuration.Long,
-                        )
-                    if (result == SnackbarResult.ActionPerformed) {
-                        openAppSettings(context)
+    val documentPickerLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.OpenDocument(),
+            onResult = { uri ->
+                uri?.let {
+                    viewModel.onFilesPicked(listOf(it), true, currentDocumentType ?: "")
+                    currentDocumentType = null
+                }
+            },
+        )
+
+    val cameraLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.TakePicture(),
+            onResult = { success ->
+                if (success) {
+                    tempCameraUri?.let {
+                        viewModel.onFilesPicked(listOf(it), false, currentDocumentType ?: "")
                     }
                 }
-            }
-        }
-    )
+                tempCameraUri = null
+                currentDocumentType = null
+            },
+        )
+
+    val cameraPermissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+            onResult = { isGranted ->
+                if (isGranted) {
+                    val imageUri = createTempImageUri(context)
+                    tempCameraUri = imageUri
+                    cameraLauncher.launch(imageUri)
+                } else {
+                    scope.launch {
+                        val result =
+                            snackbarHostState.showSnackbar(
+                                message = "Camera permission denied. Grant it from app settings to use camera upload.",
+                                actionLabel = "Settings",
+                                duration = SnackbarDuration.Long,
+                            )
+                        if (result == SnackbarResult.ActionPerformed) {
+                            openAppSettings(context)
+                        }
+                    }
+                }
+            },
+        )
 
     fun startCameraCapture() {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
@@ -224,7 +211,7 @@ internal fun TruckDetailsScreen(
                 documentPickerLauncher.launch(arrayOf("application/pdf"))
             }
         },
-        sheetState = sourceSheetState
+        sheetState = sourceSheetState,
     )
 
     if (selectedUris.isNotEmpty()) {
@@ -234,7 +221,7 @@ internal fun TruckDetailsScreen(
             isUploading = isUploading,
             uploadButtonText = "Upload Now",
             onUploadClick = { viewModel.uploadDocuments() },
-            onDismiss = { viewModel.clearSelection() }
+            onDismiss = { viewModel.clearSelection() },
         )
     }
 
@@ -269,28 +256,30 @@ internal fun TruckDetailsScreen(
                             onEditClick(state.data.truckId)
                         }
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .navigationBarsPadding()
-                        .padding(horizontal = 16.dp, vertical = 12.dp)
-                        .height(50.dp)
-                        .testTag("truck_edit_button")
-                        .semantics { testTagsAsResourceId = true },
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .navigationBarsPadding()
+                            .padding(horizontal = 16.dp, vertical = 12.dp)
+                            .height(50.dp)
+                            .testTag("truck_edit_button")
+                            .semantics { testTagsAsResourceId = true },
                     shape = RoundedCornerShape(25.dp),
-                    enabled = uiState is UiState.Success
+                    enabled = uiState is UiState.Success,
                 ) {
                     Text("Edit Truck", fontWeight = FontWeight.SemiBold)
                 }
             }
-        }
+        },
     ) { paddingValues ->
         PullToRefreshBox(
             isRefreshing = isRefreshing,
             onRefresh = { viewModel.onRefresh() },
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.background),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .background(MaterialTheme.colorScheme.background),
         ) {
             when (val state = uiState) {
                 is UiState.Loading -> {
@@ -313,12 +302,13 @@ internal fun TruckDetailsScreen(
                         TruckDetailsContent(
                             truck = state.data,
                             onViewClick = { s3Url ->
-                                val documentType = when (s3Url) {
-                                    state.data.rcCard?.url -> "rc"
-                                    state.data.fcCertificate?.url -> "fc"
-                                    state.data.insurance?.url -> "insurance"
-                                    else -> null
-                                }
+                                val documentType =
+                                    when (s3Url) {
+                                        state.data.rcCard?.url -> "rc"
+                                        state.data.fcCertificate?.url -> "fc"
+                                        state.data.insurance?.url -> "insurance"
+                                        else -> null
+                                    }
                                 if (documentType != null) {
                                     viewModel.fetchSignedUrl(documentType) { signedUrl ->
                                         context.startActivity(getPdfLaunchIntent(signedUrl, context))
@@ -335,7 +325,7 @@ internal fun TruckDetailsScreen(
                         if (isUploading) {
                             Surface(
                                 color = colorScheme.onSurface.copy(alpha = 0.5f),
-                                modifier = Modifier.fillMaxSize()
+                                modifier = Modifier.fillMaxSize(),
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -436,11 +426,15 @@ private fun SpecificationsSection(truck: TruckDetail) {
 }
 
 @Composable
-private fun LedgerRow(label: String, value: String?) {
+private fun LedgerRow(
+    label: String,
+    value: String?,
+) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         Text(
             text = label,
@@ -507,16 +501,17 @@ private fun TruckDocumentRow(
     val statusText = doc?.status?.uppercase() ?: "NOT UPLOADED"
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(
-                if (hasUrl) {
-                    Modifier.clickable { onViewClick(doc?.url) }
-                } else {
-                    Modifier
-                }
-            )
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .then(
+                    if (hasUrl) {
+                        Modifier.clickable { onViewClick(doc?.url) }
+                    } else {
+                        Modifier
+                    },
+                )
+                .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
@@ -528,33 +523,36 @@ private fun TruckDocumentRow(
             )
             Spacer(Modifier.height(2.dp))
             Text(
-                text = when {
-                    !hasUrl -> "Not uploaded"
-                    statusText == "VERIFIED" || statusText == "COMPLETED" -> "On file"
-                    statusText == "PENDING" -> "Awaiting verification"
-                    statusText == "REJECTED" -> "Rejected — upload a fresh copy"
-                    else -> "On file"
-                },
+                text =
+                    when {
+                        !hasUrl -> "Not uploaded"
+                        statusText == "VERIFIED" || statusText == "COMPLETED" -> "On file"
+                        statusText == "PENDING" -> "Awaiting verification"
+                        statusText == "REJECTED" -> "Rejected — upload a fresh copy"
+                        else -> "On file"
+                    },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
 
         when {
-            !hasUrl -> DocumentActionIconButton(
-                icon = Icons.Default.CloudUpload,
-                description = "Upload $title",
-                tint = MaterialTheme.colorScheme.primary,
-                onClick = { onUploadClick(title) },
-                testTag = "truck_doc_upload_${title.lowercase().replace(' ', '_')}",
-            )
-            statusText == "REJECTED" -> DocumentActionIconButton(
-                icon = Icons.Default.Refresh,
-                description = "Re-upload $title",
-                tint = MaterialTheme.colorScheme.error,
-                onClick = { onUploadClick(title) },
-                testTag = "truck_doc_upload_${title.lowercase().replace(' ', '_')}",
-            )
+            !hasUrl ->
+                DocumentActionIconButton(
+                    icon = Icons.Default.CloudUpload,
+                    description = "Upload $title",
+                    tint = MaterialTheme.colorScheme.primary,
+                    onClick = { onUploadClick(title) },
+                    testTag = "truck_doc_upload_${title.lowercase().replace(' ', '_')}",
+                )
+            statusText == "REJECTED" ->
+                DocumentActionIconButton(
+                    icon = Icons.Default.Refresh,
+                    description = "Re-upload $title",
+                    tint = MaterialTheme.colorScheme.error,
+                    onClick = { onUploadClick(title) },
+                    testTag = "truck_doc_upload_${title.lowercase().replace(' ', '_')}",
+                )
             else -> {
                 TruckDocumentStamp(statusText)
                 Spacer(Modifier.width(6.dp))
@@ -574,12 +572,13 @@ private fun TruckDocumentRow(
 private fun TruckDocumentStamp(statusText: String) {
     val ext = FreightThemeTokens.colors
     val scheme = MaterialTheme.colorScheme
-    val (container, content, label) = when (statusText) {
-        "VERIFIED", "COMPLETED" -> Triple(ext.surfaceSuccess, ext.onSurfaceSuccess, "VERIFIED")
-        "REJECTED" -> Triple(scheme.errorContainer, scheme.onErrorContainer, "REJECTED")
-        "PENDING" -> Triple(ext.surfaceWarning, ext.onSurfaceWarning, "PENDING")
-        else -> Triple(scheme.surfaceContainerHighest, scheme.onSurfaceVariant, "UPLOADED")
-    }
+    val (container, content, label) =
+        when (statusText) {
+            "VERIFIED", "COMPLETED" -> Triple(ext.surfaceSuccess, ext.onSurfaceSuccess, "VERIFIED")
+            "REJECTED" -> Triple(scheme.errorContainer, scheme.onErrorContainer, "REJECTED")
+            "PENDING" -> Triple(ext.surfaceWarning, ext.onSurfaceWarning, "PENDING")
+            else -> Triple(scheme.surfaceContainerHighest, scheme.onSurfaceVariant, "UPLOADED")
+        }
     Surface(
         shape = TagShape,
         color = container,
@@ -604,9 +603,10 @@ private fun DocumentActionIconButton(
 ) {
     IconButton(
         onClick = onClick,
-        modifier = Modifier
-            .size(36.dp)
-            .testTag(testTag),
+        modifier =
+            Modifier
+                .size(36.dp)
+                .testTag(testTag),
     ) {
         Icon(
             imageVector = icon,

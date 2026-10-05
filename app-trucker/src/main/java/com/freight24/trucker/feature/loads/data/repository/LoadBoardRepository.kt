@@ -1,7 +1,7 @@
 package com.freight24.trucker.feature.loads.data.repository
 
-import com.freight24.rest.response.LoadBoardResponse
 import com.freight24.rest.response.IndentInterestResponse
+import com.freight24.rest.response.LoadBoardResponse
 import com.freight24.rest.response.PaginatedLoadBoardResponse
 import com.freight24.rest.response.TruckerIndentDetailResponse
 

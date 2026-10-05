@@ -20,12 +20,16 @@ fun groupIndianMobileDigits(digits: String): String {
  *
  * @param withCountryCode Prefix the result with "+91 ".
  */
-fun formatIndianMobileNumber(phoneNumber: String, withCountryCode: Boolean = false): String {
+fun formatIndianMobileNumber(
+    phoneNumber: String,
+    withCountryCode: Boolean = false,
+): String {
     val digits = phoneNumber.filter(Char::isDigit)
-    val local = when {
-        digits.length > 10 && digits.startsWith("91") -> digits.drop(2)
-        else -> digits
-    }.take(10)
+    val local =
+        when {
+            digits.length > 10 && digits.startsWith("91") -> digits.drop(2)
+            else -> digits
+        }.take(10)
     val grouped = groupIndianMobileDigits(local)
     return if (withCountryCode) "+91 $grouped" else grouped
 }

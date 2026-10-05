@@ -12,6 +12,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,7 +26,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.border
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -100,11 +100,11 @@ import com.freight24.ui.trucker.TruckerColors
 import com.freight24.ui.trucker.TruckerPrimaryButton
 import com.freight24.ui.trucker.TruckerType
 import com.freight24.ui.trucker.inr
-import com.freight24.ui.trucker.wash
 import com.freight24.ui.trucker.rememberTruckerColors
 import com.freight24.ui.trucker.tripStageCount
 import com.freight24.ui.trucker.tripStageIndex
 import com.freight24.ui.trucker.tripStageLabel
+import com.freight24.ui.trucker.wash
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -734,16 +734,18 @@ private fun DocumentsSection(
                             else -> null
                         },
                     actionContentDescription = if (needsUpload) "Upload again" else null,
-                    onActionClick = if (needsUpload) {
-                        { onUploadClick(doc.documentType.lowercase()) }
-                    } else {
-                        null
-                    },
-                    onRowClick = if (!needsUpload && effectiveStatus != "uploading") {
-                        { doc.id?.let(onViewClick) }
-                    } else {
-                        null
-                    },
+                    onActionClick =
+                        if (needsUpload) {
+                            { onUploadClick(doc.documentType.lowercase()) }
+                        } else {
+                            null
+                        },
+                    onRowClick =
+                        if (!needsUpload && effectiveStatus != "uploading") {
+                            { doc.id?.let(onViewClick) }
+                        } else {
+                            null
+                        },
                 )
 
                 if (effectiveStatus == "uploading") {
@@ -775,11 +777,12 @@ private fun DocumentsSection(
                     sealTone = if (lrRejected) FleetTone.ERROR else FleetTone.ACCENT,
                     actionIcon = if (lrUploading) null else Icons.Filled.CloudUpload,
                     actionContentDescription = "Upload LR",
-                    onActionClick = if (lrUploading) {
-                        null
-                    } else {
-                        { onUploadClick("lr") }
-                    },
+                    onActionClick =
+                        if (lrUploading) {
+                            null
+                        } else {
+                            { onUploadClick("lr") }
+                        },
                 )
             }
 
@@ -800,11 +803,12 @@ private fun DocumentsSection(
                     sealTone = FleetTone.ACCENT,
                     actionIcon = if (podUploading) null else Icons.Filled.CloudUpload,
                     actionContentDescription = "Upload POD",
-                    onActionClick = if (podUploading) {
-                        null
-                    } else {
-                        { onUploadClick("pod") }
-                    },
+                    onActionClick =
+                        if (podUploading) {
+                            null
+                        } else {
+                            { onUploadClick("pod") }
+                        },
                 )
             }
 
@@ -842,11 +846,12 @@ private fun FreightBillSection(
 
         if (financials == null) {
             Text(
-                text = if (showDetailedBill) {
-                    "The bill is prepared once the trip is unloaded."
-                } else {
-                    "Trip revenue will appear here once the freight is confirmed."
-                },
+                text =
+                    if (showDetailedBill) {
+                        "The bill is prepared once the trip is unloaded."
+                    } else {
+                        "Trip revenue will appear here once the freight is confirmed."
+                    },
                 style = TruckerType.body,
                 color = colors.inkMuted,
             )

@@ -1,8 +1,5 @@
 package com.freight24.connect.feature.verificationrequests.views
 
-import com.freight24.ui.components.FreightTopAppBar
-import com.freight24.ui.components.FreightEmptyState
-
 import android.content.Context
 import android.os.Build
 import android.text.format.DateUtils
@@ -11,7 +8,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,7 +17,6 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -35,7 +30,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -109,24 +103,23 @@ import com.freight24.connect.feature.verificationrequests.domain.viewmodel.Verif
 import com.freight24.connect.feature.verificationrequests.domain.viewmodel.VerificationRequestsViewModel
 import com.freight24.connect.feature.verificationrequests.domain.viewmodel.VerificationRequestsViewModelImpl
 import com.freight24.ui.components.DocketCard
-import com.freight24.ui.components.DocketCut
-import com.freight24.ui.components.DocketShape
 import com.freight24.ui.components.DocumentLinkChip
+import com.freight24.ui.components.FreightEmptyState
+import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.components.HatchMark
 import com.freight24.ui.components.MetaTag
 import com.freight24.ui.components.PanelShape
 import com.freight24.ui.components.PerforationRule
 import com.freight24.ui.components.RouteIndicatorWithCities
-import com.freight24.ui.components.SpineWidth
 import com.freight24.ui.components.TagShape
+import com.freight24.ui.components.formViewportInsets
 import com.freight24.ui.components.getPdfLaunchIntent
 import com.freight24.ui.theme.FreightThemeTokens
-import com.freight24.ui.components.formViewportInsets
+import kotlinx.coroutines.launch
 import java.text.DateFormat
 import java.time.OffsetDateTime
 import java.util.Date
 import java.util.Locale
-import kotlinx.coroutines.launch
 
 // ===========================================================================
 // Verification Requests — "clearing desk" presentation layer.
@@ -158,22 +151,25 @@ import kotlinx.coroutines.launch
 // ---------------------------------------------------------------------------
 
 @Composable
-private fun eyebrow() = MaterialTheme.typography.labelSmall.copy(
-    fontWeight = FontWeight.SemiBold,
-    letterSpacing = 1.4.sp,
-)
+private fun eyebrow() =
+    MaterialTheme.typography.labelSmall.copy(
+        fontWeight = FontWeight.SemiBold,
+        letterSpacing = 1.4.sp,
+    )
 
 @Composable
-private fun ledgerLabel() = MaterialTheme.typography.labelSmall.copy(
-    fontWeight = FontWeight.SemiBold,
-    letterSpacing = 1.1.sp,
-)
+private fun ledgerLabel() =
+    MaterialTheme.typography.labelSmall.copy(
+        fontWeight = FontWeight.SemiBold,
+        letterSpacing = 1.1.sp,
+    )
 
 @Composable
-private fun identifier() = MaterialTheme.typography.titleSmall.copy(
-    fontWeight = FontWeight.SemiBold,
-    letterSpacing = 0.9.sp,
-)
+private fun identifier() =
+    MaterialTheme.typography.titleSmall.copy(
+        fontWeight = FontWeight.SemiBold,
+        letterSpacing = 0.9.sp,
+    )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -280,11 +276,12 @@ fun VerificationRequestsScreen(
         containerColor = MaterialTheme.colorScheme.background,
     ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                // Keyboard-aware viewport: without this the scroll bounds run behind the
-                // keyboard and bring-into-view leaves the focused field hidden. See FormInsets.kt.
-                .formViewportInsets(paddingValues),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    // Keyboard-aware viewport: without this the scroll bounds run behind the
+                    // keyboard and bring-into-view leaves the focused field hidden. See FormInsets.kt.
+                    .formViewportInsets(paddingValues),
         ) {
             VerificationQueueRail(
                 selectedTab = uiState.selectedTab,
@@ -304,9 +301,10 @@ fun VerificationRequestsScreen(
             PullToRefreshBox(
                 isRefreshing = uiState.isRefreshing,
                 onRefresh = { viewModel.onEvent(VerificationRequestsEvent.Refresh) },
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
             ) {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -493,7 +491,7 @@ fun VerificationRequestsScreen(
                             request = activeRequest,
                             status = status,
                             resolutionNotes = remarks.takeUnless { it.isBlank() },
-                        )
+                        ),
                     )
                 },
                 onRejectClick = {
@@ -505,17 +503,21 @@ fun VerificationRequestsScreen(
                                 request = activeRequest,
                                 status = VerificationRequestStatus.REJECTED,
                                 resolutionNotes = remarks,
-                            )
+                            ),
                         )
                     }
                 },
                 onClose = { scope.launch { sheetState.hide() }.invokeOnCompletion { clearSelectedRequest() } },
                 actionErrorMessage = uiState.actionErrorMessage,
-                isApproveLoading = uiState.actionInProgressRequestId == activeRequest.id &&
-                    (uiState.actionInProgressStatus == VerificationRequestStatus.APPROVED ||
-                        uiState.actionInProgressStatus == VerificationRequestStatus.VERIFIED),
-                isRejectLoading = uiState.actionInProgressRequestId == activeRequest.id &&
-                    uiState.actionInProgressStatus == VerificationRequestStatus.REJECTED,
+                isApproveLoading =
+                    uiState.actionInProgressRequestId == activeRequest.id &&
+                        (
+                            uiState.actionInProgressStatus == VerificationRequestStatus.APPROVED ||
+                                uiState.actionInProgressStatus == VerificationRequestStatus.VERIFIED
+                        ),
+                isRejectLoading =
+                    uiState.actionInProgressRequestId == activeRequest.id &&
+                        uiState.actionInProgressStatus == VerificationRequestStatus.REJECTED,
                 isCompletedView = isCompletedView,
             )
         }
@@ -547,7 +549,7 @@ fun VerificationRequestsScreen(
                             request = activeTruck,
                             status = VerificationRequestStatus.APPROVED,
                             resolutionNotes = remarks.takeUnless { it.isBlank() },
-                        )
+                        ),
                     )
                 },
                 onRejectClick = {
@@ -559,16 +561,18 @@ fun VerificationRequestsScreen(
                                 request = activeTruck,
                                 status = VerificationRequestStatus.REJECTED,
                                 resolutionNotes = remarks,
-                            )
+                            ),
                         )
                     }
                 },
                 onClose = { scope.launch { sheetState.hide() }.invokeOnCompletion { clearSelectedRequest() } },
                 actionErrorMessage = uiState.actionErrorMessage,
-                isApproveLoading = uiState.actionInProgressRequestId == activeTruck.id &&
-                    uiState.actionInProgressStatus == VerificationRequestStatus.APPROVED,
-                isRejectLoading = uiState.actionInProgressRequestId == activeTruck.id &&
-                    uiState.actionInProgressStatus == VerificationRequestStatus.REJECTED,
+                isApproveLoading =
+                    uiState.actionInProgressRequestId == activeTruck.id &&
+                        uiState.actionInProgressStatus == VerificationRequestStatus.APPROVED,
+                isRejectLoading =
+                    uiState.actionInProgressRequestId == activeTruck.id &&
+                        uiState.actionInProgressStatus == VerificationRequestStatus.REJECTED,
                 isCompletedView = isCompletedView,
             )
         }
@@ -601,7 +605,7 @@ fun VerificationRequestsScreen(
                             request = activeOwner,
                             status = VerificationRequestStatus.APPROVED,
                             resolutionNotes = remarks.takeUnless { it.isBlank() },
-                        )
+                        ),
                     )
                 },
                 onRejectClick = {
@@ -613,16 +617,18 @@ fun VerificationRequestsScreen(
                                 request = activeOwner,
                                 status = VerificationRequestStatus.REJECTED,
                                 resolutionNotes = remarks,
-                            )
+                            ),
                         )
                     }
                 },
                 onClose = { scope.launch { sheetState.hide() }.invokeOnCompletion { clearSelectedRequest() } },
                 actionErrorMessage = uiState.actionErrorMessage,
-                isApproveLoading = uiState.actionInProgressRequestId == activeOwner.id &&
-                    uiState.actionInProgressStatus == VerificationRequestStatus.APPROVED,
-                isRejectLoading = uiState.actionInProgressRequestId == activeOwner.id &&
-                    uiState.actionInProgressStatus == VerificationRequestStatus.REJECTED,
+                isApproveLoading =
+                    uiState.actionInProgressRequestId == activeOwner.id &&
+                        uiState.actionInProgressStatus == VerificationRequestStatus.APPROVED,
+                isRejectLoading =
+                    uiState.actionInProgressRequestId == activeOwner.id &&
+                        uiState.actionInProgressStatus == VerificationRequestStatus.REJECTED,
                 isCompletedView = isCompletedView,
             )
         }
@@ -655,7 +661,7 @@ fun VerificationRequestsScreen(
                             request = activeClient,
                             status = VerificationRequestStatus.APPROVED,
                             resolutionNotes = remarks.takeUnless { it.isBlank() },
-                        )
+                        ),
                     )
                 },
                 onRejectClick = {
@@ -667,16 +673,18 @@ fun VerificationRequestsScreen(
                                 request = activeClient,
                                 status = VerificationRequestStatus.REJECTED,
                                 resolutionNotes = remarks,
-                            )
+                            ),
                         )
                     }
                 },
                 onClose = { scope.launch { sheetState.hide() }.invokeOnCompletion { clearSelectedRequest() } },
                 actionErrorMessage = uiState.actionErrorMessage,
-                isApproveLoading = uiState.actionInProgressRequestId == activeClient.id &&
-                    uiState.actionInProgressStatus == VerificationRequestStatus.APPROVED,
-                isRejectLoading = uiState.actionInProgressRequestId == activeClient.id &&
-                    uiState.actionInProgressStatus == VerificationRequestStatus.REJECTED,
+                isApproveLoading =
+                    uiState.actionInProgressRequestId == activeClient.id &&
+                        uiState.actionInProgressStatus == VerificationRequestStatus.APPROVED,
+                isRejectLoading =
+                    uiState.actionInProgressRequestId == activeClient.id &&
+                        uiState.actionInProgressStatus == VerificationRequestStatus.REJECTED,
                 isCompletedView = isCompletedView,
             )
         }
@@ -697,12 +705,13 @@ fun VerificationRequestsScreen(
 // the tally always renders — including 0.
 // ===========================================================================
 
-private fun VerificationRequestTab.railLabel(): String = when (this) {
-    VerificationRequestTab.TRIPS -> "Trips"
-    VerificationRequestTab.TRUCKS -> "Trucks"
-    VerificationRequestTab.TRUCK_OWNERS -> "Owners"
-    VerificationRequestTab.CLIENTS -> "Clients"
-}
+private fun VerificationRequestTab.railLabel(): String =
+    when (this) {
+        VerificationRequestTab.TRIPS -> "Trips"
+        VerificationRequestTab.TRUCKS -> "Trucks"
+        VerificationRequestTab.TRUCK_OWNERS -> "Owners"
+        VerificationRequestTab.CLIENTS -> "Clients"
+    }
 
 @Composable
 private fun VerificationQueueRail(
@@ -713,28 +722,32 @@ private fun VerificationQueueRail(
     truckOwnerCount: Int,
     clientCount: Int,
 ) {
-    val counts = mapOf(
-        VerificationRequestTab.TRIPS to tripCount,
-        VerificationRequestTab.TRUCKS to truckCount,
-        VerificationRequestTab.TRUCK_OWNERS to truckOwnerCount,
-        VerificationRequestTab.CLIENTS to clientCount,
-    )
-    val icons = mapOf(
-        VerificationRequestTab.TRIPS to Icons.Default.Route,
-        VerificationRequestTab.TRUCKS to Icons.Default.LocalShipping,
-        VerificationRequestTab.TRUCK_OWNERS to Icons.Default.People,
-        VerificationRequestTab.CLIENTS to Icons.Default.Business,
-    )
+    val counts =
+        mapOf(
+            VerificationRequestTab.TRIPS to tripCount,
+            VerificationRequestTab.TRUCKS to truckCount,
+            VerificationRequestTab.TRUCK_OWNERS to truckOwnerCount,
+            VerificationRequestTab.CLIENTS to clientCount,
+        )
+    val icons =
+        mapOf(
+            VerificationRequestTab.TRIPS to Icons.Default.Route,
+            VerificationRequestTab.TRUCKS to Icons.Default.LocalShipping,
+            VerificationRequestTab.TRUCK_OWNERS to Icons.Default.People,
+            VerificationRequestTab.CLIENTS to Icons.Default.Business,
+        )
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surface),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surface),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             VerificationRequestTab.entries.forEach { tab ->
@@ -774,19 +787,21 @@ private fun QueueCell(
     val tallyContent = if (isSelected) scheme.onPrimary else scheme.onSurfaceVariant
 
     Surface(
-        modifier = modifier
-            .heightIn(min = 56.dp)
-            .testTag(testTag)
-            .semantics { testTagsAsResourceId = true }
-            .selectable(selected = isSelected, onClick = onClick, role = Role.Tab),
+        modifier =
+            modifier
+                .heightIn(min = 56.dp)
+                .testTag(testTag)
+                .semantics { testTagsAsResourceId = true }
+                .selectable(selected = isSelected, onClick = onClick, role = Role.Tab),
         shape = PanelShape,
         color = container,
         border = BorderStroke(1.dp, outline),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 6.dp, vertical = 9.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 6.dp, vertical = 9.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(5.dp),
         ) {
@@ -840,10 +855,11 @@ private fun VerificationStatusFilters(
     onStatusSelected: (VerificationRequestStatus) -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         VerificationRequestStatus.filterValues(tabType).forEach { status ->
@@ -869,11 +885,12 @@ private fun StatusFilterChip(
     val content = if (isSelected) scheme.onSurface else scheme.onSurfaceVariant
 
     Surface(
-        modifier = Modifier
-            .heightIn(min = 44.dp)
-            .testTag("verification_filter_${status.apiValue.lowercase(Locale.getDefault())}")
-            .semantics { testTagsAsResourceId = true }
-            .selectable(selected = isSelected, onClick = onClick, role = Role.RadioButton),
+        modifier =
+            Modifier
+                .heightIn(min = 44.dp)
+                .testTag("verification_filter_${status.apiValue.lowercase(Locale.getDefault())}")
+                .semantics { testTagsAsResourceId = true }
+                .selectable(selected = isSelected, onClick = onClick, role = Role.RadioButton),
         shape = PanelShape,
         color = container,
         border = BorderStroke(1.dp, outline),
@@ -883,9 +900,10 @@ private fun StatusFilterChip(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                modifier = Modifier
-                    .size(8.dp)
-                    .background(accent, CircleShape),
+                modifier =
+                    Modifier
+                        .size(8.dp)
+                        .background(accent, CircleShape),
             )
             Spacer(Modifier.width(8.dp))
             Text(
@@ -1002,9 +1020,10 @@ private fun AgeStamp(updatedAt: String) {
         fontWeight = FontWeight.Medium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         maxLines = 1,
-        modifier = Modifier
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh, TagShape)
-            .padding(horizontal = 8.dp, vertical = 4.dp),
+        modifier =
+            Modifier
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh, TagShape)
+                .padding(horizontal = 8.dp, vertical = 4.dp),
     )
 }
 
@@ -1018,14 +1037,15 @@ private fun TripDocketCard(
     onClick: () -> Unit,
 ) {
     val accent = statusAccentColor(request.status)
-    val documentLabel = remember(request.documents) {
-        val names = request.documents.map { displayDocumentName(it.name, true) }.distinct()
-        when {
-            names.isEmpty() -> "No documents attached"
-            names.size <= 2 -> names.joinToString(" + ")
-            else -> "${names.take(2).joinToString(" + ")} +${names.size - 2}"
+    val documentLabel =
+        remember(request.documents) {
+            val names = request.documents.map { displayDocumentName(it.name, true) }.distinct()
+            when {
+                names.isEmpty() -> "No documents attached"
+                names.size <= 2 -> names.joinToString(" + ")
+                else -> "${names.take(2).joinToString(" + ")} +${names.size - 2}"
+            }
         }
-    }
     val documentCount = request.documents.size
 
     DocketCard(
@@ -1075,11 +1095,12 @@ private fun TripDocketCard(
         DocketFooter(
             status = request.status,
             metaIcon = Icons.Default.Description,
-            metaText = if (documentCount == 1) {
-                "$documentLabel · 1 doc"
-            } else {
-                "$documentLabel · $documentCount docs"
-            },
+            metaText =
+                if (documentCount == 1) {
+                    "$documentLabel · 1 doc"
+                } else {
+                    "$documentLabel · $documentCount docs"
+                },
         )
     }
 }
@@ -1101,9 +1122,10 @@ private fun LaneStrip(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            modifier = Modifier
-                .size(9.dp)
-                .border(2.dp, ext.routeOrigin, CircleShape),
+            modifier =
+                Modifier
+                    .size(9.dp)
+                    .border(2.dp, ext.routeOrigin, CircleShape),
         )
         Spacer(Modifier.width(8.dp))
         Text(
@@ -1117,9 +1139,10 @@ private fun LaneStrip(
         )
         Spacer(Modifier.width(8.dp))
         Canvas(
-            modifier = Modifier
-                .weight(1f)
-                .height(8.dp),
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .height(8.dp),
         ) {
             drawLine(
                 color = ext.routeDestination.copy(alpha = 0.45f),
@@ -1141,9 +1164,10 @@ private fun LaneStrip(
         )
         Spacer(Modifier.width(8.dp))
         Box(
-            modifier = Modifier
-                .size(9.dp)
-                .background(ext.routeDestination, CircleShape),
+            modifier =
+                Modifier
+                    .size(9.dp)
+                    .background(ext.routeDestination, CircleShape),
         )
     }
 }
@@ -1219,10 +1243,11 @@ private fun TruckDocketCard(
 
         DocketFooter(
             status = request.status,
-            metaText = buildMetaLine(
-                fields = entries.size,
-                documents = request.changedDocuments.size,
-            ),
+            metaText =
+                buildMetaLine(
+                    fields = entries.size,
+                    documents = request.changedDocuments.size,
+                ),
         )
     }
 }
@@ -1338,7 +1363,10 @@ private fun BusinessDocketCard(
 
 /** One line of the card-level ledger preview: label on the left, value right. */
 @Composable
-private fun LedgerPreviewRow(entry: LedgerEntry, isNew: Boolean) {
+private fun LedgerPreviewRow(
+    entry: LedgerEntry,
+    isNew: Boolean,
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -1398,11 +1426,12 @@ private fun DocketSheet(
 
     Box(modifier = Modifier.fillMaxWidth()) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp)
-                .padding(bottom = if (showActions) barHeight + 12.dp else 28.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = if (showActions) barHeight + 12.dp else 28.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -1436,14 +1465,21 @@ private fun DocketSheet(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         StatusStamp(status = status)
-                        metaTags.forEach { MetaTag(text = it, container = MaterialTheme.colorScheme.surfaceContainerHighest, content = MaterialTheme.colorScheme.onSurfaceVariant) }
+                        metaTags.forEach {
+                            MetaTag(
+                                text = it,
+                                container = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                content = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 }
                 IconButton(
                     onClick = onClose,
-                    modifier = Modifier
-                        .testTag("verification_sheet_close")
-                        .semantics { testTagsAsResourceId = true },
+                    modifier =
+                        Modifier
+                            .testTag("verification_sheet_close")
+                            .semantics { testTagsAsResourceId = true },
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
@@ -1464,16 +1500,18 @@ private fun DocketSheet(
 
         if (showActions) {
             Surface(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth(),
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth(),
                 color = MaterialTheme.colorScheme.surface,
                 shadowElevation = 12.dp,
             ) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 12.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp, vertical = 12.dp),
                 ) {
                     if (actionErrorMessage != null) {
                         InlineNote(
@@ -1537,9 +1575,10 @@ private fun TripVerificationRequestDetailSheet(
         title = request.truckRegistrationNumber,
         subtitle = request.tripCode,
         status = request.status,
-        metaTags = listOf(
-            if (request.documents.size == 1) "1 DOC" else "${request.documents.size} DOCS",
-        ),
+        metaTags =
+            listOf(
+                if (request.documents.size == 1) "1 DOC" else "${request.documents.size} DOCS",
+            ),
         showActions = !isCompletedView,
         actionErrorMessage = actionErrorMessage,
         isApproveLoading = isApproveLoading,
@@ -1621,12 +1660,13 @@ private fun TruckVerificationRequestDetailSheet(
         entityLabel = if (onboarding) "Truck onboarding" else "Truck detail update",
         title = request.registrationNumber,
         status = request.status,
-        metaTags = buildList {
-            add("${entries.size} FIELD${if (entries.size == 1) "" else "S"}")
-            if (request.changedDocuments.isNotEmpty()) {
-                add("${request.changedDocuments.size} DOC${if (request.changedDocuments.size == 1) "" else "S"}")
-            }
-        },
+        metaTags =
+            buildList {
+                add("${entries.size} FIELD${if (entries.size == 1) "" else "S"}")
+                if (request.changedDocuments.isNotEmpty()) {
+                    add("${request.changedDocuments.size} DOC${if (request.changedDocuments.size == 1) "" else "S"}")
+                }
+            },
         showActions = !isCompletedView,
         actionErrorMessage = actionErrorMessage,
         isApproveLoading = isApproveLoading,
@@ -1759,8 +1799,9 @@ private fun LedgerSectionLabel(
                 color = MaterialTheme.colorScheme.tertiaryContainer,
             ) {
                 HatchMark(
-                    modifier = Modifier
-                        .size(width = 14.dp, height = 16.dp),
+                    modifier =
+                        Modifier
+                            .size(width = 14.dp, height = 16.dp),
                     color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.55f),
                 )
             }
@@ -1818,14 +1859,15 @@ private fun ChangeLedgerRow(
                     modifier = Modifier.weight(1f),
                 )
                 when (entry.kind) {
-                    ChangeKind.NEW -> if (showNewTag) {
-                        Spacer(Modifier.width(8.dp))
-                        MetaTag(
-                            text = "NEW",
-                            container = scheme.tertiaryContainer,
-                            content = scheme.onTertiaryContainer,
-                        )
-                    }
+                    ChangeKind.NEW ->
+                        if (showNewTag) {
+                            Spacer(Modifier.width(8.dp))
+                            MetaTag(
+                                text = "NEW",
+                                container = scheme.tertiaryContainer,
+                                content = scheme.onTertiaryContainer,
+                            )
+                        }
                     ChangeKind.CLEARED -> {
                         Spacer(Modifier.width(8.dp))
                         MetaTag(
@@ -1852,26 +1894,27 @@ private fun ChangeLedgerRow(
                 ChangeKind.UPDATED -> {
                     // One wrapping line: struck-through old value, arrow, new value.
                     Text(
-                        text = buildAnnotatedString {
-                            withStyle(
-                                SpanStyle(
-                                    color = scheme.onSurfaceVariant,
-                                    textDecoration = TextDecoration.LineThrough,
-                                )
-                            ) { append(entry.displayBefore()) }
-                            withStyle(
-                                SpanStyle(
-                                    color = accent,
-                                    fontWeight = FontWeight.Bold,
-                                )
-                            ) { append("   \u2192   ") }
-                            withStyle(
-                                SpanStyle(
-                                    color = scheme.onSurface,
-                                    fontWeight = FontWeight.SemiBold,
-                                )
-                            ) { append(entry.displayAfter()) }
-                        },
+                        text =
+                            buildAnnotatedString {
+                                withStyle(
+                                    SpanStyle(
+                                        color = scheme.onSurfaceVariant,
+                                        textDecoration = TextDecoration.LineThrough,
+                                    ),
+                                ) { append(entry.displayBefore()) }
+                                withStyle(
+                                    SpanStyle(
+                                        color = accent,
+                                        fontWeight = FontWeight.Bold,
+                                    ),
+                                ) { append("   \u2192   ") }
+                                withStyle(
+                                    SpanStyle(
+                                        color = scheme.onSurface,
+                                        fontWeight = FontWeight.SemiBold,
+                                    ),
+                                ) { append(entry.displayAfter()) }
+                            },
                         style = MaterialTheme.typography.bodyLarge,
                     )
                 }
@@ -1913,9 +1956,10 @@ private fun DocumentLedgerRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                modifier = Modifier
-                    .size(36.dp)
-                    .background(scheme.primaryContainer, RoundedCornerShape(8.dp)),
+                modifier =
+                    Modifier
+                        .size(36.dp)
+                        .background(scheme.primaryContainer, RoundedCornerShape(8.dp)),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -1961,21 +2005,24 @@ private fun DocumentLedgerRow(
 @Composable
 private fun StatusStamp(status: VerificationRequestStatus) {
     val (container, content) = statusStampColors(status)
-    val glyph = when (status) {
-        VerificationRequestStatus.REJECTED -> Icons.Default.Close
-        VerificationRequestStatus.APPROVED,
-        VerificationRequestStatus.VERIFIED -> Icons.Default.Check
-        else -> null
-    }
+    val glyph =
+        when (status) {
+            VerificationRequestStatus.REJECTED -> Icons.Default.Close
+            VerificationRequestStatus.APPROVED,
+            VerificationRequestStatus.VERIFIED,
+            -> Icons.Default.Check
+            else -> null
+        }
 
     Surface(
         shape = TagShape,
         color = container,
     ) {
         Row(
-            modifier = Modifier
-                .height(22.dp)
-                .padding(horizontal = 8.dp),
+            modifier =
+                Modifier
+                    .height(22.dp)
+                    .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (glyph != null) {
@@ -2012,10 +2059,11 @@ private fun RemarksSection(
         } else {
             Row(modifier = Modifier.fillMaxWidth()) {
                 Box(
-                    modifier = Modifier
-                        .width(3.dp)
-                        .height(IntrinsicSize.Min)
-                        .background(MaterialTheme.colorScheme.primary, TagShape),
+                    modifier =
+                        Modifier
+                            .width(3.dp)
+                            .height(IntrinsicSize.Min)
+                            .background(MaterialTheme.colorScheme.primary, TagShape),
                 )
                 Spacer(Modifier.width(12.dp))
                 Text(
@@ -2032,10 +2080,11 @@ private fun RemarksSection(
         OutlinedTextField(
             value = remarks,
             onValueChange = onRemarksChange,
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag("verification_sheet_remarks")
-                .semantics { testTagsAsResourceId = true },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .testTag("verification_sheet_remarks")
+                    .semantics { testTagsAsResourceId = true },
             minLines = 2,
             maxLines = 4,
             placeholder = {
@@ -2044,28 +2093,30 @@ private fun RemarksSection(
             textStyle = MaterialTheme.typography.bodyMedium,
             shape = PanelShape,
             isError = remarksError != null,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
-                errorBorderColor = MaterialTheme.colorScheme.error,
-                cursorColor = MaterialTheme.colorScheme.primary,
-                focusedLabelColor = MaterialTheme.colorScheme.primary,
-                unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                errorContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-            ),
+            colors =
+                OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                    errorBorderColor = MaterialTheme.colorScheme.error,
+                    cursorColor = MaterialTheme.colorScheme.primary,
+                    focusedLabelColor = MaterialTheme.colorScheme.primary,
+                    unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    errorContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                ),
         )
         Spacer(Modifier.height(6.dp))
         Text(
             text = remarksError ?: "Required when rejecting. Optional when approving.",
             style = MaterialTheme.typography.bodySmall,
             fontWeight = if (remarksError != null) FontWeight.Medium else FontWeight.Normal,
-            color = if (remarksError != null) {
-                MaterialTheme.colorScheme.error
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            },
+            color =
+                if (remarksError != null) {
+                    MaterialTheme.colorScheme.error
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
         )
     }
 }
@@ -2083,19 +2134,21 @@ private fun ActionButton(
     onClick: () -> Unit,
 ) {
     Button(
-        modifier = modifier
-            .heightIn(min = 52.dp)
-            .testTag(testTag)
-            .semantics { testTagsAsResourceId = true },
+        modifier =
+            modifier
+                .heightIn(min = 52.dp)
+                .testTag(testTag)
+                .semantics { testTagsAsResourceId = true },
         onClick = onClick,
         enabled = !isLoading,
         shape = PanelShape,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = containerColor,
-            contentColor = contentColor,
-            disabledContainerColor = containerColor.copy(alpha = 0.65f),
-            disabledContentColor = contentColor.copy(alpha = 0.75f),
-        ),
+        colors =
+            ButtonDefaults.buttonColors(
+                containerColor = containerColor,
+                contentColor = contentColor,
+                disabledContainerColor = containerColor.copy(alpha = 0.65f),
+                disabledContentColor = contentColor.copy(alpha = 0.75f),
+            ),
         border = border,
         contentPadding = PaddingValues(horizontal = 14.dp, vertical = 14.dp),
     ) {
@@ -2168,9 +2221,10 @@ private fun EmptyLedgerNote(text: String) {
 @Composable
 private fun LoadingDockets() {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 96.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(top = 96.dp),
         contentAlignment = Alignment.Center,
     ) {
         CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
@@ -2185,9 +2239,10 @@ private fun VerificationEmptyState(
     status: VerificationRequestStatus,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 64.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(top = 64.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         FreightEmptyState(
@@ -2210,9 +2265,10 @@ private fun VerificationErrorState(
     onRetry: () -> Unit,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 72.dp, start = 24.dp, end = 24.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(top = 72.dp, start = 24.dp, end = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         FreightEmptyState(
@@ -2247,22 +2303,25 @@ private data class LedgerEntry(
     val kind: ChangeKind,
 ) {
     fun displayBefore(): String = humanizeValue(before)
+
     fun displayAfter(): String = humanizeValue(after)
 }
 
-private fun TruckDetailChange.toLedgerEntry(): LedgerEntry = LedgerEntry(
-    field = displayFieldName.ifBlank { fieldName },
-    before = beforeValue,
-    after = afterValue,
-    kind = changeKind(beforeValue, afterValue),
-)
+private fun TruckDetailChange.toLedgerEntry(): LedgerEntry =
+    LedgerEntry(
+        field = displayFieldName.ifBlank { fieldName },
+        before = beforeValue,
+        after = afterValue,
+        kind = changeKind(beforeValue, afterValue),
+    )
 
-private fun BusinessProfileChange.toLedgerEntry(): LedgerEntry = LedgerEntry(
-    field = displayFieldName.ifBlank { fieldName },
-    before = beforeValue,
-    after = afterValue,
-    kind = changeKind(beforeValue, afterValue),
-)
+private fun BusinessProfileChange.toLedgerEntry(): LedgerEntry =
+    LedgerEntry(
+        field = displayFieldName.ifBlank { fieldName },
+        before = beforeValue,
+        after = afterValue,
+        kind = changeKind(beforeValue, afterValue),
+    )
 
 /** A snapshot that never had the key is "new", not "changed from N/A". */
 private fun normalized(value: String?): String? {
@@ -2272,7 +2331,10 @@ private fun normalized(value: String?): String? {
     }
 }
 
-private fun changeKind(before: String?, after: String?): ChangeKind {
+private fun changeKind(
+    before: String?,
+    after: String?,
+): ChangeKind {
     val b = normalized(before)
     val a = normalized(after)
     return when {
@@ -2289,8 +2351,7 @@ private fun changeKind(before: String?, after: String?): ChangeKind {
  * no prior record at all. That is what flips the sheet from "changes" to "new
  * details submitted" and what puts the NEW ONBOARDING marker on the card.
  */
-private fun List<LedgerEntry>.isOnboarding(): Boolean =
-    isNotEmpty() && all { it.kind == ChangeKind.NEW }
+private fun List<LedgerEntry>.isOnboarding(): Boolean = isNotEmpty() && all { it.kind == ChangeKind.NEW }
 
 private fun humanizeValue(value: String?): String {
     val trimmed = value?.trim().orEmpty()
@@ -2302,16 +2363,20 @@ private fun humanizeValue(value: String?): String {
     }
 }
 
-private fun buildMetaLine(fields: Int, documents: Int): String {
+private fun buildMetaLine(
+    fields: Int,
+    documents: Int,
+): String {
     val fieldPart = "$fields field${if (fields == 1) "" else "s"}"
     if (documents == 0) return fieldPart
     return "$fieldPart · $documents doc${if (documents == 1) "" else "s"}"
 }
 
-private val FIELD_ACRONYMS = setOf(
-    "id", "tds", "pan", "gst", "gstin", "rc", "fc", "lr", "pod", "dob",
-    "kyc", "ifsc", "upi", "emi", "doj", "hsn", "sac",
-)
+private val FIELD_ACRONYMS =
+    setOf(
+        "id", "tds", "pan", "gst", "gstin", "rc", "fc", "lr", "pod", "dob",
+        "kyc", "ifsc", "upi", "emi", "doj", "hsn", "sac",
+    )
 
 private fun formatFieldName(fieldName: String): String {
     return fieldName
@@ -2339,7 +2404,8 @@ private fun statusAccentColor(status: VerificationRequestStatus): Color {
         VerificationRequestStatus.PENDING -> ext.warning
         VerificationRequestStatus.IN_REVIEW -> ext.info
         VerificationRequestStatus.APPROVED,
-        VerificationRequestStatus.VERIFIED -> ext.success
+        VerificationRequestStatus.VERIFIED,
+        -> ext.success
         VerificationRequestStatus.REJECTED -> MaterialTheme.colorScheme.error
         VerificationRequestStatus.COMPLETED -> MaterialTheme.colorScheme.primary
     }
@@ -2353,7 +2419,8 @@ private fun statusStampColors(status: VerificationRequestStatus): Pair<Color, Co
         VerificationRequestStatus.PENDING -> ext.surfaceWarning to ext.onSurfaceWarning
         VerificationRequestStatus.IN_REVIEW -> ext.surfaceInfo to ext.onSurfaceInfo
         VerificationRequestStatus.APPROVED,
-        VerificationRequestStatus.VERIFIED -> ext.surfaceSuccess to ext.onSurfaceSuccess
+        VerificationRequestStatus.VERIFIED,
+        -> ext.surfaceSuccess to ext.onSurfaceSuccess
         VerificationRequestStatus.REJECTED -> scheme.errorContainer to scheme.onErrorContainer
         VerificationRequestStatus.COMPLETED -> scheme.primaryContainer to scheme.onPrimaryContainer
     }
@@ -2398,12 +2465,16 @@ private fun VerificationRequestLocation?.displayLabel(): String {
     return this?.displayText().orEmpty().ifBlank { "N/A" }
 }
 
-private val DOCUMENT_ACRONYMS = setOf(
-    "rc", "fc", "lr", "pod", "pan", "gst", "gstin", "kyc", "noc", "coi",
-    "tds", "emi", "ifsc", "upi", "aadhar", "aadhaar", "hsn", "sac",
-)
+private val DOCUMENT_ACRONYMS =
+    setOf(
+        "rc", "fc", "lr", "pod", "pan", "gst", "gstin", "kyc", "noc", "coi",
+        "tds", "emi", "ifsc", "upi", "aadhar", "aadhaar", "hsn", "sac",
+    )
 
-private fun displayDocumentName(name: String, shortform: Boolean): String {
+private fun displayDocumentName(
+    name: String,
+    shortform: Boolean,
+): String {
     val normalized = name.trim().lowercase(Locale.getDefault())
     return when (normalized) {
         "lr" -> if (shortform) "LR" else "Loading Receipt"
@@ -2412,21 +2483,22 @@ private fun displayDocumentName(name: String, shortform: Boolean): String {
             // The API hands back free-form keys ("rc card", "fc certificate",
             // "insurance"). Print them as real document names rather than
             // passing the raw lowercase key through to the reviewer.
-            val titled = normalized
-                .replace('_', ' ')
-                .replace('-', ' ')
-                .trim()
-                .split(Regex("\\s+"))
-                .filter { it.isNotBlank() }
-                .joinToString(" ") { word ->
-                    if (word in DOCUMENT_ACRONYMS) {
-                        word.uppercase(Locale.getDefault())
-                    } else {
-                        word.replaceFirstChar { c ->
-                            if (c.isLowerCase()) c.titlecase(Locale.getDefault()) else c.toString()
+            val titled =
+                normalized
+                    .replace('_', ' ')
+                    .replace('-', ' ')
+                    .trim()
+                    .split(Regex("\\s+"))
+                    .filter { it.isNotBlank() }
+                    .joinToString(" ") { word ->
+                        if (word in DOCUMENT_ACRONYMS) {
+                            word.uppercase(Locale.getDefault())
+                        } else {
+                            word.replaceFirstChar { c ->
+                                if (c.isLowerCase()) c.titlecase(Locale.getDefault()) else c.toString()
+                            }
                         }
                     }
-                }
             titled.ifBlank { "Document" }
         }
     }

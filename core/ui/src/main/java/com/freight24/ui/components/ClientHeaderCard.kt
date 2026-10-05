@@ -5,12 +5,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Business
@@ -27,7 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.freight24.ui.theme.FreightThemeTokens
 
 @Composable
@@ -43,13 +41,14 @@ fun ClientHeaderCard(
         shape = MaterialTheme.shapes.medium,
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            ),
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             ClientIcon(
                 fullName = fullName,
@@ -84,19 +83,19 @@ fun ClientHeaderCard(
                 if (showPhone && phone.isNotBlank()) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(top = 8.dp)
+                        modifier = Modifier.padding(top = 8.dp),
                     ) {
                         Icon(
                             imageVector = Icons.Default.Phone,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(14.dp)
+                            modifier = Modifier.size(14.dp),
                         )
                         Text(
                             text = phone,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(start = 4.dp)
+                            modifier = Modifier.padding(start = 4.dp),
                         )
                     }
                 }
@@ -160,10 +159,11 @@ fun ClientIcon(
         if (initials != null) {
             Text(
                 text = initials,
-                style = MaterialTheme.typography.labelLarge.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    color = palette.second,
-                ),
+                style =
+                    MaterialTheme.typography.labelLarge.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = palette.second,
+                    ),
             )
         } else {
             Icon(
@@ -179,15 +179,16 @@ fun ClientIcon(
 fun ClientStatusChip(status: String) {
     val isActive = status.equals("active", ignoreCase = true)
     val extended = FreightThemeTokens.colors
-    val (text, container, content) = if (isActive) {
-        Triple("Active", extended.surfaceSuccess, extended.onSurfaceSuccess)
-    } else {
-        Triple(
-            "Inactive",
-            MaterialTheme.colorScheme.surfaceContainerHigh,
-            MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
+    val (text, container, content) =
+        if (isActive) {
+            Triple("Active", extended.surfaceSuccess, extended.onSurfaceSuccess)
+        } else {
+            Triple(
+                "Inactive",
+                MaterialTheme.colorScheme.surfaceContainerHigh,
+                MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
 
     Surface(
         color = container,

@@ -8,10 +8,12 @@ interface FinalizeIdentityDocumentsUseCase {
     suspend operator fun invoke(request: FinalSaveRequest): Result<Boolean>
 }
 
-class FinalizeIdentityDocumentsUseCaseImpl @Inject constructor(
-    private val repository: ProfileRepository
-) : FinalizeIdentityDocumentsUseCase {
-    override suspend fun invoke(request: FinalSaveRequest): Result<Boolean> {
-        return repository.finalizeIdentityDocuments(request)
+class FinalizeIdentityDocumentsUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: ProfileRepository,
+    ) : FinalizeIdentityDocumentsUseCase {
+        override suspend fun invoke(request: FinalSaveRequest): Result<Boolean> {
+            return repository.finalizeIdentityDocuments(request)
+        }
     }
-}

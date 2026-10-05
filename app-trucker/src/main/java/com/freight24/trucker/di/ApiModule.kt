@@ -4,8 +4,8 @@ import com.freight24.network.RetrofitFactory
 import com.freight24.network.di.AuthenticatedNetwork
 import com.freight24.network.di.DefaultNetwork
 import com.freight24.rest.api.AuthSessionApi
-import com.freight24.rest.api.LocationApi
 import com.freight24.rest.api.IndentsApi
+import com.freight24.rest.api.LocationApi
 import com.freight24.rest.api.ProfileApi
 import com.freight24.rest.api.TripApi
 import com.freight24.rest.api.TruckApi

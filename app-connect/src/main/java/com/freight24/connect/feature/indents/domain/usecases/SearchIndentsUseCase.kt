@@ -15,18 +15,17 @@ data class SearchIndentsUseCaseParams(
 
 interface SearchIndentsUseCase : UseCase<SearchIndentsUseCaseParams, GetIndentsResponse>
 
-
-class SearchIndentsUseCaseImpl @Inject constructor(
-    private val repository: IndentRepository
-): SearchIndentsUseCase {
-
-    override suspend fun invoke(params: SearchIndentsUseCaseParams): Result<GetIndentsResponse> {
-        return repository.searchIndents(
-            params.query,
-            params.priority,
-            params.clientId,
-            params.assignedToMe
-        )
+class SearchIndentsUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: IndentRepository,
+    ) : SearchIndentsUseCase {
+        override suspend fun invoke(params: SearchIndentsUseCaseParams): Result<GetIndentsResponse> {
+            return repository.searchIndents(
+                params.query,
+                params.priority,
+                params.clientId,
+                params.assignedToMe,
+            )
+        }
     }
-
-}

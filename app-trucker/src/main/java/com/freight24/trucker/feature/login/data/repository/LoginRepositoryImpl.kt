@@ -1,7 +1,7 @@
 package com.freight24.trucker.feature.login.data.repository
 
-import com.freight24.common.di.IoDispatcher
 import com.freight24.auth.SessionManager
+import com.freight24.common.di.IoDispatcher
 import com.freight24.rest.api.TruckerLoginApi
 import com.freight24.rest.request.OtpRequest
 import com.freight24.rest.request.VerifyOtpRequest

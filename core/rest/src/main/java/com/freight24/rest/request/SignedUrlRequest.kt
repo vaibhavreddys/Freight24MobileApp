@@ -4,5 +4,5 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class SignedUrlRequest(
-    val s3Url: String
+    val s3Url: String,
 )

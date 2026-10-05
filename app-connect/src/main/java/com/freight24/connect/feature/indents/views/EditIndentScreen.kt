@@ -146,11 +146,12 @@ private fun ConfirmCorrectionDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val fields = when (changedCount) {
-        0 -> "No fields"
-        1 -> "One field"
-        else -> "$changedCount fields"
-    }
+    val fields =
+        when (changedCount) {
+            0 -> "No fields"
+            1 -> "One field"
+            else -> "$changedCount fields"
+        }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("File this correction?") },
@@ -224,15 +225,17 @@ private fun EditIndentContent(
                 Button(
                     onClick = onSubmitClick,
                     enabled = !uiState.isSubmitting && uiState.indent != null && uiState.hasChanges,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp)
-                        .docketTag("edit_indent_update_button"),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                            .docketTag("edit_indent_update_button"),
                     shape = MaterialTheme.shapes.large,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = scheme.primary,
-                        contentColor = scheme.onPrimary,
-                    ),
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor = scheme.primary,
+                            contentColor = scheme.onPrimary,
+                        ),
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
                 ) {
                     if (uiState.isSubmitting) {
@@ -265,21 +268,23 @@ private fun EditIndentContent(
         },
     ) { paddingValues ->
         when {
-            uiState.isLoading -> Box(
-                Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center,
-            ) {
-                CircularProgressIndicator(color = scheme.primary)
-            }
+            uiState.isLoading ->
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator(color = scheme.primary)
+                }
 
-            uiState.indent != null -> EditSlip(
-                uiState = uiState,
-                onEvent = onEvent,
-                onContactClick = { contactSheetRole = it },
-                paddingValues = paddingValues,
-            )
+            uiState.indent != null ->
+                EditSlip(
+                    uiState = uiState,
+                    onEvent = onEvent,
+                    onContactClick = { contactSheetRole = it },
+                    paddingValues = paddingValues,
+                )
         }
     }
 
@@ -309,14 +314,15 @@ private fun EditSlip(
     val callSheetChanged = uiState.contactsChanged
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            // Keyboard-aware viewport: without this the scroll bounds run behind the keyboard
-            // and bring-into-view leaves the focused field hidden. See FormInsets.kt.
-            .formViewportInsets(paddingValues)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp)
-            .padding(top = 8.dp, bottom = 8.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                // Keyboard-aware viewport: without this the scroll bounds run behind the keyboard
+                // and bring-into-view leaves the focused field hidden. See FormInsets.kt.
+                .formViewportInsets(paddingValues)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp)
+                .padding(top = 8.dp, bottom = 8.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         EditHead(
@@ -333,8 +339,9 @@ private fun EditSlip(
         ) {
             LedgerRow(
                 label = stringResource(R.string.client),
-                value = details.clientProfile?.companyName
-                    ?: details.clientProfile?.fullName,
+                value =
+                    details.clientProfile?.companyName
+                        ?: details.clientProfile?.fullName,
             )
             LedgerDivider()
             LedgerRow(
@@ -344,12 +351,13 @@ private fun EditSlip(
             LedgerDivider()
             LedgerRow(
                 label = stringResource(R.string.branch),
-                value = details.clientBranch?.let { branch ->
-                    listOfNotNull(
-                        branch.branchName?.takeIf { it.isNotBlank() },
-                        branch.branchCode?.takeIf { it.isNotBlank() },
-                    ).joinToString(" · ").takeIf { it.isNotBlank() }
-                },
+                value =
+                    details.clientBranch?.let { branch ->
+                        listOfNotNull(
+                            branch.branchName?.takeIf { it.isNotBlank() },
+                            branch.branchCode?.takeIf { it.isNotBlank() },
+                        ).joinToString(" · ").takeIf { it.isNotBlank() }
+                    },
             )
 
             Spacer(Modifier.height(14.dp))
@@ -380,9 +388,10 @@ private fun EditSlip(
 
             if (uiState.isLoadingContacts) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 18.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 18.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
                 ) {
@@ -407,18 +416,20 @@ private fun EditSlip(
                         // Placement cannot be cleared — the backend refuses a group
                         // save without it, so offering a clear would only build a
                         // request that cannot succeed. It can still be reassigned.
-                        onClear = if (role == IndentContactRole.PLACEMENT) {
-                            null
-                        } else {
-                            { onEvent(EditIndentEvent.SelectContact(role, null)) }
-                        },
+                        onClear =
+                            if (role == IndentContactRole.PLACEMENT) {
+                                null
+                            } else {
+                                { onEvent(EditIndentEvent.SelectContact(role, null)) }
+                            },
                         testTag = "edit_indent_contact_${role.wireKey}",
                         enabled = !uiState.contactsUnavailable,
-                        placeholder = if (uiState.contactsUnavailable) {
-                            "No contacts on file"
-                        } else {
-                            "Choose contact"
-                        },
+                        placeholder =
+                            if (uiState.contactsUnavailable) {
+                                "No contacts on file"
+                            } else {
+                                "Choose contact"
+                            },
                     )
                     if (index != IndentContactRole.entries.lastIndex) {
                         HorizontalDivider(
@@ -448,11 +459,13 @@ private fun EditSlip(
         ) {
             LaneReadout(
                 originLabel = stringResource(R.string.location_from),
-                originValue = loadingLocation?.areaName
-                    ?: loadingLocation?.cityName.orEmpty(),
+                originValue =
+                    loadingLocation?.areaName
+                        ?: loadingLocation?.cityName.orEmpty(),
                 destinationLabel = stringResource(R.string.location_to),
-                destinationValue = unloadingLocation?.areaName
-                    ?: unloadingLocation?.cityName.orEmpty(),
+                destinationValue =
+                    unloadingLocation?.areaName
+                        ?: unloadingLocation?.cityName.orEmpty(),
                 originTestTag = "edit_indent_from",
                 destinationTestTag = "edit_indent_to",
             )
@@ -467,12 +480,12 @@ private fun EditSlip(
         ) {
             LedgerRow(
                 label = stringResource(R.string.vehicle_type),
-                value = details.truckType?.displayName
+                value = details.truckType?.displayName,
             )
             LedgerDivider()
             LedgerRow(
                 label = stringResource(R.string.body_type),
-                value = details.truckType?.bodyType
+                value = details.truckType?.bodyType,
             )
         }
 
@@ -525,14 +538,16 @@ private fun EditSlip(
                 testTag = "edit_indent_negotiated_cost_field",
                 onCommit = { onEvent(EditIndentEvent.UpdateField(negotiatedCost = it)) },
                 trailingLabel = "INR",
-                isError = negotiatedCostExceedsClientError(
-                    uiState.negotiatedCost,
-                    uiState.clientCost,
-                ) != null,
-                supportingText = negotiatedCostExceedsClientError(
-                    uiState.negotiatedCost,
-                    uiState.clientCost,
-                ),
+                isError =
+                    negotiatedCostExceedsClientError(
+                        uiState.negotiatedCost,
+                        uiState.clientCost,
+                    ) != null,
+                supportingText =
+                    negotiatedCostExceedsClientError(
+                        uiState.negotiatedCost,
+                        uiState.clientCost,
+                    ),
             )
             Spacer(Modifier.height(14.dp))
             PerforationRule()
@@ -647,16 +662,18 @@ private fun EditHead(
             Spacer(Modifier.weight(1f))
             MetaTag(
                 text = if (changedCount == 0) "NO EDITS" else "$changedCount EDITED",
-                container = if (changedCount == 0) {
-                    scheme.surfaceContainerHighest
-                } else {
-                    scheme.primaryContainer
-                },
-                content = if (changedCount == 0) {
-                    scheme.onSurfaceVariant
-                } else {
-                    scheme.onPrimaryContainer
-                },
+                container =
+                    if (changedCount == 0) {
+                        scheme.surfaceContainerHighest
+                    } else {
+                        scheme.primaryContainer
+                    },
+                content =
+                    if (changedCount == 0) {
+                        scheme.onSurfaceVariant
+                    } else {
+                        scheme.onPrimaryContainer
+                    },
             )
         }
 
@@ -676,8 +693,9 @@ private fun EditHead(
         }
 
         Text(
-            text = "The lane, vehicle and cargo are fixed once an indent is raised. " +
-                "The call sheet, commercials and terms can be corrected here.",
+            text =
+                "The lane, vehicle and cargo are fixed once an indent is raised. " +
+                    "The call sheet, commercials and terms can be corrected here.",
             style = MaterialTheme.typography.bodySmall,
             color = scheme.onSurfaceVariant,
         )

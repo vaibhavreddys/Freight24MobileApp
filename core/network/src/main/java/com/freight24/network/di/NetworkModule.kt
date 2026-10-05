@@ -17,14 +17,14 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
-
     @Provides
     @Singleton
-    fun providesJson(): Json = Json {
-        ignoreUnknownKeys = true
-        isLenient = true
-        coerceInputValues = true
-    }
+    fun providesJson(): Json =
+        Json {
+            ignoreUnknownKeys = true
+            isLenient = true
+            coerceInputValues = true
+        }
 
     @Provides
     @DefaultNetwork
@@ -47,12 +47,12 @@ object NetworkModule {
     fun providesDefaultRetrofitFactory(
         @DefaultNetwork okHttpClient: OkHttpClient,
         config: NetworkConfig,
-        json: Json
+        json: Json,
     ): RetrofitFactory =
         DefaultRetrofitFactory(
             okHttpClient,
             config,
-            json
+            json,
         )
 
     @Provides
@@ -75,11 +75,11 @@ object NetworkModule {
     fun providesAuthenticatedRetrofitFactory(
         @AuthenticatedNetwork okHttpClient: OkHttpClient,
         config: NetworkConfig,
-        json: Json
+        json: Json,
     ): RetrofitFactory =
         DefaultRetrofitFactory(
             okHttpClient,
             config,
-            json
+            json,
         )
 }

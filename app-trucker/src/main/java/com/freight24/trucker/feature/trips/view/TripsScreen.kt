@@ -2,6 +2,7 @@ package com.freight24.trucker.feature.trips.view
 
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,7 +22,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.compose.foundation.layout.Arrangement
 import com.freight24.ui.components.TripCard
 import com.freight24.ui.trucker.FleetEmptyState
 import com.freight24.ui.trucker.FleetFilterEntry
@@ -112,10 +112,11 @@ fun TripsScreen(
                             trip = trip,
                             colors = colors,
                             onClick = { onTripClick(trip.id) },
-                            modifier = Modifier.animateItem(
-                                fadeInSpec = null,
-                                placementSpec = spring(dampingRatio = 0.8f, stiffness = 300f),
-                            ),
+                            modifier =
+                                Modifier.animateItem(
+                                    fadeInSpec = null,
+                                    placementSpec = spring(dampingRatio = 0.8f, stiffness = 300f),
+                                ),
                         )
                     }
                 }

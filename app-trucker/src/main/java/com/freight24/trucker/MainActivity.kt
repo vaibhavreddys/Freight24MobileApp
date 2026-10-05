@@ -5,16 +5,16 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.core.view.WindowCompat
 import androidx.compose.ui.Modifier
+import androidx.core.view.WindowCompat
 import androidx.navigation.compose.rememberNavController
 import com.freight24.auth.SessionManager
 import com.freight24.common.manager.ThemePreferenceManager
@@ -41,10 +41,13 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val themeChoiceOrdinal by themePreferenceManager.themeChoice.collectAsState(initial = ThemePreferenceManager.THEME_LOGISTICS)
-            val darkModeOverride by themePreferenceManager.darkModeOverride.collectAsState(initial = ThemePreferenceManager.DARK_MODE_FOLLOW_SYSTEM)
-            val appTheme = remember(themeChoiceOrdinal) {
-                FreightAppTheme.entries.getOrElse(themeChoiceOrdinal) { FreightAppTheme.INDIGO }
-            }
+            val darkModeOverride by themePreferenceManager.darkModeOverride.collectAsState(
+                initial = ThemePreferenceManager.DARK_MODE_FOLLOW_SYSTEM,
+            )
+            val appTheme =
+                remember(themeChoiceOrdinal) {
+                    FreightAppTheme.entries.getOrElse(themeChoiceOrdinal) { FreightAppTheme.INDIGO }
+                }
 
             Freight24Theme(
                 appTheme = appTheme,
@@ -67,8 +70,9 @@ class MainActivity : ComponentActivity() {
                     // Hold the splash until the one-shot choreography has
                     // landed (F24 in → unfurl → road ≈ 1.3s), even when
                     // bootstrap finishes instantly on a cached session.
-                    val remaining = SPLASH_MIN_DISPLAY_MS -
-                        (android.os.SystemClock.uptimeMillis() - bootstrapStarted)
+                    val remaining =
+                        SPLASH_MIN_DISPLAY_MS -
+                            (android.os.SystemClock.uptimeMillis() - bootstrapStarted)
                     if (remaining > 0) delay(remaining)
                     isBootstrapped = true
                 }

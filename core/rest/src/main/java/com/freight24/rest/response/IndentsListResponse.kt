@@ -5,5 +5,5 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class IndentsListResponse(
-    val data: List<Indent>
-): BaseResponse()
+    val data: List<Indent>,
+) : BaseResponse()

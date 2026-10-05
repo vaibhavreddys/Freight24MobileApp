@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 data class TruckOwnerResponse(
     val success: Boolean,
     val message: String? = null,
-    val data: List<TruckOwnerDto> = emptyList()
+    val data: List<TruckOwnerDto> = emptyList(),
 )
 
 @Serializable
@@ -17,5 +17,5 @@ data class TruckOwnerDto(
     val phone: String,
     val business_name: String? = null,
     val status: String? = null,
-    val tag_code: String? = null
+    val tag_code: String? = null,
 )

@@ -1,11 +1,10 @@
 package com.freight24.connect.feature.trucks.views.details
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import android.content.Context
-import kotlinx.coroutines.flow.asSharedFlow
-import android.net.Uri
 import com.freight24.common.model.TruckDetail
 import com.freight24.common.model.TruckDocument
 import com.freight24.connect.feature.trucks.domain.usecases.GetTruckByIdUseCase
@@ -17,6 +16,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -88,7 +88,11 @@ internal class TruckDetailsViewModel
             fetchTruckDetail(forceRefresh = true)
         }
 
-        fun onFilesPicked(uris: List<Uri>, pdf: Boolean, documentType: String) {
+        fun onFilesPicked(
+            uris: List<Uri>,
+            pdf: Boolean,
+            documentType: String,
+        ) {
             _errorEvent.tryEmit("Uploading documents not supported here")
         }
 
@@ -102,7 +106,10 @@ internal class TruckDetailsViewModel
             // Not supported
         }
 
-        fun fetchSignedUrl(documentType: String, onUrlReady: (String) -> Unit) {
+        fun fetchSignedUrl(
+            documentType: String,
+            onUrlReady: (String) -> Unit,
+        ) {
             viewModelScope.launch {
                 getTruckDocumentSignedUrlUseCase(
                     GetTruckDocumentSignedUrlParams(truckId, documentType),
@@ -114,23 +121,25 @@ internal class TruckDetailsViewModel
         }
     }
 
-private fun com.freight24.rest.response.TruckDetailDto.toDomain() = TruckDetail(
-    truckId = this.truckId,
-    registrationNumber = this.registrationNumber,
-    isVerified = this.isVerified,
-    truckType = this.truckType,
-    bodyType = this.bodyType,
-    displayName = this.displayName,
-    make = this.make,
-    model = this.model,
-    year = this.year,
-    rcCard = this.rcCard?.toDomain(),
-    fcCertificate = this.fcCertificate?.toDomain(),
-    insurance = this.insurance?.toDomain(),
-    isBlacklisted = this.isBlacklisted
-)
+private fun com.freight24.rest.response.TruckDetailDto.toDomain() =
+    TruckDetail(
+        truckId = this.truckId,
+        registrationNumber = this.registrationNumber,
+        isVerified = this.isVerified,
+        truckType = this.truckType,
+        bodyType = this.bodyType,
+        displayName = this.displayName,
+        make = this.make,
+        model = this.model,
+        year = this.year,
+        rcCard = this.rcCard?.toDomain(),
+        fcCertificate = this.fcCertificate?.toDomain(),
+        insurance = this.insurance?.toDomain(),
+        isBlacklisted = this.isBlacklisted,
+    )
 
-private fun com.freight24.rest.response.DocumentDto.toDomain() = TruckDocument(
-    url = this.url,
-    status = this.status
-)
+private fun com.freight24.rest.response.DocumentDto.toDomain() =
+    TruckDocument(
+        url = this.url,
+        status = this.status,
+    )

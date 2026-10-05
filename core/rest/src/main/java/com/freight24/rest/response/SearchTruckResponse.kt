@@ -4,11 +4,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class SearchTruckResponse(
-     val data: List<Truck>
+    val data: List<Truck>,
 ) : BaseResponse() {
-
     @Serializable
-    data class Truck (
+    data class Truck(
         val truckId: String,
         val registrationNumber: String,
         val truckType: String,
@@ -19,19 +18,19 @@ data class SearchTruckResponse(
         val isBlacklisted: Boolean,
         val owner: TruckOwner,
         val availability: String,
-        val activeTrip: ActiveTrip?
+        val activeTrip: ActiveTrip?,
     )
 
     @Serializable
     data class TruckOwner(
         val name: String,
         val phone: String,
-        val tagCode: String
+        val tagCode: String,
     )
 
     @Serializable
     data class ActiveTrip(
         val tripId: String,
-        val truckerStatus: String
+        val truckerStatus: String,
     )
 }

@@ -7,15 +7,17 @@ import javax.inject.Inject
 
 data class GetSignedDocumentParams(
     val tripId: String,
-    val documentId: String
+    val documentId: String,
 ) : UseCaseParams
 
 internal interface GetSignedDocumentUseCase : UseCase<GetSignedDocumentParams, String>
 
-internal class GetSignedDocumentUseCaseImpl @Inject constructor(
-    private val repository: TripRepository
-) : GetSignedDocumentUseCase {
-    override suspend fun invoke(params: GetSignedDocumentParams): Result<String> {
-        return repository.getSignedDocument(params.tripId, params.documentId)
+internal class GetSignedDocumentUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: TripRepository,
+    ) : GetSignedDocumentUseCase {
+        override suspend fun invoke(params: GetSignedDocumentParams): Result<String> {
+            return repository.getSignedDocument(params.tripId, params.documentId)
+        }
     }
-}

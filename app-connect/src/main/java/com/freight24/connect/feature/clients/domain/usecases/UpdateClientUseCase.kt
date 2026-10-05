@@ -14,13 +14,15 @@ interface UpdateClientUseCase {
     suspend operator fun invoke(params: UpdateClientParams): Result<ClientProfileDto>
 }
 
-class UpdateClientUseCaseImpl @Inject constructor(
-    private val repository: ClientRepository,
-) : UpdateClientUseCase {
-    override suspend fun invoke(params: UpdateClientParams): Result<ClientProfileDto> {
-        return repository.updateClient(
-            userId = params.userId,
-            request = params.request,
-        )
+class UpdateClientUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: ClientRepository,
+    ) : UpdateClientUseCase {
+        override suspend fun invoke(params: UpdateClientParams): Result<ClientProfileDto> {
+            return repository.updateClient(
+                userId = params.userId,
+                request = params.request,
+            )
+        }
     }
-}

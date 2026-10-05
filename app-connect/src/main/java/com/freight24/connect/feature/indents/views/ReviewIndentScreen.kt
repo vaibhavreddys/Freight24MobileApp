@@ -42,7 +42,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.freight24.connect.feature.indents.domain.viewmodel.CreateIndentEvent
-import com.freight24.connect.feature.indents.domain.viewmodel.CreateIndentUiState
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsViewModel
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsViewModelImpl
 import com.freight24.connect.navigation.ConnectDestination
@@ -68,12 +67,14 @@ fun ReviewIndentScreen(
     navController: NavController,
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val createIndentBackStackEntry = remember(navBackStackEntry) {
-        navController.getBackStackEntry(ConnectDestination.CreateIndent.route)
-    }
-    val viewModel: IndentsViewModel = hiltViewModel<IndentsViewModelImpl>(
-        createIndentBackStackEntry,
-    )
+    val createIndentBackStackEntry =
+        remember(navBackStackEntry) {
+            navController.getBackStackEntry(ConnectDestination.CreateIndent.route)
+        }
+    val viewModel: IndentsViewModel =
+        hiltViewModel<IndentsViewModelImpl>(
+            createIndentBackStackEntry,
+        )
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -130,23 +131,26 @@ fun ReviewIndentScreen(
             ) {
                 Button(
                     onClick = { viewModel.onEvent(CreateIndentEvent.SubmitIndent) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp)
-                        .docketTag("review_indent_confirm_button"),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                            .docketTag("review_indent_confirm_button"),
                     shape = MaterialTheme.shapes.large,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                    ),
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                        ),
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
                     enabled = !uiState.isSubmitting,
                 ) {
                     if (uiState.isSubmitting) {
                         CircularProgressIndicator(
-                            modifier = Modifier
-                                .size(18.dp)
-                                .padding(end = 0.dp),
+                            modifier =
+                                Modifier
+                                    .size(18.dp)
+                                    .padding(end = 0.dp),
                             color = MaterialTheme.colorScheme.onPrimary,
                             strokeWidth = 2.dp,
                         )
@@ -169,12 +173,13 @@ fun ReviewIndentScreen(
         },
     ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp)
-                .padding(top = 8.dp, bottom = 8.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 8.dp, bottom = 8.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             ReviewHead()
@@ -187,12 +192,13 @@ fun ReviewIndentScreen(
             ) {
                 LedgerRow(
                     label = "Client",
-                    value = uiState.selectedClient?.let { client ->
-                        listOfNotNull(
-                            client.companyName.takeIf { it.isNotBlank() },
-                            client.tagCode.takeIf { it.isNotBlank() },
-                        ).joinToString(" · ")
-                    },
+                    value =
+                        uiState.selectedClient?.let { client ->
+                            listOfNotNull(
+                                client.companyName.takeIf { it.isNotBlank() },
+                                client.tagCode.takeIf { it.isNotBlank() },
+                            ).joinToString(" · ")
+                        },
                 )
                 LedgerDivider()
                 LedgerRow(
@@ -202,12 +208,13 @@ fun ReviewIndentScreen(
                 LedgerDivider()
                 LedgerRow(
                     label = "Branch",
-                    value = uiState.selectedBranch?.let { branch ->
-                        listOfNotNull(
-                            branch.branchName?.takeIf { it.isNotBlank() },
-                            branch.branchCode?.takeIf { it.isNotBlank() },
-                        ).joinToString(" · ")
-                    },
+                    value =
+                        uiState.selectedBranch?.let { branch ->
+                            listOfNotNull(
+                                branch.branchName?.takeIf { it.isNotBlank() },
+                                branch.branchCode?.takeIf { it.isNotBlank() },
+                            ).joinToString(" · ")
+                        },
                 )
                 Spacer(Modifier.height(14.dp))
                 PerforationRule()
@@ -289,8 +296,9 @@ fun ReviewIndentScreen(
                     )
                     LedgerRow(
                         label = "Proposed cost",
-                        value = uiState.businessProposedCost.takeIf { it.isNotBlank() }
-                            ?.let { "₹$it" },
+                        value =
+                            uiState.businessProposedCost.takeIf { it.isNotBlank() }
+                                ?.let { "₹$it" },
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -314,11 +322,12 @@ fun ReviewIndentScreen(
             ) {
                 LedgerRow(
                     label = "Turnaround time",
-                    value = if (uiState.tatRequired) {
-                        "${uiState.tatHours.ifBlank { "0" }} hours"
-                    } else {
-                        "Not committed"
-                    },
+                    value =
+                        if (uiState.tatRequired) {
+                            "${uiState.tatHours.ifBlank { "0" }} hours"
+                        } else {
+                            "Not committed"
+                        },
                 )
                 LedgerDivider()
                 LedgerRow(
@@ -376,8 +385,9 @@ private fun ReviewHead() {
             color = scheme.onSurface,
         )
         Text(
-            text = "Check the lane and the rates. Once raised, this goes to the load board " +
-                "and truck owners start expressing interest.",
+            text =
+                "Check the lane and the rates. Once raised, this goes to the load board " +
+                    "and truck owners start expressing interest.",
             style = MaterialTheme.typography.bodySmall,
             color = scheme.onSurfaceVariant,
         )

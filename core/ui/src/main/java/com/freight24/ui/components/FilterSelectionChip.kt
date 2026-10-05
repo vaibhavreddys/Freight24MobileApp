@@ -10,9 +10,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,25 +32,28 @@ fun FilterSelectionChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     leadingIcon: ImageVector? = null,
-    count: Int? = null
+    count: Int? = null,
 ) {
-    val backgroundColor = if (isSelected) {
-        MaterialTheme.colorScheme.primary
-    } else {
-        MaterialTheme.colorScheme.surface
-    }
+    val backgroundColor =
+        if (isSelected) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            MaterialTheme.colorScheme.surface
+        }
 
-    val textColor = if (isSelected) {
-        MaterialTheme.colorScheme.onPrimary
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
-    }
+    val textColor =
+        if (isSelected) {
+            MaterialTheme.colorScheme.onPrimary
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        }
 
-    val borderColor = if (isSelected) {
-        Color.Transparent
-    } else {
-        MaterialTheme.colorScheme.outlineVariant
-    }
+    val borderColor =
+        if (isSelected) {
+            Color.Transparent
+        } else {
+            MaterialTheme.colorScheme.outlineVariant
+        }
 
     Surface(
         modifier = modifier.minimumInteractiveComponentSize().clickable { onClick() },
@@ -60,14 +63,14 @@ fun FilterSelectionChip(
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             if (leadingIcon != null) {
                 Icon(
                     imageVector = leadingIcon,
                     contentDescription = null,
                     modifier = Modifier.size(16.dp),
-                    tint = textColor
+                    tint = textColor,
                 )
                 Spacer(Modifier.width(8.dp))
             }
@@ -77,31 +80,32 @@ fun FilterSelectionChip(
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                 color = textColor,
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 0.dp)
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 0.dp),
             )
 
             if (count != null && count > 0) {
-
                 Spacer(Modifier.width(8.dp))
 
                 Surface(
-                    color = if (isSelected) {
-                        MaterialTheme.colorScheme.surface
-                    } else {
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                    },
+                    color =
+                        if (isSelected) {
+                            MaterialTheme.colorScheme.surface
+                        } else {
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                        },
                     shape = RoundedCornerShape(50),
                 ) {
                     Text(
                         text = count.toString(),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        color = if (isSelected) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.primary
-                        },
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        color =
+                            if (isSelected) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.primary
+                            },
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                     )
                 }
             }

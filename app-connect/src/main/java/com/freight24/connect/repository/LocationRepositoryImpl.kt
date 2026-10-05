@@ -35,7 +35,10 @@ class LocationRepositoryImpl
                 }
             }
 
-        override suspend fun searchCities(query: String, type: String?): Result<List<CityResult>> =
+        override suspend fun searchCities(
+            query: String,
+            type: String?,
+        ): Result<List<CityResult>> =
             withContext(ioDispatcher) {
                 try {
                     val response = api.searchCities(query, type)

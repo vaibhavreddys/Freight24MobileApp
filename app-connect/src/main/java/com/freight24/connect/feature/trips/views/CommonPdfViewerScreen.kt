@@ -1,6 +1,4 @@
 package com.freight24.connect.feature.trips.views
-import com.freight24.ui.components.FreightTopAppBar
-
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,21 +11,19 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil3.Uri
 import com.freight24.connect.feature.trips.domain.viewmodel.CommonPdfViewModel
+import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.components.PdfRendererView
 import com.rajat.pdfviewer.util.PdfSource
-import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CommonPdfViewerScreen(
     onBackClick: () -> Unit,
-    viewModel: CommonPdfViewModel = hiltViewModel()
+    viewModel: CommonPdfViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val colorScheme = MaterialTheme.colorScheme
@@ -43,13 +39,14 @@ fun CommonPdfViewerScreen(
                 },
             )
         },
-        containerColor = colorScheme.background
+        containerColor = colorScheme.background,
     ) { padding ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentAlignment = Alignment.Center
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+            contentAlignment = Alignment.Center,
         ) {
             when {
                 uiState.isLoading -> {

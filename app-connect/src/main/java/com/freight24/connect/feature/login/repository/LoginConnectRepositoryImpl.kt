@@ -1,8 +1,8 @@
 package com.freight24.connect.feature.login.repository
 
 import android.util.Log
-import com.freight24.common.di.IoDispatcher
 import com.freight24.auth.SessionManager
+import com.freight24.common.di.IoDispatcher
 import com.freight24.connect.feature.login.domain.model.AuthInfo
 import com.freight24.rest.api.LoginConnectApi
 import com.freight24.rest.request.OtpRequest

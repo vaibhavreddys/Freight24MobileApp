@@ -110,9 +110,10 @@ fun LoadBoardScreen(
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
     ) {
         PullToRefreshBox(
             isRefreshing = isRefreshing,
@@ -122,20 +123,22 @@ fun LoadBoardScreen(
             LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(
-                    top = 16.dp,
-                    start = 16.dp,
-                    end = 16.dp,
-                    bottom = 24.dp,
-                ),
+                contentPadding =
+                    PaddingValues(
+                        top = 16.dp,
+                        start = 16.dp,
+                        end = 16.dp,
+                        bottom = 24.dp,
+                    ),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 if (items.isEmpty()) {
                     item(key = "empty") {
                         Box(
-                            modifier = Modifier
-                                .fillParentMaxSize()
-                                .semantics(mergeDescendants = true) { contentDescription = "loads_empty_state" },
+                            modifier =
+                                Modifier
+                                    .fillParentMaxSize()
+                                    .semantics(mergeDescendants = true) { contentDescription = "loads_empty_state" },
                             contentAlignment = Alignment.Center,
                         ) {
                             if (isInitialLoading) {
@@ -168,9 +171,10 @@ fun LoadBoardScreen(
                                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
                             ) {
                                 Box(
-                                    modifier = Modifier
-                                        .size(8.dp)
-                                        .background(color = extended.success, shape = CircleShape),
+                                    modifier =
+                                        Modifier
+                                            .size(8.dp)
+                                            .background(color = extended.success, shape = CircleShape),
                                 )
                                 Spacer(Modifier.width(10.dp))
                                 Column(modifier = Modifier.weight(1f)) {
@@ -212,32 +216,33 @@ fun LoadBoardScreen(
                                     listingCount = item.totalLoads,
                                     expanded = item.expanded,
                                     onClick = { viewModel.onCityClicked(item.cityId) },
-                                    modifier = Modifier
-                                        // No placement animation on the city
-                                        // card itself: the previous-expanded
-                                        // card kept its body rendered under
-                                        // the new expanded card for the
-                                        // duration of the tween, and the
-                                        // tween left a "ghost" header from
-                                        // the next city stacked under the
-                                        // collapsed previous one. Letting
-                                        // the LazyColumn re-layout the
-                                        // header instantly removes the
-                                        // artefact.
-                                        //
-                                        // mergeDescendants is set on the
-                                        // inner Card by CityCard so the
-                                        // whole row is one tap target; no
-                                        // extra contentDescription is added
-                                        // here because cityId is encoded in
-                                        // the child Text content and a
-                                        // duplicate semantics node was being
-                                        // emitted during the collapse /
-                                        // expand transition.
-                                        .testTag("city_card")
-                                        .semantics {
-                                            testTagsAsResourceId = true
-                                        },
+                                    modifier =
+                                        Modifier
+                                            // No placement animation on the city
+                                            // card itself: the previous-expanded
+                                            // card kept its body rendered under
+                                            // the new expanded card for the
+                                            // duration of the tween, and the
+                                            // tween left a "ghost" header from
+                                            // the next city stacked under the
+                                            // collapsed previous one. Letting
+                                            // the LazyColumn re-layout the
+                                            // header instantly removes the
+                                            // artefact.
+                                            //
+                                            // mergeDescendants is set on the
+                                            // inner Card by CityCard so the
+                                            // whole row is one tap target; no
+                                            // extra contentDescription is added
+                                            // here because cityId is encoded in
+                                            // the child Text content and a
+                                            // duplicate semantics node was being
+                                            // emitted during the collapse /
+                                            // expand transition.
+                                            .testTag("city_card")
+                                            .semantics {
+                                                testTagsAsResourceId = true
+                                            },
                                 )
 
                             is LoadBoardItem.LoadItem ->
@@ -252,29 +257,30 @@ fun LoadBoardScreen(
                                     f24AgentName = item.load.f24AgentName,
                                     isBookmarked = item.load.isInterested,
                                     isBookmarkLoading = item.load.isInterestLoading,
-                                    modifier = Modifier
-                                        // No animateItem on the load rows:
-                                        // when a previous expanded city
-                                        // collapses and a new one expands in
-                                        // the same frame, animateItem kept
-                                        // the disappearing rows rendered
-                                        // under the new header for the
-                                        // duration of the tween — visible as
-                                        // a "ghost" of the previous city's
-                                        // loads. Without animateItem the
-                                        // LazyColumn settles to the new
-                                        // layout immediately.
-                                        //
-                                        // mergeDescendants / contentDescription
-                                        // removed here for the same reason as
-                                        // the city card above: a
-                                        // mergeDescendants wrapper was leaving
-                                        // a stale semantic node across the
-                                        // collapse/expand transition.
-                                        .testTag("load_card")
-                                        .semantics {
-                                            testTagsAsResourceId = true
-                                        },
+                                    modifier =
+                                        Modifier
+                                            // No animateItem on the load rows:
+                                            // when a previous expanded city
+                                            // collapses and a new one expands in
+                                            // the same frame, animateItem kept
+                                            // the disappearing rows rendered
+                                            // under the new header for the
+                                            // duration of the tween — visible as
+                                            // a "ghost" of the previous city's
+                                            // loads. Without animateItem the
+                                            // LazyColumn settles to the new
+                                            // layout immediately.
+                                            //
+                                            // mergeDescendants / contentDescription
+                                            // removed here for the same reason as
+                                            // the city card above: a
+                                            // mergeDescendants wrapper was leaving
+                                            // a stale semantic node across the
+                                            // collapse/expand transition.
+                                            .testTag("load_card")
+                                            .semantics {
+                                                testTagsAsResourceId = true
+                                            },
                                     onClick = {
                                         viewModel.onLoadCardClicked(
                                             indentId = item.load.id,
@@ -296,10 +302,11 @@ fun LoadBoardScreen(
                             is LoadBoardItem.ShowMoreItem -> {
                                 TextButton(
                                     onClick = { viewModel.onShowMoreClicked(item.cityId) },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .testTag("show_more_btn")
-                                        .semantics { testTagsAsResourceId = true },
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .testTag("show_more_btn")
+                                            .semantics { testTagsAsResourceId = true },
                                 ) {
                                     Text(
                                         text = "Show more (${item.loadedCount} of ${item.totalCount})",
@@ -316,9 +323,10 @@ fun LoadBoardScreen(
 
         SnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth(),
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth(),
         )
     }
 

@@ -81,13 +81,15 @@ fun LoadCard(
     // inset action well. All roles resolve through colorScheme — no hex.
     val extended = FreightThemeTokens.colors
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clickable { onClick() },
         shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            ),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
@@ -119,12 +121,13 @@ fun LoadCard(
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             ) {
                                 Box(
-                                    modifier = Modifier
-                                        .size(6.dp)
-                                        .background(
-                                            color = extended.success,
-                                            shape = CircleShape,
-                                        ),
+                                    modifier =
+                                        Modifier
+                                            .size(6.dp)
+                                            .background(
+                                                color = extended.success,
+                                                shape = CircleShape,
+                                            ),
                                 )
                                 Spacer(Modifier.width(6.dp))
                                 Text(
@@ -209,26 +212,29 @@ fun LoadCard(
                 Surface(
                     color = MaterialTheme.colorScheme.surfaceContainerLowest,
                     shape = MaterialTheme.shapes.medium,
-                    border = BorderStroke(
-                        1.dp,
-                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-                    ),
+                    border =
+                        BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                        ),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .padding(horizontal = 12.dp, vertical = 8.dp)
-                            .fillMaxWidth(),
+                        modifier =
+                            Modifier
+                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                                .fillMaxWidth(),
                     ) {
                         Box(
                             contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .size(36.dp)
-                                .background(
-                                    color = MaterialTheme.colorScheme.primaryContainer,
-                                    shape = CircleShape,
-                                ),
+                            modifier =
+                                Modifier
+                                    .size(36.dp)
+                                    .background(
+                                        color = MaterialTheme.colorScheme.primaryContainer,
+                                        shape = CircleShape,
+                                    ),
                         ) {
                             Text(
                                 text = f24AgentName.trim().firstOrNull()?.uppercase() ?: "–",
@@ -252,9 +258,10 @@ fun LoadCard(
                             contentDescription = "Mark as interested",
                             highlighted = isBookmarked,
                             enabled = !isBookmarkLoading,
-                            modifier = Modifier
-                                .testTag("load_bookmark_btn")
-                                .semantics { testTagsAsResourceId = true },
+                            modifier =
+                                Modifier
+                                    .testTag("load_bookmark_btn")
+                                    .semantics { testTagsAsResourceId = true },
                             onClick = {
                                 // Only show tooltip when bookmarking (not unbookmarking)
                                 if (!isBookmarked) {
@@ -269,9 +276,10 @@ fun LoadCard(
                         PrimaryCallButton(
                             label = "Call",
                             contentDescription = "Call $f24AgentName",
-                            modifier = Modifier
-                                .testTag("load_call_btn")
-                                .semantics { testTagsAsResourceId = true },
+                            modifier =
+                                Modifier
+                                    .testTag("load_call_btn")
+                                    .semantics { testTagsAsResourceId = true },
                             onClick = onCallClick,
                         )
                     }
@@ -280,10 +288,11 @@ fun LoadCard(
             // Floating tooltip overlay
             BookmarkThankYouTooltip(
                 visible = showThankYouTooltip,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .offset(x = (-20).dp, y = (-70).dp)
-                    .pointerInput(Unit) {}
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomEnd)
+                        .offset(x = (-20).dp, y = (-70).dp)
+                        .pointerInput(Unit) {},
             )
         }
     }
@@ -292,12 +301,13 @@ fun LoadCard(
 @Composable
 private fun MetaDot() {
     Box(
-        modifier = Modifier
-            .size(4.dp)
-            .background(
-                color = MaterialTheme.colorScheme.outline,
-                shape = CircleShape,
-            ),
+        modifier =
+            Modifier
+                .size(4.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.outline,
+                    shape = CircleShape,
+                ),
     )
 }
 
@@ -305,9 +315,10 @@ fun formatCurrency(amount: String?): String {
     if (amount.isNullOrBlank() || amount == "null") return "₹0"
     return try {
         // Clean the string: remove common currency prefixes and separators
-        val cleaned = amount.replace("Rs.", "", ignoreCase = true)
-            .replace("Rs", "", ignoreCase = true)
-            .replace("[₹,\\s]".toRegex(), "")
+        val cleaned =
+            amount.replace("Rs.", "", ignoreCase = true)
+                .replace("Rs", "", ignoreCase = true)
+                .replace("[₹,\\s]".toRegex(), "")
 
         // Extract the numeric part (digits and at most one decimal point)
         val numericRegex = Regex("[0-9]+(?:\\.[0-9]+)?")
@@ -326,4 +337,3 @@ fun formatCurrency(amount: String?): String {
         "₹0"
     }
 }
-

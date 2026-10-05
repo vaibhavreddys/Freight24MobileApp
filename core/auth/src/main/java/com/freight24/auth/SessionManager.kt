@@ -9,15 +9,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -92,10 +92,11 @@ class SessionManager
          * session seeded from either source gates identically.
          */
         fun isFleetExecutive(): Boolean {
-            val candidates = buildList {
-                getActiveRole()?.let { add(it) }
-                addAll(getRoles())
-            }
+            val candidates =
+                buildList {
+                    getActiveRole()?.let { add(it) }
+                    addAll(getRoles())
+                }
             return candidates.any { role ->
                 val normalized = role.trim().lowercase()
                 normalized == FLEET_EXECUTIVE_ROLE || normalized == FLEET_EXEC_ROLE

@@ -63,9 +63,10 @@ fun FileConfirmationSheet(
     if (selectedUris.isEmpty()) return
 
     val context = LocalContext.current
-    val firstFileMeta = remember(selectedUris) {
-        selectedUris.firstOrNull()?.let { uri -> resolveFileMeta(context, uri) }
-    }
+    val firstFileMeta =
+        remember(selectedUris) {
+            selectedUris.firstOrNull()?.let { uri -> resolveFileMeta(context, uri) }
+        }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -197,7 +198,10 @@ fun FileConfirmationSheet(
     }
 }
 
-private fun resolveFileMeta(context: Context, uri: Uri): FileMeta {
+private fun resolveFileMeta(
+    context: Context,
+    uri: Uri,
+): FileMeta {
     var name: String? = null
     var size: Long? = null
 

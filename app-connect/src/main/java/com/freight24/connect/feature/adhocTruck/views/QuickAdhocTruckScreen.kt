@@ -1,11 +1,7 @@
 package com.freight24.connect.feature.adhocTruck.views
-import com.freight24.ui.components.FreightTopAppBar
-
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -15,16 +11,13 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.freight24.connect.feature.adhocTruck.domain.viewmodel.QuickAdhocTruckEvent
 import com.freight24.connect.feature.adhocTruck.domain.viewmodel.QuickAdhocTruckViewModel
@@ -32,6 +25,7 @@ import com.freight24.connect.feature.adhocTruck.domain.viewmodel.QuickAdhocTruck
 import com.freight24.rest.response.LocationDto
 import com.freight24.rest.response.TruckTypeDto
 import com.freight24.ui.components.FilterSelectionChip
+import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.components.formViewportInsets
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -46,9 +40,10 @@ fun QuickAdhocTruckScreen(
 
     if (uiState.submitSuccess) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(32.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
@@ -96,13 +91,14 @@ fun QuickAdhocTruckScreen(
         },
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                // Keyboard-aware viewport: without this the scroll bounds run behind the
-                // keyboard and bring-into-view leaves the focused field hidden. See FormInsets.kt.
-                .formViewportInsets(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    // Keyboard-aware viewport: without this the scroll bounds run behind the
+                    // keyboard and bring-into-view leaves the focused field hidden. See FormInsets.kt.
+                    .formViewportInsets(padding)
+                    .verticalScroll(rememberScrollState())
+                    .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             // 1. Phone Number with live search
@@ -117,10 +113,11 @@ fun QuickAdhocTruckScreen(
 
             // 2. Truck Owner Name (always visible, disabled when matched)
             OutlinedTextField(
-                colors = OutlinedTextFieldDefaults.colors(
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                ),
+                colors =
+                    OutlinedTextFieldDefaults.colors(
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    ),
                 value = uiState.ownerName,
                 onValueChange = {
                     if (uiState.selectedOwner == null) {
@@ -159,9 +156,10 @@ fun QuickAdhocTruckScreen(
             // 5. Submit
             Button(
                 onClick = { viewModel.onEvent(QuickAdhocTruckEvent.Submit) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
                 shape = MaterialTheme.shapes.medium,
                 enabled = !uiState.isSubmitting,
             ) {
@@ -210,10 +208,11 @@ fun PhoneSearchSection(
 
     Column {
         OutlinedTextField(
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-            ),
+            colors =
+                OutlinedTextFieldDefaults.colors(
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                ),
             value = phoneNumber,
             onValueChange = { if (it.all { c -> c.isDigit() || c == '+' }) onPhoneChanged(it) },
             label = { Text("Phone Number") },
@@ -227,24 +226,29 @@ fun PhoneSearchSection(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             singleLine = true,
-            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Phone),
+            keyboardOptions =
+                androidx.compose.foundation.text.KeyboardOptions(
+                    keyboardType = androidx.compose.ui.text.input.KeyboardType.Phone,
+                ),
         )
 
         if (matchedOwners.isNotEmpty()) {
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
                 shape = MaterialTheme.shapes.medium,
                 border = BorderStroke(1.dp, colorScheme.outlineVariant),
             ) {
                 Column {
                     matchedOwners.forEach { owner ->
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onSelectOwner(owner) }
-                                .padding(12.dp),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onSelectOwner(owner) }
+                                    .padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Icon(
@@ -282,9 +286,10 @@ fun PhoneSearchSection(
 
         if (selectedOwner != null) {
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
                 shape = MaterialTheme.shapes.medium,
                 colors = CardDefaults.cardColors(containerColor = colorScheme.primaryContainer),
             ) {
@@ -328,7 +333,7 @@ fun TruckTypeSection(
             "Truck Type",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -400,10 +405,11 @@ fun LocationSearchSection(
 
     Column {
         OutlinedTextField(
-            colors = OutlinedTextFieldDefaults.colors(
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-            ),
+            colors =
+                OutlinedTextFieldDefaults.colors(
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                ),
             value = selectedLocation?.name ?: query,
             onValueChange = onQueryChanged,
             label = { Text("Truck Available Location") },
@@ -421,19 +427,21 @@ fun LocationSearchSection(
 
         if (results.isNotEmpty() && selectedLocation == null) {
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 4.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
                 shape = MaterialTheme.shapes.medium,
                 border = BorderStroke(1.dp, colorScheme.outlineVariant),
             ) {
                 Column {
                     results.forEach { location ->
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onSelectLocation(location) }
-                                .padding(12.dp),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onSelectLocation(location) }
+                                    .padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Icon(

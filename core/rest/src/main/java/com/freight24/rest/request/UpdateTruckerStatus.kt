@@ -6,5 +6,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class UpdateTruckerStatus(
     @SerialName("trucker_status") val truckerStatus: String,
-    val remarks: String?
+    val remarks: String?,
 )

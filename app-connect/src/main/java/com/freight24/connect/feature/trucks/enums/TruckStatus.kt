@@ -6,7 +6,8 @@ enum class TruckStatus(val displayText: String) {
     BLACKLISTED("Blacklisted"),
     IN_ACTIVE("In Active"),
     IN_TRANSIT("In Transit"),
-    AVAILABLE("Available");
+    AVAILABLE("Available"),
+    ;
 
     companion object {
         fun from(truck: SearchTruckResponse.Truck): TruckStatus {

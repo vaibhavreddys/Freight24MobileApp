@@ -5,5 +5,5 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UpdateTruckOwnerStatusRequest(
-    @SerialName("status") val status: String
+    @SerialName("status") val status: String,
 )

@@ -8,14 +8,12 @@ import javax.inject.Inject
 
 interface DashboardUseCase : UseCase<EmptyUseCaseParams, DashboardDataResponse.DashboardData>
 
-class DashboardUseCaseImpl @Inject constructor(
-    private val repository: EmployeesRepository
-) : DashboardUseCase {
-
-    override suspend fun invoke(
-        params: EmptyUseCaseParams
-    ): Result<DashboardDataResponse.DashboardData> {
-        return repository.getDashboardData()
+class DashboardUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: EmployeesRepository,
+    ) : DashboardUseCase {
+        override suspend fun invoke(params: EmptyUseCaseParams): Result<DashboardDataResponse.DashboardData> {
+            return repository.getDashboardData()
+        }
     }
-
-}

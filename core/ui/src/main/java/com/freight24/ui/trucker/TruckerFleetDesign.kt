@@ -36,13 +36,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
@@ -146,8 +146,7 @@ fun FleetTone.color(colors: TruckerColors): Color =
     }
 
 @Composable
-fun FleetTone.wash(colors: TruckerColors): Color =
-    color(colors).copy(alpha = 0.14f)
+fun FleetTone.wash(colors: TruckerColors): Color = color(colors).copy(alpha = 0.14f)
 
 // ---------------------------------------------------------------------------
 // Money — Indian digit grouping (lakh / crore), not Western thousands
@@ -794,7 +793,10 @@ enum class RigShape {
 }
 
 /** Maps the wire's truck type / body type strings onto a silhouette. */
-fun rigShapeFor(truckType: String?, bodyType: String?): RigShape {
+fun rigShapeFor(
+    truckType: String?,
+    bodyType: String?,
+): RigShape {
     val haystack = "${truckType.orEmpty()} ${bodyType.orEmpty()}".lowercase()
     return when {
         haystack.contains("container") -> RigShape.CONTAINER

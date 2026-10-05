@@ -24,17 +24,18 @@ fun PrimaryCallButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val haptics = LocalHapticFeedback.current   // <-- new
+    val haptics = LocalHapticFeedback.current // <-- new
 
     Button(
         onClick = {
-            haptics.performHapticFeedback(HapticFeedbackType.LongPress)   // <-- new
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress) // <-- new
             onClick()
         },
-        colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
-        ),
+        colors =
+            ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            ),
         shape = MaterialTheme.shapes.large,
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
         modifier = modifier,

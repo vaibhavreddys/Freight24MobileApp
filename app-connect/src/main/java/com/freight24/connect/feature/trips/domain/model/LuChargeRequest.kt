@@ -7,5 +7,5 @@ data class LuChargeRequest(
     val unloadingAmount: Double?,
     val unloadingPaymentMethod: String?,
     val unloadingReimbursable: Boolean?,
-    val notes: String?
+    val notes: String?,
 )

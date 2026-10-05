@@ -1,13 +1,12 @@
 package com.freight24.trucker.feature.trucks.view.details
 
-import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import android.content.Context
-import kotlinx.coroutines.flow.asSharedFlow
 import android.graphics.BitmapFactory
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.freight24.common.model.TruckDetail
 import com.freight24.trucker.feature.trucks.domain.usecase.FetchTruckDetailParams
 import com.freight24.trucker.feature.trucks.domain.usecase.FetchTruckDetailUseCase
@@ -21,6 +20,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -95,7 +95,11 @@ internal class TruckDetailsViewModel
             fetchTruckDetail(forceRefresh = true)
         }
 
-        fun onFilesPicked(uris: List<Uri>, pdf: Boolean, documentType: String) {
+        fun onFilesPicked(
+            uris: List<Uri>,
+            pdf: Boolean,
+            documentType: String,
+        ) {
             _selectedUris.value = uris
             _isPdf.value = pdf
             _currentDocumentType.value = documentType
@@ -115,28 +119,31 @@ internal class TruckDetailsViewModel
             viewModelScope.launch {
                 _isUploading.value = true
                 try {
-                    val file = if (_isPdf.value) {
-                        getFileFromUri(uris.first(), docType)
-                    } else {
-                        convertImagesToPdf(uris, docType)
-                    }
+                    val file =
+                        if (_isPdf.value) {
+                            getFileFromUri(uris.first(), docType)
+                        } else {
+                            convertImagesToPdf(uris, docType)
+                        }
 
                     if (file != null) {
                         val requestFile = file.asRequestBody("application/pdf".toMediaTypeOrNull())
-                        val partName = when (docType.lowercase()) {
-                            "rc book" -> "rc_card"
-                            "insurance policy" -> "insurance"
-                            "fitness certificate" -> "fc_certificate"
-                            else -> "document"
-                        }
+                        val partName =
+                            when (docType.lowercase()) {
+                                "rc book" -> "rc_card"
+                                "insurance policy" -> "insurance"
+                                "fitness certificate" -> "fc_certificate"
+                                else -> "document"
+                            }
                         val body = MultipartBody.Part.createFormData(partName, file.name, requestFile)
 
-                        val params = when (partName) {
-                            "rc_card" -> UpdateTruckDocumentsParams(truckId, rcCard = body)
-                            "insurance" -> UpdateTruckDocumentsParams(truckId, insurance = body)
-                            "fc_certificate" -> UpdateTruckDocumentsParams(truckId, fcCertificate = body)
-                            else -> UpdateTruckDocumentsParams(truckId)
-                        }
+                        val params =
+                            when (partName) {
+                                "rc_card" -> UpdateTruckDocumentsParams(truckId, rcCard = body)
+                                "insurance" -> UpdateTruckDocumentsParams(truckId, insurance = body)
+                                "fc_certificate" -> UpdateTruckDocumentsParams(truckId, fcCertificate = body)
+                                else -> UpdateTruckDocumentsParams(truckId)
+                            }
 
                         updateTruckDocumentsUseCase(params)
                             .onSuccess {
@@ -156,50 +163,61 @@ internal class TruckDetailsViewModel
             }
         }
 
-        private suspend fun getFileFromUri(uri: Uri, docType: String): File? = withContext(Dispatchers.IO) {
-            try {
-                val inputStream = context.contentResolver.openInputStream(uri)
-                val file = File(context.cacheDir, "temp_${docType.replace(" ", "_")}.pdf")
-                val outputStream = FileOutputStream(file)
-                inputStream?.use { input ->
-                    outputStream.use { output ->
-                        input.copyTo(output)
-                    }
-                }
-                file
-            } catch (e: Exception) {
-                null
-            }
-        }
-
-        private suspend fun convertImagesToPdf(uris: List<Uri>, docType: String): File? = withContext(Dispatchers.IO) {
-            try {
-                val pdfDocument = PdfDocument()
-                uris.forEachIndexed { index, uri ->
+        private suspend fun getFileFromUri(
+            uri: Uri,
+            docType: String,
+        ): File? =
+            withContext(Dispatchers.IO) {
+                try {
                     val inputStream = context.contentResolver.openInputStream(uri)
-                    val bitmap = BitmapFactory.decodeStream(inputStream)
-                    if (bitmap != null) {
-                        val pageInfo = PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, index + 1).create()
-                        val page = pdfDocument.startPage(pageInfo)
-                        page.canvas.drawBitmap(bitmap, 0f, 0f, null)
-                        pdfDocument.finishPage(page)
-                        bitmap.recycle()
+                    val file = File(context.cacheDir, "temp_${docType.replace(" ", "_")}.pdf")
+                    val outputStream = FileOutputStream(file)
+                    inputStream?.use { input ->
+                        outputStream.use { output ->
+                            input.copyTo(output)
+                        }
                     }
-                    inputStream?.close()
+                    file
+                } catch (e: Exception) {
+                    null
                 }
-
-                val file = File(context.cacheDir, "temp_${docType.replace(" ", "_")}_converted.pdf")
-                val outputStream = FileOutputStream(file)
-                pdfDocument.writeTo(outputStream)
-                pdfDocument.close()
-                outputStream.close()
-                file
-            } catch (e: Exception) {
-                null
             }
-        }
 
-        fun fetchSignedUrl(documentType: String, onUrlReady: (String) -> Unit) {
+        private suspend fun convertImagesToPdf(
+            uris: List<Uri>,
+            docType: String,
+        ): File? =
+            withContext(Dispatchers.IO) {
+                try {
+                    val pdfDocument = PdfDocument()
+                    uris.forEachIndexed { index, uri ->
+                        val inputStream = context.contentResolver.openInputStream(uri)
+                        val bitmap = BitmapFactory.decodeStream(inputStream)
+                        if (bitmap != null) {
+                            val pageInfo = PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, index + 1).create()
+                            val page = pdfDocument.startPage(pageInfo)
+                            page.canvas.drawBitmap(bitmap, 0f, 0f, null)
+                            pdfDocument.finishPage(page)
+                            bitmap.recycle()
+                        }
+                        inputStream?.close()
+                    }
+
+                    val file = File(context.cacheDir, "temp_${docType.replace(" ", "_")}_converted.pdf")
+                    val outputStream = FileOutputStream(file)
+                    pdfDocument.writeTo(outputStream)
+                    pdfDocument.close()
+                    outputStream.close()
+                    file
+                } catch (e: Exception) {
+                    null
+                }
+            }
+
+        fun fetchSignedUrl(
+            documentType: String,
+            onUrlReady: (String) -> Unit,
+        ) {
             viewModelScope.launch {
                 getTruckDocumentSignedUrlUseCase(GetTruckDocumentSignedUrlParams(truckId, documentType))
                     .onSuccess { url ->

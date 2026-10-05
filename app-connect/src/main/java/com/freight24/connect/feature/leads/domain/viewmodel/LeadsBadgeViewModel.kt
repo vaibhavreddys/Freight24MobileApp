@@ -11,18 +11,19 @@ import javax.inject.Inject
 
 /** Supplies the "new + follow-up" badge count for the More tab tile. */
 @HiltViewModel
-class LeadsBadgeViewModel @Inject constructor(
-    private val leadsRepository: LeadsRepository,
-) : ViewModel() {
+class LeadsBadgeViewModel
+    @Inject
+    constructor(
+        private val leadsRepository: LeadsRepository,
+    ) : ViewModel() {
+        private val _badgeCount = MutableStateFlow(0)
+        val badgeCount = _badgeCount.asStateFlow()
 
-    private val _badgeCount = MutableStateFlow(0)
-    val badgeCount = _badgeCount.asStateFlow()
-
-    fun refreshBadge() {
-        viewModelScope.launch {
-            leadsRepository.getLeadSummary().onSuccess { summary ->
-                _badgeCount.value = summary.badgeCount
+        fun refreshBadge() {
+            viewModelScope.launch {
+                leadsRepository.getLeadSummary().onSuccess { summary ->
+                    _badgeCount.value = summary.badgeCount
+                }
             }
         }
     }
-}

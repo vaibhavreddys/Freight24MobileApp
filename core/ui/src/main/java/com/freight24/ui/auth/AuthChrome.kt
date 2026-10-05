@@ -243,46 +243,48 @@ class AuthColors(
  * the composable below, so the values are stated once and
  * [rememberAuthColors] only selects the mode.
  */
-private val AuthDarkColors = AuthColors(
-    field = Color(0xFF0F3527),
-    ink = Color(0xFFF1F6F2),
-    inkMuted = Color(0xFFF1F6F2).copy(alpha = 0.62f),
-    hairline = Color(0xFFF1F6F2).copy(alpha = 0.07f),
-    lane = Color(0xFFDCC38A).copy(alpha = 0.34f),
-    paper = Color(0xFF0F1411),
-    paperRuling = Color(0xFFF1F6F2).copy(alpha = 0.045f),
-    paperEdge = Color(0xFFF1F6F2).copy(alpha = 0.085f),
-    // Connect is unchanged: its control edges keep the original hairline.
-    controlEdge = Color(0xFFF1F6F2).copy(alpha = 0.085f),
-    sheetInk = Color(0xFFDFE4E0),
-    sheetInkMuted = Color(0xFFBFCAC3),
-    sheetAccent = Color(0xFFA6D3BB),
-    sheetAccentInk = Color(0xFFA6D3BB),
-    sheetDanger = Color(0xFFFFB4A8),
-    standbyFill = Color(0xFF0F3527).copy(alpha = 0.18f),
-    standbyInk = Color(0xFFF1F6F2).copy(alpha = 0.55f),
-)
+private val AuthDarkColors =
+    AuthColors(
+        field = Color(0xFF0F3527),
+        ink = Color(0xFFF1F6F2),
+        inkMuted = Color(0xFFF1F6F2).copy(alpha = 0.62f),
+        hairline = Color(0xFFF1F6F2).copy(alpha = 0.07f),
+        lane = Color(0xFFDCC38A).copy(alpha = 0.34f),
+        paper = Color(0xFF0F1411),
+        paperRuling = Color(0xFFF1F6F2).copy(alpha = 0.045f),
+        paperEdge = Color(0xFFF1F6F2).copy(alpha = 0.085f),
+        // Connect is unchanged: its control edges keep the original hairline.
+        controlEdge = Color(0xFFF1F6F2).copy(alpha = 0.085f),
+        sheetInk = Color(0xFFDFE4E0),
+        sheetInkMuted = Color(0xFFBFCAC3),
+        sheetAccent = Color(0xFFA6D3BB),
+        sheetAccentInk = Color(0xFFA6D3BB),
+        sheetDanger = Color(0xFFFFB4A8),
+        standbyFill = Color(0xFF0F3527).copy(alpha = 0.18f),
+        standbyInk = Color(0xFFF1F6F2).copy(alpha = 0.55f),
+    )
 
 /** The light document palette. See [AuthDarkColors]. */
-private val AuthLightColors = AuthColors(
-    field = FreightBrandForest,
-    ink = Color(0xFFF6FAF7),
-    inkMuted = Color(0xFFF6FAF7).copy(alpha = 0.66f),
-    hairline = Color(0xFFF6FAF7).copy(alpha = 0.09f),
-    lane = Color(0xFFDCC38A).copy(alpha = 0.40f),
-    paper = Color(0xFFEFE9D9),
-    paperRuling = FreightBrandForest.copy(alpha = 0.06f),
-    paperEdge = FreightBrandForest.copy(alpha = 0.13f),
-    // Connect is unchanged: its control edges keep the original hairline.
-    controlEdge = FreightBrandForest.copy(alpha = 0.13f),
-    sheetInk = Color(0xFF181C1A),
-    sheetInkMuted = Color(0xFF414843),
-    sheetAccent = Color(0xFF1B5E40),
-    sheetAccentInk = Color(0xFF1B5E40),
-    sheetDanger = Color(0xFF93221A),
-    standbyFill = FreightBrandForest.copy(alpha = 0.18f),
-    standbyInk = Color(0xFFF6FAF7).copy(alpha = 0.55f),
-)
+private val AuthLightColors =
+    AuthColors(
+        field = FreightBrandForest,
+        ink = Color(0xFFF6FAF7),
+        inkMuted = Color(0xFFF6FAF7).copy(alpha = 0.66f),
+        hairline = Color(0xFFF6FAF7).copy(alpha = 0.09f),
+        lane = Color(0xFFDCC38A).copy(alpha = 0.40f),
+        paper = Color(0xFFEFE9D9),
+        paperRuling = FreightBrandForest.copy(alpha = 0.06f),
+        paperEdge = FreightBrandForest.copy(alpha = 0.13f),
+        // Connect is unchanged: its control edges keep the original hairline.
+        controlEdge = FreightBrandForest.copy(alpha = 0.13f),
+        sheetInk = Color(0xFF181C1A),
+        sheetInkMuted = Color(0xFF414843),
+        sheetAccent = Color(0xFF1B5E40),
+        sheetAccentInk = Color(0xFF1B5E40),
+        sheetDanger = Color(0xFF93221A),
+        standbyFill = FreightBrandForest.copy(alpha = 0.18f),
+        standbyInk = Color(0xFFF6FAF7).copy(alpha = 0.55f),
+    )
 
 /**
  * TRUCKER — the driver's copy.
@@ -303,57 +305,57 @@ private val AuthLightColors = AuthColors(
  *     Connect's low-alpha wash. Low-alpha greys vanish in sunlight, which is
  *     the single worst thing you can do to this audience.
  */
-private val TruckerAuthDarkColors = AuthColors(
-    field = Color(0xFF0F3527),
-    ink = Color(0xFFF1F6F2),
-    inkMuted = Color(0xFFF1F6F2).copy(alpha = 0.62f),
-    hairline = Color(0xFFF1F6F2).copy(alpha = 0.07f),
-    lane = Color(0xFFE5A63C).copy(alpha = 0.34f),
-    paper = Color(0xFF101613),
-    paperRuling = Color(0xFFF1F6F2).copy(alpha = 0.045f),
-    paperEdge = Color(0xFFF1F6F2).copy(alpha = 0.16f),
-    // 0.38 clears 3:1 against the dark sheet. The driver reads this in a cab
-    // in daylight, so the field boundary is load-bearing, not decorative.
-    controlEdge = Color(0xFFF1F6F2).copy(alpha = 0.38f),
-    sheetInk = Color(0xFFE9F1EB),
-    sheetInkMuted = Color(0xFFA2B8AA),
-    sheetAccent = Color(0xFFE5A63C),
-    sheetAccentInk = Color(0xFFE5A63C),
-    sheetDanger = Color(0xFFF08A7E),
-    standbyFill = Color(0xFF22402F),
-    standbyInk = Color(0xFFA2B8AA),
-)
+private val TruckerAuthDarkColors =
+    AuthColors(
+        field = Color(0xFF0F3527),
+        ink = Color(0xFFF1F6F2),
+        inkMuted = Color(0xFFF1F6F2).copy(alpha = 0.62f),
+        hairline = Color(0xFFF1F6F2).copy(alpha = 0.07f),
+        lane = Color(0xFFE5A63C).copy(alpha = 0.34f),
+        paper = Color(0xFF101613),
+        paperRuling = Color(0xFFF1F6F2).copy(alpha = 0.045f),
+        paperEdge = Color(0xFFF1F6F2).copy(alpha = 0.16f),
+        // 0.38 clears 3:1 against the dark sheet. The driver reads this in a cab
+        // in daylight, so the field boundary is load-bearing, not decorative.
+        controlEdge = Color(0xFFF1F6F2).copy(alpha = 0.38f),
+        sheetInk = Color(0xFFE9F1EB),
+        sheetInkMuted = Color(0xFFA2B8AA),
+        sheetAccent = Color(0xFFE5A63C),
+        sheetAccentInk = Color(0xFFE5A63C),
+        sheetDanger = Color(0xFFF08A7E),
+        standbyFill = Color(0xFF22402F),
+        standbyInk = Color(0xFFA2B8AA),
+    )
 
 /** TRUCKER light. See [TruckerAuthDarkColors]. */
-private val TruckerAuthLightColors = AuthColors(
-    field = FreightBrandForest,
-    ink = Color(0xFFF6FAF7),
-    inkMuted = Color(0xFFF6FAF7).copy(alpha = 0.66f),
-    hairline = Color(0xFFF6FAF7).copy(alpha = 0.09f),
-    lane = Color(0xFFE5A63C).copy(alpha = 0.38f),
-    paper = Color(0xFFF4F2ED),
-    paperRuling = FreightBrandForest.copy(alpha = 0.055f),
-    paperEdge = FreightBrandForest.copy(alpha = 0.20f),
-    // 0.58 clears 3:1 against the light sheet. The driver reads this in a cab
-    // in daylight, so the field boundary is load-bearing, not decorative.
-    controlEdge = FreightBrandForest.copy(alpha = 0.58f),
-    sheetInk = Color(0xFF12211A),
-    sheetInkMuted = Color(0xFF4C6055),
-    sheetAccent = Color(0xFFB8760E),
-    sheetAccentInk = Color(0xFF96610A),
-    sheetDanger = Color(0xFFB3261E),
-    standbyFill = FreightBrandForest.copy(alpha = 0.14f),
-    standbyInk = Color(0xFF4C6055),
-)
+private val TruckerAuthLightColors =
+    AuthColors(
+        field = FreightBrandForest,
+        ink = Color(0xFFF6FAF7),
+        inkMuted = Color(0xFFF6FAF7).copy(alpha = 0.66f),
+        hairline = Color(0xFFF6FAF7).copy(alpha = 0.09f),
+        lane = Color(0xFFE5A63C).copy(alpha = 0.38f),
+        paper = Color(0xFFF4F2ED),
+        paperRuling = FreightBrandForest.copy(alpha = 0.055f),
+        paperEdge = FreightBrandForest.copy(alpha = 0.20f),
+        // 0.58 clears 3:1 against the light sheet. The driver reads this in a cab
+        // in daylight, so the field boundary is load-bearing, not decorative.
+        controlEdge = FreightBrandForest.copy(alpha = 0.58f),
+        sheetInk = Color(0xFF12211A),
+        sheetInkMuted = Color(0xFF4C6055),
+        sheetAccent = Color(0xFFB8760E),
+        sheetAccentInk = Color(0xFF96610A),
+        sheetDanger = Color(0xFFB3261E),
+        standbyFill = FreightBrandForest.copy(alpha = 0.14f),
+        standbyInk = Color(0xFF4C6055),
+    )
 
 /**
  * Returns the document's color tokens for the current mode and identity. Use
  * this once per screen and pass the result to every component.
  */
 @Composable
-fun rememberAuthColors(
-    identity: AuthIdentity = AuthIdentity.CONNECT,
-): AuthColors {
+fun rememberAuthColors(identity: AuthIdentity = AuthIdentity.CONNECT): AuthColors {
     val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
     return remember(dark, identity) {
         when (identity) {
@@ -407,135 +409,155 @@ class AuthTypeScale(
     companion object {
         /** Connect's existing scale — unchanged, so those screens render
          *  exactly as they did before identities existed. */
-        val Connect = AuthTypeScale(
-            heroHeadline = TextStyle(
-                fontFamily = Sora,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 32.sp,
-                lineHeight = 40.sp,
-                letterSpacing = (-0.5).sp,
-            ),
-            heroBody = TextStyle(
-                fontFamily = BeVietnamPro,
-                fontWeight = FontWeight.Normal,
-                fontSize = 14.sp,
-                lineHeight = 20.sp,
-            ),
-            overline = TextStyle(
-                fontFamily = BeVietnamPro,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 11.sp,
-                lineHeight = 16.sp,
-                letterSpacing = 1.4.sp,
-            ),
-            sheetHeadline = TextStyle(
-                fontFamily = Sora,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 28.sp,
-                lineHeight = 36.sp,
-                letterSpacing = (-0.4).sp,
-            ),
-            sheetBody = TextStyle(
-                fontFamily = BeVietnamPro,
-                fontWeight = FontWeight.Normal,
-                fontSize = 14.sp,
-                lineHeight = 20.sp,
-            ),
-            actionLabel = TextStyle(
-                fontFamily = Sora,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 15.sp,
-                lineHeight = 20.sp,
-                letterSpacing = 0.1.sp,
-            ),
-            legal = TextStyle(
-                fontFamily = BeVietnamPro,
-                fontWeight = FontWeight.Normal,
-                fontSize = 12.sp,
-                lineHeight = 18.sp,
-                letterSpacing = 0.4.sp,
-            ),
-            codeDigit = TextStyle(
-                fontFamily = Sora,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 22.sp,
-                lineHeight = 28.sp,
-                fontFeatureSettings = "tnum",
-            ),
-            timer = TextStyle(
-                fontFamily = BeVietnamPro,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 13.sp,
-                lineHeight = 18.sp,
-                fontFeatureSettings = "tnum",
-            ),
-        )
+        val Connect =
+            AuthTypeScale(
+                heroHeadline =
+                    TextStyle(
+                        fontFamily = Sora,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 32.sp,
+                        lineHeight = 40.sp,
+                        letterSpacing = (-0.5).sp,
+                    ),
+                heroBody =
+                    TextStyle(
+                        fontFamily = BeVietnamPro,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp,
+                    ),
+                overline =
+                    TextStyle(
+                        fontFamily = BeVietnamPro,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 11.sp,
+                        lineHeight = 16.sp,
+                        letterSpacing = 1.4.sp,
+                    ),
+                sheetHeadline =
+                    TextStyle(
+                        fontFamily = Sora,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 28.sp,
+                        lineHeight = 36.sp,
+                        letterSpacing = (-0.4).sp,
+                    ),
+                sheetBody =
+                    TextStyle(
+                        fontFamily = BeVietnamPro,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp,
+                    ),
+                actionLabel =
+                    TextStyle(
+                        fontFamily = Sora,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 15.sp,
+                        lineHeight = 20.sp,
+                        letterSpacing = 0.1.sp,
+                    ),
+                legal =
+                    TextStyle(
+                        fontFamily = BeVietnamPro,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 12.sp,
+                        lineHeight = 18.sp,
+                        letterSpacing = 0.4.sp,
+                    ),
+                codeDigit =
+                    TextStyle(
+                        fontFamily = Sora,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 22.sp,
+                        lineHeight = 28.sp,
+                        fontFeatureSettings = "tnum",
+                    ),
+                timer =
+                    TextStyle(
+                        fontFamily = BeVietnamPro,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp,
+                        fontFeatureSettings = "tnum",
+                    ),
+            )
 
         /** The driver's copy — same faces, larger optical sizes. */
-        val Trucker = AuthTypeScale(
-            heroHeadline = TextStyle(
-                fontFamily = Sora,
-                fontWeight = FontWeight.Bold,
-                fontSize = 34.sp,
-                lineHeight = 41.sp,
-                letterSpacing = (-0.5).sp,
-            ),
-            heroBody = TextStyle(
-                fontFamily = BeVietnamPro,
-                fontWeight = FontWeight.Normal,
-                fontSize = 16.sp,
-                lineHeight = 23.sp,
-            ),
-            overline = TextStyle(
-                fontFamily = BeVietnamPro,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 12.sp,
-                lineHeight = 17.sp,
-                letterSpacing = 1.3.sp,
-            ),
-            sheetHeadline = TextStyle(
-                fontFamily = Sora,
-                fontWeight = FontWeight.Bold,
-                fontSize = 26.sp,
-                lineHeight = 33.sp,
-                letterSpacing = (-0.4).sp,
-            ),
-            sheetBody = TextStyle(
-                fontFamily = BeVietnamPro,
-                fontWeight = FontWeight.Normal,
-                fontSize = 16.sp,
-                lineHeight = 23.sp,
-            ),
-            actionLabel = TextStyle(
-                fontFamily = Sora,
-                fontWeight = FontWeight.Bold,
-                fontSize = 17.sp,
-                lineHeight = 22.sp,
-                letterSpacing = 0.2.sp,
-            ),
-            legal = TextStyle(
-                fontFamily = BeVietnamPro,
-                fontWeight = FontWeight.Normal,
-                fontSize = 14.sp,
-                lineHeight = 20.sp,
-                letterSpacing = 0.2.sp,
-            ),
-            codeDigit = TextStyle(
-                fontFamily = Sora,
-                fontWeight = FontWeight.Bold,
-                fontSize = 26.sp,
-                lineHeight = 32.sp,
-                letterSpacing = 0.5.sp,
-                fontFeatureSettings = "tnum",
-            ),
-            timer = TextStyle(
-                fontFamily = BeVietnamPro,
-                fontWeight = FontWeight.Bold,
-                fontSize = 14.sp,
-                lineHeight = 19.sp,
-                fontFeatureSettings = "tnum",
-            ),
-        )
+        val Trucker =
+            AuthTypeScale(
+                heroHeadline =
+                    TextStyle(
+                        fontFamily = Sora,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 34.sp,
+                        lineHeight = 41.sp,
+                        letterSpacing = (-0.5).sp,
+                    ),
+                heroBody =
+                    TextStyle(
+                        fontFamily = BeVietnamPro,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 16.sp,
+                        lineHeight = 23.sp,
+                    ),
+                overline =
+                    TextStyle(
+                        fontFamily = BeVietnamPro,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 12.sp,
+                        lineHeight = 17.sp,
+                        letterSpacing = 1.3.sp,
+                    ),
+                sheetHeadline =
+                    TextStyle(
+                        fontFamily = Sora,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 26.sp,
+                        lineHeight = 33.sp,
+                        letterSpacing = (-0.4).sp,
+                    ),
+                sheetBody =
+                    TextStyle(
+                        fontFamily = BeVietnamPro,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 16.sp,
+                        lineHeight = 23.sp,
+                    ),
+                actionLabel =
+                    TextStyle(
+                        fontFamily = Sora,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 17.sp,
+                        lineHeight = 22.sp,
+                        letterSpacing = 0.2.sp,
+                    ),
+                legal =
+                    TextStyle(
+                        fontFamily = BeVietnamPro,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 14.sp,
+                        lineHeight = 20.sp,
+                        letterSpacing = 0.2.sp,
+                    ),
+                codeDigit =
+                    TextStyle(
+                        fontFamily = Sora,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 26.sp,
+                        lineHeight = 32.sp,
+                        letterSpacing = 0.5.sp,
+                        fontFeatureSettings = "tnum",
+                    ),
+                timer =
+                    TextStyle(
+                        fontFamily = BeVietnamPro,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        lineHeight = 19.sp,
+                        fontFeatureSettings = "tnum",
+                    ),
+            )
     }
 }
 
@@ -570,28 +592,30 @@ class AuthMetrics(
 ) {
     companion object {
         /** Connect's existing geometry — unchanged. */
-        val Connect = AuthMetrics(
-            actionHeight = 56.dp,
-            fieldHeight = 56.dp,
-            otpCellHeight = 56.dp,
-            otpCellGap = 8.dp,
-            sheetPaddingH = 24.dp,
-            sheetPaddingV = 28.dp,
-            gutter = 24.dp,
-            maxContentWidth = 520.dp,
-        )
+        val Connect =
+            AuthMetrics(
+                actionHeight = 56.dp,
+                fieldHeight = 56.dp,
+                otpCellHeight = 56.dp,
+                otpCellGap = 8.dp,
+                sheetPaddingH = 24.dp,
+                sheetPaddingV = 28.dp,
+                gutter = 24.dp,
+                maxContentWidth = 520.dp,
+            )
 
         /** Trucker's geometry — bigger targets, same skeleton. */
-        val Trucker = AuthMetrics(
-            actionHeight = 60.dp,
-            fieldHeight = 64.dp,
-            otpCellHeight = 64.dp,
-            otpCellGap = 8.dp,
-            sheetPaddingH = 24.dp,
-            sheetPaddingV = 28.dp,
-            gutter = 24.dp,
-            maxContentWidth = 560.dp,
-        )
+        val Trucker =
+            AuthMetrics(
+                actionHeight = 60.dp,
+                fieldHeight = 64.dp,
+                otpCellHeight = 64.dp,
+                otpCellGap = 8.dp,
+                sheetPaddingH = 24.dp,
+                sheetPaddingV = 28.dp,
+                gutter = 24.dp,
+                maxContentWidth = 560.dp,
+            )
     }
 }
 
@@ -609,24 +633,24 @@ class AuthTokens(
 
 /** Returns the token set for [identity] in the current mode. */
 @Composable
-fun rememberAuthTokens(
-    identity: AuthIdentity = AuthIdentity.CONNECT,
-): AuthTokens {
+fun rememberAuthTokens(identity: AuthIdentity = AuthIdentity.CONNECT): AuthTokens {
     val colors = rememberAuthColors(identity)
     return remember(identity, colors) {
         when (identity) {
-            AuthIdentity.CONNECT -> AuthTokens(
-                identity = identity,
-                colors = colors,
-                type = AuthTypeScale.Connect,
-                metrics = AuthMetrics.Connect,
-            )
-            AuthIdentity.TRUCKER -> AuthTokens(
-                identity = identity,
-                colors = colors,
-                type = AuthTypeScale.Trucker,
-                metrics = AuthMetrics.Trucker,
-            )
+            AuthIdentity.CONNECT ->
+                AuthTokens(
+                    identity = identity,
+                    colors = colors,
+                    type = AuthTypeScale.Connect,
+                    metrics = AuthMetrics.Connect,
+                )
+            AuthIdentity.TRUCKER ->
+                AuthTokens(
+                    identity = identity,
+                    colors = colors,
+                    type = AuthTypeScale.Trucker,
+                    metrics = AuthMetrics.Trucker,
+                )
         }
     }
 }
@@ -682,29 +706,33 @@ fun BoxScope.AuthLaneMarkings(
     modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = modifier
-            .align(Alignment.BottomEnd)
-            .padding(end = 8.dp, bottom = 6.dp),
+        modifier =
+            modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 8.dp, bottom = 6.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
         horizontalAlignment = Alignment.End,
     ) {
         Box(
-            modifier = Modifier
-                .size(width = 44.dp, height = 2.dp)
-                .clip(CircleShape)
-                .background(colors.lane),
+            modifier =
+                Modifier
+                    .size(width = 44.dp, height = 2.dp)
+                    .clip(CircleShape)
+                    .background(colors.lane),
         )
         Box(
-            modifier = Modifier
-                .size(width = 30.dp, height = 2.dp)
-                .clip(CircleShape)
-                .background(colors.lane),
+            modifier =
+                Modifier
+                    .size(width = 30.dp, height = 2.dp)
+                    .clip(CircleShape)
+                    .background(colors.lane),
         )
         Box(
-            modifier = Modifier
-                .size(width = 18.dp, height = 2.dp)
-                .clip(CircleShape)
-                .background(colors.lane),
+            modifier =
+                Modifier
+                    .size(width = 18.dp, height = 2.dp)
+                    .clip(CircleShape)
+                    .background(colors.lane),
         )
     }
 }
@@ -752,10 +780,11 @@ fun AuthSheet(
     content: @Composable () -> Unit,
 ) {
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(AuthSheetShape)
-            .background(colors.paper),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(AuthSheetShape)
+                .background(colors.paper),
     ) {
         AuthPaperRuling(colors)
 
@@ -770,10 +799,11 @@ fun AuthSheet(
         }
 
         Column(
-            modifier = Modifier.padding(
-                horizontal = metrics.sheetPaddingH,
-                vertical = metrics.sheetPaddingV,
-            ),
+            modifier =
+                Modifier.padding(
+                    horizontal = metrics.sheetPaddingH,
+                    vertical = metrics.sheetPaddingV,
+                ),
         ) {
             content()
         }
@@ -810,7 +840,10 @@ fun AuthOverline(
  * divider between two cards.
  */
 @Composable
-fun AuthRule(colors: AuthColors, modifier: Modifier = Modifier) {
+fun AuthRule(
+    colors: AuthColors,
+    modifier: Modifier = Modifier,
+) {
     Canvas(modifier = modifier.fillMaxWidth().height(1.dp)) {
         drawRect(color = colors.paperEdge, size = size)
     }
@@ -831,13 +864,14 @@ fun AuthOutlinedRow(
     content: @Composable () -> Unit,
 ) {
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(AuthControlShape)
-            .background(colors.paper)
-            .border(1.dp, colors.controlEdge, AuthControlShape)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(AuthControlShape)
+                .background(colors.paper)
+                .border(1.dp, colors.controlEdge, AuthControlShape)
+                .clickable(onClick = onClick)
+                .padding(horizontal = 16.dp, vertical = 14.dp),
     ) {
         content()
     }
@@ -876,48 +910,52 @@ fun AuthPrimaryAction(
     val wiped = progress > 0f
     val labelOnBrand = wiped && progress >= 0.5f
 
-    val container = when {
-        !enabled && !wiped -> colors.standbyFill
-        else -> colors.field
-    }
+    val container =
+        when {
+            !enabled && !wiped -> colors.standbyFill
+            else -> colors.field
+        }
     val ink = colors.ink
-    val content = when {
-        loading -> ink
-        labelOnBrand -> ink
-        !enabled && !wiped -> colors.standbyInk
-        else -> ink
-    }
+    val content =
+        when {
+            loading -> ink
+            labelOnBrand -> ink
+            !enabled && !wiped -> colors.standbyInk
+            else -> ink
+        }
 
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(metrics.actionHeight)
-            .let {
-                if (testTag != null) {
-                    it
-                        .testTag(testTag)
-                        .semantics { testTagsAsResourceId = true }
-                } else {
-                    it
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(metrics.actionHeight)
+                .let {
+                    if (testTag != null) {
+                        it
+                            .testTag(testTag)
+                            .semantics { testTagsAsResourceId = true }
+                    } else {
+                        it
+                    }
                 }
-            }
-            .clip(AuthControlShape)
-            .background(container)
-            .then(
-                if (enabled) {
-                    Modifier.clickable(onClick = onClick)
-                } else {
-                    Modifier
-                }
-            ),
+                .clip(AuthControlShape)
+                .background(container)
+                .then(
+                    if (enabled) {
+                        Modifier.clickable(onClick = onClick)
+                    } else {
+                        Modifier
+                    },
+                ),
         contentAlignment = Alignment.Center,
     ) {
         if (wiped) {
             Box(
-                modifier = Modifier
-                    .fillMaxWidth(progress.coerceIn(0f, 1f))
-                    .fillMaxHeight()
-                    .background(colors.field),
+                modifier =
+                    Modifier
+                        .fillMaxWidth(progress.coerceIn(0f, 1f))
+                        .fillMaxHeight()
+                        .background(colors.field),
             )
         }
 
@@ -970,11 +1008,12 @@ fun AuthLaneProgress(
     ) {
         repeat(steps) { i ->
             Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(4.dp)
-                    .clip(CircleShape)
-                    .background(if (i + 1 <= current) colors.lane else colors.hairline),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .height(4.dp)
+                        .clip(CircleShape)
+                        .background(if (i + 1 <= current) colors.lane else colors.hairline),
             )
         }
     }
@@ -1017,9 +1056,10 @@ fun AuthBackButton(
 ) {
     IconButton(
         onClick = onClick,
-        modifier = modifier
-            .size(48.dp)
-            .offset(x = (-12).dp),
+        modifier =
+            modifier
+                .size(48.dp)
+                .offset(x = (-12).dp),
     ) {
         Icon(
             imageVector = Icons.Filled.ArrowBackIosNew,
@@ -1075,18 +1115,19 @@ fun AuthMasthead(
     bottomPadding: Dp = 44.dp,
 ) {
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(AuthHeroShape)
-            .background(colors.field)
-            .statusBarsPadding()
-            // The gutter and the vertical padding belong on the BOX, not on an
-            // inner column. The backdrop and the lane markings are BoxScope
-            // children aligned to its content area, so padding applied further
-            // in leaves them measuring against the full bleed — which parks
-            // the lane dashes on the rounded bottom corner and clips them.
-            .padding(horizontal = metrics.gutter)
-            .padding(top = topPadding, bottom = bottomPadding),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(AuthHeroShape)
+                .background(colors.field)
+                .statusBarsPadding()
+                // The gutter and the vertical padding belong on the BOX, not on an
+                // inner column. The backdrop and the lane markings are BoxScope
+                // children aligned to its content area, so padding applied further
+                // in leaves them measuring against the full bleed — which parks
+                // the lane dashes on the rounded bottom corner and clips them.
+                .padding(horizontal = metrics.gutter)
+                .padding(top = topPadding, bottom = bottomPadding),
     ) {
         AuthLedgerBackdrop(colors)
         AuthLaneMarkings(colors)
@@ -1133,9 +1174,10 @@ fun AuthMasthead(
                 Spacer(modifier = Modifier.height(18.dp))
                 // Bronze/saffron seam rule — the crease of the document.
                 Box(
-                    modifier = Modifier
-                        .size(width = 44.dp, height = 2.dp)
-                        .background(colors.lane),
+                    modifier =
+                        Modifier
+                            .size(width = 44.dp, height = 2.dp)
+                            .background(colors.lane),
                 )
                 Spacer(modifier = Modifier.height(24.dp))
             }
@@ -1182,13 +1224,14 @@ fun AuthDestinationRow(
     changeLabel: String = "Change",
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(AuthChipShape)
-            .background(colors.paper)
-            .border(1.dp, colors.controlEdge, AuthChipShape)
-            .clickable(onClick = onClick, role = Role.Button)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clip(AuthChipShape)
+                .background(colors.paper)
+                .border(1.dp, colors.controlEdge, AuthChipShape)
+                .clickable(onClick = onClick, role = Role.Button)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // The number takes the slack and ellipsises; the action label keeps its
@@ -1200,10 +1243,11 @@ fun AuthDestinationRow(
             modifier = Modifier.weight(1f),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            style = type.sheetBody.copy(
-                fontWeight = FontWeight.SemiBold,
-                fontFeatureSettings = "tnum",
-            ),
+            style =
+                type.sheetBody.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    fontFeatureSettings = "tnum",
+                ),
             color = colors.sheetInk,
         )
         Spacer(modifier = Modifier.width(12.dp))
@@ -1260,18 +1304,20 @@ fun AuthTimerMeter(
         Spacer(modifier = Modifier.height(8.dp))
 
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(3.dp)
-                .clip(CircleShape)
-                .background(colors.paperEdge),
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(fraction.coerceIn(0f, 1f))
+            modifier =
+                Modifier
+                    .fillMaxWidth()
                     .height(3.dp)
                     .clip(CircleShape)
-                    .background(fill),
+                    .background(colors.paperEdge),
+        ) {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth(fraction.coerceIn(0f, 1f))
+                        .height(3.dp)
+                        .clip(CircleShape)
+                        .background(fill),
             )
         }
     }
@@ -1331,31 +1377,33 @@ fun AuthOtpCells(
     }
 
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .offset(x = shakeOffset.value.dp)
-            .clickable(
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() },
-            ) {
-                if (enabled) {
-                    focusRequester.requestFocus()
-                    keyboardController?.show()
-                }
-            },
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .offset(x = shakeOffset.value.dp)
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() },
+                ) {
+                    if (enabled) {
+                        focusRequester.requestFocus()
+                        keyboardController?.show()
+                    }
+                },
     ) {
         BasicTextField(
             value = otp,
             onValueChange = { raw ->
                 if (enabled) onOtpChange(raw.filter(Char::isDigit).take(otpLength))
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(metrics.otpCellHeight)
-                .alpha(0.01f)
-                .testTag("otp_input")
-                .semantics { testTagsAsResourceId = true }
-                .focusRequester(focusRequester),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(metrics.otpCellHeight)
+                    .alpha(0.01f)
+                    .testTag("otp_input")
+                    .semantics { testTagsAsResourceId = true }
+                    .focusRequester(focusRequester),
             enabled = enabled,
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
@@ -1364,9 +1412,10 @@ fun AuthOtpCells(
         )
 
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(metrics.otpCellHeight),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(metrics.otpCellHeight),
             horizontalArrangement = Arrangement.spacedBy(metrics.otpCellGap),
         ) {
             repeat(otpLength) { index ->
@@ -1378,41 +1427,47 @@ fun AuthOtpCells(
                 // your digit". Brand green is deliberately NOT used here — it
                 // belongs to the primary action, and spending it on six cells
                 // would leave the CTA with nothing of its own.
-                val container = when {
-                    isError && isFilled -> colors.sheetDanger.copy(alpha = 0.12f)
-                    isFilled -> colors.sheetAccent.copy(alpha = 0.12f)
-                    else -> colors.paper
-                }
-                val border = when {
-                    isError && isFilled -> colors.sheetDanger
-                    isActive -> colors.sheetAccent
-                    isFilled -> colors.sheetAccent.copy(alpha = 0.50f)
-                    // An empty cell is identified by its outline alone, so this
-                    // is a control boundary and owes WCAG 1.4.11 its 3:1.
-                    else -> colors.controlEdge
-                }
+                val container =
+                    when {
+                        isError && isFilled -> colors.sheetDanger.copy(alpha = 0.12f)
+                        isFilled -> colors.sheetAccent.copy(alpha = 0.12f)
+                        else -> colors.paper
+                    }
+                val border =
+                    when {
+                        isError && isFilled -> colors.sheetDanger
+                        isActive -> colors.sheetAccent
+                        isFilled -> colors.sheetAccent.copy(alpha = 0.50f)
+                        // An empty cell is identified by its outline alone, so this
+                        // is a control boundary and owes WCAG 1.4.11 its 3:1.
+                        else -> colors.controlEdge
+                    }
                 val borderWidth = if (isActive || (isError && isFilled)) 2.dp else 1.dp
 
                 Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .clip(AuthFieldShape)
-                        .background(container)
-                        .border(borderWidth, border, AuthFieldShape),
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .clip(AuthFieldShape)
+                            .background(container)
+                            .border(borderWidth, border, AuthFieldShape),
                     contentAlignment = Alignment.Center,
                 ) {
                     when {
-                        isFilled -> Text(
-                            text = char,
-                            style = type.codeDigit,
-                            color = if (isError) colors.sheetDanger else colors.sheetInk,
-                        )
-                        isActive -> Box(
-                            modifier = Modifier
-                                .size(width = 2.dp, height = metrics.otpCellHeight * 0.38f)
-                                .background(colors.sheetAccent),
-                        )
+                        isFilled ->
+                            Text(
+                                text = char,
+                                style = type.codeDigit,
+                                color = if (isError) colors.sheetDanger else colors.sheetInk,
+                            )
+                        isActive ->
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .size(width = 2.dp, height = metrics.otpCellHeight * 0.38f)
+                                        .background(colors.sheetAccent),
+                            )
                     }
                 }
             }
@@ -1454,27 +1509,29 @@ fun AuthTextField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = metrics.fieldHeight)
-            .let { base ->
-                if (testTag != null) {
-                    base
-                        .testTag(testTag)
-                        .semantics { testTagsAsResourceId = true }
-                } else {
-                    base
-                }
-            },
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .heightIn(min = metrics.fieldHeight)
+                .let { base ->
+                    if (testTag != null) {
+                        base
+                            .testTag(testTag)
+                            .semantics { testTagsAsResourceId = true }
+                    } else {
+                        base
+                    }
+                },
         enabled = enabled,
         singleLine = true,
         shape = AuthFieldShape,
-        textStyle = type.sheetBody.copy(
-            fontWeight = FontWeight.SemiBold,
-            fontSize = (type.sheetBody.fontSize.value + 1).sp,
-            letterSpacing = 0.6.sp,
-            fontFeatureSettings = "tnum",
-        ),
+        textStyle =
+            type.sheetBody.copy(
+                fontWeight = FontWeight.SemiBold,
+                fontSize = (type.sheetBody.fontSize.value + 1).sp,
+                letterSpacing = 0.6.sp,
+                fontFeatureSettings = "tnum",
+            ),
         placeholder = {
             Text(
                 text = placeholder,
@@ -1486,39 +1543,42 @@ fun AuthTextField(
                 color = colors.sheetInkMuted,
             )
         },
-        prefix = prefix?.let {
-            {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = it,
-                        style = type.sheetBody.copy(fontWeight = FontWeight.SemiBold),
-                        color = colors.sheetInk,
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(width = 1.dp, height = 20.dp)
-                            .background(colors.paperEdge),
-                    )
-                    Spacer(modifier = Modifier.width(12.dp))
+        prefix =
+            prefix?.let {
+                {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = it,
+                            style = type.sheetBody.copy(fontWeight = FontWeight.SemiBold),
+                            color = colors.sheetInk,
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Box(
+                            modifier =
+                                Modifier
+                                    .size(width = 1.dp, height = 20.dp)
+                                    .background(colors.paperEdge),
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                    }
                 }
-            }
-        },
+            },
         keyboardOptions = keyboardOptions,
         visualTransformation = visualTransformation,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = colors.sheetAccent,
-            unfocusedBorderColor = colors.controlEdge,
-            disabledBorderColor = colors.controlEdge,
-            errorBorderColor = colors.sheetDanger,
-            focusedContainerColor = colors.paper,
-            unfocusedContainerColor = colors.paper,
-            disabledContainerColor = colors.paper,
-            focusedTextColor = colors.sheetInk,
-            unfocusedTextColor = colors.sheetInk,
-            disabledTextColor = colors.sheetInkMuted,
-            cursorColor = colors.sheetAccent,
-        ),
+        colors =
+            OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = colors.sheetAccent,
+                unfocusedBorderColor = colors.controlEdge,
+                disabledBorderColor = colors.controlEdge,
+                errorBorderColor = colors.sheetDanger,
+                focusedContainerColor = colors.paper,
+                unfocusedContainerColor = colors.paper,
+                disabledContainerColor = colors.paper,
+                focusedTextColor = colors.sheetInk,
+                unfocusedTextColor = colors.sheetInk,
+                disabledTextColor = colors.sheetInkMuted,
+                cursorColor = colors.sheetAccent,
+            ),
     )
 }
 
@@ -1550,31 +1610,32 @@ fun AuthSheetActionRow(
     val ink = if (enabled || loading) colors.sheetAccentInk else colors.sheetInkMuted
 
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = 48.dp)
-            .let { base ->
-                if (testTag != null) {
-                    base
-                        .testTag(testTag)
-                        .semantics { testTagsAsResourceId = true }
-                } else {
-                    base
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp)
+                .let { base ->
+                    if (testTag != null) {
+                        base
+                            .testTag(testTag)
+                            .semantics { testTagsAsResourceId = true }
+                    } else {
+                        base
+                    }
                 }
-            }
-            .semantics {
-                role = Role.Button
-                if (!enabled || loading) disabled()
-            }
-            .clip(AuthControlShape)
-            .then(
-                if (enabled && !loading) {
-                    Modifier.clickable(onClick = onClick, role = Role.Button)
-                } else {
-                    Modifier
-                },
-            )
-            .padding(vertical = 12.dp),
+                .semantics {
+                    role = Role.Button
+                    if (!enabled || loading) disabled()
+                }
+                .clip(AuthControlShape)
+                .then(
+                    if (enabled && !loading) {
+                        Modifier.clickable(onClick = onClick, role = Role.Button)
+                    } else {
+                        Modifier
+                    },
+                )
+                .padding(vertical = 12.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {

@@ -43,7 +43,7 @@ dependencies {
     implementation(libs.androidx.material3)
     // Pdf Viewer For Android (Lightweight Compose PDF Viewer)
     implementation(libs.pdf.viewer)
-    
+
     // Coil for Image Loading
     implementation(libs.coil.compose)
 

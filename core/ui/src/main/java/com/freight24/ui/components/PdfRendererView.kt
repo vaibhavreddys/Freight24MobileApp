@@ -17,43 +17,50 @@ import com.rajat.pdfviewer.util.CacheStrategy
 import com.rajat.pdfviewer.util.PdfSource
 import com.rajat.pdfviewer.util.ToolbarTitleBehavior
 import com.rajat.pdfviewer.util.saveTo
-import java.io.File
 
 @Composable
 fun PdfRendererView(source: PdfSource) {
     val lifecycleOwner = LocalLifecycleOwner.current
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.surface),
     ) {
-
         PdfRendererViewCompose(
             source = source,
             lifecycleOwner = lifecycleOwner,
             modifier = Modifier.fillMaxSize(),
-            statusCallBack = object : PdfRendererView.StatusCallBack {
-                override fun onPdfLoadStart() {
-                    Log.d("PdfViewer", "PDF load started")
-                }
+            statusCallBack =
+                object : PdfRendererView.StatusCallBack {
+                    override fun onPdfLoadStart() {
+                        Log.d("PdfViewer", "PDF load started")
+                    }
 
-                override fun onPdfLoadProgress(progress: Int, downloadedBytes: Long, totalBytes: Long?) {
-                    Log.d("PdfViewer", "Progress: $progress%")
-                }
+                    override fun onPdfLoadProgress(
+                        progress: Int,
+                        downloadedBytes: Long,
+                        totalBytes: Long?,
+                    ) {
+                        Log.d("PdfViewer", "Progress: $progress%")
+                    }
 
-                override fun onPdfLoadSuccess(absolutePath: String) {
-                    Log.d("PdfViewer", "PDF loaded successfully: $absolutePath")
-                }
+                    override fun onPdfLoadSuccess(absolutePath: String) {
+                        Log.d("PdfViewer", "PDF loaded successfully: $absolutePath")
+                    }
 
-                override fun onError(error: Throwable) {
-                    Log.e("PdfViewer", "Error loading PDF", error)
-                }
+                    override fun onError(error: Throwable) {
+                        Log.e("PdfViewer", "Error loading PDF", error)
+                    }
 
-                override fun onPageChanged(currentPage: Int, totalPage: Int) {
-                    Log.d("PdfViewer", "Page changed: $currentPage/$totalPage")
-                }
-            }
+                    override fun onPageChanged(
+                        currentPage: Int,
+                        totalPage: Int,
+                    ) {
+                        Log.d("PdfViewer", "Page changed: $currentPage/$totalPage")
+                    }
+                },
         )
     }
 }
@@ -61,14 +68,17 @@ fun PdfRendererView(source: PdfSource) {
 /**
  * Launches a PDF file from a URL.
  */
-fun getPdfLaunchIntent(url: String, context: Context) : Intent {
-        return PdfViewerActivity.launchPdfFromUrl(
-            context = context,
-            pdfUrl = url,
-            pdfTitle = "F24 Document",
-            saveTo = saveTo.DOWNLOADS,
-            enableDownload = true,
-            toolbarTitleBehavior = ToolbarTitleBehavior.SINGLE_LINE_SCROLLABLE,
-            cacheStrategy = CacheStrategy.MAXIMIZE_PERFORMANCE
-        )
+fun getPdfLaunchIntent(
+    url: String,
+    context: Context,
+): Intent {
+    return PdfViewerActivity.launchPdfFromUrl(
+        context = context,
+        pdfUrl = url,
+        pdfTitle = "F24 Document",
+        saveTo = saveTo.DOWNLOADS,
+        enableDownload = true,
+        toolbarTitleBehavior = ToolbarTitleBehavior.SINGLE_LINE_SCROLLABLE,
+        cacheStrategy = CacheStrategy.MAXIMIZE_PERFORMANCE,
+    )
 }

@@ -1,11 +1,9 @@
 package com.freight24.connect.feature.trucks.views
-import com.freight24.ui.components.FreightCenterAlignedTopAppBar
-import com.freight24.ui.components.FreightTopAppBar
-
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -29,7 +27,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -37,11 +34,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Assignment
-import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
-import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.LocalShipping
-import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.Button
@@ -56,7 +50,6 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -64,7 +57,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -78,7 +70,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -86,7 +77,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -97,8 +87,9 @@ import com.freight24.rest.response.AddTruckDto
 import com.freight24.ui.UiState
 import com.freight24.ui.components.AppDropdown
 import com.freight24.ui.components.DashedUploadCard
-import com.freight24.ui.theme.FreightThemeTokens
+import com.freight24.ui.components.FreightCenterAlignedTopAppBar
 import com.freight24.ui.components.formViewportInsets
+import com.freight24.ui.theme.FreightThemeTokens
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -368,32 +359,35 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
                             Icon(
                                 imageVector = Icons.Default.Search,
                                 contentDescription = null,
-                                tint = extendedColors.success
+                                tint = extendedColors.success,
                             )
                         },
                         modifier = Modifier.fillMaxWidth(),
                         shape = MaterialTheme.shapes.medium,
                         singleLine = true,
-                        colors = if (selectedTruckOwner != null) {
-                            OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = extendedColors.success,
-                                unfocusedBorderColor = extendedColors.success
-                            )
-                        } else {
-                            OutlinedTextFieldDefaults.colors()
-                        }
+                        colors =
+                            if (selectedTruckOwner != null) {
+                                OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = extendedColors.success,
+                                    unfocusedBorderColor = extendedColors.success,
+                                )
+                            } else {
+                                OutlinedTextFieldDefaults.colors()
+                            },
                     )
 
                     if (truckOwnerSuggestions.isNotEmpty()) {
                         Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 4.dp),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 4.dp),
                             shape = MaterialTheme.shapes.medium,
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant
-                            ),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                            colors =
+                                CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                ),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
                         ) {
                             Column {
                                 truckOwnerSuggestions.forEach { owner ->
@@ -402,28 +396,30 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
                                             Text(
                                                 text = owner.full_name,
                                                 fontWeight = FontWeight.Bold,
-                                                style = MaterialTheme.typography.bodyLarge
+                                                style = MaterialTheme.typography.bodyLarge,
                                             )
                                         },
                                         supportingContent = {
                                             Text(
                                                 text = owner.phone,
-                                                style = MaterialTheme.typography.bodySmall
+                                                style = MaterialTheme.typography.bodySmall,
                                             )
                                         },
-                                        modifier = Modifier.clickable {
-                                            viewModel.onTruckOwnerSelected(owner)
-                                            focusManager.clearFocus()
-                                        },
-                                        colors = ListItemDefaults.colors(
-                                            containerColor = colorScheme.surface.copy(alpha = 0f)
-                                        )
+                                        modifier =
+                                            Modifier.clickable {
+                                                viewModel.onTruckOwnerSelected(owner)
+                                                focusManager.clearFocus()
+                                            },
+                                        colors =
+                                            ListItemDefaults.colors(
+                                                containerColor = colorScheme.surface.copy(alpha = 0f),
+                                            ),
                                     )
                                     if (owner != truckOwnerSuggestions.last()) {
                                         androidx.compose.material3.HorizontalDivider(
                                             modifier = Modifier.padding(horizontal = 16.dp),
                                             thickness = 0.5.dp,
-                                            color = MaterialTheme.colorScheme.outlineVariant
+                                            color = MaterialTheme.colorScheme.outlineVariant,
                                         )
                                     }
                                 }
@@ -597,7 +593,7 @@ private fun DocumentsStep(viewModel: OnboardTruckViewModel) {
                 docLauncher.launch(arrayOf("application/pdf"))
             }
         },
-        sheetState = sheetState
+        sheetState = sheetState,
     )
 
     if (pendingUris.isNotEmpty()) {
@@ -618,7 +614,7 @@ private fun DocumentsStep(viewModel: OnboardTruckViewModel) {
             onDismiss = {
                 pendingUris = emptyList()
                 currentTargetPrefix = null
-            }
+            },
         )
     }
 

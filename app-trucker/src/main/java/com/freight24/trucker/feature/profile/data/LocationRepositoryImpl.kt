@@ -15,7 +15,10 @@ internal class LocationRepositoryImpl
         private val safeCallProvider: SafeCallProvider,
         @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) : LocationRepository {
-        override suspend fun searchCities(query: String, type: String?): Result<List<CityResult>> {
+        override suspend fun searchCities(
+            query: String,
+            type: String?,
+        ): Result<List<CityResult>> {
             return safeCallProvider.safeApiCall(ioDispatcher) {
                 api.searchCities(query, type)
             }.map { response ->

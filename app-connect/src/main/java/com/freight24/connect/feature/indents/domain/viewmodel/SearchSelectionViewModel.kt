@@ -7,7 +7,7 @@ data class SearchSelectionUiState(
     val query: String = "",
     val results: List<Any> = emptyList(),
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
 )
 
 sealed class SearchSelectionEvent {
@@ -16,5 +16,6 @@ sealed class SearchSelectionEvent {
 
 interface SearchSelectionViewModel {
     val uiState: StateFlow<SearchSelectionUiState>
+
     fun onEvent(event: SearchSelectionEvent)
 }

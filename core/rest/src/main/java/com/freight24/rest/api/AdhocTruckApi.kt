@@ -1,8 +1,8 @@
 package com.freight24.rest.api
 
+import com.freight24.rest.request.CreateAdhocTruckRequest
 import com.freight24.rest.response.AdhocTruckOwnerSearchResponse
 import com.freight24.rest.response.BaseResponse
-import com.freight24.rest.request.CreateAdhocTruckRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET

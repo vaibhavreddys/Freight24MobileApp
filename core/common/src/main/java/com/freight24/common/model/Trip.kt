@@ -57,15 +57,20 @@ data class TripFinancials(
 )
 
 data class FeeBlock(val amount: Double, val percent: Int)
+
 data class TdsBlock(val amount: Double, val percent: Float, val applicable: Boolean)
+
 data class HaltingBlock(val loading: HaltingLeg, val unloading: HaltingLeg)
+
 data class HaltingLeg(
     val days: Int,
     val totalAmount: Double,
     val perDayAmount: Double,
     val notes: String?,
 )
+
 data class LuBlock(val loading: LuLeg, val unloading: LuLeg)
+
 data class LuLeg(
     val id: String?,
     val total: Double,
@@ -74,12 +79,14 @@ data class LuLeg(
     val slipUrl: String?,
     val notes: String?,
 )
+
 data class AdvanceBlock(
     val percent: Int,
     val amount: Double,
     val paid: Boolean,
     val paidAmount: Double,
 )
+
 data class BalanceBlock(
     val amount: Double,
     val paidAmount: Double,

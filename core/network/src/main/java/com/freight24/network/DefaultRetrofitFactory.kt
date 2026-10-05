@@ -19,7 +19,6 @@ class DefaultRetrofitFactory(
         clientConfigurator: OkHttpClient.Builder.() -> Unit,
         retrofitConfigurator: Retrofit.Builder.() -> Unit,
     ): Retrofit {
-
         val client =
             okHttpClient
                 .newBuilder()

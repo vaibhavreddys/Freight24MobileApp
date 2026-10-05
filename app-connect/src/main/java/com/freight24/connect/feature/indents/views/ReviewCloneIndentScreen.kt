@@ -1,6 +1,4 @@
 package com.freight24.connect.feature.indents.views
-import com.freight24.ui.components.FreightTopAppBar
-
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,6 +35,7 @@ import com.freight24.connect.feature.indents.domain.viewmodel.CloneIndentEvent
 import com.freight24.connect.feature.indents.domain.viewmodel.CloneIndentViewModel
 import com.freight24.connect.feature.indents.domain.viewmodel.CloneIndentViewModelImpl
 import com.freight24.connect.navigation.ConnectDestination
+import com.freight24.ui.components.FreightTopAppBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,14 +45,16 @@ fun ReviewCloneIndentScreen(
     navController: NavController,
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val cloneIndentBackStackEntry = remember(navBackStackEntry) {
-        requireNotNull(navController.previousBackStackEntry) {
-            "CloneIndent back stack entry not found"
+    val cloneIndentBackStackEntry =
+        remember(navBackStackEntry) {
+            requireNotNull(navController.previousBackStackEntry) {
+                "CloneIndent back stack entry not found"
+            }
         }
-    }
-    val viewModel: CloneIndentViewModel = hiltViewModel<CloneIndentViewModelImpl>(
-        cloneIndentBackStackEntry
-    )
+    val viewModel: CloneIndentViewModel =
+        hiltViewModel<CloneIndentViewModelImpl>(
+            cloneIndentBackStackEntry,
+        )
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -61,7 +62,7 @@ fun ReviewCloneIndentScreen(
         uiState.successMessage?.let {
             uiState.createdIndentId?.let { indentId ->
                 navController.navigate(
-                    ConnectDestination.IndentSuccess.createRoute(indentId, uiState.createdIndentCode)
+                    ConnectDestination.IndentSuccess.createRoute(indentId, uiState.createdIndentCode),
                 ) {
                     launchSingleTop = true
                 }
@@ -138,9 +139,10 @@ fun ReviewCloneIndentScreen(
                 // Consignor clause
                 ConsignorClause(
                     number = 1,
-                    clientName = groupDetails.clientProfile?.companyName
-                        ?: groupDetails.clientProfile?.fullName
-                        ?: "Unknown",
+                    clientName =
+                        groupDetails.clientProfile?.companyName
+                            ?: groupDetails.clientProfile?.fullName
+                            ?: "Unknown",
                     tagCode = groupDetails.clientProfile?.tagCode,
                     branchName = groupDetails.clientBranch?.branchName,
                     branchCode = groupDetails.clientBranch?.branchCode,
@@ -151,12 +153,14 @@ fun ReviewCloneIndentScreen(
                 // Route & Financials Section
                 RouteAndFinancialsSection(
                     number = 2,
-                    originCity = loadingLocation?.let {
-                        "${it.areaName ?: it.cityName}"
-                    } ?: "Unknown",
-                    destinationCity = unloadingLocation?.let {
-                        "${it.areaName ?: it.cityName}"
-                    } ?: "Unknown",
+                    originCity =
+                        loadingLocation?.let {
+                            "${it.areaName ?: it.cityName}"
+                        } ?: "Unknown",
+                    destinationCity =
+                        unloadingLocation?.let {
+                            "${it.areaName ?: it.cityName}"
+                        } ?: "Unknown",
                     clientCost = uiState.clientCost,
                     negotiatedCost = uiState.negotiatedCost,
                     hideCost = uiState.hideCost,
@@ -188,12 +192,12 @@ fun ReviewCloneIndentScreen(
     }
 }
 
-//@Composable
-//fun CloneSettingsSection(
+// @Composable
+// fun CloneSettingsSection(
 //    assignedTo: String,
 //    notes: String,
 //    onEditClick: () -> Unit
-//) {
+// ) {
 //    ReviewSection(title = "Clone Settings", onEditClick = onEditClick) {
 //        if (assignedTo.isNotBlank()) {
 //            ReviewItem(label = "Assigned To", value = assignedTo)
@@ -202,4 +206,4 @@ fun ReviewCloneIndentScreen(
 //            ReviewItem(label = "Notes", value = notes)
 //        }
 //    }
-//}
+// }

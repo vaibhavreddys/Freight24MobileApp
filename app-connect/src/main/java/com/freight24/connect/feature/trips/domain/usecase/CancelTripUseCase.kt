@@ -9,19 +9,19 @@ import javax.inject.Inject
 data class CancelTripUseCaseDataParams(
     val tripId: String,
     val reason: String,
-): UseCaseParams
+) : UseCaseParams
 
 internal interface CancelTripUseCase : UseCase<CancelTripUseCaseDataParams, BaseResponse>
 
-
-class CancelTripUseCaseImpl @Inject constructor(
-    private val repository: TripRepository
-) : CancelTripUseCase {
-
-    override suspend fun invoke(params: CancelTripUseCaseDataParams): Result<BaseResponse> {
-        return repository.cancelTrip(
-            params.tripId,
-            params.reason,
-        )
+class CancelTripUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: TripRepository,
+    ) : CancelTripUseCase {
+        override suspend fun invoke(params: CancelTripUseCaseDataParams): Result<BaseResponse> {
+            return repository.cancelTrip(
+                params.tripId,
+                params.reason,
+            )
+        }
     }
-}

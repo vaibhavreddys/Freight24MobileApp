@@ -26,10 +26,22 @@ val IndianPhoneVisualTransformation: VisualTransformation =
             val offsetMapping =
                 object : OffsetMapping {
                     override fun originalToTransformed(offset: Int): Int =
-                        if (raw.length <= 5) offset else if (offset <= 5) offset else offset + 1
+                        if (raw.length <= 5) {
+                            offset
+                        } else if (offset <= 5) {
+                            offset
+                        } else {
+                            offset + 1
+                        }
 
                     override fun transformedToOriginal(offset: Int): Int =
-                        if (raw.length <= 5) offset else if (offset <= 5) offset else offset - 1
+                        if (raw.length <= 5) {
+                            offset
+                        } else if (offset <= 5) {
+                            offset
+                        } else {
+                            offset - 1
+                        }
                 }
 
             return TransformedText(AnnotatedString(transformed), offsetMapping)

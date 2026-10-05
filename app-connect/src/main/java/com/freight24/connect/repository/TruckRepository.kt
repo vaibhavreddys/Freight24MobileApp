@@ -13,7 +13,10 @@ interface TruckRepository {
 
     suspend fun getTruckDetail(id: String): Result<TruckDetailResponse>
 
-    suspend fun getTruckDocumentSignedUrl(truckId: String, documentType: String): Result<String>
+    suspend fun getTruckDocumentSignedUrl(
+        truckId: String,
+        documentType: String,
+    ): Result<String>
 
     suspend fun addTruck(
         registrationNumber: MultipartBody.Part,

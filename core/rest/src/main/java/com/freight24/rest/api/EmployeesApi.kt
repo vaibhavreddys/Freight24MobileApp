@@ -7,12 +7,11 @@ import retrofit2.http.GET
 import retrofit2.http.Path
 
 interface EmployeesApi {
-
     @GET("employees/dashboard")
     suspend fun getDashboardData(): Response<DashboardDataResponse>
 
     @GET("employees/{userId}/basic-info")
     suspend fun getEmployeeBasicInfo(
-        @Path("userId") userId: String
+        @Path("userId") userId: String,
     ): Response<EmployeeBasicInfoResponse>
 }

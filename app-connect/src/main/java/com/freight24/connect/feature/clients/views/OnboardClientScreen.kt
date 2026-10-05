@@ -1,6 +1,8 @@
 package com.freight24.connect.feature.clients.views
-import com.freight24.ui.components.FreightTopAppBar
-
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -41,17 +43,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Apartment
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Call
-import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -61,9 +60,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -86,8 +83,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
@@ -98,7 +95,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -112,18 +108,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.freight24.connect.feature.clients.domain.viewmodel.OnboardClientViewModel
 import com.freight24.ui.components.DashedUploadCard
+import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.theme.FreightThemeTokens
 import kotlinx.coroutines.launch
 import java.io.File
-import android.Manifest
-import android.content.Context
-import android.content.pm.PackageManager
-import android.net.Uri
-import androidx.core.content.ContextCompat
 
 private enum class ClientFieldType {
     TEXT,
@@ -308,7 +301,8 @@ fun OnboardClientScreen(
                     RequiredClientField.FULL_NAME,
                     RequiredClientField.PHONE_NUMBER,
                     RequiredClientField.PAN_NUMBER,
-                    RequiredClientField.GST_NUMBER -> {
+                    RequiredClientField.GST_NUMBER,
+                    -> {
                         clientExpanded = true
                         scope.launch { listState.animateScrollToItem(0) }
                     }
@@ -318,7 +312,8 @@ fun OnboardClientScreen(
                     }
 
                     RequiredClientField.BRANCH_NAME,
-                    RequiredClientField.BRANCH_ADDRESS -> {
+                    RequiredClientField.BRANCH_ADDRESS,
+                    -> {
                         firstMissing.branchId?.let { branchDetailsExpanded[it] = true }
                         firstMissing.branchIndex?.let(::scrollToBranch)
                     }
@@ -444,9 +439,10 @@ fun OnboardClientScreen(
                             }
                             InternalDivider()
                             Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
                                 OnboardSection(
@@ -596,10 +592,11 @@ fun OnboardClientScreen(
                             modifier = Modifier.fillMaxWidth().height(48.dp),
                             shape = MaterialTheme.shapes.medium,
                             border = BorderStroke(0.5.dp, successColor.copy(alpha = 0.5f)),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surface,
-                                contentColor = successColor,
-                            ),
+                            colors =
+                                ButtonDefaults.outlinedButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.surface,
+                                    contentColor = successColor,
+                                ),
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Add,
@@ -627,9 +624,10 @@ fun OnboardClientScreen(
 
             if (isSaving) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(FreightThemeTokens.colors.dialogScrim),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .background(FreightThemeTokens.colors.dialogScrim),
                     contentAlignment = Alignment.Center,
                 ) {
                     Card(
@@ -673,9 +671,9 @@ fun OnboardClientScreen(
                         docLauncher.launch(arrayOf("application/pdf"))
                     }
                 },
-                sheetState = sheetState
+                sheetState = sheetState,
             )
-            
+
             if (pendingUris.isNotEmpty()) {
                 com.freight24.ui.components.FileConfirmationSheet(
                     selectedUris = pendingUris,
@@ -693,7 +691,7 @@ fun OnboardClientScreen(
                     onDismiss = {
                         pendingUris = emptyList()
                         currentTargetPrefix = null
-                    }
+                    },
                 )
             }
         }
@@ -879,70 +877,77 @@ private fun FormField(
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = if (errorMessage != null) 0.dp else 13.dp)
-                .then(if (isMultiline) Modifier.heightIn(min = 80.dp) else Modifier)
-                .onFocusChanged { state ->
-                    if (isFocused && !state.isFocused) {
-                        onFocusLost?.invoke()
-                    }
-                    isFocused = state.isFocused
-                },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, top = 8.dp, end = 16.dp, bottom = if (errorMessage != null) 0.dp else 13.dp)
+                    .then(if (isMultiline) Modifier.heightIn(min = 80.dp) else Modifier)
+                    .onFocusChanged { state ->
+                        if (isFocused && !state.isFocused) {
+                            onFocusLost?.invoke()
+                        }
+                        isFocused = state.isFocused
+                    },
             singleLine = !isMultiline,
             minLines = if (isMultiline) 3 else 1,
             maxLines = if (isMultiline) Int.MAX_VALUE else 1,
             shape = MaterialTheme.shapes.small,
             isError = errorMessage != null,
-            textStyle = MaterialTheme.typography.labelLarge.copy(
-                color = MaterialTheme.colorScheme.onSurface,
-                fontFamily = if (monospace) FontFamily.Monospace else FontFamily.Default,
-                letterSpacing = if (monospace) 0.05.sp else 0.sp,
-            ),
-            keyboardOptions = KeyboardOptions(
-                keyboardType = when (fieldType) {
-                    ClientFieldType.PHONE -> KeyboardType.Phone
-                    ClientFieldType.EMAIL -> KeyboardType.Email
-                    ClientFieldType.GST,
-                    ClientFieldType.PAN,
-                    -> KeyboardType.Ascii
-                    else -> KeyboardType.Text
-                },
-                capitalization = when (fieldType) {
-                    ClientFieldType.EMAIL -> KeyboardCapitalization.None
-                    ClientFieldType.GST,
-                    ClientFieldType.PAN,
-                    -> KeyboardCapitalization.Characters
-                    else -> KeyboardCapitalization.Words
-                },
-                imeAction = if (isMultiline) ImeAction.Default else ImeAction.Next,
-            ),
+            textStyle =
+                MaterialTheme.typography.labelLarge.copy(
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontFamily = if (monospace) FontFamily.Monospace else FontFamily.Default,
+                    letterSpacing = if (monospace) 0.05.sp else 0.sp,
+                ),
+            keyboardOptions =
+                KeyboardOptions(
+                    keyboardType =
+                        when (fieldType) {
+                            ClientFieldType.PHONE -> KeyboardType.Phone
+                            ClientFieldType.EMAIL -> KeyboardType.Email
+                            ClientFieldType.GST,
+                            ClientFieldType.PAN,
+                            -> KeyboardType.Ascii
+                            else -> KeyboardType.Text
+                        },
+                    capitalization =
+                        when (fieldType) {
+                            ClientFieldType.EMAIL -> KeyboardCapitalization.None
+                            ClientFieldType.GST,
+                            ClientFieldType.PAN,
+                            -> KeyboardCapitalization.Characters
+                            else -> KeyboardCapitalization.Words
+                        },
+                    imeAction = if (isMultiline) ImeAction.Default else ImeAction.Next,
+                ),
             visualTransformation = VisualTransformation.None,
             placeholder = {
                 Text(
-                    text = when (fieldType) {
-                        ClientFieldType.PHONE -> "Enter phone number"
-                        ClientFieldType.EMAIL -> "email@example.com"
-                        ClientFieldType.PAN -> "ABCDE1234F"
-                        ClientFieldType.GST -> "27ABCDE1234F1Z5"
-                        ClientFieldType.ADDRESS -> "Enter branch address"
-                        else -> label
-                    },
+                    text =
+                        when (fieldType) {
+                            ClientFieldType.PHONE -> "Enter phone number"
+                            ClientFieldType.EMAIL -> "email@example.com"
+                            ClientFieldType.PAN -> "ABCDE1234F"
+                            ClientFieldType.GST -> "27ABCDE1234F1Z5"
+                            ClientFieldType.ADDRESS -> "Enter branch address"
+                            else -> label
+                        },
                     fontFamily = if (monospace) FontFamily.Monospace else FontFamily.Default,
                     style = MaterialTheme.typography.bodyMedium,
                     letterSpacing = if (monospace) 0.05.sp else 0.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f),
                 )
             },
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                focusedBorderColor = if (errorMessage == null) successColor.copy(alpha = 0.5f) else MaterialTheme.colorScheme.error,
-                unfocusedBorderColor = if (errorMessage == null) MaterialTheme.colorScheme.outlineVariant else MaterialTheme.colorScheme.error,
-                cursorColor = successColor,
-                focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-            ),
+            colors =
+                OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    focusedBorderColor = if (errorMessage == null) successColor.copy(alpha = 0.5f) else MaterialTheme.colorScheme.error,
+                    unfocusedBorderColor = if (errorMessage == null) MaterialTheme.colorScheme.outlineVariant else MaterialTheme.colorScheme.error,
+                    cursorColor = successColor,
+                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+                ),
         )
         if (errorMessage != null) {
             Text(
@@ -980,14 +985,15 @@ private fun TextLabelRow(
         )
         Spacer(modifier = Modifier.width(6.dp))
         Text(
-            text = buildAnnotatedString {
-                append(label.uppercase())
-                if (required) {
-                    withStyle(SpanStyle(color = MaterialTheme.colorScheme.error)) {
-                        append(" *")
+            text =
+                buildAnnotatedString {
+                    append(label.uppercase())
+                    if (required) {
+                        withStyle(SpanStyle(color = MaterialTheme.colorScheme.error)) {
+                            append(" *")
+                        }
                     }
-                }
-            },
+                },
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.SemiBold,
             letterSpacing = 0.07.sp,
@@ -1013,9 +1019,10 @@ private fun FloatingActions(
     )
 
     Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(16.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(16.dp),
         tonalElevation = 8.dp,
         shadowElevation = 12.dp,
         shape = MaterialTheme.shapes.medium,
@@ -1030,10 +1037,11 @@ private fun FloatingActions(
                 modifier = Modifier.weight(1f).height(54.dp),
                 shape = MaterialTheme.shapes.medium,
                 border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0f),
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                ),
+                colors =
+                    ButtonDefaults.outlinedButtonColors(
+                        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0f),
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
             ) {
                 Text("Cancel", fontWeight = FontWeight.Medium)
             }
@@ -1043,12 +1051,13 @@ private fun FloatingActions(
                 interactionSource = interactionSource,
                 modifier = Modifier.weight(1.9f).height(54.dp).scale(scale),
                 shape = MaterialTheme.shapes.medium,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = FreightThemeTokens.colors.success,
-                    contentColor = FreightThemeTokens.colors.onSuccess,
-                    disabledContainerColor = FreightThemeTokens.colors.success.copy(alpha = 0.4f),
-                    disabledContentColor = FreightThemeTokens.colors.onSuccess.copy(alpha = 0.6f),
-                ),
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = FreightThemeTokens.colors.success,
+                        contentColor = FreightThemeTokens.colors.onSuccess,
+                        disabledContainerColor = FreightThemeTokens.colors.success.copy(alpha = 0.4f),
+                        disabledContentColor = FreightThemeTokens.colors.onSuccess.copy(alpha = 0.6f),
+                    ),
             ) {
                 if (isSaving) {
                     CircularProgressIndicator(
@@ -1084,7 +1093,11 @@ private fun EntityOnboardedDialog(
     val cardAlpha by animateFloatAsState(if (playEntry) 1f else 0f, tween(400, easing = FastOutSlowInEasing), label = "cardAlpha")
     val iconScale by animateFloatAsState(if (playEntry) 1f else 0.85f, tween(500, 150, easing = FastOutSlowInEasing), label = "iconScale")
     val iconAlpha by animateFloatAsState(if (playEntry) 1f else 0f, tween(500, 150, easing = FastOutSlowInEasing), label = "iconAlpha")
-    val checkProgress by animateFloatAsState(if (playEntry) 1f else 0f, tween(400, 500, easing = FastOutSlowInEasing), label = "checkProgress")
+    val checkProgress by animateFloatAsState(
+        if (playEntry) 1f else 0f,
+        tween(400, 500, easing = FastOutSlowInEasing),
+        label = "checkProgress",
+    )
 
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Box(
@@ -1092,14 +1105,15 @@ private fun EntityOnboardedDialog(
             contentAlignment = Alignment.Center,
         ) {
             Card(
-                modifier = Modifier
-                    .width(320.dp)
-                    .graphicsLayer {
-                        alpha = cardAlpha
-                        scaleX = cardScale
-                        scaleY = cardScale
-                    }
-                    .border(1.dp, colorScheme.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(24.dp)),
+                modifier =
+                    Modifier
+                        .width(320.dp)
+                        .graphicsLayer {
+                            alpha = cardAlpha
+                            scaleX = cardScale
+                            scaleY = cardScale
+                        }
+                        .border(1.dp, colorScheme.outlineVariant.copy(alpha = 0.5f), RoundedCornerShape(24.dp)),
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
             ) {
@@ -1109,13 +1123,14 @@ private fun EntityOnboardedDialog(
                 ) {
                     Canvas(modifier = Modifier.width(180.dp).height(1.dp)) {
                         drawLine(
-                            brush = Brush.horizontalGradient(
-                                listOf(
-                                    successColor.copy(alpha = 0f),
-                                    successColor.copy(alpha = 0.8f),
-                                    successColor.copy(alpha = 0f),
+                            brush =
+                                Brush.horizontalGradient(
+                                    listOf(
+                                        successColor.copy(alpha = 0f),
+                                        successColor.copy(alpha = 0.8f),
+                                        successColor.copy(alpha = 0f),
+                                    ),
                                 ),
-                            ),
                             start = androidx.compose.ui.geometry.Offset(0f, size.height / 2f),
                             end = androidx.compose.ui.geometry.Offset(size.width, size.height / 2f),
                             strokeWidth = size.height,
@@ -1123,35 +1138,39 @@ private fun EntityOnboardedDialog(
                     }
                     Spacer(modifier = Modifier.height(20.dp))
                     Surface(
-                        modifier = Modifier
-                            .size(72.dp)
-                            .graphicsLayer {
-                                alpha = iconAlpha
-                                scaleX = iconScale
-                                scaleY = iconScale
-                            }
-                            .border(1.dp, successColor.copy(alpha = 0.25f), RoundedCornerShape(999.dp)),
+                        modifier =
+                            Modifier
+                                .size(72.dp)
+                                .graphicsLayer {
+                                    alpha = iconAlpha
+                                    scaleX = iconScale
+                                    scaleY = iconScale
+                                }
+                                .border(1.dp, successColor.copy(alpha = 0.25f), RoundedCornerShape(999.dp)),
                         shape = RoundedCornerShape(999.dp),
                         color = successColor.copy(alpha = 0.10f),
                     ) {
                         Canvas(modifier = Modifier.fillMaxSize().padding(20.dp)) {
-                            val path = androidx.compose.ui.graphics.Path().apply {
-                                moveTo(size.width * 0.18f, size.height * 0.54f)
-                                lineTo(size.width * 0.42f, size.height * 0.76f)
-                                lineTo(size.width * 0.84f, size.height * 0.24f)
-                            }
+                            val path =
+                                androidx.compose.ui.graphics.Path().apply {
+                                    moveTo(size.width * 0.18f, size.height * 0.54f)
+                                    lineTo(size.width * 0.42f, size.height * 0.76f)
+                                    lineTo(size.width * 0.84f, size.height * 0.24f)
+                                }
                             drawPath(
                                 path = path,
                                 color = successColor,
-                                style = Stroke(
-                                    width = 2.2.dp.toPx(),
-                                    cap = StrokeCap.Round,
-                                    join = StrokeJoin.Round,
-                                    pathEffect = PathEffect.dashPathEffect(
-                                        floatArrayOf(path.getBounds().maxDimension * checkProgress, path.getBounds().maxDimension),
-                                        0f,
+                                style =
+                                    Stroke(
+                                        width = 2.2.dp.toPx(),
+                                        cap = StrokeCap.Round,
+                                        join = StrokeJoin.Round,
+                                        pathEffect =
+                                            PathEffect.dashPathEffect(
+                                                floatArrayOf(path.getBounds().maxDimension * checkProgress, path.getBounds().maxDimension),
+                                                0f,
+                                            ),
                                     ),
-                                ),
                             )
                         }
                     }
@@ -1159,7 +1178,11 @@ private fun EntityOnboardedDialog(
                     Text("ONBOARDING COMPLETE", letterSpacing = 0.12.sp, fontWeight = FontWeight.SemiBold, color = successColor)
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "${entityName.ifBlank { entityLabel.lowercase().replaceFirstChar(Char::titlecase) }} has been onboarded successfully.",
+                        text = "${entityName.ifBlank {
+                            entityLabel.lowercase().replaceFirstChar(
+                                Char::titlecase,
+                            )
+                        }} has been onboarded successfully.",
                         style = MaterialTheme.typography.titleLarge,
                         lineHeight = 28.6.sp,
                         fontWeight = FontWeight.Normal,
@@ -1183,7 +1206,11 @@ private fun EntityOnboardedDialog(
                         )
                     }
                     Spacer(modifier = Modifier.height(28.dp))
-                    HorizontalDivider(color = colorScheme.outlineVariant.copy(alpha = 0.4f), thickness = 0.5.dp, modifier = Modifier.fillMaxWidth())
+                    HorizontalDivider(
+                        color = colorScheme.outlineVariant.copy(alpha = 0.4f),
+                        thickness = 0.5.dp,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                     Spacer(modifier = Modifier.height(20.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         DialogButton(

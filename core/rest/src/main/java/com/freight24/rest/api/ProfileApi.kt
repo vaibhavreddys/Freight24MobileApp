@@ -7,7 +7,6 @@ import com.freight24.rest.response.ProfileResponse
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
-import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.http.POST
@@ -22,7 +21,7 @@ interface ProfileApi {
     @PUT("truck-owners/{id}")
     suspend fun updateProfile(
         @Path("id") id: String,
-        @Body request: com.freight24.rest.request.UpdateProfileRequest
+        @Body request: com.freight24.rest.request.UpdateProfileRequest,
     ): Response<BaseResponse>
 
     @Multipart
@@ -31,7 +30,7 @@ interface ProfileApi {
         @Part file: MultipartBody.Part,
         @Part("document_type_id") documentTypeId: Int,
         @Part("user_id") userId: String,
-        @Part("document_number") documentNumber: okhttp3.RequestBody
+        @Part("document_number") documentNumber: okhttp3.RequestBody,
     ): Response<BaseResponse>
 
     @Multipart
@@ -40,7 +39,7 @@ interface ProfileApi {
         @Path("docId") docId: String,
         @Path("userId") userId: String,
         @Part file: MultipartBody.Part,
-        @Part("document_number") documentNumber: okhttp3.RequestBody
+        @Part("document_number") documentNumber: okhttp3.RequestBody,
     ): Response<BaseResponse>
 
     @Multipart
@@ -49,7 +48,7 @@ interface ProfileApi {
         @Part file: MultipartBody.Part,
         @Part("document_type_id") documentTypeId: Int,
         @Part("user_id") userId: String,
-        @Part("document_number") documentNumber: okhttp3.RequestBody
+        @Part("document_number") documentNumber: okhttp3.RequestBody,
     ): Response<IdentityDocumentUploadResponse>
 
     @Multipart
@@ -58,12 +57,11 @@ interface ProfileApi {
         @Path("docId") docId: String,
         @Path("userId") userId: String,
         @Part file: MultipartBody.Part,
-        @Part("document_number") documentNumber: okhttp3.RequestBody
+        @Part("document_number") documentNumber: okhttp3.RequestBody,
     ): Response<IdentityDocumentUploadResponse>
 
     @POST("documents/identity/final-save")
     suspend fun finalizeIdentityDocuments(
-        @Body request: FinalSaveRequest
+        @Body request: FinalSaveRequest,
     ): Response<BaseResponse>
-
 }

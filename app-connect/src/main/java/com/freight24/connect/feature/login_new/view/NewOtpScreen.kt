@@ -54,8 +54,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.freight24.connect.feature.login_new.viewmodel.NewOtpViewModel
 import com.freight24.common.util.groupIndianMobileDigits
+import com.freight24.connect.feature.login_new.viewmodel.NewOtpViewModel
 import com.freight24.ui.UiState
 import com.freight24.ui.auth.AuthChipShape
 import com.freight24.ui.auth.AuthControlShape
@@ -134,22 +134,25 @@ fun NewOtpScreen(
     val hero = rememberAuthColors()
     val extendedColors = FreightThemeTokens.colors
     val expiringSoon = verificationSecondsRemaining in 1..30
-    val expiryFraction = (verificationSecondsRemaining.toFloat() / VERIFY_WINDOW_SECONDS)
-        .coerceIn(0f, 1f)
+    val expiryFraction =
+        (verificationSecondsRemaining.toFloat() / VERIFY_WINDOW_SECONDS)
+            .coerceIn(0f, 1f)
     val expiryColor = if (expiringSoon) extendedColors.warning else colorScheme.primary
 
     Scaffold(
-        modifier = Modifier
-            .fillMaxSize()
-            .imePadding()
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .imePadding(),
     ) { contentPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(contentPadding)
-                .background(hero.paper)
-                .verticalScroll(scrollState)
-                .navigationBarsPadding()
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(contentPadding)
+                    .background(hero.paper)
+                    .verticalScroll(scrollState)
+                    .navigationBarsPadding(),
         ) {
             // -----------------------------------------------------------
             // Masthead — the same brand document as the login screen, now
@@ -157,13 +160,14 @@ fun NewOtpScreen(
             // rather than a second, unrelated screen.
             // -----------------------------------------------------------
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(AuthHeroShape)
-                    .background(hero.field)
-                    .statusBarsPadding()
-                    .padding(horizontal = 24.dp)
-                    .padding(top = 16.dp, bottom = 30.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(AuthHeroShape)
+                        .background(hero.field)
+                        .statusBarsPadding()
+                        .padding(horizontal = 24.dp)
+                        .padding(top = 16.dp, bottom = 30.dp),
             ) {
                 AuthLedgerBackdrop(hero)
                 AuthLaneMarkings(hero)
@@ -175,9 +179,10 @@ fun NewOtpScreen(
                     ) {
                         IconButton(
                             onClick = onBackClick,
-                            modifier = Modifier
-                                .offset(x = (-8).dp)
-                                .size(48.dp),
+                            modifier =
+                                Modifier
+                                    .offset(x = (-8).dp)
+                                    .size(48.dp),
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.ArrowBackIosNew,
@@ -247,20 +252,22 @@ fun NewOtpScreen(
                     // Destination block — tap to correct the number. Reads as a
                     // consignment "deliver code to" row, not a generic chip.
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(AuthChipShape)
-                            .background(hero.paper)
-                            .border(1.dp, hero.paperEdge, AuthChipShape)
-                            .clickable(onClick = onWrongNumberClick)
-                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clip(AuthChipShape)
+                                .background(hero.paper)
+                                .border(1.dp, hero.paperEdge, AuthChipShape)
+                                .clickable(onClick = onWrongNumberClick)
+                                .padding(horizontal = 16.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
                             text = "+91 ${groupIndianMobileDigits(phoneNumber)}",
-                            style = MaterialTheme.typography.titleSmall.copy(
-                                fontFeatureSettings = "tnum",
-                            ),
+                            style =
+                                MaterialTheme.typography.titleSmall.copy(
+                                    fontFeatureSettings = "tnum",
+                                ),
                             color = colorScheme.onSurface,
                         )
                         Spacer(modifier = Modifier.weight(1f))
@@ -280,7 +287,7 @@ fun NewOtpScreen(
                         shake = shake,
                         enabled = !isResending && !isLoading,
                         isError = errorMessage != null,
-                        onOtpChange = viewModel::onOtpChange
+                        onOtpChange = viewModel::onOtpChange,
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -299,43 +306,48 @@ fun NewOtpScreen(
                     ) {
                         AuthOverline(
                             text = "CODE EXPIRES IN",
-                            color = if (expiringSoon) {
-                                extendedColors.onSurfaceWarning
-                            } else {
-                                colorScheme.onSurfaceVariant
-                            },
+                            color =
+                                if (expiringSoon) {
+                                    extendedColors.onSurfaceWarning
+                                } else {
+                                    colorScheme.onSurfaceVariant
+                                },
                         )
                         Spacer(modifier = Modifier.weight(1f))
                         Text(
                             text = verificationSecondsRemaining.toMmSs(),
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = FontWeight.SemiBold,
-                                fontFeatureSettings = "tnum",
-                                fontSize = 13.sp,
-                            ),
-                            color = if (expiringSoon) {
-                                extendedColors.onSurfaceWarning
-                            } else {
-                                colorScheme.onSurface
-                            },
+                            style =
+                                MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontFeatureSettings = "tnum",
+                                    fontSize = 13.sp,
+                                ),
+                            color =
+                                if (expiringSoon) {
+                                    extendedColors.onSurfaceWarning
+                                } else {
+                                    colorScheme.onSurface
+                                },
                         )
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(3.dp)
-                            .clip(CircleShape)
-                            .background(hero.paperEdge)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(expiryFraction)
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
                                 .height(3.dp)
                                 .clip(CircleShape)
-                                .background(expiryColor)
+                                .background(hero.paperEdge),
+                    ) {
+                        Box(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth(expiryFraction)
+                                    .height(3.dp)
+                                    .clip(CircleShape)
+                                    .background(expiryColor),
                         )
                     }
 
@@ -354,13 +366,14 @@ fun NewOtpScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(AuthControlShape)
-                            .clickable(enabled = isResendEnabled && !isResending) {
-                                viewModel.onResendClick()
-                            }
-                            .padding(vertical = 12.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clip(AuthControlShape)
+                                .clickable(enabled = isResendEnabled && !isResending) {
+                                    viewModel.onResendClick()
+                                }
+                                .padding(vertical = 12.dp),
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -375,30 +388,33 @@ fun NewOtpScreen(
                             Icon(
                                 imageVector = Icons.Filled.Refresh,
                                 contentDescription = null,
-                                tint = if (isResendEnabled) {
-                                    colorScheme.primary
-                                } else {
-                                    colorScheme.onSurfaceVariant
-                                },
-                                modifier = Modifier.size(16.dp)
+                                tint =
+                                    if (isResendEnabled) {
+                                        colorScheme.primary
+                                    } else {
+                                        colorScheme.onSurfaceVariant
+                                    },
+                                modifier = Modifier.size(16.dp),
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                         }
                         Text(
-                            text = if (isResending) {
-                                "Sending a new code…"
-                            } else if (isResendEnabled) {
-                                "Resend OTP"
-                            } else {
-                                "Resend OTP in ${resendSecondsRemaining}s"
-                            },
+                            text =
+                                if (isResending) {
+                                    "Sending a new code…"
+                                } else if (isResendEnabled) {
+                                    "Resend OTP"
+                                } else {
+                                    "Resend OTP in ${resendSecondsRemaining}s"
+                                },
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.Medium,
-                            color = if (isResendEnabled || isResending) {
-                                colorScheme.primary
-                            } else {
-                                colorScheme.onSurfaceVariant
-                            },
+                            color =
+                                if (isResendEnabled || isResending) {
+                                    colorScheme.primary
+                                } else {
+                                    colorScheme.onSurfaceVariant
+                                },
                         )
                     }
 
@@ -411,17 +427,18 @@ fun NewOtpScreen(
                     AuthOutlinedRow(onClick = { dialSupport(context) }, colors = hero) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .background(hero.field.copy(alpha = 0.10f), CircleShape)
-                                    .border(1.dp, hero.field.copy(alpha = 0.18f), CircleShape),
-                                contentAlignment = Alignment.Center
+                                modifier =
+                                    Modifier
+                                        .size(36.dp)
+                                        .background(hero.field.copy(alpha = 0.10f), CircleShape)
+                                        .border(1.dp, hero.field.copy(alpha = 0.18f), CircleShape),
+                                contentAlignment = Alignment.Center,
                             ) {
                                 Icon(
                                     imageVector = Icons.Filled.LocalPhone,
                                     contentDescription = null,
                                     tint = hero.field,
-                                    modifier = Modifier.size(18.dp)
+                                    modifier = Modifier.size(18.dp),
                                 )
                             }
                             Spacer(modifier = Modifier.width(12.dp))

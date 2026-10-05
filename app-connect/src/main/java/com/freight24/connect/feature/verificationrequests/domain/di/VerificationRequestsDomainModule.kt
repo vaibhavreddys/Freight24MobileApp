@@ -27,47 +27,43 @@ import dagger.hilt.android.components.ViewModelComponent
 @InstallIn(ViewModelComponent::class)
 abstract class VerificationRequestsDomainModule {
     @Binds
-    abstract fun bindGetVerificationRequestsUseCase(
-        useCaseImpl: GetVerificationRequestsUseCaseImpl
-    ): GetVerificationRequestsUseCase
+    abstract fun bindGetVerificationRequestsUseCase(useCaseImpl: GetVerificationRequestsUseCaseImpl): GetVerificationRequestsUseCase
 
     @Binds
     abstract fun bindGetVerificationTruckRequestsUseCase(
-        useCaseImpl: GetVerificationTruckRequestsUseCaseImpl
+        useCaseImpl: GetVerificationTruckRequestsUseCaseImpl,
     ): GetVerificationTruckRequestsUseCase
 
     @Binds
     abstract fun bindGetVerificationTruckOwnerRequestsUseCase(
-        useCaseImpl: GetVerificationTruckOwnerRequestsUseCaseImpl
+        useCaseImpl: GetVerificationTruckOwnerRequestsUseCaseImpl,
     ): GetVerificationTruckOwnerRequestsUseCase
 
     @Binds
     abstract fun bindGetVerificationClientRequestsUseCase(
-        useCaseImpl: GetVerificationClientRequestsUseCaseImpl
+        useCaseImpl: GetVerificationClientRequestsUseCaseImpl,
     ): GetVerificationClientRequestsUseCase
 
     @Binds
-    abstract fun bindGetVerificationSignedUrlUseCase(
-        useCaseImpl: GetVerificationSignedUrlUseCaseImpl
-    ): GetVerificationSignedUrlUseCase
+    abstract fun bindGetVerificationSignedUrlUseCase(useCaseImpl: GetVerificationSignedUrlUseCaseImpl): GetVerificationSignedUrlUseCase
 
     @Binds
     abstract fun bindUpdateVerificationRequestStatusUseCase(
-        useCaseImpl: UpdateVerificationRequestStatusUseCaseImpl
+        useCaseImpl: UpdateVerificationRequestStatusUseCaseImpl,
     ): UpdateVerificationRequestStatusUseCase
 
     @Binds
     abstract fun bindUpdateTruckVerificationStatusUseCase(
-        useCaseImpl: UpdateTruckVerificationStatusUseCaseImpl
+        useCaseImpl: UpdateTruckVerificationStatusUseCaseImpl,
     ): UpdateTruckVerificationStatusUseCase
 
     @Binds
     abstract fun bindUpdateTruckOwnerVerificationStatusUseCase(
-        useCaseImpl: UpdateTruckOwnerVerificationStatusUseCaseImpl
+        useCaseImpl: UpdateTruckOwnerVerificationStatusUseCaseImpl,
     ): UpdateTruckOwnerVerificationStatusUseCase
 
     @Binds
     abstract fun bindUpdateClientVerificationStatusUseCase(
-        useCaseImpl: UpdateClientVerificationStatusUseCaseImpl
+        useCaseImpl: UpdateClientVerificationStatusUseCaseImpl,
     ): UpdateClientVerificationStatusUseCase
 }

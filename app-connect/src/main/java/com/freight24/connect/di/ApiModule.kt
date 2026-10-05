@@ -5,26 +5,26 @@ import com.freight24.connect.BuildConfig
 import com.freight24.network.RetrofitFactory
 import com.freight24.network.di.AuthenticatedNetwork
 import com.freight24.network.di.DefaultNetwork
+import com.freight24.rest.api.AdhocTruckApi
+import com.freight24.rest.api.AuthSessionApi
 import com.freight24.rest.api.ClientApi
 import com.freight24.rest.api.ClientV2Api
-import com.freight24.rest.api.AuthSessionApi
+import com.freight24.rest.api.DocumentApi
+import com.freight24.rest.api.EmployeesApi
 import com.freight24.rest.api.FindTrucksApi
+import com.freight24.rest.api.IndentInterestApi
 import com.freight24.rest.api.IndentsApi
+import com.freight24.rest.api.LeadsApi
 import com.freight24.rest.api.LocationApi
 import com.freight24.rest.api.LoginConnectApi
 import com.freight24.rest.api.NotificationServiceApi
 import com.freight24.rest.api.ProfileApi
-import com.freight24.rest.api.VerificationApi
 import com.freight24.rest.api.TripApi
 import com.freight24.rest.api.TripHaltingApi
 import com.freight24.rest.api.TripLUChargesApi
 import com.freight24.rest.api.TruckApi
-import com.freight24.rest.api.LeadsApi
 import com.freight24.rest.api.TruckOwnerApi
-import com.freight24.rest.api.DocumentApi
-import com.freight24.rest.api.EmployeesApi
-import com.freight24.rest.api.IndentInterestApi
-import com.freight24.rest.api.AdhocTruckApi
+import com.freight24.rest.api.VerificationApi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -209,7 +209,6 @@ object ApiModule {
             .create(BuildConfig.BASE_URL, "AdhocTruckApi")
             .create(AdhocTruckApi::class.java)
     }
-
 
     @Provides
     fun providesLeadsApi(

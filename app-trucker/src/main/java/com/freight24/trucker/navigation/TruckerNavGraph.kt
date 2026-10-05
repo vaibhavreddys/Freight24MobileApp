@@ -1,6 +1,9 @@
 package com.freight24.trucker.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -15,9 +18,6 @@ import com.freight24.trucker.feature.trucks.view.details.TruckDetailsScreen
 import com.freight24.trucker.feature.trucks.view.onboard.OnboardTruckScreen
 import com.freight24.ui.components.AppSettingsScreen
 import com.freight24.ui.theme.FreightAppTheme
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
 fun TruckerNavGraph(
@@ -92,13 +92,13 @@ fun TruckerNavGraph(
                 onBackClick = { navController.popBackStack() },
                 onEditClick = { truckId ->
                     navController.navigate(TruckerDestination.EditTruck.createRoute(truckId))
-                }
+                },
             )
         }
 
         composable(
             route = TruckerDestination.EditTruck.route,
-            arguments = listOf(navArgument("truckId") { type = NavType.StringType })
+            arguments = listOf(navArgument("truckId") { type = NavType.StringType }),
         ) {
             com.freight24.trucker.feature.trucks.view.onboard.EditTruckScreen(
                 onBackClick = { navController.popBackStack() },

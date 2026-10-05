@@ -10,17 +10,14 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 
 interface TripHaltingApi {
-
     @GET("trips/halting-rate/{truck_type_id}")
     suspend fun getHaltingRate(
         @Path("truck_type_id") truckTypeId: String,
     ): Response<TruckHaltingRateResponse>
 
-
     @POST("trips/{trip_id}/halting/bulk")
     suspend fun addHaltingCharges(
         @Path("trip_id") tripId: String,
-        @Body request: HaltingRequest
+        @Body request: HaltingRequest,
     ): Response<UpdateHaltingRatesResponse>
-
 }

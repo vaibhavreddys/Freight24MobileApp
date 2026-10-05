@@ -4,13 +4,12 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UploadedDataResponse(
-    val data: UploadedData
-): BaseResponse() {
-
+    val data: UploadedData,
+) : BaseResponse() {
     @Serializable
     data class UploadedData(
         val document: DocumentResponse?,
-        val trip: TripDataResponse?
+        val trip: TripDataResponse?,
     )
 
     @Serializable
@@ -21,6 +20,6 @@ data class UploadedDataResponse(
         val status: String,
         val podType: String?,
         val podStatus: String?,
-        val uploadedAt: String
+        val uploadedAt: String,
     )
 }

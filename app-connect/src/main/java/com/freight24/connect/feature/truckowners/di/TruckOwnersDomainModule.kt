@@ -11,7 +11,5 @@ import dagger.hilt.components.SingletonComponent
 @InstallIn(SingletonComponent::class)
 abstract class TruckOwnersDomainModule {
     @Binds
-    abstract fun bindCreateTruckOwnerUseCase(
-        useCaseImpl: CreateTruckOwnerUseCaseImpl
-    ): CreateTruckOwnerUseCase
+    abstract fun bindCreateTruckOwnerUseCase(useCaseImpl: CreateTruckOwnerUseCaseImpl): CreateTruckOwnerUseCase
 }

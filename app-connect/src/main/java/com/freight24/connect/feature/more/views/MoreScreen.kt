@@ -3,10 +3,10 @@ package com.freight24.connect.feature.more.views
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -61,9 +61,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.connect.feature.leads.domain.viewmodel.LeadsBadgeViewModel
 import com.freight24.connect.feature.more.MoreViewModel
 import com.freight24.ui.components.DocketCard
+import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.components.MetaTag
 import com.freight24.ui.components.PerforationRule
-import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.theme.FreightThemeTokens
 
 // ===========================================================================
@@ -84,17 +84,19 @@ private fun DeskSectionLabel(text: String) {
         style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.4.sp),
         fontWeight = FontWeight.SemiBold,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier
-            .padding(horizontal = 18.dp)
-            .padding(top = 16.dp, bottom = 7.dp),
+        modifier =
+            Modifier
+                .padding(horizontal = 18.dp)
+                .padding(top = 16.dp, bottom = 7.dp),
     )
 }
 
 @Composable
-private fun deskEyebrow() = MaterialTheme.typography.labelSmall.copy(
-    fontWeight = FontWeight.SemiBold,
-    letterSpacing = 1.4.sp,
-)
+private fun deskEyebrow() =
+    MaterialTheme.typography.labelSmall.copy(
+        fontWeight = FontWeight.SemiBold,
+        letterSpacing = 1.4.sp,
+    )
 
 /** Initials for the badge avatar: first letters of the first and last words. */
 private fun initialsOf(name: String): String =
@@ -143,11 +145,12 @@ fun MoreScreen(
         containerColor = MaterialTheme.colorScheme.background,
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(innerPadding)
-                .padding(bottom = 32.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(innerPadding)
+                    .padding(bottom = 32.dp),
         ) {
             // -- The employee badge ------------------------------------------------
             ProfileDocket(
@@ -237,9 +240,10 @@ fun MoreScreen(
             RegistryDocket(
                 accent = MaterialTheme.colorScheme.error,
                 testTag = "more_logout_docket",
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-                    .padding(top = 10.dp),
+                modifier =
+                    Modifier
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 10.dp),
             ) {
                 DeskRow(
                     icon = Icons.AutoMirrored.Filled.Logout,
@@ -282,9 +286,10 @@ private fun ProfileDocket(
         accent = scheme.primary,
         testTag = "more_profile_card",
         onClick = null,
-        modifier = modifier
-            .padding(top = 12.dp)
-            .fillMaxWidth(),
+        modifier =
+            modifier
+                .padding(top = 12.dp)
+                .fillMaxWidth(),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Surface(
@@ -433,13 +438,14 @@ private fun DeskRow(
     val titleColor = if (danger) scheme.error else scheme.onSurface
 
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = 64.dp)
-            .testTag(testTag)
-            .semantics { testTagsAsResourceId = true }
-            .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .heightIn(min = 64.dp)
+                .testTag(testTag)
+                .semantics { testTagsAsResourceId = true }
+                .clickable(onClick = onClick)
+                .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Surface(
@@ -495,10 +501,11 @@ private fun LogoutConfirmationSheet(
         containerColor = scheme.surface,
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(horizontal = 24.dp, vertical = 8.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 24.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
@@ -511,12 +518,13 @@ private fun LogoutConfirmationSheet(
 
             // Icon badge
             Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .background(
-                        color = scheme.error.copy(alpha = 0.18f),
-                        shape = CircleShape,
-                    ),
+                modifier =
+                    Modifier
+                        .size(56.dp)
+                        .background(
+                            color = scheme.error.copy(alpha = 0.18f),
+                            shape = CircleShape,
+                        ),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -551,19 +559,21 @@ private fun LogoutConfirmationSheet(
             // Primary action: Logout — the destructive choice is the loud one.
             Button(
                 onClick = onConfirm,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-                    .testTag("more_logout_confirm")
-                    .semantics(mergeDescendants = true) {
-                        testTagsAsResourceId = true
-                        contentDescription = "logout_confirm"
-                    },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                        .testTag("more_logout_confirm")
+                        .semantics(mergeDescendants = true) {
+                            testTagsAsResourceId = true
+                            contentDescription = "logout_confirm"
+                        },
                 shape = RoundedCornerShape(28.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = scheme.errorContainer,
-                    contentColor = scheme.onErrorContainer,
-                ),
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = scheme.errorContainer,
+                        contentColor = scheme.onErrorContainer,
+                    ),
                 elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
             ) {
                 Text(text = "Logout", fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
@@ -574,14 +584,15 @@ private fun LogoutConfirmationSheet(
             // Secondary action: Stay Logged In
             OutlinedButton(
                 onClick = onDismiss,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-                    .testTag("more_logout_cancel")
-                    .semantics(mergeDescendants = true) {
-                        testTagsAsResourceId = true
-                        contentDescription = "logout_cancel"
-                    },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                        .testTag("more_logout_cancel")
+                        .semantics(mergeDescendants = true) {
+                            testTagsAsResourceId = true
+                            contentDescription = "logout_cancel"
+                        },
                 shape = RoundedCornerShape(28.dp),
                 border = BorderStroke(1.dp, scheme.outlineVariant),
             ) {

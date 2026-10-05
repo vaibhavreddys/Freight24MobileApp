@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.StateFlow
 
 interface IndentsListViewModel {
     val uiState: StateFlow<IndentsListUiState>
+
     fun onEvent(event: IndentsListEvent)
 }
 
@@ -15,22 +16,25 @@ data class IndentsListUiState(
     val indents: List<IndentResponse.Indent> = emptyList(),
     val selectedTab: IndentTab = IndentTab.MINE,
     val statusFilter: IndentStatusFilter = IndentStatusFilter.ACTIVE,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
 )
 
 enum class IndentTab {
     MINE,
-    ALL
+    ALL,
 }
 
 enum class IndentStatusFilter {
     ACTIVE,
-    INACTIVE
+    INACTIVE,
 }
 
 sealed class IndentsListEvent {
     data class SelectTab(val tab: IndentTab) : IndentsListEvent()
+
     data class SelectStatusFilter(val filter: IndentStatusFilter) : IndentsListEvent()
+
     object RefreshIndents : IndentsListEvent()
+
     object ClearError : IndentsListEvent()
 }

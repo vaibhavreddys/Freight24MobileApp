@@ -1,6 +1,5 @@
 package com.freight24.rest.response
 
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable

@@ -7,5 +7,5 @@ data class GetIndentsResponse(
     val page: Int,
     val limit: Int,
     val total: Int,
-    val data: List<IndentResponse.Indent>
-): BaseResponse()
+    val data: List<IndentResponse.Indent>,
+) : BaseResponse()

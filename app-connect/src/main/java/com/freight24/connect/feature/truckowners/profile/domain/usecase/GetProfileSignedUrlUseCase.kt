@@ -7,10 +7,12 @@ interface GetProfileSignedUrlUseCase {
     suspend operator fun invoke(documentId: String): Result<String>
 }
 
-class GetProfileSignedUrlUseCaseImpl @Inject constructor(
-    private val repository: ProfileRepository
-) : GetProfileSignedUrlUseCase {
-    override suspend fun invoke(documentId: String): Result<String> {
-        return repository.getIdentityDocumentSignedUrl(documentId)
+class GetProfileSignedUrlUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: ProfileRepository,
+    ) : GetProfileSignedUrlUseCase {
+        override suspend fun invoke(documentId: String): Result<String> {
+            return repository.getIdentityDocumentSignedUrl(documentId)
+        }
     }
-}

@@ -8,19 +8,18 @@ import javax.inject.Inject
 
 data class SearchTrucksUseCaseParams(
     val query: String,
-): UseCaseParams
-
+) : UseCaseParams
 
 interface SearchTruckUseCase : UseCase<SearchTrucksUseCaseParams, List<SearchTruckResponse.Truck>>
 
-class SearchTruckUseCaseImpl @Inject constructor(
-    private val repository: TruckRepository
-) : SearchTruckUseCase {
-    override suspend fun invoke(
-        params: SearchTrucksUseCaseParams
-    ): Result<List<SearchTruckResponse.Truck>> {
-        return repository.searchTrucks(
-            params.query
-        )
+class SearchTruckUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: TruckRepository,
+    ) : SearchTruckUseCase {
+        override suspend fun invoke(params: SearchTrucksUseCaseParams): Result<List<SearchTruckResponse.Truck>> {
+            return repository.searchTrucks(
+                params.query,
+            )
+        }
     }
-}

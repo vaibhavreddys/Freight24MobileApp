@@ -12,27 +12,27 @@ enum class TripTypes(val filter: String?, val displayText: String) {
     LR_NOT_UPLOADED("LR_NOT_UPLOADED", "Upload LR Pending"),
     LR_PENDING_REVIEW("LR_PENDING_REVIEW", "Review LR"),
     WAITING_FOR_POD("WAITING_FOR_POD", "POD Pending"),
-    COMPLETED("COMPLETED", "Completed");
+    COMPLETED("COMPLETED", "Completed"),
 }
 
 data class GetMyTripsUseCaseDataParams(
     val tripTypes: TripTypes = TripTypes.ALL,
     val page: Int?,
     val limit: Int?,
-): UseCaseParams
+) : UseCaseParams
 
 interface GetMyTripsUseCase : UseCase<GetMyTripsUseCaseDataParams, MyTripsDataResponse>
 
-
-class GetMyTripsUseCaseImpl @Inject constructor(
-    private val repository: TripRepository
-) : GetMyTripsUseCase {
-
-    override suspend fun invoke(params: GetMyTripsUseCaseDataParams): Result<MyTripsDataResponse> {
-        return repository.getMyTrips(
-            params.tripTypes.filter,
-            params.page ?: 1,
-            params.limit ?: 20,
-        )
+class GetMyTripsUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: TripRepository,
+    ) : GetMyTripsUseCase {
+        override suspend fun invoke(params: GetMyTripsUseCaseDataParams): Result<MyTripsDataResponse> {
+            return repository.getMyTrips(
+                params.tripTypes.filter,
+                params.page ?: 1,
+                params.limit ?: 20,
+            )
+        }
     }
-}

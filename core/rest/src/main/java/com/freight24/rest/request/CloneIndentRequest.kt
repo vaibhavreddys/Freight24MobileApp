@@ -5,5 +5,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class CloneIndentRequest(
     val assigned_to: String?,
-    val notes: String?
+    val notes: String?,
 )

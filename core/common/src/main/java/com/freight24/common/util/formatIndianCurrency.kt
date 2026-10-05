@@ -14,11 +14,12 @@ fun formatIndianCurrency(input: String): String {
     val remaining = integerPart.dropLast(3)
 
     // Correct Indian grouping: reverse -> chunk by 2 -> reverse chunks back -> join
-    val groupedRemaining = remaining.reversed()
-        .chunked(2)
-        .map { it.reversed() }
-        .reversed()
-        .joinToString(",")
+    val groupedRemaining =
+        remaining.reversed()
+            .chunked(2)
+            .map { it.reversed() }
+            .reversed()
+            .joinToString(",")
 
     return "$groupedRemaining,$lastThree$decimalPart"
 }

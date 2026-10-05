@@ -8,10 +8,12 @@ interface GetTrucksUseCase {
     suspend operator fun invoke(): Result<List<TruckDto>>
 }
 
-class GetTrucksUseCaseImpl @Inject constructor(
-    private val repository: TruckRepository
-) : GetTrucksUseCase {
-    override suspend fun invoke(): Result<List<TruckDto>> {
-        return repository.getTrucks()
+class GetTrucksUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: TruckRepository,
+    ) : GetTrucksUseCase {
+        override suspend fun invoke(): Result<List<TruckDto>> {
+            return repository.getTrucks()
+        }
     }
-}

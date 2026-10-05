@@ -14,6 +14,5 @@ class GetClientBranchesUseCaseImpl
     constructor(
         private val repository: ClientRepository,
     ) : GetClientBranchesUseCase {
-        override suspend fun invoke(clientId: String): Result<List<ClientBranchV2Dto>> =
-            repository.getClientBranches(clientId)
+        override suspend fun invoke(clientId: String): Result<List<ClientBranchV2Dto>> = repository.getClientBranches(clientId)
     }

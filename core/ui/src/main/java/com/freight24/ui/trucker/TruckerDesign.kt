@@ -142,12 +142,16 @@ private val TruckerCellShape = RoundedCornerShape(10.dp)
 object TruckerSizes {
     /** Primary action. Big enough to hit without looking. */
     val primaryAction = 60.dp
+
     /** Text fields and the OTP row. */
     val field = 64.dp
+
     /** Secondary / outlined rows (resend, change number). */
     val secondary = 56.dp
+
     /** Minimum tap target for icon buttons. */
     val iconButton = 56.dp
+
     /** Icon size inside button labels. */
     val labelIcon = 22.dp
 }
@@ -189,36 +193,38 @@ data class TruckerColors(
 /** The dark trucker palette. A named singleton rather than inline hex in
  *  the composable below, so the values are stated once and
  *  [rememberTruckerColors] only selects the mode. */
-private val TruckerDarkColors = TruckerColors(
-    canvas = Color(0xFF0F1A14),
-    surface = Color(0xFF1B2C22),
-    brand = Color(0xFF4C9B70),
-    brandPressed = Color(0xFF3E8460),
-    brandSoft = Color(0xFF23402F),
-    ink = Color(0xFFE9F1EB),
-    inkMuted = Color(0xFFA2B8AA),
-    line = Color(0xFF33513E),
-    accent = Color(0xFFE5A63C),
-    error = Color(0xFFF08A7E),
-    onError = Color(0xFF2A0B08),
-    onBrand = Color(0xFF08150E),
-)
+private val TruckerDarkColors =
+    TruckerColors(
+        canvas = Color(0xFF0F1A14),
+        surface = Color(0xFF1B2C22),
+        brand = Color(0xFF4C9B70),
+        brandPressed = Color(0xFF3E8460),
+        brandSoft = Color(0xFF23402F),
+        ink = Color(0xFFE9F1EB),
+        inkMuted = Color(0xFFA2B8AA),
+        line = Color(0xFF33513E),
+        accent = Color(0xFFE5A63C),
+        error = Color(0xFFF08A7E),
+        onError = Color(0xFF2A0B08),
+        onBrand = Color(0xFF08150E),
+    )
 
 /** The light trucker palette. See [TruckerDarkColors]. */
-private val TruckerLightColors = TruckerColors(
-    canvas = Color(0xFFF7F6F2),
-    surface = Color(0xFFF6FAF6),
-    brand = FreightBrandForest,
-    brandPressed = Color(0xFF0D3121),
-    brandSoft = Color(0xFFCDE5D5),
-    ink = Color(0xFF12211A),
-    inkMuted = Color(0xFF4C6055),
-    line = Color(0xFFB7CDBE),
-    accent = Color(0xFFB8760E),
-    error = Color(0xFFB3261E),
-    onError = Color(0xFFFFFFFF),
-    onBrand = Color(0xFFFFFFFF),
-)
+private val TruckerLightColors =
+    TruckerColors(
+        canvas = Color(0xFFF7F6F2),
+        surface = Color(0xFFF6FAF6),
+        brand = FreightBrandForest,
+        brandPressed = Color(0xFF0D3121),
+        brandSoft = Color(0xFFCDE5D5),
+        ink = Color(0xFF12211A),
+        inkMuted = Color(0xFF4C6055),
+        line = Color(0xFFB7CDBE),
+        accent = Color(0xFFB8760E),
+        error = Color(0xFFB3261E),
+        onError = Color(0xFFFFFFFF),
+        onBrand = Color(0xFFFFFFFF),
+    )
 
 /** Returns the trucker palette for the current mode. Mode is derived from
  *  the ambient scheme's surface luminance, so the driver's light/dark
@@ -247,73 +253,84 @@ object TruckerType {
     private val bodyFont = BeVietnamPro
     private val displayFont = Sora
 
-    val headline = TextStyle(
-        fontFamily = displayFont,
-        fontWeight = FontWeight.Bold,
-        fontSize = 30.sp,
-        lineHeight = 37.sp,
-        letterSpacing = (-0.4).sp,
-    )
-    val title = TextStyle(
-        fontFamily = displayFont,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 20.sp,
-        lineHeight = 27.sp,
-    )
-    val body = TextStyle(
-        fontFamily = bodyFont,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 23.sp,
-    )
-    val bodyStrong = TextStyle(
-        fontFamily = bodyFont,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 16.sp,
-        lineHeight = 23.sp,
-    )
-    val fieldLabel = TextStyle(
-        fontFamily = bodyFont,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 15.sp,
-        lineHeight = 21.sp,
-    )
-    val fieldValue = TextStyle(
-        fontFamily = bodyFont,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 18.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.6.sp,
-    )
+    val headline =
+        TextStyle(
+            fontFamily = displayFont,
+            fontWeight = FontWeight.Bold,
+            fontSize = 30.sp,
+            lineHeight = 37.sp,
+            letterSpacing = (-0.4).sp,
+        )
+    val title =
+        TextStyle(
+            fontFamily = displayFont,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 20.sp,
+            lineHeight = 27.sp,
+        )
+    val body =
+        TextStyle(
+            fontFamily = bodyFont,
+            fontWeight = FontWeight.Normal,
+            fontSize = 16.sp,
+            lineHeight = 23.sp,
+        )
+    val bodyStrong =
+        TextStyle(
+            fontFamily = bodyFont,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 16.sp,
+            lineHeight = 23.sp,
+        )
+    val fieldLabel =
+        TextStyle(
+            fontFamily = bodyFont,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 15.sp,
+            lineHeight = 21.sp,
+        )
+    val fieldValue =
+        TextStyle(
+            fontFamily = bodyFont,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 18.sp,
+            lineHeight = 24.sp,
+            letterSpacing = 0.6.sp,
+        )
+
     /** Digits get the display face at a large optical size — the number is
      *  the thing the driver checks twice before tapping. */
-    val digit = TextStyle(
-        fontFamily = displayFont,
-        fontWeight = FontWeight.Bold,
-        fontSize = 24.sp,
-        lineHeight = 30.sp,
-        letterSpacing = 1.5.sp,
-        fontFeatureSettings = "tnum",
-    )
-    val button = TextStyle(
-        fontFamily = bodyFont,
-        fontWeight = FontWeight.Bold,
-        fontSize = 17.sp,
-        lineHeight = 23.sp,
-        letterSpacing = 0.3.sp,
-    )
-    val caption = TextStyle(
-        fontFamily = bodyFont,
-        fontWeight = FontWeight.Normal,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-    )
-    val captionStrong = TextStyle(
-        fontFamily = bodyFont,
-        fontWeight = FontWeight.Bold,
-        fontSize = 15.sp,
-        lineHeight = 21.sp,
-    )
+    val digit =
+        TextStyle(
+            fontFamily = displayFont,
+            fontWeight = FontWeight.Bold,
+            fontSize = 24.sp,
+            lineHeight = 30.sp,
+            letterSpacing = 1.5.sp,
+            fontFeatureSettings = "tnum",
+        )
+    val button =
+        TextStyle(
+            fontFamily = bodyFont,
+            fontWeight = FontWeight.Bold,
+            fontSize = 17.sp,
+            lineHeight = 23.sp,
+            letterSpacing = 0.3.sp,
+        )
+    val caption =
+        TextStyle(
+            fontFamily = bodyFont,
+            fontWeight = FontWeight.Normal,
+            fontSize = 14.sp,
+            lineHeight = 20.sp,
+        )
+    val captionStrong =
+        TextStyle(
+            fontFamily = bodyFont,
+            fontWeight = FontWeight.Bold,
+            fontSize = 15.sp,
+            lineHeight = 21.sp,
+        )
 }
 
 // ---------------------------------------------------------------------------
@@ -363,10 +380,11 @@ fun TruckerBrandHeader(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            modifier = Modifier
-                .size(42.dp)
-                .clip(CircleShape)
-                .background(colors.brandSoft),
+            modifier =
+                Modifier
+                    .size(42.dp)
+                    .clip(CircleShape)
+                    .background(colors.brandSoft),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
@@ -403,9 +421,10 @@ fun TruckerBackButton(
 ) {
     IconButton(
         onClick = onClick,
-        modifier = modifier
-            .size(TruckerSizes.iconButton)
-            .offset(x = (-12).dp),
+        modifier =
+            modifier
+                .size(TruckerSizes.iconButton)
+                .offset(x = (-12).dp),
     ) {
         Icon(
             imageVector = Icons.Filled.ArrowBackIosNew,
@@ -442,54 +461,57 @@ fun TruckerPrimaryButton(
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     val container by animateColorAsState(
-        targetValue = when {
-            !enabled -> colors.brandSoft
-            pressed -> colors.brandPressed
-            else -> colors.brand
-        },
+        targetValue =
+            when {
+                !enabled -> colors.brandSoft
+                pressed -> colors.brandPressed
+                else -> colors.brand
+            },
         animationSpec = tween(durationMillis = 110),
         label = "trucker-button",
     )
     val contentColor = if (enabled) colors.onBrand else colors.inkMuted
 
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(TruckerSizes.primaryAction)
-            .let { base ->
-                if (testTag != null) {
-                    base
-                        .testTag(testTag)
-                        .semantics { testTagsAsResourceId = true }
-                } else {
-                    base
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(TruckerSizes.primaryAction)
+                .let { base ->
+                    if (testTag != null) {
+                        base
+                            .testTag(testTag)
+                            .semantics { testTagsAsResourceId = true }
+                    } else {
+                        base
+                    }
                 }
-            }
-            .semantics {
-                role = Role.Button
-                if (!enabled || loading) disabled()
-            }
-            .clip(TruckerButtonShape)
-            .background(container)
-            .then(
-                if (enabled && !loading) {
-                    Modifier.clickable(
-                        interactionSource = interactionSource,
-                        indication = null,
-                        role = Role.Button,
-                        onClick = onClick,
-                    )
-                } else {
-                    Modifier
-                },
-            ),
+                .semantics {
+                    role = Role.Button
+                    if (!enabled || loading) disabled()
+                }
+                .clip(TruckerButtonShape)
+                .background(container)
+                .then(
+                    if (enabled && !loading) {
+                        Modifier.clickable(
+                            interactionSource = interactionSource,
+                            indication = null,
+                            role = Role.Button,
+                            onClick = onClick,
+                        )
+                    } else {
+                        Modifier
+                    },
+                ),
         contentAlignment = Alignment.Center,
     ) {
         if (loading) {
             CircularProgressIndicator(
-                modifier = Modifier
-                    .size(24.dp)
-                    .semantics { contentDescription = "Loading" },
+                modifier =
+                    Modifier
+                        .size(24.dp)
+                        .semantics { contentDescription = "Loading" },
                 strokeWidth = 2.5.dp,
                 color = contentColor,
             )
@@ -519,32 +541,33 @@ fun TruckerSecondaryButton(
     val borderColor = if (enabled) colors.line else colors.line.copy(alpha = 0.5f)
 
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(TruckerSizes.secondary)
-            .let { base ->
-                if (testTag != null) {
-                    base
-                        .testTag(testTag)
-                        .semantics { testTagsAsResourceId = true }
-                } else {
-                    base
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(TruckerSizes.secondary)
+                .let { base ->
+                    if (testTag != null) {
+                        base
+                            .testTag(testTag)
+                            .semantics { testTagsAsResourceId = true }
+                    } else {
+                        base
+                    }
                 }
-            }
-            .semantics {
-                role = Role.Button
-                if (!enabled || loading) disabled()
-            }
-            .clip(TruckerButtonShape)
-            .background(colors.surface)
-            .border(width = 1.5.dp, color = borderColor, shape = TruckerButtonShape)
-            .then(
-                if (enabled && !loading) {
-                    Modifier.clickable(onClick = onClick, role = Role.Button)
-                } else {
-                    Modifier
-                },
-            ),
+                .semantics {
+                    role = Role.Button
+                    if (!enabled || loading) disabled()
+                }
+                .clip(TruckerButtonShape)
+                .background(colors.surface)
+                .border(width = 1.5.dp, color = borderColor, shape = TruckerButtonShape)
+                .then(
+                    if (enabled && !loading) {
+                        Modifier.clickable(onClick = onClick, role = Role.Button)
+                    } else {
+                        Modifier
+                    },
+                ),
         contentAlignment = Alignment.Center,
     ) {
         Row(
@@ -599,19 +622,21 @@ fun TruckerTextField(
     prefix: String? = null,
     enabled: Boolean = true,
     visualTransformation: androidx.compose.ui.text.input.VisualTransformation? = null,
-    keyboardOptions: KeyboardOptions = KeyboardOptions(
-        keyboardType = KeyboardType.Phone,
-        imeAction = ImeAction.Done,
-    ),
+    keyboardOptions: KeyboardOptions =
+        KeyboardOptions(
+            keyboardType = KeyboardType.Phone,
+            imeAction = ImeAction.Done,
+        ),
     testTag: String? = null,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val focused by interactionSource.collectIsFocusedAsState()
     val borderColor by animateColorAsState(
-        targetValue = when {
-            focused -> colors.brand
-            else -> colors.line
-        },
+        targetValue =
+            when {
+                focused -> colors.brand
+                else -> colors.line
+            },
         animationSpec = tween(durationMillis = 140),
         label = "trucker-field-border",
     )
@@ -621,13 +646,14 @@ fun TruckerTextField(
         Text(text = label, style = TruckerType.fieldLabel, color = colors.ink)
         Spacer(modifier = Modifier.height(8.dp))
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(TruckerSizes.field)
-                .clip(TruckerFieldShape)
-                .background(colors.surface)
-                .border(width = borderWidth, color = borderColor, shape = TruckerFieldShape)
-                .padding(horizontal = 16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(TruckerSizes.field)
+                    .clip(TruckerFieldShape)
+                    .background(colors.surface)
+                    .border(width = borderWidth, color = borderColor, shape = TruckerFieldShape)
+                    .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (prefix != null) {
@@ -641,10 +667,11 @@ fun TruckerTextField(
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Box(
-                    modifier = Modifier
-                        .width(1.dp)
-                        .height(26.dp)
-                        .background(colors.line),
+                    modifier =
+                        Modifier
+                            .width(1.dp)
+                            .height(26.dp)
+                            .background(colors.line),
                 )
                 Spacer(modifier = Modifier.width(12.dp))
             }
@@ -657,23 +684,25 @@ fun TruckerTextField(
                     // it is applied to, so tagging the wrapper leaves the
                     // EditText's resource-id empty and breaks the
                     // `phone_input` contract the Maestro flows type into.
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .let { base ->
-                            if (testTag != null) {
-                                base
-                                    .testTag(testTag)
-                                    .semantics { testTagsAsResourceId = true }
-                            } else {
-                                base
-                            }
-                        },
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .let { base ->
+                                if (testTag != null) {
+                                    base
+                                        .testTag(testTag)
+                                        .semantics { testTagsAsResourceId = true }
+                                } else {
+                                    base
+                                }
+                            },
                     interactionSource = interactionSource,
                     enabled = enabled,
                     singleLine = true,
                     keyboardOptions = keyboardOptions,
-                    visualTransformation = visualTransformation
-                        ?: androidx.compose.ui.text.input.VisualTransformation.None,
+                    visualTransformation =
+                        visualTransformation
+                            ?: androidx.compose.ui.text.input.VisualTransformation.None,
                     textStyle = TruckerType.digit.copy(color = colors.ink),
                     cursorBrush = SolidColor(colors.brand),
                     decorationBox = { inner ->
@@ -748,31 +777,33 @@ fun TruckerOtpField(
     }
 
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .offset(x = shakeOffset.value.dp)
-            .clickable(
-                indication = null,
-                interactionSource = remember { MutableInteractionSource() },
-            ) {
-                if (enabled) {
-                    focusRequester.requestFocus()
-                    keyboardController?.show()
-                }
-            },
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .offset(x = shakeOffset.value.dp)
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() },
+                ) {
+                    if (enabled) {
+                        focusRequester.requestFocus()
+                        keyboardController?.show()
+                    }
+                },
     ) {
         BasicTextField(
             value = otp,
             onValueChange = { raw ->
                 if (enabled) onOtpChange(raw.filter(Char::isDigit).take(otpLength))
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(TruckerSizes.field)
-                .alpha(0.01f)
-                .testTag("otp_input")
-                .semantics { testTagsAsResourceId = true }
-                .focusRequester(focusRequester),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(TruckerSizes.field)
+                    .alpha(0.01f)
+                    .testTag("otp_input")
+                    .semantics { testTagsAsResourceId = true }
+                    .focusRequester(focusRequester),
             enabled = enabled,
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
@@ -782,9 +813,10 @@ fun TruckerOtpField(
 
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(TruckerSizes.field),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(TruckerSizes.field),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 repeat(otpLength) { index ->
@@ -792,39 +824,45 @@ fun TruckerOtpField(
                     val isFilled = char.isNotEmpty()
                     val isActive = otp.length == index && !isFilled
 
-                    val container = when {
-                        isError && isFilled -> colors.error.copy(alpha = 0.12f)
-                        isFilled -> colors.brandSoft
-                        else -> colors.surface
-                    }
-                    val border = when {
-                        isError && isFilled -> colors.error
-                        isActive -> colors.brand
-                        isFilled -> colors.brand.copy(alpha = 0.45f)
-                        else -> colors.line
-                    }
+                    val container =
+                        when {
+                            isError && isFilled -> colors.error.copy(alpha = 0.12f)
+                            isFilled -> colors.brandSoft
+                            else -> colors.surface
+                        }
+                    val border =
+                        when {
+                            isError && isFilled -> colors.error
+                            isActive -> colors.brand
+                            isFilled -> colors.brand.copy(alpha = 0.45f)
+                            else -> colors.line
+                        }
                     val borderWidth = if (isActive || (isError && isFilled)) 2.dp else 1.5.dp
 
                     Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            .clip(TruckerCellShape)
-                            .background(container)
-                            .border(width = borderWidth, color = border, shape = TruckerCellShape),
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .clip(TruckerCellShape)
+                                .background(container)
+                                .border(width = borderWidth, color = border, shape = TruckerCellShape),
                         contentAlignment = Alignment.Center,
                     ) {
                         when {
-                            isFilled -> Text(
-                                text = char,
-                                style = TruckerType.digit,
-                                color = if (isError) colors.error else colors.ink,
-                            )
-                            isActive -> Box(
-                                modifier = Modifier
-                                    .size(width = 2.dp, height = 26.dp)
-                                    .background(colors.accent),
-                            )
+                            isFilled ->
+                                Text(
+                                    text = char,
+                                    style = TruckerType.digit,
+                                    color = if (isError) colors.error else colors.ink,
+                                )
+                            isActive ->
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .size(width = 2.dp, height = 26.dp)
+                                            .background(colors.accent),
+                                )
                         }
                     }
                 }
@@ -857,11 +895,12 @@ fun TruckerErrorBlock(
         modifier = modifier,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(TruckerCardShape)
-                .background(colors.error.copy(alpha = 0.12f))
-                .padding(horizontal = 16.dp, vertical = 16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clip(TruckerCardShape)
+                    .background(colors.error.copy(alpha = 0.12f))
+                    .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalAlignment = Alignment.Top,
         ) {
             Icon(
@@ -911,21 +950,23 @@ fun TruckerHelplineRow(
     caption: String = "Need help? Call our helpline",
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(TruckerSizes.field)
-            .clip(TruckerCardShape)
-            .background(colors.surface)
-            .border(width = 1.5.dp, color = colors.line, shape = TruckerCardShape)
-            .clickable(onClick = onClick, role = Role.Button)
-            .padding(horizontal = 16.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(TruckerSizes.field)
+                .clip(TruckerCardShape)
+                .background(colors.surface)
+                .border(width = 1.5.dp, color = colors.line, shape = TruckerCardShape)
+                .clickable(onClick = onClick, role = Role.Button)
+                .padding(horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(colors.brandSoft),
+            modifier =
+                Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(colors.brandSoft),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
@@ -953,12 +994,16 @@ fun TruckerHelplineRow(
 
 /** Standard 1.5dp divider on the canvas. */
 @Composable
-fun TruckerDivider(colors: TruckerColors, modifier: Modifier = Modifier) {
+fun TruckerDivider(
+    colors: TruckerColors,
+    modifier: Modifier = Modifier,
+) {
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(1.5.dp)
-            .background(colors.line),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(1.5.dp)
+                .background(colors.line),
     )
 }
 
@@ -986,10 +1031,11 @@ fun TruckerStepChip(
     modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier = modifier
-            .clip(CircleShape)
-            .background(colors.brandSoft)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier =
+            modifier
+                .clip(CircleShape)
+                .background(colors.brandSoft)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -1013,17 +1059,18 @@ fun TruckerTextButton(
     modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier = modifier
-            .heightIn(min = 48.dp)
-            .semantics {
-                role = Role.Button
-                if (!enabled) disabled()
-            }
-            .clip(TruckerButtonShape)
-            .then(
-                if (enabled) Modifier.clickable(onClick = onClick, role = Role.Button) else Modifier,
-            )
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+        modifier =
+            modifier
+                .heightIn(min = 48.dp)
+                .semantics {
+                    role = Role.Button
+                    if (!enabled) disabled()
+                }
+                .clip(TruckerButtonShape)
+                .then(
+                    if (enabled) Modifier.clickable(onClick = onClick, role = Role.Button) else Modifier,
+                )
+                .padding(horizontal = 12.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(

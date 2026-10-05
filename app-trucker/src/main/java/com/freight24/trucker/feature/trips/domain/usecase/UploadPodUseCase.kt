@@ -22,41 +22,42 @@ data class UploadPodUseCaseDataParams(
     // Set when a POD is already on file (pending/rejected) so the upload goes
     // through the replace endpoint instead of the create one.
     val replaceDocumentId: String? = null,
-): UseCaseParams
+) : UseCaseParams
 
 internal interface UploadPodUseCase : UseCase<UploadPodUseCaseDataParams, TripDetail>
 
-internal class UploadPodUseCaseImpl @Inject constructor(
-    private val repository: TripRepository
-) : UploadPodUseCase {
+internal class UploadPodUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: TripRepository,
+    ) : UploadPodUseCase {
+        override suspend fun invoke(params: UploadPodUseCaseDataParams): Result<TripDetail> {
+            val mimeType =
+                if (params.file.extension.equals("pdf", ignoreCase = true)) {
+                    "application/pdf"
+                } else {
+                    getMimeType(params.file.absolutePath) ?: "application/octet-stream"
+                }
+            val requestFile = params.file.asRequestBody(mimeType.toMediaTypeOrNull())
 
-    override suspend fun invoke(params: UploadPodUseCaseDataParams): Result<TripDetail> {
+            val filePart =
+                MultipartBody.Part.createFormData(
+                    "file", // The name expected by the server for the file field
+                    params.file.name, // The actual file name
+                    requestFile,
+                )
 
-        val mimeType =
-            if (params.file.extension.equals("pdf", ignoreCase = true)) {
-                "application/pdf"
-            } else {
-                getMimeType(params.file.absolutePath) ?: "application/octet-stream"
-            }
-        val requestFile = params.file.asRequestBody(mimeType.toMediaTypeOrNull())
+            return repository.uploadPod(
+                params.tripId,
+                filePart,
+                params.podType.toRequestBody("text/plain".toMediaType()),
+                params.notes?.toRequestBody("text/plain".toMediaType()),
+                params.replaceDocumentId,
+            )
+        }
 
-        val filePart = MultipartBody.Part.createFormData(
-            "file", // The name expected by the server for the file field
-            params.file.name, // The actual file name
-            requestFile
-        )
-
-        return repository.uploadPod(
-            params.tripId,
-            filePart,
-            params.podType.toRequestBody("text/plain".toMediaType()),
-            params.notes?.toRequestBody("text/plain".toMediaType()),
-            params.replaceDocumentId,
-        )
+        private fun getMimeType(url: String): String? {
+            val extension = MimeTypeMap.getFileExtensionFromUrl(url)
+            return MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+        }
     }
-
-    private fun getMimeType(url: String): String? {
-        val extension = MimeTypeMap.getFileExtensionFromUrl(url)
-        return MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
-    }
-}

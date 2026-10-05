@@ -18,7 +18,6 @@ import com.freight24.trucker.feature.trips.domain.usecase.UploadPodUseCaseDataPa
 import com.freight24.ui.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,6 +26,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 internal enum class UploadStatus {
     IDLE,
@@ -46,9 +46,10 @@ internal class TripDetailsViewModel
         @param:ApplicationContext private val context: Context,
         savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
-        private val tripId: String = checkNotNull(savedStateHandle["tripId"]) {
-            "Trip ID is required"
-        }
+        private val tripId: String =
+            checkNotNull(savedStateHandle["tripId"]) {
+                "Trip ID is required"
+            }
 
         private val _uiState = MutableStateFlow<UiState<TripDetail>>(UiState.Loading)
         val uiState: StateFlow<UiState<TripDetail>> = _uiState.asStateFlow()
@@ -140,7 +141,10 @@ internal class TripDetailsViewModel
             }
         }
 
-        fun onFilesPicked(uris: List<Uri>, pdf: Boolean) {
+        fun onFilesPicked(
+            uris: List<Uri>,
+            pdf: Boolean,
+        ) {
             _selectedUris.value = uris
             _isPdf.value = pdf
         }
@@ -173,11 +177,12 @@ internal class TripDetailsViewModel
                 _uploadStatus.value = UploadStatus.UPLOADING
 
                 try {
-                    val file = if (isPdfSelection) {
-                        FileUtils.getFileFromUri(context, uris.first())
-                    } else {
-                        FileUtils.convertImageToPdf(context, uris)
-                    }
+                    val file =
+                        if (isPdfSelection) {
+                            FileUtils.getFileFromUri(context, uris.first())
+                        } else {
+                            FileUtils.convertImageToPdf(context, uris)
+                        }
 
                     if (file == null || !file.exists() || file.length() == 0L) {
                         _uploadStatus.value = UploadStatus.ERROR
@@ -185,26 +190,28 @@ internal class TripDetailsViewModel
                         return@launch
                     }
 
-                    val result = if (isPod) {
-                        val existingPodId = cachedTripDetail?.tripDocuments
-                            ?.find { it.documentType.lowercase() == "pod" }?.id
-                        uploadPodUseCase(
-                            UploadPodUseCaseDataParams(
-                                tripId = tripId,
-                                file = file,
-                                notes = "POD uploaded via Trucker App",
-                                replaceDocumentId = existingPodId,
-                            ),
-                        )
-                    } else {
-                        uploadLrUseCase(
-                            UploadLrUseCaseDataParams(
-                                tripId = tripId,
-                                file = file,
-                                notes = "LR uploaded via Trucker App",
-                            ),
-                        )
-                    }
+                    val result =
+                        if (isPod) {
+                            val existingPodId =
+                                cachedTripDetail?.tripDocuments
+                                    ?.find { it.documentType.lowercase() == "pod" }?.id
+                            uploadPodUseCase(
+                                UploadPodUseCaseDataParams(
+                                    tripId = tripId,
+                                    file = file,
+                                    notes = "POD uploaded via Trucker App",
+                                    replaceDocumentId = existingPodId,
+                                ),
+                            )
+                        } else {
+                            uploadLrUseCase(
+                                UploadLrUseCaseDataParams(
+                                    tripId = tripId,
+                                    file = file,
+                                    notes = "LR uploaded via Trucker App",
+                                ),
+                            )
+                        }
 
                     result.onSuccess { tripDetail ->
                         cachedTripDetail = tripDetail
@@ -224,7 +231,10 @@ internal class TripDetailsViewModel
             }
         }
 
-        fun fetchSignedUrl(documentId: String, onUrlReady: (String) -> Unit) {
+        fun fetchSignedUrl(
+            documentId: String,
+            onUrlReady: (String) -> Unit,
+        ) {
             viewModelScope.launch(Dispatchers.IO) {
                 getSignedDocumentUseCase(GetSignedDocumentParams(tripId, documentId))
                     .onSuccess { url ->
@@ -242,7 +252,10 @@ internal class TripDetailsViewModel
             }
         }
 
-        private fun toDisplayMessage(error: Throwable, fallback: String): String {
+        private fun toDisplayMessage(
+            error: Throwable,
+            fallback: String,
+        ): String {
             val raw = error.message.orEmpty()
             val regex = Regex("\\\"message\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"")
             val match = regex.find(raw)?.groupValues?.getOrNull(1)

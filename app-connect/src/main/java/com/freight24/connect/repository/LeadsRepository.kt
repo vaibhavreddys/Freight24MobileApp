@@ -29,13 +29,22 @@ interface LeadsRepository {
 
     suspend fun getLeadDetail(leadId: String): Result<LeadDetailDto>
 
-    suspend fun updateLeadDetails(leadId: String, request: UpdateLeadDetailsRequest): Result<LeadDetailDto>
+    suspend fun updateLeadDetails(
+        leadId: String,
+        request: UpdateLeadDetailsRequest,
+    ): Result<LeadDetailDto>
 
-    suspend fun recordCallOutcome(leadId: String, request: CallOutcomeRequest): Result<CallOutcomeData>
+    suspend fun recordCallOutcome(
+        leadId: String,
+        request: CallOutcomeRequest,
+    ): Result<CallOutcomeData>
 
     suspend fun reopenLead(leadId: String): Result<Boolean>
 
-    suspend fun convertLead(leadId: String, request: ConvertLeadRequest): Result<ConvertLeadData>
+    suspend fun convertLead(
+        leadId: String,
+        request: ConvertLeadRequest,
+    ): Result<ConvertLeadData>
 
     /** Truck types with 24h Room caching for instant offline form loading. */
     suspend fun getTruckTypesCached(): Result<List<LeadTruckTypeDto>>

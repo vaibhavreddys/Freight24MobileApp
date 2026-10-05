@@ -1,7 +1,4 @@
 package com.freight24.trucker.feature.trucks.view.onboard
-import com.freight24.ui.components.FreightCenterAlignedTopAppBar
-import com.freight24.ui.components.FreightTopAppBar
-
 import android.Manifest
 import android.content.Context
 import android.content.Intent
@@ -9,6 +6,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -18,7 +16,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,7 +29,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -40,12 +36,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Assignment
-import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.LocalShipping
-import androidx.compose.material.icons.filled.Numbers
-import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -55,9 +47,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -69,7 +59,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -95,7 +84,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -104,6 +92,7 @@ import com.freight24.rest.response.AddTruckDto
 import com.freight24.ui.UiState
 import com.freight24.ui.components.AppDropdown
 import com.freight24.ui.components.DashedUploadCard
+import com.freight24.ui.components.FreightCenterAlignedTopAppBar
 import com.freight24.ui.components.formViewportInsets
 import kotlinx.coroutines.launch
 import java.io.File
@@ -373,26 +362,30 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         val registrationError by viewModel.registrationError.collectAsState()
- 
+
         OutlinedTextField(
             value = registrationNumber,
             onValueChange = { viewModel.updateRegistrationNumber(it) },
             label = { Text("Vehicle Number") },
             placeholder = { Text("KA07AB1287") },
 //            leadingIcon = { Icon(Icons.Default.Numbers, contentDescription = null) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag("onboard_reg_input")
-                .semantics { testTagsAsResourceId = true }
-                .onFocusChanged { focusState ->
-                    if (!focusState.isFocused) {
-                        viewModel.checkRegistrationAvailability()
-                    }
-                },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .testTag("onboard_reg_input")
+                    .semantics { testTagsAsResourceId = true }
+                    .onFocusChanged { focusState ->
+                        if (!focusState.isFocused) {
+                            viewModel.checkRegistrationAvailability()
+                        }
+                    },
             isError = registrationError != null,
-            supportingText = if (registrationError != null) {
-                { Text(registrationError!!) }
-            } else null,
+            supportingText =
+                if (registrationError != null) {
+                    { Text(registrationError!!) }
+                } else {
+                    null
+                },
             shape = MaterialTheme.shapes.medium,
             singleLine = true,
             keyboardOptions =
@@ -408,10 +401,11 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
             selectedOption = selectedTruckType,
             onOptionSelected = { viewModel.selectedTruckType.value = it },
             optionToString = { it.name },
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag("onboard_type_dropdown")
-                .semantics { testTagsAsResourceId = true },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .testTag("onboard_type_dropdown")
+                    .semantics { testTagsAsResourceId = true },
             focusRequester = truckTypeFocusRequester,
         )
 
@@ -435,10 +429,11 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
                 onValueChange = { viewModel.model.value = it },
                 label = { Text("Model") },
                 placeholder = { Text("FH Aero") },
-                modifier = Modifier
-                    .weight(1f)
-                    .testTag("onboard_model_input")
-                    .semantics { testTagsAsResourceId = true },
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .testTag("onboard_model_input")
+                        .semantics { testTagsAsResourceId = true },
                 shape = MaterialTheme.shapes.medium,
                 singleLine = true,
             )
@@ -581,7 +576,7 @@ private fun DocumentsStep(
                 docLauncher.launch(arrayOf("application/pdf"))
             }
         },
-        sheetState = sheetState
+        sheetState = sheetState,
     )
 
     if (pendingUris.isNotEmpty()) {
@@ -602,7 +597,7 @@ private fun DocumentsStep(
             onDismiss = {
                 pendingUris = emptyList()
                 currentTargetPrefix = null
-            }
+            },
         )
     }
 
@@ -773,7 +768,6 @@ private fun OnboardSuccessScreen(
                         Text(
                             text = "● ACTIVE",
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
                         )
@@ -787,11 +781,12 @@ private fun OnboardSuccessScreen(
 
         Button(
             onClick = onViewFleet,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
-                .testTag("onboard_view_fleet_btn")
-                .semantics { testTagsAsResourceId = true },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
+                    .testTag("onboard_view_fleet_btn")
+                    .semantics { testTagsAsResourceId = true },
             shape = MaterialTheme.shapes.medium,
             colors =
                 ButtonDefaults.buttonColors(

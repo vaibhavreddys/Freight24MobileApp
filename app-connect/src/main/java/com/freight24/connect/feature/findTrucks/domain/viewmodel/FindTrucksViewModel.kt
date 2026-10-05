@@ -15,21 +15,29 @@ data class FindTrucksUiState(
     val isSearching: Boolean = false,
     val searchResults: TruckerData? = null,
     val error: String? = null,
-    val showResults: Boolean = false
+    val showResults: Boolean = false,
 )
 
 sealed class FindTrucksEvent {
     data class SelectLoadingLocation(val location: LocationDto) : FindTrucksEvent()
+
     data class SelectUnloadingLocation(val location: LocationDto) : FindTrucksEvent()
+
     data object SwapLocations : FindTrucksEvent()
+
     data class ToggleTruckType(val truckType: TruckTypeDto) : FindTrucksEvent()
+
     data object ClearTruckTypes : FindTrucksEvent()
+
     data object SearchTrucks : FindTrucksEvent()
+
     data object DismissResults : FindTrucksEvent()
+
     data object ClearError : FindTrucksEvent()
 }
 
 interface FindTrucksViewModel {
     val uiState: StateFlow<FindTrucksUiState>
+
     fun onEvent(event: FindTrucksEvent)
 }

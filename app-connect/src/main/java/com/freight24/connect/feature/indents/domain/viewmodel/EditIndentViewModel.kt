@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 
 interface EditIndentViewModel {
     val uiState: StateFlow<EditIndentUiState>
+
     fun onEvent(event: EditIndentEvent)
 }
 
@@ -33,7 +34,6 @@ data class EditIndentUiState(
     val commercialsChanged: Boolean = false,
     /** True when the term fields differ. Colours clause 06's spine. */
     val termsChanged: Boolean = false,
-
     // Editable fields — accepted by PUT /api/v1/indents/:id
     val clientCost: String = "",
     val negotiatedCost: String = "",
@@ -52,7 +52,6 @@ data class EditIndentUiState(
     val tatRequired: Boolean = false,
     val tatHours: String = "",
     val remarks: String = "",
-
     // Contact roles — editable only through PUT /api/v1/indents/groups/:id
     val contacts: List<ClientContactV2Dto> = emptyList(),
     val isLoadingContacts: Boolean = false,
@@ -64,12 +63,13 @@ data class EditIndentUiState(
     val podContact: ClientContactV2Dto? = null,
 ) {
     /** Contact currently bound to [role]. */
-    fun contactFor(role: IndentContactRole): ClientContactV2Dto? = when (role) {
-        IndentContactRole.PLACEMENT -> placementContact
-        IndentContactRole.PAYMENT -> paymentContact
-        IndentContactRole.OPERATIONS -> operationsContact
-        IndentContactRole.POD -> podContact
-    }
+    fun contactFor(role: IndentContactRole): ClientContactV2Dto? =
+        when (role) {
+            IndentContactRole.PLACEMENT -> placementContact
+            IndentContactRole.PAYMENT -> paymentContact
+            IndentContactRole.OPERATIONS -> operationsContact
+            IndentContactRole.POD -> podContact
+        }
 
     /**
      * The contact id recorded on the indent as loaded, for [role]. Compared
@@ -108,6 +108,8 @@ sealed class EditIndentEvent {
     ) : EditIndentEvent()
 
     object SubmitUpdate : EditIndentEvent()
+
     object ClearError : EditIndentEvent()
+
     object ClearSuccess : EditIndentEvent()
 }

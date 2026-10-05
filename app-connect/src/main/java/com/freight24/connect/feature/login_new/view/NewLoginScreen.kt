@@ -50,14 +50,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.connect.feature.login_new.viewmodel.NewLoginViewModel
 import com.freight24.ui.UiState
-import com.freight24.ui.trucker.IndianPhoneVisualTransformation
 import com.freight24.ui.auth.AuthFieldShape
 import com.freight24.ui.auth.AuthHeroShape
 import com.freight24.ui.auth.AuthLaneMarkings
-import com.freight24.ui.auth.AuthLaneProgress
 import com.freight24.ui.auth.AuthLedgerBackdrop
 import com.freight24.ui.auth.AuthLegalNote
-import com.freight24.ui.auth.AuthOutlinedRow
 import com.freight24.ui.auth.AuthOverline
 import com.freight24.ui.auth.AuthPrimaryAction
 import com.freight24.ui.auth.AuthRule
@@ -65,6 +62,7 @@ import com.freight24.ui.auth.AuthSheet
 import com.freight24.ui.auth.rememberAuthColors
 import com.freight24.ui.components.InlineErrorBanner
 import com.freight24.ui.connect.ConnectTruckMark
+import com.freight24.ui.trucker.IndianPhoneVisualTransformation
 
 private const val sendOtpButtonAutoClickAfter = 2000
 
@@ -102,7 +100,7 @@ fun NewLoginScreen(
         if (isPhoneValid && !wasPreviouslyValid.value && uiState !is UiState.Loading) {
             fillProgress.animateTo(
                 targetValue = 1f,
-                animationSpec = tween(durationMillis = sendOtpButtonAutoClickAfter)
+                animationSpec = tween(durationMillis = sendOtpButtonAutoClickAfter),
             )
             // Guard against race conditions if user manually clicks during animation
             if (uiState !is UiState.Loading) {
@@ -149,29 +147,32 @@ fun NewLoginScreen(
     val fillFraction = fillProgress.value
 
     Scaffold(
-        modifier = Modifier
-            .fillMaxSize()
-            .imePadding(),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .imePadding(),
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { contentPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(contentPadding)
-                .background(hero.paper)
-                .navigationBarsPadding(),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(contentPadding)
+                    .background(hero.paper)
+                    .navigationBarsPadding(),
         ) {
             // ---------------------------------------------------------------
             // Masthead — brand-inked block, ledger-ruled, lane-marked.
             // ---------------------------------------------------------------
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(AuthHeroShape)
-                    .background(hero.field)
-                    .statusBarsPadding()
-                    .padding(horizontal = 24.dp)
-                    .padding(top = 28.dp, bottom = 44.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(AuthHeroShape)
+                        .background(hero.field)
+                        .statusBarsPadding()
+                        .padding(horizontal = 24.dp)
+                        .padding(top = 28.dp, bottom = 44.dp),
             ) {
                 AuthLedgerBackdrop(hero)
                 AuthLaneMarkings(hero)
@@ -192,9 +193,10 @@ fun NewLoginScreen(
 
                     // Bronze seam rule — the crease of the document.
                     Box(
-                        modifier = Modifier
-                            .size(width = 44.dp, height = 2.dp)
-                            .background(hero.lane),
+                        modifier =
+                            Modifier
+                                .size(width = 44.dp, height = 2.dp)
+                                .background(hero.lane),
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
@@ -232,25 +234,28 @@ fun NewLoginScreen(
                     OutlinedTextField(
                         value = phoneNumber,
                         onValueChange = viewModel::onPhoneNumberChange,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("phone_input")
-                            .semantics { testTagsAsResourceId = true },
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .testTag("phone_input")
+                                .semantics { testTagsAsResourceId = true },
                         singleLine = true,
                         shape = AuthFieldShape,
-                        textStyle = MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 17.sp,
-                            letterSpacing = 0.6.sp,
-                            fontFeatureSettings = "tnum",
-                        ),
+                        textStyle =
+                            MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 17.sp,
+                                letterSpacing = 0.6.sp,
+                                fontFeatureSettings = "tnum",
+                            ),
                         placeholder = {
                             Text(
                                 text = "98765 43210",
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    fontSize = 17.sp,
-                                    letterSpacing = 0.6.sp,
-                                ),
+                                style =
+                                    MaterialTheme.typography.bodyLarge.copy(
+                                        fontSize = 17.sp,
+                                        letterSpacing = 0.6.sp,
+                                    ),
                                 color = colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
                             )
                         },
@@ -265,33 +270,36 @@ fun NewLoginScreen(
                                 // Column rule — the field reads like a form
                                 // cell, not a rounded slab.
                                 Box(
-                                    modifier = Modifier
-                                        .size(width = 1.dp, height = 20.dp)
-                                        .background(colorScheme.outlineVariant),
+                                    modifier =
+                                        Modifier
+                                            .size(width = 1.dp, height = 20.dp)
+                                            .background(colorScheme.outlineVariant),
                                 )
                                 Spacer(modifier = Modifier.width(12.dp))
                             }
                         },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Phone,
-                            imeAction = ImeAction.Done,
-                            autoCorrectEnabled = false,
-                        ),
+                        keyboardOptions =
+                            KeyboardOptions(
+                                keyboardType = KeyboardType.Phone,
+                                imeAction = ImeAction.Done,
+                                autoCorrectEnabled = false,
+                            ),
                         visualTransformation = IndianPhoneVisualTransformation,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = colorScheme.primary,
-                            unfocusedBorderColor = hero.paperEdge,
-                            disabledBorderColor = hero.paperEdge,
-                            // The field sits inside a sheet of warm bone paper;
-                            // using scheme's `surfaceContainerLowest` here would
-                            // paint a stark #FFFFFF box through the paper.
-                            focusedContainerColor = hero.paper,
-                            unfocusedContainerColor = hero.paper,
-                            disabledContainerColor = hero.paper,
-                            focusedTextColor = colorScheme.onSurface,
-                            unfocusedTextColor = colorScheme.onSurface,
-                            cursorColor = colorScheme.primary,
-                        ),
+                        colors =
+                            OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = colorScheme.primary,
+                                unfocusedBorderColor = hero.paperEdge,
+                                disabledBorderColor = hero.paperEdge,
+                                // The field sits inside a sheet of warm bone paper;
+                                // using scheme's `surfaceContainerLowest` here would
+                                // paint a stark #FFFFFF box through the paper.
+                                focusedContainerColor = hero.paper,
+                                unfocusedContainerColor = hero.paper,
+                                disabledContainerColor = hero.paper,
+                                focusedTextColor = colorScheme.onSurface,
+                                unfocusedTextColor = colorScheme.onSurface,
+                                cursorColor = colorScheme.primary,
+                            ),
                     )
 
                     Spacer(modifier = Modifier.height(20.dp))
@@ -308,11 +316,12 @@ fun NewLoginScreen(
                             Text(
                                 text = "→",
                                 style = MaterialTheme.typography.titleSmall,
-                                color = if (buttonEnabled) {
-                                    colorScheme.onPrimary
-                                } else {
-                                    colorScheme.onPrimaryContainer
-                                },
+                                color =
+                                    if (buttonEnabled) {
+                                        colorScheme.onPrimary
+                                    } else {
+                                        colorScheme.onPrimaryContainer
+                                    },
                             )
                         },
                     )

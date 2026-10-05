@@ -8,16 +8,16 @@ import javax.inject.Inject
 
 data class GetHaltingRateUseCaseDataParams(
     val truckTypeId: String,
-): UseCaseParams
+) : UseCaseParams
 
 internal interface GetHaltingRateUseCase : UseCase<GetHaltingRateUseCaseDataParams, TruckHaltingRate>
 
-
-class GetHaltingRateUseCaseImpl @Inject constructor(
-    private val repository: TripHaltingRepository
-) : GetHaltingRateUseCase {
-
-    override suspend fun invoke(params: GetHaltingRateUseCaseDataParams): Result<TruckHaltingRate> {
-        return repository.getHaltingRate(params.truckTypeId)
+class GetHaltingRateUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: TripHaltingRepository,
+    ) : GetHaltingRateUseCase {
+        override suspend fun invoke(params: GetHaltingRateUseCaseDataParams): Result<TruckHaltingRate> {
+            return repository.getHaltingRate(params.truckTypeId)
+        }
     }
-}

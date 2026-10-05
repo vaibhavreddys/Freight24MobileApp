@@ -20,7 +20,6 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -57,12 +56,13 @@ fun RefreshProgressBar(
         lastIsRefreshing = isRefreshing
     }
 
-    val phase = when {
-        isRefreshing -> Phase.Loading
-        pullFraction > 0f -> Phase.Pulling
-        wasRefreshing -> Phase.Closing
-        else -> Phase.Idle
-    }
+    val phase =
+        when {
+            isRefreshing -> Phase.Loading
+            pullFraction > 0f -> Phase.Pulling
+            wasRefreshing -> Phase.Closing
+            else -> Phase.Idle
+        }
 
     LaunchedEffect(phase, barWidthPx.value) {
         when (phase) {
@@ -82,7 +82,7 @@ fun RefreshProgressBar(
                     val durationMs = ((halfWidth.value / slowSpeedPxPerSec) * 1000f).toInt().coerceAtLeast(1)
                     halfWidth.animateTo(
                         targetValue = 0f,
-                        animationSpec = tween(durationMillis = durationMs, easing = LinearEasing)
+                        animationSpec = tween(durationMillis = durationMs, easing = LinearEasing),
                     )
                 }
 
@@ -91,13 +91,13 @@ fun RefreshProgressBar(
                     val growDuration = ((maxHalfWidth / slowSpeedPxPerSec) * 1000f).toInt().coerceAtLeast(1)
                     halfWidth.animateTo(
                         targetValue = maxHalfWidth,
-                        animationSpec = tween(durationMillis = growDuration, easing = LinearEasing)
+                        animationSpec = tween(durationMillis = growDuration, easing = LinearEasing),
                     )
 
                     val shrinkDuration = ((maxHalfWidth / slowSpeedPxPerSec) * 1000f).toInt().coerceAtLeast(1)
                     halfWidth.animateTo(
                         targetValue = 0f,
-                        animationSpec = tween(durationMillis = shrinkDuration, easing = LinearEasing)
+                        animationSpec = tween(durationMillis = shrinkDuration, easing = LinearEasing),
                     )
                 }
             }
@@ -125,16 +125,18 @@ fun RefreshProgressBar(
     val rightX = (barWidthPx.value / 2f + halfWidth.value).coerceAtMost(barWidthPx.value)
 
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(10.dp)
-            .clipToBounds()
-            .alpha(alpha) // The component handles its own fade-out!
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(10.dp)
+                .clipToBounds()
+                .alpha(alpha), // The component handles its own fade-out!
     ) {
         Canvas(
-            modifier = Modifier
-                .fillMaxSize()
-                .onSizeChanged { barWidthPx.value = it.width.toFloat() }
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .onSizeChanged { barWidthPx.value = it.width.toFloat() },
         ) {
             if (barWidthPx.value <= 0f || rightX <= leftX) return@Canvas
             val midY = size.height / 2f
@@ -145,17 +147,18 @@ fun RefreshProgressBar(
             val drawEnd = rightX.coerceAtMost(barWidthPx.value)
             if (drawEnd <= drawStart) return@Canvas
 
-            val path = Path().apply {
-                moveTo(drawStart, midY + amplitudePx * sin((2.0 * Math.PI * drawStart / wavelengthPxLocal).toFloat()))
-                val step = 1f
-                var x = drawStart + step
-                while (x <= drawEnd) {
-                    val theta = (2.0 * Math.PI * (x / wavelengthPxLocal)).toFloat()
-                    val y = midY + amplitudePx * sin(theta)
-                    lineTo(x, y)
-                    x += step
+            val path =
+                Path().apply {
+                    moveTo(drawStart, midY + amplitudePx * sin((2.0 * Math.PI * drawStart / wavelengthPxLocal).toFloat()))
+                    val step = 1f
+                    var x = drawStart + step
+                    while (x <= drawEnd) {
+                        val theta = (2.0 * Math.PI * (x / wavelengthPxLocal)).toFloat()
+                        val y = midY + amplitudePx * sin(theta)
+                        lineTo(x, y)
+                        x += step
+                    }
                 }
-            }
             drawPath(
                 path = path,
                 color = color,

@@ -31,19 +31,21 @@ fun FreightEmptyState(
     subtitle: String? = null,
 ) {
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 32.dp, vertical = 24.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(horizontal = 32.dp, vertical = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Box(
-            modifier = Modifier
-                .size(56.dp)
-                .background(
-                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
-                    CircleShape,
-                ),
+            modifier =
+                Modifier
+                    .size(56.dp)
+                    .background(
+                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                        CircleShape,
+                    ),
             contentAlignment = Alignment.Center,
         ) {
             Icon(

@@ -5,8 +5,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class TruckerInboxInterestResponse(
     val data: List<TruckerInboxInterestInfo>,
-    val total: Int
-): BaseResponse() {
+    val total: Int,
+) : BaseResponse() {
     @Serializable
     data class TruckerInboxInterestInfo(
         val interestId: String,
@@ -14,5 +14,4 @@ data class TruckerInboxInterestResponse(
         val phone: String?,
         val expressedAt: String,
     )
-
 }

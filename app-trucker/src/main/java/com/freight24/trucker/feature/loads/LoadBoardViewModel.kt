@@ -24,8 +24,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -411,9 +411,10 @@ class LoadBoardViewModel
         }
 
         fun onBookmarkClicked(indentId: String) {
-            val targetItem = _items.value.firstOrNull {
-                it is LoadBoardItem.LoadItem && it.load.id == indentId
-            } as? LoadBoardItem.LoadItem ?: return
+            val targetItem =
+                _items.value.firstOrNull {
+                    it is LoadBoardItem.LoadItem && it.load.id == indentId
+                } as? LoadBoardItem.LoadItem ?: return
 
             if (targetItem.load.isInterestLoading) return
 
@@ -424,146 +425,154 @@ class LoadBoardViewModel
             }
         }
 
-    private fun updateLoadInterestState(
-        indentId: String,
-        isInterested: Boolean,
-        isLoading: Boolean,
-    ) {
-        publishItems(
-            _items.value.map { item ->
-            if (item is LoadBoardItem.LoadItem && item.load.id == indentId) {
-                item.copy(
-                    load = item.load.copy(
-                        isInterested = isInterested,
-                        isInterestLoading = isLoading,
-                    ),
-                )
-            } else {
-                item
-            }
-            },
-        )
-
-        // Mirror the state into the bottom sheet detail if it's open for
-        // this indent, so the CTA reflects the current interest status.
-        val current = _indentDetailState.value
-        if (current is LoadDetailState.Success &&
-            _selectedIndentId.value == indentId
+        private fun updateLoadInterestState(
+            indentId: String,
+            isInterested: Boolean,
+            isLoading: Boolean,
         ) {
-            _indentDetailState.value = LoadDetailState.Success(
-                current.detail.copy(
-                    isInterested = isInterested,
-                    isInterestLoading = isLoading,
-                ),
+            publishItems(
+                _items.value.map { item ->
+                    if (item is LoadBoardItem.LoadItem && item.load.id == indentId) {
+                        item.copy(
+                            load =
+                                item.load.copy(
+                                    isInterested = isInterested,
+                                    isInterestLoading = isLoading,
+                                ),
+                        )
+                    } else {
+                        item
+                    }
+                },
             )
+
+            // Mirror the state into the bottom sheet detail if it's open for
+            // this indent, so the CTA reflects the current interest status.
+            val current = _indentDetailState.value
+            if (current is LoadDetailState.Success &&
+                _selectedIndentId.value == indentId
+            ) {
+                _indentDetailState.value =
+                    LoadDetailState.Success(
+                        current.detail.copy(
+                            isInterested = isInterested,
+                            isInterestLoading = isLoading,
+                        ),
+                    )
+            }
         }
-    }
 
-    // ── Bottom sheet: open / dismiss / fetch ────────────────────────────────
+        // ── Bottom sheet: open / dismiss / fetch ────────────────────────────────
 
-    private val detailCacheTtlMs = 60_000L
+        private val detailCacheTtlMs = 60_000L
 
-    fun onLoadCardClicked(indentId: String, tripPrice: String) {
-        val previousId = _selectedIndentId.value
-        _selectedIndentId.value = indentId
+        fun onLoadCardClicked(
+            indentId: String,
+            tripPrice: String,
+        ) {
+            val previousId = _selectedIndentId.value
+            _selectedIndentId.value = indentId
 
-        // If user taps the same load again, do nothing — the sheet is already
-        // open for it.
-        if (previousId == indentId) return
+            // If user taps the same load again, do nothing — the sheet is already
+            // open for it.
+            if (previousId == indentId) return
 
-        // Cancel any in-flight fetch for a different indent.
-        detailJob?.cancel()
+            // Cancel any in-flight fetch for a different indent.
+            detailJob?.cancel()
 
-        // Use the brief cache if it's still fresh; otherwise show loading.
-        val cached = detailCache[indentId]
-        if (cached != null && System.currentTimeMillis() - cached.cachedAt < detailCacheTtlMs) {
-            _indentDetailState.value = LoadDetailState.Success(cached.detail)
-        } else {
+            // Use the brief cache if it's still fresh; otherwise show loading.
+            val cached = detailCache[indentId]
+            if (cached != null && System.currentTimeMillis() - cached.cachedAt < detailCacheTtlMs) {
+                _indentDetailState.value = LoadDetailState.Success(cached.detail)
+            } else {
+                _indentDetailState.value = LoadDetailState.Loading
+            }
+            fetchIndentDetail(indentId, tripPrice, allowCache = true)
+        }
+
+        fun onDismissIndentSheet() {
+            detailJob?.cancel()
+            detailJob = null
+            _selectedIndentId.value = null
             _indentDetailState.value = LoadDetailState.Loading
         }
-        fetchIndentDetail(indentId, tripPrice, allowCache = true)
-    }
 
-    fun onDismissIndentSheet() {
-        detailJob?.cancel()
-        detailJob = null
-        _selectedIndentId.value = null
-        _indentDetailState.value = LoadDetailState.Loading
-    }
-
-    fun onToggleInterestInSheet() {
-        val indentId = _selectedIndentId.value ?: return
-        if (indentId !in interestedLoadIds) {
-            expressInterest(indentId)
-        } else {
-            withdrawInterest(indentId)
+        fun onToggleInterestInSheet() {
+            val indentId = _selectedIndentId.value ?: return
+            if (indentId !in interestedLoadIds) {
+                expressInterest(indentId)
+            } else {
+                withdrawInterest(indentId)
+            }
         }
-    }
 
-    private fun fetchIndentDetail(
-        indentId: String,
-        tripPrice: String,
-        allowCache: Boolean,
-    ) {
-        detailJob = viewModelScope.launch {
-            getTruckerIndentDetailUseCase(
-                GetTruckerIndentDetailParams(indentId),
-            )
-                .onSuccess { response ->
-                    val data = response.data
-                    if (data == null) {
-                        _indentDetailState.value = LoadDetailState.Error("Indent not found")
-                        _detailMessage.emit("Indent not found")
-                        onDismissIndentSheet()
-                        return@onSuccess
-                    }
-
-                    val isInterested = indentId in interestedLoadIds
-                    val isInterestLoading = indentId in loadingInterestedLoadIds
-                    val detail = data.toLoadDetail(
-                        tripPrice = tripPrice,
-                        isInterested = isInterested,
-                        isInterestLoading = isInterestLoading,
+        private fun fetchIndentDetail(
+            indentId: String,
+            tripPrice: String,
+            allowCache: Boolean,
+        ) {
+            detailJob =
+                viewModelScope.launch {
+                    getTruckerIndentDetailUseCase(
+                        GetTruckerIndentDetailParams(indentId),
                     )
+                        .onSuccess { response ->
+                            val data = response.data
+                            if (data == null) {
+                                _indentDetailState.value = LoadDetailState.Error("Indent not found")
+                                _detailMessage.emit("Indent not found")
+                                onDismissIndentSheet()
+                                return@onSuccess
+                            }
 
-                    if (allowCache) {
-                        detailCache[indentId] = CachedDetail(
-                            detail = detail,
-                            cachedAt = System.currentTimeMillis(),
-                        )
-                    }
-                    _indentDetailState.value = LoadDetailState.Success(detail)
-                }
-                .onFailure { error ->
-                    val message = mapDetailError(error)
-                    val isGone = isGoneError(error)
-                    Log.e("LoadBoardViewModel", "Fetch indent detail failed", error)
-                    _indentDetailState.value = LoadDetailState.Error(message)
-                    if (isGone) {
-                        _detailMessage.emit(message)
-                        onDismissIndentSheet()
-                    }
+                            val isInterested = indentId in interestedLoadIds
+                            val isInterestLoading = indentId in loadingInterestedLoadIds
+                            val detail =
+                                data.toLoadDetail(
+                                    tripPrice = tripPrice,
+                                    isInterested = isInterested,
+                                    isInterestLoading = isInterestLoading,
+                                )
+
+                            if (allowCache) {
+                                detailCache[indentId] =
+                                    CachedDetail(
+                                        detail = detail,
+                                        cachedAt = System.currentTimeMillis(),
+                                    )
+                            }
+                            _indentDetailState.value = LoadDetailState.Success(detail)
+                        }
+                        .onFailure { error ->
+                            val message = mapDetailError(error)
+                            val isGone = isGoneError(error)
+                            Log.e("LoadBoardViewModel", "Fetch indent detail failed", error)
+                            _indentDetailState.value = LoadDetailState.Error(message)
+                            if (isGone) {
+                                _detailMessage.emit(message)
+                                onDismissIndentSheet()
+                            }
+                        }
                 }
         }
-    }
 
-    private fun isGoneError(error: Throwable): Boolean {
-        val raw = error.message.orEmpty()
-        return raw.contains("410") || raw.contains("no longer available", ignoreCase = true)
-    }
-
-    private fun mapDetailError(error: Throwable): String {
-        val raw = error.message.orEmpty().lowercase()
-        return when {
-            raw.contains("410") || raw.contains("no longer available") ->
-                "This indent is no longer available"
-            raw.contains("404") || raw.contains("not found") ->
-                "Indent not found"
-            raw.contains("network") || raw.contains("unable to resolve") ->
-                "Network error. Check your connection and try again."
-            else -> "Unable to load indent details"
+        private fun isGoneError(error: Throwable): Boolean {
+            val raw = error.message.orEmpty()
+            return raw.contains("410") || raw.contains("no longer available", ignoreCase = true)
         }
-    }
+
+        private fun mapDetailError(error: Throwable): String {
+            val raw = error.message.orEmpty().lowercase()
+            return when {
+                raw.contains("410") || raw.contains("no longer available") ->
+                    "This indent is no longer available"
+                raw.contains("404") || raw.contains("not found") ->
+                    "Indent not found"
+                raw.contains("network") || raw.contains("unable to resolve") ->
+                    "Network error. Check your connection and try again."
+                else -> "Unable to load indent details"
+            }
+        }
 
         private fun com.freight24.trucker.feature.loads.model.ui.LoadUi.decorateInterestState() =
             run {

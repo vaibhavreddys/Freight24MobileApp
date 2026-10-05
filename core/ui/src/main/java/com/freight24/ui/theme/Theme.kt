@@ -13,12 +13,10 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
-
 import com.freight24.ui.connect.ConnectAppTypography
 import com.freight24.ui.connect.ConnectDarkColorScheme
 import com.freight24.ui.connect.ConnectDarkExtendedColors
@@ -481,11 +479,12 @@ fun Freight24Theme(
 ) {
     // Resolve dark mode: if the user picked "on"/"off", honour that;
     // otherwise defer to the system setting (the darkTheme parameter).
-    val isDark = when (darkModeOverride) {
-        "on" -> true
-        "off" -> false
-        else -> darkTheme
-    }
+    val isDark =
+        when (darkModeOverride) {
+            "on" -> true
+            "off" -> false
+            else -> darkTheme
+        }
 
     val colorScheme =
         when {

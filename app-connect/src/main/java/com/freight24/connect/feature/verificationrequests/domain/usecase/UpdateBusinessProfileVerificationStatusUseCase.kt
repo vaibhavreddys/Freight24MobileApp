@@ -13,17 +13,19 @@ interface UpdateTruckOwnerVerificationStatusUseCase {
     suspend operator fun invoke(params: UpdateTruckOwnerVerificationStatusUseCaseParams): Result<Unit>
 }
 
-class UpdateTruckOwnerVerificationStatusUseCaseImpl @Inject constructor(
-    private val repository: VerificationRequestsRepository,
-) : UpdateTruckOwnerVerificationStatusUseCase {
-    override suspend fun invoke(params: UpdateTruckOwnerVerificationStatusUseCaseParams): Result<Unit> {
-        return repository.updateTruckOwnerVerificationStatus(
-            id = params.id,
-            status = params.status,
-            resolutionNotes = params.resolutionNotes,
-        )
+class UpdateTruckOwnerVerificationStatusUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: VerificationRequestsRepository,
+    ) : UpdateTruckOwnerVerificationStatusUseCase {
+        override suspend fun invoke(params: UpdateTruckOwnerVerificationStatusUseCaseParams): Result<Unit> {
+            return repository.updateTruckOwnerVerificationStatus(
+                id = params.id,
+                status = params.status,
+                resolutionNotes = params.resolutionNotes,
+            )
+        }
     }
-}
 
 data class UpdateClientVerificationStatusUseCaseParams(
     val id: String,
@@ -35,14 +37,16 @@ interface UpdateClientVerificationStatusUseCase {
     suspend operator fun invoke(params: UpdateClientVerificationStatusUseCaseParams): Result<Unit>
 }
 
-class UpdateClientVerificationStatusUseCaseImpl @Inject constructor(
-    private val repository: VerificationRequestsRepository,
-) : UpdateClientVerificationStatusUseCase {
-    override suspend fun invoke(params: UpdateClientVerificationStatusUseCaseParams): Result<Unit> {
-        return repository.updateClientVerificationStatus(
-            id = params.id,
-            status = params.status,
-            resolutionNotes = params.resolutionNotes,
-        )
+class UpdateClientVerificationStatusUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: VerificationRequestsRepository,
+    ) : UpdateClientVerificationStatusUseCase {
+        override suspend fun invoke(params: UpdateClientVerificationStatusUseCaseParams): Result<Unit> {
+            return repository.updateClientVerificationStatus(
+                id = params.id,
+                status = params.status,
+                resolutionNotes = params.resolutionNotes,
+            )
+        }
     }
-}

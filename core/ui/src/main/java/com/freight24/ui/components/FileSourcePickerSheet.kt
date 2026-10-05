@@ -27,7 +27,7 @@ fun FileSourcePickerSheet(
     onCameraClick: () -> Unit,
     onGalleryClick: () -> Unit,
     onDocumentClick: () -> Unit,
-    sheetState: SheetState = rememberModalBottomSheetState()
+    sheetState: SheetState = rememberModalBottomSheetState(),
 ) {
     if (!showSheet) return
 
@@ -37,9 +37,10 @@ fun FileSourcePickerSheet(
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 32.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 32.dp),
         ) {
             Text(
                 text = "Select Document Source",
@@ -55,10 +56,11 @@ fun FileSourcePickerSheet(
                         Icon(Icons.Default.CameraAlt, null, modifier = Modifier.padding(8.dp).size(20.dp))
                     }
                 },
-                modifier = Modifier
-                    .testTag("source_picker_camera")
-                    .semantics { testTagsAsResourceId = true }
-                    .clickable { onCameraClick() },
+                modifier =
+                    Modifier
+                        .testTag("source_picker_camera")
+                        .semantics { testTagsAsResourceId = true }
+                        .clickable { onCameraClick() },
             )
             ListItem(
                 headlineContent = { Text("Gallery (Images)") },
@@ -67,10 +69,11 @@ fun FileSourcePickerSheet(
                         Icon(Icons.Default.PhotoLibrary, null, modifier = Modifier.padding(8.dp).size(20.dp))
                     }
                 },
-                modifier = Modifier
-                    .testTag("source_picker_gallery")
-                    .semantics { testTagsAsResourceId = true }
-                    .clickable { onGalleryClick() },
+                modifier =
+                    Modifier
+                        .testTag("source_picker_gallery")
+                        .semantics { testTagsAsResourceId = true }
+                        .clickable { onGalleryClick() },
             )
             ListItem(
                 headlineContent = { Text("Documents (PDF)") },
@@ -79,10 +82,11 @@ fun FileSourcePickerSheet(
                         Icon(Icons.AutoMirrored.Filled.InsertDriveFile, null, modifier = Modifier.padding(8.dp).size(20.dp))
                     }
                 },
-                modifier = Modifier
-                    .testTag("source_picker_document")
-                    .semantics { testTagsAsResourceId = true }
-                    .clickable { onDocumentClick() },
+                modifier =
+                    Modifier
+                        .testTag("source_picker_document")
+                        .semantics { testTagsAsResourceId = true }
+                        .clickable { onDocumentClick() },
             )
         }
     }

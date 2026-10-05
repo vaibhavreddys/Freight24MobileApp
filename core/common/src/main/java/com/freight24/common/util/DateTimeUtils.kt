@@ -27,13 +27,15 @@ object DateTimeUtils {
     fun formatPaymentTimestamp(timestamp: String?): String {
         if (timestamp.isNullOrBlank()) return "--"
         return try {
-            val utcFormat = SimpleDateFormat(SUPABASE_PATTERN, Locale.getDefault()).apply {
-                timeZone = UTC_TIMEZONE
-            }
+            val utcFormat =
+                SimpleDateFormat(SUPABASE_PATTERN, Locale.getDefault()).apply {
+                    timeZone = UTC_TIMEZONE
+                }
             val utcDate = utcFormat.parse(timestamp.substringBefore(".")) ?: return timestamp
-            val displayFormat = SimpleDateFormat(PAYMENT_PATTERN, Locale.getDefault()).apply {
-                timeZone = IST_TIMEZONE
-            }
+            val displayFormat =
+                SimpleDateFormat(PAYMENT_PATTERN, Locale.getDefault()).apply {
+                    timeZone = IST_TIMEZONE
+                }
             displayFormat.format(utcDate)
         } catch (e: Exception) {
             Log.e("DateTimeUtils", "Invalid UTC timestamp: $timestamp", e)
@@ -53,13 +55,15 @@ object DateTimeUtils {
     fun formatIndentTimestamp(timestamp: String?): String {
         if (timestamp.isNullOrBlank()) return "--"
         return try {
-            val utcFormat = SimpleDateFormat(SUPABASE_PATTERN, Locale.getDefault()).apply {
-                timeZone = UTC_TIMEZONE
-            }
+            val utcFormat =
+                SimpleDateFormat(SUPABASE_PATTERN, Locale.getDefault()).apply {
+                    timeZone = UTC_TIMEZONE
+                }
             val utcDate = utcFormat.parse(timestamp.substringBefore(".")) ?: return timestamp
-            val displayFormat = SimpleDateFormat(ABSOLUTE_PATTERN, Locale.getDefault()).apply {
-                timeZone = IST_TIMEZONE
-            }
+            val displayFormat =
+                SimpleDateFormat(ABSOLUTE_PATTERN, Locale.getDefault()).apply {
+                    timeZone = IST_TIMEZONE
+                }
             displayFormat.format(utcDate)
         } catch (e: Exception) {
             Log.e("DateTimeUtils", "Invalid UTC timestamp: $timestamp", e)

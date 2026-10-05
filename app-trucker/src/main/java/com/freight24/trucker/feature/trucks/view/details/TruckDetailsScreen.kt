@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.CloudUpload
@@ -313,12 +312,13 @@ internal fun TruckDetailsScreen(
                         truck = state.data,
                         colors = colors,
                         onViewClick = { s3Url ->
-                            val documentType = when (s3Url) {
-                                state.data.rcCard?.url -> "rc"
-                                state.data.fcCertificate?.url -> "fc"
-                                state.data.insurance?.url -> "insurance"
-                                else -> null
-                            }
+                            val documentType =
+                                when (s3Url) {
+                                    state.data.rcCard?.url -> "rc"
+                                    state.data.fcCertificate?.url -> "fc"
+                                    state.data.insurance?.url -> "insurance"
+                                    else -> null
+                                }
                             if (documentType != null) {
                                 viewModel.fetchSignedUrl(documentType) { signedUrl ->
                                     context.startActivity(getPdfLaunchIntent(signedUrl, context))
@@ -610,10 +610,11 @@ private fun TruckDocumentRow(
         actionIcon = if (url == null || status == "REJECTED") Icons.Filled.CloudUpload else null,
         actionContentDescription = if (url == null) "Upload $title" else "Upload $title again",
         onActionClick = { onUploadClick(title) },
-        onRowClick = if (url != null) {
-            { onViewClick(url) }
-        } else {
-            null
-        },
+        onRowClick =
+            if (url != null) {
+                { onViewClick(url) }
+            } else {
+                null
+            },
     )
 }

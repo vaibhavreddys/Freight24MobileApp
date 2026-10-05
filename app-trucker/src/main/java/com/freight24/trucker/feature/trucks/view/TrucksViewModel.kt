@@ -32,16 +32,16 @@ internal class TrucksViewModel
         private val _selectedFilter = MutableStateFlow(TruckFilter.ALL)
         val selectedFilter: StateFlow<TruckFilter> = _selectedFilter.asStateFlow()
 
-    private val _isRefreshing = MutableStateFlow(false)
-    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+        private val _isRefreshing = MutableStateFlow(false)
+        val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
-    private val _searchQuery = MutableStateFlow("")
-    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+        private val _searchQuery = MutableStateFlow("")
+        val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
-    private val _isSearchVisible = MutableStateFlow(false)
-    val isSearchVisible: StateFlow<Boolean> = _isSearchVisible.asStateFlow()
+        private val _isSearchVisible = MutableStateFlow(false)
+        val isSearchVisible: StateFlow<Boolean> = _isSearchVisible.asStateFlow()
 
-    private var allTrucks: List<Truck> = emptyList()
+        private var allTrucks: List<Truck> = emptyList()
 
         init {
             fetchTrucks()
@@ -75,38 +75,39 @@ internal class TrucksViewModel
             applyFilter()
         }
 
-    private fun applyFilter() {
-        val filtered =
-            when (_selectedFilter.value) {
-                TruckFilter.ALL -> allTrucks
-                TruckFilter.AVAILABLE -> allTrucks.filter { it.availability.uppercase() == "AVAILABLE" || it.availability.uppercase() == "ACTIVE" }
-                TruckFilter.ON_TRIP -> allTrucks.filter { it.availability.uppercase() == "ON_TRIP" }
-                TruckFilter.BLACKLISTED -> allTrucks.filter { it.isBlacklisted }
-            }
-        val searchText = _searchQuery.value.trim()
-        val result = if (searchText.isBlank()) {
-            filtered
-        } else {
-            filtered.filter { truck ->
-                truck.registrationNumber.contains(searchText, ignoreCase = true) ||
-                    (truck.truckType?.contains(searchText, ignoreCase = true) ?: false)
+        private fun applyFilter() {
+            val filtered =
+                when (_selectedFilter.value) {
+                    TruckFilter.ALL -> allTrucks
+                    TruckFilter.AVAILABLE -> allTrucks.filter { it.availability.uppercase() == "AVAILABLE" || it.availability.uppercase() == "ACTIVE" }
+                    TruckFilter.ON_TRIP -> allTrucks.filter { it.availability.uppercase() == "ON_TRIP" }
+                    TruckFilter.BLACKLISTED -> allTrucks.filter { it.isBlacklisted }
+                }
+            val searchText = _searchQuery.value.trim()
+            val result =
+                if (searchText.isBlank()) {
+                    filtered
+                } else {
+                    filtered.filter { truck ->
+                        truck.registrationNumber.contains(searchText, ignoreCase = true) ||
+                            (truck.truckType?.contains(searchText, ignoreCase = true) ?: false)
+                    }
+                }
+            _uiState.value = UiState.Success(result)
+        }
+
+        fun onSearchClick() {
+            _isSearchVisible.value = !_isSearchVisible.value
+            if (!_isSearchVisible.value) {
+                _searchQuery.value = ""
+                applyFilter()
             }
         }
-        _uiState.value = UiState.Success(result)
-    }
 
-    fun onSearchClick() {
-        _isSearchVisible.value = !_isSearchVisible.value
-        if (!_isSearchVisible.value) {
-            _searchQuery.value = ""
+        fun onSearchQueryChanged(query: String) {
+            _searchQuery.value = query
             applyFilter()
         }
-    }
-
-    fun onSearchQueryChanged(query: String) {
-        _searchQuery.value = query
-        applyFilter()
-    }
 
         fun onRefresh() {
             fetchTrucks(forceRefresh = true)

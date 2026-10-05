@@ -14,7 +14,6 @@ import java.util.TimeZone
  * user sees on their wall clock.
  */
 object RelativeTimeFormatter {
-
     private val IST = TimeZone.getTimeZone("Asia/Kolkata")
     private val UTC = TimeZone.getTimeZone("UTC")
 
@@ -27,11 +26,13 @@ object RelativeTimeFormatter {
      * @return "Expires in 1d 12h", "Expires in 45m", "Expires in <1m",
      *         "Expired", or "--" if the input is unparseable.
      */
-    fun formatExpiry(timestamp: String?): String {        if (timestamp.isNullOrBlank()) return "--"
+    fun formatExpiry(timestamp: String?): String {
+        if (timestamp.isNullOrBlank()) return "--"
         return try {
-            val parser = SimpleDateFormat(SUPABASE_PATTERN, Locale.getDefault()).apply {
-                timeZone = UTC
-            }
+            val parser =
+                SimpleDateFormat(SUPABASE_PATTERN, Locale.getDefault()).apply {
+                    timeZone = UTC
+                }
             val clean = stripFractionalAndZone(timestamp)
             val expiresUtc = parser.parse(clean) ?: return "--"
 
@@ -82,9 +83,10 @@ object RelativeTimeFormatter {
     fun formatCreatedIst(timestamp: String?): String {
         if (timestamp.isNullOrBlank()) return ""
         return try {
-            val parser = SimpleDateFormat(SUPABASE_PATTERN, Locale.getDefault()).apply {
-                timeZone = UTC
-            }
+            val parser =
+                SimpleDateFormat(SUPABASE_PATTERN, Locale.getDefault()).apply {
+                    timeZone = UTC
+                }
             val clean = stripFractionalAndZone(timestamp)
             val instant = parser.parse(clean) ?: return ""
 
@@ -92,29 +94,34 @@ object RelativeTimeFormatter {
             val now = Calendar.getInstance(IST)
             val yesterday = Calendar.getInstance(IST).apply { add(Calendar.DAY_OF_YEAR, -1) }
 
-            val timePart = SimpleDateFormat("h:mm a", Locale.getDefault()).apply {
-                timeZone = IST
-            }.format(instant)
+            val timePart =
+                SimpleDateFormat("h:mm a", Locale.getDefault()).apply {
+                    timeZone = IST
+                }.format(instant)
 
-            val sameDay = created.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
-                created.get(Calendar.DAY_OF_YEAR) == now.get(Calendar.DAY_OF_YEAR)
-            val isYesterday = created.get(Calendar.YEAR) == yesterday.get(Calendar.YEAR) &&
-                created.get(Calendar.DAY_OF_YEAR) == yesterday.get(Calendar.DAY_OF_YEAR)
+            val sameDay =
+                created.get(Calendar.YEAR) == now.get(Calendar.YEAR) &&
+                    created.get(Calendar.DAY_OF_YEAR) == now.get(Calendar.DAY_OF_YEAR)
+            val isYesterday =
+                created.get(Calendar.YEAR) == yesterday.get(Calendar.YEAR) &&
+                    created.get(Calendar.DAY_OF_YEAR) == yesterday.get(Calendar.DAY_OF_YEAR)
             val sameYear = created.get(Calendar.YEAR) == now.get(Calendar.YEAR)
 
             when {
                 sameDay -> "Today, $timePart IST"
                 isYesterday -> "Yesterday, $timePart IST"
                 sameYear -> {
-                    val datePart = SimpleDateFormat("d MMM", Locale.getDefault()).apply {
-                        timeZone = IST
-                    }.format(instant)
+                    val datePart =
+                        SimpleDateFormat("d MMM", Locale.getDefault()).apply {
+                            timeZone = IST
+                        }.format(instant)
                     "$datePart, $timePart IST"
                 }
                 else -> {
-                    val datePart = SimpleDateFormat("d MMM yyyy", Locale.getDefault()).apply {
-                        timeZone = IST
-                    }.format(instant)
+                    val datePart =
+                        SimpleDateFormat("d MMM yyyy", Locale.getDefault()).apply {
+                            timeZone = IST
+                        }.format(instant)
                     "$datePart, $timePart IST"
                 }
             }
@@ -139,9 +146,10 @@ object RelativeTimeFormatter {
     fun formatElapsed(timestamp: String?): String {
         if (timestamp.isNullOrBlank()) return ""
         return try {
-            val parser = SimpleDateFormat(SUPABASE_PATTERN, Locale.getDefault()).apply {
-                timeZone = UTC
-            }
+            val parser =
+                SimpleDateFormat(SUPABASE_PATTERN, Locale.getDefault()).apply {
+                    timeZone = UTC
+                }
             val instant = parser.parse(stripFractionalAndZone(timestamp)) ?: return ""
 
             val elapsedMillis = System.currentTimeMillis() - instant.time
@@ -174,17 +182,18 @@ object RelativeTimeFormatter {
      */
     private fun toIstMillis(utcInstant: Date): Long {
         val calUtc = Calendar.getInstance(UTC).apply { time = utcInstant }
-        val calIst = Calendar.getInstance(IST).apply {
-            clear()
-            set(
-                calUtc.get(Calendar.YEAR),
-                calUtc.get(Calendar.MONTH),
-                calUtc.get(Calendar.DAY_OF_MONTH),
-                calUtc.get(Calendar.HOUR_OF_DAY),
-                calUtc.get(Calendar.MINUTE),
-                calUtc.get(Calendar.SECOND),
-            )
-        }
+        val calIst =
+            Calendar.getInstance(IST).apply {
+                clear()
+                set(
+                    calUtc.get(Calendar.YEAR),
+                    calUtc.get(Calendar.MONTH),
+                    calUtc.get(Calendar.DAY_OF_MONTH),
+                    calUtc.get(Calendar.HOUR_OF_DAY),
+                    calUtc.get(Calendar.MINUTE),
+                    calUtc.get(Calendar.SECOND),
+                )
+            }
         return calIst.timeInMillis
     }
 

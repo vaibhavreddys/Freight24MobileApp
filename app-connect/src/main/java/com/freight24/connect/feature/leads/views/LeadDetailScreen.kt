@@ -43,7 +43,6 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -142,53 +141,61 @@ private const val CityKeyBaseLocation = "lead_city_base"
 private val FieldTopMargin = 12.dp
 
 private fun cityKeyRouteSource(rowId: Long) = "lead_city_route_${rowId}_source"
+
 private fun cityKeyRouteDestination(rowId: Long) = "lead_city_route_${rowId}_destination"
 
-private val NOT_INTERESTED_REASONS = listOf(
-    "not_interested" to "Not interested",
-    "no_truck" to "No truck",
-    "stopped_business" to "Stopped business",
-    "too_many_calls" to "Too many calls",
-    "competitor" to "Competitor",
-    "other" to "Other",
-)
+private val NOT_INTERESTED_REASONS =
+    listOf(
+        "not_interested" to "Not interested",
+        "no_truck" to "No truck",
+        "stopped_business" to "Stopped business",
+        "too_many_calls" to "Too many calls",
+        "competitor" to "Competitor",
+        "other" to "Other",
+    )
 
-private val INVALID_REASONS = listOf(
-    "wrong_number" to "Wrong number",
-    "not_a_truck_owner" to "Not a truck owner",
-    "duplicate" to "Duplicate",
-)
+private val INVALID_REASONS =
+    listOf(
+        "wrong_number" to "Wrong number",
+        "not_a_truck_owner" to "Not a truck owner",
+        "duplicate" to "Duplicate",
+    )
 
-private fun callOutcomeLabel(outcome: String?): String = when (outcome) {
-    "no_answer" -> "No answer"
-    "interested" -> "Interested"
-    "not_interested" -> "Not interested"
-    "invalid" -> "Invalid"
-    null -> ""
-    else -> outcome.replace('_', ' ')
-}
+private fun callOutcomeLabel(outcome: String?): String =
+    when (outcome) {
+        "no_answer" -> "No answer"
+        "interested" -> "Interested"
+        "not_interested" -> "Not interested"
+        "invalid" -> "Invalid"
+        null -> ""
+        else -> outcome.replace('_', ' ')
+    }
 
 private fun String.pluralize(count: Int): String = if (count == 1) this else "${this}s"
 
 /** A lead's own city (id + name only) promoted to the richer search-result shape. */
-private fun LeadCityDto.toCityResult() =
-    CityResult(type = "CITY", id = id, name = name, city = name, state = "")
+private fun LeadCityDto.toCityResult() = CityResult(type = "CITY", id = id, name = name, city = name, state = "")
 
 @Composable
-private fun ledgerLabel() = MaterialTheme.typography.labelSmall.copy(
-    fontWeight = FontWeight.SemiBold,
-    letterSpacing = 1.1.sp,
-)
+private fun ledgerLabel() =
+    MaterialTheme.typography.labelSmall.copy(
+        fontWeight = FontWeight.SemiBold,
+        letterSpacing = 1.1.sp,
+    )
 
 @Composable
-private fun docketEyebrow() = MaterialTheme.typography.labelSmall.copy(
-    fontWeight = FontWeight.SemiBold,
-    letterSpacing = 1.4.sp,
-)
+private fun docketEyebrow() =
+    MaterialTheme.typography.labelSmall.copy(
+        fontWeight = FontWeight.SemiBold,
+        letterSpacing = 1.4.sp,
+    )
 
 /** Tracked-caps label at the top of a docket, optionally hatch-marked. */
 @Composable
-private fun DocketSectionLabel(text: String, hatch: Boolean = false) {
+private fun DocketSectionLabel(
+    text: String,
+    hatch: Boolean = false,
+) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         if (hatch) {
             Surface(
@@ -242,21 +249,22 @@ private class LeadOnboardingForm(detail: LeadDetailDto) {
 
     private var nextRowId = 0L
 
-    val routes = mutableStateListOf<RouteRow>().apply {
-        detail.routes.forEach { route ->
-            add(
-                RouteRow(id = nextRowId++).apply {
-                    sourceCity = route.sourceCity?.toCityResult()
-                    sourceQuery = route.sourceCity?.name.orEmpty()
-                    destinationCity = route.destinationCity?.toCityResult()
-                    destinationQuery = route.destinationCity?.name.orEmpty()
-                }
-            )
+    val routes =
+        mutableStateListOf<RouteRow>().apply {
+            detail.routes.forEach { route ->
+                add(
+                    RouteRow(id = nextRowId++).apply {
+                        sourceCity = route.sourceCity?.toCityResult()
+                        sourceQuery = route.sourceCity?.name.orEmpty()
+                        destinationCity = route.destinationCity?.toCityResult()
+                        destinationQuery = route.destinationCity?.name.orEmpty()
+                    },
+                )
+            }
+            // A lone blank row is how you record the first lane; it also keeps the section
+            // from ever being a dead end after the last route is removed.
+            if (isEmpty()) add(RouteRow(id = nextRowId++))
         }
-        // A lone blank row is how you record the first lane; it also keeps the section
-        // from ever being a dead end after the last route is removed.
-        if (isEmpty()) add(RouteRow(id = nextRowId++))
-    }
 
     /** Counted for the section header — incomplete drafts are not lanes yet. */
     val completeRouteCount: Int get() = routes.count { it.isComplete }
@@ -321,7 +329,10 @@ private class FieldScrollTarget(
         viewportTop = top
     }
 
-    fun onFieldPositioned(key: String, top: Float) {
+    fun onFieldPositioned(
+        key: String,
+        top: Float,
+    ) {
         if (viewportTop.isNaN()) return
         // Position in root moves with the scroll, so add it back to recover the field's
         // position in the content. The result is constant across scroll positions, which
@@ -338,19 +349,24 @@ private class FieldScrollTarget(
      * below them than one viewport's worth — so they rise as far as the content allows and
      * settle fully above the keyboard, which is the outcome that actually matters.
      */
-    fun scrollToTop(key: String, topMarginPx: Float) {
+    fun scrollToTop(
+        key: String,
+        topMarginPx: Float,
+    ) {
         val offset = offsets[key] ?: return
         val target = (offset - topMarginPx).toInt().coerceIn(0, scrollState.maxValue)
         animation?.cancel()
-        animation = scope.launch {
-            scrollState.animateScrollTo(
-                value = target,
-                animationSpec = tween(
-                    durationMillis = 250,
-                    easing = FastOutSlowInEasing,
-                ),
-            )
-        }
+        animation =
+            scope.launch {
+                scrollState.animateScrollTo(
+                    value = target,
+                    animationSpec =
+                        tween(
+                            durationMillis = 250,
+                            easing = FastOutSlowInEasing,
+                        ),
+                )
+            }
     }
 }
 
@@ -408,27 +424,29 @@ fun LeadDetailScreen(
         val fieldTopMarginPx = with(LocalDensity.current) { FieldTopMargin.toPx() }
 
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                // The scaffold's insets are already spent above; without this the IME
-                // inset below would be counted a second time and the pinned bar would
-                // float a nav-bar's height too high.
-                .consumeWindowInsets(innerPadding)
-                // Edge-to-edge window: the IME does not resize us, it just covers us. This
-                // is what shrinks the viewport to the part of the screen the user can
-                // actually see, so the scroll maths below has a truthful bottom edge and
-                // the pinned bar rides up with the keyboard.
-                .imePadding()
-                .onGloballyPositioned { fieldScroll.onViewportPositioned(it.positionInRoot().y) },
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    // The scaffold's insets are already spent above; without this the IME
+                    // inset below would be counted a second time and the pinned bar would
+                    // float a nav-bar's height too high.
+                    .consumeWindowInsets(innerPadding)
+                    // Edge-to-edge window: the IME does not resize us, it just covers us. This
+                    // is what shrinks the viewport to the part of the screen the user can
+                    // actually see, so the scroll maths below has a truthful bottom edge and
+                    // the pinned bar rides up with the keyboard.
+                    .imePadding()
+                    .onGloballyPositioned { fieldScroll.onViewportPositioned(it.positionInRoot().y) },
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(scrollState)
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                    // keep content clear of the pinned action bar
-                    .padding(bottom = 96.dp),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .verticalScroll(scrollState)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        // keep content clear of the pinned action bar
+                        .padding(bottom = 96.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 LeadHeaderDocket(
@@ -437,7 +455,7 @@ fun LeadDetailScreen(
                     onCallClick = {
                         runCatching {
                             context.startActivity(
-                                Intent(Intent.ACTION_DIAL, Uri.parse("tel:${detail.phone}"))
+                                Intent(Intent.ACTION_DIAL, Uri.parse("tel:${detail.phone}")),
                             )
                         }
                         showCallOutcomeSheet = true
@@ -469,9 +487,10 @@ fun LeadDetailScreen(
                 shadowElevation = 8.dp,
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     val onSave = {
@@ -559,10 +578,11 @@ private fun ActionButton(
     if (filled) {
         Button(
             onClick = onClick,
-            modifier = modifier
-                .height(50.dp)
-                .testTag(testTag)
-                .semantics { testTagsAsResourceId = true },
+            modifier =
+                modifier
+                    .height(50.dp)
+                    .testTag(testTag)
+                    .semantics { testTagsAsResourceId = true },
             enabled = enabled,
             shape = RoundedCornerShape(25.dp),
         ) {
@@ -575,10 +595,11 @@ private fun ActionButton(
     } else {
         OutlinedButton(
             onClick = onClick,
-            modifier = modifier
-                .height(50.dp)
-                .testTag(testTag)
-                .semantics { testTagsAsResourceId = true },
+            modifier =
+                modifier
+                    .height(50.dp)
+                    .testTag(testTag)
+                    .semantics { testTagsAsResourceId = true },
             enabled = enabled,
             shape = RoundedCornerShape(25.dp),
             border = BorderStroke(1.dp, scheme.outlineVariant),
@@ -598,7 +619,10 @@ private fun ActionButton(
 }
 
 @Composable
-private fun ActionBanner(text: String, container: Color) {
+private fun ActionBanner(
+    text: String,
+    container: Color,
+) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = PanelShape,
@@ -691,11 +715,12 @@ private fun LeadHeaderDocket(
 
         Button(
             onClick = onCallClick,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
-                .testTag("lead_call_button")
-                .semantics { testTagsAsResourceId = true },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+                    .testTag("lead_call_button")
+                    .semantics { testTagsAsResourceId = true },
             shape = RoundedCornerShape(25.dp),
         ) {
             Icon(imageVector = Icons.Default.Call, contentDescription = null, modifier = Modifier.size(18.dp))
@@ -726,9 +751,10 @@ private fun LeadFactsPanel(detail: LeadDetailDto) {
         border = BorderStroke(1.dp, scheme.outlineVariant.copy(alpha = 0.5f)),
     ) {
         Row(
-            modifier = Modifier
-                .padding(horizontal = 12.dp, vertical = 11.dp)
-                .height(IntrinsicSize.Min),
+            modifier =
+                Modifier
+                    .padding(horizontal = 12.dp, vertical = 11.dp)
+                    .height(IntrinsicSize.Min),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             FactColumn(
@@ -738,10 +764,11 @@ private fun LeadFactsPanel(detail: LeadDetailDto) {
                 modifier = Modifier.weight(1f),
             )
             Box(
-                modifier = Modifier
-                    .width(1.dp)
-                    .fillMaxHeight()
-                    .background(scheme.outlineVariant.copy(alpha = 0.7f)),
+                modifier =
+                    Modifier
+                        .width(1.dp)
+                        .fillMaxHeight()
+                        .background(scheme.outlineVariant.copy(alpha = 0.7f)),
             )
             FactColumn(
                 label = "Truck types",
@@ -820,14 +847,15 @@ private fun LeadMetaStatus(detail: LeadDetailDto) {
     val outcome = callOutcomeLabel(detail.lastCallOutcome)
 
     Text(
-        text = buildString {
-            if (detail.callAttempts == 0) {
-                append("No attempts made yet")
-            } else {
-                append("${detail.callAttempts} ${"attempt".pluralize(detail.callAttempts)} made")
-                if (outcome.isNotBlank()) append(" · last ${outcome.lowercase()}")
-            }
-        },
+        text =
+            buildString {
+                if (detail.callAttempts == 0) {
+                    append("No attempts made yet")
+                } else {
+                    append("${detail.callAttempts} ${"attempt".pluralize(detail.callAttempts)} made")
+                    if (outcome.isNotBlank()) append(" · last ${outcome.lowercase()}")
+                }
+            },
         style = MaterialTheme.typography.bodySmall,
         color = scheme.onSurfaceVariant,
         maxLines = 1,
@@ -885,11 +913,12 @@ private fun LeadOnboardingDocket(
             value = form.name,
             onValueChange = { form.name = it },
             label = { Text(text = "Name *") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(FieldHeight)
-                .testTag("lead_name_field")
-                .semantics { testTagsAsResourceId = true },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(FieldHeight)
+                    .testTag("lead_name_field")
+                    .semantics { testTagsAsResourceId = true },
             shape = PanelShape,
             textStyle = MaterialTheme.typography.bodyLarge,
             singleLine = true,
@@ -942,20 +971,22 @@ private fun LeadOnboardingDocket(
             label = "Base Location",
             selectAllOnFocus = true,
             testTag = "city_search_base_location",
-            modifier = Modifier
-                .fillMaxWidth()
-                .onGloballyPositioned {
-                    fieldScroll.onFieldPositioned(CityKeyBaseLocation, it.positionInRoot().y)
-                },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .onGloballyPositioned {
+                        fieldScroll.onFieldPositioned(CityKeyBaseLocation, it.positionInRoot().y)
+                    },
         )
 
         Spacer(Modifier.height(16.dp))
         Text(
-            text = if (form.completeRouteCount > 0) {
-                "PREFERRED ROUTES (${form.completeRouteCount})"
-            } else {
-                "PREFERRED ROUTES"
-            },
+            text =
+                if (form.completeRouteCount > 0) {
+                    "PREFERRED ROUTES (${form.completeRouteCount})"
+                } else {
+                    "PREFERRED ROUTES"
+                },
             style = ledgerLabel(),
             color = scheme.onSurfaceVariant,
         )
@@ -1005,11 +1036,12 @@ private fun LeadOnboardingDocket(
             value = form.notes,
             onValueChange = { form.notes = it },
             label = { Text(text = "Notes") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(NotesFieldHeight)
-                .testTag("lead_notes_field")
-                .semantics { testTagsAsResourceId = true },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(NotesFieldHeight)
+                    .testTag("lead_notes_field")
+                    .semantics { testTagsAsResourceId = true },
             shape = PanelShape,
             textStyle = MaterialTheme.typography.bodyLarge,
         )
@@ -1064,9 +1096,10 @@ private fun RouteEntryRow(
             label = "Source",
             selectAllOnFocus = true,
             testTag = "city_search_route_${row.id}_source",
-            modifier = Modifier
-                .weight(1f)
-                .onGloballyPositioned { fieldScroll.onFieldPositioned(sourceKey, it.positionInRoot().y) },
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .onGloballyPositioned { fieldScroll.onFieldPositioned(sourceKey, it.positionInRoot().y) },
         )
 
         Box(modifier = Modifier.height(FieldHeight), contentAlignment = Alignment.Center) {
@@ -1096,19 +1129,21 @@ private fun RouteEntryRow(
             label = "Destination",
             selectAllOnFocus = true,
             testTag = "city_search_route_${row.id}_destination",
-            modifier = Modifier
-                .weight(1f)
-                .onGloballyPositioned { fieldScroll.onFieldPositioned(destinationKey, it.positionInRoot().y) },
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .onGloballyPositioned { fieldScroll.onFieldPositioned(destinationKey, it.positionInRoot().y) },
         )
 
         Box(modifier = Modifier.height(FieldHeight), contentAlignment = Alignment.Center) {
             if (canRemove) {
                 IconButton(
                     onClick = onRemove,
-                    modifier = Modifier
-                        .size(28.dp)
-                        .testTag("lead_remove_route_${row.id}")
-                        .semantics { testTagsAsResourceId = true },
+                    modifier =
+                        Modifier
+                            .size(28.dp)
+                            .testTag("lead_remove_route_${row.id}")
+                            .semantics { testTagsAsResourceId = true },
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
@@ -1149,19 +1184,21 @@ private fun ActivityDocket(detail: LeadDetailDto) {
                 // Timeline spine: action-coloured dot joined by a connector.
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Box(
-                        modifier = Modifier
-                            .size(10.dp)
-                            .background(LeadActivityAccent(activity.actionType), CircleShape),
+                        modifier =
+                            Modifier
+                                .size(10.dp)
+                                .background(LeadActivityAccent(activity.actionType), CircleShape),
                     )
                     if (index < minOf(detail.activities.size, 20) - 1) {
                         Box(
-                            modifier = Modifier
-                                .width(2.dp)
-                                .height(36.dp)
-                                .background(
-                                    scheme.outlineVariant.copy(alpha = 0.6f),
-                                    RoundedCornerShape(2.dp),
-                                ),
+                            modifier =
+                                Modifier
+                                    .width(2.dp)
+                                    .height(36.dp)
+                                    .background(
+                                        scheme.outlineVariant.copy(alpha = 0.6f),
+                                        RoundedCornerShape(2.dp),
+                                    ),
                         )
                     }
                 }
@@ -1189,16 +1226,17 @@ private fun ActivityDocket(detail: LeadDetailDto) {
                         )
                     }
                     Text(
-                        text = buildString {
-                            append(activity.actor?.fullName ?: activity.actor?.tagCode ?: "System")
-                            val statusFrom = activity.statusFrom
-                            val statusTo = activity.statusTo
-                            // A transition that lands on the same status (archive
-                            // bookkeeping) reads as a fake diff — show nothing.
-                            if (statusFrom != null && statusTo != null && statusFrom != statusTo) {
-                                append(" · ${leadStatusLabel(statusFrom)} → ${leadStatusLabel(statusTo)}")
-                            }
-                        },
+                        text =
+                            buildString {
+                                append(activity.actor?.fullName ?: activity.actor?.tagCode ?: "System")
+                                val statusFrom = activity.statusFrom
+                                val statusTo = activity.statusTo
+                                // A transition that lands on the same status (archive
+                                // bookkeeping) reads as a fake diff — show nothing.
+                                if (statusFrom != null && statusTo != null && statusFrom != statusTo) {
+                                    append(" · ${leadStatusLabel(statusFrom)} → ${leadStatusLabel(statusTo)}")
+                                }
+                            },
                         style = MaterialTheme.typography.bodySmall,
                         color = scheme.onSurfaceVariant,
                         maxLines = 1,
@@ -1235,11 +1273,12 @@ private fun CallOutcomeSheet(
     var selectedOutcome by remember { mutableStateOf<String?>(null) }
     var selectedReason by remember { mutableStateOf<String?>(null) }
 
-    val reasonList = when (selectedOutcome) {
-        "not_interested" -> NOT_INTERESTED_REASONS
-        "invalid" -> INVALID_REASONS
-        else -> emptyList()
-    }
+    val reasonList =
+        when (selectedOutcome) {
+            "not_interested" -> NOT_INTERESTED_REASONS
+            "invalid" -> INVALID_REASONS
+            else -> emptyList()
+        }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -1247,9 +1286,10 @@ private fun CallOutcomeSheet(
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
         ) {
             Text(
                 text = "CALL OUTCOME",
@@ -1308,13 +1348,15 @@ private fun CallOutcomeSheet(
             Spacer(Modifier.height(20.dp))
             Button(
                 onClick = { onOutcome(selectedOutcome!!, selectedReason) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
-                    .testTag("lead_outcome_save")
-                    .semantics { testTagsAsResourceId = true },
-                enabled = selectedOutcome != null &&
-                    (reasonList.isEmpty() || selectedReason != null),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                        .testTag("lead_outcome_save")
+                        .semantics { testTagsAsResourceId = true },
+                enabled =
+                    selectedOutcome != null &&
+                        (reasonList.isEmpty() || selectedReason != null),
                 shape = RoundedCornerShape(25.dp),
             ) {
                 Text(text = "Log Call", fontWeight = FontWeight.SemiBold)
@@ -1347,11 +1389,12 @@ private fun OutcomeRow(
 ) {
     val scheme = MaterialTheme.colorScheme
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag(testTag)
-            .semantics { testTagsAsResourceId = true }
-            .clickable(onClick = onClick),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .testTag(testTag)
+                .semantics { testTagsAsResourceId = true }
+                .clickable(onClick = onClick),
         shape = PanelShape,
         color = if (isSelected) accent.copy(alpha = 0.14f) else Color.Transparent,
         border = BorderStroke(1.dp, if (isSelected) accent.copy(alpha = 0.55f) else scheme.outlineVariant),
@@ -1361,9 +1404,10 @@ private fun OutcomeRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                modifier = Modifier
-                    .size(8.dp)
-                    .background(accent, CircleShape),
+                modifier =
+                    Modifier
+                        .size(8.dp)
+                        .background(accent, CircleShape),
             )
             Spacer(Modifier.width(10.dp))
             Text(
@@ -1386,23 +1430,25 @@ private fun ReasonRow(
 ) {
     val scheme = MaterialTheme.colorScheme
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag(testTag)
-            .semantics { testTagsAsResourceId = true }
-            .clickable(onClick = onClick)
-            .padding(start = 12.dp, top = 8.dp, bottom = 8.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .testTag(testTag)
+                .semantics { testTagsAsResourceId = true }
+                .clickable(onClick = onClick)
+                .padding(start = 12.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            modifier = Modifier
-                .size(14.dp)
-                .background(if (isSelected) scheme.primary else Color.Transparent, CircleShape)
-                .border(
-                    width = 1.dp,
-                    color = if (isSelected) scheme.primary else scheme.outlineVariant,
-                    shape = CircleShape,
-                ),
+            modifier =
+                Modifier
+                    .size(14.dp)
+                    .background(if (isSelected) scheme.primary else Color.Transparent, CircleShape)
+                    .border(
+                        width = 1.dp,
+                        color = if (isSelected) scheme.primary else scheme.outlineVariant,
+                        shape = CircleShape,
+                    ),
         )
         Spacer(Modifier.width(10.dp))
         Text(

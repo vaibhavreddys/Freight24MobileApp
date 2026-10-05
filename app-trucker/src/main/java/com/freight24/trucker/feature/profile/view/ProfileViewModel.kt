@@ -7,12 +7,12 @@ import androidx.lifecycle.viewModelScope
 import com.freight24.common.util.FileUtils
 import com.freight24.rest.api.TruckOwnerApi
 import com.freight24.rest.repository.LocationRepository
-import com.freight24.rest.response.CityResult
-import com.freight24.rest.request.PreferredRouteEntry
-import com.freight24.trucker.feature.profile.domain.PreferredRoute
 import com.freight24.rest.request.FinalSaveFileRequest
 import com.freight24.rest.request.FinalSaveRequest
+import com.freight24.rest.request.PreferredRouteEntry
+import com.freight24.rest.response.CityResult
 import com.freight24.trucker.feature.profile.domain.DocumentType
+import com.freight24.trucker.feature.profile.domain.PreferredRoute
 import com.freight24.trucker.feature.profile.domain.Profile
 import com.freight24.trucker.feature.profile.domain.ProfileRepository
 import com.freight24.trucker.feature.profile.domain.usecase.FetchProfileUseCase
@@ -27,11 +27,8 @@ import com.freight24.trucker.feature.profile.util.ProfileDocumentTypeIds
 import com.freight24.ui.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.io.File
-import java.util.UUID
-import javax.inject.Inject
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -48,6 +45,9 @@ import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
+import java.io.File
+import java.util.UUID
+import javax.inject.Inject
 
 internal enum class UploadStatus {
     IDLE,
@@ -176,17 +176,18 @@ internal class ProfileViewModel
                         priority = it.priority,
                         isStaged = false,
                     )
-                } + toAdd.map {
-                    DisplayRoute(
-                        id = it.tempId,
-                        sourceCityId = it.sourceCityId,
-                        sourceCityName = it.sourceCityName,
-                        destCityId = it.destCityId,
-                        destCityName = it.destCityName,
-                        priority = it.priority,
-                        isStaged = true,
-                    )
-                }
+                } +
+                    toAdd.map {
+                        DisplayRoute(
+                            id = it.tempId,
+                            sourceCityId = it.sourceCityId,
+                            sourceCityName = it.sourceCityName,
+                            destCityId = it.destCityId,
+                            destCityName = it.destCityName,
+                            priority = it.priority,
+                            isStaged = true,
+                        )
+                    }
             }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
         private val _showAddRouteSheet = MutableStateFlow(false)
@@ -202,6 +203,7 @@ internal class ProfileViewModel
         fun dismissLogoutSheet() {
             _showLogoutSheet.value = false
         }
+
         val fromCityQuery = MutableStateFlow("")
         val toCityQuery = MutableStateFlow("")
         private val _fromCitySuggestions = MutableStateFlow<List<CityResult>>(emptyList())
@@ -310,33 +312,39 @@ internal class ProfileViewModel
             editableBranchName.value = profile.bankAccountDetails?.branchName.orEmpty()
         }
 
-        private fun initializeDocumentStates(profile: Profile, preserveTemporary: Boolean) {
+        private fun initializeDocumentStates(
+            profile: Profile,
+            preserveTemporary: Boolean,
+        ) {
             val previous = _documentStates.value
             val docsByType = profile.documents.associateBy { it.type }
 
             val requiredTypes = ProfileDocumentTypeIds.requiredDocumentTypes(profile.isTdsApplicable)
             _documentTypes.value = requiredTypes
 
-            val nextStates = requiredTypes.associate { type ->
-                val fieldKey = ProfileDocumentTypeIds.fieldKey(type)
-                val existing = docsByType[type]
-                val oldState = previous[fieldKey]
-                val documentTypeId = ProfileDocumentTypeIds.documentTypeId(type) ?: 0
+            val nextStates =
+                requiredTypes.associate { type ->
+                    val fieldKey = ProfileDocumentTypeIds.fieldKey(type)
+                    val existing = docsByType[type]
+                    val oldState = previous[fieldKey]
+                    val documentTypeId = ProfileDocumentTypeIds.documentTypeId(type) ?: 0
 
-                fieldKey to DocumentUploadState(
-                    fieldKey = fieldKey,
-                    documentTypeId = documentTypeId,
-                    existingDocId = existing?.docId,
-                    existingFileUrl = existing?.url,
-                    existingVerifyStatus = existing?.let { ProfileDocumentTypeIds.verifyStatus(it.status) },
-                    temporaryFileKey = if (preserveTemporary) oldState?.temporaryFileKey else null,
-                    uploadStatus = if (preserveTemporary && oldState?.temporaryFileKey != null) {
-                        if (oldState.uploadStatus == UploadStatus.ERROR) UploadStatus.ERROR else UploadStatus.DONE
-                    } else {
-                        UploadStatus.IDLE
-                    },
-                )
-            }
+                    fieldKey to
+                        DocumentUploadState(
+                            fieldKey = fieldKey,
+                            documentTypeId = documentTypeId,
+                            existingDocId = existing?.docId,
+                            existingFileUrl = existing?.url,
+                            existingVerifyStatus = existing?.let { ProfileDocumentTypeIds.verifyStatus(it.status) },
+                            temporaryFileKey = if (preserveTemporary) oldState?.temporaryFileKey else null,
+                            uploadStatus =
+                                if (preserveTemporary && oldState?.temporaryFileKey != null) {
+                                    if (oldState.uploadStatus == UploadStatus.ERROR) UploadStatus.ERROR else UploadStatus.DONE
+                                } else {
+                                    UploadStatus.IDLE
+                                },
+                        )
+                }
             // Drop state for types that are no longer applicable (e.g. TDS was
             // switched off server-side) so they cannot be finalised by accident.
             _documentStates.value = nextStates
@@ -350,13 +358,14 @@ internal class ProfileViewModel
             val baseLabel = profile.baseLocation?.ifBlank { null } ?: baseCityName
             _baseLocation.value = baseLabel
             if (baseCityId != null && !baseCityName.isNullOrBlank()) {
-                _baseCity.value = CityResult(
-                    type = "CITY",
-                    id = baseCityId,
-                    name = baseCityName,
-                    city = baseCityName,
-                    state = profile.baseCityState.orEmpty(),
-                )
+                _baseCity.value =
+                    CityResult(
+                        type = "CITY",
+                        id = baseCityId,
+                        name = baseCityName,
+                        city = baseCityName,
+                        state = profile.baseCityState.orEmpty(),
+                    )
                 baseCityQuery.value = baseLabel.orEmpty()
             } else {
                 _baseCity.value = null
@@ -385,13 +394,17 @@ internal class ProfileViewModel
             }
         }
 
-        private fun fetchCitySuggestions(query: String, target: String) {
+        private fun fetchCitySuggestions(
+            query: String,
+            target: String,
+        ) {
             viewModelScope.launch(Dispatchers.IO) {
-                val loading = when (target) {
-                    "base" -> _baseCitySearchLoading
-                    "from" -> _fromCityLoading
-                    else -> _toCityLoading
-                }
+                val loading =
+                    when (target) {
+                        "base" -> _baseCitySearchLoading
+                        "from" -> _fromCityLoading
+                        else -> _toCityLoading
+                    }
                 loading.value = true
                 val type = if (target == "base") null else "CITY"
                 locationRepository.searchCities(query, type)
@@ -406,12 +419,16 @@ internal class ProfileViewModel
             }
         }
 
-        private fun shouldSkipSearch(target: String, query: String): Boolean {
-            val skipFlow = when (target) {
-                "base" -> _baseCitySearchSkip
-                "from" -> _fromCitySearchSkip
-                else -> _toCitySearchSkip
-            }
+        private fun shouldSkipSearch(
+            target: String,
+            query: String,
+        ): Boolean {
+            val skipFlow =
+                when (target) {
+                    "base" -> _baseCitySearchSkip
+                    "from" -> _fromCitySearchSkip
+                    else -> _toCitySearchSkip
+                }
             val skipValue = skipFlow.value
             return if (skipValue != null && skipValue == query) {
                 skipFlow.value = null
@@ -501,19 +518,23 @@ internal class ProfileViewModel
                 _routeSheetError.value = "This route is already in your list"
                 return
             }
-            _routesToAdd.value = _routesToAdd.value + StagedRoute(
-                tempId = UUID.randomUUID().toString(),
-                sourceCityId = from.id,
-                sourceCityName = from.city,
-                destCityId = to.id,
-                destCityName = to.city,
-                priority = selectedPriority.value.toPriorityInt(),
-            )
+            _routesToAdd.value = _routesToAdd.value +
+                StagedRoute(
+                    tempId = UUID.randomUUID().toString(),
+                    sourceCityId = from.id,
+                    sourceCityName = from.city,
+                    destCityId = to.id,
+                    destCityName = to.city,
+                    priority = selectedPriority.value.toPriorityInt(),
+                )
             _showAddRouteSheet.value = false
             recomputeHasChanges()
         }
 
-        fun onStageRouteDelete(displayRouteId: String, isStaged: Boolean) {
+        fun onStageRouteDelete(
+            displayRouteId: String,
+            isStaged: Boolean,
+        ) {
             if (isStaged) {
                 _routesToAdd.value = _routesToAdd.value.filter { it.tempId != displayRouteId }
             } else {
@@ -656,14 +677,15 @@ internal class ProfileViewModel
         fun buildFinalSaveRequest(userId: String): FinalSaveRequest {
             return FinalSaveRequest(
                 user_id = userId,
-                files = documentStates.value.values
-                    .filter { it.temporaryFileKey != null }
-                    .map { doc ->
-                        FinalSaveFileRequest(
-                            temporaryKey = doc.temporaryFileKey!!,
-                            document_type_id = doc.documentTypeId,
-                        )
-                },
+                files =
+                    documentStates.value.values
+                        .filter { it.temporaryFileKey != null }
+                        .map { doc ->
+                            FinalSaveFileRequest(
+                                temporaryKey = doc.temporaryFileKey!!,
+                                document_type_id = doc.documentTypeId,
+                            )
+                        },
             )
         }
 
@@ -712,7 +734,11 @@ internal class ProfileViewModel
                 priority = priority,
             )
 
-        fun uploadDocument(uris: List<Uri>, type: DocumentType, isPdf: Boolean) {
+        fun uploadDocument(
+            uris: List<Uri>,
+            type: DocumentType,
+            isPdf: Boolean,
+        ) {
             if (uris.isEmpty()) return
             val original = originalProfile ?: return
             val fieldKey = ProfileDocumentTypeIds.fieldKey(type)
@@ -725,31 +751,33 @@ internal class ProfileViewModel
                 recomputeHasChanges()
 
                 try {
-                    val file = createPdfFile(uris = uris, isPdf = isPdf)
-                        ?: throw IllegalStateException("Unable to process selected file")
+                    val file =
+                        createPdfFile(uris = uris, isPdf = isPdf)
+                            ?: throw IllegalStateException("Unable to process selected file")
 
                     val requestFile = file.asRequestBody("application/pdf".toMediaTypeOrNull())
                     val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
 
-                    val result = if (!currentState.existingDocId.isNullOrBlank()) {
-                        updateIdentityDocumentUseCase.invoke(
-                            UpdateIdentityDocumentParams(
-                                docId = currentState.existingDocId,
-                                userId = original.userId,
-                                documentNumber = "SESSION_$sessionId",
-                                file = body,
-                            ),
-                        )
-                    } else {
-                        uploadIdentityDocumentUseCase.invoke(
-                            UploadIdentityDocumentParams(
-                                userId = original.userId,
-                                documentTypeId = currentState.documentTypeId,
-                                documentNumber = "SESSION_$sessionId",
-                                file = body,
-                            ),
-                        )
-                    }
+                    val result =
+                        if (!currentState.existingDocId.isNullOrBlank()) {
+                            updateIdentityDocumentUseCase.invoke(
+                                UpdateIdentityDocumentParams(
+                                    docId = currentState.existingDocId,
+                                    userId = original.userId,
+                                    documentNumber = "SESSION_$sessionId",
+                                    file = body,
+                                ),
+                            )
+                        } else {
+                            uploadIdentityDocumentUseCase.invoke(
+                                UploadIdentityDocumentParams(
+                                    userId = original.userId,
+                                    documentTypeId = currentState.documentTypeId,
+                                    documentNumber = "SESSION_$sessionId",
+                                    file = body,
+                                ),
+                            )
+                        }
 
                     result.onSuccess { temporaryKey ->
                         updateDocumentState(fieldKey) { state ->
@@ -777,7 +805,10 @@ internal class ProfileViewModel
             }
         }
 
-        private suspend fun createPdfFile(uris: List<Uri>, isPdf: Boolean): File? {
+        private suspend fun createPdfFile(
+            uris: List<Uri>,
+            isPdf: Boolean,
+        ): File? {
             return if (isPdf) {
                 FileUtils.getFileFromUri(context, uris.first())
             } else {
@@ -785,18 +816,23 @@ internal class ProfileViewModel
             }
         }
 
-        private fun updateDocumentState(fieldKey: String, transformer: (DocumentUploadState) -> DocumentUploadState) {
-            _documentStates.value = _documentStates.value.toMutableMap().apply {
-                val current = this[fieldKey] ?: return@apply
-                this[fieldKey] = transformer(current)
-            }
+        private fun updateDocumentState(
+            fieldKey: String,
+            transformer: (DocumentUploadState) -> DocumentUploadState,
+        ) {
+            _documentStates.value =
+                _documentStates.value.toMutableMap().apply {
+                    val current = this[fieldKey] ?: return@apply
+                    this[fieldKey] = transformer(current)
+                }
             recomputeDocumentDerivedState()
         }
 
         private fun clearTemporaryFileKeys() {
-            _documentStates.value = _documentStates.value.mapValues { (_, state) ->
-                state.copy(temporaryFileKey = null, uploadStatus = UploadStatus.IDLE)
-            }
+            _documentStates.value =
+                _documentStates.value.mapValues { (_, state) ->
+                    state.copy(temporaryFileKey = null, uploadStatus = UploadStatus.IDLE)
+                }
             recomputeDocumentDerivedState()
         }
 
@@ -807,13 +843,14 @@ internal class ProfileViewModel
          */
         private fun recomputeDocumentDerivedState() {
             _hasPendingTemporaryUploads.value = hasTemporaryUploads()
-            _completion.value = ProfileCompletion(
-                uploaded =
-                    _documentStates.value.values.count { state ->
-                        !state.existingFileUrl.isNullOrBlank() || !state.temporaryFileKey.isNullOrBlank()
-                    },
-                total = _documentTypes.value.size,
-            )
+            _completion.value =
+                ProfileCompletion(
+                    uploaded =
+                        _documentStates.value.values.count { state ->
+                            !state.existingFileUrl.isNullOrBlank() || !state.temporaryFileKey.isNullOrBlank()
+                        },
+                    total = _documentTypes.value.size,
+                )
         }
 
         private fun recomputeHasChanges() {
@@ -859,8 +896,7 @@ internal class ProfileViewModel
 
         private fun hasProfileFieldChanges(original: Profile): Boolean = countProfileFieldChanges(original) > 0
 
-        private fun stagedDocumentCount(): Int =
-            _documentStates.value.values.count { !it.temporaryFileKey.isNullOrBlank() }
+        private fun stagedDocumentCount(): Int = _documentStates.value.values.count { !it.temporaryFileKey.isNullOrBlank() }
 
         private fun hasTemporaryUploads(): Boolean {
             return _documentStates.value.values.any { !it.temporaryFileKey.isNullOrBlank() }
@@ -870,7 +906,10 @@ internal class ProfileViewModel
             return _routesToAdd.value.isNotEmpty() || _routeIdsToDelete.value.isNotEmpty()
         }
 
-        fun getSignedUrl(documentId: String, onUrlReady: (String) -> Unit) {
+        fun getSignedUrl(
+            documentId: String,
+            onUrlReady: (String) -> Unit,
+        ) {
             viewModelScope.launch(Dispatchers.IO) {
                 getProfileSignedUrlUseCase.invoke(documentId)
                     .onSuccess { signedUrl ->

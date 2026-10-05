@@ -216,9 +216,10 @@ fun ConnectIndentCard(
                 Surface(
                     shape = RoundedCornerShape(8.dp),
                     color = scheme.surfaceContainerHighest,
-                    modifier = Modifier
-                        .docketTag("indent_card_clone")
-                        .clickable(onClick = onCloneClick),
+                    modifier =
+                        Modifier
+                            .docketTag("indent_card_clone")
+                            .clickable(onClick = onCloneClick),
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
@@ -381,10 +382,11 @@ private fun CallPill(onClick: () -> Unit) {
     Surface(
         shape = RoundedCornerShape(8.dp),
         color = scheme.primary,
-        modifier = Modifier
-            .docketTag("indent_card_call")
-            .clickable(onClick = onClick)
-            .semantics { contentDescription = "Call client" },
+        modifier =
+            Modifier
+                .docketTag("indent_card_call")
+                .clickable(onClick = onClick)
+                .semantics { contentDescription = "Call client" },
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),

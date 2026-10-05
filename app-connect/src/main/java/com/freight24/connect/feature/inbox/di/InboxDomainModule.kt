@@ -12,13 +12,9 @@ import dagger.hilt.components.SingletonComponent
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class InboxDomainModule {
-
     @Binds
     abstract fun bindInboxUseCase(useCaseImpl: InboxUseCaseImpl): InboxUseCase
 
     @Binds
-    abstract fun bindWithDrawInterestUseCase(
-        useCaseImpl: WithDrawInterestUseCaseImpl
-    ): WithDrawInterestUseCase
-
+    abstract fun bindWithDrawInterestUseCase(useCaseImpl: WithDrawInterestUseCaseImpl): WithDrawInterestUseCase
 }

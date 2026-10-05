@@ -50,7 +50,6 @@ import com.freight24.ui.trucker.FleetFilterEntry
 import com.freight24.ui.trucker.FleetFilterRail
 import com.freight24.ui.trucker.FleetRule
 import com.freight24.ui.trucker.FleetSearchField
-import com.freight24.ui.trucker.FleetTone
 import com.freight24.ui.trucker.PlateBadge
 import com.freight24.ui.trucker.RigShape
 import com.freight24.ui.trucker.RigSilhouette
@@ -334,9 +333,10 @@ internal fun RigCard(
             PlateBadge(
                 registration = truck.registrationNumber,
                 colors = colors,
-                caption = listOfNotNull(truck.truckType, truck.bodyType)
-                    .joinToString(" · ")
-                    .ifBlank { null },
+                caption =
+                    listOfNotNull(truck.truckType, truck.bodyType)
+                        .joinToString(" · ")
+                        .ifBlank { null },
                 border = colors.brand,
                 modifier = Modifier.weight(1f, fill = false),
             )

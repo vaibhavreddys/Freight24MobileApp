@@ -1,7 +1,4 @@
 package com.freight24.trucker.feature.trucks.view.onboard
-import com.freight24.ui.components.FreightCenterAlignedTopAppBar
-import com.freight24.ui.components.FreightTopAppBar
-
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
@@ -15,9 +12,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,14 +35,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Assignment
-import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.FileUpload
-import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.LocalShipping
-import androidx.compose.material.icons.filled.Numbers
-import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -56,9 +48,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -89,18 +79,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.freight24.rest.response.AddTruckDto
 import com.freight24.ui.UiState
-import com.freight24.ui.theme.FreightThemeTokens
 import com.freight24.ui.components.AppDropdown
 import com.freight24.ui.components.DashedUploadCard
-import com.freight24.ui.components.getPdfLaunchIntent
+import com.freight24.ui.components.FreightCenterAlignedTopAppBar
 import com.freight24.ui.components.formViewportInsets
+import com.freight24.ui.components.getPdfLaunchIntent
+import com.freight24.ui.theme.FreightThemeTokens
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -352,24 +342,28 @@ private fun BasicInfoStep(viewModel: EditTruckViewModel) {
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         val registrationError by viewModel.registrationError.collectAsState()
- 
+
         OutlinedTextField(
             value = registrationNumber,
             onValueChange = { viewModel.updateRegistrationNumber(it) },
             label = { Text("Vehicle Number") },
             placeholder = { Text("KA07AB1287") },
 //            leadingIcon = { Icon(Icons.Default.Numbers, contentDescription = null) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .onFocusChanged { focusState ->
-                    if (!focusState.isFocused) {
-                        viewModel.checkRegistrationAvailability()
-                    }
-                },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged { focusState ->
+                        if (!focusState.isFocused) {
+                            viewModel.checkRegistrationAvailability()
+                        }
+                    },
             isError = registrationError != null,
-            supportingText = if (registrationError != null) {
-                { Text(registrationError!!) }
-            } else null,
+            supportingText =
+                if (registrationError != null) {
+                    { Text(registrationError!!) }
+                } else {
+                    null
+                },
             shape = MaterialTheme.shapes.medium,
             singleLine = true,
             keyboardOptions =
@@ -542,7 +536,7 @@ private fun DocumentsStep(viewModel: EditTruckViewModel) {
                 docLauncher.launch(arrayOf("application/pdf"))
             }
         },
-        sheetState = sheetState
+        sheetState = sheetState,
     )
 
     if (pendingUris.isNotEmpty()) {
@@ -563,7 +557,7 @@ private fun DocumentsStep(viewModel: EditTruckViewModel) {
             onDismiss = {
                 pendingUris = emptyList()
                 currentTargetPrefix = null
-            }
+            },
         )
     }
 
@@ -679,7 +673,6 @@ private fun DocumentUploadSection(
                         Text(
                             text = label,
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                            
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
@@ -718,10 +711,11 @@ private fun DocumentUploadSection(
             label = label,
             icon = icon,
             isUploaded = newFile != null,
-            statusText = when {
-                newFile != null -> "Ready to Upload"
-                else -> "Pending Selection"
-            },
+            statusText =
+                when {
+                    newFile != null -> "Ready to Upload"
+                    else -> "Pending Selection"
+                },
             onUploadClick = onUploadClick,
         )
     }
@@ -923,7 +917,6 @@ private fun EditSuccessScreen(
                         Text(
                             text = "● ACTIVE",
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
                         )

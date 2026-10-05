@@ -12,10 +12,12 @@ interface CreateClientUseCase {
     suspend operator fun invoke(params: CreateClientParams): Result<Boolean>
 }
 
-class CreateClientUseCaseImpl @Inject constructor(
-    private val repository: ClientRepository,
-) : CreateClientUseCase {
-    override suspend fun invoke(params: CreateClientParams): Result<Boolean> {
-        return repository.createClient(params.request)
+class CreateClientUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: ClientRepository,
+    ) : CreateClientUseCase {
+        override suspend fun invoke(params: CreateClientParams): Result<Boolean> {
+            return repository.createClient(params.request)
+        }
     }
-}

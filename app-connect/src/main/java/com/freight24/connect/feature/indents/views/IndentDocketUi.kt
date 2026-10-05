@@ -21,8 +21,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -113,8 +113,7 @@ fun clauseAccent(state: ClauseState): Color {
 }
 
 /** Exposes a stable resource-id so `scripts/android_agent.py` can drive the node. */
-fun Modifier.docketTag(tag: String): Modifier =
-    this.testTag(tag).semantics { testTagsAsResourceId = true }
+fun Modifier.docketTag(tag: String): Modifier = this.testTag(tag).semantics { testTagsAsResourceId = true }
 
 private val EyebrowSpacing = 1.1.sp
 
@@ -229,17 +228,19 @@ fun ClauseTally(
     modifier: Modifier = Modifier,
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(4.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         states.forEach { state ->
             Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .background(clauseAccent(state), RoundedCornerShape(2.dp)),
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .background(clauseAccent(state), RoundedCornerShape(2.dp)),
             )
         }
     }
@@ -285,16 +286,22 @@ fun RuledField(
             enabled = enabled,
             singleLine = minLines == 1,
             minLines = minLines,
-            textStyle = MaterialTheme.typography.bodyLarge.copy(
-                color = if (enabled) MaterialTheme.colorScheme.onSurface
-                else MaterialTheme.colorScheme.onSurfaceVariant,
-            ),
+            textStyle =
+                MaterialTheme.typography.bodyLarge.copy(
+                    color =
+                        if (enabled) {
+                            MaterialTheme.colorScheme.onSurface
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                ),
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-            modifier = Modifier
-                .fillMaxWidth()
-                .docketTag(testTag)
-                .onFocusChanged { focused.value = it.isFocused },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .docketTag(testTag)
+                    .onFocusChanged { focused.value = it.isFocused },
             decorationBox = { innerTextField ->
                 Box {
                     if (value.isEmpty() && placeholder.isNotEmpty()) {
@@ -343,16 +350,22 @@ fun RuledAmountField(
             onValueChange = onValueChange,
             enabled = enabled,
             singleLine = true,
-            textStyle = MaterialTheme.typography.bodyLarge.copy(
-                color = if (enabled) MaterialTheme.colorScheme.onSurface
-                else MaterialTheme.colorScheme.onSurfaceVariant,
-            ),
+            textStyle =
+                MaterialTheme.typography.bodyLarge.copy(
+                    color =
+                        if (enabled) {
+                            MaterialTheme.colorScheme.onSurface
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                ),
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            modifier = Modifier
-                .fillMaxWidth()
-                .docketTag(testTag)
-                .onFocusChanged { focused.value = it.isFocused },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .docketTag(testTag)
+                    .onFocusChanged { focused.value = it.isFocused },
             decorationBox = { innerTextField ->
                 Box {
                     if (value.text.isEmpty() && placeholder.isNotEmpty()) {
@@ -387,11 +400,12 @@ private fun RuledFieldChrome(
     val focused = remember { mutableStateOf(false) }
     val focusedNow by focused
 
-    val ruleColor = when {
-        isError -> scheme.error
-        focusedNow -> scheme.primary
-        else -> scheme.outlineVariant
-    }
+    val ruleColor =
+        when {
+            isError -> scheme.error
+            focusedNow -> scheme.primary
+            else -> scheme.outlineVariant
+        }
     val ruleThickness = if (focusedNow || isError) 2.dp else 1.dp
 
     Column(modifier = modifier) {
@@ -451,10 +465,11 @@ fun DocketPicker(
     val hasValue = value.isNotBlank()
 
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .docketTag(testTag)
-            .clickable(enabled = enabled, onClick = onClick),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .docketTag(testTag)
+                .clickable(enabled = enabled, onClick = onClick),
     ) {
         Text(
             text = label.uppercase(),
@@ -468,11 +483,12 @@ fun DocketPicker(
                 text = if (hasValue) value else placeholder,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = if (hasValue) FontWeight.SemiBold else FontWeight.Normal,
-                color = when {
-                    !enabled -> scheme.outline
-                    hasValue -> scheme.onSurface
-                    else -> scheme.outline
-                },
+                color =
+                    when {
+                        !enabled -> scheme.outline
+                        hasValue -> scheme.onSurface
+                        else -> scheme.outline
+                    },
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
@@ -487,11 +503,12 @@ fun DocketPicker(
         Spacer(Modifier.height(5.dp))
         HorizontalDivider(
             thickness = if (isError) 2.dp else 1.dp,
-            color = when {
-                isError -> scheme.error
-                hasValue -> scheme.primary.copy(alpha = 0.45f)
-                else -> scheme.outlineVariant
-            },
+            color =
+                when {
+                    isError -> scheme.error
+                    hasValue -> scheme.primary.copy(alpha = 0.45f)
+                    else -> scheme.outlineVariant
+                },
         )
         if (supportingText != null) {
             Spacer(Modifier.height(5.dp))
@@ -570,9 +587,10 @@ internal fun rememberRoleStampGutter(labels: List<String>): Dp {
     val stampPadding = RoleStampPadding * 2
 
     return remember(labels, stampStyle, density) {
-        val widest = labels.maxOfOrNull { label ->
-            with(density) { measurer.measure(label.uppercase(), stampStyle).size.width.toDp() }
-        }
+        val widest =
+            labels.maxOfOrNull { label ->
+                with(density) { measurer.measure(label.uppercase(), stampStyle).size.width.toDp() }
+            }
         // 1dp of slack: text measurement and text layout agree, but rounding a
         // measured px width down to dp must not shave a pixel off the stamp.
         (widest ?: 0.dp) + stampPadding + 1.dp
@@ -581,10 +599,11 @@ internal fun rememberRoleStampGutter(labels: List<String>): Dp {
 
 /** The one style a role stamp is both measured and drawn in. */
 @Composable
-private fun roleStampStyle() = MaterialTheme.typography.labelSmall.copy(
-    letterSpacing = 0.9.sp,
-    fontWeight = FontWeight.Bold,
-)
+private fun roleStampStyle() =
+    MaterialTheme.typography.labelSmall.copy(
+        letterSpacing = 0.9.sp,
+        fontWeight = FontWeight.Bold,
+    )
 
 /** The one padding a role stamp is both measured and drawn with. */
 private val RoleStampPadding = 7.dp
@@ -598,7 +617,11 @@ private val RoleStampPadding = 7.dp
  * expression.
  */
 @Composable
-internal fun RoleStamp(text: String, container: Color, content: Color) {
+internal fun RoleStamp(
+    text: String,
+    container: Color,
+    content: Color,
+) {
     Surface(shape = TagShape, color = container) {
         Text(
             text = text.uppercase(),
@@ -637,23 +660,26 @@ fun ContactRoleSlot(
     // column against the other three roles without being told about them.
     val stampGutter = rememberRoleStampGutter(IndentContactRole.entries.map { it.label })
 
-    val tagContainer = when {
-        isError -> scheme.errorContainer
-        filled -> ext.surfaceSuccess
-        else -> scheme.surfaceContainerHighest
-    }
-    val tagContent = when {
-        isError -> scheme.onErrorContainer
-        filled -> ext.onSurfaceSuccess
-        else -> scheme.onSurfaceVariant
-    }
+    val tagContainer =
+        when {
+            isError -> scheme.errorContainer
+            filled -> ext.surfaceSuccess
+            else -> scheme.surfaceContainerHighest
+        }
+    val tagContent =
+        when {
+            isError -> scheme.onErrorContainer
+            filled -> ext.onSurfaceSuccess
+            else -> scheme.onSurfaceVariant
+        }
 
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .docketTag(testTag)
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(vertical = 10.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .docketTag(testTag)
+                .clickable(enabled = enabled, onClick = onClick)
+                .padding(vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(modifier = Modifier.width(stampGutter)) {
@@ -684,12 +710,13 @@ fun ContactRoleSlot(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            val detail = contact?.let { c ->
-                listOfNotNull(
-                    c.designation?.takeIf { it.isNotBlank() },
-                    c.phone?.takeIf { it.isNotBlank() },
-                ).joinToString(" · ").takeIf { it.isNotBlank() }
-            }
+            val detail =
+                contact?.let { c ->
+                    listOfNotNull(
+                        c.designation?.takeIf { it.isNotBlank() },
+                        c.phone?.takeIf { it.isNotBlank() },
+                    ).joinToString(" · ").takeIf { it.isNotBlank() }
+                }
             if (detail != null) {
                 Spacer(Modifier.height(1.dp))
                 Text(
@@ -706,9 +733,10 @@ fun ContactRoleSlot(
             Icon(
                 imageVector = Icons.Default.Close,
                 contentDescription = "Clear ${role.label} contact",
-                modifier = Modifier
-                    .size(18.dp)
-                    .clickable(onClick = onClear),
+                modifier =
+                    Modifier
+                        .size(18.dp)
+                        .clickable(onClick = onClear),
                 tint = scheme.onSurfaceVariant,
             )
             Spacer(Modifier.width(10.dp))
@@ -742,25 +770,28 @@ fun CallSheetReadout(
             val contact = contactFor(role)
 
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .docketTag("indent_contact_readout_${role.wireKey}")
-                    .padding(vertical = 10.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .docketTag("indent_contact_readout_${role.wireKey}")
+                        .padding(vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(modifier = Modifier.width(stampGutter)) {
                     RoleStamp(
                         text = role.label,
-                        container = if (contact != null) {
-                            ext.surfaceSuccess
-                        } else {
-                            scheme.surfaceContainerHighest
-                        },
-                        content = if (contact != null) {
-                            ext.onSurfaceSuccess
-                        } else {
-                            scheme.onSurfaceVariant
-                        },
+                        container =
+                            if (contact != null) {
+                                ext.surfaceSuccess
+                            } else {
+                                scheme.surfaceContainerHighest
+                            },
+                        content =
+                            if (contact != null) {
+                                ext.onSurfaceSuccess
+                            } else {
+                                scheme.onSurfaceVariant
+                            },
                     )
                 }
                 Spacer(Modifier.width(12.dp))
@@ -773,12 +804,13 @@ fun CallSheetReadout(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    val detail = contact?.let { c ->
-                        listOfNotNull(
-                            c.designation?.takeIf { it.isNotBlank() },
-                            c.phone?.takeIf { it.isNotBlank() },
-                        ).joinToString(" · ").takeIf { it.isNotBlank() }
-                    }
+                    val detail =
+                        contact?.let { c ->
+                            listOfNotNull(
+                                c.designation?.takeIf { it.isNotBlank() },
+                                c.phone?.takeIf { it.isNotBlank() },
+                            ).joinToString(" · ").takeIf { it.isNotBlank() }
+                        }
                     if (detail != null) {
                         Spacer(Modifier.height(1.dp))
                         Text(
@@ -894,10 +926,11 @@ private fun LaneRun() {
     val runColor = FreightThemeTokens.colors.routeDestination.copy(alpha = 0.55f)
 
     Canvas(
-        modifier = Modifier
-            .padding(start = 6.dp)
-            .width(2.dp)
-            .height(22.dp),
+        modifier =
+            Modifier
+                .padding(start = 6.dp)
+                .width(2.dp)
+                .height(22.dp),
     ) {
         drawLine(
             color = runColor,
@@ -921,10 +954,11 @@ private fun LaneReadoutStop(
     val hasValue = value.isNotBlank()
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(if (testTag != null) Modifier.docketTag(testTag) else Modifier)
-            .padding(vertical = 6.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .then(if (testTag != null) Modifier.docketTag(testTag) else Modifier)
+                .padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         LaneMarker(markerColor = markerColor, isOrigin = isOrigin)
@@ -948,7 +982,10 @@ private fun LaneReadoutStop(
 }
 
 @Composable
-private fun LaneMarker(markerColor: Color, isOrigin: Boolean) {
+private fun LaneMarker(
+    markerColor: Color,
+    isOrigin: Boolean,
+) {
     val scheme = MaterialTheme.colorScheme
     Canvas(modifier = Modifier.size(14.dp)) {
         val radius = size.minDimension / 2f
@@ -977,11 +1014,12 @@ private fun LaneStop(
     val hasValue = value.isNotBlank()
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .docketTag(testTag)
-            .clickable(onClick = onClick)
-            .padding(vertical = 6.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .docketTag(testTag)
+                .clickable(onClick = onClick)
+                .padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         LaneMarker(markerColor = markerColor, isOrigin = isOrigin)
@@ -1007,11 +1045,12 @@ private fun LaneStop(
             Spacer(Modifier.height(5.dp))
             HorizontalDivider(
                 thickness = if (isError) 2.dp else 1.dp,
-                color = when {
-                    isError -> scheme.error
-                    hasValue -> markerColor.copy(alpha = 0.5f)
-                    else -> scheme.outlineVariant
-                },
+                color =
+                    when {
+                        isError -> scheme.error
+                        hasValue -> markerColor.copy(alpha = 0.5f)
+                        else -> scheme.outlineVariant
+                    },
             )
         }
 
@@ -1044,11 +1083,12 @@ fun DocketSwitchRow(
     val scheme = MaterialTheme.colorScheme
 
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .docketTag(testTag)
-            .clickable(enabled = enabled) { onCheckedChange(!checked) }
-            .padding(vertical = 8.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .docketTag(testTag)
+                .clickable(enabled = enabled) { onCheckedChange(!checked) }
+                .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
@@ -1090,10 +1130,11 @@ fun VehicleTypeChip(
         modifier = modifier.docketTag(testTag).clickable(onClick = onClick),
         shape = RoundedCornerShape(50),
         color = if (isSelected) scheme.primaryContainer else Color.Transparent,
-        border = BorderStroke(
-            width = if (isSelected) 1.5.dp else 1.dp,
-            color = if (isSelected) scheme.primary else scheme.outlineVariant,
-        ),
+        border =
+            BorderStroke(
+                width = if (isSelected) 1.5.dp else 1.dp,
+                color = if (isSelected) scheme.primary else scheme.outlineVariant,
+            ),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 14.dp, vertical = 9.dp),
@@ -1101,9 +1142,10 @@ fun VehicleTypeChip(
         ) {
             if (isSelected) {
                 Box(
-                    modifier = Modifier
-                        .size(6.dp)
-                        .background(ext.success, RoundedCornerShape(50)),
+                    modifier =
+                        Modifier
+                            .size(6.dp)
+                            .background(ext.success, RoundedCornerShape(50)),
                 )
                 Spacer(Modifier.width(7.dp))
             }

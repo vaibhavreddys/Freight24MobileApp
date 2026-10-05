@@ -6,5 +6,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class WithdrawInterestRequest(
     @SerialName("interest_id") val interestId: String,
-    @SerialName("remarks") val remarks: String
+    @SerialName("remarks") val remarks: String,
 )

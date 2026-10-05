@@ -100,9 +100,10 @@ fun docketStatusAccent(status: String): Color {
 private fun LeaderRule(modifier: Modifier = Modifier) {
     val color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.85f)
     Canvas(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(1.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(1.dp),
     ) {
         drawLine(
             color = color,
@@ -137,9 +138,10 @@ fun LedgerLine(
     val blank = value.isNullOrBlank()
 
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = 5.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(vertical = 5.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -188,16 +190,18 @@ fun DocketSeal(
             drawCircle(
                 color = ext.success.copy(alpha = 0.5f),
                 radius = radius,
-                style = Stroke(
-                    width = 1.5f,
-                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(5f, 5f), 0f),
-                ),
+                style =
+                    Stroke(
+                        width = 1.5f,
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(5f, 5f), 0f),
+                    ),
             )
         }
         Box(
-            modifier = Modifier
-                .size(size * 0.68f)
-                .background(ext.success, CircleShape),
+            modifier =
+                Modifier
+                    .size(size * 0.68f)
+                    .background(ext.success, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
@@ -226,9 +230,10 @@ private fun LaneStripStop(
     val scheme = MaterialTheme.colorScheme
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .let { if (testTag != null) it.docketTag(testTag) else it },
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .let { if (testTag != null) it.docketTag(testTag) else it },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Canvas(modifier = Modifier.size(11.dp)) {
@@ -291,10 +296,11 @@ fun LaneStrip(
         )
 
         Canvas(
-            modifier = Modifier
-                .padding(start = 5.dp)
-                .width(1.dp)
-                .height(14.dp),
+            modifier =
+                Modifier
+                    .padding(start = 5.dp)
+                    .width(1.dp)
+                    .height(14.dp),
         ) {
             drawLine(
                 color = ext.routeDestination.copy(alpha = 0.5f),
@@ -339,10 +345,11 @@ fun List<IndentResponse.IndentContact>.toDocketCallLines(): List<DocketCallLine>
         .mapNotNull { role -> byRole[role.name] }
         .map { contact ->
             DocketCallLine(
-                roleLabel = contact.contactType?.let { type ->
-                    IndentContactRole.entries.firstOrNull { it.name == type.uppercase() }?.label
-                        ?: type
-                } ?: "Contact",
+                roleLabel =
+                    contact.contactType?.let { type ->
+                        IndentContactRole.entries.firstOrNull { it.name == type.uppercase() }?.label
+                            ?: type
+                    } ?: "Contact",
                 name = contact.contactName?.takeIf { it.isNotBlank() } ?: "—",
                 phone = contact.contactPhone?.takeIf { it.isNotBlank() },
             )
@@ -390,10 +397,11 @@ fun IndentContactReadout(
             val phone = line.phone
 
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .docketTag("${testTagPrefix}_${line.roleLabel.lowercase()}")
-                    .padding(vertical = 7.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .docketTag("${testTagPrefix}_${line.roleLabel.lowercase()}")
+                        .padding(vertical = 7.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(modifier = Modifier.width(stampGutter)) {
@@ -427,10 +435,11 @@ fun IndentContactReadout(
                     Surface(
                         shape = CircleShape,
                         color = scheme.surfaceContainerHighest,
-                        modifier = Modifier
-                            .size(30.dp)
-                            .docketTag("${testTagPrefix}_call_${line.roleLabel.lowercase()}")
-                            .clickable { onCall(phone) },
+                        modifier =
+                            Modifier
+                                .size(30.dp)
+                                .docketTag("${testTagPrefix}_call_${line.roleLabel.lowercase()}")
+                                .clickable { onCall(phone) },
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Icon(
@@ -485,10 +494,11 @@ fun ConsignorClause(
 ) {
     val scheme = MaterialTheme.colorScheme
     val phone = clientPhone?.takeIf { it.isNotBlank() }
-    val branchLabel = buildString {
-        append(branchName?.takeIf { it.isNotBlank() } ?: "Not specified")
-        branchCode?.takeIf { it.isNotBlank() }?.let { append("  ·  $it") }
-    }
+    val branchLabel =
+        buildString {
+            append(branchName?.takeIf { it.isNotBlank() } ?: "Not specified")
+            branchCode?.takeIf { it.isNotBlank() }?.let { append("  ·  $it") }
+        }
 
     ClauseDocket(
         number = number,
@@ -504,9 +514,10 @@ fun ConsignorClause(
                     Surface(
                         shape = RoundedChipShape,
                         color = scheme.surfaceContainerHighest,
-                        modifier = Modifier
-                            .docketTag("indent_details_view_profile")
-                            .clickable { onViewProfileClick() },
+                        modifier =
+                            Modifier
+                                .docketTag("indent_details_view_profile")
+                                .clickable { onViewProfileClick() },
                     ) {
                         Row(
                             modifier = Modifier.padding(start = 10.dp, end = 6.dp, top = 4.dp, bottom = 4.dp),

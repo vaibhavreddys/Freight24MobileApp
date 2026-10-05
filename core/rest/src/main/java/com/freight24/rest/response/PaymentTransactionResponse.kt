@@ -2,13 +2,13 @@
 
 package com.freight24.rest.response
 
-import java.math.BigDecimal
 import kotlinx.serialization.Serializable
+import java.math.BigDecimal
 
 @Serializable
 data class PaymentTransactionsResponse(
     val success: Boolean,
-    val data: List<PaymentTransaction> = emptyList()
+    val data: List<PaymentTransaction> = emptyList(),
 )
 
 @Serializable
@@ -25,11 +25,11 @@ data class PaymentTransaction(
     val notes: String? = null,
     val createdAt: String? = null,
     val verifiedAt: String? = null,
-    val verifiedBy: PaymentTransactionUser? = null
+    val verifiedBy: PaymentTransactionUser? = null,
 )
 
 @Serializable
 data class PaymentTransactionUser(
     val id: String,
-    val name: String? = null
+    val name: String? = null,
 )

@@ -1,13 +1,11 @@
 package com.freight24.rest.response
 
-
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class IndentResponse(
-    val data : Indent
+    val data: Indent,
 ) : BaseResponse() {
-
     @Serializable
     data class Indent(
         val id: String,
@@ -19,7 +17,7 @@ data class IndentResponse(
         val negotiatedTripCost: Double?,
         val hideCostInfo: Boolean,
         val fleetExecutive: FleetExecutive? = null,
-        val indentOwnership: String ?= null,
+        val indentOwnership: String? = null,
         val indentGroupDetails: IndentGroupDetails,
         val metrics: Metrics? = null,
     )
@@ -54,7 +52,7 @@ data class IndentResponse(
         val clientBranch: ClientBranch? = null,
         /** Named contacts attached to the indent, one entry per contact role. */
         val indentContacts: List<IndentContact> = emptyList(),
-        val indentLocations: List<IndentLocation>
+        val indentLocations: List<IndentLocation>,
     )
 
     /**
@@ -90,7 +88,7 @@ data class IndentResponse(
         val id: String? = null,
         val bodyType: String,
         val truckType: String,
-        val displayName: String
+        val displayName: String,
     )
 
     @Serializable
@@ -114,7 +112,7 @@ data class IndentResponse(
         val contactPhone: String?,
         val locationType: String,
         val contactPerson: String?,
-        val sequenceOrder: Int
+        val sequenceOrder: Int,
     )
 
     @Serializable
@@ -130,5 +128,4 @@ data class IndentResponse(
         val suitableTruckOwners: Int,
         val suitableTrucks: Int,
     )
-
 }

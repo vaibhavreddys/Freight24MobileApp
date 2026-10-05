@@ -1,7 +1,7 @@
 package com.freight24.rest.api
 
-import com.freight24.rest.response.LocationSearchResponse
 import com.freight24.rest.response.LocationResponse
+import com.freight24.rest.response.LocationSearchResponse
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Query

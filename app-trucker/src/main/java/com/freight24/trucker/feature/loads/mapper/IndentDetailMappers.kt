@@ -13,11 +13,12 @@ fun TruckerIndentDetailResponse.toLoadDetailOrNull(
     tripPrice: String,
     isInterested: Boolean,
     isInterestLoading: Boolean,
-): LoadDetail? = data?.toLoadDetail(
-    tripPrice = tripPrice,
-    isInterested = isInterested,
-    isInterestLoading = isInterestLoading,
-)
+): LoadDetail? =
+    data?.toLoadDetail(
+        tripPrice = tripPrice,
+        isInterested = isInterested,
+        isInterestLoading = isInterestLoading,
+    )
 
 fun TruckerIndentDetail.toLoadDetail(
     tripPrice: String,
@@ -25,12 +26,14 @@ fun TruckerIndentDetail.toLoadDetail(
     isInterestLoading: Boolean,
 ): LoadDetail {
     val group = indentGroupDetails
-    val loading = group.indentLocations
-        .filter { it.locationType.equals("loading", ignoreCase = true) }
-        .maxByOrNull { it.sequenceOrder }
-    val unloading = group.indentLocations
-        .filter { it.locationType.equals("unloading", ignoreCase = true) }
-        .maxByOrNull { it.sequenceOrder }
+    val loading =
+        group.indentLocations
+            .filter { it.locationType.equals("loading", ignoreCase = true) }
+            .maxByOrNull { it.sequenceOrder }
+    val unloading =
+        group.indentLocations
+            .filter { it.locationType.equals("unloading", ignoreCase = true) }
+            .maxByOrNull { it.sequenceOrder }
 
     return LoadDetail(
         indentCode = indentCode?.takeIf { it.isNotBlank() } ?: "Indent ${id.take(6)}",
@@ -41,13 +44,14 @@ fun TruckerIndentDetail.toLoadDetail(
         loadWeight = formatLoadWeight(group.loadWeight, "Tons"),
         material = group.material,
         commodity = group.material,
-        truckType = group.truckType?.let {
-            LoadDetailTruckType(
-                bodyType = it.bodyType,
-                truckType = it.truckType,
-                displayName = it.displayName,
-            )
-        },
+        truckType =
+            group.truckType?.let {
+                LoadDetailTruckType(
+                    bodyType = it.bodyType,
+                    truckType = it.truckType,
+                    displayName = it.displayName,
+                )
+            },
         flooringType = group.flooringType,
         vehicleHeight = group.vehicleHeight?.let { "%.2f ft".format(it) },
         tarpaulingRequired = group.tarpaulingRequired,
@@ -56,21 +60,23 @@ fun TruckerIndentDetail.toLoadDetail(
         luIncludedInTripCost = group.luIncludedInTripCost,
         specialRequirements = group.specialRequirements,
         expiresAt = group.expiresAt,
-        client = group.clientProfile?.let {
-            LoadDetailClient(
-                companyName = it.companyName,
-                tagCode = it.tagCode,
-            )
-        },
+        client =
+            group.clientProfile?.let {
+                LoadDetailClient(
+                    companyName = it.companyName,
+                    tagCode = it.tagCode,
+                )
+            },
         loadingLocation = loading?.toLocation(),
         unloadingLocation = unloading?.toLocation(),
         interestCount = metrics?.interestCount ?: 0,
-        agent = fleetExecutive?.let { exec ->
-            LoadDetailF24Agent(
-                name = exec.name.orEmpty(),
-                phone = exec.phone.orEmpty(),
-            )
-        },
+        agent =
+            fleetExecutive?.let { exec ->
+                LoadDetailF24Agent(
+                    name = exec.name.orEmpty(),
+                    phone = exec.phone.orEmpty(),
+                )
+            },
         isInterested = isInterested,
         isInterestLoading = isInterestLoading,
     )

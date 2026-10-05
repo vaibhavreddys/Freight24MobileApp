@@ -1,6 +1,4 @@
 package com.freight24.connect.feature.indents.views
-import com.freight24.ui.components.FreightTopAppBar
-
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -17,8 +15,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -28,6 +24,7 @@ import com.freight24.connect.feature.indents.domain.viewmodel.CloneIndentEvent
 import com.freight24.connect.feature.indents.domain.viewmodel.CloneIndentUiState
 import com.freight24.connect.feature.indents.domain.viewmodel.CloneIndentViewModel
 import com.freight24.connect.feature.indents.domain.viewmodel.CloneIndentViewModelImpl
+import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.components.formViewportInsets
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,7 +34,7 @@ fun CloneIndentScreen(
     indentGroupId: String,
     onBackClick: () -> Unit,
     onReviewClick: () -> Unit,
-    viewModel: CloneIndentViewModel = hiltViewModel<CloneIndentViewModelImpl>()
+    viewModel: CloneIndentViewModel = hiltViewModel<CloneIndentViewModelImpl>(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -46,8 +43,8 @@ fun CloneIndentScreen(
         viewModel.onEvent(
             CloneIndentEvent.LoadIndent(
                 indentId,
-                indentGroupId
-            )
+                indentGroupId,
+            ),
         )
     }
 
@@ -73,10 +70,11 @@ fun CloneIndentScreen(
         bottomBar = {
             Button(
                 onClick = onReviewClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                enabled = uiState.indent != null
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                enabled = uiState.indent != null,
             ) {
                 Text("Review Clone Indent")
             }
@@ -90,7 +88,7 @@ fun CloneIndentScreen(
             CloneIndentContent(
                 paddingValues = paddingValues,
                 uiState = uiState,
-                onEvent = viewModel::onEvent
+                onEvent = viewModel::onEvent,
             )
         }
     }
@@ -108,13 +106,14 @@ fun CloneIndentContent(
     val unloadingLocation = groupDetails.indentLocations.find { it.locationType == "unloading" }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            // Keyboard-aware viewport: without this the scroll bounds run behind the keyboard
-            // and bring-into-view leaves the focused field hidden. See FormInsets.kt.
-            .formViewportInsets(paddingValues)
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                // Keyboard-aware viewport: without this the scroll bounds run behind the keyboard
+                // and bring-into-view leaves the focused field hidden. See FormInsets.kt.
+                .formViewportInsets(paddingValues)
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         // Read-only Mandatory Fields Section
@@ -130,7 +129,7 @@ fun CloneIndentContent(
                 Text(
                     "Original Indent Details (Read-only)",
                     style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
                 )
 
                 OutlinedTextField(
@@ -139,7 +138,7 @@ fun CloneIndentContent(
                     label = { Text("Client Name") },
                     readOnly = true,
                     enabled = false,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
 
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -149,7 +148,7 @@ fun CloneIndentContent(
                         label = { Text("Loading") },
                         readOnly = true,
                         enabled = false,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     )
 
                     OutlinedTextField(
@@ -158,7 +157,7 @@ fun CloneIndentContent(
                         label = { Text("Unloading") },
                         readOnly = true,
                         enabled = false,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     )
                 }
 
@@ -168,7 +167,7 @@ fun CloneIndentContent(
                     label = { Text("Vehicle Type") },
                     readOnly = true,
                     enabled = false,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
 
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -178,7 +177,7 @@ fun CloneIndentContent(
                         label = { Text("Weight") },
                         readOnly = true,
                         enabled = false,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     )
 
                     OutlinedTextField(
@@ -187,7 +186,7 @@ fun CloneIndentContent(
                         label = { Text("Material") },
                         readOnly = true,
                         enabled = false,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     )
                 }
             }
@@ -244,9 +243,10 @@ fun CloneOptionalFieldsSection(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { expanded = !expanded },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable { expanded = !expanded },
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -314,14 +314,14 @@ fun CloneOptionalFieldsSection(
                         Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                             Checkbox(
                                 checked = uiState.tarpaulinRequired,
-                                onCheckedChange = { onEvent(CloneIndentEvent.UpdateField(tarpaulinRequired = it)) }
+                                onCheckedChange = { onEvent(CloneIndentEvent.UpdateField(tarpaulinRequired = it)) },
                             )
                             Text("Tarpaulin")
                         }
                         Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                             Checkbox(
                                 checked = uiState.hideCost,
-                                onCheckedChange = { onEvent(CloneIndentEvent.UpdateField(hideCost = it)) }
+                                onCheckedChange = { onEvent(CloneIndentEvent.UpdateField(hideCost = it)) },
                             )
                             Text("Hide Cost")
                         }
@@ -331,7 +331,7 @@ fun CloneOptionalFieldsSection(
                         Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                             Checkbox(
                                 checked = uiState.tatRequired,
-                                onCheckedChange = { onEvent(CloneIndentEvent.UpdateField(tatRequired = it)) }
+                                onCheckedChange = { onEvent(CloneIndentEvent.UpdateField(tatRequired = it)) },
                             )
                             Text("TAT")
                         }

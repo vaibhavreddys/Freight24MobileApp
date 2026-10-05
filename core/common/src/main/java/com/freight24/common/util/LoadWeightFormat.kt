@@ -14,5 +14,7 @@ fun formatWeightValue(weight: Double?): String {
 }
 
 /** Renders [weight] with [unit], e.g. `formatLoadWeight(2.5, "MT")` -> `2.5 MT`. */
-fun formatLoadWeight(weight: Double?, unit: String): String =
-    formatWeightValue(weight).let { value -> if (value.isEmpty()) "" else "$value $unit" }
+fun formatLoadWeight(
+    weight: Double?,
+    unit: String,
+): String = formatWeightValue(weight).let { value -> if (value.isEmpty()) "" else "$value $unit" }

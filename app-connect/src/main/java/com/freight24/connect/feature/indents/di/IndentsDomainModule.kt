@@ -49,14 +49,10 @@ abstract class IndentsDomainModule {
     abstract fun bindGetClientsUseCase(useCaseImpl: GetClientsUseCaseImpl): GetClientsUseCase
 
     @Binds
-    abstract fun bindGetClientBranchesUseCase(
-        useCaseImpl: GetClientBranchesUseCaseImpl
-    ): GetClientBranchesUseCase
+    abstract fun bindGetClientBranchesUseCase(useCaseImpl: GetClientBranchesUseCaseImpl): GetClientBranchesUseCase
 
     @Binds
-    abstract fun bindGetClientContactsUseCase(
-        useCaseImpl: GetClientContactsUseCaseImpl
-    ): GetClientContactsUseCase
+    abstract fun bindGetClientContactsUseCase(useCaseImpl: GetClientContactsUseCaseImpl): GetClientContactsUseCase
 
     @Binds
     abstract fun bindGetTruckTypesUseCase(useCaseImpl: GetTruckTypesUseCaseImpl): GetTruckTypesUseCase
@@ -80,9 +76,7 @@ abstract class IndentsDomainModule {
     abstract fun bindUpdateIndentUseCase(useCaseImpl: UpdateIndentUseCaseImpl): UpdateIndentUseCase
 
     @Binds
-    abstract fun bindUpdateIndentGroupUseCase(
-        useCaseImpl: UpdateIndentGroupUseCaseImpl
-    ): UpdateIndentGroupUseCase
+    abstract fun bindUpdateIndentGroupUseCase(useCaseImpl: UpdateIndentGroupUseCaseImpl): UpdateIndentGroupUseCase
 
     @Binds
     abstract fun bindGetAllIndentsUseCase(useCaseImpl: GetAllIndentsUseCaseImpl): GetAllIndentsUseCase
@@ -97,9 +91,5 @@ abstract class IndentsDomainModule {
     abstract fun bindCancelIndentsUseCase(useCaseImpl: CancelIndentUseCaseImpl): CancelIndentUseCase
 
     @Binds
-    abstract fun bindTruckerInterestInboxUseCase(
-        useCaseImpl: TruckerInterestInboxUseCaseImpl
-    ): TruckerInterestInboxUseCase
-
-
+    abstract fun bindTruckerInterestInboxUseCase(useCaseImpl: TruckerInterestInboxUseCaseImpl): TruckerInterestInboxUseCase
 }

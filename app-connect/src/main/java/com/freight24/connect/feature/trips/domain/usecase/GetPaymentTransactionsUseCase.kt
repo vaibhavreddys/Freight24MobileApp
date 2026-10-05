@@ -8,15 +8,17 @@ import javax.inject.Inject
 
 data class GetPaymentTransactionsParams(
     val tripId: String,
-    val userType: String
+    val userType: String,
 ) : UseCaseParams
 
 internal interface GetPaymentTransactionsUseCase :
     UseCase<GetPaymentTransactionsParams, List<PaymentTransaction>>
 
-class GetPaymentTransactionsUseCaseImpl @Inject constructor(
-    private val repository: TripRepository
-) : GetPaymentTransactionsUseCase {
-    override suspend fun invoke(params: GetPaymentTransactionsParams): Result<List<PaymentTransaction>> =
-        repository.getPaymentTransactions(params.tripId, params.userType)
-}
+class GetPaymentTransactionsUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: TripRepository,
+    ) : GetPaymentTransactionsUseCase {
+        override suspend fun invoke(params: GetPaymentTransactionsParams): Result<List<PaymentTransaction>> =
+            repository.getPaymentTransactions(params.tripId, params.userType)
+    }

@@ -5,11 +5,11 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class CreatedTripResponse(
-    val data: TripData
+    val data: TripData,
 ) {
     @Serializable
     data class TripData(
-        @SerialName("trip")  val trip: Trip,
+        @SerialName("trip") val trip: Trip,
         @SerialName("indent_closed") val indentClosed: Boolean,
     )
 
@@ -36,5 +36,3 @@ data class CreatedTripResponse(
         val sequenceOrder: Int?,
     )
 }
-
-

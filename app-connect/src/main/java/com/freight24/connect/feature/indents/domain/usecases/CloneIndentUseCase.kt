@@ -14,17 +14,16 @@ data class ClonedIndentUseCaseParams(
 
 interface CloneIndentUseCase : UseCase<ClonedIndentUseCaseParams, IndentResponse>
 
-
-class CloneIndentUseCaseImpl @Inject constructor(
-    private val repository: IndentRepository
-): CloneIndentUseCase {
-
-    override suspend fun invoke(params: ClonedIndentUseCaseParams): Result<IndentResponse> {
-        return repository.cloneIndent(
-            params.groupIndentId,
-            params.assignedTo,
-            params.notes
-        )
+class CloneIndentUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: IndentRepository,
+    ) : CloneIndentUseCase {
+        override suspend fun invoke(params: ClonedIndentUseCaseParams): Result<IndentResponse> {
+            return repository.cloneIndent(
+                params.groupIndentId,
+                params.assignedTo,
+                params.notes,
+            )
+        }
     }
-
-}

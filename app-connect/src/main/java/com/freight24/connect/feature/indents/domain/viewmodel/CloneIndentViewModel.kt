@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.StateFlow
 
 interface CloneIndentViewModel {
     val uiState: StateFlow<CloneIndentUiState>
+
     fun onEvent(event: CloneIndentEvent)
 }
 
@@ -19,7 +20,6 @@ data class CloneIndentUiState(
     val createdIndentCode: String? = null,
     val createdDate: String? = null,
     val indent: IndentResponse.Indent? = null,
-    
     // Editable fields
     val assignedTo: String = "",
     val notes: String = "",
@@ -32,7 +32,7 @@ data class CloneIndentUiState(
     val hideCost: Boolean = false,
     val tatRequired: Boolean = false,
     val tatHours: String = "",
-    val remarks: String = ""
+    val remarks: String = "",
 )
 
 sealed class CloneIndentEvent {
@@ -53,9 +53,12 @@ sealed class CloneIndentEvent {
         val hideCost: Boolean? = null,
         val tatRequired: Boolean? = null,
         val tatHours: String? = null,
-        val remarks: String? = null
+        val remarks: String? = null,
     ) : CloneIndentEvent()
+
     object SubmitClone : CloneIndentEvent()
+
     object ClearError : CloneIndentEvent()
+
     object ClearSuccess : CloneIndentEvent()
 }

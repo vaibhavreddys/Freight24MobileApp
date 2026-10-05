@@ -4,7 +4,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.freight24.connect.feature.indents.domain.viewmodel.CreateIndentUiState
-import com.freight24.rest.response.ClientDto
 import com.freight24.rest.response.LocationDto
 import com.freight24.rest.response.TruckCategoryDto
 import com.freight24.rest.response.TruckTypeDto
@@ -23,13 +22,13 @@ fun CreateIndentContentPreview() {
         onBackClick = {},
         onEvent = {},
         onNavigateToSearch = {},
-        onNavigateToReview = {}
+        onNavigateToReview = {},
     )
 }
 
-//@Preview(showBackground = true, name = "Location AutoComplete")
-//@Composable
-//fun LocationAutoCompletePreview() {
+// @Preview(showBackground = true, name = "Location AutoComplete")
+// @Composable
+// fun LocationAutoCompletePreview() {
 //    LocationAutoComplete(
 //        label = "From Location",
 //        query = "Mum",
@@ -41,11 +40,11 @@ fun CreateIndentContentPreview() {
 //            ),
 //        onSelect = {},
 //    )
-//}
+// }
 
-//@Preview(showBackground = true, name = "Client AutoComplete")
-//@Composable
-//fun ClientAutoCompletePreview() {
+// @Preview(showBackground = true, name = "Client AutoComplete")
+// @Composable
+// fun ClientAutoCompletePreview() {
 //    ClientAutoComplete(
 //        label = "Client Name",
 //        query = "Tata",
@@ -73,21 +72,21 @@ fun CreateIndentContentPreview() {
 //            ),
 //        onSelect = {},
 //    )
-//}
+// }
 //
-//@Preview(showBackground = true, name = "Truck Type Selection")
-//@Composable
-//fun TruckTypeSelectionPreview() {
+// @Preview(showBackground = true, name = "Truck Type Selection")
+// @Composable
+// fun TruckTypeSelectionPreview() {
 //    TruckTypeSelection(
 //        truckTypes = mockTruckTypes(),
 //        selectedTruckType = mockTruckTypes().open.first(),
 //        onSelect = {},
 //    )
-//}
+// }
 //
-//@Preview(showBackground = true, name = "Optional Fields Expanded")
-//@Composable
-//fun OptionalFieldsSectionPreview() {
+// @Preview(showBackground = true, name = "Optional Fields Expanded")
+// @Composable
+// fun OptionalFieldsSectionPreview() {
 //    OptionalFieldsSection(
 //        uiState =
 //            CreateIndentUiState(
@@ -97,7 +96,7 @@ fun CreateIndentContentPreview() {
 //            ),
 //        onEvent = {},
 //    )
-//}
+// }
 
 private fun mockTruckTypes() =
     TruckCategoryDto(

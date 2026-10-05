@@ -17,6 +17,5 @@ class GetClientContactsUseCaseImpl
     constructor(
         private val repository: ClientRepository,
     ) : GetClientContactsUseCase {
-        override suspend fun invoke(clientId: String): Result<List<ClientContactV2Dto>> =
-            repository.getClientContacts(clientId)
+        override suspend fun invoke(clientId: String): Result<List<ClientContactV2Dto>> = repository.getClientContacts(clientId)
     }

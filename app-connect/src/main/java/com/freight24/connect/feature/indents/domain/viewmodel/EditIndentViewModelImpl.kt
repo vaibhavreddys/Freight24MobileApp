@@ -33,246 +33,266 @@ class EditIndentViewModelImpl
         private val updateIndentGroupUseCase: UpdateIndentGroupUseCase,
         private val getClientContactsUseCase: GetClientContactsUseCase,
     ) : ViewModel(), EditIndentViewModel {
+        private val _uiState = MutableStateFlow(EditIndentUiState())
+        override val uiState: StateFlow<EditIndentUiState> = _uiState.asStateFlow()
 
-    private val _uiState = MutableStateFlow(EditIndentUiState())
-    override val uiState: StateFlow<EditIndentUiState> = _uiState.asStateFlow()
+        private var currentIndentId: String? = null
 
-    private var currentIndentId: String? = null
-
-    override fun onEvent(event: EditIndentEvent) {
-        when (event) {
-            is EditIndentEvent.LoadIndent -> {
-                currentIndentId = event.indentId
-                loadIndent(event.indentId)
-            }
-            is EditIndentEvent.UpdateField -> {
-                _uiState.update { state ->
-                    val next = state.copy(
-                        clientCost = event.clientCost ?: state.clientCost,
-                        negotiatedCost = event.negotiatedCost ?: state.negotiatedCost,
-                        businessProposedCost = event.businessProposedCost
-                            ?: state.businessProposedCost,
-                        vehicleHeight = event.vehicleHeight ?: state.vehicleHeight,
-                        flooringType = event.flooringType ?: state.flooringType,
-                        tarpaulinRequired = event.tarpaulinRequired ?: state.tarpaulinRequired,
-                        hideCost = event.hideCost ?: state.hideCost,
-                        tatRequired = event.tatRequired ?: state.tatRequired,
-                        tatHours = event.tatHours ?: state.tatHours,
-                        remarks = event.remarks ?: state.remarks,
-                    )
-                    next.withDiff()
+        override fun onEvent(event: EditIndentEvent) {
+            when (event) {
+                is EditIndentEvent.LoadIndent -> {
+                    currentIndentId = event.indentId
+                    loadIndent(event.indentId)
                 }
-            }
-            is EditIndentEvent.SelectContact -> {
-                _uiState.update { state ->
-                    val next = when (event.role) {
-                        IndentContactRole.PLACEMENT -> state.copy(placementContact = event.contact)
-                        IndentContactRole.PAYMENT -> state.copy(paymentContact = event.contact)
-                        IndentContactRole.OPERATIONS ->
-                            state.copy(operationsContact = event.contact)
-                        IndentContactRole.POD -> state.copy(podContact = event.contact)
+                is EditIndentEvent.UpdateField -> {
+                    _uiState.update { state ->
+                        val next =
+                            state.copy(
+                                clientCost = event.clientCost ?: state.clientCost,
+                                negotiatedCost = event.negotiatedCost ?: state.negotiatedCost,
+                                businessProposedCost =
+                                    event.businessProposedCost
+                                        ?: state.businessProposedCost,
+                                vehicleHeight = event.vehicleHeight ?: state.vehicleHeight,
+                                flooringType = event.flooringType ?: state.flooringType,
+                                tarpaulinRequired = event.tarpaulinRequired ?: state.tarpaulinRequired,
+                                hideCost = event.hideCost ?: state.hideCost,
+                                tatRequired = event.tatRequired ?: state.tatRequired,
+                                tatHours = event.tatHours ?: state.tatHours,
+                                remarks = event.remarks ?: state.remarks,
+                            )
+                        next.withDiff()
                     }
-                    next.withDiff()
                 }
+                is EditIndentEvent.SelectContact -> {
+                    _uiState.update { state ->
+                        val next =
+                            when (event.role) {
+                                IndentContactRole.PLACEMENT -> state.copy(placementContact = event.contact)
+                                IndentContactRole.PAYMENT -> state.copy(paymentContact = event.contact)
+                                IndentContactRole.OPERATIONS ->
+                                    state.copy(operationsContact = event.contact)
+                                IndentContactRole.POD -> state.copy(podContact = event.contact)
+                            }
+                        next.withDiff()
+                    }
+                }
+                is EditIndentEvent.SubmitUpdate -> submitUpdate()
+                is EditIndentEvent.ClearError -> _uiState.update { it.copy(errorMessage = null) }
+                is EditIndentEvent.ClearSuccess -> _uiState.update { it.copy(successMessage = null) }
             }
-            is EditIndentEvent.SubmitUpdate -> submitUpdate()
-            is EditIndentEvent.ClearError -> _uiState.update { it.copy(errorMessage = null) }
-            is EditIndentEvent.ClearSuccess -> _uiState.update { it.copy(successMessage = null) }
         }
-    }
 
-    private fun loadIndent(indentId: String) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            val result = getIndentByIdUseCase.invoke(GetIndentByIdUseCaseParams(identId = indentId))
-            if (result.isSuccess) {
-                val indent = result.getOrNull()?.data
-                if (indent != null) {
-                    val details = indent.indentGroupDetails
+        private fun loadIndent(indentId: String) {
+            viewModelScope.launch {
+                _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+                val result = getIndentByIdUseCase.invoke(GetIndentByIdUseCaseParams(identId = indentId))
+                if (result.isSuccess) {
+                    val indent = result.getOrNull()?.data
+                    if (indent != null) {
+                        val details = indent.indentGroupDetails
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                indent = indent,
+                                hasChanges = false,
+                                clientCost =
+                                    details.clientTripCost?.toInt()?.toString()
+                                        ?.let(::formatIndianCurrency) ?: "",
+                                negotiatedCost =
+                                    indent.negotiatedTripCost?.toInt()?.toString()
+                                        ?.let(::formatIndianCurrency) ?: "",
+                                businessProposedCost =
+                                    details.businessProposedCost?.toInt()?.toString()
+                                        ?.let(::formatIndianCurrency) ?: "",
+                                vehicleHeight = details.vehicleHeight?.toString() ?: "",
+                                flooringType = details.flooringType.normalizedFlooringType(),
+                                tarpaulinRequired = details.tarpaulingRequired,
+                                hideCost = indent.hideCostInfo,
+                                tatRequired = details.tatEnabled,
+                                tatHours = details.tatHours?.toString() ?: "",
+                                remarks = details.specialRequirements ?: "",
+                            )
+                        }
+                        loadContacts(indent)
+                    }
+                } else {
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            indent = indent,
-                            hasChanges = false,
-                            clientCost = details.clientTripCost?.toInt()?.toString()
-                                ?.let(::formatIndianCurrency) ?: "",
-                            negotiatedCost = indent.negotiatedTripCost?.toInt()?.toString()
-                                ?.let(::formatIndianCurrency) ?: "",
-                            businessProposedCost = details.businessProposedCost?.toInt()?.toString()
-                                ?.let(::formatIndianCurrency) ?: "",
-                            vehicleHeight = details.vehicleHeight?.toString() ?: "",
-                            flooringType = details.flooringType.normalizedFlooringType(),
-                            tarpaulinRequired = details.tarpaulingRequired,
-                            hideCost = indent.hideCostInfo,
-                            tatRequired = details.tatEnabled,
-                            tatHours = details.tatHours?.toString() ?: "",
-                            remarks = details.specialRequirements ?: "",
+                            errorMessage = result.exceptionOrNull()?.message ?: "Failed to load indent",
                         )
                     }
-                    loadContacts(indent)
-                }
-            } else {
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        errorMessage = result.exceptionOrNull()?.message ?: "Failed to load indent",
-                    )
                 }
             }
         }
-    }
 
-    /**
-     * Loads the client's active contacts so the roles can be reassigned, then
-     * pre-selects whatever the indent already records.
-     *
-     * The indent's `indentContacts` carry only a name and phone, so a role is
-     * reconstructed from the richer client-contact record when the ids match and
-     * falls back to the indent's own snapshot when they do not — a contact
-     * deactivated since the indent was raised must still print, or the roster
-     * would silently appear to have lost a role it has.
-     */
-    private fun loadContacts(indent: IndentResponse.Indent) {
-        val clientId = indent.indentGroupDetails.clientId
-        val recorded = indent.indentGroupDetails.indentContacts
+        /**
+         * Loads the client's active contacts so the roles can be reassigned, then
+         * pre-selects whatever the indent already records.
+         *
+         * The indent's `indentContacts` carry only a name and phone, so a role is
+         * reconstructed from the richer client-contact record when the ids match and
+         * falls back to the indent's own snapshot when they do not — a contact
+         * deactivated since the indent was raised must still print, or the roster
+         * would silently appear to have lost a role it has.
+         */
+        private fun loadContacts(indent: IndentResponse.Indent) {
+            val clientId = indent.indentGroupDetails.clientId
+            val recorded = indent.indentGroupDetails.indentContacts
 
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoadingContacts = true) }
-            val result = getClientContactsUseCase.invoke(clientId)
-            val available = result.getOrNull().orEmpty()
+            viewModelScope.launch {
+                _uiState.update { it.copy(isLoadingContacts = true) }
+                val result = getClientContactsUseCase.invoke(clientId)
+                val available = result.getOrNull().orEmpty()
 
-            _uiState.update { state ->
-                // Order matters: hasChanges must be computed from the state that
-                // already has the roles pre-selected. Computing it before the
-                // pre-selection compares `null` against the contact recorded on
-                // the indent and reports a phantom edit — which would light up the
-                // save button on open and fire a pointless group PUT on submit.
-                val next = state
-                    .copy(
-                        contacts = available,
-                        isLoadingContacts = false,
-                        contactsUnavailable = result.isFailure || available.isEmpty(),
-                    )
-                    .withPreselectedContacts(recorded, available)
-                next.withDiff()
+                _uiState.update { state ->
+                    // Order matters: hasChanges must be computed from the state that
+                    // already has the roles pre-selected. Computing it before the
+                    // pre-selection compares `null` against the contact recorded on
+                    // the indent and reports a phantom edit — which would light up the
+                    // save button on open and fire a pointless group PUT on submit.
+                    val next =
+                        state
+                            .copy(
+                                contacts = available,
+                                isLoadingContacts = false,
+                                contactsUnavailable = result.isFailure || available.isEmpty(),
+                            )
+                            .withPreselectedContacts(recorded, available)
+                    next.withDiff()
+                }
             }
         }
-    }
 
-    private fun submitUpdate() {
-        val indentId = currentIndentId ?: return
-        val originalIndent = _uiState.value.indent ?: return
-        val originalDetails = originalIndent.indentGroupDetails
-        val currentState = _uiState.value
+        private fun submitUpdate() {
+            val indentId = currentIndentId ?: return
+            val originalIndent = _uiState.value.indent ?: return
+            val originalDetails = originalIndent.indentGroupDetails
+            val currentState = _uiState.value
 
-        viewModelScope.launch {
-            _uiState.update { it.copy(isSubmitting = true, errorMessage = null) }
+            viewModelScope.launch {
+                _uiState.update { it.copy(isSubmitting = true, errorMessage = null) }
 
-            // Contacts first. This is the call that can legitimately be refused —
-            // the group must still be OPEN and the caller must be the creator or
-            // an admin / operations manager — so firing it first means a refusal
-            // leaves the indent untouched instead of half-corrected.
-            if (currentState.contactsChanged) {
-                val groupResult = updateIndentGroupUseCase.invoke(
-                    UpdateIndentGroupUseCaseParams(
-                        groupId = originalDetails.id,
-                        request = UpdateIndentGroupRequest(
-                            contacts = IndentContactsRequest(
-                                placement = currentState.placementContact?.id,
-                                payment = currentState.paymentContact?.id,
-                                operations = currentState.operationsContact?.id,
-                                pod = currentState.podContact?.id,
+                // Contacts first. This is the call that can legitimately be refused —
+                // the group must still be OPEN and the caller must be the creator or
+                // an admin / operations manager — so firing it first means a refusal
+                // leaves the indent untouched instead of half-corrected.
+                if (currentState.contactsChanged) {
+                    val groupResult =
+                        updateIndentGroupUseCase.invoke(
+                            UpdateIndentGroupUseCaseParams(
+                                groupId = originalDetails.id,
+                                request =
+                                    UpdateIndentGroupRequest(
+                                        contacts =
+                                            IndentContactsRequest(
+                                                placement = currentState.placementContact?.id,
+                                                payment = currentState.paymentContact?.id,
+                                                operations = currentState.operationsContact?.id,
+                                                pod = currentState.podContact?.id,
+                                            ),
+                                    ),
                             ),
-                        ),
-                    ),
-                )
-                if (groupResult.isFailure) {
-                    _uiState.update {
-                        it.copy(
-                            isSubmitting = false,
-                            errorMessage = groupResult.exceptionOrNull()?.message
-                                ?: "Could not update the contact roles",
                         )
+                    if (groupResult.isFailure) {
+                        _uiState.update {
+                            it.copy(
+                                isSubmitting = false,
+                                errorMessage =
+                                    groupResult.exceptionOrNull()?.message
+                                        ?: "Could not update the contact roles",
+                            )
+                        }
+                        return@launch
+                    }
+                }
+
+                val request =
+                    UpdateIndentRequest(
+                        clientTripCost =
+                            compareFields(
+                                currentState.clientCost.replace(",", "").toIntOrNull(),
+                                originalDetails.clientTripCost?.toInt(),
+                            ),
+                        negotiatedTripCost =
+                            compareFields(
+                                currentState.negotiatedCost.replace(",", "").toIntOrNull(),
+                                originalIndent.negotiatedTripCost?.toInt(),
+                            ),
+                        businessProposedCost =
+                            compareFields(
+                                currentState.businessProposedCost.replace(",", "").toIntOrNull(),
+                                originalDetails.businessProposedCost?.toInt(),
+                            ),
+                        vehicleHeight =
+                            compareFields(
+                                currentState.vehicleHeight.toFloatOrNull(),
+                                originalDetails.vehicleHeight?.toFloat(),
+                            ),
+                        hideCostInfo = compareFields(currentState.hideCost, originalIndent.hideCostInfo),
+                        tatEnabled = compareFields(currentState.tatRequired, originalDetails.tatEnabled),
+                        tatHours = compareFields(currentState.tatHours.toIntOrNull(), originalDetails.tatHours),
+                        tarpaulingRequired =
+                            compareFields(
+                                currentState.tarpaulinRequired,
+                                originalDetails.tarpaulingRequired,
+                            ),
+                        remarks = compareFields(currentState.remarks, originalDetails.specialRequirements),
+                        flooringType =
+                            compareFields(
+                                currentState.flooringType.normalizedFlooringType(),
+                                originalDetails.flooringType.normalizedFlooringType(),
+                            ),
+                    )
+
+                // Contacts may have been the only edit; the group call already saved them.
+                if (isRequestEmpty(request)) {
+                    _uiState.update {
+                        it.copy(isSubmitting = false, successMessage = "Indent updated successfully")
                     }
                     return@launch
                 }
-            }
 
-            val request = UpdateIndentRequest(
-                clientTripCost = compareFields(
-                    currentState.clientCost.replace(",", "").toIntOrNull(),
-                    originalDetails.clientTripCost?.toInt(),
-                ),
-                negotiatedTripCost = compareFields(
-                    currentState.negotiatedCost.replace(",", "").toIntOrNull(),
-                    originalIndent.negotiatedTripCost?.toInt(),
-                ),
-                businessProposedCost = compareFields(
-                    currentState.businessProposedCost.replace(",", "").toIntOrNull(),
-                    originalDetails.businessProposedCost?.toInt(),
-                ),
-                vehicleHeight = compareFields(
-                    currentState.vehicleHeight.toFloatOrNull(),
-                    originalDetails.vehicleHeight?.toFloat(),
-                ),
-                hideCostInfo = compareFields(currentState.hideCost, originalIndent.hideCostInfo),
-                tatEnabled = compareFields(currentState.tatRequired, originalDetails.tatEnabled),
-                tatHours = compareFields(currentState.tatHours.toIntOrNull(), originalDetails.tatHours),
-                tarpaulingRequired = compareFields(
-                    currentState.tarpaulinRequired,
-                    originalDetails.tarpaulingRequired,
-                ),
-                remarks = compareFields(currentState.remarks, originalDetails.specialRequirements),
-                flooringType = compareFields(
-                    currentState.flooringType.normalizedFlooringType(),
-                    originalDetails.flooringType.normalizedFlooringType(),
-                ),
-            )
-
-            // Contacts may have been the only edit; the group call already saved them.
-            if (isRequestEmpty(request)) {
-                _uiState.update {
-                    it.copy(isSubmitting = false, successMessage = "Indent updated successfully")
-                }
-                return@launch
-            }
-
-            val result = updateIndentUseCase.invoke(
-                UpdateIndentUseCaseParams(id = indentId, request = request),
-            )
-            if (result.isSuccess) {
-                _uiState.update {
-                    it.copy(isSubmitting = false, successMessage = "Indent updated successfully")
-                }
-            } else {
-                _uiState.update {
-                    it.copy(
-                        isSubmitting = false,
-                        errorMessage = result.exceptionOrNull()?.message ?: "Failed to update indent",
+                val result =
+                    updateIndentUseCase.invoke(
+                        UpdateIndentUseCaseParams(id = indentId, request = request),
                     )
+                if (result.isSuccess) {
+                    _uiState.update {
+                        it.copy(isSubmitting = false, successMessage = "Indent updated successfully")
+                    }
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            isSubmitting = false,
+                            errorMessage = result.exceptionOrNull()?.message ?: "Failed to update indent",
+                        )
+                    }
                 }
             }
         }
+
+        private fun <T> compareFields(
+            current: T?,
+            original: T?,
+        ): T? = if (current == original) null else current
+
+        private fun isRequestEmpty(request: UpdateIndentRequest): Boolean =
+            request.clientTripCost == null &&
+                request.negotiatedTripCost == null &&
+                request.businessProposedCost == null &&
+                request.vehicleHeight == null &&
+                request.hideCostInfo == null &&
+                request.tatEnabled == null &&
+                request.tatHours == null &&
+                request.tarpaulingRequired == null &&
+                request.remarks == null &&
+                request.flooringType == null &&
+                request.status == null &&
+                request.notes == null &&
+                request.luIncludedInTripCost == null
     }
-
-    private fun <T> compareFields(current: T?, original: T?): T? =
-        if (current == original) null else current
-
-    private fun isRequestEmpty(request: UpdateIndentRequest): Boolean =
-        request.clientTripCost == null &&
-            request.negotiatedTripCost == null &&
-            request.businessProposedCost == null &&
-            request.vehicleHeight == null &&
-            request.hideCostInfo == null &&
-            request.tatEnabled == null &&
-            request.tatHours == null &&
-            request.tarpaulingRequired == null &&
-            request.remarks == null &&
-            request.flooringType == null &&
-            request.status == null &&
-            request.notes == null &&
-            request.luIncludedInTripCost == null
-}
 
 /**
  * Binds each role to the client-contact record the indent already names, falling
@@ -284,9 +304,10 @@ private fun EditIndentUiState.withPreselectedContacts(
     available: List<ClientContactV2Dto>,
 ): EditIndentUiState {
     fun pick(role: IndentContactRole): ClientContactV2Dto? {
-        val onIndent = recorded.firstOrNull {
-            it.contactType.equals(role.name, ignoreCase = true)
-        } ?: return null
+        val onIndent =
+            recorded.firstOrNull {
+                it.contactType.equals(role.name, ignoreCase = true)
+            } ?: return null
         val id = onIndent.contactId ?: onIndent.id
         return available.firstOrNull { it.id == id }
             ?: ClientContactV2Dto(
@@ -306,8 +327,10 @@ private fun EditIndentUiState.withPreselectedContacts(
 }
 
 /** Blank and null mean the same thing to this form: absent text renders as `""`. */
-private fun textChanged(current: String?, original: String?): Boolean =
-    current?.trim().orEmpty() != original?.trim().orEmpty()
+private fun textChanged(
+    current: String?,
+    original: String?,
+): Boolean = current?.trim().orEmpty() != original?.trim().orEmpty()
 
 /**
  * One canonical spelling of "this indent's flooring", used by both the diff and
@@ -361,30 +384,34 @@ private fun EditIndentUiState.withDiff(): EditIndentUiState {
         flooringType.normalizedFlooringType() != details.flooringType.normalizedFlooringType()
     val remarksChanged = textChanged(remarks, details.specialRequirements)
 
-    val rolesChanged = IndentContactRole.entries.any { role ->
-        contactFor(role)?.id != originalContactId(role)
-    }
+    val rolesChanged =
+        IndentContactRole.entries.any { role ->
+            contactFor(role)?.id != originalContactId(role)
+        }
 
-    val fieldCount = listOf(
-        clientCostChanged,
-        businessCostChanged,
-        negotiatedChanged,
-        hideCostChanged,
-        tatRequiredChanged,
-        tatHoursChanged,
-        tarpaulinChanged,
-        vehicleHeightChanged,
-        flooringChanged,
-        remarksChanged,
-    ).count { it } + if (rolesChanged) 1 else 0
+    val fieldCount =
+        listOf(
+            clientCostChanged,
+            businessCostChanged,
+            negotiatedChanged,
+            hideCostChanged,
+            tatRequiredChanged,
+            tatHoursChanged,
+            tarpaulinChanged,
+            vehicleHeightChanged,
+            flooringChanged,
+            remarksChanged,
+        ).count { it } + if (rolesChanged) 1 else 0
 
     return copy(
         hasChanges = fieldCount > 0,
         changedFieldCount = fieldCount,
         contactsChanged = rolesChanged,
-        commercialsChanged = clientCostChanged || businessCostChanged ||
-            negotiatedChanged || hideCostChanged,
-        termsChanged = tatRequiredChanged || tatHoursChanged || tarpaulinChanged ||
-            vehicleHeightChanged || flooringChanged || remarksChanged,
+        commercialsChanged =
+            clientCostChanged || businessCostChanged ||
+                negotiatedChanged || hideCostChanged,
+        termsChanged =
+            tatRequiredChanged || tatHoursChanged || tarpaulinChanged ||
+                vehicleHeightChanged || flooringChanged || remarksChanged,
     )
 }

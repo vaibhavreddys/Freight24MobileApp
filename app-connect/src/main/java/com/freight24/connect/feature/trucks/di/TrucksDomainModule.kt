@@ -16,9 +16,7 @@ abstract class TrucksDomainModule {
     abstract fun bindGetTruckByIdUseCase(useCaseImpl: GetTruckByIdUseCaseImpl): GetTruckByIdUseCase
 
     @Binds
-    abstract fun bindGetTruckDocumentSignedUrlUseCase(
-        useCaseImpl: GetTruckDocumentSignedUrlUseCaseImpl,
-    ): GetTruckDocumentSignedUrlUseCase
+    abstract fun bindGetTruckDocumentSignedUrlUseCase(useCaseImpl: GetTruckDocumentSignedUrlUseCaseImpl): GetTruckDocumentSignedUrlUseCase
 
     @Binds
     abstract fun bindGetTrucksUseCase(useCaseImpl: GetTrucksUseCaseImpl): GetTrucksUseCase

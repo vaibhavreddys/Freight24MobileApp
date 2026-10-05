@@ -40,7 +40,6 @@ import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Scale
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Verified
@@ -67,10 +66,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.style.TextOverflow
@@ -140,7 +139,9 @@ data class LoadDetail(
 
 sealed interface LoadDetailState {
     data object Loading : LoadDetailState
+
     data class Success(val detail: LoadDetail) : LoadDetailState
+
     data class Error(val message: String) : LoadDetailState
 }
 
@@ -189,23 +190,26 @@ fun LoadDetailBottomSheet(
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
         dragHandle = { DragHandle() },
-        modifier = modifier
-            .testTag("load_detail_sheet")
-            .semantics { testTagsAsResourceId = true },
+        modifier =
+            modifier
+                .testTag("load_detail_sheet")
+                .semantics { testTagsAsResourceId = true },
     ) {
         when (state) {
             is LoadDetailState.Loading -> LoadDetailLoading()
-            is LoadDetailState.Error -> LoadDetailError(
-                message = state.message,
-                onClose = onDismiss,
-            )
-            is LoadDetailState.Success -> LoadDetailContent(
-                detail = state.detail,
-                onClose = onDismiss,
-                onCallAgent = onCallAgent,
-                onToggleInterest = onToggleInterest,
-                config = config,
-            )
+            is LoadDetailState.Error ->
+                LoadDetailError(
+                    message = state.message,
+                    onClose = onDismiss,
+                )
+            is LoadDetailState.Success ->
+                LoadDetailContent(
+                    detail = state.detail,
+                    onClose = onDismiss,
+                    onCallAgent = onCallAgent,
+                    onToggleInterest = onToggleInterest,
+                    config = config,
+                )
         }
     }
 }
@@ -213,13 +217,14 @@ fun LoadDetailBottomSheet(
 @Composable
 private fun DragHandle() {
     Box(
-        modifier = Modifier
-            .padding(top = 12.dp, bottom = 4.dp)
-            .size(width = 40.dp, height = 4.dp)
-            .background(
-                color = MaterialTheme.colorScheme.outlineVariant,
-                shape = RoundedCornerShape(2.dp),
-            ),
+        modifier =
+            Modifier
+                .padding(top = 12.dp, bottom = 4.dp)
+                .size(width = 40.dp, height = 4.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                    shape = RoundedCornerShape(2.dp),
+                ),
     )
 }
 
@@ -236,11 +241,12 @@ private fun LoadDetailContent(
     config: LoadDetailSheetConfig,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 8.dp)
-            .verticalScroll(rememberScrollState())
-            .navigationBarsPadding(),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 8.dp)
+                .verticalScroll(rememberScrollState())
+                .navigationBarsPadding(),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         // Brand tokens (deep forest #14422C in light) are hoisted once and
@@ -310,10 +316,11 @@ private fun Header(
         Spacer(Modifier.weight(1f))
         IconButton(
             onClick = onClose,
-            modifier = Modifier
-                .size(40.dp)
-                .testTag("sheet_close_btn")
-                .semantics { testTagsAsResourceId = true },
+            modifier =
+                Modifier
+                    .size(40.dp)
+                    .testTag("sheet_close_btn")
+                    .semantics { testTagsAsResourceId = true },
         ) {
             Icon(
                 imageVector = Icons.Default.Close,
@@ -325,7 +332,10 @@ private fun Header(
 }
 
 @Composable
-private fun IndentIdChip(code: String, trucker: TruckerColors) {
+private fun IndentIdChip(
+    code: String,
+    trucker: TruckerColors,
+) {
     // Persistent brand anchor: deep-forest fill with light mono text, so the
     // brand is visible at the top of the sheet in every state.
     Surface(
@@ -377,18 +387,19 @@ private fun PostedRow(createdAt: String) {
     Column(modifier = Modifier.padding(horizontal = 4.dp)) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .clip(RoundedCornerShape(999.dp))
-                .clickable(
-                    enabled = exact.isNotEmpty(),
-                    role = Role.Button,
-                ) { showExact = !showExact }
-                .padding(horizontal = 8.dp, vertical = 6.dp)
-                // Tag the tappable Row, not the Column: `testTagsAsResourceId`
-                // only exposes the id on the node it is applied to, and the
-                // Column has no semantics of its own to carry it.
-                .testTag("sheet_posted_on")
-                .semantics { testTagsAsResourceId = true },
+            modifier =
+                Modifier
+                    .clip(RoundedCornerShape(999.dp))
+                    .clickable(
+                        enabled = exact.isNotEmpty(),
+                        role = Role.Button,
+                    ) { showExact = !showExact }
+                    .padding(horizontal = 8.dp, vertical = 6.dp)
+                    // Tag the tappable Row, not the Column: `testTagsAsResourceId`
+                    // only exposes the id on the node it is applied to, and the
+                    // Column has no semantics of its own to carry it.
+                    .testTag("sheet_posted_on")
+                    .semantics { testTagsAsResourceId = true },
         ) {
             Icon(
                 imageVector = Icons.Filled.Schedule,
@@ -443,27 +454,31 @@ private fun RouteCard(
     // rather than re-deriving it inside the layout. A ₹0 amount with the note
     // switched off leaves the hero with nothing below the route — the divider
     // goes with it so we never strand a rule above empty space.
-    val priceRow = when {
-        detail.hideCostInfo -> PriceRow.HideCost
-        isZeroAmount(detail.tripPrice) && !showPricingNote -> PriceRow.None
-        isZeroAmount(detail.tripPrice) -> PriceRow.ContactAgent
-        else -> PriceRow.Amount
-    }
+    val priceRow =
+        when {
+            detail.hideCostInfo -> PriceRow.HideCost
+            isZeroAmount(detail.tripPrice) && !showPricingNote -> PriceRow.None
+            isZeroAmount(detail.tripPrice) -> PriceRow.ContactAgent
+            else -> PriceRow.Amount
+        }
 
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(
-                brush = androidx.compose.ui.graphics.Brush.linearGradient(
-                    colors = listOf(trucker.brand, trucker.brandPressed),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(
+                    brush =
+                        androidx.compose.ui.graphics.Brush.linearGradient(
+                            colors = listOf(trucker.brand, trucker.brandPressed),
+                        ),
+                    shape = RoundedCornerShape(24.dp),
                 ),
-                shape = RoundedCornerShape(24.dp),
-            ),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 20.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             // Route — column-style with indicator on the left, cities stacked.
@@ -477,15 +492,17 @@ private fun RouteCard(
             }
             when (priceRow) {
                 PriceRow.HideCost -> HideCostInline(trucker = trucker)
-                PriceRow.ContactAgent -> PricingNote(
-                    agentPhone = detail.agent?.phone.orEmpty(),
-                    onCallAgent = onCallAgent,
-                    trucker = trucker,
-                )
-                PriceRow.Amount -> AmountChip(
-                    priceText = formatCurrency(detail.tripPrice),
-                    trucker = trucker,
-                )
+                PriceRow.ContactAgent ->
+                    PricingNote(
+                        agentPhone = detail.agent?.phone.orEmpty(),
+                        onCallAgent = onCallAgent,
+                        trucker = trucker,
+                    )
+                PriceRow.Amount ->
+                    AmountChip(
+                        priceText = formatCurrency(detail.tripPrice),
+                        trucker = trucker,
+                    )
                 PriceRow.None -> Unit
             }
         }
@@ -496,8 +513,7 @@ private fun RouteCard(
 private enum class PriceRow { Amount, ContactAgent, HideCost, None }
 
 /** True when the backend sent no usable amount (blank, "--", or numeric 0). */
-private fun isZeroAmount(tripPrice: String): Boolean =
-    formatCurrency(tripPrice).trim() == "₹0"
+private fun isZeroAmount(tripPrice: String): Boolean = formatCurrency(tripPrice).trim() == "₹0"
 
 /**
  * Column-style route indicator that mirrors the LoadCard layout:
@@ -520,30 +536,34 @@ private fun ColumnRouteIndicator(
             modifier = Modifier.padding(top = 8.dp),
         ) {
             Box(
-                modifier = Modifier
-                    .size(12.dp)
-                    .background(
-                        color = trucker.onBrand,
-                        shape = CircleShape,
-                    ),
-            )
-            Box(
-                modifier = Modifier
-                    .width(4.dp)
-                    .height(28.dp)
-                    .background(
-                        brush = androidx.compose.ui.graphics.Brush.verticalGradient(
-                            colors = listOf(trucker.onBrand, trucker.accent),
+                modifier =
+                    Modifier
+                        .size(12.dp)
+                        .background(
+                            color = trucker.onBrand,
+                            shape = CircleShape,
                         ),
-                    ),
             )
             Box(
-                modifier = Modifier
-                    .size(12.dp)
-                    .background(
-                        color = trucker.accent,
-                        shape = CircleShape,
-                    ),
+                modifier =
+                    Modifier
+                        .width(4.dp)
+                        .height(28.dp)
+                        .background(
+                            brush =
+                                androidx.compose.ui.graphics.Brush.verticalGradient(
+                                    colors = listOf(trucker.onBrand, trucker.accent),
+                                ),
+                        ),
+            )
+            Box(
+                modifier =
+                    Modifier
+                        .size(12.dp)
+                        .background(
+                            color = trucker.accent,
+                            shape = CircleShape,
+                        ),
             )
         }
         Spacer(Modifier.width(12.dp))
@@ -571,7 +591,10 @@ private fun ColumnRouteIndicator(
 }
 
 @Composable
-private fun AmountChip(priceText: String, trucker: TruckerColors) {
+private fun AmountChip(
+    priceText: String,
+    trucker: TruckerColors,
+) {
     // Earnings stay the dominant element inside the hero: a light surface
     // pill with dark ink on the deep-green ground.
     Surface(
@@ -616,13 +639,15 @@ private fun PricingNote(
         color = trucker.onBrand.copy(alpha = 0.14f),
         contentColor = trucker.onBrand,
         shape = RoundedCornerShape(999.dp),
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            trucker.onBrand.copy(alpha = 0.35f),
-        ),
-        modifier = Modifier
-            .testTag("sheet_price_call_btn")
-            .semantics { testTagsAsResourceId = true },
+        border =
+            androidx.compose.foundation.BorderStroke(
+                1.dp,
+                trucker.onBrand.copy(alpha = 0.35f),
+            ),
+        modifier =
+            Modifier
+                .testTag("sheet_price_call_btn")
+                .semantics { testTagsAsResourceId = true },
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -657,10 +682,11 @@ private fun HideCostInline(trucker: TruckerColors) {
         color = trucker.onBrand.copy(alpha = 0.14f),
         contentColor = trucker.onBrand,
         shape = RoundedCornerShape(999.dp),
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            trucker.onBrand.copy(alpha = 0.35f),
-        ),
+        border =
+            androidx.compose.foundation.BorderStroke(
+                1.dp,
+                trucker.onBrand.copy(alpha = 0.35f),
+            ),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -683,12 +709,13 @@ private fun HideCostInline(trucker: TruckerColors) {
 private fun bestCityLabel(
     location: LoadDetailLocation?,
     fallback: String,
-): String = when {
-    location == null -> fallback
-    !location.cityName.isNullOrBlank() -> location.cityName
-    !location.areaName.isNullOrBlank() -> location.areaName
-    else -> fallback
-}
+): String =
+    when {
+        location == null -> fallback
+        !location.cityName.isNullOrBlank() -> location.cityName
+        !location.areaName.isNullOrBlank() -> location.areaName
+        else -> fallback
+    }
 
 // ──────────────────────────────────────────────────────────────────────────────
 //  Spec chips — surface-variant pills with icons
@@ -750,14 +777,16 @@ private fun SpecialRequirementsCard(detail: LoadDetail) {
             color = MaterialTheme.colorScheme.surfaceContainerLowest,
             contentColor = MaterialTheme.colorScheme.onSurface,
             shape = MaterialTheme.shapes.medium,
-            border = androidx.compose.foundation.BorderStroke(
-                1.dp,
-                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .testTag("sheet_special_requirements")
-                .semantics { testTagsAsResourceId = true },
+            border =
+                androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                ),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .testTag("sheet_special_requirements")
+                    .semantics { testTagsAsResourceId = true },
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
@@ -785,7 +814,10 @@ private fun SpecialRequirementsCard(detail: LoadDetail) {
 // ──────────────────────────────────────────────────────────────────────────────
 
 @Composable
-private fun ShipperCard(companyName: String, trucker: TruckerColors) {
+private fun ShipperCard(
+    companyName: String,
+    trucker: TruckerColors,
+) {
     SectionColumn(label = "Shipper Account") {
         PartnerCard(
             name = companyName,
@@ -805,15 +837,17 @@ private fun PartnerCard(
         color = MaterialTheme.colorScheme.surfaceContainerLowest,
         contentColor = MaterialTheme.colorScheme.onSurface,
         shape = MaterialTheme.shapes.medium,
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-        ),
+        border =
+            androidx.compose.foundation.BorderStroke(
+                1.dp,
+                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+            ),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AvatarCircle(
@@ -841,9 +875,10 @@ private fun AvatarCircle(
     icon: ImageVector,
 ) {
     Box(
-        modifier = Modifier
-            .size(44.dp)
-            .background(color = color, shape = CircleShape),
+        modifier =
+            Modifier
+                .size(44.dp)
+                .background(color = color, shape = CircleShape),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
@@ -870,15 +905,17 @@ private fun DispatchAgentCard(
             color = MaterialTheme.colorScheme.surfaceContainerLowest,
             contentColor = MaterialTheme.colorScheme.onSurface,
             shape = MaterialTheme.shapes.medium,
-            border = androidx.compose.foundation.BorderStroke(
-                1.dp,
-                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-            ),
+            border =
+                androidx.compose.foundation.BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                ),
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 AvatarCircle(
@@ -914,25 +951,28 @@ private fun CallPillButton(
 ) {
     // Secondary action in the brand family: pale brand wash with dark ink,
     // so it harmonizes with the hero without competing with the Express CTA.
-    val container = if (enabled) {
-        trucker.brandSoft
-    } else {
-        MaterialTheme.colorScheme.surfaceContainerHigh
-    }
-    val onContainer = if (enabled) {
-        trucker.ink
-    } else {
-        MaterialTheme.colorScheme.onSurfaceVariant
-    }
+    val container =
+        if (enabled) {
+            trucker.brandSoft
+        } else {
+            MaterialTheme.colorScheme.surfaceContainerHigh
+        }
+    val onContainer =
+        if (enabled) {
+            trucker.ink
+        } else {
+            MaterialTheme.colorScheme.onSurfaceVariant
+        }
     Surface(
         onClick = onClick,
         enabled = enabled,
         color = container,
         contentColor = onContainer,
         shape = RoundedCornerShape(999.dp),
-        modifier = Modifier
-            .testTag("sheet_call_btn")
-            .semantics { testTagsAsResourceId = true },
+        modifier =
+            Modifier
+                .testTag("sheet_call_btn")
+                .semantics { testTagsAsResourceId = true },
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
@@ -969,16 +1009,18 @@ private fun EngagementLine(
     val expiryText = RelativeTimeFormatter.formatExpiry(detail.expiresAt)
     val isExpired = expiryText == "Expired"
     val hasInterest = detail.interestCount > 0
-    val interestText = if (hasInterest) {
-        "${detail.interestCount} trucker${if (detail.interestCount == 1) "" else "s"} interested"
-    } else {
-        "Be the first to express interest"
-    }
+    val interestText =
+        if (hasInterest) {
+            "${detail.interestCount} trucker${if (detail.interestCount == 1) "" else "s"} interested"
+        } else {
+            "Be the first to express interest"
+        }
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 4.dp, vertical = 4.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // Left: clock + relative expiry
@@ -990,22 +1032,24 @@ private fun EngagementLine(
                 Icon(
                     imageVector = Icons.Default.AccessTime,
                     contentDescription = null,
-                    tint = if (isExpired) {
-                        MaterialTheme.colorScheme.error
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
+                    tint =
+                        if (isExpired) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
                     modifier = Modifier.size(16.dp),
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
                     text = expiryText,
                     style = MaterialTheme.typography.labelMedium,
-                    color = if (isExpired) {
-                        MaterialTheme.colorScheme.error
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
-                    },
+                    color =
+                        if (isExpired) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.onSurface
+                        },
                     maxLines = 1,
                 )
             }
@@ -1023,26 +1067,29 @@ private fun EngagementLine(
                 modifier = Modifier.weight(1f, fill = false),
             ) {
                 Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .background(
-                            color = if (hasInterest) {
-                                FreightThemeTokens.colors.success
-                            } else {
-                                MaterialTheme.colorScheme.outlineVariant
-                            },
-                            shape = CircleShape,
-                        ),
+                    modifier =
+                        Modifier
+                            .size(8.dp)
+                            .background(
+                                color =
+                                    if (hasInterest) {
+                                        FreightThemeTokens.colors.success
+                                    } else {
+                                        MaterialTheme.colorScheme.outlineVariant
+                                    },
+                                shape = CircleShape,
+                            ),
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
                     text = interestText,
                     style = MaterialTheme.typography.labelMedium,
-                    color = if (hasInterest) {
-                        FreightThemeTokens.colors.success
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
+                    color =
+                        if (hasInterest) {
+                            FreightThemeTokens.colors.success
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -1067,31 +1114,35 @@ private fun ExpressInterestButton(
     // relaxes to the pale brand wash — still tappable (withdraw), but no
     // longer shouting.
     val haptics = LocalHapticFeedback.current
-    val container = if (isInterested) {
-        trucker.brandSoft
-    } else {
-        trucker.brand
-    }
-    val onContainer = if (isInterested) {
-        trucker.ink
-    } else {
-        trucker.onBrand
-    }
+    val container =
+        if (isInterested) {
+            trucker.brandSoft
+        } else {
+            trucker.brand
+        }
+    val onContainer =
+        if (isInterested) {
+            trucker.ink
+        } else {
+            trucker.onBrand
+        }
     Button(
         onClick = {
             haptics.performHapticFeedback(HapticFeedbackType.LongPress)
             onToggle()
         },
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 56.dp)
-            .testTag("express_interest_btn")
-            .semantics { testTagsAsResourceId = true },
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = 56.dp)
+                .testTag("express_interest_btn")
+                .semantics { testTagsAsResourceId = true },
         shape = MaterialTheme.shapes.large,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = container,
-            contentColor = onContainer,
-        ),
+        colors =
+            ButtonDefaults.buttonColors(
+                containerColor = container,
+                contentColor = onContainer,
+            ),
         enabled = !isLoading,
     ) {
         if (isLoading) {
@@ -1150,10 +1201,11 @@ private fun SpecChip(
         color = MaterialTheme.colorScheme.surfaceContainerHighest,
         contentColor = MaterialTheme.colorScheme.onSurface,
         shape = RoundedCornerShape(999.dp),
-        border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-        ),
+        border =
+            androidx.compose.foundation.BorderStroke(
+                1.dp,
+                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+            ),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -1184,10 +1236,11 @@ private fun SpecChip(
 @Composable
 private fun LoadDetailLoading() {
     Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 240.dp)
-            .padding(24.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = 240.dp)
+                .padding(24.dp),
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -1208,9 +1261,10 @@ private fun LoadDetailError(
     onClose: () -> Unit,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(24.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Icon(
@@ -1239,6 +1293,7 @@ private fun LoadDetailError(
 }
 
 @Suppress("unused")
-private val LoadDetailBottomSheetDefaults = object {
-    val ContentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp)
-}
+private val LoadDetailBottomSheetDefaults =
+    object {
+        val ContentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp)
+    }

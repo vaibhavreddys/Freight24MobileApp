@@ -20,7 +20,8 @@ enum class VerificationRequestStatus(
     APPROVED("APPROVED", "Approved"),
     VERIFIED("VERIFIED", "Verified"),
     REJECTED("REJECTED", "Rejected"),
-    COMPLETED("COMPLETED", "Completed");
+    COMPLETED("COMPLETED", "Completed"),
+    ;
 
     companion object {
         fun fromApiValue(value: String?): VerificationRequestStatus? {
@@ -29,12 +30,17 @@ enum class VerificationRequestStatus(
 
         fun filterValues(tabType: String): List<VerificationRequestStatus> {
             return when (tabType) {
-                "TRIPS" -> listOf(
-                    PENDING, COMPLETED
-                )
-                else -> listOf(
-                    PENDING, IN_REVIEW, COMPLETED
-                )
+                "TRIPS" ->
+                    listOf(
+                        PENDING,
+                        COMPLETED,
+                    )
+                else ->
+                    listOf(
+                        PENDING,
+                        IN_REVIEW,
+                        COMPLETED,
+                    )
             }
         }
     }

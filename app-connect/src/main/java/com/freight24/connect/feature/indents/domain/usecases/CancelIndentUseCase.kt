@@ -13,15 +13,16 @@ data class CancelIndentUseCaseParams(
 
 interface CancelIndentUseCase : UseCase<CancelIndentUseCaseParams, IndentResponse>
 
-class CancelIndentUseCaseImpl @Inject constructor(
-    private val repository: IndentRepository
-) : CancelIndentUseCase {
-
-    override suspend fun invoke(params: CancelIndentUseCaseParams): Result<IndentResponse> {
-        val request = UpdateIndentRequest(
-            status = "CANCELLED",
-        )
-        return repository.updateIndent(params.id, request)
+class CancelIndentUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: IndentRepository,
+    ) : CancelIndentUseCase {
+        override suspend fun invoke(params: CancelIndentUseCaseParams): Result<IndentResponse> {
+            val request =
+                UpdateIndentRequest(
+                    status = "CANCELLED",
+                )
+            return repository.updateIndent(params.id, request)
+        }
     }
-
-}

@@ -29,54 +29,57 @@ fun QuickActionCard(
     iconTint: Color = MaterialTheme.colorScheme.primary,
     textColor: Color = MaterialTheme.colorScheme.onSurface,
     border: BorderStroke? = null,
-    contentPadding: PaddingValues = PaddingValues(8.dp)
+    contentPadding: PaddingValues = PaddingValues(8.dp),
 ) {
     Card(
-        modifier = modifier
-            .padding(2.dp)
-            .heightIn(min = 100.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .clickable(onClick = onClick),
+        modifier =
+            modifier
+                .padding(2.dp)
+                .heightIn(min = 100.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = containerColor),
         shape = RoundedCornerShape(16.dp),
-        border = border
+        border = border,
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(contentPadding),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(contentPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
+            verticalArrangement = Arrangement.Top,
         ) {
             Box {
                 Surface(
                     modifier = Modifier.size(48.dp),
                     shape = RoundedCornerShape(12.dp),
-                    color = iconContainerColor
+                    color = iconContainerColor,
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = icon,
                             contentDescription = null,
                             tint = iconTint,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(24.dp),
                         )
                     }
                 }
                 if (badgeCount != null && badgeCount > 0) {
                     Surface(
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .size(22.dp),
+                        modifier =
+                            Modifier
+                                .align(Alignment.TopEnd)
+                                .size(22.dp),
                         shape = RoundedCornerShape(50),
-                        color = MaterialTheme.colorScheme.error
+                        color = MaterialTheme.colorScheme.error,
                     ) {
                         Box(contentAlignment = Alignment.Center) {
                             Text(
                                 text = if (badgeCount > 99) "99+" else badgeCount.toString(),
                                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                                 fontWeight = FontWeight.ExtraBold,
-                                color = MaterialTheme.colorScheme.onError
+                                color = MaterialTheme.colorScheme.onError,
                             )
                         }
                     }
@@ -92,7 +95,7 @@ fun QuickActionCard(
                 color = textColor,
                 maxLines = 2,
                 softWrap = true,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }
@@ -103,15 +106,16 @@ fun SectionContainer(
     modifier: Modifier = Modifier,
     title: String? = null,
     containerColor: Color = MaterialTheme.colorScheme.surface,
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
         colors = CardDefaults.cardColors(containerColor = containerColor),
         shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
     ) {
         Column(modifier = Modifier.padding(vertical = 4.dp)) {
             if (title != null) {
@@ -121,7 +125,7 @@ fun SectionContainer(
                     fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                    letterSpacing = 0.5.sp
+                    letterSpacing = 0.5.sp,
                 )
             }
             content()
@@ -140,28 +144,29 @@ fun QuickActionListItem(
     iconTint: Color = MaterialTheme.colorScheme.primary,
     textColor: Color = MaterialTheme.colorScheme.onSurface,
     showDivider: Boolean = false,
-    iconContainerBorder: BorderStroke? = null
+    iconContainerBorder: BorderStroke? = null,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(vertical = 12.dp, horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onClick)
+                    .padding(vertical = 12.dp, horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Surface(
                 modifier = Modifier.size(40.dp),
                 shape = RoundedCornerShape(10.dp),
                 color = iconContainerColor,
-                border = iconContainerBorder
+                border = iconContainerBorder,
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
                         tint = iconTint,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(20.dp),
                     )
                 }
             }
@@ -171,13 +176,13 @@ fun QuickActionListItem(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = textColor
+                    color = textColor,
                 )
                 if (subtitle != null) {
                     Text(
                         text = subtitle,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -186,7 +191,7 @@ fun QuickActionListItem(
             HorizontalDivider(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 thickness = 0.5.dp,
-                color = MaterialTheme.colorScheme.outlineVariant
+                color = MaterialTheme.colorScheme.outlineVariant,
             )
         }
     }

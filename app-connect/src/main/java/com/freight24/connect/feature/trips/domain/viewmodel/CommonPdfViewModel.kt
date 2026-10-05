@@ -23,72 +23,73 @@ data class CommonPdfUiState(
     val isLoading: Boolean = false,
     val pdfFile: File? = null,
     val errorMessage: String? = null,
-    val title: String = "Document"
+    val title: String = "Document",
 )
 
 @HiltViewModel
-class CommonPdfViewModel @Inject constructor(
-    @param:ApplicationContext private val context: Context,
-    savedStateHandle: SavedStateHandle
-) : ViewModel() {
+class CommonPdfViewModel
+    @Inject
+    constructor(
+        @param:ApplicationContext private val context: Context,
+        savedStateHandle: SavedStateHandle,
+    ) : ViewModel() {
+        private val url: String? = savedStateHandle["url"]
+        private val localPath: String? = savedStateHandle["localPath"]
+        private val title: String = savedStateHandle["title"] ?: "Document"
 
-    private val url: String? = savedStateHandle["url"]
-    private val localPath: String? = savedStateHandle["localPath"]
-    private val title: String = savedStateHandle["title"] ?: "Document"
+        private val _uiState = MutableStateFlow(CommonPdfUiState(title = title))
+        val uiState: StateFlow<CommonPdfUiState> = _uiState.asStateFlow()
 
-    private val _uiState = MutableStateFlow(CommonPdfUiState(title = title))
-    val uiState: StateFlow<CommonPdfUiState> = _uiState.asStateFlow()
+        init {
+            loadPdf()
+        }
 
-    init {
-        loadPdf()
-    }
-
-    private fun loadPdf() {
-        if (!localPath.isNullOrBlank() && localPath != "null") {
-            val file = File(localPath)
-            if (file.exists()) {
-                _uiState.update { it.copy(pdfFile = file, isLoading = false) }
+        private fun loadPdf() {
+            if (!localPath.isNullOrBlank() && localPath != "null") {
+                val file = File(localPath)
+                if (file.exists()) {
+                    _uiState.update { it.copy(pdfFile = file, isLoading = false) }
+                } else if (!url.isNullOrBlank() && url != "null") {
+                    downloadPdf(url)
+                } else {
+                    _uiState.update { it.copy(errorMessage = "File not found and no URL provided") }
+                }
             } else if (!url.isNullOrBlank() && url != "null") {
                 downloadPdf(url)
             } else {
-                _uiState.update { it.copy(errorMessage = "File not found and no URL provided") }
+                _uiState.update { it.copy(errorMessage = "No valid PDF source provided") }
             }
-        } else if (!url.isNullOrBlank() && url != "null") {
-            downloadPdf(url)
-        } else {
-            _uiState.update { it.copy(errorMessage = "No valid PDF source provided") }
         }
-    }
 
-    private fun downloadPdf(pdfUrl: String) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            try {
-                withContext(Dispatchers.IO) {
-                    val connection = URL(pdfUrl).openConnection() as HttpURLConnection
-                    connection.connect()
+        private fun downloadPdf(pdfUrl: String) {
+            viewModelScope.launch {
+                _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+                try {
+                    withContext(Dispatchers.IO) {
+                        val connection = URL(pdfUrl).openConnection() as HttpURLConnection
+                        connection.connect()
 
-                    if (connection.responseCode != HttpURLConnection.HTTP_OK) {
-                        throw Exception("Server returned HTTP ${connection.responseCode}")
-                    }
-
-                    val inputStream = connection.inputStream
-                    val file = File(context.cacheDir, "temp_common_pdf_${System.currentTimeMillis()}.pdf")
-                    val outputStream = FileOutputStream(file)
-
-                    inputStream.use { input ->
-                        outputStream.use { output ->
-                            input.copyTo(output)
+                        if (connection.responseCode != HttpURLConnection.HTTP_OK) {
+                            throw Exception("Server returned HTTP ${connection.responseCode}")
                         }
-                    }
 
-                    _uiState.update { it.copy(isLoading = false, pdfFile = file) }
+                        val inputStream = connection.inputStream
+                        val file = File(context.cacheDir, "temp_common_pdf_${System.currentTimeMillis()}.pdf")
+                        val outputStream = FileOutputStream(file)
+
+                        inputStream.use { input ->
+                            outputStream.use { output ->
+                                input.copyTo(output)
+                            }
+                        }
+
+                        _uiState.update { it.copy(isLoading = false, pdfFile = file) }
+                    }
+                } catch (e: Exception) {
+                    _uiState.update { it.copy(isLoading = false, errorMessage = "Failed to download PDF: ${e.message}") }
                 }
-            } catch (e: Exception) {
-                _uiState.update { it.copy(isLoading = false, errorMessage = "Failed to download PDF: ${e.message}") }
             }
         }
+
+        fun retry() = loadPdf()
     }
-    
-    fun retry() = loadPdf()
-}

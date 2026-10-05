@@ -11,12 +11,11 @@ data class HaltingChargesUiState(
     val dailyRate: Double = 0.0,
     val notes: String = "",
     val updateSuccess: Boolean = false,
-    
     // Initial values for comparison
     val initialLoadingDays: Int = 0,
     val initialUnloadingDays: Int = 0,
     val initialNotes: String = "",
-    val hasChanges: Boolean = false
+    val hasChanges: Boolean = false,
 )
 
 sealed class HaltingChargesEvent {
@@ -24,15 +23,20 @@ sealed class HaltingChargesEvent {
         val truckTypeId: String,
         val initialLoadingDays: Int = 0,
         val initialUnloadingDays: Int = 0,
-        val notes: String = ""
+        val notes: String = "",
     ) : HaltingChargesEvent()
+
     data class UpdateLoadingDays(val days: Int) : HaltingChargesEvent()
+
     data class UpdateUnloadingDays(val days: Int) : HaltingChargesEvent()
+
     data class UpdateNotes(val notes: String) : HaltingChargesEvent()
+
     data class SubmitHaltingCharges(val tripId: String) : HaltingChargesEvent()
 }
 
 interface HaltingChargesViewModel {
     val uiState: StateFlow<HaltingChargesUiState>
+
     fun onEvent(event: HaltingChargesEvent)
 }

@@ -4,5 +4,5 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UpdateTripResponse(
-    val data: TripDataResponse
+    val data: TripDataResponse,
 ) : BaseResponse()

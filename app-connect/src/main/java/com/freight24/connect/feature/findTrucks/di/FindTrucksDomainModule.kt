@@ -10,9 +10,6 @@ import dagger.hilt.components.SingletonComponent
 @Module
 @InstallIn(SingletonComponent::class)
 internal abstract class FindTrucksDomainModule {
-
     @Binds
     abstract fun bindFindTrucksUseCase(useCaseImpl: FindTrucksUseCaseImpl): FindTrucksUseCase
-    
-
 }

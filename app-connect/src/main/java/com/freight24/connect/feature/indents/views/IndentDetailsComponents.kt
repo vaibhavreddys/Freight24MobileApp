@@ -93,25 +93,25 @@ fun IndentMetricsSection(
     interestCount: Int,
     suitableTrucks: Int,
     onInterestClick: () -> Unit = {},
-    onSuitableTrucksClick: () -> Unit = {}
+    onSuitableTrucksClick: () -> Unit = {},
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         MetricCard(
             modifier = Modifier.weight(1f),
             icon = Icons.Outlined.People,
             value = interestCount.toString(),
             label = "Interest Expressed",
-            onClick = onInterestClick
+            onClick = onInterestClick,
         )
         MetricCard(
             modifier = Modifier.weight(1f),
             icon = Icons.Outlined.LocalShipping,
             value = suitableTrucks.toString(),
             label = "Suitable Trucks",
-            onClick = onSuitableTrucksClick
+            onClick = onSuitableTrucksClick,
         )
     }
 }
@@ -122,7 +122,7 @@ private fun MetricCard(
     icon: ImageVector,
     value: String,
     label: String,
-    onClick: (() -> Unit)? = null
+    onClick: (() -> Unit)? = null,
 ) {
     val colorScheme = MaterialTheme.colorScheme
 
@@ -133,36 +133,37 @@ private fun MetricCard(
         colors = CardDefaults.cardColors(containerColor = colorScheme.surfaceContainer),
     ) {
         Column(
-            modifier = Modifier
-                .padding(12.dp)
-                .fillMaxWidth(),
+            modifier =
+                Modifier
+                    .padding(12.dp)
+                    .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Surface(
                 modifier = Modifier.size(28.dp),
                 shape = CircleShape,
                 color = colorScheme.primaryContainer,
-                contentColor = colorScheme.onPrimaryContainer
+                contentColor = colorScheme.onPrimaryContainer,
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(16.dp),
                     )
                 }
             }
             Text(
                 text = value,
                 style = MaterialTheme.typography.titleMedium,
-                color = colorScheme.onSurface
+                color = colorScheme.onSurface,
             )
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
                 color = colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
             )
         }
     }
@@ -186,9 +187,10 @@ fun IndentStatusChip(status: String) {
         color = backgroundColor,
     ) {
         Text(
-            text = status
-                .split("_")
-                .joinToString(" ") { word -> word.lowercase().replaceFirstChar { it.uppercase() } },
+            text =
+                status
+                    .split("_")
+                    .joinToString(" ") { word -> word.lowercase().replaceFirstChar { it.uppercase() } },
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
             color = contentColor,
@@ -198,21 +200,21 @@ fun IndentStatusChip(status: String) {
 }
 
 @Composable
-fun CostVisibilityIndicator(
-    isVisible: Boolean,
-) {
+fun CostVisibilityIndicator(isVisible: Boolean) {
     val extended = FreightThemeTokens.colors
     val contentColor = if (isVisible) extended.success else MaterialTheme.colorScheme.onSurfaceVariant
     val icon = if (isVisible) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff
-    val label = if (isVisible)
-        stringResource(R.string.cost_visible)
-    else
-        stringResource(R.string.cost_hidden)
+    val label =
+        if (isVisible) {
+            stringResource(R.string.cost_visible)
+        } else {
+            stringResource(R.string.cost_hidden)
+        }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(5.dp),
-        modifier = Modifier.semantics { contentDescription = label }
+        modifier = Modifier.semantics { contentDescription = label },
     ) {
         Icon(
             imageVector = icon,
@@ -312,25 +314,29 @@ fun SpecificationsSection(
         )
         LedgerLine(
             label = stringResource(R.string.weight),
-            value = "$weight $weightUnit"
+            value = "$weight $weightUnit",
         )
         LedgerLine(
             label = stringResource(R.string.material),
-            value = titleCase(materialType)
+            value = titleCase(materialType),
         )
         LedgerLine(
             label = stringResource(R.string.tat),
-            value = if (tatRequired)
-                "$tatHours hrs"
-            else
-                stringResource(R.string.not_applicable),
+            value =
+                if (tatRequired) {
+                    "$tatHours hrs"
+                } else {
+                    stringResource(R.string.not_applicable)
+                },
         )
         LedgerLine(
             label = stringResource(R.string.tarpaulin),
-            value = if (tarpaulinRequired)
-                stringResource(R.string.required)
-            else
-                stringResource(R.string.not_applicable),
+            value =
+                if (tarpaulinRequired) {
+                    stringResource(R.string.required)
+                } else {
+                    stringResource(R.string.not_applicable)
+                },
         )
     }
 }
@@ -357,8 +363,9 @@ fun RemarksSection(
             color = scheme.surfaceContainerHighest,
         ) {
             Text(
-                text = remarks.takeIf { it.isNotBlank() }
-                    ?: stringResource(R.string.no_special_requirements_specified),
+                text =
+                    remarks.takeIf { it.isNotBlank() }
+                        ?: stringResource(R.string.no_special_requirements_specified),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = if (remarks.isNotBlank()) FontWeight.Medium else FontWeight.Normal,
                 color = if (remarks.isNotBlank()) scheme.onSurface else scheme.onSurfaceVariant,
@@ -387,7 +394,10 @@ private fun formatNumber(amount: Double): String {
     return "%,.0f".format(amount)
 }
 
-private fun calculateMargin(clientCost: String, negotiatedCost: String): Double {
+private fun calculateMargin(
+    clientCost: String,
+    negotiatedCost: String,
+): Double {
     val client = clientCost.replace(",", "").toDoubleOrNull() ?: 0.0
     val negotiated = negotiatedCost.replace(",", "").toDoubleOrNull() ?: 0.0
     return if (client > 0 && negotiated > 0) client - negotiated else 0.0

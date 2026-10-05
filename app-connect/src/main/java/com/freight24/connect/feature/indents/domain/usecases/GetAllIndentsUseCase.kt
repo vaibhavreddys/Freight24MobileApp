@@ -14,17 +14,16 @@ data class GetAllIndentsUseCaseParams(
 
 interface GetAllIndentsUseCase : UseCase<GetAllIndentsUseCaseParams, GetIndentsResponse>
 
-
-class GetAllIndentsUseCaseImpl @Inject constructor(
-    private val repository: IndentRepository
-): GetAllIndentsUseCase {
-
-    override suspend fun invoke(params: GetAllIndentsUseCaseParams): Result<GetIndentsResponse> {
-        return if (params.inactive) {
-            repository.getInactiveIndents(params.page, params.limit)
-        } else {
-            repository.getAllIndents(params.page, params.limit)
+class GetAllIndentsUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: IndentRepository,
+    ) : GetAllIndentsUseCase {
+        override suspend fun invoke(params: GetAllIndentsUseCaseParams): Result<GetIndentsResponse> {
+            return if (params.inactive) {
+                repository.getInactiveIndents(params.page, params.limit)
+            } else {
+                repository.getAllIndents(params.page, params.limit)
+            }
         }
     }
-
-}

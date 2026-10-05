@@ -1,7 +1,4 @@
 package com.freight24.connect.feature.trips.views
-import com.freight24.ui.components.FreightTopAppBar
-
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -19,18 +16,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.freight24.connect.R
 import com.freight24.connect.feature.trips.domain.viewmodel.PdfViewerEvent
 import com.freight24.connect.feature.trips.domain.viewmodel.PdfViewerViewModel
+import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.components.PdfRendererView
 import com.freight24.ui.theme.FreightThemeTokens
-import java.io.File
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -38,7 +33,7 @@ import kotlinx.coroutines.launch
 internal fun PdfViewerScreen(
     onBackClick: () -> Unit,
     onSuccess: () -> Unit,
-    viewModel: PdfViewerViewModel = hiltViewModel()
+    viewModel: PdfViewerViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val colorScheme = MaterialTheme.colorScheme
@@ -47,10 +42,11 @@ internal fun PdfViewerScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     val isLrDocument = uiState.documentType.equals("lr", ignoreCase = true)
-    val shareTitle = stringResource(
-        if (isLrDocument) R.string.trip_share_lr else R.string.trip_share_loading_memo
-    )
-    
+    val shareTitle =
+        stringResource(
+            if (isLrDocument) R.string.trip_share_lr else R.string.trip_share_loading_memo,
+        )
+
     // Navigate back when approval/rejection is successful
     LaunchedEffect(uiState.shouldNavigateBack) {
         if (uiState.shouldNavigateBack) {
@@ -66,7 +62,7 @@ internal fun PdfViewerScreen(
                     title = {
                         Text(
                             stringResource(if (isLrDocument) R.string.trip_lr_preview_title else R.string.trip_loading_memo),
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
                         )
                     },
                     navigationIcon = {
@@ -78,7 +74,7 @@ internal fun PdfViewerScreen(
                         TooltipBox(
                             positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
                             tooltip = { PlainTooltip { Text(shareTitle) } },
-                            state = rememberTooltipState()
+                            state = rememberTooltipState(),
                         ) {
                             IconButton(
                                 enabled = uiState.pdfFile != null && !uiState.isLoading,
@@ -90,7 +86,7 @@ internal fun PdfViewerScreen(
                                             }
                                         }
                                     }
-                                }
+                                },
                             ) {
                                 Icon(Icons.Outlined.Share, contentDescription = shareTitle)
                             }
@@ -102,7 +98,7 @@ internal fun PdfViewerScreen(
                                 modifier = Modifier.padding(end = 16.dp),
                                 color = extendedColors.success,
                                 style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
                             )
                         } else if (uiState.documentStatus?.lowercase() == "rejected") {
                             Text(
@@ -110,7 +106,7 @@ internal fun PdfViewerScreen(
                                 modifier = Modifier.padding(end = 16.dp),
                                 color = colorScheme.error,
                                 style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
                             )
                         }
                     },
@@ -118,21 +114,25 @@ internal fun PdfViewerScreen(
                 Surface(color = colorScheme.surfaceContainerLow) {
                     Column(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         Text(
                             text = stringResource(R.string.client),
                             style = MaterialTheme.typography.labelMedium,
-                            color = colorScheme.onSurfaceVariant
+                            color = colorScheme.onSurfaceVariant,
                         )
                         Text(
-                            text = uiState.clientName ?: stringResource(
-                                if (uiState.isLoadingClient) R.string.trip_review_client_loading
-                                else R.string.trip_review_client_unavailable
-                            ),
+                            text =
+                                uiState.clientName ?: stringResource(
+                                    if (uiState.isLoadingClient) {
+                                        R.string.trip_review_client_loading
+                                    } else {
+                                        R.string.trip_review_client_unavailable
+                                    },
+                                ),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.SemiBold,
-                            color = colorScheme.onSurface
+                            color = colorScheme.onSurface,
                         )
                     }
                 }
@@ -142,34 +142,34 @@ internal fun PdfViewerScreen(
             // Show FABs only if document is pending and not yet approved/rejected
             if (isLrDocument && uiState.documentStatus?.lowercase() == "pending" && !uiState.isApproved) {
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     // Reject FAB
                     FloatingActionButton(
                         onClick = { viewModel.onEvent(PdfViewerEvent.ShowRejectDialog) },
                         containerColor = colorScheme.error,
-                        contentColor = colorScheme.onError
+                        contentColor = colorScheme.onError,
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 16.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Icon(Icons.Filled.Close, contentDescription = "Reject")
                             Text("Reject", fontWeight = FontWeight.Bold)
                         }
                     }
-                    
+
                     // Approve FAB
                     FloatingActionButton(
                         onClick = { viewModel.onEvent(PdfViewerEvent.ShowApproveDialog) },
                         containerColor = extendedColors.success,
-                        contentColor = colorScheme.onPrimary
+                        contentColor = colorScheme.onPrimary,
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 16.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Icon(Icons.Default.Check, contentDescription = "Approve")
                             Text("Approve", fontWeight = FontWeight.Bold)
@@ -179,13 +179,14 @@ internal fun PdfViewerScreen(
             }
         },
         floatingActionButtonPosition = FabPosition.End,
-        containerColor = colorScheme.background
+        containerColor = colorScheme.background,
     ) { padding ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentAlignment = Alignment.Center
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+            contentAlignment = Alignment.Center,
         ) {
             when {
                 uiState.isLoading -> {
@@ -204,7 +205,7 @@ internal fun PdfViewerScreen(
                 }
             }
         }
-        
+
         // Approve Dialog
         if (isLrDocument && uiState.showApproveDialog) {
             RemarksDialog(
@@ -213,10 +214,10 @@ internal fun PdfViewerScreen(
                 onRemarksChange = { viewModel.onEvent(PdfViewerEvent.UpdateRemarks(it)) },
                 onDismiss = { viewModel.onEvent(PdfViewerEvent.DismissDialog) },
                 onSubmit = { viewModel.onEvent(PdfViewerEvent.ApproveLr) },
-                isLoading = uiState.isApproving
+                isLoading = uiState.isApproving,
             )
         }
-        
+
         // Reject Dialog
         if (isLrDocument && uiState.showRejectDialog) {
             RemarksDialog(
@@ -225,7 +226,7 @@ internal fun PdfViewerScreen(
                 onRemarksChange = { viewModel.onEvent(PdfViewerEvent.UpdateRemarks(it)) },
                 onDismiss = { viewModel.onEvent(PdfViewerEvent.DismissDialog) },
                 onSubmit = { viewModel.onEvent(PdfViewerEvent.RejectLr) },
-                isLoading = uiState.isApproving
+                isLoading = uiState.isApproving,
             )
         }
     }
@@ -238,7 +239,7 @@ fun RemarksDialog(
     onRemarksChange: (String) -> Unit,
     onDismiss: () -> Unit,
     onSubmit: () -> Unit,
-    isLoading: Boolean
+    isLoading: Boolean,
 ) {
     AlertDialog(
         onDismissRequest = { if (!isLoading) onDismiss() },
@@ -246,17 +247,17 @@ fun RemarksDialog(
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
         },
         text = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
                     "Enter remarks: *",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 OutlinedTextField(
                     value = remarksValue,
@@ -267,22 +268,25 @@ fun RemarksDialog(
                     maxLines = 5,
                     enabled = !isLoading,
                     isError = remarksValue.isBlank(),
-                    supportingText = if (remarksValue.isBlank()) {
-                        { Text("Remarks are required", color = MaterialTheme.colorScheme.error) }
-                    } else null
+                    supportingText =
+                        if (remarksValue.isBlank()) {
+                            { Text("Remarks are required", color = MaterialTheme.colorScheme.error) }
+                        } else {
+                            null
+                        },
                 )
             }
         },
         confirmButton = {
             Button(
                 onClick = onSubmit,
-                enabled = !isLoading && remarksValue.isNotBlank()
+                enabled = !isLoading && remarksValue.isNotBlank(),
             ) {
                 if (isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(18.dp),
                         color = MaterialTheme.colorScheme.onPrimary,
-                        strokeWidth = 2.dp
+                        strokeWidth = 2.dp,
                     )
                     Spacer(Modifier.width(8.dp))
                 }
@@ -292,10 +296,10 @@ fun RemarksDialog(
         dismissButton = {
             TextButton(
                 onClick = onDismiss,
-                enabled = !isLoading
+                enabled = !isLoading,
             ) {
                 Text("Cancel")
             }
-        }
+        },
     )
 }

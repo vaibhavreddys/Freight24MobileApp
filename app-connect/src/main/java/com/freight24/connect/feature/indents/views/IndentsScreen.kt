@@ -3,7 +3,6 @@ package com.freight24.connect.feature.indents.views
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,10 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -26,20 +22,17 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.selected
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.common.util.DateTimeUtils.formatRelativeTime
 import com.freight24.common.util.formatLoadWeight
-import com.freight24.connect.feature.indents.domain.viewmodel.IndentTab
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentStatusFilter
+import com.freight24.connect.feature.indents.domain.viewmodel.IndentTab
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsListEvent
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsListUiState
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsListViewModel
@@ -57,7 +50,7 @@ fun IndentsScreen(
     statusFilter: IndentStatusFilter = IndentStatusFilter.ACTIVE,
     onRefreshingChange: (Boolean) -> Unit = {},
     onPullFractionChange: (Float) -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val viewModel: IndentsListViewModel = hiltViewModel<IndentsListViewModelImpl>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -85,7 +78,7 @@ fun IndentsScreen(
             isRefreshing = uiState.isLoading,
             onRefresh = { viewModel.onEvent(IndentsListEvent.RefreshIndents) },
             state = pullToRefreshState,
-            indicator = {},             // <-- ADD: Hide default circular indicator
+            indicator = {}, // <-- ADD: Hide default circular indicator
             modifier = Modifier.fillMaxSize(),
         ) {
             IndentsContent(
@@ -98,7 +91,6 @@ fun IndentsScreen(
             )
         }
     }
-
 }
 
 @Composable
@@ -108,7 +100,7 @@ fun IndentsContent(
     onIndentClick: (String) -> Unit,
     onCloneClick: (String, String) -> Unit,
     onSearchClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val colorScheme = MaterialTheme.colorScheme
     Box(modifier = modifier) {
@@ -117,9 +109,10 @@ fun IndentsContent(
             // the search sits inline to the right of the tabs instead of
             // pushing the list down. Search is only relevant on the ALL tab.
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 IndentTabSwitcher(
@@ -148,7 +141,7 @@ fun IndentsContent(
                     indents = uiState.indents,
                     onIndentClick = onIndentClick,
                     onCloneClick = onCloneClick,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
         }
@@ -158,27 +151,28 @@ fun IndentsContent(
 @Composable
 fun SearchBarTrigger(
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier = modifier
-            .height(36.dp)
-            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(16.dp))
-            .clickable { onClick() }
-            .padding(horizontal = 12.dp),
-        contentAlignment = Alignment.CenterStart
+        modifier =
+            modifier
+                .height(36.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(16.dp))
+                .clickable { onClick() }
+                .padding(horizontal = 12.dp),
+        contentAlignment = Alignment.CenterStart,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = "Search",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Search indents",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
@@ -188,7 +182,7 @@ fun SearchBarTrigger(
 fun IndentTabSwitcher(
     selectedTab: IndentTab,
     onTabSelected: (IndentTab) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier,
@@ -198,15 +192,17 @@ fun IndentTabSwitcher(
             label = "Mine",
             isSelected = selectedTab == IndentTab.MINE,
             onClick = { onTabSelected(IndentTab.MINE) },
-            modifier = Modifier.docketTag("indents_filter_mine")
-                .semantics { selected = selectedTab == IndentTab.MINE },
+            modifier =
+                Modifier.docketTag("indents_filter_mine")
+                    .semantics { selected = selectedTab == IndentTab.MINE },
         )
         FilterSelectionChip(
             label = "All",
             isSelected = selectedTab == IndentTab.ALL,
             onClick = { onTabSelected(IndentTab.ALL) },
-            modifier = Modifier.docketTag("indents_filter_all")
-                .semantics { selected = selectedTab == IndentTab.ALL },
+            modifier =
+                Modifier.docketTag("indents_filter_all")
+                    .semantics { selected = selectedTab == IndentTab.ALL },
         )
     }
 }
@@ -216,13 +212,13 @@ fun IndentsList(
     indents: List<IndentResponse.Indent>,
     onIndentClick: (String) -> Unit,
     onCloneClick: (String, String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
 
     LazyColumn(
         modifier = modifier,
-        contentPadding = PaddingValues(bottom = 80.dp)
+        contentPadding = PaddingValues(bottom = 80.dp),
     ) {
         if (indents.isEmpty()) {
             item(key = "indents_empty") {
@@ -259,14 +255,16 @@ fun IndentsList(
                 materialDisplay = indent.indentGroupDetails.material.replaceFirstChar { it.uppercase() },
                 showAdmin = showAdmin,
                 adminName = fleetExecutive?.name,
-                onCallClick = clientProfile?.phoneNumber?.takeIf { it.isNotBlank() }?.let { phone ->
-                    {
-                        val intent = Intent(Intent.ACTION_DIAL).apply {
-                            data = Uri.parse("tel:$phone")
+                onCallClick =
+                    clientProfile?.phoneNumber?.takeIf { it.isNotBlank() }?.let { phone ->
+                        {
+                            val intent =
+                                Intent(Intent.ACTION_DIAL).apply {
+                                    data = Uri.parse("tel:$phone")
+                                }
+                            context.startActivity(intent)
                         }
-                        context.startActivity(intent)
-                    }
-                },
+                    },
                 onClick = { onIndentClick(indent.id) },
                 onCloneClick = { onCloneClick(indent.id, indent.indentGroupDetails.id) },
             )
@@ -274,28 +272,28 @@ fun IndentsList(
     }
 }
 
-
-
 @Composable
 fun RouteDot(isStart: Boolean) {
     Box(
-        modifier = Modifier
-            .size(12.dp)
-            .background(
-                color = if (isStart) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
-                shape = CircleShape
-            )
+        modifier =
+            Modifier
+                .size(12.dp)
+                .background(
+                    color = if (isStart) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
+                    shape = CircleShape,
+                ),
     )
 }
 
 @Composable
 fun RouteVerticalLine() {
     Box(
-        modifier = Modifier
-            .padding(start = 3.dp) // center under 8dp dot
-            .width(4.dp)
-            .height(12.dp)
-            .background(MaterialTheme.colorScheme.outlineVariant)
+        modifier =
+            Modifier
+                .padding(start = 3.dp) // center under 8dp dot
+                .width(4.dp)
+                .height(12.dp)
+                .background(MaterialTheme.colorScheme.outlineVariant),
     )
 }
 
@@ -304,25 +302,27 @@ fun CostColumn(
     label: String,
     value: String,
     alignment: Alignment.Horizontal = Alignment.Start,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier.padding(horizontal = 4.dp),
-        horizontalAlignment = alignment
+        horizontalAlignment = alignment,
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.labelSmall.copy(
-                                letterSpacing = 0.5.sp
-            ),
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            style =
+                MaterialTheme.typography.labelSmall.copy(
+                    letterSpacing = 0.5.sp,
+                ),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
             text = value,
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.Bold,
-                            ),
-            color = MaterialTheme.colorScheme.onSurface
+            style =
+                MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                ),
+            color = MaterialTheme.colorScheme.onSurface,
         )
     }
 }

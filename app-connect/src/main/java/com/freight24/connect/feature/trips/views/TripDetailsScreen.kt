@@ -5,13 +5,10 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.Settings
-import com.freight24.ui.components.FreightTopAppBar
-
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,37 +19,31 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.PhotoLibrary
-import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.outlined.AccountBalanceWallet
 import androidx.compose.material.icons.outlined.BorderColor
+import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.Payments
-import androidx.compose.material.icons.outlined.AccountBalanceWallet
-import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.Phone
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -63,12 +54,13 @@ import com.freight24.connect.feature.trips.domain.viewmodel.TripDetailsViewModel
 import com.freight24.connect.feature.trips.domain.viewmodel.TripDetailsViewModelImpl
 import com.freight24.connect.feature.trips.views.components.TripCard
 import com.freight24.connect.feature.trips.views.components.formatAmount
-import com.freight24.ui.components.FileConfirmationSheet
-import com.freight24.ui.components.FileSourcePickerSheet
-import com.freight24.ui.components.rememberCallAction
 import com.freight24.connect.utils.toDateTime
 import com.freight24.rest.response.TripDataResponse
+import com.freight24.ui.components.FileConfirmationSheet
+import com.freight24.ui.components.FileSourcePickerSheet
+import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.components.formViewportInsets
+import com.freight24.ui.components.rememberCallAction
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -79,11 +71,11 @@ fun TripDetailsScreen(
     tripId: String,
     onBackClick: () -> Unit,
     onEditClick: (String) -> Unit,
-    onDocumentView : (String, String, String, String) -> Unit,
+    onDocumentView: (String, String, String, String) -> Unit,
     onHaltingClick: (String, String, Int, Int, String?) -> Unit,
     onLuClick: (String, String, String?, String?, String?, String?, String?) -> Unit,
     onOtherDeductionsClick: (String, String?, String?) -> Unit,
-    viewModel: TripDetailsViewModel = hiltViewModel<TripDetailsViewModelImpl>()
+    viewModel: TripDetailsViewModel = hiltViewModel<TripDetailsViewModelImpl>(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val colorScheme = MaterialTheme.colorScheme
@@ -91,12 +83,13 @@ fun TripDetailsScreen(
     var showConfirmationDialog by remember { mutableStateOf(false) }
     var pendingStatus by remember { mutableStateOf("") }
     var pendingButtonText by remember { mutableStateOf("") }
-    
+
     // Refresh trip details when returning from PDF viewer via navigation result
-    val refreshTrigger = navController.currentBackStackEntry
-        ?.savedStateHandle
-        ?.getStateFlow("refresh", false)
-        ?.collectAsStateWithLifecycle()
+    val refreshTrigger =
+        navController.currentBackStackEntry
+            ?.savedStateHandle
+            ?.getStateFlow("refresh", false)
+            ?.collectAsStateWithLifecycle()
 
     LaunchedEffect(tripId, refreshTrigger?.value) {
         if (refreshTrigger?.value == true) {
@@ -104,7 +97,7 @@ fun TripDetailsScreen(
             navController.currentBackStackEntry?.savedStateHandle?.set("refresh", false)
         }
     }
-    
+
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -112,12 +105,17 @@ fun TripDetailsScreen(
     LaunchedEffect(uiState.sharedDocumentFile, uiState.documentShareFailed) {
         val file = uiState.sharedDocumentFile
         if (file != null || uiState.documentShareFailed) {
-            val shareTitle = context.getString(
-                if (uiState.sharedDocumentType.equals("loading_memo", ignoreCase = true))
-                    R.string.trip_share_loading_memo else R.string.trip_share_lr
-            )
-            val failed = uiState.documentShareFailed ||
-                (file != null && shareTripDocumentPdf(context, file, shareTitle).isFailure)
+            val shareTitle =
+                context.getString(
+                    if (uiState.sharedDocumentType.equals("loading_memo", ignoreCase = true)) {
+                        R.string.trip_share_loading_memo
+                    } else {
+                        R.string.trip_share_lr
+                    },
+                )
+            val failed =
+                uiState.documentShareFailed ||
+                    (file != null && shareTripDocumentPdf(context, file, shareTitle).isFailure)
             if (failed) {
                 snackbarHostState.showSnackbar(context.getString(R.string.trip_share_document_failed))
             }
@@ -129,57 +127,62 @@ fun TripDetailsScreen(
     var showSourcePicker by rememberSaveable { mutableStateOf(false) }
     var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
 
-    val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia(),
-        onResult = { uris ->
-            if (uris.isNotEmpty()) {
-                viewModel.onEvent(TripDetailsEvent.OnFilesPicked(uris, isPdf = false))
-            }
-        },
-    )
-
-    val pdfPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument(),
-        onResult = { uri ->
-            uri?.let {
-                viewModel.onEvent(TripDetailsEvent.OnFilesPicked(listOf(it), isPdf = true))
-            }
-        },
-    )
-
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture(),
-        onResult = { success ->
-            if (success) {
-                tempCameraUri?.let {
-                    viewModel.onEvent(TripDetailsEvent.OnFilesPicked(listOf(it), isPdf = false))
+    val imagePickerLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.PickMultipleVisualMedia(),
+            onResult = { uris ->
+                if (uris.isNotEmpty()) {
+                    viewModel.onEvent(TripDetailsEvent.OnFilesPicked(uris, isPdf = false))
                 }
-            }
-            tempCameraUri = null
-        },
-    )
+            },
+        )
 
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission(),
-        onResult = { isGranted ->
-            if (isGranted) {
-                val imageUri = createTempImageUri(context)
-                tempCameraUri = imageUri
-                cameraLauncher.launch(imageUri)
-            } else {
-                scope.launch {
-                    val result = snackbarHostState.showSnackbar(
-                        message = "Camera permission denied. Grant it from app settings to use camera upload.",
-                        actionLabel = "Settings",
-                        duration = SnackbarDuration.Long,
-                    )
-                    if (result == SnackbarResult.ActionPerformed) {
-                        openAppSettings(context)
+    val pdfPickerLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.OpenDocument(),
+            onResult = { uri ->
+                uri?.let {
+                    viewModel.onEvent(TripDetailsEvent.OnFilesPicked(listOf(it), isPdf = true))
+                }
+            },
+        )
+
+    val cameraLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.TakePicture(),
+            onResult = { success ->
+                if (success) {
+                    tempCameraUri?.let {
+                        viewModel.onEvent(TripDetailsEvent.OnFilesPicked(listOf(it), isPdf = false))
                     }
                 }
-            }
-        },
-    )
+                tempCameraUri = null
+            },
+        )
+
+    val cameraPermissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+            onResult = { isGranted ->
+                if (isGranted) {
+                    val imageUri = createTempImageUri(context)
+                    tempCameraUri = imageUri
+                    cameraLauncher.launch(imageUri)
+                } else {
+                    scope.launch {
+                        val result =
+                            snackbarHostState.showSnackbar(
+                                message = "Camera permission denied. Grant it from app settings to use camera upload.",
+                                actionLabel = "Settings",
+                                duration = SnackbarDuration.Long,
+                            )
+                        if (result == SnackbarResult.ActionPerformed) {
+                            openAppSettings(context)
+                        }
+                    }
+                }
+            },
+        )
 
     fun startCameraCapture() {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
@@ -201,7 +204,7 @@ fun TripDetailsScreen(
                     onClick = {
                         viewModel.onEvent(TripDetailsEvent.UpdateStatus(newStatus = pendingStatus))
                         showConfirmationDialog = false
-                    }
+                    },
                 ) {
                     Text("Confirm", color = colorScheme.primary)
                 }
@@ -212,7 +215,7 @@ fun TripDetailsScreen(
                 }
             },
             containerColor = colorScheme.surface,
-            shape = MaterialTheme.shapes.medium
+            shape = MaterialTheme.shapes.medium,
         )
     }
 
@@ -234,7 +237,7 @@ fun TripDetailsScreen(
                         singleLine = false,
                         minLines = 3,
                         shape = RoundedCornerShape(8.dp),
-                        enabled = !uiState.isCanceling
+                        enabled = !uiState.isCanceling,
                     )
                 }
             },
@@ -242,7 +245,7 @@ fun TripDetailsScreen(
                 Button(
                     onClick = { viewModel.onEvent(TripDetailsEvent.ConfirmCancelTrip) },
                     enabled = !uiState.isCanceling && uiState.cancelReason.isNotBlank(),
-                    colors = ButtonDefaults.buttonColors(containerColor = colorScheme.error)
+                    colors = ButtonDefaults.buttonColors(containerColor = colorScheme.error),
                 ) {
                     if (uiState.isCanceling) {
                         CircularProgressIndicator(modifier = Modifier.size(18.dp), color = colorScheme.onError, strokeWidth = 2.dp)
@@ -257,7 +260,7 @@ fun TripDetailsScreen(
                 }
             },
             containerColor = colorScheme.surface,
-            shape = MaterialTheme.shapes.medium
+            shape = MaterialTheme.shapes.medium,
         )
     }
 
@@ -273,7 +276,7 @@ fun TripDetailsScreen(
                 }
             },
             containerColor = colorScheme.surface,
-            shape = MaterialTheme.shapes.medium
+            shape = MaterialTheme.shapes.medium,
         )
     }
 
@@ -284,7 +287,7 @@ fun TripDetailsScreen(
             isLoading = uiState.isTransactionsLoading,
             errorMessage = uiState.transactionsError,
             onRetry = { viewModel.onEvent(TripDetailsEvent.RetryPaymentTransactions) },
-            onDismiss = { viewModel.onEvent(TripDetailsEvent.DismissPaymentTransactions) }
+            onDismiss = { viewModel.onEvent(TripDetailsEvent.DismissPaymentTransactions) },
         )
     }
 
@@ -343,7 +346,7 @@ fun TripDetailsScreen(
                         DropdownMenu(
                             expanded = menuExpanded,
                             onDismissRequest = { menuExpanded = false },
-                            modifier = Modifier.background(colorScheme.surface)
+                            modifier = Modifier.background(colorScheme.surface),
                         ) {
                             DropdownMenuItem(
                                 text = { Text("Edit") },
@@ -353,7 +356,7 @@ fun TripDetailsScreen(
                                 onClick = {
                                     menuExpanded = false
                                     onEditClick(tripId)
-                                }
+                                },
                             )
                             DropdownMenuItem(
                                 text = { Text("Cancel", color = colorScheme.error) },
@@ -363,7 +366,7 @@ fun TripDetailsScreen(
                                 onClick = {
                                     menuExpanded = false
                                     viewModel.onEvent(TripDetailsEvent.ShowCancelDialog)
-                                }
+                                },
                             )
                         }
                     }
@@ -374,12 +377,13 @@ fun TripDetailsScreen(
             val trip = uiState.trip
             val truckerStatus = trip?.truckerStatus ?: ""
             val showTripStatus = (trip?.status ?: "").equals("active", true)
-            val (buttonText, nextStatus) = when (truckerStatus.uppercase()) {
-                "ASSIGNED" -> stringResource(R.string.trip_update_to_loading) to "LOADING"
-                "LOADING" -> stringResource(R.string.trip_upload_lr) to "UPLOAD_LR"
-                "IN_TRANSIT" -> "Update to UNLOADED" to "UNLOADED"
-                else -> null to null
-            }
+            val (buttonText, nextStatus) =
+                when (truckerStatus.uppercase()) {
+                    "ASSIGNED" -> stringResource(R.string.trip_update_to_loading) to "LOADING"
+                    "LOADING" -> stringResource(R.string.trip_upload_lr) to "UPLOAD_LR"
+                    "IN_TRANSIT" -> "Update to UNLOADED" to "UNLOADED"
+                    else -> null to null
+                }
 
             if (buttonText != null && nextStatus != null && showTripStatus) {
                 Surface(
@@ -392,7 +396,7 @@ fun TripDetailsScreen(
                                 text = stringResource(R.string.trip_loading_lr_hint),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp)
+                                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp),
                             )
                         }
                         Button(
@@ -405,29 +409,32 @@ fun TripDetailsScreen(
                                     showConfirmationDialog = true
                                 }
                             },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 12.dp)
-                                .height(52.dp),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                                    .height(52.dp),
                             shape = MaterialTheme.shapes.medium,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = colorScheme.primary,
-                                contentColor = colorScheme.onPrimary
-                            )
+                            colors =
+                                ButtonDefaults.buttonColors(
+                                    containerColor = colorScheme.primary,
+                                    contentColor = colorScheme.onPrimary,
+                                ),
                         ) {
                             Text(buttonText, style = MaterialTheme.typography.titleMedium)
                         }
                     }
                 }
             }
-        }
+        },
     ) { paddingValues ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                // Keyboard-aware viewport; see FormInsets.kt.
-                .formViewportInsets(paddingValues)
-                .background(colorScheme.background)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    // Keyboard-aware viewport; see FormInsets.kt.
+                    .formViewportInsets(paddingValues)
+                    .background(colorScheme.background),
         ) {
             when {
                 uiState.isLoading -> {
@@ -437,7 +444,7 @@ fun TripDetailsScreen(
                     Text(
                         text = uiState.errorMessage ?: "Unknown error",
                         color = colorScheme.error,
-                        modifier = Modifier.align(Alignment.Center)
+                        modifier = Modifier.align(Alignment.Center),
                     )
                 }
                 uiState.trip != null -> {
@@ -458,7 +465,7 @@ fun TripDetailsScreen(
                         onViewPaymentTransactions = {
                             viewModel.onEvent(TripDetailsEvent.ViewPaymentTransactions(it))
                         },
-                        sharingDocumentId = uiState.sharingDocumentId
+                        sharingDocumentId = uiState.sharingDocumentId,
                     )
                 }
             }
@@ -479,11 +486,12 @@ fun TripDetailsContent(
     sharingDocumentId: String?,
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         // Reused Trip Card
         TripCard(trip = trip)
@@ -525,7 +533,7 @@ fun TripDetailsContent(
                 onUploadLrClick = onUploadLrClick,
                 onDocClick = onDocClick,
                 onShareDocumentClick = onShareDocumentClick,
-                sharingDocumentId = sharingDocumentId
+                sharingDocumentId = sharingDocumentId,
             )
         }
 
@@ -534,7 +542,7 @@ fun TripDetailsContent(
             title = "Charges & Deductions",
             icon = Icons.Outlined.AccountBalanceWallet,
             iconBg = colorScheme.primaryContainer,
-            iconTint = colorScheme.primary
+            iconTint = colorScheme.primary,
         ) {
             ChargesAndDeductionsContent(
                 financials = trip.financials,
@@ -548,7 +556,7 @@ fun TripDetailsContent(
                 onLuClick = onLuClick,
                 onOtherDeductionsClick = { amount, notes ->
                     onOtherDeductionsClick(trip.id, amount.toInt().toString(), notes)
-                }
+                },
             )
         }
 
@@ -557,11 +565,11 @@ fun TripDetailsContent(
             title = stringResource(R.string.trip_trucker_payment_breakdown),
             icon = Icons.Outlined.Payments,
             iconBg = colorScheme.primaryContainer,
-            iconTint = colorScheme.primary
+            iconTint = colorScheme.primary,
         ) {
             PaymentBreakdownContent(
                 financials = trip.financials,
-                onViewTransactions = { onViewPaymentTransactions("trucker") }
+                onViewTransactions = { onViewPaymentTransactions("trucker") },
             )
         }
 
@@ -569,11 +577,11 @@ fun TripDetailsContent(
             title = stringResource(R.string.trip_client_payment_breakdown),
             icon = Icons.Outlined.Payments,
             iconBg = colorScheme.primaryContainer,
-            iconTint = colorScheme.primary
+            iconTint = colorScheme.primary,
         ) {
             ClientPaymentBreakdownContent(
                 trip = trip,
-                onViewTransactions = { onViewPaymentTransactions("client") }
+                onViewTransactions = { onViewPaymentTransactions("client") },
             )
         }
 
@@ -582,11 +590,11 @@ fun TripDetailsContent(
             title = "Timeline",
             icon = Icons.Outlined.History,
             iconBg = colorScheme.primaryContainer,
-            iconTint = colorScheme.primary
+            iconTint = colorScheme.primary,
         ) {
             TripTimelineContent(timeline = trip.timelines ?: emptyList())
         }
-        
+
         Spacer(modifier = Modifier.height(32.dp))
     }
 }
@@ -594,7 +602,7 @@ fun TripDetailsContent(
 @Composable
 private fun TripContactsContent(trip: TripDataResponse) {
     Column(
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
         TripContactRow(
             label = "Truck owner",
@@ -614,7 +622,7 @@ private fun TripContactsContent(trip: TripDataResponse) {
 @Composable
 private fun ClientContactsContent(contacts: TripDataResponse.Contacts?) {
     Column(
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
         TripContactRow(
             label = "Placement",
@@ -653,9 +661,10 @@ private fun TripContactRow(
     val hasPhone = !phone.isNullOrBlank()
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(modifier = Modifier.weight(1f)) {
@@ -702,7 +711,6 @@ private fun TripContactRow(
     }
 }
 
-
 @Composable
 fun TripDocumentsSection(
     truckerStatus: String,
@@ -710,18 +718,22 @@ fun TripDocumentsSection(
     onUploadLrClick: () -> Unit,
     onDocClick: (String, String, String) -> Unit,
     onShareDocumentClick: (String) -> Unit,
-    sharingDocumentId: String?
+    sharingDocumentId: String?,
 ) {
     Column(
         modifier = Modifier.padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-
         val lrDoc = documents.find { it.type.lowercase() == "lr" }
         val memoDoc = documents.find { it.type.lowercase() == "loading_memo" }
-        val isLrUploadEnabled = truckerStatus.equals("LOADING", ignoreCase = true) ||
-            (lrDoc != null && (lrDoc.status.equals("pending", ignoreCase = true) ||
-                lrDoc.status.equals("rejected", ignoreCase = true)))
+        val isLrUploadEnabled =
+            truckerStatus.equals("LOADING", ignoreCase = true) ||
+                (
+                    lrDoc != null && (
+                        lrDoc.status.equals("pending", ignoreCase = true) ||
+                            lrDoc.status.equals("rejected", ignoreCase = true)
+                    )
+                )
 
         DocumentCard(
             title = stringResource(R.string.trip_lorry_receipt),
@@ -729,14 +741,19 @@ fun TripDocumentsSection(
             showUploadButton = true,
             showEmptyStatus = false,
             isUploadEnabled = isLrUploadEnabled,
-            uploadDisabledReason = if (truckerStatus.equals("ASSIGNED", ignoreCase = true) &&
-                !isLrUploadEnabled && lrDoc == null
-            ) stringResource(R.string.trip_lr_upload_disabled_reason) else null,
+            uploadDisabledReason =
+                if (truckerStatus.equals("ASSIGNED", ignoreCase = true) &&
+                    !isLrUploadEnabled && lrDoc == null
+                ) {
+                    stringResource(R.string.trip_lr_upload_disabled_reason)
+                } else {
+                    null
+                },
             onUploadClick = onUploadLrClick,
             onCardClick = { docId, status -> onDocClick(docId, status, "lr") },
             onShareClick = lrDoc?.let { { onShareDocumentClick(it.id) } },
             isPreparingShare = lrDoc != null && sharingDocumentId == lrDoc.id,
-            isShareEnabled = sharingDocumentId == null
+            isShareEnabled = sharingDocumentId == null,
         )
 
         DocumentCard(
@@ -747,7 +764,7 @@ fun TripDocumentsSection(
             onShareClick = memoDoc?.let { { onShareDocumentClick(it.id) } },
             isPreparingShare = memoDoc != null && sharingDocumentId == memoDoc.id,
             isShareEnabled = sharingDocumentId == null,
-            shareLabel = stringResource(R.string.trip_share_loading_memo)
+            shareLabel = stringResource(R.string.trip_share_loading_memo),
         )
     }
 }
@@ -765,9 +782,8 @@ fun DocumentCard(
     onShareClick: (() -> Unit)? = null,
     isPreparingShare: Boolean = false,
     isShareEnabled: Boolean = true,
-    shareLabel: String? = null
+    shareLabel: String? = null,
 ) {
-
     fun onCardClick() {
         doc?.let {
             onCardClick(it.id, it.status)
@@ -781,24 +797,24 @@ fun DocumentCard(
         modifier = Modifier.fillMaxWidth(),
         onClick = {
             onCardClick()
-        }
+        },
     ) {
         Column {
             Row(
                 modifier = Modifier.padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Surface(
                     shape = RoundedCornerShape(8.dp),
                     color = colorScheme.primaryContainer,
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier.size(40.dp),
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             imageVector = Icons.Outlined.Description,
                             contentDescription = null,
                             tint = colorScheme.primary,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(20.dp),
                         )
                     }
                 }
@@ -808,13 +824,13 @@ fun DocumentCard(
                         text = title,
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Bold,
-                        color = colorScheme.onSurface
+                        color = colorScheme.onSurface,
                     )
                     if (doc == null && showEmptyStatus) {
                         Text(
                             text = stringResource(R.string.trip_document_not_generated),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = colorScheme.onSurfaceVariant
+                            color = colorScheme.onSurfaceVariant,
                         )
                     }
                 }
@@ -825,27 +841,34 @@ fun DocumentCard(
                 val showUpload = showUploadButton && (doc == null || isPending || isRejected)
 
                 if (showUpload) {
-                    val buttonText = stringResource(
-                        if (isPending) R.string.trip_verify_document else R.string.trip_upload_lr
-                    )
-                    val handleButtonClick = if (isPending) { { onCardClick() } } else onUploadClick
+                    val buttonText =
+                        stringResource(
+                            if (isPending) R.string.trip_verify_document else R.string.trip_upload_lr,
+                        )
+                    val handleButtonClick =
+                        if (isPending) {
+                            { onCardClick() }
+                        } else {
+                            onUploadClick
+                        }
 
                     Button(
                         onClick = handleButtonClick,
                         enabled = isUploadEnabled,
                         shape = MaterialTheme.shapes.small,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = colorScheme.primaryContainer,
-                            contentColor = colorScheme.onPrimaryContainer,
-                            disabledContainerColor = colorScheme.primaryContainer.copy(alpha = 0.5f),
-                            disabledContentColor = colorScheme.onPrimaryContainer.copy(alpha = 0.5f)
-                        ),
+                        colors =
+                            ButtonDefaults.buttonColors(
+                                containerColor = colorScheme.primaryContainer,
+                                contentColor = colorScheme.onPrimaryContainer,
+                                disabledContainerColor = colorScheme.primaryContainer.copy(alpha = 0.5f),
+                                disabledContentColor = colorScheme.onPrimaryContainer.copy(alpha = 0.5f),
+                            ),
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                        modifier = Modifier.height(36.dp)
+                        modifier = Modifier.height(36.dp),
                     ) {
                         Text(
                             text = buttonText,
-                            style = MaterialTheme.typography.labelLarge
+                            style = MaterialTheme.typography.labelLarge,
                         )
                     }
                 } else if (doc != null) {
@@ -855,7 +878,7 @@ fun DocumentCard(
             if (doc != null && onShareClick != null) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
-                    horizontalArrangement = Arrangement.End
+                    horizontalArrangement = Arrangement.End,
                 ) {
                     TextButton(onClick = onShareClick, enabled = isShareEnabled && !isPreparingShare) {
                         if (isPreparingShare) {
@@ -872,19 +895,19 @@ fun DocumentCard(
                 Row(
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.Top
+                    verticalAlignment = Alignment.Top,
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Info,
                         contentDescription = null,
                         tint = colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(18.dp),
                     )
                     Text(
                         text = uploadDisabledReason,
                         style = MaterialTheme.typography.bodySmall,
                         color = colorScheme.onSurfaceVariant,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
                     )
                 }
             }
@@ -894,25 +917,27 @@ fun DocumentCard(
 
 @Composable
 fun StatusBadgeSmall(status: String) {
-    val (color, ticketColor) = when (status.lowercase()) {
-        "verified", "approved" -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.primary
-        "pending" -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.tertiary
-        "rejected" -> MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.error
-        else -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
-    }
-    val label = when (status.lowercase()) {
-        "pending" -> "In Review"
-        else -> status.replaceFirstChar { it.uppercase() }
-    }
+    val (color, ticketColor) =
+        when (status.lowercase()) {
+            "verified", "approved" -> MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.primary
+            "pending" -> MaterialTheme.colorScheme.tertiaryContainer to MaterialTheme.colorScheme.tertiary
+            "rejected" -> MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.error
+            else -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
+        }
+    val label =
+        when (status.lowercase()) {
+            "pending" -> "In Review"
+            else -> status.replaceFirstChar { it.uppercase() }
+        }
 
     Surface(
         color = color,
-        shape = MaterialTheme.shapes.small
+        shape = MaterialTheme.shapes.small,
     ) {
         Text(
             text = label,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, color = ticketColor)
+            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, color = ticketColor),
         )
     }
 }
@@ -924,27 +949,28 @@ fun ExpandableSection(
     iconBg: Color = MaterialTheme.colorScheme.surfaceVariant,
     iconTint: Color = MaterialTheme.colorScheme.primary,
     initiallyExpanded: Boolean = false,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
 
     Card(
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Column {
             Row(
-                modifier = Modifier
-                    .clickable { expanded = !expanded }
-                    .padding(16.dp)
-                    .fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                modifier =
+                    Modifier
+                        .clickable { expanded = !expanded }
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Surface(
                     shape = MaterialTheme.shapes.small,
                     color = iconBg,
-                    modifier = Modifier.size(40.dp)
+                    modifier = Modifier.size(40.dp),
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp), tint = iconTint)
@@ -954,12 +980,12 @@ fun ExpandableSection(
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
                 Icon(
                     imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                     contentDescription = if (expanded) "Collapse" else "Expand",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
 
@@ -967,7 +993,7 @@ fun ExpandableSection(
                 Column {
                     HorizontalDivider(
                         color = MaterialTheme.colorScheme.outlineVariant,
-                        modifier = Modifier.padding(horizontal = 16.dp)
+                        modifier = Modifier.padding(horizontal = 16.dp),
                     )
                     content()
                 }
@@ -981,21 +1007,22 @@ fun ChargesAndDeductionsContent(
     financials: TripDataResponse.FinanceDetails?,
     onHaltingClick: () -> Unit,
     onLuClick: (String, String, String?, String?, String?, String?, String?) -> Unit,
-    onOtherDeductionsClick: (Double, String?) -> Unit
+    onOtherDeductionsClick: (Double, String?) -> Unit,
 ) {
     if (financials == null) {
         Text("No data", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodySmall)
         return
     }
-    
+
     Column(
         modifier = Modifier.padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         val luTotal = (financials.luCharges.loading.total + financials.luCharges.unloading.total).toDouble()
-        val haltingTotal = (financials.halting.loading.totalAmount?.toDouble() ?: 0.0) +
-            (financials.halting.unloading.totalAmount?.toDouble() ?: 0.0)
-        
+        val haltingTotal =
+            (financials.halting.loading.totalAmount?.toDouble() ?: 0.0) +
+                (financials.halting.unloading.totalAmount?.toDouble() ?: 0.0)
+
         ChargesSubRow("Loading & Unloading", luTotal, onClick = {
             onLuClick(
                 financials.luCharges.loading.total.toString(),
@@ -1017,53 +1044,56 @@ fun ChargesAndDeductionsContent(
 
 @Composable
 fun ChargesSubRow(
-    label: String, 
-    amount: Double, 
+    label: String,
+    amount: Double,
     isDeduction: Boolean = false,
-    onClick: (() -> Unit)? = null
+    onClick: (() -> Unit)? = null,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 48.dp)
-            .then(
-                if (onClick != null) {
-                    Modifier.clickable { onClick() }
-                } else {
-                    Modifier
-                }
-            )
-            .padding(vertical = 4.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp)
+                .then(
+                    if (onClick != null) {
+                        Modifier.clickable { onClick() }
+                    } else {
+                        Modifier
+                    },
+                )
+                .padding(vertical = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = label, 
-            style = MaterialTheme.typography.bodyMedium, 
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Row(verticalAlignment = Alignment.CenterVertically) {
             val hasAmount = amount > 0.0
             Text(
-                text = if (hasAmount) {
-                    (if (isDeduction) "- " else "") + "₹${formatAmount(amount.toString())}"
-                } else {
-                    "—"
-                },
+                text =
+                    if (hasAmount) {
+                        (if (isDeduction) "- " else "") + "₹${formatAmount(amount.toString())}"
+                    } else {
+                        "—"
+                    },
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = if (hasAmount) FontWeight.Bold else FontWeight.Normal,
-                color = when {
-                    !hasAmount -> MaterialTheme.colorScheme.onSurfaceVariant
-                    isDeduction -> MaterialTheme.colorScheme.error
-                    else -> MaterialTheme.colorScheme.onSurface
-                }
+                color =
+                    when {
+                        !hasAmount -> MaterialTheme.colorScheme.onSurfaceVariant
+                        isDeduction -> MaterialTheme.colorScheme.error
+                        else -> MaterialTheme.colorScheme.onSurface
+                    },
             )
             Spacer(modifier = Modifier.width(8.dp))
             Icon(
                 imageVector = Icons.Outlined.ChevronRight,
                 contentDescription = null,
                 modifier = Modifier.size(20.dp),
-                tint = MaterialTheme.colorScheme.primary
+                tint = MaterialTheme.colorScheme.primary,
             )
         }
     }
@@ -1072,7 +1102,7 @@ fun ChargesSubRow(
 @Composable
 fun PaymentBreakdownContent(
     financials: TripDataResponse.FinanceDetails?,
-    onViewTransactions: () -> Unit
+    onViewTransactions: () -> Unit,
 ) {
     if (financials == null) {
         Text("Financial data not available", modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodySmall)
@@ -1081,18 +1111,20 @@ fun PaymentBreakdownContent(
 
     Column(
         modifier = Modifier.padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(15.dp)
+        verticalArrangement = Arrangement.spacedBy(15.dp),
     ) {
         PaymentDetailRow("Trip Cost", financials.truckerTripCost)
-        
+
         // Halting Loading
         PaymentDetailRow(
             label = "Loading",
             amount = financials.halting.loading.totalAmount?.toDouble() ?: 0.0,
             isAddition = true,
-            detailText = "(${financials.halting.loading.days} Days x ₹${formatAmount(financials.halting.loading.perDayAmount?.toPlainString() ?: "0")})",
+            detailText = "(${financials.halting.loading.days} Days x ₹${formatAmount(
+                financials.halting.loading.perDayAmount?.toPlainString() ?: "0",
+            )})",
             addHeader = true,
-            headerName = "Halting Charges"
+            headerName = "Halting Charges",
         )
 
         // Halting Unloading
@@ -1100,46 +1132,68 @@ fun PaymentBreakdownContent(
             label = "Unloading",
             amount = financials.halting.unloading.totalAmount?.toDouble() ?: 0.0,
             isAddition = true,
-            detailText = "(${financials.halting.unloading.days} Days x ₹${formatAmount(financials.halting.unloading.perDayAmount?.toPlainString() ?: "0")})"
+            detailText = "(${financials.halting.unloading.days} Days x ₹${formatAmount(
+                financials.halting.unloading.perDayAmount?.toPlainString() ?: "0",
+            )})",
         )
 
         // Loading Charges (from LU)
         PaymentDetailRow(
             label = "Loading Charges",
             amount = financials.luCharges.loading.total.toDouble(),
-            isAddition = true
+            isAddition = true,
         )
 
         // Unloading Charges (from LU)
         PaymentDetailRow(
             label = "Unloading Charges",
             amount = financials.luCharges.unloading.total.toDouble(),
-            isAddition = true
+            isAddition = true,
         )
 
         PaymentDetailRow("Other Deductions", financials.otherDeductions?.toDouble() ?: 0.0, isDeduction = true)
         PaymentDetailRow("Advance Paid", financials.advance.paidAmount)
         PaymentDetailRow("Platform Fee", financials.platformFee.amount, isDeduction = true)
         PaymentDetailRow("TDS", financials.tds.amount, isDeduction = true)
-        
+
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, modifier = Modifier.padding(vertical = 4.dp))
-        
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("Net Payable", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-            Text("₹${formatAmount(financials.netPayable.toString())}", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+            Text(
+                "Net Payable",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                "₹${formatAmount(financials.netPayable.toString())}",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+            )
         }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("Paid Amount", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-            Text("₹${formatAmount(financials.totalPaidAmount.toString())}", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            Text(
+                "Paid Amount",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                "₹${formatAmount(financials.totalPaidAmount.toString())}",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
         }
 
         Spacer(modifier = Modifier.height(4.dp))
@@ -1149,24 +1203,24 @@ fun PaymentBreakdownContent(
         Surface(
             color = MaterialTheme.colorScheme.tertiaryContainer,
             shape = MaterialTheme.shapes.medium,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         ) {
             Row(
                 modifier = Modifier.padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     "Balance Due",
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onTertiaryContainer,
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
                 )
                 Text(
                     "₹${formatAmount(balanceDue.toString())}",
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onTertiaryContainer,
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
                 )
             }
         }
@@ -1184,53 +1238,55 @@ fun PaymentDetailRow(
     isAddition: Boolean = false,
     detailText: String? = null,
     addHeader: Boolean = false,
-    headerName: String = ""
+    headerName: String = "",
 ) {
     Column(modifier = Modifier.padding(vertical = 4.dp)) {
         if (addHeader) {
             Text(
-                text = headerName, 
-                style = MaterialTheme.typography.bodySmall, 
+                text = headerName,
+                style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 4.dp)
+                modifier = Modifier.padding(bottom = 4.dp),
             )
         }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = label, 
-                    style = MaterialTheme.typography.bodyMedium, 
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = label,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 if (!detailText.isNullOrBlank()) {
                     Text(
                         text = detailText,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            )
+                    )
                 }
             }
             Text(
-                text = when {
-                    amount <= 0.0 -> "₹0"
-                    isDeduction -> "- ₹${formatAmount(amount.toString())}"
-                    isAddition -> "+ ₹${formatAmount(amount.toString())}"
-                    else -> "₹${formatAmount(amount.toString())}"
-                },
+                text =
+                    when {
+                        amount <= 0.0 -> "₹0"
+                        isDeduction -> "- ₹${formatAmount(amount.toString())}"
+                        isAddition -> "+ ₹${formatAmount(amount.toString())}"
+                        else -> "₹${formatAmount(amount.toString())}"
+                    },
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = if (amount > 0.0) FontWeight.Bold else FontWeight.Normal,
-                color = when {
-                    amount <= 0.0 -> MaterialTheme.colorScheme.onSurfaceVariant
-                    isDeduction -> MaterialTheme.colorScheme.error
-                    isAddition -> MaterialTheme.colorScheme.primary
-                    else -> MaterialTheme.colorScheme.onSurface
-                }
+                color =
+                    when {
+                        amount <= 0.0 -> MaterialTheme.colorScheme.onSurfaceVariant
+                        isDeduction -> MaterialTheme.colorScheme.error
+                        isAddition -> MaterialTheme.colorScheme.primary
+                        else -> MaterialTheme.colorScheme.onSurface
+                    },
             )
         }
     }
@@ -1240,12 +1296,12 @@ fun PaymentDetailRow(
 fun TripTimelineContent(timeline: List<TripDataResponse.Timeline>) {
     Column(
         modifier = Modifier.padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(0.dp)
+        verticalArrangement = Arrangement.spacedBy(0.dp),
     ) {
         timeline.forEachIndexed { index, item ->
             TimelineItemRow(
                 item = item,
-                isLast = index == timeline.size - 1
+                isLast = index == timeline.size - 1,
             )
         }
     }
@@ -1254,55 +1310,61 @@ fun TripTimelineContent(timeline: List<TripDataResponse.Timeline>) {
 @Composable
 fun TimelineItemRow(
     item: TripDataResponse.Timeline,
-    isLast: Boolean
+    isLast: Boolean,
 ) {
-    val lineColor = if (item.isCompleted) {
-        MaterialTheme.colorScheme.primary
-    } else {
-        MaterialTheme.colorScheme.outlineVariant
-    }
+    val lineColor =
+        if (item.isCompleted) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            MaterialTheme.colorScheme.outlineVariant
+        }
     val isCurrentStop = item.isCurrent && !item.isCompleted
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(IntrinsicSize.Min),
-        verticalAlignment = Alignment.Top
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min),
+        verticalAlignment = Alignment.Top,
     ) {
         // Indicator column: dot centered over the connector line
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.width(24.dp)
+            modifier = Modifier.width(24.dp),
         ) {
             Box(
-                modifier = Modifier
-                    .size(16.dp)
-                    .border(
-                        width = 2.dp,
-                        color = if (item.isCompleted || isCurrentStop) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.outlineVariant
-                        },
-                        shape = CircleShape
-                    )
-                    .padding(4.dp)
-                    .background(
-                        color = if (item.isCompleted || isCurrentStop) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.outlineVariant
-                        },
-                        shape = CircleShape
-                    )
+                modifier =
+                    Modifier
+                        .size(16.dp)
+                        .border(
+                            width = 2.dp,
+                            color =
+                                if (item.isCompleted || isCurrentStop) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.outlineVariant
+                                },
+                            shape = CircleShape,
+                        )
+                        .padding(4.dp)
+                        .background(
+                            color =
+                                if (item.isCompleted || isCurrentStop) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.outlineVariant
+                                },
+                            shape = CircleShape,
+                        ),
             )
 
             if (!isLast) {
                 Box(
-                    modifier = Modifier
-                        .width(2.dp)
-                        .weight(1f)
-                        .background(lineColor)
+                    modifier =
+                        Modifier
+                            .width(2.dp)
+                            .weight(1f)
+                            .background(lineColor),
                 )
             }
         }
@@ -1314,26 +1376,27 @@ fun TimelineItemRow(
                 text = mapStatusToTitle(item.statusType),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
-                color = if (item.isCompleted || isCurrentStop) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (item.isCompleted || isCurrentStop) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
-            val subText = if (isCurrentStop) {
-                "In Progress"
-            } else {
-                item.updatedAt?.let {
-                    try {
-                        it.toDateTime()
-                    } catch (e: Exception) {
-                        it
-                    }
-                } ?: ""
-            }
+            val subText =
+                if (isCurrentStop) {
+                    "In Progress"
+                } else {
+                    item.updatedAt?.let {
+                        try {
+                            it.toDateTime()
+                        } catch (e: Exception) {
+                            it
+                        }
+                    } ?: ""
+                }
 
             if (subText.isNotEmpty()) {
                 Text(
                     text = subText,
                     style = MaterialTheme.typography.labelSmall,
-                    color = if (isCurrentStop) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    color = if (isCurrentStop) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -1365,8 +1428,9 @@ private fun createTempImageUri(context: Context): Uri {
 }
 
 private fun openAppSettings(context: Context) {
-    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-        data = Uri.fromParts("package", context.packageName, null)
-    }
+    val intent =
+        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = Uri.fromParts("package", context.packageName, null)
+        }
     context.startActivity(intent)
 }

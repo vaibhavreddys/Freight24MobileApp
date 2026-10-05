@@ -20,11 +20,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.navigation.compose.rememberNavController
-import com.freight24.connect.BuildConfig
 import com.freight24.auth.SessionManager
 import com.freight24.common.manager.ThemePreferenceManager
 import com.freight24.connect.navigation.ConnectDestination
@@ -56,16 +54,19 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val themeChoiceOrdinal by themePreferenceManager.themeChoice.collectAsState(initial = ThemePreferenceManager.THEME_LOGISTICS)
-            val darkModeOverride by themePreferenceManager.darkModeOverride.collectAsState(initial = ThemePreferenceManager.DARK_MODE_FOLLOW_SYSTEM)
-            val appTheme = remember(themeChoiceOrdinal) {
-                // Default (persisted THEME_LOGISTICS) resolves to the premium
-                // CONNECT identity; an explicit user pick is honoured as-is.
-                if (themeChoiceOrdinal == ThemePreferenceManager.THEME_LOGISTICS) {
-                    FreightAppTheme.CONNECT
-                } else {
-                    FreightAppTheme.entries.getOrElse(themeChoiceOrdinal) { FreightAppTheme.CONNECT }
+            val darkModeOverride by themePreferenceManager.darkModeOverride.collectAsState(
+                initial = ThemePreferenceManager.DARK_MODE_FOLLOW_SYSTEM,
+            )
+            val appTheme =
+                remember(themeChoiceOrdinal) {
+                    // Default (persisted THEME_LOGISTICS) resolves to the premium
+                    // CONNECT identity; an explicit user pick is honoured as-is.
+                    if (themeChoiceOrdinal == ThemePreferenceManager.THEME_LOGISTICS) {
+                        FreightAppTheme.CONNECT
+                    } else {
+                        FreightAppTheme.entries.getOrElse(themeChoiceOrdinal) { FreightAppTheme.CONNECT }
+                    }
                 }
-            }
 
             Freight24Theme(
                 appTheme = appTheme,
@@ -78,11 +79,12 @@ class MainActivity : ComponentActivity() {
                 var isAuthenticated by remember { mutableStateOf(false) }
                 var sessionExpiredMessage by remember { mutableStateOf<String?>(null) }
 
-                val loginRoute = if (BuildConfig.FEATURE_NEW_LOGIN) {
-                    ConnectDestination.NewLogin.route
-                } else {
-                    ConnectDestination.Login.route
-                }
+                val loginRoute =
+                    if (BuildConfig.FEATURE_NEW_LOGIN) {
+                        ConnectDestination.NewLogin.route
+                    } else {
+                        ConnectDestination.Login.route
+                    }
 
                 LaunchedEffect(Unit) {
                     val bootstrapStarted = android.os.SystemClock.uptimeMillis()
@@ -94,8 +96,9 @@ class MainActivity : ComponentActivity() {
                     // Hold the splash until the one-shot choreography has
                     // landed (F24 in → unfurl → road ≈ 1.3s), even when
                     // bootstrap finishes instantly on a cached session.
-                    val remaining = SPLASH_MIN_DISPLAY_MS -
-                        (android.os.SystemClock.uptimeMillis() - bootstrapStarted)
+                    val remaining =
+                        SPLASH_MIN_DISPLAY_MS -
+                            (android.os.SystemClock.uptimeMillis() - bootstrapStarted)
                     if (remaining > 0) delay(remaining)
                     isBootstrapped = true
                 }
@@ -108,7 +111,10 @@ class MainActivity : ComponentActivity() {
                 }
 
                 LaunchedEffect(isBootstrapped, isAuthenticated, pendingIndentId) {
-                    Log.d("FCM_DEBUG", "Nav check: isBootstrapped=$isBootstrapped isAuthenticated=$isAuthenticated pendingIndentId=$pendingIndentId pendingOpenInterests=$pendingOpenInterests")
+                    Log.d(
+                        "FCM_DEBUG",
+                        "Nav check: isBootstrapped=$isBootstrapped isAuthenticated=$isAuthenticated pendingIndentId=$pendingIndentId pendingOpenInterests=$pendingOpenInterests",
+                    )
                     if (isBootstrapped && isAuthenticated && pendingIndentId != null) {
                         val indentId = pendingIndentId!!
                         val openInterests = pendingOpenInterests
@@ -122,9 +128,10 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                val notificationPermissionLauncher = rememberLauncherForActivityResult(
-                    ActivityResultContracts.RequestPermission(),
-                ) { }
+                val notificationPermissionLauncher =
+                    rememberLauncherForActivityResult(
+                        ActivityResultContracts.RequestPermission(),
+                    ) { }
 
                 LaunchedEffect(Unit) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
@@ -190,7 +197,7 @@ class MainActivity : ComponentActivity() {
             val type = intent.getStringExtra(EXTRA_TYPE)
             pendingOpenInterests =
                 intent.getBooleanExtra(ConnectMessagingService.EXTRA_OPEN_INTERESTS, false) ||
-                    type == INDENT_INTEREST_TYPE
+                type == INDENT_INTEREST_TYPE
             Log.d("FCM_DEBUG", "Deep link extras found: indentId=$pendingIndentId type=$type openInterests=$pendingOpenInterests")
         } else {
             Log.d("FCM_DEBUG", "No indent_id extra in intent")

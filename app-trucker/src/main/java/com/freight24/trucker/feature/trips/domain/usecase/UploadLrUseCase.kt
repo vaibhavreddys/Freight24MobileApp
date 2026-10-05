@@ -15,41 +15,42 @@ import javax.inject.Inject
 
 data class UploadLrUseCaseDataParams(
     val tripId: String,
-    val file : File,
+    val file: File,
     val notes: String?,
-): UseCaseParams
+) : UseCaseParams
 
 internal interface UploadLrUseCase : UseCase<UploadLrUseCaseDataParams, TripDetail>
 
-internal class UploadLrUseCaseImpl @Inject constructor(
-    private val repository: TripRepository
-) : UploadLrUseCase {
+internal class UploadLrUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: TripRepository,
+    ) : UploadLrUseCase {
+        override suspend fun invoke(params: UploadLrUseCaseDataParams): Result<TripDetail> {
+            val mimeType =
+                if (params.file.extension.equals("pdf", ignoreCase = true)) {
+                    "application/pdf"
+                } else {
+                    getMimeType(params.file.absolutePath) ?: "application/octet-stream"
+                }
+            val requestFile = params.file.asRequestBody(mimeType.toMediaTypeOrNull())
 
-    override suspend fun invoke(params: UploadLrUseCaseDataParams): Result<TripDetail> {
+            val filePart =
+                MultipartBody.Part.createFormData(
+                    "file", // The name expected by the server for the file field
+                    params.file.name, // The actual file name
+                    requestFile,
+                )
 
-        val mimeType =
-            if (params.file.extension.equals("pdf", ignoreCase = true)) {
-                "application/pdf"
-            } else {
-                getMimeType(params.file.absolutePath) ?: "application/octet-stream"
-            }
-        val requestFile = params.file.asRequestBody(mimeType.toMediaTypeOrNull())
+            return repository.uploadLr(
+                params.tripId,
+                filePart,
+                params.notes?.toRequestBody("text/plain".toMediaType()),
+            )
+        }
 
-        val filePart = MultipartBody.Part.createFormData(
-            "file", // The name expected by the server for the file field
-            params.file.name, // The actual file name
-            requestFile
-        )
-
-        return repository.uploadLr(
-            params.tripId,
-            filePart,
-            params.notes?.toRequestBody("text/plain".toMediaType())
-        )
+        private fun getMimeType(url: String): String? {
+            val extension = MimeTypeMap.getFileExtensionFromUrl(url)
+            return MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+        }
     }
-
-    private fun getMimeType(url: String): String? {
-        val extension = MimeTypeMap.getFileExtensionFromUrl(url)
-        return MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
-    }
-}

@@ -1,6 +1,4 @@
 package com.freight24.connect.feature.trips.views
-import com.freight24.ui.components.FreightTopAppBar
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -25,24 +23,26 @@ import com.freight24.connect.feature.trips.domain.viewmodel.TripsListEvent
 import com.freight24.connect.feature.trips.domain.viewmodel.TripsListViewModel
 import com.freight24.connect.feature.trips.views.components.TripListItem
 import com.freight24.ui.components.FreightEmptyState
+import com.freight24.ui.components.FreightTopAppBar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FilteredTripsScreen(
     onBackClick: () -> Unit,
     onTripClick: (String) -> Unit,
-    viewModel: TripsListViewModel = hiltViewModel<FilteredTripsViewModelImpl>()
+    viewModel: TripsListViewModel = hiltViewModel<FilteredTripsViewModelImpl>(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val colorScheme = MaterialTheme.colorScheme
     val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.onEvent(TripsListEvent.Refresh)
+        val observer =
+            LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_RESUME) {
+                    viewModel.onEvent(TripsListEvent.Refresh)
+                }
             }
-        }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
@@ -50,29 +50,30 @@ fun FilteredTripsScreen(
     Scaffold(
         topBar = {
             FreightTopAppBar(
-                title = { 
+                title = {
                     Text(
                         text = uiState.selectedFilter.displayText,
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    ) 
+                        fontWeight = FontWeight.Bold,
+                    )
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = "Back",
                         )
                     }
                 },
             )
         },
-        containerColor = colorScheme.background
+        containerColor = colorScheme.background,
     ) { paddingValues ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
         ) {
             if (uiState.isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -80,7 +81,7 @@ fun FilteredTripsScreen(
                 Text(
                     text = uiState.errorMessage!!,
                     color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.Center).padding(16.dp)
+                    modifier = Modifier.align(Alignment.Center).padding(16.dp),
                 )
             } else if (uiState.trips.isEmpty()) {
                 FreightEmptyState(
@@ -93,12 +94,12 @@ fun FilteredTripsScreen(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     items(uiState.trips) { trip ->
                         TripListItem(
                             trip = trip,
-                            onClick = { onTripClick(trip.id) }
+                            onClick = { onTripClick(trip.id) },
                         )
                     }
                 }

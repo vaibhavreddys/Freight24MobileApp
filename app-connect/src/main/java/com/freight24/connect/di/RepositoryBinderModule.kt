@@ -1,31 +1,31 @@
 package com.freight24.connect.di
 
+import com.freight24.connect.repository.AdhocTruckRepository
+import com.freight24.connect.repository.AdhocTruckRepositoryImpl
 import com.freight24.connect.repository.ClientRepository
 import com.freight24.connect.repository.ClientRepositoryImpl
 import com.freight24.connect.repository.EmployeesRepository
 import com.freight24.connect.repository.EmployeesRepositoryImpl
 import com.freight24.connect.repository.FindTrucksRepository
 import com.freight24.connect.repository.FindTrucksRepositoryImpl
-import com.freight24.connect.repository.LeadsRepository
-import com.freight24.connect.repository.LeadsRepositoryImpl
 import com.freight24.connect.repository.InterestInboxRepository
 import com.freight24.connect.repository.InterestInboxRepositoryImpl
+import com.freight24.connect.repository.LeadsRepository
+import com.freight24.connect.repository.LeadsRepositoryImpl
 import com.freight24.connect.repository.LocationRepository
 import com.freight24.connect.repository.LocationRepositoryImpl
-import com.freight24.connect.repository.trips.TripHaltingRepository
-import com.freight24.connect.repository.trips.TripHaltingRepositoryImpl
-import com.freight24.connect.repository.trips.TripRepository
-import com.freight24.connect.repository.trips.TripRepositoryImpl
-import com.freight24.connect.repository.TruckRepository
-import com.freight24.connect.repository.TruckRepositoryImpl
-import com.freight24.connect.repository.trips.TripLUChargesRepository
-import com.freight24.connect.repository.trips.TripLUChargesRepositoryImpl
 import com.freight24.connect.repository.TruckOwnerRepository
 import com.freight24.connect.repository.TruckOwnerRepositoryImpl
+import com.freight24.connect.repository.TruckRepository
+import com.freight24.connect.repository.TruckRepositoryImpl
+import com.freight24.connect.repository.trips.TripHaltingRepository
+import com.freight24.connect.repository.trips.TripHaltingRepositoryImpl
+import com.freight24.connect.repository.trips.TripLUChargesRepository
+import com.freight24.connect.repository.trips.TripLUChargesRepositoryImpl
+import com.freight24.connect.repository.trips.TripRepository
+import com.freight24.connect.repository.trips.TripRepositoryImpl
 import com.freight24.connect.repository.verificationrequests.VerificationRequestsRepository
 import com.freight24.connect.repository.verificationrequests.VerificationRequestsRepositoryImpl
-import com.freight24.connect.repository.AdhocTruckRepository
-import com.freight24.connect.repository.AdhocTruckRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -53,39 +53,27 @@ interface RepositoryBinderModule {
 
     @Binds
     @Singleton
-    fun bindsTripHaltingRepository(
-        tripHaltingRepositoryImpl: TripHaltingRepositoryImpl
-    ): TripHaltingRepository
+    fun bindsTripHaltingRepository(tripHaltingRepositoryImpl: TripHaltingRepositoryImpl): TripHaltingRepository
 
     @Binds
     @Singleton
-    fun bindsTripLUChargesRepository(
-        tripLUChargesRepositoryImpl: TripLUChargesRepositoryImpl
-    ): TripLUChargesRepository
+    fun bindsTripLUChargesRepository(tripLUChargesRepositoryImpl: TripLUChargesRepositoryImpl): TripLUChargesRepository
 
     @Binds
     @Singleton
-    fun bindsTruckOwnerRepository(
-        truckOwnerRepositoryImpl: TruckOwnerRepositoryImpl
-    ): TruckOwnerRepository
+    fun bindsTruckOwnerRepository(truckOwnerRepositoryImpl: TruckOwnerRepositoryImpl): TruckOwnerRepository
 
     @Binds
     @Singleton
-    fun bindsFindTrucksRepository(
-        findTrucksRepositoryImpl: FindTrucksRepositoryImpl
-    ): FindTrucksRepository
+    fun bindsFindTrucksRepository(findTrucksRepositoryImpl: FindTrucksRepositoryImpl): FindTrucksRepository
 
     @Binds
     @Singleton
-    fun bindsEmployeesRepository(
-        employeesRepository: EmployeesRepositoryImpl
-    ): EmployeesRepository
+    fun bindsEmployeesRepository(employeesRepository: EmployeesRepositoryImpl): EmployeesRepository
 
     @Binds
     @Singleton
-    fun bindsInterestInboxRepository(
-        interestInboxRepository: InterestInboxRepositoryImpl
-    ): InterestInboxRepository
+    fun bindsInterestInboxRepository(interestInboxRepository: InterestInboxRepositoryImpl): InterestInboxRepository
 
     @Binds
     @Singleton
@@ -95,13 +83,9 @@ interface RepositoryBinderModule {
 
     @Binds
     @Singleton
-    fun bindsLeadsRepository(
-        leadsRepositoryImpl: LeadsRepositoryImpl,
-    ): LeadsRepository
+    fun bindsLeadsRepository(leadsRepositoryImpl: LeadsRepositoryImpl): LeadsRepository
 
     @Binds
     @Singleton
-    fun bindsAdhocTruckRepository(
-        adhocTruckRepositoryImpl: AdhocTruckRepositoryImpl,
-    ): AdhocTruckRepository
+    fun bindsAdhocTruckRepository(adhocTruckRepositoryImpl: AdhocTruckRepositoryImpl): AdhocTruckRepository
 }

@@ -32,7 +32,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -61,13 +60,15 @@ fun IndentCard(
 ) {
     Card(
         onClick = onClick,
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 6.dp),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 6.dp),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(
@@ -121,9 +122,10 @@ private fun Header(
         ) {
             Text(
                 text = companyName,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                ),
+                style =
+                    MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                    ),
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -132,10 +134,11 @@ private fun Header(
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = "($indentCode)",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Medium,
-                    ),
+                    style =
+                        MaterialTheme.typography.bodyMedium.copy(
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Medium,
+                        ),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                 )
@@ -192,9 +195,10 @@ private fun RouteAndPrices(
             )
             Text(
                 text = clientCostFormatted,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                ),
+                style =
+                    MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                    ),
                 color = MaterialTheme.colorScheme.onSurface,
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -206,9 +210,10 @@ private fun RouteAndPrices(
             )
             Text(
                 text = negotiatedCostFormatted,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                ),
+                style =
+                    MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                    ),
                 color = MaterialTheme.colorScheme.onSurface,
             )
         }
@@ -235,13 +240,15 @@ private fun CargoChips(
                         style = MaterialTheme.typography.labelMedium,
                     )
                 },
-                colors = AssistChipDefaults.assistChipColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                ),
-                border = AssistChipDefaults.assistChipBorder(
-                    enabled = false,
-                    borderColor = MaterialTheme.colorScheme.outlineVariant,
-                ),
+                colors =
+                    AssistChipDefaults.assistChipColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    ),
+                border =
+                    AssistChipDefaults.assistChipBorder(
+                        enabled = false,
+                        borderColor = MaterialTheme.colorScheme.outlineVariant,
+                    ),
                 shape = RoundedCornerShape(8.dp),
             )
 
@@ -253,13 +260,15 @@ private fun CargoChips(
                         style = MaterialTheme.typography.labelMedium,
                     )
                 },
-                colors = AssistChipDefaults.assistChipColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                ),
-                border = AssistChipDefaults.assistChipBorder(
-                    enabled = false,
-                    borderColor = MaterialTheme.colorScheme.outlineVariant,
-                ),
+                colors =
+                    AssistChipDefaults.assistChipColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    ),
+                border =
+                    AssistChipDefaults.assistChipBorder(
+                        enabled = false,
+                        borderColor = MaterialTheme.colorScheme.outlineVariant,
+                    ),
                 shape = RoundedCornerShape(8.dp),
             )
 
@@ -272,13 +281,15 @@ private fun CargoChips(
                             style = MaterialTheme.typography.labelMedium,
                         )
                     },
-                    colors = AssistChipDefaults.assistChipColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    ),
-                    border = AssistChipDefaults.assistChipBorder(
-                        enabled = false,
-                        borderColor = MaterialTheme.colorScheme.outlineVariant,
-                    ),
+                    colors =
+                        AssistChipDefaults.assistChipColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        ),
+                    border =
+                        AssistChipDefaults.assistChipBorder(
+                            enabled = false,
+                            borderColor = MaterialTheme.colorScheme.outlineVariant,
+                        ),
                     shape = RoundedCornerShape(8.dp),
                 )
             }
@@ -289,31 +300,34 @@ private fun CargoChips(
 
             // LIGHTWEIGHT CUSTOM CHIP: 100% predictable sizing, no hidden framework padding
             Row(
-                modifier = Modifier
-                    .height(32.dp)
-                    .clip(MaterialTheme.shapes.small)
-                    .background(MaterialTheme.colorScheme.primary)
-                    .clickable(
-                        onClick = onCallClick,
-                    )
-                    .padding(horizontal = 8.dp), // STRICT: Exact same horizontal padding as AssistChip
+                modifier =
+                    Modifier
+                        .height(32.dp)
+                        .clip(MaterialTheme.shapes.small)
+                        .background(MaterialTheme.colorScheme.primary)
+                        .clickable(
+                            onClick = onCallClick,
+                        )
+                        .padding(horizontal = 8.dp),
+                // STRICT: Exact same horizontal padding as AssistChip
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.Center,
             ) {
                 Icon(
                     imageVector = Icons.Default.Call,
                     contentDescription = "Call",
                     modifier = Modifier.size(18.dp), // Exact same icon size as AssistChip
-                    tint = MaterialTheme.colorScheme.onPrimary
+                    tint = MaterialTheme.colorScheme.onPrimary,
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Call",
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        // CRITICAL: Prevents the Text composable from adding hidden vertical padding
-                        lineHeight = 16.sp
-                    )
+                    style =
+                        MaterialTheme.typography.labelMedium.copy(
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            // CRITICAL: Prevents the Text composable from adding hidden vertical padding
+                            lineHeight = 16.sp,
+                        ),
                 )
             }
         }
@@ -341,9 +355,10 @@ private fun Footer(
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = adminName,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.Medium,
-                    ),
+                    style =
+                        MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Medium,
+                        ),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -356,10 +371,11 @@ private fun Footer(
                 FilledTonalButton(
                     onClick = onCloneClick,
                     shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    ),
+                    colors =
+                        ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        ),
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
                 ) {
                     Icon(
@@ -370,9 +386,10 @@ private fun Footer(
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "Clone",
-                        style = MaterialTheme.typography.labelLarge.copy(
-                            fontWeight = FontWeight.SemiBold,
-                        ),
+                        style =
+                            MaterialTheme.typography.labelLarge.copy(
+                                fontWeight = FontWeight.SemiBold,
+                            ),
                     )
                 }
             }

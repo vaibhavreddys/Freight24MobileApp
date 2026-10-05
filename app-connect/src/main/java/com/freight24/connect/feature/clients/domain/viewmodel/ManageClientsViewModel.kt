@@ -16,68 +16,73 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class ManageClientsViewModel @Inject constructor(
-    private val getClientsUseCase: GetClientsUseCase
-) : ViewModel() {
+class ManageClientsViewModel
+    @Inject
+    constructor(
+        private val getClientsUseCase: GetClientsUseCase,
+    ) : ViewModel() {
+        private val _uiState = MutableStateFlow<UiState<List<ClientDto>>>(UiState.Loading)
+        val uiState: StateFlow<UiState<List<ClientDto>>> = _uiState.asStateFlow()
 
-    private val _uiState = MutableStateFlow<UiState<List<ClientDto>>>(UiState.Loading)
-    val uiState: StateFlow<UiState<List<ClientDto>>> = _uiState.asStateFlow()
+        private val _searchQuery = MutableStateFlow("")
+        val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
-    private val _searchQuery = MutableStateFlow("")
-    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+        private val _isRefreshing = MutableStateFlow(false)
+        val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
-    private val _isRefreshing = MutableStateFlow(false)
-    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
-
-    val filteredClients: StateFlow<List<ClientDto>> = combine(
-        _uiState,
-        _searchQuery
-    ) { state, query ->
-        if (state is UiState.Success) {
-            if (query.isBlank()) {
-                state.data
-            } else {
-                state.data.filter { client ->
-                    client.fullName?.contains(query, ignoreCase = true) == true ||
-                    client.companyName?.contains(query, ignoreCase = true) == true ||
-                    client.phoneNumber?.contains(query) == true
+        val filteredClients: StateFlow<List<ClientDto>> =
+            combine(
+                _uiState,
+                _searchQuery,
+            ) { state, query ->
+                if (state is UiState.Success) {
+                    if (query.isBlank()) {
+                        state.data
+                    } else {
+                        state.data.filter { client ->
+                            client.fullName?.contains(query, ignoreCase = true) == true ||
+                                client.companyName?.contains(query, ignoreCase = true) == true ||
+                                client.phoneNumber?.contains(query) == true
+                        }
+                    }
+                } else {
+                    emptyList()
                 }
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+        init {
+            loadClients()
+        }
+
+        fun onSearchQueryChanged(query: String) {
+            _searchQuery.value = query
+        }
+
+        fun onRefresh() {
+            loadClients(isRefresh = true)
+        }
+
+        fun retry() {
+            loadClients()
+        }
+
+        private fun loadClients(isRefresh: Boolean = false) {
+            viewModelScope.launch {
+                if (isRefresh) {
+                    _isRefreshing.value = true
+                } else {
+                    _uiState.value = UiState.Loading
+                }
+
+                getClientsUseCase()
+                    .onSuccess { clients ->
+                        _uiState.value = UiState.Success(clients)
+                        _isRefreshing.value = false
+                    }
+                    .onFailure { error ->
+                        _uiState.value = UiState.Error(error.message ?: "Failed to load clients")
+                        _isRefreshing.value = false
+                    }
             }
-        } else {
-            emptyList()
-        }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    init {
-        loadClients()
-    }
-
-    fun onSearchQueryChanged(query: String) {
-        _searchQuery.value = query
-    }
-
-    fun onRefresh() {
-        loadClients(isRefresh = true)
-    }
-
-    fun retry() {
-        loadClients()
-    }
-
-    private fun loadClients(isRefresh: Boolean = false) {
-        viewModelScope.launch {
-            if (isRefresh) _isRefreshing.value = true
-            else _uiState.value = UiState.Loading
-            
-            getClientsUseCase()
-                .onSuccess { clients ->
-                    _uiState.value = UiState.Success(clients)
-                    _isRefreshing.value = false
-                }
-                .onFailure { error ->
-                    _uiState.value = UiState.Error(error.message ?: "Failed to load clients")
-                    _isRefreshing.value = false
-                }
         }
     }
-}

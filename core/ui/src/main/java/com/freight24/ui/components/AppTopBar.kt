@@ -71,9 +71,10 @@ fun AppTopBar(
                     }
                     if (filterBadge) {
                         PulsingBadgeDot(
-                            modifier = Modifier
-                                .align(Alignment.TopCenter)
-                                .offset(y = (5).dp)
+                            modifier =
+                                Modifier
+                                    .align(Alignment.TopCenter)
+                                    .offset(y = (5).dp),
                         )
                     }
                 }
@@ -105,16 +106,18 @@ private fun PulsingBadgeDot(modifier: Modifier = Modifier) {
     val alpha by transition.animateFloat(
         initialValue = 1f,
         targetValue = 0.35f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 700),
-            repeatMode = RepeatMode.Reverse,
-        ),
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(durationMillis = 700),
+                repeatMode = RepeatMode.Reverse,
+            ),
         label = "FilterBadgeAlpha",
     )
     Box(
-        modifier = modifier
-            .size(8.dp)
-            .alpha(alpha)
-            .background(MaterialTheme.colorScheme.error, CircleShape),
+        modifier =
+            modifier
+                .size(8.dp)
+                .alpha(alpha)
+                .background(MaterialTheme.colorScheme.error, CircleShape),
     )
 }

@@ -10,8 +10,6 @@ import dagger.hilt.components.SingletonComponent
 @Module
 @InstallIn(SingletonComponent::class)
 internal abstract class HomeDomainModule {
-
     @Binds
     abstract fun bindDashboardUseCase(dashboardUseCaseImpl: DashboardUseCaseImpl): DashboardUseCase
-
 }

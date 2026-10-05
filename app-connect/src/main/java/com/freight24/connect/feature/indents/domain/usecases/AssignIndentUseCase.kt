@@ -11,21 +11,24 @@ data class AssignIndentUseCaseParams(
     val id: String,
     val clientTripCost: Int?,
     val negotiatedTripCost: Int?,
-    val notes: String?
+    val notes: String?,
 ) : UseCaseParams
 
 interface AssignIndentUseCase : UseCase<AssignIndentUseCaseParams, IndentResponse>
 
-class AssignIndentUseCaseImpl @Inject constructor(
-    private val repository: IndentRepository
-) : AssignIndentUseCase {
-    override suspend fun invoke(input: AssignIndentUseCaseParams): Result<IndentResponse> {
-        val request = UpdateIndentRequest(
-            status = "READY_FOR_ASSIGNMENT",
-            clientTripCost = input.clientTripCost,
-            negotiatedTripCost = input.negotiatedTripCost,
-            notes = input.notes
-        )
-        return repository.updateIndent(input.id, request)
+class AssignIndentUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: IndentRepository,
+    ) : AssignIndentUseCase {
+        override suspend fun invoke(input: AssignIndentUseCaseParams): Result<IndentResponse> {
+            val request =
+                UpdateIndentRequest(
+                    status = "READY_FOR_ASSIGNMENT",
+                    clientTripCost = input.clientTripCost,
+                    negotiatedTripCost = input.negotiatedTripCost,
+                    notes = input.notes,
+                )
+            return repository.updateIndent(input.id, request)
+        }
     }
-}

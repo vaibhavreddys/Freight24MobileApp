@@ -7,43 +7,40 @@ import com.freight24.rest.response.PaymentTransaction
 import com.freight24.rest.response.SignedDocument
 import com.freight24.rest.response.TripDataResponse
 import com.freight24.rest.response.UpdateOtherDeductionsResponse
-import com.freight24.rest.response.UpdateTripResponse
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 
 interface TripRepository {
-
     suspend fun createTrip(
         indentId: String,
         truckId: String,
         driverName: String?,
-        driverPhone: String?): Result<CreatedTripResponse.TripData>
+        driverPhone: String?,
+    ): Result<CreatedTripResponse.TripData>
 
     suspend fun getMyTrips(
         filter: String?,
         page: Int,
-        limit: Int
+        limit: Int,
     ): Result<MyTripsDataResponse>
 
-    suspend fun getTripDetails(
-        tripId: String,
-    ): Result<TripDataResponse>
+    suspend fun getTripDetails(tripId: String): Result<TripDataResponse>
 
     suspend fun getPaymentTransactions(
         tripId: String,
-        userType: String
+        userType: String,
     ): Result<List<PaymentTransaction>>
 
     suspend fun updateTruckerStatus(
         tripId: String,
         truckerStatus: String,
-        remarks: String?
+        remarks: String?,
     ): Result<TripDataResponse>
 
     suspend fun uploadLr(
         tripId: String,
         file: MultipartBody.Part,
-       description: RequestBody? = null
+        description: RequestBody? = null,
     ): Result<TripDataResponse>
 
     suspend fun getSignedDocument(
@@ -54,24 +51,24 @@ interface TripRepository {
     suspend fun verifyLr(
         tripId: String,
         status: String,
-        remarks: String?
+        remarks: String?,
     ): Result<TripDataResponse>
 
     suspend fun updateOtherDeductions(
         tripId: String,
         amount: String,
-        notes: String?
+        notes: String?,
     ): Result<UpdateOtherDeductionsResponse>
 
     suspend fun updateTrip(
-       tripId: String,
-       driverName: String?,
-       driverPhone: String?,
-       clientTripCost: String?,
-       truckerTripCost: String?,
-       luIncluded: Boolean?,
-       truckId: String?,
-       reason: String?,
+        tripId: String,
+        driverName: String?,
+        driverPhone: String?,
+        clientTripCost: String?,
+        truckerTripCost: String?,
+        luIncluded: Boolean?,
+        truckId: String?,
+        reason: String?,
     ): Result<TripDataResponse>
 
     suspend fun cancelTrip(

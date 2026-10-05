@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.DropdownMenuItem
@@ -45,33 +44,35 @@ fun IndentStatusFilterMenu(
     onDismissRequest: () -> Unit,
 ) {
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-            ) {
-                onDismissRequest()
-            },
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                ) {
+                    onDismissRequest()
+                },
     ) {
         Column(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(top = 64.dp, end = 4.dp)
-                .widthIn(min = 160.dp, max = 240.dp)
-                .shadow(elevation = 4.dp, shape = MaterialTheme.shapes.medium)
-                .border(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                    shape = MaterialTheme.shapes.medium,
-                )
-                .clip(MaterialTheme.shapes.medium)
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceContainer,
-                    shape = MaterialTheme.shapes.medium,
-                )
-                .padding(vertical = 8.dp),
+            modifier =
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .windowInsetsPadding(WindowInsets.statusBars)
+                    .padding(top = 64.dp, end = 4.dp)
+                    .widthIn(min = 160.dp, max = 240.dp)
+                    .shadow(elevation = 4.dp, shape = MaterialTheme.shapes.medium)
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                        shape = MaterialTheme.shapes.medium,
+                    )
+                    .clip(MaterialTheme.shapes.medium)
+                    .background(
+                        color = MaterialTheme.colorScheme.surfaceContainer,
+                        shape = MaterialTheme.shapes.medium,
+                    )
+                    .padding(vertical = 8.dp),
         ) {
             Text(
                 text = "INDENTS",
@@ -89,11 +90,12 @@ fun IndentStatusFilterMenu(
                         Text(
                             text = filter.name,
                             style = MaterialTheme.typography.labelLarge,
-                            color = if (isSelected) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.onSurface
-                            },
+                            color =
+                                if (isSelected) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface
+                                },
                             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
                         )
                     },

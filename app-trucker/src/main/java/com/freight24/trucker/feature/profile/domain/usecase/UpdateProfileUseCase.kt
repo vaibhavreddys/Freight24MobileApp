@@ -10,13 +10,15 @@ interface UpdateProfileUseCase {
 
 data class UpdateProfileParams(
     val id: String,
-    val request: UpdateProfileRequest
+    val request: UpdateProfileRequest,
 )
 
-class UpdateProfileUseCaseImpl @Inject constructor(
-    private val repository: ProfileRepository
-) : UpdateProfileUseCase {
-    override suspend fun invoke(params: UpdateProfileParams): Result<Boolean> {
-        return repository.updateProfile(params.id, params.request)
+class UpdateProfileUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: ProfileRepository,
+    ) : UpdateProfileUseCase {
+        override suspend fun invoke(params: UpdateProfileParams): Result<Boolean> {
+            return repository.updateProfile(params.id, params.request)
+        }
     }
-}

@@ -4,7 +4,6 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import com.freight24.ui.theme.Error30
 import com.freight24.ui.theme.Error40
@@ -15,7 +14,6 @@ import com.freight24.ui.theme.FreightExtendedColors
 import com.freight24.ui.theme.OnError100
 import com.freight24.ui.theme.OnError20
 import com.freight24.ui.theme.OnErrorContainer100
-import com.freight24.ui.theme.OnPrimary20
 
 // ---------------------------------------------------------------------------
 // Connect light scheme
@@ -133,85 +131,87 @@ internal data class ConnectExtendedColors(
     val statusPending: Color,
     val onStatusPending: Color,
 ) {
-    fun toFreightExtendedColors() = FreightExtendedColors(
-        success = success,
-        onSuccess = onSuccess,
-        surfaceSuccess = surfaceSuccess,
-        onSurfaceSuccess = onSurfaceSuccess,
-        warning = warning,
-        onWarning = onWarning,
-        surfaceWarning = surfaceWarning,
-        onSurfaceWarning = onSurfaceWarning,
-        info = info,
-        onInfo = onInfo,
-        surfaceInfo = surfaceInfo,
-        onSurfaceInfo = onSurfaceInfo,
-        settings = settings,
-        onSettings = onSettings,
-        dialogScrim = dialogScrim,
-        routeOrigin = routeOrigin,
-        onRouteOrigin = onRouteOrigin,
-        routeDestination = routeDestination,
-        onRouteDestination = onRouteDestination,
-        statusAvailable = statusAvailable,
-        onStatusAvailable = onStatusAvailable,
-        statusPending = statusPending,
-        onStatusPending = onStatusPending,
-    )
+    fun toFreightExtendedColors() =
+        FreightExtendedColors(
+            success = success,
+            onSuccess = onSuccess,
+            surfaceSuccess = surfaceSuccess,
+            onSurfaceSuccess = onSurfaceSuccess,
+            warning = warning,
+            onWarning = onWarning,
+            surfaceWarning = surfaceWarning,
+            onSurfaceWarning = onSurfaceWarning,
+            info = info,
+            onInfo = onInfo,
+            surfaceInfo = surfaceInfo,
+            onSurfaceInfo = onSurfaceInfo,
+            settings = settings,
+            onSettings = onSettings,
+            dialogScrim = dialogScrim,
+            routeOrigin = routeOrigin,
+            onRouteOrigin = onRouteOrigin,
+            routeDestination = routeDestination,
+            onRouteDestination = onRouteDestination,
+            statusAvailable = statusAvailable,
+            onStatusAvailable = onStatusAvailable,
+            statusPending = statusPending,
+            onStatusPending = onStatusPending,
+        )
 }
 
-internal val ConnectLightExtendedColors = ConnectExtendedColors(
-    success = ConnectSuccessLight,
-    onSuccess = ConnectOnSuccessLight,
-    surfaceSuccess = ConnectSurfaceSuccessLight,
-    onSurfaceSuccess = ConnectOnSurfaceSuccessLight,
-    warning = ConnectWarningLight,
-    onWarning = ConnectOnWarningLight,
-    surfaceWarning = ConnectSurfaceWarningLight,
-    onSurfaceWarning = ConnectOnSurfaceWarningLight,
-    info = ConnectInfoLight,
-    onInfo = ConnectOnInfoLight,
-    surfaceInfo = ConnectSurfaceInfoLight,
-    onSurfaceInfo = ConnectOnSurfaceInfoLight,
-    settings = FreightBrandForest,
-    onSettings = Color.White,
-    dialogScrim = Color.Black.copy(alpha = 0.55f),
-    routeOrigin = ConnectPrimary40,
-    onRouteOrigin = ConnectOnPrimary100,
-    routeDestination = ConnectTertiary40,
-    onRouteDestination = ConnectOnTertiary100,
-    statusAvailable = ConnectSuccessLight,
-    onStatusAvailable = ConnectOnSuccessLight,
-    statusPending = ConnectWarningLight,
-    onStatusPending = ConnectOnWarningLight,
-)
+internal val ConnectLightExtendedColors =
+    ConnectExtendedColors(
+        success = ConnectSuccessLight,
+        onSuccess = ConnectOnSuccessLight,
+        surfaceSuccess = ConnectSurfaceSuccessLight,
+        onSurfaceSuccess = ConnectOnSurfaceSuccessLight,
+        warning = ConnectWarningLight,
+        onWarning = ConnectOnWarningLight,
+        surfaceWarning = ConnectSurfaceWarningLight,
+        onSurfaceWarning = ConnectOnSurfaceWarningLight,
+        info = ConnectInfoLight,
+        onInfo = ConnectOnInfoLight,
+        surfaceInfo = ConnectSurfaceInfoLight,
+        onSurfaceInfo = ConnectOnSurfaceInfoLight,
+        settings = FreightBrandForest,
+        onSettings = Color.White,
+        dialogScrim = Color.Black.copy(alpha = 0.55f),
+        routeOrigin = ConnectPrimary40,
+        onRouteOrigin = ConnectOnPrimary100,
+        routeDestination = ConnectTertiary40,
+        onRouteDestination = ConnectOnTertiary100,
+        statusAvailable = ConnectSuccessLight,
+        onStatusAvailable = ConnectOnSuccessLight,
+        statusPending = ConnectWarningLight,
+        onStatusPending = ConnectOnWarningLight,
+    )
 
-internal val ConnectDarkExtendedColors = ConnectExtendedColors(
-    success = ConnectSuccessDark,
-    onSuccess = ConnectOnSuccessDark,
-    surfaceSuccess = ConnectSurfaceSuccessDark,
-    onSurfaceSuccess = ConnectOnSurfaceSuccessDark,
-    warning = ConnectWarningDark,
-    onWarning = ConnectOnWarningDark,
-    surfaceWarning = ConnectSurfaceWarningDark,
-    onSurfaceWarning = ConnectOnSurfaceWarningDark,
-    info = ConnectInfoDark,
-    onInfo = ConnectOnInfoDark,
-    surfaceInfo = ConnectSurfaceInfoDark,
-    onSurfaceInfo = ConnectOnSurfaceInfoDark,
-    settings = ConnectPrimary80,
-    onSettings = ConnectPrimary10,
-    dialogScrim = Color.Black.copy(alpha = 0.65f),
-    routeOrigin = ConnectPrimary80,
-    onRouteOrigin = ConnectPrimary10,
-    routeDestination = ConnectTertiary80,
-    onRouteDestination = ConnectTertiary30,
-    statusAvailable = ConnectSuccessDark,
-    onStatusAvailable = ConnectOnSuccessDark,
-    statusPending = ConnectWarningDark,
-    onStatusPending = ConnectOnWarningDark,
-)
+internal val ConnectDarkExtendedColors =
+    ConnectExtendedColors(
+        success = ConnectSuccessDark,
+        onSuccess = ConnectOnSuccessDark,
+        surfaceSuccess = ConnectSurfaceSuccessDark,
+        onSurfaceSuccess = ConnectOnSurfaceSuccessDark,
+        warning = ConnectWarningDark,
+        onWarning = ConnectOnWarningDark,
+        surfaceWarning = ConnectSurfaceWarningDark,
+        onSurfaceWarning = ConnectOnSurfaceWarningDark,
+        info = ConnectInfoDark,
+        onInfo = ConnectOnInfoDark,
+        surfaceInfo = ConnectSurfaceInfoDark,
+        onSurfaceInfo = ConnectOnSurfaceInfoDark,
+        settings = ConnectPrimary80,
+        onSettings = ConnectPrimary10,
+        dialogScrim = Color.Black.copy(alpha = 0.65f),
+        routeOrigin = ConnectPrimary80,
+        onRouteOrigin = ConnectPrimary10,
+        routeDestination = ConnectTertiary80,
+        onRouteDestination = ConnectTertiary30,
+        statusAvailable = ConnectSuccessDark,
+        onStatusAvailable = ConnectOnSuccessDark,
+        statusPending = ConnectWarningDark,
+        onStatusPending = ConnectOnWarningDark,
+    )
 
 /** Convenience accessor for the connect splash background per mode. */
-internal fun connectSplashBackground(isDark: Boolean): Color =
-    if (isDark) ConnectSplashBackgroundDark else ConnectSplashBackgroundLight
+internal fun connectSplashBackground(isDark: Boolean): Color = if (isDark) ConnectSplashBackgroundDark else ConnectSplashBackgroundLight

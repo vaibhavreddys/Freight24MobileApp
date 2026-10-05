@@ -1,7 +1,7 @@
 package com.freight24.connect.repository.verificationrequests
 
-import com.freight24.rest.response.VerificationTripsResponse
 import com.freight24.rest.response.VerificationClientsResponse
+import com.freight24.rest.response.VerificationTripsResponse
 import com.freight24.rest.response.VerificationTruckOwnersResponse
 import com.freight24.rest.response.VerificationTrucksResponse
 
@@ -38,5 +38,9 @@ interface VerificationRequestsRepository {
         resolutionNotes: String? = null,
     ): Result<Unit>
 
-    suspend fun getSignedUrl(entity: String, requestId: String, documentKey: String): Result<String>
+    suspend fun getSignedUrl(
+        entity: String,
+        requestId: String,
+        documentKey: String,
+    ): Result<String>
 }

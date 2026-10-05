@@ -52,11 +52,12 @@ internal data class VerifyOtpUiState(
 
     /** Label for the secondary action. */
     val resendLabel: String
-        get() = when {
-            isResending -> "Sending a new code…"
-            canResend -> "Resend code"
-            else -> "Resend in ${formatCountdownClock(resendSeconds)}"
-        }
+        get() =
+            when {
+                isResending -> "Sending a new code…"
+                canResend -> "Resend code"
+                else -> "Resend in ${formatCountdownClock(resendSeconds)}"
+            }
 
     /**
      * The bare countdown readout for the expiry meter, e.g. "04:44".
@@ -87,19 +88,29 @@ internal data class VerifyOtpUiState(
 
 internal interface VerifyOtpActions {
     fun onOtpChange(value: String)
+
     fun onVerify()
+
     fun onResend()
+
     fun onChangeNumber()
+
     fun onBack()
+
     fun onCallHelpline()
 }
 
 /** No-op implementation, handy for previews. */
 internal object VerifyOtpActionsNoop : VerifyOtpActions {
     override fun onOtpChange(value: String) = Unit
+
     override fun onVerify() = Unit
+
     override fun onResend() = Unit
+
     override fun onChangeNumber() = Unit
+
     override fun onBack() = Unit
+
     override fun onCallHelpline() = Unit
 }

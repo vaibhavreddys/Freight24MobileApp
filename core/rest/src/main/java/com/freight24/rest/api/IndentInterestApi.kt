@@ -11,20 +11,18 @@ import retrofit2.http.POST
 import retrofit2.http.Query
 
 interface IndentInterestApi {
-
     @GET("indent-interests/inbox")
     suspend fun getIndentInterestInbox(
-        @Query("indent_id") indentId: String?= null,
+        @Query("indent_id") indentId: String? = null,
     ): Response<IndentInterestInboxResponse>
 
     @POST("indent-interests/employee-withdraw")
     suspend fun withdrawInterest(
-        @Body request: WithdrawInterestRequest
+        @Body request: WithdrawInterestRequest,
     ): Response<BaseResponse>
 
     @GET("indent-interests/inbox/truckers")
     suspend fun getTruckersInterestInbox(
-        @Query("indent_id") indentId: String?= null,
+        @Query("indent_id") indentId: String? = null,
     ): Response<TruckerInboxInterestResponse>
-
 }

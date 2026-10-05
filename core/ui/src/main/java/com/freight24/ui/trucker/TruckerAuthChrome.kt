@@ -76,11 +76,12 @@ fun TruckerAuthSupportRow(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(colors.field.copy(alpha = 0.10f))
-                    .border(1.dp, colors.field.copy(alpha = 0.18f), CircleShape),
+                modifier =
+                    Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(colors.field.copy(alpha = 0.10f))
+                        .border(1.dp, colors.field.copy(alpha = 0.18f), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -99,10 +100,11 @@ fun TruckerAuthSupportRow(
                 )
                 Text(
                     text = number,
-                    style = type.sheetBody.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontFeatureSettings = "tnum",
-                    ),
+                    style =
+                        type.sheetBody.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontFeatureSettings = "tnum",
+                        ),
                     color = colors.sheetInk,
                 )
             }
@@ -136,16 +138,17 @@ fun TruckerAuthErrorBlock(
         modifier = modifier,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(16.dp))
-                .background(colors.sheetDanger.copy(alpha = 0.10f))
-                .border(
-                    width = 1.dp,
-                    color = colors.sheetDanger.copy(alpha = 0.35f),
-                    shape = RoundedCornerShape(16.dp),
-                )
-                .padding(horizontal = 16.dp, vertical = 14.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(colors.sheetDanger.copy(alpha = 0.10f))
+                    .border(
+                        width = 1.dp,
+                        color = colors.sheetDanger.copy(alpha = 0.35f),
+                        shape = RoundedCornerShape(16.dp),
+                    )
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.Top,
         ) {
             Icon(
@@ -158,9 +161,10 @@ fun TruckerAuthErrorBlock(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = message,
-                    style = type.sheetBody.copy(
-                        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
-                    ),
+                    style =
+                        type.sheetBody.copy(
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                        ),
                     color = colors.sheetDanger,
                 )
                 if (detail != null) {

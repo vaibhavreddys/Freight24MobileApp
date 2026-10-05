@@ -1,8 +1,8 @@
 package com.freight24.connect.feature.trips.views
 
-import java.math.BigDecimal
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.math.BigDecimal
 
 class ClientPaymentFormattingTest {
     @Test

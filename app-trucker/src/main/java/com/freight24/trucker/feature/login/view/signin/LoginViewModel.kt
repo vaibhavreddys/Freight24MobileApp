@@ -83,9 +83,10 @@ internal class LoginViewModel
                         }
                     },
                     onFailure = { exception ->
-                        _uiState.value = UiState.Error(
-                            AuthErrorMessage.from(exception),
-                        )
+                        _uiState.value =
+                            UiState.Error(
+                                AuthErrorMessage.from(exception),
+                            )
                     },
                 )
             }

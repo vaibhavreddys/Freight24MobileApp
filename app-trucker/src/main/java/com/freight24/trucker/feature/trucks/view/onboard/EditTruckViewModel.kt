@@ -3,9 +3,10 @@ package com.freight24.trucker.feature.trucks.view.onboard
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.SavedStateHandle
+import com.freight24.common.util.FileUtils
 import com.freight24.rest.response.AddTruckDto
 import com.freight24.trucker.feature.trucks.domain.usecase.FetchTruckDetailUseCase
 import com.freight24.trucker.feature.trucks.domain.usecase.GetTruckDocumentSignedUrlParams
@@ -23,9 +24,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
-import com.freight24.common.util.FileUtils
 import javax.inject.Inject
-
 
 private const val TAG = "EditTruckVM"
 
@@ -40,15 +39,15 @@ internal class EditTruckViewModel
         private val getTruckDocumentSignedUrlUseCase: GetTruckDocumentSignedUrlUseCase,
     ) : ViewModel() {
         private val truckId = savedStateHandle.get<String>("truckId") ?: ""
- 
+
         private data class InitialData(
             val registrationNumber: String,
             val truckType: TruckType?,
             val make: String,
             val model: String,
-            val year: String
+            val year: String,
         )
- 
+
         private val initialData = MutableStateFlow<InitialData?>(null)
 
         private val _uiState = MutableStateFlow<UiState<AddTruckDto>>(UiState.Loading)
@@ -63,7 +62,7 @@ internal class EditTruckViewModel
         val make = MutableStateFlow("")
         val model = MutableStateFlow("")
         val year = MutableStateFlow("")
- 
+
         private val _registrationError = MutableStateFlow<String?>(null)
         val registrationError: StateFlow<String?> = _registrationError.asStateFlow()
 
@@ -116,43 +115,44 @@ internal class EditTruckViewModel
                 val regErr = args[5] as? String
                 reg && type != null && mk.isNotBlank() && md.isNotBlank() && yr && regErr == null
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
- 
+
         val isDirty: StateFlow<Boolean> =
-        combine(
-            registrationNumber,
-            selectedTruckType,
-            make,
-            model,
-            year,
-            rcCardFile,
-            fcCertificateFile,
-            insuranceFile,
-            initialData
-        ) { args ->
-            val reg = args[0] as String
-            val type = args[1] as? TruckType
-            val mk = args[2] as String
-            val md = args[3] as String
-            val yr = args[4] as String
-            val rcFile = args[5] as? File
-            val fcFile = args[6] as? File
-            val insFile = args[7] as? File
-            val initial = args[8] as? InitialData
+            combine(
+                registrationNumber,
+                selectedTruckType,
+                make,
+                model,
+                year,
+                rcCardFile,
+                fcCertificateFile,
+                insuranceFile,
+                initialData,
+            ) { args ->
+                val reg = args[0] as String
+                val type = args[1] as? TruckType
+                val mk = args[2] as String
+                val md = args[3] as String
+                val yr = args[4] as String
+                val rcFile = args[5] as? File
+                val fcFile = args[6] as? File
+                val insFile = args[7] as? File
+                val initial = args[8] as? InitialData
 
-            if (initial == null) return@combine false
+                if (initial == null) return@combine false
 
-            val textChanged = reg != initial.registrationNumber ||
-                    type != initial.truckType ||
-                    mk != initial.make ||
-                    md != initial.model ||
-                    yr != initial.year
+                val textChanged =
+                    reg != initial.registrationNumber ||
+                        type != initial.truckType ||
+                        mk != initial.make ||
+                        md != initial.model ||
+                        yr != initial.year
 
-            val filesChanged = rcFile != null || fcFile != null || insFile != null
+                val filesChanged = rcFile != null || fcFile != null || insFile != null
 
-            textChanged || filesChanged
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
- 
-    val isStep2Valid: StateFlow<Boolean> = isDirty
+                textChanged || filesChanged
+            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
+
+        val isStep2Valid: StateFlow<Boolean> = isDirty
 
         val truckTypes =
             listOf(
@@ -193,7 +193,7 @@ internal class EditTruckViewModel
                         model.value = truckDetail.model ?: ""
                         year.value = truckDetail.year ?: ""
                         selectedTruckType.value = truckTypes.find { it.name == truckDetail.truckType }
-                        
+
                         val rcUrl = if (!truckDetail.rcCard?.url.isNullOrEmpty()) truckDetail.rcCard?.url else null
                         val fcUrl = if (!truckDetail.fcCertificate?.url.isNullOrEmpty()) truckDetail.fcCertificate?.url else null
                         val insUrl = if (!truckDetail.insurance?.url.isNullOrEmpty()) truckDetail.insurance?.url else null
@@ -204,15 +204,16 @@ internal class EditTruckViewModel
                         existingRcStatus.value = if (rcUrl != null) truckDetail.rcCard?.status else null
                         existingFcStatus.value = if (fcUrl != null) truckDetail.fcCertificate?.status else null
                         existingInsuranceStatus.value = if (insUrl != null) truckDetail.insurance?.status else null
- 
-                        initialData.value = InitialData(
-                            registrationNumber = truckDetail.registrationNumber,
-                            truckType = selectedTruckType.value,
-                            make = truckDetail.make ?: "",
-                            model = truckDetail.model ?: "",
-                            year = truckDetail.year ?: ""
-                        )
-                        
+
+                        initialData.value =
+                            InitialData(
+                                registrationNumber = truckDetail.registrationNumber,
+                                truckType = selectedTruckType.value,
+                                make = truckDetail.make ?: "",
+                                model = truckDetail.model ?: "",
+                                year = truckDetail.year ?: "",
+                            )
+
                         _uiState.value = UiState.Idle
                     }
                     .onFailure {
@@ -240,17 +241,18 @@ internal class EditTruckViewModel
             uris: List<Uri>,
             type: String,
             isPdf: Boolean,
-            onSuccess: () -> Unit
+            onSuccess: () -> Unit,
         ) {
             if (uris.isEmpty()) return
             Log.d(TAG, "File selected: $type, uris size: ${uris.size}")
             viewModelScope.launch {
                 try {
-                    val file = if (isPdf) {
-                        FileUtils.getFileFromUri(context, uris.first())
-                    } else {
-                        FileUtils.convertImageToPdf(context, uris)
-                    }
+                    val file =
+                        if (isPdf) {
+                            FileUtils.getFileFromUri(context, uris.first())
+                        } else {
+                            FileUtils.convertImageToPdf(context, uris)
+                        }
                     if (file != null) {
                         Log.d(TAG, "File processed successfully: ${file.absolutePath}")
                         when (type) {
@@ -268,7 +270,10 @@ internal class EditTruckViewModel
             }
         }
 
-        fun fetchSignedUrl(documentType: String, onUrlReady: (String) -> Unit) {
+        fun fetchSignedUrl(
+            documentType: String,
+            onUrlReady: (String) -> Unit,
+        ) {
             viewModelScope.launch {
                 getTruckDocumentSignedUrlUseCase(GetTruckDocumentSignedUrlParams(truckId, documentType))
                     .onSuccess { url -> onUrlReady(url) }
@@ -331,13 +336,13 @@ internal class EditTruckViewModel
                 }
             registrationNumber.value = filtered
         }
- 
+
         fun checkRegistrationAvailability() {
             val reg = registrationNumber.value.replace(" ", "").uppercase()
             if (!registrationRegex.matches(reg)) {
                 return
             }
- 
+
             viewModelScope.launch {
                 checkTruckAvailabilityUseCase(reg)
                     .onSuccess { existingId ->

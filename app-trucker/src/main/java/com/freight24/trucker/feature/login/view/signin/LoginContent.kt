@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
@@ -74,12 +73,13 @@ internal fun LoginContent(
     LaunchedEffect(Unit) { revealed = true }
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(colors.paper)
-            .imePadding()
-            .verticalScroll(rememberScrollState())
-            .navigationBarsPadding(),
+        modifier =
+            modifier
+                .fillMaxSize()
+                .background(colors.paper)
+                .imePadding()
+                .verticalScroll(rememberScrollState())
+                .navigationBarsPadding(),
     ) {
         AuthMasthead(
             colors = colors,
@@ -159,8 +159,9 @@ internal fun LoginContent(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     AuthLegalNote(
-                        text = "By continuing you agree to the Freight24 Terms of " +
-                            "Service and Privacy Policy.",
+                        text =
+                            "By continuing you agree to the Freight24 Terms of " +
+                                "Service and Privacy Policy.",
                         color = colors.sheetInkMuted,
                         type = tokens.type,
                     )

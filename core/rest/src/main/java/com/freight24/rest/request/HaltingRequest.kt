@@ -7,5 +7,5 @@ data class HaltingRequest(
     val loadingDays: Int? = null,
     val unloadingDays: Int? = null,
     val ratePerDay: Int? = null,
-    val notes: String? = null
+    val notes: String? = null,
 )

@@ -26,16 +26,24 @@ data class QuickAdhocTruckUiState(
 
 sealed class QuickAdhocTruckEvent {
     data class PhoneChanged(val phone: String) : QuickAdhocTruckEvent()
+
     data class SelectOwner(val owner: AdhocTruckOwnerDto) : QuickAdhocTruckEvent()
+
     data class OwnerNameChanged(val name: String) : QuickAdhocTruckEvent()
+
     data class SelectTruckType(val truckType: TruckTypeDto) : QuickAdhocTruckEvent()
+
     data class LocationQueryChanged(val query: String) : QuickAdhocTruckEvent()
+
     data class SelectLocation(val location: LocationDto) : QuickAdhocTruckEvent()
+
     data object Submit : QuickAdhocTruckEvent()
+
     data object ClearError : QuickAdhocTruckEvent()
 }
 
 interface QuickAdhocTruckViewModel {
     val uiState: StateFlow<QuickAdhocTruckUiState>
+
     fun onEvent(event: QuickAdhocTruckEvent)
 }

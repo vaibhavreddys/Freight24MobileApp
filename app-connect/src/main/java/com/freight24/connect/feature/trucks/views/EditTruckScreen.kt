@@ -1,7 +1,4 @@
 package com.freight24.connect.feature.trucks.views
-import com.freight24.ui.components.FreightCenterAlignedTopAppBar
-import com.freight24.ui.components.FreightTopAppBar
-
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
@@ -15,7 +12,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,7 +25,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -37,11 +32,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Assignment
-import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
-import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.LocalShipping
-import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -51,9 +43,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -74,7 +64,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -82,7 +71,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -91,6 +79,7 @@ import com.freight24.rest.response.AddTruckDto
 import com.freight24.ui.UiState
 import com.freight24.ui.components.AppDropdown
 import com.freight24.ui.components.DashedUploadCard
+import com.freight24.ui.components.FreightCenterAlignedTopAppBar
 import com.freight24.ui.components.formViewportInsets
 import kotlinx.coroutines.launch
 import java.io.File
@@ -339,26 +328,30 @@ private fun BasicInfoStep(viewModel: com.freight24.connect.feature.trucks.domain
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             ...
         }
-        */
+         */
         val registrationError by viewModel.registrationError.collectAsState()
- 
+
         OutlinedTextField(
             value = registrationNumber,
             onValueChange = { viewModel.updateRegistrationNumber(it) },
             label = { Text("Vehicle Number") },
             placeholder = { Text("KA07AB1287") },
 //            leadingIcon = { Icon(Icons.Default.Numbers, contentDescription = null) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .onFocusChanged { focusState ->
-                    if (!focusState.isFocused) {
-                        viewModel.checkRegistrationAvailability()
-                    }
-                },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged { focusState ->
+                        if (!focusState.isFocused) {
+                            viewModel.checkRegistrationAvailability()
+                        }
+                    },
             isError = registrationError != null,
-            supportingText = if (registrationError != null) {
-                { Text(registrationError!!) }
-            } else null,
+            supportingText =
+                if (registrationError != null) {
+                    { Text(registrationError!!) }
+                } else {
+                    null
+                },
             shape = MaterialTheme.shapes.medium,
             singleLine = true,
             keyboardOptions =
@@ -520,7 +513,7 @@ private fun DocumentsStep(viewModel: com.freight24.connect.feature.trucks.domain
                 docLauncher.launch(arrayOf("application/pdf"))
             }
         },
-        sheetState = sheetState
+        sheetState = sheetState,
     )
 
     if (pendingUris.isNotEmpty()) {
@@ -541,7 +534,7 @@ private fun DocumentsStep(viewModel: com.freight24.connect.feature.trucks.domain
             onDismiss = {
                 pendingUris = emptyList()
                 currentTargetPrefix = null
-            }
+            },
         )
     }
 
@@ -569,11 +562,12 @@ private fun DocumentsStep(viewModel: com.freight24.connect.feature.trucks.domain
             subtitle = "Camera, JPG or PDF",
             label = "Required",
             isUploaded = rcFile != null || existingRcStatus != null,
-            statusText = when {
-                rcFile != null -> "Ready to Upload"
-                existingRcStatus != null -> "Existing Document (${existingRcStatus?.lowercase()?.replaceFirstChar { it.uppercase() }})"
-                else -> "Pending Selection"
-            },
+            statusText =
+                when {
+                    rcFile != null -> "Ready to Upload"
+                    existingRcStatus != null -> "Existing Document (${existingRcStatus?.lowercase()?.replaceFirstChar { it.uppercase() }})"
+                    else -> "Pending Selection"
+                },
             onUploadClick = {
                 currentTargetPrefix = "RC"
                 showSourcePicker = true
@@ -585,11 +579,12 @@ private fun DocumentsStep(viewModel: com.freight24.connect.feature.trucks.domain
             subtitle = "Camera, JPG or PDF",
             label = "Optional",
             isUploaded = insuranceFile != null || existingInsuranceStatus != null,
-            statusText = when {
-                insuranceFile != null -> "Ready to Upload"
-                existingInsuranceStatus != null -> "Existing Document (${existingInsuranceStatus?.lowercase()?.replaceFirstChar { it.uppercase() }})"
-                else -> null
-            },
+            statusText =
+                when {
+                    insuranceFile != null -> "Ready to Upload"
+                    existingInsuranceStatus != null -> "Existing Document (${existingInsuranceStatus?.lowercase()?.replaceFirstChar { it.uppercase() }})"
+                    else -> null
+                },
             icon = Icons.Default.Shield,
             onUploadClick = {
                 currentTargetPrefix = "INSURANCE"
@@ -602,11 +597,12 @@ private fun DocumentsStep(viewModel: com.freight24.connect.feature.trucks.domain
             subtitle = "Camera, JPG or PDF",
             label = "Optional",
             isUploaded = fcFile != null || existingFcStatus != null,
-            statusText = when {
-                fcFile != null -> "Ready to Upload"
-                existingFcStatus != null -> "Existing Document (${existingFcStatus?.lowercase()?.replaceFirstChar { it.uppercase() }})"
-                else -> null
-            },
+            statusText =
+                when {
+                    fcFile != null -> "Ready to Upload"
+                    existingFcStatus != null -> "Existing Document (${existingFcStatus?.lowercase()?.replaceFirstChar { it.uppercase() }})"
+                    else -> null
+                },
             icon = Icons.AutoMirrored.Filled.Assignment,
             onUploadClick = {
                 currentTargetPrefix = "FC"

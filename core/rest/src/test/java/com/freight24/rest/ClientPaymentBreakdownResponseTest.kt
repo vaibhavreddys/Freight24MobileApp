@@ -2,21 +2,22 @@ package com.freight24.rest
 
 import com.freight24.rest.response.ClientPaymentBreakdown
 import com.freight24.rest.response.TripDataResponse
-import java.math.BigDecimal
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.math.BigDecimal
 
 class ClientPaymentBreakdownResponseTest {
     private val json = Json { ignoreUnknownKeys = true }
 
     @Test
     fun `numeric and string amounts retain decimal precision`() {
-        val payment = json.decodeFromString<ClientPaymentBreakdown>(
-            """{
+        val payment =
+            json.decodeFromString<ClientPaymentBreakdown>(
+                """{
                 "clientNetAmount": 9007199254740993.01,
                 "clientPaidAmount": "50000.10",
                 "clientPendingAmount": "4000.25",
@@ -24,8 +25,8 @@ class ClientPaymentBreakdownResponseTest {
                 "advanceReceivedAmount": "45000.05",
                 "balanceReceivedAmount": 5000.05,
                 "isPaymentCompleted": false
-            }"""
-        )
+            }""",
+            )
 
         assertEquals(BigDecimal("9007199254740993.01"), payment.clientNetAmount)
         assertEquals(BigDecimal("50000.10"), payment.clientPaidAmount)
@@ -37,9 +38,10 @@ class ClientPaymentBreakdownResponseTest {
 
     @Test
     fun `missing and null amounts remain null in the model`() {
-        val payment = json.decodeFromString<ClientPaymentBreakdown>(
-            """{"clientNetAmount":null,"isPaymentCompleted":true}"""
-        )
+        val payment =
+            json.decodeFromString<ClientPaymentBreakdown>(
+                """{"clientNetAmount":null,"isPaymentCompleted":true}""",
+            )
 
         assertNull(payment.clientNetAmount)
         assertNull(payment.clientPendingAmount)
@@ -49,9 +51,10 @@ class ClientPaymentBreakdownResponseTest {
 
     @Test
     fun `loading charges preserve reimbursable separately from total`() {
-        val charges = json.decodeFromString<TripDataResponse.Charges>(
-            """{"total":3000,"reimbursable":"1000.25"}"""
-        )
+        val charges =
+            json.decodeFromString<TripDataResponse.Charges>(
+                """{"total":3000,"reimbursable":"1000.25"}""",
+            )
 
         assertEquals(3000, charges.total)
         assertEquals(BigDecimal("1000.25"), charges.reimbursable)
@@ -59,9 +62,10 @@ class ClientPaymentBreakdownResponseTest {
 
     @Test
     fun `halting decimals and missing amounts decode correctly`() {
-        val halting = json.decodeFromString<TripDataResponse.HaltingCharges>(
-            """{"days":2,"totalAmount":2000.50,"perDayAmount":"1000.25"}"""
-        )
+        val halting =
+            json.decodeFromString<TripDataResponse.HaltingCharges>(
+                """{"days":2,"totalAmount":2000.50,"perDayAmount":"1000.25"}""",
+            )
         assertEquals(BigDecimal("2000.50"), halting.totalAmount)
         assertEquals(BigDecimal("1000.25"), halting.perDayAmount)
 
@@ -102,13 +106,14 @@ class ClientPaymentBreakdownResponseTest {
         assertEquals(BigDecimal("50000.25"), trip.clientTripCost)
         assertEquals(BigDecimal("54000.75"), trip.clientPaymentBreakdown?.clientNetAmount)
         assertEquals(BigDecimal("4000.75"), trip.clientPaymentBreakdown?.clientPendingAmount)
-        val absent = json.decodeFromString<TripDataResponse>(
-            json.parseToJsonElement(payload).let { element ->
-                kotlinx.serialization.json.JsonObject(
-                    (element as kotlinx.serialization.json.JsonObject) - "clientPaymentBreakdown"
-                ).toString()
-            }
-        )
+        val absent =
+            json.decodeFromString<TripDataResponse>(
+                json.parseToJsonElement(payload).let { element ->
+                    kotlinx.serialization.json.JsonObject(
+                        (element as kotlinx.serialization.json.JsonObject) - "clientPaymentBreakdown",
+                    ).toString()
+                },
+            )
         assertNull(absent.clientPaymentBreakdown)
     }
 }

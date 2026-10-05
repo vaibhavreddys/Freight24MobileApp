@@ -53,14 +53,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.freight24.common.util.DateTimeUtils
+import com.freight24.common.util.formatWeightValue
 import com.freight24.connect.feature.indents.domain.viewmodel.CloneIndentViewModel
 import com.freight24.connect.feature.indents.domain.viewmodel.CloneIndentViewModelImpl
 import com.freight24.connect.feature.indents.domain.viewmodel.CreateIndentUiState
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentContactRole
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsViewModel
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsViewModelImpl
-import com.freight24.common.util.DateTimeUtils
-import com.freight24.common.util.formatWeightValue
 import com.freight24.connect.navigation.ConnectDestination
 import com.freight24.ui.components.DocketCard
 import com.freight24.ui.components.PerforationRule
@@ -93,21 +93,23 @@ fun IndentSuccessScreen(
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
 
-    val createIndentBackStackEntry = remember(navBackStackEntry) {
-        try {
-            navController.getBackStackEntry(ConnectDestination.CreateIndent.route)
-        } catch (e: Exception) {
-            null
+    val createIndentBackStackEntry =
+        remember(navBackStackEntry) {
+            try {
+                navController.getBackStackEntry(ConnectDestination.CreateIndent.route)
+            } catch (e: Exception) {
+                null
+            }
         }
-    }
 
-    val cloneIndentBackStackEntry = remember(navBackStackEntry) {
-        try {
-            navController.getBackStackEntry(ConnectDestination.CloneIndent.route)
-        } catch (e: Exception) {
-            null
+    val cloneIndentBackStackEntry =
+        remember(navBackStackEntry) {
+            try {
+                navController.getBackStackEntry(ConnectDestination.CloneIndent.route)
+            } catch (e: Exception) {
+                null
+            }
         }
-    }
 
     when {
         createIndentBackStackEntry != null -> {
@@ -121,15 +123,16 @@ fun IndentSuccessScreen(
                 toLocation = uiState.selectedToLocation?.name ?: "",
                 truckType = uiState.selectedTruckType?.displayName ?: "",
                 createdDate = uiState.createdDate,
-                branchLabel = uiState.selectedBranch?.let { branch ->
-                    listOfNotNull(
-                        branch.branchName?.takeIf { it.isNotBlank() },
-                        branch.branchCode?.takeIf { it.isNotBlank() },
-                    ).joinToString("  ·  ").takeIf { it.isNotBlank() }
-                },
+                branchLabel =
+                    uiState.selectedBranch?.let { branch ->
+                        listOfNotNull(
+                            branch.branchName?.takeIf { it.isNotBlank() },
+                            branch.branchCode?.takeIf { it.isNotBlank() },
+                        ).joinToString("  ·  ").takeIf { it.isNotBlank() }
+                    },
                 callLines = createCallLines(uiState),
                 onViewIndentClick = onViewIndentClick,
-                onBackToHomeClick = onBackToHomeClick
+                onBackToHomeClick = onBackToHomeClick,
             )
         }
         cloneIndentBackStackEntry != null -> {
@@ -148,15 +151,16 @@ fun IndentSuccessScreen(
                 toLocation = unloadingLocation?.areaName ?: unloadingLocation?.cityName ?: "",
                 truckType = groupDetails?.truckType?.displayName ?: "",
                 createdDate = uiState.createdDate,
-                branchLabel = groupDetails?.clientBranch?.let { branch ->
-                    listOfNotNull(
-                        branch.branchName?.takeIf { it.isNotBlank() },
-                        branch.branchCode?.takeIf { it.isNotBlank() },
-                    ).joinToString("  ·  ").takeIf { it.isNotBlank() }
-                },
+                branchLabel =
+                    groupDetails?.clientBranch?.let { branch ->
+                        listOfNotNull(
+                            branch.branchName?.takeIf { it.isNotBlank() },
+                            branch.branchCode?.takeIf { it.isNotBlank() },
+                        ).joinToString("  ·  ").takeIf { it.isNotBlank() }
+                    },
                 callLines = groupDetails?.indentContacts?.toDocketCallLines().orEmpty(),
                 onViewIndentClick = onViewIndentClick,
-                onBackToHomeClick = onBackToHomeClick
+                onBackToHomeClick = onBackToHomeClick,
             )
         }
         else -> {
@@ -169,7 +173,7 @@ fun IndentSuccessScreen(
                 truckType = "",
                 createdDate = null,
                 onViewIndentClick = onViewIndentClick,
-                onBackToHomeClick = onBackToHomeClick
+                onBackToHomeClick = onBackToHomeClick,
             )
         }
     }
@@ -212,7 +216,7 @@ fun IndentSuccessComponent(
     val sealScale by animateFloatAsState(
         targetValue = if (animateSeal) 1f else 0.6f,
         animationSpec = tween(durationMillis = 420),
-        label = "sealAnimation"
+        label = "sealAnimation",
     )
 
     LaunchedEffect(Unit) {
@@ -226,12 +230,13 @@ fun IndentSuccessComponent(
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(colorScheme.background)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(colorScheme.background)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Spacer(modifier = Modifier.height(36.dp))
 
@@ -243,7 +248,7 @@ fun IndentSuccessComponent(
                 text = "Indent Created!",
                 style = MaterialTheme.typography.headlineSmall.copy(letterSpacing = (-0.4).sp),
                 fontWeight = FontWeight.Bold,
-                color = colorScheme.onBackground
+                color = colorScheme.onBackground,
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -291,21 +296,23 @@ fun IndentSuccessComponent(
                             scope.launch {
                                 snackbarHostState.showSnackbar(
                                     message = "Indent code copied",
-                                    duration = SnackbarDuration.Short
+                                    duration = SnackbarDuration.Short,
                                 )
                             }
                         },
-                        modifier = Modifier
-                            .size(40.dp)
-                            .docketTag("indent_created_copy_code"),
-                        colors = IconButtonDefaults.iconButtonColors(
-                            contentColor = colorScheme.onSurfaceVariant
-                        )
+                        modifier =
+                            Modifier
+                                .size(40.dp)
+                                .docketTag("indent_created_copy_code"),
+                        colors =
+                            IconButtonDefaults.iconButtonColors(
+                                contentColor = colorScheme.onSurfaceVariant,
+                            ),
                     ) {
                         Icon(
                             imageVector = Icons.Default.ContentCopy,
                             contentDescription = "Copy indent code",
-                            modifier = Modifier.size(19.dp)
+                            modifier = Modifier.size(19.dp),
                         )
                     }
                 }
@@ -370,24 +377,25 @@ fun IndentSuccessComponent(
                 text = "Transporters will start quoting soon — you'll be notified.",
                 style = MaterialTheme.typography.bodySmall,
                 color = colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 8.dp)
+                modifier = Modifier.padding(horizontal = 8.dp),
             )
 
             Spacer(modifier = Modifier.weight(1f))
 
             Button(
                 onClick = onViewIndentClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp)
-                    .docketTag("indent_created_view_details"),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(54.dp)
+                        .docketTag("indent_created_view_details"),
                 shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = colorScheme.primary)
+                colors = ButtonDefaults.buttonColors(containerColor = colorScheme.primary),
             ) {
                 Text(
                     text = "View Indent Details",
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
             }
 
@@ -395,16 +403,17 @@ fun IndentSuccessComponent(
 
             OutlinedButton(
                 onClick = onBackToHomeClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(48.dp)
-                    .docketTag("indent_created_back_to_dashboard"),
-                shape = RoundedCornerShape(16.dp)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .docketTag("indent_created_back_to_dashboard"),
+                shape = RoundedCornerShape(16.dp),
             ) {
                 Text(
                     text = "Back to Dashboard",
                     style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
                 )
             }
 
@@ -413,7 +422,7 @@ fun IndentSuccessComponent(
 
         SnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier.align(Alignment.BottomCenter)
+            modifier = Modifier.align(Alignment.BottomCenter),
         )
     }
 }
@@ -434,12 +443,13 @@ fun IndentSuccessComponentPreview() {
             truckType = "22 ft",
             createdDate = "2026-09-15T17:45:00",
             branchLabel = "Kolar Depot  ·  KLR-02",
-            callLines = listOf(
-                DocketCallLine("Placement", "Madhan Rao", "9876543210"),
-                DocketCallLine("Payment", "Ravi Deshmukh", "9876500001"),
-            ),
+            callLines =
+                listOf(
+                    DocketCallLine("Placement", "Madhan Rao", "9876543210"),
+                    DocketCallLine("Payment", "Ravi Deshmukh", "9876500001"),
+                ),
             onViewIndentClick = {},
-            onBackToHomeClick = {}
+            onBackToHomeClick = {},
         )
     }
 }

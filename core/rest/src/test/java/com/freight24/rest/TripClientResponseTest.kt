@@ -11,9 +11,10 @@ class TripClientResponseTest {
 
     @Test
     fun `client decodes display name and company name from trip response`() {
-        val client = json.decodeFromString<TripDataResponse.Client>(
-            """{"id":"client-id","displayName":"Kemara Pvt Ltd","companyName":"Kemara Logistics","branch":{"name":"Hyderabad office"}}"""
-        )
+        val client =
+            json.decodeFromString<TripDataResponse.Client>(
+                """{"id":"client-id","displayName":"Kemara Pvt Ltd","companyName":"Kemara Logistics","branch":{"name":"Hyderabad office"}}""",
+            )
 
         assertEquals("Kemara Pvt Ltd", client.displayName)
         assertEquals("Kemara Logistics", client.companyName)
@@ -22,9 +23,10 @@ class TripClientResponseTest {
 
     @Test
     fun `older client responses still decode without display name`() {
-        val client = json.decodeFromString<TripDataResponse.Client>(
-            """{"id":"client-id","name":"Kemara","companyName":"Kemara Logistics"}"""
-        )
+        val client =
+            json.decodeFromString<TripDataResponse.Client>(
+                """{"id":"client-id","name":"Kemara","companyName":"Kemara Logistics"}""",
+            )
 
         assertNull(client.displayName)
         assertEquals("Kemara", client.name)

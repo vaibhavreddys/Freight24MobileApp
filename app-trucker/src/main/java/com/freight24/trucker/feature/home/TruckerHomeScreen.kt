@@ -118,13 +118,14 @@ fun TruckerHomeScreen(navController: NavHostController) {
                         },
                     )
 
-                TruckerTab.Profile -> ProfileScreen(
-                    paddingValues = paddingValues,
-                    viewModel = profileViewModel,
-                    onSettingsClick = {
-                        navController.navigate(TruckerDestination.Settings.route)
-                    },
-                )
+                TruckerTab.Profile ->
+                    ProfileScreen(
+                        paddingValues = paddingValues,
+                        viewModel = profileViewModel,
+                        onSettingsClick = {
+                            navController.navigate(TruckerDestination.Settings.route)
+                        },
+                    )
             }
         }
     }

@@ -23,25 +23,37 @@ internal abstract class ProfileModule {
 
     @Binds
     @ViewModelScoped
-    abstract fun bindUpdateProfileUseCase(impl: com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateProfileUseCaseImpl): com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateProfileUseCase
+    abstract fun bindUpdateProfileUseCase(
+        impl: com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateProfileUseCaseImpl,
+    ): com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateProfileUseCase
 
     @Binds
     @ViewModelScoped
-    abstract fun bindUploadIdentityDocumentUseCase(impl: com.freight24.connect.feature.truckowners.profile.domain.usecase.UploadIdentityDocumentUseCaseImpl): com.freight24.connect.feature.truckowners.profile.domain.usecase.UploadIdentityDocumentUseCase
+    abstract fun bindUploadIdentityDocumentUseCase(
+        impl: com.freight24.connect.feature.truckowners.profile.domain.usecase.UploadIdentityDocumentUseCaseImpl,
+    ): com.freight24.connect.feature.truckowners.profile.domain.usecase.UploadIdentityDocumentUseCase
 
     @Binds
     @ViewModelScoped
-    abstract fun bindGetProfileSignedUrlUseCase(impl: com.freight24.connect.feature.truckowners.profile.domain.usecase.GetProfileSignedUrlUseCaseImpl): com.freight24.connect.feature.truckowners.profile.domain.usecase.GetProfileSignedUrlUseCase
+    abstract fun bindGetProfileSignedUrlUseCase(
+        impl: com.freight24.connect.feature.truckowners.profile.domain.usecase.GetProfileSignedUrlUseCaseImpl,
+    ): com.freight24.connect.feature.truckowners.profile.domain.usecase.GetProfileSignedUrlUseCase
 
     @Binds
     @ViewModelScoped
-    abstract fun bindUpdateIdentityDocumentUseCase(impl: com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateIdentityDocumentUseCaseImpl): com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateIdentityDocumentUseCase
+    abstract fun bindUpdateIdentityDocumentUseCase(
+        impl: com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateIdentityDocumentUseCaseImpl,
+    ): com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateIdentityDocumentUseCase
 
     @Binds
     @ViewModelScoped
-    abstract fun bindFinalizeIdentityDocumentsUseCase(impl: com.freight24.connect.feature.truckowners.profile.domain.usecase.FinalizeIdentityDocumentsUseCaseImpl): com.freight24.connect.feature.truckowners.profile.domain.usecase.FinalizeIdentityDocumentsUseCase
+    abstract fun bindFinalizeIdentityDocumentsUseCase(
+        impl: com.freight24.connect.feature.truckowners.profile.domain.usecase.FinalizeIdentityDocumentsUseCaseImpl,
+    ): com.freight24.connect.feature.truckowners.profile.domain.usecase.FinalizeIdentityDocumentsUseCase
 
     @Binds
     @ViewModelScoped
-    abstract fun bindUpdateTruckOwnerStatusUseCase(impl: com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateTruckOwnerStatusUseCaseImpl): com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateTruckOwnerStatusUseCase
+    abstract fun bindUpdateTruckOwnerStatusUseCase(
+        impl: com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateTruckOwnerStatusUseCaseImpl,
+    ): com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateTruckOwnerStatusUseCase
 }

@@ -18,87 +18,87 @@ import javax.inject.Inject
 
 @HiltViewModel
 internal class NewLoginViewModel
-@Inject
-constructor(
-    private val loginConnectApi: LoginConnectApi,
-    @ApplicationContext private val context: Context,
-) : ViewModel() {
-    companion object {
-        private const val FULL_PHONE_PREFIX = "+91"
-        val PHONE_REGEX: Regex = Regex("^[789]\\d{9}$")
-    }
-
-    // FIX #2: Start with empty string instead of space
-    private val _phoneNumber = MutableStateFlow("")
-    val phoneNumber: StateFlow<String> = _phoneNumber.asStateFlow()
-
-    private val _isPhoneValid = MutableStateFlow(false)
-    val isPhoneValid: StateFlow<Boolean> = _isPhoneValid.asStateFlow()
-
-    private val _uiState = MutableStateFlow<UiState<String>>(UiState.Idle)
-    val uiState: StateFlow<UiState<String>> = _uiState.asStateFlow()
-
-    fun onPhoneNumberChange(input: String) {
-        // FIX #3: Strip country code prefixes from autofill
-        val cleanedInput = stripCountryCode(input)
-        val digitsOnly = cleanedInput.filter(Char::isDigit).take(10)
-        _phoneNumber.value = digitsOnly
-        _isPhoneValid.value = PHONE_REGEX.matches(digitsOnly)
-    }
-
-    // FIX #3: Helper function to remove country codes
-    private fun stripCountryCode(input: String): String {
-        var result = input.trim()
-
-        // Remove "+91" or "91" prefix
-        if (result.startsWith("+91")) {
-            result = result.substring(3)
-        } else if (result.startsWith("91") && result.length > 2) {
-            result = result.substring(2)
+    @Inject
+    constructor(
+        private val loginConnectApi: LoginConnectApi,
+        @ApplicationContext private val context: Context,
+    ) : ViewModel() {
+        companion object {
+            private const val FULL_PHONE_PREFIX = "+91"
+            val PHONE_REGEX: Regex = Regex("^[789]\\d{9}$")
         }
 
-        // Remove "+91 " with space
-        if (result.startsWith("+91 ")) {
-            result = result.substring(4)
+        // FIX #2: Start with empty string instead of space
+        private val _phoneNumber = MutableStateFlow("")
+        val phoneNumber: StateFlow<String> = _phoneNumber.asStateFlow()
+
+        private val _isPhoneValid = MutableStateFlow(false)
+        val isPhoneValid: StateFlow<Boolean> = _isPhoneValid.asStateFlow()
+
+        private val _uiState = MutableStateFlow<UiState<String>>(UiState.Idle)
+        val uiState: StateFlow<UiState<String>> = _uiState.asStateFlow()
+
+        fun onPhoneNumberChange(input: String) {
+            // FIX #3: Strip country code prefixes from autofill
+            val cleanedInput = stripCountryCode(input)
+            val digitsOnly = cleanedInput.filter(Char::isDigit).take(10)
+            _phoneNumber.value = digitsOnly
+            _isPhoneValid.value = PHONE_REGEX.matches(digitsOnly)
         }
 
-        return result
-    }
+        // FIX #3: Helper function to remove country codes
+        private fun stripCountryCode(input: String): String {
+            var result = input.trim()
 
-    fun onSendOtpClick() {
-        if (!PHONE_REGEX.matches(_phoneNumber.value)) {
-            _uiState.value = UiState.Error("Enter a valid 10-digit Indian mobile number")
-            return
+            // Remove "+91" or "91" prefix
+            if (result.startsWith("+91")) {
+                result = result.substring(3)
+            } else if (result.startsWith("91") && result.length > 2) {
+                result = result.substring(2)
+            }
+
+            // Remove "+91 " with space
+            if (result.startsWith("+91 ")) {
+                result = result.substring(4)
+            }
+
+            return result
         }
 
-        viewModelScope.launch {
-            _uiState.value = UiState.Loading
-            try {
-                val response =
-                    loginConnectApi.requestOtp(
-                        OtpRequest(phone_number = "$FULL_PHONE_PREFIX${_phoneNumber.value}"),
-                    )
+        fun onSendOtpClick() {
+            if (!PHONE_REGEX.matches(_phoneNumber.value)) {
+                _uiState.value = UiState.Error("Enter a valid 10-digit Indian mobile number")
+                return
+            }
 
-                _uiState.value =
-                    if (response.success) {
-                        val otpCode = response.data?.otp_code
-                        if (!otpCode.isNullOrBlank()) {
-                            val fullPhone = "$FULL_PHONE_PREFIX${_phoneNumber.value}"
-                            NotificationDispatcher(context).show(
-                                AppNotification.Critical(message = "OTP for $fullPhone is $otpCode")
-                            )
+            viewModelScope.launch {
+                _uiState.value = UiState.Loading
+                try {
+                    val response =
+                        loginConnectApi.requestOtp(
+                            OtpRequest(phone_number = "$FULL_PHONE_PREFIX${_phoneNumber.value}"),
+                        )
+
+                    _uiState.value =
+                        if (response.success) {
+                            val otpCode = response.data?.otp_code
+                            if (!otpCode.isNullOrBlank()) {
+                                val fullPhone = "$FULL_PHONE_PREFIX${_phoneNumber.value}"
+                                NotificationDispatcher(context).show(
+                                    AppNotification.Critical(message = "OTP for $fullPhone is $otpCode"),
+                                )
+                            }
+                            UiState.Success(_phoneNumber.value)
+                        } else {
+                            UiState.Error(response.message.ifBlank { "Failed to send OTP" })
                         }
-                        UiState.Success(_phoneNumber.value)
-                    } else {
-                        UiState.Error(response.message.ifBlank { "Failed to send OTP" })
-                    }
-            } catch (exception: Exception) {
-                _uiState.value = UiState.Error(exception.message ?: "Failed to send OTP")
+                } catch (exception: Exception) {
+                    _uiState.value = UiState.Error(exception.message ?: "Failed to send OTP")
+                }
             }
         }
-    }
 
-    fun resetUiState() {
-        _uiState.value = UiState.Idle
+        fun resetUiState() {
+            _uiState.value = UiState.Idle
+        }
     }
-}

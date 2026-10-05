@@ -114,23 +114,25 @@ internal class VerifyOtpViewModel
 
         private fun startResendTimer() {
             resendTimerJob?.cancel()
-            resendTimerJob = viewModelScope.launch {
-                while (_remainingSeconds.value > 0) {
-                    delay(1000)
-                    _remainingSeconds.value -= 1
+            resendTimerJob =
+                viewModelScope.launch {
+                    while (_remainingSeconds.value > 0) {
+                        delay(1000)
+                        _remainingSeconds.value -= 1
+                    }
+                    _isResendEnabled.value = true
                 }
-                _isResendEnabled.value = true
-            }
         }
 
         private fun startVerifyWindowTimer() {
             verifyWindowJob?.cancel()
-            verifyWindowJob = viewModelScope.launch {
-                while (_verificationSecondsRemaining.value > 0) {
-                    delay(1000)
-                    _verificationSecondsRemaining.value -= 1
+            verifyWindowJob =
+                viewModelScope.launch {
+                    while (_verificationSecondsRemaining.value > 0) {
+                        delay(1000)
+                        _verificationSecondsRemaining.value -= 1
+                    }
                 }
-            }
         }
 
         @SuppressLint("MissingPermission")

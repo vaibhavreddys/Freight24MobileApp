@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class IdentityDocumentUploadResponse(
-    val data: IdentityDocumentUploadData? = null
+    val data: IdentityDocumentUploadData? = null,
 ) : BaseResponse()
 
 @Serializable
@@ -13,5 +13,5 @@ data class IdentityDocumentUploadData(
     @SerialName("temporaryFileKey")
     val temporaryFileKey: String? = null,
     @SerialName("fileKey")
-    val fileKey: String? = null
+    val fileKey: String? = null,
 )

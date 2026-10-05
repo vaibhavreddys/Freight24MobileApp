@@ -22,7 +22,7 @@ import com.freight24.ui.theme.FreightThemeTokens
 @Composable
 fun VisibilityChip(
     isVisible: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     // "Visible" reads as a positive state → success palette; "Hidden" is a
     // blocking / concerning state → error palette. Both come from the
@@ -39,25 +39,25 @@ fun VisibilityChip(
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(50), // Fully rounded corners
-        color = backgroundColor
+        color = backgroundColor,
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = contentColor,
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(18.dp),
             )
 
             Text(
                 text = text,
                 color = contentColor,
                 style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
         }
     }

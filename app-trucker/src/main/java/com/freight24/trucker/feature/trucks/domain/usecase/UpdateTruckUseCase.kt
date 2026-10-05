@@ -3,7 +3,6 @@ package com.freight24.trucker.feature.trucks.domain.usecase
 import com.freight24.common.usecase.UseCase
 import com.freight24.common.usecase.UseCaseParams
 import com.freight24.rest.response.AddTruckResponse
-import okhttp3.MultipartBody
 
 data class UpdateTruckParams(
     val truckId: String,

@@ -42,7 +42,10 @@ import com.freight24.ui.theme.FreightThemeTokens
 // ===========================================================================
 
 @Composable
-fun truckStatusAccent(isVerified: Boolean, isBlacklisted: Boolean): Color {
+fun truckStatusAccent(
+    isVerified: Boolean,
+    isBlacklisted: Boolean,
+): Color {
     val ext = FreightThemeTokens.colors
     val scheme = MaterialTheme.colorScheme
     return when {
@@ -79,19 +82,24 @@ private enum class TruckStampKind { VERIFIED, VERIFICATION_PENDING, BLACKLISTED,
 
 /** Rubber-stamp mark with a Check / Close glyph where the verdict is binary. */
 @Composable
-private fun TruckStamp(kind: TruckStampKind, modifier: Modifier = Modifier) {
+private fun TruckStamp(
+    kind: TruckStampKind,
+    modifier: Modifier = Modifier,
+) {
     val (container, content) = truckStampColors(kind)
-    val glyph = when (kind) {
-        TruckStampKind.VERIFIED -> Icons.Default.Check
-        TruckStampKind.BLACKLISTED -> Icons.Default.Close
-        else -> null
-    }
-    val text = when (kind) {
-        TruckStampKind.VERIFIED -> "VERIFIED"
-        TruckStampKind.VERIFICATION_PENDING -> "VERIFICATION PENDING"
-        TruckStampKind.BLACKLISTED -> "BLACKLISTED"
-        TruckStampKind.ON_TRIP -> "ON TRIP"
-    }
+    val glyph =
+        when (kind) {
+            TruckStampKind.VERIFIED -> Icons.Default.Check
+            TruckStampKind.BLACKLISTED -> Icons.Default.Close
+            else -> null
+        }
+    val text =
+        when (kind) {
+            TruckStampKind.VERIFIED -> "VERIFIED"
+            TruckStampKind.VERIFICATION_PENDING -> "VERIFICATION PENDING"
+            TruckStampKind.BLACKLISTED -> "BLACKLISTED"
+            TruckStampKind.ON_TRIP -> "ON TRIP"
+        }
 
     Surface(
         modifier = modifier,
@@ -99,9 +107,10 @@ private fun TruckStamp(kind: TruckStampKind, modifier: Modifier = Modifier) {
         color = container,
     ) {
         Row(
-            modifier = Modifier
-                .height(22.dp)
-                .padding(horizontal = 8.dp),
+            modifier =
+                Modifier
+                    .height(22.dp)
+                    .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (glyph != null) {
@@ -180,7 +189,7 @@ fun TruckDocketCard(
                 Spacer(Modifier.width(8.dp))
             }
             TruckStamp(
-                kind = if (isVerified) TruckStampKind.VERIFIED else TruckStampKind.VERIFICATION_PENDING
+                kind = if (isVerified) TruckStampKind.VERIFIED else TruckStampKind.VERIFICATION_PENDING,
             )
             if (onClick != null) {
                 Spacer(Modifier.weight(1f))

@@ -7,22 +7,21 @@ import com.freight24.rest.response.SignedDocument
 import javax.inject.Inject
 
 data class SlipUrlSignedDocumentUseCaseDataParams(
-    val tripId : String,
+    val tripId: String,
     val chargeId: String,
-): UseCaseParams
+) : UseCaseParams
 
 internal interface SlipUrlSignedDocumentUseCase : UseCase<SlipUrlSignedDocumentUseCaseDataParams, SignedDocument>
 
-class SlipUrlSignedDocumentUseCaseImpl @Inject constructor(
-    private val repository: TripLUChargesRepository
-) : SlipUrlSignedDocumentUseCase {
-
-    override suspend fun invoke(
-        params: SlipUrlSignedDocumentUseCaseDataParams
-    ): Result<SignedDocument> {
-        return repository.getSignedLUDocument(
-            params.tripId,
-            params.chargeId
-        )
+class SlipUrlSignedDocumentUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: TripLUChargesRepository,
+    ) : SlipUrlSignedDocumentUseCase {
+        override suspend fun invoke(params: SlipUrlSignedDocumentUseCaseDataParams): Result<SignedDocument> {
+            return repository.getSignedLUDocument(
+                params.tripId,
+                params.chargeId,
+            )
+        }
     }
-}

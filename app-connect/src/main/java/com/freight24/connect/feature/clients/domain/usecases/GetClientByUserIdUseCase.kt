@@ -8,10 +8,12 @@ interface GetClientByUserIdUseCase {
     suspend operator fun invoke(userId: String): Result<ClientProfileDto>
 }
 
-class GetClientByUserIdUseCaseImpl @Inject constructor(
-    private val repository: ClientRepository,
-) : GetClientByUserIdUseCase {
-    override suspend fun invoke(userId: String): Result<ClientProfileDto> {
-        return repository.getClientByUserId(userId)
+class GetClientByUserIdUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: ClientRepository,
+    ) : GetClientByUserIdUseCase {
+        override suspend fun invoke(userId: String): Result<ClientProfileDto> {
+            return repository.getClientByUserId(userId)
+        }
     }
-}

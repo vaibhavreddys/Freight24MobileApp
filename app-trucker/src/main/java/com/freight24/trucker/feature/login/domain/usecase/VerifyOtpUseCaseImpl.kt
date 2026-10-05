@@ -48,8 +48,9 @@ internal class VerifyOtpUseCaseImpl
                     val errorBody = e.response()?.errorBody()?.string()
                     if (errorBody != null) {
                         try {
-                            val errorResponse = errorJson
-                                .decodeFromString<LoginResponse>(errorBody)
+                            val errorResponse =
+                                errorJson
+                                    .decodeFromString<LoginResponse>(errorBody)
                             // Server-authored copy is fine to show, but a body with no
                             // message would render an empty error block.
                             val message = AuthErrorMessage.orGeneric(errorResponse.message)

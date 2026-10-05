@@ -13,7 +13,10 @@ class NotificationDispatcher
     constructor(
         @param:ApplicationContext private val context: Context,
     ) {
-        fun show(notification: AppNotification, pendingIntent: PendingIntent? = null) {
+        fun show(
+            notification: AppNotification,
+            pendingIntent: PendingIntent? = null,
+        ) {
             if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return
 
             NotificationChannels.create(context)

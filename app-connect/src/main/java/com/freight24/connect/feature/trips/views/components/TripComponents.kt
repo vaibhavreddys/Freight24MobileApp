@@ -11,8 +11,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.outlined.Handshake
 import androidx.compose.material.icons.outlined.Payments
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,10 +22,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.freight24.common.util.formatLoadWeight
-import com.freight24.connect.utils.toDate
 import com.freight24.connect.R
+import com.freight24.connect.utils.toDate
 import com.freight24.rest.response.TripDataResponse
 
 /**
@@ -39,7 +38,7 @@ private val TripDataResponse.Client.label: String
 fun TripCard(
     trip: TripDataResponse,
     onClick: (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val colorScheme = MaterialTheme.colorScheme
     Card(
@@ -47,28 +46,30 @@ fun TripCard(
         colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
         border = BorderStroke(1.dp, colorScheme.outlineVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        modifier = modifier
-            .fillMaxWidth()
-            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
     ) {
         Column(
-            modifier = Modifier
-                .padding(
-                    start = 16.dp,
-                    end = 16.dp,
-                    top = 16.dp,
-                    bottom = 16.dp
-                )
+            modifier =
+                Modifier
+                    .padding(
+                        start = 16.dp,
+                        end = 16.dp,
+                        top = 16.dp,
+                        bottom = 16.dp,
+                    ),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = trip.tripCode,
                     style = MaterialTheme.typography.labelMedium,
-                    color = colorScheme.onSurfaceVariant
+                    color = colorScheme.onSurfaceVariant,
                 )
                 StatusBadge(status = trip.truckerStatus)
             }
@@ -81,24 +82,27 @@ fun TripCard(
                     imageVector = Icons.Default.LocalShipping,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp),
-                    tint = colorScheme.primary
+                    tint = colorScheme.primary,
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = trip.truck.registrationNumber,
                     style = MaterialTheme.typography.titleLarge,
-                    color = colorScheme.onSurface
+                    color = colorScheme.onSurface,
                 )
             }
 
             Spacer(modifier = Modifier.height(4.dp))
 
             Text(
-                text = "${trip.truck.truckType.displayName} • ${formatLoadWeight(trip.indentDetails.loadWeight, "MT")} • ${trip.indentDetails.material}",
+                text = "${trip.truck.truckType.displayName} • ${formatLoadWeight(
+                    trip.indentDetails.loadWeight,
+                    "MT",
+                )} • ${trip.indentDetails.material}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = colorScheme.onSurfaceVariant,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -108,29 +112,30 @@ fun TripCard(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     RouteDot(color = colorScheme.primary)
                     Box(
-                        modifier = Modifier
-                            .width(2.dp)
-                            .height(20.dp)
-                            .background(colorScheme.outlineVariant)
+                        modifier =
+                            Modifier
+                                .width(2.dp)
+                                .height(20.dp)
+                                .background(colorScheme.outlineVariant),
                     )
                     RouteDot(color = colorScheme.secondary)
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.padding(top = 0.dp)
+                    modifier = Modifier.padding(top = 0.dp),
                 ) {
                     Text(
                         text = trip.loadingLocation.city ?: trip.loadingLocation.area ?: "Unknown",
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
-                        color = colorScheme.onSurface
+                        color = colorScheme.onSurface,
                     )
                     Text(
                         text = trip.unLoadingLocation.city ?: trip.unLoadingLocation.area ?: "Unknown",
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
-                        color = colorScheme.onSurface
+                        color = colorScheme.onSurface,
                     )
                 }
             }
@@ -139,7 +144,7 @@ fun TripCard(
 
             HorizontalDivider(
                 color = colorScheme.outlineVariant,
-                thickness = 1.dp
+                thickness = 1.dp,
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -147,42 +152,43 @@ fun TripCard(
             // Financials — labelled pair, negotiated cost emphasized
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = stringResource(R.string.client_cost).uppercase(),
                         style = MaterialTheme.typography.labelSmall,
-                        color = colorScheme.onSurfaceVariant
+                        color = colorScheme.onSurfaceVariant,
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     FinancialItem(
                         icon = Icons.Outlined.Payments,
-                        amount = trip.clientTripCost?.toPlainString().orEmpty()
+                        amount = trip.clientTripCost?.toPlainString().orEmpty(),
                     )
                 }
 
                 VerticalDivider(
-                    modifier = Modifier
-                        .width(1.dp)
-                        .height(32.dp)
-                        .background(colorScheme.outlineVariant)
+                    modifier =
+                        Modifier
+                            .width(1.dp)
+                            .height(32.dp)
+                            .background(colorScheme.outlineVariant),
                 )
 
                 Column(
                     horizontalAlignment = Alignment.End,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 ) {
                     Text(
                         text = stringResource(R.string.trucker_cost).uppercase(),
                         style = MaterialTheme.typography.labelSmall,
-                        color = colorScheme.onSurfaceVariant
+                        color = colorScheme.onSurfaceVariant,
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     FinancialItem(
                         icon = Icons.Outlined.Handshake,
                         amount = trip.truckerTripCost.orEmpty(),
-                        emphasized = true
+                        emphasized = true,
                     )
                 }
             }
@@ -191,21 +197,22 @@ fun TripCard(
         Column {
             // Footer: Client & Date
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        color = colorScheme.surfaceContainerLow
-                    )
-                    .padding(
-                        horizontal = 16.dp,
-                        vertical = 8.dp
-                    ),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = colorScheme.surfaceContainerLow,
+                        )
+                        .padding(
+                            horizontal = 16.dp,
+                            vertical = 8.dp,
+                        ),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Row(
                     modifier = Modifier.weight(1f),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
                         text = trip.client.label.uppercase(),
@@ -213,7 +220,7 @@ fun TripCard(
                         color = colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
+                        modifier = Modifier.weight(1f, fill = false),
                     )
                     trip.client.tagCode?.takeIf { it.isNotBlank() }?.let { tagCode ->
                         Spacer(modifier = Modifier.width(8.dp))
@@ -221,7 +228,7 @@ fun TripCard(
                             text = tagCode.uppercase(),
                             style = MaterialTheme.typography.labelSmall,
                             color = colorScheme.primary,
-                            maxLines = 1
+                            maxLines = 1,
                         )
                     }
                 }
@@ -229,7 +236,7 @@ fun TripCard(
                 Text(
                     text = trip.createdAt.toDate(),
                     style = MaterialTheme.typography.labelSmall,
-                    color = colorScheme.onSurfaceVariant
+                    color = colorScheme.onSurfaceVariant,
                 )
             }
         }
@@ -254,33 +261,35 @@ fun TripListItem(
         colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
         border = BorderStroke(1.dp, colorScheme.outlineVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        modifier = modifier
-            .fillMaxWidth()
-            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
     ) {
         Column(
-            modifier = Modifier
-                .padding(start = 16.dp, end = 16.dp, top = 12.dp)
+            modifier =
+                Modifier
+                    .padding(start = 16.dp, end = 16.dp, top = 12.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 ) {
                     Text(
                         text = trip.tripCode,
                         style = MaterialTheme.typography.labelMedium,
-                        color = colorScheme.onSurfaceVariant
+                        color = colorScheme.onSurfaceVariant,
                     )
                     Text(
                         text = "•",
                         style = MaterialTheme.typography.labelMedium,
-                        color = colorScheme.outline
+                        color = colorScheme.outline,
                     )
                     Text(
                         text = trip.client.label,
@@ -288,7 +297,7 @@ fun TripListItem(
                         fontWeight = FontWeight.SemiBold,
                         color = colorScheme.onSurface,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
                 Spacer(modifier = Modifier.width(8.dp))
@@ -302,21 +311,24 @@ fun TripListItem(
                     imageVector = Icons.Default.LocalShipping,
                     contentDescription = null,
                     modifier = Modifier.size(16.dp),
-                    tint = colorScheme.primary
+                    tint = colorScheme.primary,
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = trip.truck.registrationNumber,
                     style = MaterialTheme.typography.titleMedium,
-                    color = colorScheme.onSurface
+                    color = colorScheme.onSurface,
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "${trip.truck.truckType.displayName} • ${formatLoadWeight(trip.indentDetails.loadWeight, "MT")} • ${trip.indentDetails.material}",
+                    text = "${trip.truck.truckType.displayName} • ${formatLoadWeight(
+                        trip.indentDetails.loadWeight,
+                        "MT",
+                    )} • ${trip.indentDetails.material}",
                     style = MaterialTheme.typography.bodySmall,
                     color = colorScheme.onSurfaceVariant,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
 
@@ -325,25 +337,25 @@ fun TripListItem(
             // Route on one line — origin → destination
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Text(
                     text = trip.loadingLocation.city ?: trip.loadingLocation.area ?: "Unknown",
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold,
-                    color = colorScheme.onSurface
+                    color = colorScheme.onSurface,
                 )
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                     contentDescription = "to",
                     modifier = Modifier.size(16.dp),
-                    tint = colorScheme.primary
+                    tint = colorScheme.primary,
                 )
                 Text(
                     text = trip.unLoadingLocation.city ?: trip.unLoadingLocation.area ?: "Unknown",
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold,
-                    color = colorScheme.onSurface
+                    color = colorScheme.onSurface,
                 )
             }
 
@@ -352,29 +364,32 @@ fun TripListItem(
 
         // Brand-tinted financial band — no icons needed, labels carry meaning
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(colorScheme.primaryContainer)
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .background(colorScheme.primaryContainer)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = stringResource(
-                    R.string.client_amount,
-                    formatAmount(trip.clientTripCost?.toPlainString().orEmpty())
-                ),
+                text =
+                    stringResource(
+                        R.string.client_amount,
+                        formatAmount(trip.clientTripCost?.toPlainString().orEmpty()),
+                    ),
                 style = MaterialTheme.typography.labelMedium,
-                color = colorScheme.onPrimaryContainer
+                color = colorScheme.onPrimaryContainer,
             )
             Text(
-                text = stringResource(
-                    R.string.trucker_amount,
-                    formatAmount(trip.truckerTripCost.orEmpty())
-                ),
+                text =
+                    stringResource(
+                        R.string.trucker_amount,
+                        formatAmount(trip.truckerTripCost.orEmpty()),
+                    ),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold,
-                color = colorScheme.primary
+                color = colorScheme.primary,
             )
         }
     }
@@ -383,26 +398,28 @@ fun TripListItem(
 @Composable
 fun StatusBadge(status: String) {
     val colorScheme = MaterialTheme.colorScheme
-    val (color, ticketColor, text) = when (status) {
-        "ASSIGNED" -> Triple(colorScheme.primaryContainer, colorScheme.primary, "ASSIGNED")
-        "IN_TRANSIT" -> Triple(colorScheme.tertiaryContainer, colorScheme.tertiary, "IN-TRANSIT")
-        "LOADING" -> Triple(colorScheme.secondaryContainer, colorScheme.secondary, "LOADING")
-        "UNLOADING" -> Triple(colorScheme.primaryContainer, colorScheme.primary, "UNLOADING")
-        else -> Triple(colorScheme.surfaceVariant, colorScheme.onSurfaceVariant, status)
-    }
+    val (color, ticketColor, text) =
+        when (status) {
+            "ASSIGNED" -> Triple(colorScheme.primaryContainer, colorScheme.primary, "ASSIGNED")
+            "IN_TRANSIT" -> Triple(colorScheme.tertiaryContainer, colorScheme.tertiary, "IN-TRANSIT")
+            "LOADING" -> Triple(colorScheme.secondaryContainer, colorScheme.secondary, "LOADING")
+            "UNLOADING" -> Triple(colorScheme.primaryContainer, colorScheme.primary, "UNLOADING")
+            else -> Triple(colorScheme.surfaceVariant, colorScheme.onSurfaceVariant, status)
+        }
 
     Surface(
         color = color,
         shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
     ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.labelSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                color = ticketColor
-            ),
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+            style =
+                MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = ticketColor,
+                ),
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
         )
     }
 }
@@ -410,11 +427,12 @@ fun StatusBadge(status: String) {
 @Composable
 fun RouteDot(color: Color) {
     Box(
-        modifier = Modifier
-            .size(12.dp)
-            .background(color, CircleShape)
-            .padding(3.dp)
-            .background(MaterialTheme.colorScheme.surface, CircleShape)
+        modifier =
+            Modifier
+                .size(12.dp)
+                .background(color, CircleShape)
+                .padding(3.dp)
+                .background(MaterialTheme.colorScheme.surface, CircleShape),
     )
 }
 
@@ -422,28 +440,30 @@ fun RouteDot(color: Color) {
 fun FinancialItem(
     icon: ImageVector,
     amount: String,
-    emphasized: Boolean = false
+    emphasized: Boolean = false,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(
             imageVector = icon,
             contentDescription = null,
             modifier = Modifier.size(16.dp),
-            tint = if (emphasized) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            }
+            tint =
+                if (emphasized) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
         )
         Spacer(modifier = Modifier.width(4.dp))
         Text(
             text = "₹${formatAmount(amount)}",
             style = MaterialTheme.typography.titleMedium,
-            color = if (emphasized) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.onSurface
-            }
+            color =
+                if (emphasized) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                },
         )
     }
 }

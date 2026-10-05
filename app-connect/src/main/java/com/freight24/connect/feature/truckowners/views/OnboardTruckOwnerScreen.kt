@@ -1,19 +1,17 @@
 package com.freight24.connect.feature.truckowners.views
-import com.freight24.ui.components.FreightTopAppBar
-
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,8 +29,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Assignment
@@ -48,7 +44,8 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -68,8 +65,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -81,26 +76,28 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.freight24.connect.feature.truckowners.domain.viewmodel.OnboardTruckOwnerViewModel
 import com.freight24.connect.feature.truckowners.profile.domain.DocumentStatus
@@ -109,10 +106,10 @@ import com.freight24.connect.feature.truckowners.profile.util.ProfileFieldValida
 import com.freight24.connect.feature.truckowners.profile.util.ValidationResult
 import com.freight24.ui.components.AddRouteBottomSheet
 import com.freight24.ui.components.CitySearchField
+import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.components.RouteChip
-import com.freight24.ui.theme.FreightThemeTokens
 import com.freight24.ui.components.formViewportInsets
-
+import com.freight24.ui.theme.FreightThemeTokens
 
 private enum class InputValidationType {
     NONE,
@@ -190,12 +187,12 @@ fun OnboardTruckOwnerScreen(
         accountNumber,
         ifscCode,
         canSubmit,
-        submitBlockReason
+        submitBlockReason,
     ) {
         if (!canSubmit) {
             Log.d(
                 "OnboardTruckOwnerScreen",
-                "Save disabled. Reason=$submitBlockReason [full=${fullName.isNotBlank()}, phoneLen=${phone.length}, aadhaarLen=${aadharCard.length}, panLen=${panCard.length}, accHolder=${accountHolderName.isNotBlank()}, accLen=${accountNumber.length}, ifscLen=${ifscCode.length}]"
+                "Save disabled. Reason=$submitBlockReason [full=${fullName.isNotBlank()}, phoneLen=${phone.length}, aadhaarLen=${aadharCard.length}, panLen=${panCard.length}, accHolder=${accountHolderName.isNotBlank()}, accLen=${accountNumber.length}, ifscLen=${ifscCode.length}]",
             )
         }
     }
@@ -208,29 +205,31 @@ fun OnboardTruckOwnerScreen(
                     Text(
                         text = "Onboard Truck Owner",
                         style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                }
+                },
             )
-        }
+        },
     ) { paddingValues ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                // Keyboard-aware viewport: without this the scroll bounds run behind the
-                // keyboard and bring-into-view leaves the focused field hidden. See FormInsets.kt.
-                .formViewportInsets(paddingValues)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    // Keyboard-aware viewport: without this the scroll bounds run behind the
+                    // keyboard and bring-into-view leaves the focused field hidden. See FormInsets.kt.
+                    .formViewportInsets(paddingValues),
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp, vertical = 20.dp),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp, vertical = 20.dp),
             ) {
                 ProfileSection(
                     title = "PERSONAL INFORMATION",
@@ -330,9 +329,10 @@ fun OnboardTruckOwnerScreen(
                     }
                     DividerLine()
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 12.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
@@ -403,10 +403,11 @@ fun OnboardTruckOwnerScreen(
                         AssistChip(
                             onClick = viewModel::openAddRouteSheet,
                             label = { Text("+ Add route", style = MaterialTheme.typography.labelMedium) },
-                            colors = AssistChipDefaults.assistChipColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f),
-                                labelColor = MaterialTheme.colorScheme.primary,
-                            ),
+                            colors =
+                                AssistChipDefaults.assistChipColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f),
+                                    labelColor = MaterialTheme.colorScheme.primary,
+                                ),
                             border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)),
                         )
                     }
@@ -492,9 +493,10 @@ fun OnboardTruckOwnerScreen(
 
             AnimatedVisibility(visible = isSaving) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)),
                     contentAlignment = Alignment.Center,
                 ) {
                     Card(shape = RoundedCornerShape(16.dp)) {
@@ -564,9 +566,10 @@ private fun ProfileSection(
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -626,18 +629,20 @@ private fun ProfileField(
 ) {
     var hasLostFocusOnce by rememberSaveable { mutableStateOf(false) }
     var isFocused by remember { mutableStateOf(false) }
-    val validationError = validationError(
-        label = label,
-        value = value,
-        type = validationType,
-        required = required,
-        showIncompleteError = hasLostFocusOnce
-    )
+    val validationError =
+        validationError(
+            label = label,
+            value = value,
+            type = validationType,
+            required = required,
+            showIncompleteError = hasLostFocusOnce,
+        )
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 14.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 14.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
@@ -661,65 +666,90 @@ private fun ProfileField(
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            modifier = Modifier
-                .fillMaxWidth()
-                .onFocusChanged { state ->
-                    if (isFocused && !state.isFocused) {
-                        hasLostFocusOnce = true
-                        onFocusLost?.invoke()
-                    }
-                    isFocused = state.isFocused
-                },
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .onFocusChanged { state ->
+                        if (isFocused && !state.isFocused) {
+                            hasLostFocusOnce = true
+                            onFocusLost?.invoke()
+                        }
+                        isFocused = state.isFocused
+                    },
             textStyle = MaterialTheme.typography.bodyLarge,
             singleLine = true,
             shape = MaterialTheme.shapes.medium,
             isError = validationError != null,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = when (validationType) {
-                    InputValidationType.PHONE,
-                    InputValidationType.ACCOUNT_NUMBER,
-                    InputValidationType.AADHAAR -> KeyboardType.Number
-                    InputValidationType.EMAIL -> KeyboardType.Email
-                    else -> KeyboardType.Text
+            keyboardOptions =
+                KeyboardOptions(
+                    keyboardType =
+                        when (validationType) {
+                            InputValidationType.PHONE,
+                            InputValidationType.ACCOUNT_NUMBER,
+                            InputValidationType.AADHAAR,
+                            -> KeyboardType.Number
+                            InputValidationType.EMAIL -> KeyboardType.Email
+                            else -> KeyboardType.Text
+                        },
+                    capitalization =
+                        when (validationType) {
+                            InputValidationType.PAN,
+                            InputValidationType.IFSC,
+                            InputValidationType.GST,
+                            -> KeyboardCapitalization.Characters
+                            InputValidationType.UPI,
+                            InputValidationType.EMAIL,
+                            -> KeyboardCapitalization.None
+                            else -> KeyboardCapitalization.Words
+                        },
+                    imeAction = ImeAction.Next,
+                ),
+            visualTransformation =
+                when (validationType) {
+                    InputValidationType.AADHAAR -> AadhaarVisualTransformation
+                    InputValidationType.PHONE -> PhoneVisualTransformation
+                    else -> VisualTransformation.None
                 },
-                capitalization = when (validationType) {
-                    InputValidationType.PAN,
-                    InputValidationType.IFSC,
-                    InputValidationType.GST -> KeyboardCapitalization.Characters
-                    InputValidationType.UPI,
-                    InputValidationType.EMAIL -> KeyboardCapitalization.None
-                    else -> KeyboardCapitalization.Words
+            supportingText =
+                if (validationError != null) {
+                    {
+                        Text(
+                            text = validationError,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                } else {
+                    null
                 },
-                imeAction = ImeAction.Next,
-            ),
-            visualTransformation = when (validationType) {
-                InputValidationType.AADHAAR -> AadhaarVisualTransformation
-                InputValidationType.PHONE -> PhoneVisualTransformation
-                else -> VisualTransformation.None
-            },
-            supportingText = if (validationError != null) {
-                {
-                    Text(
-                        text = validationError,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
-            } else null,
-            placeholder = when (validationType) {
-                InputValidationType.AADHAAR -> { { Text("1234 5678 9012") } }
-                InputValidationType.PAN -> { { Text("ABCDE1234F") } }
-                InputValidationType.GST -> { { Text("27ABCDE1234F1Z5") } }
-                InputValidationType.IFSC -> { { Text("HDFC0001234") } }
-                InputValidationType.UPI -> { { Text("name@okhdfcbank") } }
-                InputValidationType.EMAIL -> { { Text("email@example.com") } }
-                else -> null
-            },
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = if (validationError == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
-                unfocusedBorderColor = if (validationError == null) MaterialTheme.colorScheme.outlineVariant else MaterialTheme.colorScheme.error,
-                errorBorderColor = MaterialTheme.colorScheme.error,
-            ),
+            placeholder =
+                when (validationType) {
+                    InputValidationType.AADHAAR -> {
+                        { Text("1234 5678 9012") }
+                    }
+                    InputValidationType.PAN -> {
+                        { Text("ABCDE1234F") }
+                    }
+                    InputValidationType.GST -> {
+                        { Text("27ABCDE1234F1Z5") }
+                    }
+                    InputValidationType.IFSC -> {
+                        { Text("HDFC0001234") }
+                    }
+                    InputValidationType.UPI -> {
+                        { Text("name@okhdfcbank") }
+                    }
+                    InputValidationType.EMAIL -> {
+                        { Text("email@example.com") }
+                    }
+                    else -> null
+                },
+            colors =
+                OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = if (validationError == null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+                    unfocusedBorderColor = if (validationError == null) MaterialTheme.colorScheme.outlineVariant else MaterialTheme.colorScheme.error,
+                    errorBorderColor = MaterialTheme.colorScheme.error,
+                ),
         )
     }
 }
@@ -733,7 +763,10 @@ private fun DividerLine() {
 }
 
 @Composable
-private fun VerificationChip(text: String, color: Color) {
+private fun VerificationChip(
+    text: String,
+    color: Color,
+) {
     Surface(
         color = color.copy(alpha = 0.12f),
         shape = MaterialTheme.shapes.medium,
@@ -750,21 +783,23 @@ private fun VerificationChip(text: String, color: Color) {
 
 @Composable
 private fun DocumentPlaceholderList() {
-    val docs = listOf(
-        PlaceholderDocument(DocumentType.AADHAAR, DocumentStatus.UPLOADED),
-        PlaceholderDocument(DocumentType.PAN, DocumentStatus.VERIFIED),
-        PlaceholderDocument(DocumentType.GST_CERTIFICATE, DocumentStatus.UPLOADED),
-        PlaceholderDocument(DocumentType.COMPANY_REGISTRATION, null),
-        PlaceholderDocument(DocumentType.TDS_CERTIFICATE, DocumentStatus.UPLOADED),
-        PlaceholderDocument(DocumentType.CANCELLED_CHEQUE, DocumentStatus.UPLOADED),
-    )
+    val docs =
+        listOf(
+            PlaceholderDocument(DocumentType.AADHAAR, DocumentStatus.UPLOADED),
+            PlaceholderDocument(DocumentType.PAN, DocumentStatus.VERIFIED),
+            PlaceholderDocument(DocumentType.GST_CERTIFICATE, DocumentStatus.UPLOADED),
+            PlaceholderDocument(DocumentType.COMPANY_REGISTRATION, null),
+            PlaceholderDocument(DocumentType.TDS_CERTIFICATE, DocumentStatus.UPLOADED),
+            PlaceholderDocument(DocumentType.CANCELLED_CHEQUE, DocumentStatus.UPLOADED),
+        )
 
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         docs.forEachIndexed { index, item ->
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 18.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 18.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
@@ -808,13 +843,14 @@ private fun DocumentPlaceholderList() {
 
 @Composable
 private fun StatusBadge(status: DocumentStatus) {
-    val (text, color) = when (status) {
-        DocumentStatus.VERIFIED -> "Verified" to MaterialTheme.colorScheme.primary
-        DocumentStatus.UPLOADED -> "Verification Pending" to FreightThemeTokens.colors.warning
-        DocumentStatus.REJECTED -> "Rejected" to MaterialTheme.colorScheme.error
-        DocumentStatus.PENDING -> "Pending" to MaterialTheme.colorScheme.error
-        DocumentStatus.UNKNOWN -> "N/A" to MaterialTheme.colorScheme.onSurfaceVariant
-    }
+    val (text, color) =
+        when (status) {
+            DocumentStatus.VERIFIED -> "Verified" to MaterialTheme.colorScheme.primary
+            DocumentStatus.UPLOADED -> "Verification Pending" to FreightThemeTokens.colors.warning
+            DocumentStatus.REJECTED -> "Rejected" to MaterialTheme.colorScheme.error
+            DocumentStatus.PENDING -> "Pending" to MaterialTheme.colorScheme.error
+            DocumentStatus.UNKNOWN -> "N/A" to MaterialTheme.colorScheme.onSurfaceVariant
+        }
 
     Surface(
         color = color.copy(alpha = 0.1f),
@@ -840,10 +876,11 @@ private fun FloatingActions(
     modifier: Modifier = Modifier,
 ) {
     Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-//        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+        //        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f),
         tonalElevation = 8.dp,
         shadowElevation = 12.dp,
         shape = MaterialTheme.shapes.medium,
@@ -897,7 +934,10 @@ private data class PlaceholderDocument(
     val status: DocumentStatus?,
 )
 
-private fun validationError(value: String, type: InputValidationType): String? {
+private fun validationError(
+    value: String,
+    type: InputValidationType,
+): String? {
     return validationError("", value, type, false, false)
 }
 
@@ -906,15 +946,14 @@ private fun validationError(
     value: String,
     type: InputValidationType,
     required: Boolean,
-    showIncompleteError: Boolean
+    showIncompleteError: Boolean,
 ): String? {
     if (required && value.isBlank() && showIncompleteError) {
         return "$label is required"
     }
     if (value.isBlank()) return null
 
-    fun fromResult(result: ValidationResult): String? =
-        if (result is ValidationResult.Error) result.message else null
+    fun fromResult(result: ValidationResult): String? = if (result is ValidationResult.Error) result.message else null
 
     return when (type) {
         InputValidationType.AADHAAR -> {
@@ -965,51 +1004,54 @@ private fun validationError(
     }
 }
 
-private val AadhaarVisualTransformation = VisualTransformation { text ->
-    val transformed = ProfileFieldValidators.formatAadhaar(text.text)
-    TransformedText(
-        AnnotatedString(transformed),
-        object : OffsetMapping {
-            override fun originalToTransformed(offset: Int): Int {
-                if (offset <= 4) return offset
-                if (offset <= 8) return offset + 1
-                return offset + 2
-            }
+private val AadhaarVisualTransformation =
+    VisualTransformation { text ->
+        val transformed = ProfileFieldValidators.formatAadhaar(text.text)
+        TransformedText(
+            AnnotatedString(transformed),
+            object : OffsetMapping {
+                override fun originalToTransformed(offset: Int): Int {
+                    if (offset <= 4) return offset
+                    if (offset <= 8) return offset + 1
+                    return offset + 2
+                }
 
-            override fun transformedToOriginal(offset: Int): Int {
-                if (offset <= 4) return offset
-                if (offset <= 9) return offset - 1
-                return offset - 2
-            }
-        },
-    )
-}
+                override fun transformedToOriginal(offset: Int): Int {
+                    if (offset <= 4) return offset
+                    if (offset <= 9) return offset - 1
+                    return offset - 2
+                }
+            },
+        )
+    }
 
-private val PhoneVisualTransformation = VisualTransformation { text ->
-    val transformed = ProfileFieldValidators.formatPhone(text.text)
-    TransformedText(
-        AnnotatedString(transformed),
-        object : OffsetMapping {
-            override fun originalToTransformed(offset: Int): Int {
-                return if (offset <= 5) offset else offset + 1
-            }
+private val PhoneVisualTransformation =
+    VisualTransformation { text ->
+        val transformed = ProfileFieldValidators.formatPhone(text.text)
+        TransformedText(
+            AnnotatedString(transformed),
+            object : OffsetMapping {
+                override fun originalToTransformed(offset: Int): Int {
+                    return if (offset <= 5) offset else offset + 1
+                }
 
-            override fun transformedToOriginal(offset: Int): Int {
-                return if (offset <= 5) offset else offset - 1
-            }
-        },
-    )
-}
+                override fun transformedToOriginal(offset: Int): Int {
+                    return if (offset <= 5) offset else offset - 1
+                }
+            },
+        )
+    }
 
-private fun docIcon(type: DocumentType): ImageVector = when (type) {
-    DocumentType.PAN -> Icons.Default.CreditCard
-    DocumentType.AADHAAR -> Icons.Default.Fingerprint
-    DocumentType.GST_CERTIFICATE -> Icons.Default.Description
-    DocumentType.COMPANY_REGISTRATION -> Icons.Default.Business
-    DocumentType.TDS_CERTIFICATE -> Icons.Default.Badge
-    DocumentType.CANCELLED_CHEQUE -> Icons.Default.AccountBalance
-    else -> Icons.Default.Description
-}
+private fun docIcon(type: DocumentType): ImageVector =
+    when (type) {
+        DocumentType.PAN -> Icons.Default.CreditCard
+        DocumentType.AADHAAR -> Icons.Default.Fingerprint
+        DocumentType.GST_CERTIFICATE -> Icons.Default.Description
+        DocumentType.COMPANY_REGISTRATION -> Icons.Default.Business
+        DocumentType.TDS_CERTIFICATE -> Icons.Default.Badge
+        DocumentType.CANCELLED_CHEQUE -> Icons.Default.AccountBalance
+        else -> Icons.Default.Description
+    }
 
 @Composable
 private fun TruckOwnerOnboardedDialog(
@@ -1064,24 +1106,26 @@ private fun TruckOwnerOnboardedDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(scrimColor),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(scrimColor),
             contentAlignment = Alignment.Center,
         ) {
             Card(
-                modifier = Modifier
-                    .width(320.dp)
-                    .graphicsLayer {
-                        alpha = cardAlpha
-                        scaleX = cardScale
-                        scaleY = cardScale
-                    }
-                    .border(
-                        width = 1.dp,
-                        color = colorScheme.outlineVariant.copy(alpha = 0.5f),
-                        shape = RoundedCornerShape(24.dp),
-                    ),
+                modifier =
+                    Modifier
+                        .width(320.dp)
+                        .graphicsLayer {
+                            alpha = cardAlpha
+                            scaleX = cardScale
+                            scaleY = cardScale
+                        }
+                        .border(
+                            width = 1.dp,
+                            color = colorScheme.outlineVariant.copy(alpha = 0.5f),
+                            shape = RoundedCornerShape(24.dp),
+                        ),
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
             ) {
@@ -1091,13 +1135,15 @@ private fun TruckOwnerOnboardedDialog(
                 ) {
                     Canvas(modifier = Modifier.width(180.dp).height(1.dp)) {
                         drawLine(
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(
-                                    successColor.copy(alpha = 0f),
-                                    successColor.copy(alpha = 0.8f),
-                                    successColor.copy(alpha = 0f),
-                                )
-                            ),
+                            brush =
+                                Brush.horizontalGradient(
+                                    colors =
+                                        listOf(
+                                            successColor.copy(alpha = 0f),
+                                            successColor.copy(alpha = 0.8f),
+                                            successColor.copy(alpha = 0f),
+                                        ),
+                                ),
                             start = androidx.compose.ui.geometry.Offset(0f, size.height / 2f),
                             end = androidx.compose.ui.geometry.Offset(size.width, size.height / 2f),
                             strokeWidth = size.height,
@@ -1107,39 +1153,43 @@ private fun TruckOwnerOnboardedDialog(
                     Spacer(modifier = Modifier.height(20.dp))
 
                     Surface(
-                        modifier = Modifier
-                            .size(72.dp)
-                            .graphicsLayer {
-                                alpha = iconAlpha
-                                scaleX = iconScale * iconOvershoot
-                                scaleY = iconScale * iconOvershoot
-                            }
-                            .border(
-                                width = 1.dp,
-                                color = successColor.copy(alpha = 0.25f),
-                                shape = RoundedCornerShape(999.dp),
-                            ),
+                        modifier =
+                            Modifier
+                                .size(72.dp)
+                                .graphicsLayer {
+                                    alpha = iconAlpha
+                                    scaleX = iconScale * iconOvershoot
+                                    scaleY = iconScale * iconOvershoot
+                                }
+                                .border(
+                                    width = 1.dp,
+                                    color = successColor.copy(alpha = 0.25f),
+                                    shape = RoundedCornerShape(999.dp),
+                                ),
                         shape = RoundedCornerShape(999.dp),
                         color = successColor.copy(alpha = 0.10f),
                     ) {
                         Canvas(modifier = Modifier.fillMaxSize().padding(20.dp)) {
-                            val path = androidx.compose.ui.graphics.Path().apply {
-                                moveTo(size.width * 0.18f, size.height * 0.54f)
-                                lineTo(size.width * 0.42f, size.height * 0.76f)
-                                lineTo(size.width * 0.84f, size.height * 0.24f)
-                            }
+                            val path =
+                                androidx.compose.ui.graphics.Path().apply {
+                                    moveTo(size.width * 0.18f, size.height * 0.54f)
+                                    lineTo(size.width * 0.42f, size.height * 0.76f)
+                                    lineTo(size.width * 0.84f, size.height * 0.24f)
+                                }
                             drawPath(
                                 path = path,
                                 color = successColor,
-                                style = androidx.compose.ui.graphics.drawscope.Stroke(
-                                    width = 2.2.dp.toPx(),
-                                    cap = StrokeCap.Round,
-                                    join = StrokeJoin.Round,
-                                    pathEffect = PathEffect.dashPathEffect(
-                                        floatArrayOf(path.getBounds().maxDimension * checkProgress, path.getBounds().maxDimension),
-                                        0f,
+                                style =
+                                    androidx.compose.ui.graphics.drawscope.Stroke(
+                                        width = 2.2.dp.toPx(),
+                                        cap = StrokeCap.Round,
+                                        join = StrokeJoin.Round,
+                                        pathEffect =
+                                            PathEffect.dashPathEffect(
+                                                floatArrayOf(path.getBounds().maxDimension * checkProgress, path.getBounds().maxDimension),
+                                                0f,
+                                            ),
                                     ),
-                                ),
                             )
                         }
                     }
@@ -1173,11 +1223,12 @@ private fun TruckOwnerOnboardedDialog(
                         Surface(
                             color = successColor.copy(alpha = 0.08f),
                             shape = RoundedCornerShape(6.dp),
-                            modifier = Modifier.border(
-                                width = 0.5.dp,
-                                color = successColor.copy(alpha = 0.20f),
-                                shape = RoundedCornerShape(6.dp),
-                            ),
+                            modifier =
+                                Modifier.border(
+                                    width = 0.5.dp,
+                                    color = successColor.copy(alpha = 0.20f),
+                                    shape = RoundedCornerShape(6.dp),
+                                ),
                         ) {
                             Text(
                                 text = "\u25cf TRUCK OWNER",
@@ -1251,10 +1302,11 @@ private fun AnimatedDialogContent(
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.graphicsLayer {
-            this.alpha = alpha
-            this.translationY = translateY
-        },
+        modifier =
+            Modifier.graphicsLayer {
+                this.alpha = alpha
+                this.translationY = translateY
+            },
         content = content,
     )
 }
@@ -1285,10 +1337,11 @@ private fun DialogActionButton(
             enabled = enabled,
             shape = MaterialTheme.shapes.medium,
             interactionSource = interactionSource,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = containerColor,
-                contentColor = contentColor,
-            ),
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = containerColor,
+                    contentColor = contentColor,
+                ),
         ) {
             Text(text = text, fontWeight = FontWeight.Medium)
         }
@@ -1300,10 +1353,11 @@ private fun DialogActionButton(
             shape = MaterialTheme.shapes.medium,
             interactionSource = interactionSource,
             border = androidx.compose.foundation.BorderStroke(0.5.dp, borderColor),
-            colors = ButtonDefaults.outlinedButtonColors(
-                containerColor = containerColor,
-                contentColor = contentColor,
-            ),
+            colors =
+                ButtonDefaults.outlinedButtonColors(
+                    containerColor = containerColor,
+                    contentColor = contentColor,
+                ),
         ) {
             Text(text = text, fontWeight = FontWeight.Medium)
         }

@@ -1,23 +1,19 @@
 package com.freight24.connect.feature.trips.views
-import com.freight24.ui.components.FreightTopAppBar
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -26,6 +22,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.freight24.connect.feature.trips.domain.viewmodel.OtherDeductionsEvent
 import com.freight24.connect.feature.trips.domain.viewmodel.OtherDeductionsViewModel
 import com.freight24.connect.feature.trips.domain.viewmodel.OtherDeductionsViewModelImpl
+import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.components.formViewportInsets
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,7 +31,7 @@ fun OtherDeductionsScreen(
     tripId: String,
     onBackClick: () -> Unit,
     onSuccess: () -> Unit,
-    viewModel: OtherDeductionsViewModel = hiltViewModel<OtherDeductionsViewModelImpl>()
+    viewModel: OtherDeductionsViewModel = hiltViewModel<OtherDeductionsViewModelImpl>(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
@@ -68,13 +65,14 @@ fun OtherDeductionsScreen(
         bottomBar = {
             Button(
                 onClick = { viewModel.onEvent(OtherDeductionsEvent.OnUpdateClick) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .height(56.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .height(56.dp),
                 shape = MaterialTheme.shapes.medium,
                 colors = ButtonDefaults.buttonColors(containerColor = colorScheme.primary),
-                enabled = !uiState.isLoading && uiState.hasChanges
+                enabled = !uiState.isLoading && uiState.hasChanges,
             ) {
                 if (uiState.isLoading) {
                     CircularProgressIndicator(color = colorScheme.onPrimary, modifier = Modifier.size(24.dp))
@@ -87,40 +85,41 @@ fun OtherDeductionsScreen(
                 }
             }
         },
-        containerColor = colorScheme.background
+        containerColor = colorScheme.background,
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                // Keyboard-aware viewport: without this the scroll bounds run behind the
-                // keyboard and bring-into-view leaves the focused field hidden. See FormInsets.kt.
-                .formViewportInsets(padding)
-                .verticalScroll(scrollState)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    // Keyboard-aware viewport: without this the scroll bounds run behind the
+                    // keyboard and bring-into-view leaves the focused field hidden. See FormInsets.kt.
+                    .formViewportInsets(padding)
+                    .verticalScroll(scrollState)
+                    .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
             // NOTE box
             Surface(
                 color = colorScheme.primaryContainer,
                 shape = MaterialTheme.shapes.medium,
-                modifier = Modifier.fillMaxWidth().border(1.dp, colorScheme.primary.copy(alpha = 0.2f), MaterialTheme.shapes.medium)
+                modifier = Modifier.fillMaxWidth().border(1.dp, colorScheme.primary.copy(alpha = 0.2f), MaterialTheme.shapes.medium),
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.Top
+                    verticalAlignment = Alignment.Top,
                 ) {
                     Icon(
                         Icons.Default.Info,
                         contentDescription = null,
                         tint = colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(20.dp),
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         "These are miscellaneous deductions subject to approval by the finance department. Please provide accurate details.",
                         style = MaterialTheme.typography.bodySmall,
                         color = colorScheme.onSurfaceVariant,
-                        lineHeight = 18.sp
+                        lineHeight = 18.sp,
                     )
                 }
             }
@@ -131,7 +130,7 @@ fun OtherDeductionsScreen(
                     "Deduction Amount",
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.labelLarge,
-                    color = colorScheme.onSurface
+                    color = colorScheme.onSurface,
                 )
                 OutlinedTextField(
                     value = uiState.amount,
@@ -143,13 +142,14 @@ fun OtherDeductionsScreen(
                     },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     shape = MaterialTheme.shapes.medium,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = colorScheme.primary,
-                        unfocusedBorderColor = colorScheme.outlineVariant,
-                        focusedContainerColor = colorScheme.surface,
-                        unfocusedContainerColor = colorScheme.surface
-                    ),
-                    singleLine = true
+                    colors =
+                        OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = colorScheme.primary,
+                            unfocusedBorderColor = colorScheme.outlineVariant,
+                            focusedContainerColor = colorScheme.surface,
+                            unfocusedContainerColor = colorScheme.surface,
+                        ),
+                    singleLine = true,
                 )
             }
 
@@ -159,26 +159,27 @@ fun OtherDeductionsScreen(
                     "Reason for Deduction",
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.labelLarge,
-                    color = colorScheme.onSurface
+                    color = colorScheme.onSurface,
                 )
                 OutlinedTextField(
                     value = uiState.notes,
                     onValueChange = { viewModel.onEvent(OtherDeductionsEvent.OnReasonChange(it)) },
                     modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp),
-                    placeholder = { 
+                    placeholder = {
                         Text(
                             "Enter the specific reason or notes for this deduction...",
-                            color = colorScheme.onSurfaceVariant
-                        ) 
+                            color = colorScheme.onSurfaceVariant,
+                        )
                     },
                     shape = MaterialTheme.shapes.medium,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = colorScheme.primary,
-                        unfocusedBorderColor = colorScheme.outlineVariant,
-                        focusedContainerColor = colorScheme.surface,
-                        unfocusedContainerColor = colorScheme.surface
-                    ),
-                    minLines = 4
+                    colors =
+                        OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = colorScheme.primary,
+                            unfocusedBorderColor = colorScheme.outlineVariant,
+                            focusedContainerColor = colorScheme.surface,
+                            unfocusedContainerColor = colorScheme.surface,
+                        ),
+                    minLines = 4,
                 )
             }
         }

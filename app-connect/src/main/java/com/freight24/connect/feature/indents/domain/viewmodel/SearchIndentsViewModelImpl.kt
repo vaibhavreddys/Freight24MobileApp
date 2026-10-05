@@ -19,94 +19,97 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class SearchIndentsViewModelImpl @Inject constructor(
-    private val searchIndentsUseCase: SearchIndentsUseCase
-) : ViewModel(), SearchIndentsViewModel {
+class SearchIndentsViewModelImpl
+    @Inject
+    constructor(
+        private val searchIndentsUseCase: SearchIndentsUseCase,
+    ) : ViewModel(), SearchIndentsViewModel {
+        private val _uiState = MutableStateFlow(SearchIndentsUiState())
+        override val uiState: StateFlow<SearchIndentsUiState> = _uiState.asStateFlow()
 
-    private val _uiState = MutableStateFlow(SearchIndentsUiState())
-    override val uiState: StateFlow<SearchIndentsUiState> = _uiState.asStateFlow()
+        private var searchJob: Job? = null
+        private val queryFlow = MutableStateFlow("")
 
-    private var searchJob: Job? = null
-    private val queryFlow = MutableStateFlow("")
+        init {
+            observeQuery()
+        }
 
-    init {
-        observeQuery()
-    }
-
-    @OptIn(FlowPreview::class)
-    private fun observeQuery() {
-        queryFlow
-            .debounce(500) // Debounce for 500ms
-            .distinctUntilChanged()
-            .onEach { query ->
-                if (query.isNotBlank()) {
-                    performSearch(query)
-                } else {
-                    _uiState.update { it.copy(indents = emptyList()) }
+        @OptIn(FlowPreview::class)
+        private fun observeQuery() {
+            queryFlow
+                .debounce(500) // Debounce for 500ms
+                .distinctUntilChanged()
+                .onEach { query ->
+                    if (query.isNotBlank()) {
+                        performSearch(query)
+                    } else {
+                        _uiState.update { it.copy(indents = emptyList()) }
+                    }
                 }
-            }
-            .launchIn(viewModelScope)
-    }
+                .launchIn(viewModelScope)
+        }
 
-    override fun onEvent(event: SearchIndentsEvent) {
-        when (event) {
-            is SearchIndentsEvent.UpdateQuery -> {
-                _uiState.update { it.copy(query = event.query) }
-                queryFlow.value = event.query
-            }
-            is SearchIndentsEvent.UpdateFilters -> {
-                _uiState.update {
-                    it.copy(
-                        priority = event.priority ?: it.priority,
-                        clientId = event.clientId ?: it.clientId,
-                        assignedToMe = event.assignedToMe ?: it.assignedToMe
-                    )
+        override fun onEvent(event: SearchIndentsEvent) {
+            when (event) {
+                is SearchIndentsEvent.UpdateQuery -> {
+                    _uiState.update { it.copy(query = event.query) }
+                    queryFlow.value = event.query
                 }
-                // Trigger search with new filters if query is present
-                if (_uiState.value.query.isNotBlank()) {
+                is SearchIndentsEvent.UpdateFilters -> {
+                    _uiState.update {
+                        it.copy(
+                            priority = event.priority ?: it.priority,
+                            clientId = event.clientId ?: it.clientId,
+                            assignedToMe = event.assignedToMe ?: it.assignedToMe,
+                        )
+                    }
+                    // Trigger search with new filters if query is present
+                    if (_uiState.value.query.isNotBlank()) {
+                        performSearch(_uiState.value.query)
+                    }
+                }
+                is SearchIndentsEvent.PerformSearch -> {
                     performSearch(_uiState.value.query)
                 }
-            }
-            is SearchIndentsEvent.PerformSearch -> {
-                performSearch(_uiState.value.query)
-            }
-            is SearchIndentsEvent.ClearError -> {
-                _uiState.update { it.copy(errorMessage = null) }
-            }
-        }
-    }
-
-    private fun performSearch(query: String) {
-        searchJob?.cancel()
-        searchJob = viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-            
-            val currentState = _uiState.value
-            val result = searchIndentsUseCase(
-                SearchIndentsUseCaseParams(
-                    query = query,
-                    priority = currentState.priority,
-                    clientId = currentState.clientId,
-                    assignedToMe = if (currentState.assignedToMe) true else null
-                )
-            )
-
-            if (result.isSuccess) {
-                val response = result.getOrNull()
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        indents = response?.data ?: emptyList()
-                    )
-                }
-            } else {
-                 _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        errorMessage = result.exceptionOrNull()?.message ?: "Search failed"
-                    )
+                is SearchIndentsEvent.ClearError -> {
+                    _uiState.update { it.copy(errorMessage = null) }
                 }
             }
         }
+
+        private fun performSearch(query: String) {
+            searchJob?.cancel()
+            searchJob =
+                viewModelScope.launch {
+                    _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+
+                    val currentState = _uiState.value
+                    val result =
+                        searchIndentsUseCase(
+                            SearchIndentsUseCaseParams(
+                                query = query,
+                                priority = currentState.priority,
+                                clientId = currentState.clientId,
+                                assignedToMe = if (currentState.assignedToMe) true else null,
+                            ),
+                        )
+
+                    if (result.isSuccess) {
+                        val response = result.getOrNull()
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                indents = response?.data ?: emptyList(),
+                            )
+                        }
+                    } else {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                errorMessage = result.exceptionOrNull()?.message ?: "Search failed",
+                            )
+                        }
+                    }
+                }
+        }
     }
-}

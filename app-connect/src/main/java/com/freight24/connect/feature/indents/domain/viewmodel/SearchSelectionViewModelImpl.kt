@@ -16,51 +16,57 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class SearchSelectionViewModelImpl @Inject constructor(
-    private val getLocationsUseCase: GetLocationsUseCase,
-    private val getClientsUseCase: GetClientsUseCase
-) : ViewModel(), SearchSelectionViewModel {
+class SearchSelectionViewModelImpl
+    @Inject
+    constructor(
+        private val getLocationsUseCase: GetLocationsUseCase,
+        private val getClientsUseCase: GetClientsUseCase,
+    ) : ViewModel(), SearchSelectionViewModel {
+        private val _uiState = MutableStateFlow(SearchSelectionUiState())
+        override val uiState: StateFlow<SearchSelectionUiState> = _uiState.asStateFlow()
 
-    private val _uiState = MutableStateFlow(SearchSelectionUiState())
-    override val uiState: StateFlow<SearchSelectionUiState> = _uiState.asStateFlow()
+        private var searchJob: Job? = null
 
-    private var searchJob: Job? = null
-
-    override fun onEvent(event: SearchSelectionEvent) {
-        when (event) {
-            is SearchSelectionEvent.OnQueryChange -> {
-                _uiState.update { it.copy(query = event.query) }
-                search(event.query, event.searchType)
-            }
-        }
-    }
-
-    private fun search(query: String, searchType: SearchType) {
-        searchJob?.cancel()
-        if (query.length < 3) {
-            _uiState.update { it.copy(results = emptyList(), isLoading = false) }
-            return
-        }
-
-        searchJob = viewModelScope.launch {
-            delay(300)
-            _uiState.update { it.copy(isLoading = true, error = null) }
-            
-            val result = when (searchType) {
-                SearchType.CLIENT -> getClientsUseCase.invoke(query)
-                SearchType.LOCATION_FROM, SearchType.LOCATION_TO -> getLocationsUseCase.invoke(query)
-            }
-
-            if (result.isSuccess) {
-                _uiState.update { it.copy(results = result.getOrNull() ?: emptyList(), isLoading = false) }
-            } else {
-                _uiState.update { 
-                    it.copy(
-                        isLoading = false, 
-                        error = result.exceptionOrNull()?.message ?: "Search failed"
-                    ) 
+        override fun onEvent(event: SearchSelectionEvent) {
+            when (event) {
+                is SearchSelectionEvent.OnQueryChange -> {
+                    _uiState.update { it.copy(query = event.query) }
+                    search(event.query, event.searchType)
                 }
             }
         }
+
+        private fun search(
+            query: String,
+            searchType: SearchType,
+        ) {
+            searchJob?.cancel()
+            if (query.length < 3) {
+                _uiState.update { it.copy(results = emptyList(), isLoading = false) }
+                return
+            }
+
+            searchJob =
+                viewModelScope.launch {
+                    delay(300)
+                    _uiState.update { it.copy(isLoading = true, error = null) }
+
+                    val result =
+                        when (searchType) {
+                            SearchType.CLIENT -> getClientsUseCase.invoke(query)
+                            SearchType.LOCATION_FROM, SearchType.LOCATION_TO -> getLocationsUseCase.invoke(query)
+                        }
+
+                    if (result.isSuccess) {
+                        _uiState.update { it.copy(results = result.getOrNull() ?: emptyList(), isLoading = false) }
+                    } else {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                error = result.exceptionOrNull()?.message ?: "Search failed",
+                            )
+                        }
+                    }
+                }
+        }
     }
-}

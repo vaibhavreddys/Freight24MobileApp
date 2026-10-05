@@ -5,5 +5,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class UpdateOtherDeductionsRequest(
     val amount: String,
-    val remarks: String?
+    val remarks: String?,
 )

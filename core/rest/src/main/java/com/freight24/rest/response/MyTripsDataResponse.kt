@@ -6,5 +6,5 @@ import kotlinx.serialization.Serializable
 data class MyTripsDataResponse(
     val page: Int,
     val limit: Int,
-    val data: List<TripDataResponse>
+    val data: List<TripDataResponse>,
 ) : BaseResponse()

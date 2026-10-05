@@ -10,9 +10,6 @@ import dagger.hilt.android.components.ViewModelComponent
 @Module
 @InstallIn(ViewModelComponent::class)
 abstract class DashboardDomainModule {
-
     @Binds
-    abstract fun bindDashboardViewModel(
-        impl: DashboardViewModelImpl
-    ): DashboardViewModel
+    abstract fun bindDashboardViewModel(impl: DashboardViewModelImpl): DashboardViewModel
 }

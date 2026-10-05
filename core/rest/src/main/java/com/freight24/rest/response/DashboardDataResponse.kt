@@ -4,15 +4,16 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class DashboardDataResponse(
-    val data : DashboardData
-): BaseResponse() {
+    val data: DashboardData,
+) : BaseResponse() {
     @Serializable
     data class DashboardData(
         val activeTrips: ActiveTrips,
         val indentPulse: IndentPulse,
         val pendingActions: PendingActions,
-        val attentionNeeded: AttentionNeeded
+        val attentionNeeded: AttentionNeeded,
     )
+
     @Serializable
     data class ActiveTrips(
         val total: Int,
@@ -20,6 +21,7 @@ data class DashboardDataResponse(
         val assigned: Int,
         val inTransit: Int,
     )
+
     @Serializable
     data class IndentPulse(
         val open: Int,
@@ -27,23 +29,24 @@ data class DashboardDataResponse(
         val closed: Int,
         val readyForAssignment: Int,
     )
-@Serializable
-data class PendingActions(
-    val lrReviews: Int,
-    val podFollowUp: Int,
-    val verificationRequests: VerificationRequests,
-)
 
-@Serializable
-data class VerificationRequests(
-    val tripVerificationRequests: Int,
-    val truckVerificationRequests: Int,
-    val clientVerificationRequests: Int,
-    val truckOwnerVerificationRequests: Int,
-) {
-    val total: Int
-        get() = tripVerificationRequests + truckVerificationRequests + clientVerificationRequests + truckOwnerVerificationRequests
-}
+    @Serializable
+    data class PendingActions(
+        val lrReviews: Int,
+        val podFollowUp: Int,
+        val verificationRequests: VerificationRequests,
+    )
+
+    @Serializable
+    data class VerificationRequests(
+        val tripVerificationRequests: Int,
+        val truckVerificationRequests: Int,
+        val clientVerificationRequests: Int,
+        val truckOwnerVerificationRequests: Int,
+    ) {
+        val total: Int
+            get() = tripVerificationRequests + truckVerificationRequests + clientVerificationRequests + truckOwnerVerificationRequests
+    }
 
     @Serializable
     data class AttentionNeeded(

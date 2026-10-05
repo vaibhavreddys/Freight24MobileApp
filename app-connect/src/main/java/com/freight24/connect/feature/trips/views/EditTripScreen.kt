@@ -1,6 +1,4 @@
 package com.freight24.connect.feature.trips.views
-import com.freight24.ui.components.FreightTopAppBar
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -22,18 +20,17 @@ import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.connect.feature.trips.domain.viewmodel.EditTripEvent
 import com.freight24.connect.feature.trips.domain.viewmodel.EditTripViewModel
 import com.freight24.connect.feature.trips.domain.viewmodel.EditTripViewModelImpl
-import com.freight24.ui.theme.FreightThemeTokens
+import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.components.formViewportInsets
+import com.freight24.ui.theme.FreightThemeTokens
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,7 +42,7 @@ fun EditTripScreen(
     onBackClick: () -> Unit,
     onNavigateToTruckSearch: (String) -> Unit,
     onSuccess: () -> Unit,
-    viewModel: EditTripViewModel = hiltViewModel<EditTripViewModelImpl>()
+    viewModel: EditTripViewModel = hiltViewModel<EditTripViewModelImpl>(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val colorScheme = MaterialTheme.colorScheme
@@ -55,13 +52,15 @@ fun EditTripScreen(
     val scope = rememberCoroutineScope()
 
     // Observe truck selection result from AssignTruckScreen using the specific backStackEntry
-    val selectedTruckId = backStackEntry.savedStateHandle
-        .getStateFlow<String?>("selected_truck_id", null)
-        .collectAsStateWithLifecycle()
+    val selectedTruckId =
+        backStackEntry.savedStateHandle
+            .getStateFlow<String?>("selected_truck_id", null)
+            .collectAsStateWithLifecycle()
 
-    val selectedTruckNumber = backStackEntry.savedStateHandle
-        .getStateFlow<String?>("selected_truck_number", null)
-        .collectAsStateWithLifecycle()
+    val selectedTruckNumber =
+        backStackEntry.savedStateHandle
+            .getStateFlow<String?>("selected_truck_number", null)
+            .collectAsStateWithLifecycle()
 
     LaunchedEffect(selectedTruckId.value, selectedTruckNumber.value) {
         if (selectedTruckId.value != null && selectedTruckNumber.value != null) {
@@ -106,17 +105,18 @@ fun EditTripScreen(
                 color = colorScheme.surface,
                 tonalElevation = 8.dp,
                 shadowElevation = 8.dp,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Box(modifier = Modifier.padding(16.dp)) {
                     Button(
                         onClick = { viewModel.onEvent(EditTripEvent.SaveChanges) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
                         shape = MaterialTheme.shapes.medium,
                         colors = ButtonDefaults.buttonColors(containerColor = extendedColors.success),
-                        enabled = !uiState.isSaving && uiState.hasChanges
+                        enabled = !uiState.isSaving && uiState.hasChanges,
                     ) {
                         if (uiState.isSaving) {
                             CircularProgressIndicator(modifier = Modifier.size(24.dp), color = colorScheme.onPrimary)
@@ -124,43 +124,43 @@ fun EditTripScreen(
                             Text(
                                 "Save Changes",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
                             )
                         }
                     }
                 }
             }
         },
-        containerColor = colorScheme.background
+        containerColor = colorScheme.background,
     ) { paddingValues ->
         // Keyboard-aware viewport; see FormInsets.kt.
-    Box(modifier = Modifier.fillMaxSize().formViewportInsets(paddingValues)) {
+        Box(modifier = Modifier.fillMaxSize().formViewportInsets(paddingValues)) {
             if (uiState.isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             } else {
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     // Trip ID Card
                     Card(
                         shape = MaterialTheme.shapes.medium,
                         colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
                         Row(
                             modifier = Modifier.padding(16.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-
                             Text(
                                 "Trip ID",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = colorScheme.onSurfaceVariant
+                                color = colorScheme.onSurfaceVariant,
                             )
 
                             Text(
@@ -169,7 +169,7 @@ fun EditTripScreen(
                                 fontWeight = FontWeight.Bold,
                                 textAlign = TextAlign.End,
                                 color = colorScheme.onSurface,
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
                             )
                         }
                     }
@@ -180,36 +180,41 @@ fun EditTripScreen(
                         shape = MaterialTheme.shapes.medium,
                         colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
                         border = if (isTruckUpdated) androidx.compose.foundation.BorderStroke(1.dp, extendedColors.success) else null,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                val restrictedStatuses = listOf("IN_TRANSIT", "UNLOADED", "INVOICED", "POD_DISPATCHED", "PAID", "CLOSED")
-                                if (uiState.truckerStatus in restrictedStatuses) {
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar(
-                                            "Truck updates are restricted once the trip has reached the '${uiState.truckerStatus.replace("_", " ")}' stage."
-                                        )
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    val restrictedStatuses =
+                                        listOf("IN_TRANSIT", "UNLOADED", "INVOICED", "POD_DISPATCHED", "PAID", "CLOSED")
+                                    if (uiState.truckerStatus in restrictedStatuses) {
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(
+                                                "Truck updates are restricted once the trip has reached the '${uiState.truckerStatus.replace(
+                                                    "_",
+                                                    " ",
+                                                )}' stage.",
+                                            )
+                                        }
+                                    } else {
+                                        onNavigateToTruckSearch(uiState.internalTripId)
                                     }
-                                } else {
-                                    onNavigateToTruckSearch(uiState.internalTripId)
-                                }
-                            }
+                                },
                     ) {
                         Row(
                             modifier = Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
                                 color = if (isTruckUpdated) extendedColors.success.copy(alpha = 0.12f) else colorScheme.surfaceVariant,
-                                modifier = Modifier.size(40.dp)
+                                modifier = Modifier.size(40.dp),
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
                                         Icons.Default.LocalShipping,
                                         contentDescription = null,
                                         tint = if (isTruckUpdated) extendedColors.success else colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(20.dp)
+                                        modifier = Modifier.size(20.dp),
                                     )
                                 }
                             }
@@ -219,20 +224,20 @@ fun EditTripScreen(
                                     Text(
                                         "Truck Number",
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = colorScheme.onSurfaceVariant
+                                        color = colorScheme.onSurfaceVariant,
                                     )
                                     if (isTruckUpdated) {
                                         Spacer(modifier = Modifier.width(8.dp))
                                         Surface(
                                             color = extendedColors.success.copy(alpha = 0.12f),
-                                            shape = RoundedCornerShape(4.dp)
+                                            shape = RoundedCornerShape(4.dp),
                                         ) {
                                             Text(
                                                 "Updated",
                                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                                 style = MaterialTheme.typography.labelSmall,
                                                 color = extendedColors.success,
-                                                fontWeight = FontWeight.Bold
+                                                fontWeight = FontWeight.Bold,
                                             )
                                         }
                                     }
@@ -241,22 +246,23 @@ fun EditTripScreen(
                                     uiState.truckNumber,
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (isTruckUpdated) extendedColors.success else colorScheme.onSurface
+                                    color = if (isTruckUpdated) extendedColors.success else colorScheme.onSurface,
                                 )
                                 if (isTruckUpdated) {
                                     Text(
                                         uiState.initialTruckNumber,
-                                        style = MaterialTheme.typography.bodySmall.copy(
-                                            textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough
-                                        ),
-                                        color = colorScheme.onSurfaceVariant
+                                        style =
+                                            MaterialTheme.typography.bodySmall.copy(
+                                                textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough,
+                                            ),
+                                        color = colorScheme.onSurfaceVariant,
                                     )
                                 }
                             }
                             Icon(
                                 Icons.Default.ChevronRight,
                                 contentDescription = null,
-                                tint = colorScheme.onSurfaceVariant
+                                tint = colorScheme.onSurfaceVariant,
                             )
                         }
                     }
@@ -265,28 +271,28 @@ fun EditTripScreen(
                     Card(
                         shape = MaterialTheme.shapes.medium,
                         colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                             Text(
                                 "Driver Details",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = colorScheme.onSurface
+                                color = colorScheme.onSurface,
                             )
 
                             DetailInputField(
                                 label = "Name",
                                 value = uiState.driverName,
                                 onValueChange = { viewModel.onEvent(EditTripEvent.UpdateDriverName(it)) },
-                                leadingIcon = Icons.Outlined.Person
+                                leadingIcon = Icons.Outlined.Person,
                             )
 
                             DetailInputField(
                                 label = "Phone",
                                 value = uiState.driverPhone,
                                 onValueChange = { viewModel.onEvent(EditTripEvent.UpdateDriverPhone(it)) },
-                                leadingIcon = Icons.Outlined.Call
+                                leadingIcon = Icons.Outlined.Call,
                             )
                         }
                     }
@@ -295,25 +301,26 @@ fun EditTripScreen(
                     Card(
                         shape = MaterialTheme.shapes.medium,
                         colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(
-                                modifier = Modifier.fillMaxWidth()
-                                    .clickable { isOptionalExpanded = !isOptionalExpanded },
+                                modifier =
+                                    Modifier.fillMaxWidth()
+                                        .clickable { isOptionalExpanded = !isOptionalExpanded },
                                 horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Text(
                                     "Cost Details",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = colorScheme.onSurface
+                                    color = colorScheme.onSurface,
                                 )
                                 Icon(
                                     if (isOptionalExpanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
                                     contentDescription = null,
-                                    tint = colorScheme.onSurfaceVariant
+                                    tint = colorScheme.onSurfaceVariant,
                                 )
                             }
 
@@ -326,11 +333,11 @@ fun EditTripScreen(
                                         onValueChange = {
                                             viewModel.onEvent(
                                                 EditTripEvent.UpdateClientCost(
-                                                    it
-                                                )
+                                                    it,
+                                                ),
                                             )
                                         },
-                                        leadingIcon = Icons.Outlined.CurrencyRupee
+                                        leadingIcon = Icons.Outlined.CurrencyRupee,
                                     )
 
                                     DetailInputField(
@@ -339,11 +346,11 @@ fun EditTripScreen(
                                         onValueChange = {
                                             viewModel.onEvent(
                                                 EditTripEvent.UpdateTruckerCost(
-                                                    it
-                                                )
+                                                    it,
+                                                ),
                                             )
                                         },
-                                        leadingIcon = Icons.Outlined.CurrencyRupee
+                                        leadingIcon = Icons.Outlined.CurrencyRupee,
                                     )
 
                                     DetailInputField(
@@ -352,26 +359,28 @@ fun EditTripScreen(
                                         onValueChange = { viewModel.onEvent(EditTripEvent.UpdateNotes(it)) },
                                         leadingIcon = Icons.AutoMirrored.Outlined.Notes,
                                         modifier = Modifier.height(150.dp),
-                                        singleLine = false
+                                        singleLine = false,
                                     )
 
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.fillMaxWidth().clickable {
-                                            viewModel.onEvent(EditTripEvent.ToggleLuIncluded)
-                                        }
+                                        modifier =
+                                            Modifier.fillMaxWidth().clickable {
+                                                viewModel.onEvent(EditTripEvent.ToggleLuIncluded)
+                                            },
                                     ) {
                                         Checkbox(
                                             checked = uiState.luIncluded,
                                             onCheckedChange = { viewModel.onEvent(EditTripEvent.ToggleLuIncluded) },
-                                            colors = CheckboxDefaults.colors(
-                                                checkedColor = extendedColors.success
-                                            )
+                                            colors =
+                                                CheckboxDefaults.colors(
+                                                    checkedColor = extendedColors.success,
+                                                ),
                                         )
                                         Text(
                                             "Loading & Unloading Charges Included",
                                             style = MaterialTheme.typography.bodyMedium,
-                                            color = colorScheme.onSurfaceVariant
+                                            color = colorScheme.onSurfaceVariant,
                                         )
                                     }
                                 }
@@ -391,13 +400,13 @@ fun DetailInputField(
     onValueChange: (String) -> Unit,
     leadingIcon: androidx.compose.ui.graphics.vector.ImageVector,
     modifier: Modifier = Modifier,
-    singleLine: Boolean = true
+    singleLine: Boolean = true,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
             label,
             style = MaterialTheme.typography.labelMedium,
-            color = colorScheme.onSurfaceVariant
+            color = colorScheme.onSurfaceVariant,
         )
         OutlinedTextField(
             value = value,
@@ -407,13 +416,14 @@ fun DetailInputField(
             leadingIcon = {
                 Icon(leadingIcon, contentDescription = null, tint = colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
             },
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = colorScheme.outlineVariant,
-                unfocusedBorderColor = colorScheme.outlineVariant,
-                focusedContainerColor = colorScheme.surface,
-                unfocusedContainerColor = colorScheme.surface
-            ),
-            singleLine = singleLine
+            colors =
+                OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = colorScheme.outlineVariant,
+                    unfocusedBorderColor = colorScheme.outlineVariant,
+                    focusedContainerColor = colorScheme.surface,
+                    unfocusedContainerColor = colorScheme.surface,
+                ),
+            singleLine = singleLine,
         )
     }
 }

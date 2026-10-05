@@ -4,8 +4,8 @@ import com.freight24.common.model.PaginatedTrips
 import com.freight24.common.model.Trip
 import com.freight24.trucker.feature.trips.data.repository.TripRepository
 import com.freight24.trucker.feature.trips.mapper.toDomain
-import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
 
 internal class FetchTripsUseCaseImpl
     @Inject

@@ -18,11 +18,11 @@ import org.junit.Test
  * that, so the live shape of each endpoint is pinned here.
  */
 class LoadBoardResponseTest {
-
     private val json = Json { ignoreUnknownKeys = true }
 
     /** Trimmed from a live `/api/v1/indents/trucker/load-board-summary` response. */
-    private val summaryPayload = """
+    private val summaryPayload =
+        """
         {
           "success": true,
           "data": {
@@ -130,7 +130,7 @@ class LoadBoardResponseTest {
             }
           }
         }
-    """.trimIndent()
+        """.trimIndent()
 
     @Test
     fun `summary data decodes as an object of groups, not an array`() {
@@ -183,7 +183,8 @@ class LoadBoardResponseTest {
     }
 
     /** Captured from a live `/api/v1/indents/trucker/load-board-paginated` response. */
-    private val paginatedPayload = """
+    private val paginatedPayload =
+        """
         {
           "success": true,
           "data": {
@@ -232,7 +233,7 @@ class LoadBoardResponseTest {
             }
           }
         }
-    """.trimIndent()
+        """.trimIndent()
 
     @Test
     fun `paginated feed decodes from the same camelCase shape as the summary`() {

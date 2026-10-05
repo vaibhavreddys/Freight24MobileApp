@@ -41,7 +41,6 @@ enum class IndentContactRole(
 const val DEFAULT_FLOORING_TYPE = "STEEL"
 
 interface IndentsViewModel {
-
     val uiState: StateFlow<CreateIndentUiState>
 
     fun onEvent(event: CreateIndentEvent)
@@ -112,12 +111,13 @@ data class CreateIndentUiState(
     val createdDate: String? = null,
 ) {
     /** Contact currently bound to [role]. */
-    fun contactFor(role: IndentContactRole): ClientContactV2Dto? = when (role) {
-        IndentContactRole.PLACEMENT -> placementContact
-        IndentContactRole.PAYMENT -> paymentContact
-        IndentContactRole.OPERATIONS -> operationsContact
-        IndentContactRole.POD -> podContact
-    }
+    fun contactFor(role: IndentContactRole): ClientContactV2Dto? =
+        when (role) {
+            IndentContactRole.PLACEMENT -> placementContact
+            IndentContactRole.PAYMENT -> paymentContact
+            IndentContactRole.OPERATIONS -> operationsContact
+            IndentContactRole.POD -> podContact
+        }
 
     /** True while the client's branch/contact directory is still loading. */
     val isLoadingClientDirectory: Boolean

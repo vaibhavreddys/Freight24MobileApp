@@ -1,8 +1,8 @@
 package com.freight24.connect.feature.clients.views
-import com.freight24.ui.components.FreightTopAppBar
-
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -34,10 +34,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -55,29 +54,26 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.freight24.common.model.DocumentUploadState
 import com.freight24.common.model.UploadStatus
 import com.freight24.connect.feature.clients.domain.viewmodel.ClientProfileViewModel
-import com.freight24.rest.response.ClientProfileDto
 import com.freight24.rest.response.ClientDocumentDto
+import com.freight24.rest.response.ClientProfileDto
 import com.freight24.ui.UiState
-import com.freight24.ui.components.DashedUploadCard
-import com.freight24.ui.theme.FreightThemeTokens
+import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.components.formViewportInsets
-import java.io.File
-import android.Manifest
-import android.content.pm.PackageManager
-import androidx.core.content.ContextCompat
+import com.freight24.ui.theme.FreightThemeTokens
 import kotlinx.coroutines.launch
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -161,11 +157,12 @@ fun ClientProfileScreen(
         PullToRefreshBox(
             isRefreshing = isRefreshing,
             onRefresh = viewModel::onRefresh,
-            modifier = Modifier
-                .fillMaxSize()
-                // Keyboard-aware viewport: without this the scroll bounds run behind the
-                // keyboard and bring-into-view leaves the focused field hidden. See FormInsets.kt.
-                .formViewportInsets(paddingValues),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    // Keyboard-aware viewport: without this the scroll bounds run behind the
+                    // keyboard and bring-into-view leaves the focused field hidden. See FormInsets.kt.
+                    .formViewportInsets(paddingValues),
         ) {
             if (showCancelConfirmDialog) {
                 AlertDialog(
@@ -216,9 +213,10 @@ fun ClientProfileScreen(
 
                         if (isSaving) {
                             Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)),
+                                modifier =
+                                    Modifier
+                                        .fillMaxSize()
+                                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)),
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Card(
@@ -265,9 +263,10 @@ private fun ClientProfileContent(
 
     var pendingUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
     var isPdfPending by rememberSaveable { mutableStateOf(false) }
-    val selectedUploadStatus = currentTargetFieldKey
-        ?.let { fieldKey -> documentStates[fieldKey]?.uploadStatus }
-        ?: UploadStatus.IDLE
+    val selectedUploadStatus =
+        currentTargetFieldKey
+            ?.let { fieldKey -> documentStates[fieldKey]?.uploadStatus }
+            ?: UploadStatus.IDLE
 
     val galleryLauncher =
         rememberLauncherForActivityResult(
@@ -337,10 +336,11 @@ private fun ClientProfileContent(
     val tagCode = client.tag_code ?: ""
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 20.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 20.dp),
     ) {
         ProfileHeaderCard(
             fullName = fullName,
@@ -396,9 +396,10 @@ private fun ClientProfileContent(
                 },
             )
             DividerLine()
-            val altPhones = client.alt_phones
-                ?.filter { it.isNotBlank() && it != "[]" }
-                .orEmpty()
+            val altPhones =
+                client.alt_phones
+                    ?.filter { it.isNotBlank() && it != "[]" }
+                    .orEmpty()
             if (altPhones.isNotEmpty()) {
                 ProfileField(
                     label = "ALT PHONES",
@@ -630,9 +631,10 @@ private fun BranchesSectionContent(
                         )
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Box(
-                                modifier = Modifier
-                                    .size(8.dp)
-                                    .background(successColor, CircleShape),
+                                modifier =
+                                    Modifier
+                                        .size(8.dp)
+                                        .background(successColor, CircleShape),
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
@@ -901,35 +903,39 @@ private fun BranchContactField(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = MaterialTheme.shapes.small,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = if (isPhoneNumber) successColor else MaterialTheme.colorScheme.primary,
-                ),
-                textStyle = MaterialTheme.typography.bodyMedium.copy(
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (isPhoneNumber && value.isNotBlank()) successColor else MaterialTheme.colorScheme.onSurface,
-                ),
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = if (isPhoneNumber) KeyboardType.Phone else KeyboardType.Text,
-                    capitalization = KeyboardCapitalization.None,
-                ),
+                colors =
+                    OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = if (isPhoneNumber) successColor else MaterialTheme.colorScheme.primary,
+                    ),
+                textStyle =
+                    MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (isPhoneNumber && value.isNotBlank()) successColor else MaterialTheme.colorScheme.onSurface,
+                    ),
+                keyboardOptions =
+                    KeyboardOptions(
+                        keyboardType = if (isPhoneNumber) KeyboardType.Phone else KeyboardType.Text,
+                        capitalization = KeyboardCapitalization.None,
+                    ),
             )
         } else {
             val displayValue = value.ifBlank { "—" }
             val isPhoneValid = isPhoneNumber && value.isNotBlank()
             Box {
                 Row(
-                    modifier = Modifier
-                        .then(
-                            if (isPhoneValid) {
-                                Modifier.pointerInput(Unit) {
-                                    detectTapGestures(
-                                        onLongPress = { showPhoneMenu = true },
-                                    )
-                                }
-                            } else {
-                                Modifier
-                            },
-                        ),
+                    modifier =
+                        Modifier
+                            .then(
+                                if (isPhoneValid) {
+                                    Modifier.pointerInput(Unit) {
+                                        detectTapGestures(
+                                            onLongPress = { showPhoneMenu = true },
+                                        )
+                                    }
+                                } else {
+                                    Modifier
+                                },
+                            ),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
@@ -989,15 +995,17 @@ private fun ProfileHeaderCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), CircleShape),
+                modifier =
+                    Modifier
+                        .size(72.dp)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -1050,10 +1058,11 @@ private fun ProfileSection(
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { isExpanded = !isExpanded }
-                .padding(vertical = 8.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { isExpanded = !isExpanded }
+                    .padding(vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -1118,9 +1127,10 @@ private fun ProfileField(
     var showPhoneMenu by remember { mutableStateOf(false) }
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 18.dp, vertical = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 18.dp, vertical = 12.dp),
         verticalAlignment = Alignment.Top,
     ) {
         if (leadingIcon != null) {
@@ -1147,88 +1157,95 @@ private fun ProfileField(
                 fontWeight = FontWeight.Bold,
             )
             Spacer(modifier = Modifier.height(6.dp))
-        if (isEditing && isEditable) {
-            var isFocused by remember { mutableStateOf(false) }
-            OutlinedTextField(
-                value = value,
-                onValueChange = onValueChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onFocusChanged { state ->
-                        if (isFocused && !state.isFocused) {
-                            onFocusLost?.invoke()
-                        }
-                        isFocused = state.isFocused
-                    },
-                singleLine = true,
-                shape = MaterialTheme.shapes.medium,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                ),
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = keyboardType,
-                    capitalization = capitalization,
-                ),
-                supportingText = if (duplicateError != null) {
-                    {
+            if (isEditing && isEditable) {
+                var isFocused by remember { mutableStateOf(false) }
+                OutlinedTextField(
+                    value = value,
+                    onValueChange = onValueChange,
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .onFocusChanged { state ->
+                                if (isFocused && !state.isFocused) {
+                                    onFocusLost?.invoke()
+                                }
+                                isFocused = state.isFocused
+                            },
+                    singleLine = true,
+                    shape = MaterialTheme.shapes.medium,
+                    colors =
+                        OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        ),
+                    keyboardOptions =
+                        KeyboardOptions(
+                            keyboardType = keyboardType,
+                            capitalization = capitalization,
+                        ),
+                    supportingText =
+                        if (duplicateError != null) {
+                            {
+                                Text(
+                                    text = duplicateError,
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+                            }
+                        } else {
+                            null
+                        },
+                )
+            } else {
+                val displayValue = value.ifBlank { placeholder }
+                val isPhoneValid = isPhoneNumber && value.isNotBlank()
+                Box {
+                    Row(
+                        modifier =
+                            Modifier
+                                .then(
+                                    if (isPhoneValid && !isEditing) {
+                                        Modifier.pointerInput(Unit) {
+                                            detectTapGestures(onLongPress = { showPhoneMenu = true })
+                                        }
+                                    } else {
+                                        Modifier
+                                    },
+                                ),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
                         Text(
-                            text = duplicateError,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
+                            text = displayValue,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (value.isBlank()) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurface,
                         )
                     }
-                } else null,
-            )
-        } else {
-            val displayValue = value.ifBlank { placeholder }
-            val isPhoneValid = isPhoneNumber && value.isNotBlank()
-            Box {
-                Row(
-                    modifier = Modifier
-                        .then(
-                            if (isPhoneValid && !isEditing) {
-                                Modifier.pointerInput(Unit) {
-                                    detectTapGestures(onLongPress = { showPhoneMenu = true })
-                                }
-                            } else {
-                                Modifier
-                            },
-                        ),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = displayValue,
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = if (value.isBlank()) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurface,
-                    )
-                }
 
-                DropdownMenu(
-                    expanded = showPhoneMenu,
-                    onDismissRequest = { showPhoneMenu = false },
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Call") },
-                        leadingIcon = { Icon(Icons.Default.Call, contentDescription = null) },
-                        onClick = {
-                            showPhoneMenu = false
-                            launchDialer(context, value)
-                        },
-                    )
-                    HorizontalDivider()
-                    DropdownMenuItem(
-                        text = { Text("Copy Number") },
-                        leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
-                        onClick = {
-                            showPhoneMenu = false
-                            clipboardManager.setText(AnnotatedString(value))
-                        },
-                    )
+                    DropdownMenu(
+                        expanded = showPhoneMenu,
+                        onDismissRequest = { showPhoneMenu = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Call") },
+                            leadingIcon = { Icon(Icons.Default.Call, contentDescription = null) },
+                            onClick = {
+                                showPhoneMenu = false
+                                launchDialer(context, value)
+                            },
+                        )
+                        HorizontalDivider()
+                        DropdownMenuItem(
+                            text = { Text("Copy Number") },
+                            leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
+                            onClick = {
+                                showPhoneMenu = false
+                                clipboardManager.setText(AnnotatedString(value))
+                            },
+                        )
+                    }
                 }
             }
         }
-    }
     }
 }
 
@@ -1242,7 +1259,10 @@ private fun DividerLine() {
 }
 
 @Composable
-private fun VerificationChip(text: String, color: Color) {
+private fun VerificationChip(
+    text: String,
+    color: Color,
+) {
     Surface(
         color = color.copy(alpha = 0.12f),
         shape = MaterialTheme.shapes.medium,
@@ -1265,9 +1285,10 @@ private fun EditActions(
     isSaving: Boolean,
 ) {
     Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
         shape = RoundedCornerShape(16.dp),
         tonalElevation = 4.dp,
         shadowElevation = 10.dp,
@@ -1342,10 +1363,11 @@ private fun DocumentList(
     onDocumentView: (String) -> Unit,
     onDocumentUpload: (String) -> Unit,
 ) {
-    val types = listOf(
-        ClientDocumentTypeUi("aadhaar", "Aadhaar Card"),
-        ClientDocumentTypeUi("pan", "PAN Card"),
-    )
+    val types =
+        listOf(
+            ClientDocumentTypeUi("aadhaar", "Aadhaar Card"),
+            ClientDocumentTypeUi("pan", "PAN Card"),
+        )
 
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
         types.forEachIndexed { index, type ->
@@ -1354,24 +1376,26 @@ private fun DocumentList(
             val existingUrl = uploadState?.existingFileUrl ?: doc?.documentUrl
 
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        if (isEditing) {
-                            onDocumentUpload(type.fieldKey)
-                        } else if (!existingUrl.isNullOrEmpty() && !doc?.documentId.isNullOrBlank()) {
-                            onDocumentView(doc!!.documentId)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            if (isEditing) {
+                                onDocumentUpload(type.fieldKey)
+                            } else if (!existingUrl.isNullOrEmpty() && !doc?.documentId.isNullOrBlank()) {
+                                onDocumentView(doc!!.documentId)
+                            }
                         }
-                    }
-                    .padding(horizontal = 20.dp, vertical = 18.dp),
+                        .padding(horizontal = 20.dp, vertical = 18.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
-                    imageVector = when (type.displayName) {
-                        "PAN Card" -> Icons.Default.CreditCard
-                        "Aadhaar Card" -> Icons.Default.Fingerprint
-                        else -> Icons.Default.Description
-                    },
+                    imageVector =
+                        when (type.displayName) {
+                            "PAN Card" -> Icons.Default.CreditCard
+                            "Aadhaar Card" -> Icons.Default.Fingerprint
+                            else -> Icons.Default.Description
+                        },
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1422,17 +1446,19 @@ private fun DocumentList(
                         enabled = (uploadState?.uploadStatus ?: UploadStatus.IDLE) != UploadStatus.UPLOADING,
                     ) {
                         Icon(
-                            imageVector = if ((uploadState?.uploadStatus ?: UploadStatus.IDLE) == UploadStatus.ERROR) {
-                                Icons.Default.Refresh
-                            } else {
-                                Icons.Default.CloudUpload
-                            },
+                            imageVector =
+                                if ((uploadState?.uploadStatus ?: UploadStatus.IDLE) == UploadStatus.ERROR) {
+                                    Icons.Default.Refresh
+                                } else {
+                                    Icons.Default.CloudUpload
+                                },
                             contentDescription = "Upload",
-                            tint = if ((uploadState?.uploadStatus ?: UploadStatus.IDLE) == UploadStatus.ERROR) {
-                                MaterialTheme.colorScheme.error
-                            } else {
-                                FreightThemeTokens.colors.success
-                            },
+                            tint =
+                                if ((uploadState?.uploadStatus ?: UploadStatus.IDLE) == UploadStatus.ERROR) {
+                                    MaterialTheme.colorScheme.error
+                                } else {
+                                    FreightThemeTokens.colors.success
+                                },
                             modifier = Modifier.size(24.dp),
                         )
                     }
@@ -1443,7 +1469,7 @@ private fun DocumentList(
                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                         contentDescription = "View",
                         tint = MaterialTheme.colorScheme.outline,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(20.dp),
                     )
                 } else {
                     VerificationChip("Not Uploaded", MaterialTheme.colorScheme.outline)
@@ -1461,14 +1487,18 @@ private fun DocumentList(
 }
 
 @Composable
-private fun ExistingStatusBadge(existingVerifyStatus: String?, fallbackStatus: String?) {
+private fun ExistingStatusBadge(
+    existingVerifyStatus: String?,
+    fallbackStatus: String?,
+) {
     val status = existingVerifyStatus?.lowercase()?.trim() ?: fallbackStatus?.lowercase()?.trim().orEmpty()
-    val (text, color) = when (status) {
-        "verified" -> "Verified" to FreightThemeTokens.colors.success
-        "rejected" -> "Rejected" to MaterialTheme.colorScheme.error
-        "pending" -> "Verification Pending" to MaterialTheme.colorScheme.tertiary
-        else -> "N/A" to MaterialTheme.colorScheme.onSurfaceVariant
-    }
+    val (text, color) =
+        when (status) {
+            "verified" -> "Verified" to FreightThemeTokens.colors.success
+            "rejected" -> "Rejected" to MaterialTheme.colorScheme.error
+            "pending" -> "Verification Pending" to MaterialTheme.colorScheme.tertiary
+            else -> "N/A" to MaterialTheme.colorScheme.onSurfaceVariant
+        }
 
     Surface(
         color = color.copy(alpha = 0.1f),
@@ -1522,8 +1552,10 @@ private data class ClientDocumentTypeUi(
     val displayName: String,
 )
 
-
-private fun launchDialer(context: Context, rawPhone: String) {
+private fun launchDialer(
+    context: Context,
+    rawPhone: String,
+) {
     val phone = rawPhone.substringBefore(",").trim()
     if (phone.isBlank()) return
     val dialIntent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${Uri.encode(phone)}"))

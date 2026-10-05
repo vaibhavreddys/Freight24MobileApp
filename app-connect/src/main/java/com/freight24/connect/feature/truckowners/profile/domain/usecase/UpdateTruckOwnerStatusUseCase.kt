@@ -9,13 +9,15 @@ interface UpdateTruckOwnerStatusUseCase {
 
 data class UpdateTruckOwnerStatusParams(
     val userId: String,
-    val status: String
+    val status: String,
 )
 
-class UpdateTruckOwnerStatusUseCaseImpl @Inject constructor(
-    private val repository: ProfileRepository
-) : UpdateTruckOwnerStatusUseCase {
-    override suspend fun invoke(params: UpdateTruckOwnerStatusParams): Result<Boolean> {
-        return repository.updateTruckOwnerStatus(params.userId, params.status)
+class UpdateTruckOwnerStatusUseCaseImpl
+    @Inject
+    constructor(
+        private val repository: ProfileRepository,
+    ) : UpdateTruckOwnerStatusUseCase {
+        override suspend fun invoke(params: UpdateTruckOwnerStatusParams): Result<Boolean> {
+            return repository.updateTruckOwnerStatus(params.userId, params.status)
+        }
     }
-}

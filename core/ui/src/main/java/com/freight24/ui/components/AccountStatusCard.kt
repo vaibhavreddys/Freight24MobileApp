@@ -1,7 +1,6 @@
 package com.freight24.ui.components
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -29,7 +28,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.freight24.ui.theme.FreightThemeTokens
@@ -45,15 +43,15 @@ fun AccountStatusCard(
     val onSuccessColor = FreightThemeTokens.colors.onSuccess
     val containerColor by animateColorAsState(
         targetValue = if (isActive) successColor.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f),
-        label = "containerColor"
+        label = "containerColor",
     )
     val borderColor by animateColorAsState(
         targetValue = if (isActive) successColor.copy(alpha = 0.2f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
-        label = "borderColor"
+        label = "borderColor",
     )
     val titleColor by animateColorAsState(
         targetValue = if (isActive) successColor else MaterialTheme.colorScheme.onSurfaceVariant,
-        label = "titleColor"
+        label = "titleColor",
     )
     val subtitle = if (isActive) "Currently Active" else "Account Inactive"
 
@@ -64,9 +62,10 @@ fun AccountStatusCard(
         border = androidx.compose.foundation.BorderStroke(1.dp, borderColor),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
@@ -75,12 +74,19 @@ fun AccountStatusCard(
                 modifier = Modifier.weight(1f),
             ) {
                 Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (isActive) successColor.copy(alpha = 0.15f) else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.12f)
-                        ),
+                    modifier =
+                        Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (isActive) {
+                                    successColor.copy(
+                                        alpha = 0.15f,
+                                    )
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.12f)
+                                },
+                            ),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
@@ -112,12 +118,13 @@ fun AccountStatusCard(
                 checked = isActive,
                 onCheckedChange = { onToggle() },
                 enabled = !isToggling,
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = onSuccessColor,
-                    checkedTrackColor = successColor,
-                    uncheckedThumbColor = MaterialTheme.colorScheme.outline,
-                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
-                ),
+                colors =
+                    SwitchDefaults.colors(
+                        checkedThumbColor = onSuccessColor,
+                        checkedTrackColor = successColor,
+                        uncheckedThumbColor = MaterialTheme.colorScheme.outline,
+                        uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant,
+                    ),
             )
         }
     }

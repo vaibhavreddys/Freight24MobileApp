@@ -5,6 +5,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.freight24.common.util.FileUtils
 import com.freight24.rest.response.AddTruckDto
 import com.freight24.trucker.feature.trucks.domain.usecase.AddTruckParams
 import com.freight24.trucker.feature.trucks.domain.usecase.AddTruckUseCase
@@ -19,7 +20,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
-import com.freight24.common.util.FileUtils
 import javax.inject.Inject
 
 data class TruckType(val id: Int, val name: String)
@@ -45,7 +45,7 @@ internal class OnboardTruckViewModel
         val make = MutableStateFlow("")
         val model = MutableStateFlow("")
         val year = MutableStateFlow("")
- 
+
         private val _registrationError = MutableStateFlow<String?>(null)
         val registrationError: StateFlow<String?> = _registrationError.asStateFlow()
 
@@ -111,7 +111,7 @@ internal class OnboardTruckViewModel
                 TruckType(6, "12 Whl Open"),
                 TruckType(7, "14 Whl Open"),
                 TruckType(8, "16 Whl Open"),
-                TruckType(9, "18 Whl Open")
+                TruckType(9, "18 Whl Open"),
             )
 
         fun nextStep() {
@@ -133,17 +133,18 @@ internal class OnboardTruckViewModel
             uris: List<Uri>,
             type: String,
             isPdf: Boolean,
-            onSuccess: () -> Unit
+            onSuccess: () -> Unit,
         ) {
             if (uris.isEmpty()) return
             Log.d(TAG, "File selected: $type, uris size: ${uris.size}")
             viewModelScope.launch {
                 try {
-                    val file = if (isPdf) {
-                        FileUtils.getFileFromUri(context, uris.first())
-                    } else {
-                        FileUtils.convertImageToPdf(context, uris)
-                    }
+                    val file =
+                        if (isPdf) {
+                            FileUtils.getFileFromUri(context, uris.first())
+                        } else {
+                            FileUtils.convertImageToPdf(context, uris)
+                        }
                     if (file != null) {
                         Log.d(TAG, "File processed successfully: ${file.absolutePath}")
                         when (type) {
@@ -215,13 +216,13 @@ internal class OnboardTruckViewModel
                 }
             registrationNumber.value = filtered
         }
- 
+
         fun checkRegistrationAvailability() {
             val reg = registrationNumber.value.replace(" ", "").uppercase()
             if (!registrationRegex.matches(reg)) {
                 return
             }
- 
+
             viewModelScope.launch {
                 checkTruckAvailabilityUseCase(reg)
                     .onSuccess { existingId ->

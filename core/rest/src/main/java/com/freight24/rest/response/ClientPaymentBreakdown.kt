@@ -2,8 +2,8 @@
 
 package com.freight24.rest.response
 
-import java.math.BigDecimal
 import kotlinx.serialization.Serializable
+import java.math.BigDecimal
 
 @Serializable
 data class ClientPaymentBreakdown(
@@ -17,5 +17,5 @@ data class ClientPaymentBreakdown(
     val balanceExpectedAmount: BigDecimal? = null,
     val balanceReceivedAmount: BigDecimal? = null,
     val balancePendingAmount: BigDecimal? = null,
-    val isPaymentCompleted: Boolean = false
+    val isPaymentCompleted: Boolean = false,
 )

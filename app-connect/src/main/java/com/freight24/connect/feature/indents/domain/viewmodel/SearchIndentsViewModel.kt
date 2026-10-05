@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.StateFlow
 
 interface SearchIndentsViewModel {
     val uiState: StateFlow<SearchIndentsUiState>
+
     fun onEvent(event: SearchIndentsEvent)
 }
 
@@ -18,16 +19,19 @@ data class SearchIndentsUiState(
     // Filters
     val priority: String? = null,
     val clientId: String? = null,
-    val assignedToMe: Boolean = false
+    val assignedToMe: Boolean = false,
 )
 
 sealed class SearchIndentsEvent {
     data class UpdateQuery(val query: String) : SearchIndentsEvent()
+
     data class UpdateFilters(
         val priority: String? = null,
         val clientId: String? = null,
-        val assignedToMe: Boolean? = null
+        val assignedToMe: Boolean? = null,
     ) : SearchIndentsEvent()
+
     object PerformSearch : SearchIndentsEvent()
+
     object ClearError : SearchIndentsEvent()
 }

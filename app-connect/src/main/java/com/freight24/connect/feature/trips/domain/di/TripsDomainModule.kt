@@ -38,7 +38,6 @@ import dagger.hilt.components.SingletonComponent
 @Module
 @InstallIn(SingletonComponent::class)
 internal abstract class TripsDomainModule {
-
     @Binds
     abstract fun bindCreateTripUseCase(useCaseImpl: CreateTripUseCaseImpl): CreateTripUseCase
 
@@ -49,9 +48,7 @@ internal abstract class TripsDomainModule {
     abstract fun bindTripDetailsUseCase(useCaseImpl: TripDetailsUseCaseImpl): TripDetailsUseCase
 
     @Binds
-    abstract fun bindGetPaymentTransactionsUseCase(
-        useCaseImpl: GetPaymentTransactionsUseCaseImpl
-    ): GetPaymentTransactionsUseCase
+    abstract fun bindGetPaymentTransactionsUseCase(useCaseImpl: GetPaymentTransactionsUseCaseImpl): GetPaymentTransactionsUseCase
 
     @Binds
     abstract fun bindUpdateTruckerUseCase(useCaseImpl: UpdateTruckerUseCaseImpl): UpdateTruckerUseCase
@@ -85,5 +82,4 @@ internal abstract class TripsDomainModule {
 
     @Binds
     abstract fun bindCancelTripUseCase(useCaseImpl: CancelTripUseCaseImpl): CancelTripUseCase
-
 }

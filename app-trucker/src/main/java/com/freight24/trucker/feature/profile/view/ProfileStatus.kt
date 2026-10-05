@@ -15,7 +15,6 @@ import com.freight24.trucker.feature.profile.domain.DocumentType
 import com.freight24.trucker.feature.profile.util.ProfileDocumentTypeIds
 import com.freight24.ui.theme.FreightThemeTokens
 
-
 /**
  * The single status vocabulary for the Profile screen.
  *

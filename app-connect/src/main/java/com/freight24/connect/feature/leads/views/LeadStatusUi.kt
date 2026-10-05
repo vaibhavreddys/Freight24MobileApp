@@ -1,5 +1,11 @@
 package com.freight24.connect.feature.leads.views
 
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -8,12 +14,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -40,17 +40,18 @@ import com.freight24.ui.theme.FreightThemeTokens
 //   do_not_contact     → error          (the lead is closed)
 // ===========================================================================
 
-fun leadStatusLabel(status: String): String = when (status) {
-    "new" -> "New"
-    "contact_in_progress" -> "In Progress"
-    "follow_up" -> "Follow Up"
-    "soft_onboarded" -> "Soft Onboarded"
-    "not_interested" -> "Not Interested"
-    "invalid" -> "Invalid"
-    "converted" -> "Converted"
-    "do_not_contact" -> "DND"
-    else -> status.replace('_', ' ')
-}
+fun leadStatusLabel(status: String): String =
+    when (status) {
+        "new" -> "New"
+        "contact_in_progress" -> "In Progress"
+        "follow_up" -> "Follow Up"
+        "soft_onboarded" -> "Soft Onboarded"
+        "not_interested" -> "Not Interested"
+        "invalid" -> "Invalid"
+        "converted" -> "Converted"
+        "do_not_contact" -> "DND"
+        else -> status.replace('_', ' ')
+    }
 
 /** The one status that means "imported, never touched". */
 const val LEAD_STATUS_NEW = "new"
@@ -101,13 +102,17 @@ fun LeadStatusStampColors(status: String): Pair<Color, Color> {
  * already states the state for single-status tabs).
  */
 @Composable
-fun LeadStatusStamp(status: String, modifier: Modifier = Modifier) {
+fun LeadStatusStamp(
+    status: String,
+    modifier: Modifier = Modifier,
+) {
     val (container, content) = LeadStatusStampColors(status)
-    val glyph = when (status) {
-        "converted" -> Icons.Default.Check
-        "not_interested", "invalid", "do_not_contact" -> Icons.Default.Close
-        else -> null
-    }
+    val glyph =
+        when (status) {
+            "converted" -> Icons.Default.Check
+            "not_interested", "invalid", "do_not_contact" -> Icons.Default.Close
+            else -> null
+        }
 
     Surface(
         modifier = modifier,
@@ -115,9 +120,10 @@ fun LeadStatusStamp(status: String, modifier: Modifier = Modifier) {
         color = container,
     ) {
         Row(
-            modifier = Modifier
-                .height(22.dp)
-                .padding(horizontal = 8.dp),
+            modifier =
+                Modifier
+                    .height(22.dp)
+                    .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (glyph != null) {

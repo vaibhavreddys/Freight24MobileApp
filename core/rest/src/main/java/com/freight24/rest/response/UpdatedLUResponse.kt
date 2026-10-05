@@ -4,11 +4,11 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UpdatedLUResponse(
-    val data : Charges
+    val data: Charges,
 ) : BaseResponse()
 
 @Serializable
 data class Charges(
     val loadingChargeId: String? = null,
-    val unloadingChargeId: String? = null
+    val unloadingChargeId: String? = null,
 )
