@@ -14,7 +14,7 @@ data class EmployeeBasicInfoResponse(
 data class EmployeeBasicInfo(
     @SerialName("user_id") val userId: String,
     @SerialName("full_name") val fullName: String,
-    @SerialName("designation") val designation: String,
+    @SerialName("designation") val designation: String? = null,
     @SerialName("status") val status: String,
     @SerialName("tag_code") val tagCode: String = "",
     @SerialName("department") val department: String? = null,

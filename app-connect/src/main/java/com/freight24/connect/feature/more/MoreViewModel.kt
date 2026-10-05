@@ -76,7 +76,7 @@ class MoreViewModel
                         _employeeInfo.value =
                             EmployeeBasicInfoState(
                                 fullName = basicInfo.fullName,
-                                designation = basicInfo.designation,
+                                designation = basicInfo.designation.orEmpty(),
                                 tagCode = basicInfo.tagCode,
                                 department = basicInfo.department.orEmpty(),
                                 phone = basicInfo.phone.orEmpty(),

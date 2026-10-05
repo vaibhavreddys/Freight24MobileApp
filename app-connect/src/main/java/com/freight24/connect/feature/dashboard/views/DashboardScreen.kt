@@ -16,12 +16,9 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
@@ -176,7 +173,7 @@ fun AttentionNeededSection(
             // Trucker Interview Card
             AttentionCard(
                 modifier = Modifier.weight(1f),
-                title = "Trucker\nInterests",
+                title = "Trucker Interests",
                 value = "${attentionNeeded.truckerInterests} New Leads",
                 backgroundColor = colorScheme.primaryContainer,
                 valueColor = colorScheme.primary,

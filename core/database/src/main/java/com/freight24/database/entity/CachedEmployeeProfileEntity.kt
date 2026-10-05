@@ -17,7 +17,7 @@ import androidx.room.PrimaryKey
 data class CachedEmployeeProfileEntity(
     @PrimaryKey val userId: String,
     val fullName: String,
-    val designation: String,
+    val designation: String?,
     val status: String,
     val tagCode: String,
     val department: String?,
