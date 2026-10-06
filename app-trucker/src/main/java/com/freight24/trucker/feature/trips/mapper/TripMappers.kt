@@ -11,6 +11,7 @@ import com.freight24.common.model.StatusEvent
 import com.freight24.common.model.TdsBlock
 import com.freight24.common.model.Trip
 import com.freight24.common.model.TripDetail
+import com.freight24.common.model.TripEmployee
 import com.freight24.common.model.TripDocument
 import com.freight24.common.model.TripFinancials
 import com.freight24.common.model.TripLocation
@@ -107,6 +108,9 @@ fun TripDetailDto.toDomain(): TripDetail {
         financials = mappedFinancials,
         truckerStatus = trucker_status,
         truckerPayments = trucker_payments.map { it.toDomain() }.reversed(),
+        indentCreatedBy = indent_created_by?.let {
+            TripEmployee(id = it.id, name = it.name, phone = it.phone, tagCode = it.tag_code)
+        },
     )
 }
 

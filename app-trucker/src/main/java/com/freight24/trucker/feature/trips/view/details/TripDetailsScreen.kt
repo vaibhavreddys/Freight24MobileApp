@@ -532,6 +532,9 @@ internal fun TripDossier(
                 .padding(bottom = 24.dp),
     ) {
         TripHero(trip = trip, colors = colors)
+        trip.indentCreatedBy?.let { employee ->
+            TripEmployeeContactCard(employee = employee, colors = colors)
+        }
 
         Spacer(modifier = Modifier.height(26.dp))
 

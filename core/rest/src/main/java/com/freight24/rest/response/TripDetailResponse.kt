@@ -24,6 +24,15 @@ data class TripDetailDto(
     val trip_documents: List<TripDocumentDto> = emptyList(),
     val financials: TripFinancialsDto? = null,
     val trucker_payments: List<TruckerPaymentDto> = emptyList(),
+    val indent_created_by: TripEmployeeDto? = null,
+)
+
+@Serializable
+data class TripEmployeeDto(
+    val id: String? = null,
+    val name: String? = null,
+    val phone: String? = null,
+    val tag_code: String? = null,
 )
 
 /**

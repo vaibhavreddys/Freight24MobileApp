@@ -28,6 +28,14 @@ data class TripDetail(
     val financials: TripFinancials? = null,
     val truckerStatus: String? = null,
     val truckerPayments: List<TruckerPayment> = emptyList(),
+    val indentCreatedBy: TripEmployee? = null,
+)
+
+data class TripEmployee(
+    val id: String?,
+    val name: String?,
+    val phone: String?,
+    val tagCode: String?,
 )
 
 /**

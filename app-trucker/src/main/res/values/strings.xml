@@ -20,4 +20,7 @@
     <string name="supportPhoneNumber">+919620111667</string>
 
     <string name="profile_document_preview_failed">Unable to open the document. Please try again.</string>
+    <string name="trip_employee_contact_label">Trip Contact</string>
+    <string name="trip_employee_contact_fallback">Freight24 Contact</string>
+    <string name="trip_employee_call_us">Call Us</string>
 </resources>
