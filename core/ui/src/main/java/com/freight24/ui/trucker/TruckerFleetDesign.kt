@@ -712,10 +712,14 @@ fun FleetSectionHeader(
                     .background(colors.brand),
         )
         Spacer(modifier = Modifier.width(9.dp))
+        // One line, always: a section title that wraps ("Document / s") breaks
+        // the rail the title hangs off. Trailing content yields space first.
         Text(
             text = title,
             style = TruckerType.title,
             color = colors.ink,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
         if (trailing != null) {

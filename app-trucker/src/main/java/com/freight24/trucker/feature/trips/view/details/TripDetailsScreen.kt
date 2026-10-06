@@ -11,6 +11,11 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -34,6 +39,8 @@ import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -62,6 +69,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -663,158 +671,221 @@ private fun DocumentsSection(
     // The POD is the trucker's last lodgement: it exists only after unloading,
     // and the backend refuses one before it.
     val showPodSlot = podDoc == null && trip.truckerStatus?.uppercase() == "UNLOADED"
+    // What the header counts: the lodged documents plus the open slots, and how
+    // many of those the driver still owes something on.
+    val requiredCount = listOf(showLrSlot, showPodSlot).count { it }
+    val documentCount = trip.tripDocuments.size + requiredCount
+    // Nothing owed → folded away, the header line is the whole answer. Something
+    // owed → open, so the thing to act on is the first thing on screen. Keyed on
+    // [requiredCount] so a slot opening (unloading, a rejected LR) re-evaluates
+    // the default, while a manual toggle on an unchanged section survives.
+    var expanded by rememberSaveable(requiredCount) { mutableStateOf(requiredCount > 0) }
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         FleetSectionHeader(
             title = "Documents",
             colors = colors,
-            trailing = null,
+            trailing =
+                if (documentCount == 0) {
+                    null
+                } else {
+                    {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            // The owed count outlives the collapse: a driver who
+                            // has folded the section away still has to see it.
+                            if (requiredCount > 0) {
+                                FleetChip(
+                                    text = if (requiredCount == 1) "1 Action Required" else "$requiredCount Actions Required",
+                                    colors = colors,
+                                    tone = FleetTone.ACCENT,
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+                            Row(
+                                modifier =
+                                    Modifier
+                                        .clip(FleetCellShape)
+                                        .clickable { expanded = !expanded }
+                                        .padding(horizontal = 6.dp, vertical = 4.dp)
+                                        .testTag("trip_details_documents_toggle")
+                                        .semantics { testTagsAsResourceId = true },
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text = if (expanded) "Hide ($documentCount)" else "Show ($documentCount)",
+                                    style = TruckerType.captionStrong,
+                                    color = colors.brand,
+                                    maxLines = 1,
+                                )
+                                Icon(
+                                    imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                                    contentDescription = null,
+                                    tint = colors.brand,
+                                    modifier = Modifier.size(16.dp),
+                                )
+                            }
+                        }
+                    }
+                },
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        // Nothing to fold: the hint is the section's own content, so it sits
+        // outside the collapsible region. Inside it would be dead — with no
+        // documents there is no required item either, so the section would
+        // always default closed with no toggle to open it again.
+        if (documentCount == 0) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = "Click on \"Start Loading\" to upload LR document.",
+                style = TruckerType.body,
+                color = colors.inkMuted,
+            )
+        }
 
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            trip.tripDocuments.forEach { doc ->
-                val isLr = doc.documentType.equals("lr", ignoreCase = true)
-                val isPod = doc.documentType.equals("pod", ignoreCase = true)
-                val effectiveStatus =
-                    when {
-                        isLr && lrUploading -> "uploading"
-                        isLr && lrFailed -> "error"
-                        isPod && podUploading -> "uploading"
-                        isPod && podFailed -> "error"
-                        else -> doc.verificationStatus.lowercase()
-                    }
+        AnimatedVisibility(
+            visible = expanded,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut(),
+        ) {
+            Column {
+                Spacer(modifier = Modifier.height(12.dp))
 
-                val (sealText, sealTone, subtitle) =
-                    when (effectiveStatus) {
-                        "uploading" -> Triple("Sending", FleetTone.ACCENT, "Uploading the ${if (isPod) "POD" else "LR"} now…")
-                        "error" -> Triple("Failed", FleetTone.ERROR, "Upload failed. Try again.")
-                        "verified" -> {
-                            // No generic filler: the stamp already says it.
-                            // A stamp date differentiates rows; without one
-                            // the row collapses to title + stamp.
-                            val stampedAt =
-                                doc.uploadedAt
-                                    ?.takeIf { it.isNotBlank() }
-                                    ?.let { DateTimeUtils.formatRelativeTime(it) }
-                                    ?.takeIf { it.isNotBlank() && it != "--" }
-                            Triple("Verified", FleetTone.BRAND, stampedAt?.let { "Verified · $it" } ?: "")
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    trip.tripDocuments.forEach { doc ->
+                        val isLr = doc.documentType.equals("lr", ignoreCase = true)
+                        val isPod = doc.documentType.equals("pod", ignoreCase = true)
+                        val effectiveStatus =
+                            when {
+                                isLr && lrUploading -> "uploading"
+                                isLr && lrFailed -> "error"
+                                isPod && podUploading -> "uploading"
+                                isPod && podFailed -> "error"
+                                else -> doc.verificationStatus.lowercase()
+                            }
+
+                        val (sealText, sealTone, subtitle) =
+                            when (effectiveStatus) {
+                                "uploading" -> Triple("Sending", FleetTone.ACCENT, "Uploading the ${if (isPod) "POD" else "LR"} now…")
+                                "error" -> Triple("Failed", FleetTone.ERROR, "Upload failed. Try again.")
+                                "verified" -> {
+                                    // No generic filler: the stamp already says it.
+                                    // A stamp date differentiates rows; without one
+                                    // the row collapses to title + stamp.
+                                    val stampedAt =
+                                        doc.uploadedAt
+                                            ?.takeIf { it.isNotBlank() }
+                                            ?.let { DateTimeUtils.formatRelativeTime(it) }
+                                            ?.takeIf { it.isNotBlank() && it != "--" }
+                                    Triple("Verified", FleetTone.BRAND, stampedAt?.let { "Verified · $it" } ?: "")
+                                }
+                                "pending" -> Triple("In Review", FleetTone.ACCENT, "Lodged. Waiting on verification.")
+                                "rejected" -> {
+                                    val remarks = doc.verificationRemarks?.takeIf { it.isNotBlank() }
+                                    Triple("Rejected", FleetTone.ERROR, remarks ?: "Rejected. Upload a fresh copy.")
+                                }
+                                else -> Triple("Lodged", FleetTone.MUTED, "On file.")
+                            }
+
+                        val needsUpload = effectiveStatus == "rejected" || effectiveStatus == "error"
+                        val docTitle =
+                            when {
+                                isLr -> "Lorry Receipt (LR)"
+                                isPod -> "Proof of Delivery (POD)"
+                                else -> doc.documentType.uppercase()
+                            }
+
+                        DocWalletRow(
+                            title = docTitle,
+                            subtitle = subtitle,
+                            icon = Icons.AutoMirrored.Filled.InsertDriveFile,
+                            colors = colors,
+                            sealText = if (effectiveStatus == "uploading") null else sealText,
+                            sealTone = sealTone,
+                            actionIcon =
+                                when {
+                                    effectiveStatus == "uploading" -> null
+                                    needsUpload -> Icons.Filled.Refresh
+                                    else -> null
+                                },
+                            actionContentDescription = if (needsUpload) "Upload again" else null,
+                            onActionClick =
+                                if (needsUpload) {
+                                    { onUploadClick(doc.documentType.lowercase()) }
+                                } else {
+                                    null
+                                },
+                            onRowClick =
+                                if (!needsUpload && effectiveStatus != "uploading") {
+                                    { doc.id?.let(onViewClick) }
+                                } else {
+                                    null
+                                },
+                        )
+
+                        if (effectiveStatus == "uploading") {
+                            LinearProgressIndicator(
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 4.dp),
+                                color = colors.brand,
+                                trackColor = colors.brandSoft,
+                            )
                         }
-                        "pending" -> Triple("In Review", FleetTone.ACCENT, "Lodged. Waiting on verification.")
-                        "rejected" -> {
-                            val remarks = doc.verificationRemarks?.takeIf { it.isNotBlank() }
-                            Triple("Rejected", FleetTone.ERROR, remarks ?: "Rejected. Upload a fresh copy.")
-                        }
-                        else -> Triple("Lodged", FleetTone.MUTED, "On file.")
                     }
 
-                val needsUpload = effectiveStatus == "rejected" || effectiveStatus == "error"
-                val docTitle =
-                    when {
-                        isLr -> "Lorry Receipt (LR)"
-                        isPod -> "Proof of Delivery (POD)"
-                        else -> doc.documentType.uppercase()
+                    // The LR slot — always visible while the trip can still take one.
+                    if (showLrSlot) {
+                        DocWalletRow(
+                            title = "Lorry Receipt (LR)",
+                            subtitle =
+                                when {
+                                    lrUploading -> "Uploading the LR now…"
+                                    lrFailed -> "Upload failed. Try again."
+                                    lrRejected -> "Rejected. Upload a fresh copy to move this trip forward."
+                                    else -> "Required before this trip can move into transit."
+                                },
+                            icon = if (lrUploading) Icons.Filled.HourglassEmpty else Icons.Filled.CloudUpload,
+                            colors = colors,
+                            sealText = if (lrRejected) "Rejected" else "Required",
+                            sealTone = if (lrRejected) FleetTone.ERROR else FleetTone.ACCENT,
+                            actionIcon = if (lrUploading) null else Icons.Filled.CloudUpload,
+                            actionContentDescription = "Upload LR",
+                            onActionClick =
+                                if (lrUploading) {
+                                    null
+                                } else {
+                                    { onUploadClick("lr") }
+                                },
+                        )
                     }
 
-                DocWalletRow(
-                    title = docTitle,
-                    subtitle = subtitle,
-                    icon = Icons.AutoMirrored.Filled.InsertDriveFile,
-                    colors = colors,
-                    sealText = if (effectiveStatus == "uploading") null else sealText,
-                    sealTone = sealTone,
-                    actionIcon =
-                        when {
-                            effectiveStatus == "uploading" -> null
-                            needsUpload -> Icons.Filled.Refresh
-                            else -> null
-                        },
-                    actionContentDescription = if (needsUpload) "Upload again" else null,
-                    onActionClick =
-                        if (needsUpload) {
-                            { onUploadClick(doc.documentType.lowercase()) }
-                        } else {
-                            null
-                        },
-                    onRowClick =
-                        if (!needsUpload && effectiveStatus != "uploading") {
-                            { doc.id?.let(onViewClick) }
-                        } else {
-                            null
-                        },
-                )
-
-                if (effectiveStatus == "uploading") {
-                    LinearProgressIndicator(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 4.dp),
-                        color = colors.brand,
-                        trackColor = colors.brandSoft,
-                    )
+                    // The POD slot — offered once the consignment is unloaded and no
+                    // POD is on file. A rejected POD is handled on its own row above.
+                    if (showPodSlot) {
+                        DocWalletRow(
+                            title = "Proof of Delivery (POD)",
+                            subtitle =
+                                when {
+                                    podUploading -> "Uploading the POD now…"
+                                    podFailed -> "Upload failed. Try again."
+                                    else -> "Upload the POD for verification."
+                                },
+                            icon = if (podUploading) Icons.Filled.HourglassEmpty else Icons.Filled.CloudUpload,
+                            colors = colors,
+                            sealText = "Required",
+                            sealTone = FleetTone.ACCENT,
+                            actionIcon = if (podUploading) null else Icons.Filled.CloudUpload,
+                            actionContentDescription = "Upload POD",
+                            onActionClick =
+                                if (podUploading) {
+                                    null
+                                } else {
+                                    { onUploadClick("pod") }
+                                },
+                        )
+                    }
                 }
-            }
-
-            // The LR slot — always visible while the trip can still take one.
-            if (showLrSlot) {
-                DocWalletRow(
-                    title = "Lorry Receipt (LR)",
-                    subtitle =
-                        when {
-                            lrUploading -> "Uploading the LR now…"
-                            lrFailed -> "Upload failed. Try again."
-                            lrRejected -> "Rejected. Upload a fresh copy to move this trip forward."
-                            else -> "Required before this trip can move into transit."
-                        },
-                    icon = if (lrUploading) Icons.Filled.HourglassEmpty else Icons.Filled.CloudUpload,
-                    colors = colors,
-                    sealText = if (lrRejected) "Rejected" else "Required",
-                    sealTone = if (lrRejected) FleetTone.ERROR else FleetTone.ACCENT,
-                    actionIcon = if (lrUploading) null else Icons.Filled.CloudUpload,
-                    actionContentDescription = "Upload LR",
-                    onActionClick =
-                        if (lrUploading) {
-                            null
-                        } else {
-                            { onUploadClick("lr") }
-                        },
-                )
-            }
-
-            // The POD slot — offered once the consignment is unloaded and no
-            // POD is on file. A rejected POD is handled on its own row above.
-            if (showPodSlot) {
-                DocWalletRow(
-                    title = "Proof of Delivery (POD)",
-                    subtitle =
-                        when {
-                            podUploading -> "Uploading the POD now…"
-                            podFailed -> "Upload failed. Try again."
-                            else -> "Upload the POD for verification."
-                        },
-                    icon = if (podUploading) Icons.Filled.HourglassEmpty else Icons.Filled.CloudUpload,
-                    colors = colors,
-                    sealText = "Required",
-                    sealTone = FleetTone.ACCENT,
-                    actionIcon = if (podUploading) null else Icons.Filled.CloudUpload,
-                    actionContentDescription = "Upload POD",
-                    onActionClick =
-                        if (podUploading) {
-                            null
-                        } else {
-                            { onUploadClick("pod") }
-                        },
-                )
-            }
-
-            if (trip.tripDocuments.isEmpty() && !showLrSlot && !showPodSlot) {
-                Text(
-                    text = "Nothing to lodge yet. Documents appear here once the trip is booked.",
-                    style = TruckerType.body,
-                    color = colors.inkMuted,
-                )
             }
         }
     }
