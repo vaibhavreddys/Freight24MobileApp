@@ -1174,7 +1174,7 @@ fun VerificationLine(
         )
         Spacer(modifier = Modifier.width(9.dp))
         Text(
-            text = if (isVerified) "Documents verified" else "Verification pending",
+            text = if (isVerified) "Documents verified" else "Documents Verification pending",
             style = TruckerType.caption,
             color = tone.color(colors),
             maxLines = 1,

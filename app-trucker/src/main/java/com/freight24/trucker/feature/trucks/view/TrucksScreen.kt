@@ -1,5 +1,6 @@
 package com.freight24.trucker.feature.trucks.view
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
@@ -27,6 +28,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -36,10 +38,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.freight24.common.model.Truck
@@ -48,19 +52,14 @@ import com.freight24.ui.trucker.FleetCard
 import com.freight24.ui.trucker.FleetEmptyState
 import com.freight24.ui.trucker.FleetFilterEntry
 import com.freight24.ui.trucker.FleetFilterRail
-import com.freight24.ui.trucker.FleetRule
 import com.freight24.ui.trucker.FleetSearchField
-import com.freight24.ui.trucker.PlateBadge
 import com.freight24.ui.trucker.RigShape
-import com.freight24.ui.trucker.RigSilhouette
-import com.freight24.ui.trucker.StampSeal
 import com.freight24.ui.trucker.TruckerColors
 import com.freight24.ui.trucker.TruckerSecondaryButton
-import com.freight24.ui.trucker.VerificationLine
+import com.freight24.ui.trucker.TruckerType
 import com.freight24.ui.trucker.color
 import com.freight24.ui.trucker.fleetPress
 import com.freight24.ui.trucker.rememberTruckerColors
-import com.freight24.ui.trucker.rigShapeFor
 import com.freight24.ui.trucker.truckSidingLabel
 import com.freight24.ui.trucker.truckSidingTone
 
@@ -294,10 +293,16 @@ private fun TruckList(
 // ---------------------------------------------------------------------------
 
 /**
- * One truck in the yard. Plate, class, hairline, state — the same four
- * moves as a trip card, with the siding carrying availability rather than
- * stage.
+ * One truck in the yard, built as a ledger row rather than a stack of badges.
+ *
+ * Four things are true of every truck — where it is parked, what it is, what
+ * paperwork it has, and whether it is free — and only the first and last
+ * change often. So the plate leads in type, the body and tonnage sit under it
+ * as one muted line, and the two states share one right-hand column: colour
+ * for parking, a plain word for paperwork. No boxes inside the card, so the
+ * eye lands on the registration and stays there while scanning the column.
  */
+@SuppressLint("RememberInComposition")
 @Composable
 internal fun RigCard(
     truck: Truck,
@@ -313,7 +318,7 @@ internal fun RigCard(
         spine = siding.color(colors),
         modifier =
             modifier
-                .padding(horizontal = 16.dp, vertical = 6.dp)
+                .padding(horizontal = 16.dp, vertical = 4.dp)
                 .fleetPress(interactionSource)
                 .clickable(
                     interactionSource = interactionSource,
@@ -328,56 +333,58 @@ internal fun RigCard(
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.Top,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            PlateBadge(
-                registration = truck.registrationNumber,
-                colors = colors,
+            Column(modifier = Modifier.weight(1f)) {
+                // The plate, set as type instead of drawn as a badge: an
+                // outlined box inside an outlined card put two borders around
+                // every row, which is where the list started to read as
+                // template rather than as a yard.
+                Text(
+                    text = truck.registrationNumber.uppercase(),
+                    style = TruckerType.digit.copy(letterSpacing = 1.4.sp),
+                    color = colors.ink,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
                 // The truck type already names the body ("22 Feet Closed"),
                 // so listing bodyType after it only ever read as a stutter.
-                caption =
+                val spec =
                     listOfNotNull(
                         truck.truckType,
                         truck.capacityMt?.let { "${it.toString().removeSuffix(".0")} MT" },
+                    ).joinToString(" · ")
+                if (spec.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(3.dp))
+                    Text(
+                        text = spec,
+                        style = TruckerType.caption,
+                        color = colors.inkMuted,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
-                        .joinToString(" · ")
-                        .ifBlank { null },
-                border = colors.brand,
-                // Takes the slack, not just its content: with fill = false the
-                // seal was packed against the plate instead of the far edge,
-                // which only showed on trucks with a short type label.
-                modifier = Modifier.weight(1f),
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            StampSeal(
-                text = truckSidingLabel(truck.availability, truck.isBlacklisted),
-                tone = siding,
-                colors = colors,
-            )
-        }
+                }
+            }
 
-        // Symmetric around the rule: 16/13 read as an accident at card size,
-        // and the slack buys nothing — the plate and the verification line are
-        // already two strong horizontals.
-        Spacer(modifier = Modifier.height(11.dp))
-        FleetRule(colors = colors)
-        Spacer(modifier = Modifier.height(11.dp))
+            Spacer(modifier = Modifier.width(14.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            VerificationLine(
-                isVerified = truck.isVerified,
-                colors = colors,
-                modifier = Modifier.weight(1f),
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            RigSilhouette(
-                shape = rigShapeFor(truckType = truck.truckType, bodyType = truck.bodyType),
-                tint = colors.inkMuted,
-                modifier = Modifier.size(width = 46.dp, height = 26.dp),
-            )
+            // Parking and paperwork, stacked and right-aligned so they form one
+            // scannable column down the list.
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text = truckSidingLabel(truck.availability, truck.isBlacklisted),
+                    style = TruckerType.bodyStrong,
+                    color = siding.color(colors),
+                    maxLines = 1,
+                )
+                Spacer(modifier = Modifier.height(3.dp))
+                Text(
+                    text = if (truck.isVerified) "Verified" else "Not Verified",
+                    style = TruckerType.caption,
+                    color = colors.inkMuted,
+                    maxLines = 1,
+                )
+            }
         }
     }
 }
