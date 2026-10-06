@@ -10,6 +10,7 @@ data class TruckDetail(
     val make: String?,
     val model: String?,
     val year: String?,
+    val capacityMt: Double?,
     val rcCard: TruckDocument?,
     val fcCertificate: TruckDocument?,
     val insurance: TruckDocument?,

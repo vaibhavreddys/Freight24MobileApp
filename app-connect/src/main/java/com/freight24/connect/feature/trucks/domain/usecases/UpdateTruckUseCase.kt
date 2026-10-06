@@ -17,6 +17,7 @@ data class UpdateTruckParams(
     val make: String? = null,
     val model: String? = null,
     val year: String? = null,
+    val capacityMt: String? = null,
     val rcCard: File? = null,
     val fcCertificate: File? = null,
     val insurance: File? = null,
@@ -35,6 +36,7 @@ class UpdateTruckUseCaseImpl
             val make = params.make?.toPart("make")
             val model = params.model?.toPart("model")
             val year = params.year?.toPart("year")
+            val capacityMt = params.capacityMt?.toPart("capacity_mt")
 
             val rcCard = params.rcCard?.toFilePart("rc_card")
             val fcCertificate = params.fcCertificate?.toFilePart("fc_certificate")
@@ -47,6 +49,7 @@ class UpdateTruckUseCaseImpl
                 make = make,
                 model = model,
                 year = year,
+                capacityMt = capacityMt,
                 rcCard = rcCard,
                 fcCertificate = fcCertificate,
                 insurance = insurance,

@@ -49,6 +49,7 @@ internal class TruckRepositoryImpl
                     make,
                     model,
                     year,
+                    null,
                     rcCard,
                     fcCertificate,
                     insurance,

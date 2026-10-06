@@ -110,6 +110,7 @@ import com.freight24.ui.components.CitySearchField
 import com.freight24.ui.components.ProfileUtilityRow
 import com.freight24.ui.components.RouteChip
 import com.freight24.ui.components.formViewportInsets
+import com.freight24.ui.components.getPdfLaunchIntent
 import com.freight24.ui.theme.FreightThemeTokens
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -253,6 +254,7 @@ private fun ProfileMainContent(
 ) {
     val documentStates by viewModel.documentStates.collectAsState()
     val documentTypes by viewModel.documentTypes.collectAsState()
+    val previewingDocumentId by viewModel.previewingDocumentId.collectAsState()
     val completion by viewModel.completion.collectAsState()
     val hasPendingTemporaryUploads by viewModel.hasPendingTemporaryUploads.collectAsState()
     val isSaving by viewModel.isSaving.collectAsState()
@@ -265,6 +267,11 @@ private fun ProfileMainContent(
     val visibleRoutes by viewModel.visibleRoutes.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val documentPreviewLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        viewModel.onDocumentPreviewClosed()
+    }
 
     val isVerified = profile.profileVerificationStatus?.equals("verified", ignoreCase = true) == true
     val makeCall = rememberCallAction(stringResource(R.string.supportPhoneNumber))
@@ -734,15 +741,27 @@ private fun ProfileMainContent(
                 badgeTone =
                     if (completion.isComplete) StatusTone.VERIFIED else StatusTone.PENDING,
             ) {
+                val message = stringResource(R.string.profile_document_preview_failed)
                 DocumentList(
                     documentTypes = documentTypes,
                     documents = profile.documents,
                     documentStates = documentStates,
                     isEditing = isEditing,
+                    previewingDocumentId = previewingDocumentId,
                     onDocumentView = { documentId ->
-                        viewModel.getSignedUrl(documentId) { signedUrl ->
-                            context.startActivity(com.freight24.ui.components.getPdfLaunchIntent(signedUrl, context))
-                        }
+                        viewModel.getSignedUrl(
+                            documentId = documentId,
+                            onUrlReady = { signedUrl ->
+                                documentPreviewLauncher.launch(
+                                    getPdfLaunchIntent(signedUrl, context)
+                                )
+                            },
+                            onError = {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(message)
+                                }
+                            }
+                        )
                     },
                     onDocumentUpload = { type ->
                         pickingDocumentType = type
@@ -915,7 +934,7 @@ private fun CourierAddressCard(
                 }
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(
-                    text = "Courier address",
+                    text = "POD address",
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f),

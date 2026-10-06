@@ -420,6 +420,8 @@ private fun SpecificationsSection(truck: TruckDetail) {
             LedgerDivider()
             LedgerRow("MODEL", truck.model)
             LedgerDivider()
+            LedgerRow("CAPACITY", truck.capacityMt?.let { "${it.toString().removeSuffix(".0")} MT" })
+            LedgerDivider()
             LedgerRow("TRUCK TYPE", truck.truckType)
         }
     }

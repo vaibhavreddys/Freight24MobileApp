@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -56,6 +57,7 @@ internal fun DocumentList(
     isEditing: Boolean,
     onDocumentView: (String) -> Unit,
     onDocumentUpload: (DocumentType) -> Unit,
+    previewingDocumentId: String? = null,
 ) {
     Column {
         documentTypes.forEachIndexed { index, type ->
@@ -71,7 +73,7 @@ internal fun DocumentList(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .clickable {
+                        .clickable(enabled = previewingDocumentId == null) {
                             when {
                                 isEditing -> onDocumentUpload(type)
                                 canView -> onDocumentView(doc!!.docId!!)
@@ -127,25 +129,32 @@ internal fun DocumentList(
 
                 Spacer(modifier = Modifier.width(6.dp))
 
-                Icon(
-                    imageVector =
-                        when {
-                            uploadStatus == UploadStatus.ERROR -> Icons.Default.Refresh
-                            canView -> Icons.AutoMirrored.Filled.KeyboardArrowRight
-                            // Outlined variants only: the filled cloud sat next to
-                            // outlined chevrons at double the visual weight, which
-                            // made the action look more important than the row.
-                            else -> Icons.Outlined.CloudUpload
-                        },
-                    contentDescription =
-                        when {
-                            uploadStatus == UploadStatus.ERROR -> "Retry upload"
-                            canView -> "View ${type.displayName}"
-                            else -> "Upload ${type.displayName}"
-                        },
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp),
-                )
+                if (previewingDocumentId != null && previewingDocumentId == doc?.docId) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                    )
+                } else {
+                    Icon(
+                        imageVector =
+                            when {
+                                uploadStatus == UploadStatus.ERROR -> Icons.Default.Refresh
+                                canView -> Icons.AutoMirrored.Filled.KeyboardArrowRight
+                                // Outlined variants only: the filled cloud sat next to
+                                // outlined chevrons at double the visual weight, which
+                                // made the action look more important than the row.
+                                else -> Icons.Outlined.CloudUpload
+                            },
+                        contentDescription =
+                            when {
+                                uploadStatus == UploadStatus.ERROR -> "Retry upload"
+                                canView -> "View ${type.displayName}"
+                                else -> "Upload ${type.displayName}"
+                            },
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
             }
 
             if (index < documentTypes.lastIndex) {

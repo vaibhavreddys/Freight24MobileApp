@@ -106,7 +106,7 @@ fun TripDetailDto.toDomain(): TripDetail {
         tripDocuments = latestDocuments,
         financials = mappedFinancials,
         truckerStatus = trucker_status,
-        truckerPayments = trucker_payments.map { it.toDomain() },
+        truckerPayments = trucker_payments.map { it.toDomain() }.reversed(),
     )
 }
 

@@ -51,6 +51,7 @@ class OnboardTruckViewModel
         val make = MutableStateFlow("")
         val model = MutableStateFlow("")
         val year = MutableStateFlow("")
+        val capacityMt = MutableStateFlow("")
 
         private val _registrationError = MutableStateFlow<String?>(null)
         val registrationError: StateFlow<String?> = _registrationError.asStateFlow()
@@ -95,11 +96,16 @@ class OnboardTruckViewModel
 
         val isYearValid: StateFlow<Boolean> =
             year.map {
+                if (it.isBlank()) return@map true
                 if (it.length != 4 || !it.all { char -> char.isDigit() }) return@map false
                 val yearsInt = it.toIntOrNull() ?: 0
                 val currentYear = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)
                 yearsInt in 2000..currentYear
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
+
+        val isCapacityValid: StateFlow<Boolean> =
+            capacityMt.map { (it.toDoubleOrNull() ?: 0.0) > 0.0 }
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
 
         val isOwnerValid: StateFlow<Boolean> =
             selectedTruckOwner.map { it != null }
@@ -109,20 +115,18 @@ class OnboardTruckViewModel
             combine(
                 isRegistrationValid,
                 selectedTruckType,
-                make,
-                model,
                 isYearValid,
                 isOwnerValid,
                 registrationError,
+                isCapacityValid,
             ) { args: Array<Any?> ->
                 val reg = args[0] as Boolean
                 val type = args[1] as? TruckType
-                val mk = args[2] as String
-                val md = args[3] as String
-                val yr = args[4] as Boolean
-                val owner = args[5] as Boolean
-                val regErr = args[6] as? String
-                reg && type != null && mk.isNotBlank() && md.isNotBlank() && yr && owner && regErr == null
+                val yr = args[2] as Boolean
+                val owner = args[3] as Boolean
+                val regErr = args[4] as? String
+                val capacity = args[5] as Boolean
+                reg && type != null && yr && owner && regErr == null && capacity
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
 
         val isStep2Valid: StateFlow<Boolean> =
@@ -235,6 +239,7 @@ class OnboardTruckViewModel
                         make = make.value.ifBlank { null },
                         model = model.value.ifBlank { null },
                         year = year.value.ifBlank { null },
+                        capacityMt = capacityMt.value.ifBlank { null },
                         rcCard = rcCardFile.value,
                         fcCertificate = fcCertificateFile.value,
                         insurance = insuranceFile.value,
@@ -327,6 +332,7 @@ class OnboardTruckViewModel
             make.value = ""
             model.value = ""
             year.value = ""
+            capacityMt.value = ""
             truckOwnerQuery.value = ""
             selectedTruckOwner.value = null
             rcCardFile.value = null

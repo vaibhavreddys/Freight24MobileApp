@@ -132,6 +132,7 @@ private fun com.freight24.rest.response.TruckDetailDto.toDomain() =
         make = this.make,
         model = this.model,
         year = this.year,
+        capacityMt = this.capacityMt,
         rcCard = this.rcCard?.toDomain(),
         fcCertificate = this.fcCertificate?.toDomain(),
         insurance = this.insurance?.toDomain(),

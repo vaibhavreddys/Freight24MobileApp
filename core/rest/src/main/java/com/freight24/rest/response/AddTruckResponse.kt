@@ -18,6 +18,7 @@ data class AddTruckDto(
     val make: String?,
     val model: String?,
     val year: String?,
+    val capacity_mt: Double? = null,
     val rc_card_url: String?,
     val fc_certificate_url: String?,
     val insurance_url: String?,

@@ -21,6 +21,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -30,11 +31,7 @@ import com.freight24.connect.feature.trucks.enums.TruckStatus
 import com.freight24.rest.response.SearchTruckResponse
 import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.theme.FreightThemeTokens
-
-// Indian vehicle registration number (e.g. KA01AB1234): 2 state letters, 2 district
-// digits, up to 3 series letters, 1-4 number digits. The optional groups also accept
-// partial queries like "KA", "KA01" or "KA01AB" while the user is still typing.
-private val VEHICLE_NO_REGEX = Regex("^(?:[A-Z]{2}\\d{2}[A-Z]{0,2}\\d{1,4}|\\d{2}BH\\d{4}[A-Z]{1,2})$")
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,12 +68,14 @@ fun AssignTruckScreen(
             OutlinedTextField(
                 value = uiState.query,
                 onValueChange = { query ->
-                    val filtered = query.uppercase().filter { it.isLetterOrDigit() }.take(11)
-                    if (VEHICLE_NO_REGEX.matches(filtered)) {
-                        viewModel.onEvent(AssignTruckEvent.UpdateQuery(filtered))
-                    }
+                    val filtered = query.uppercase(Locale.ROOT).filter { it.isLetterOrDigit() }.take(11)
+                    viewModel.onEvent(AssignTruckEvent.UpdateQuery(filtered))
                 },
-                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Characters,
+                    keyboardType = KeyboardType.Ascii,
+                    autoCorrectEnabled = false,
+                ),
                 modifier =
                     Modifier
                         .fillMaxWidth()

@@ -28,6 +28,7 @@ import com.freight24.ui.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,6 +43,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -122,6 +124,9 @@ internal class ProfileViewModel
 
         private val _uiState = MutableStateFlow<UiState<Profile>>(UiState.Loading)
         val uiState: StateFlow<UiState<Profile>> = _uiState.asStateFlow()
+
+        private val _previewingDocumentId = MutableStateFlow<String?>(null)
+        val previewingDocumentId: StateFlow<String?> = _previewingDocumentId.asStateFlow()
 
         private val _isEditing = MutableStateFlow(false)
         val isEditing: StateFlow<Boolean> = _isEditing.asStateFlow()
@@ -909,13 +914,27 @@ internal class ProfileViewModel
         fun getSignedUrl(
             documentId: String,
             onUrlReady: (String) -> Unit,
+            onError: (Throwable) -> Unit,
         ) {
-            viewModelScope.launch(Dispatchers.IO) {
-                getProfileSignedUrlUseCase.invoke(documentId)
-                    .onSuccess { signedUrl ->
-                        onUrlReady(signedUrl)
+            if (!_previewingDocumentId.compareAndSet(null, documentId)) return
+            viewModelScope.launch {
+                try {
+                    val signedUrl = withContext(Dispatchers.IO) {
+                        getProfileSignedUrlUseCase.invoke(documentId).getOrThrow()
                     }
+                    onUrlReady(signedUrl)
+                } catch (error: CancellationException) {
+                    onDocumentPreviewClosed()
+                    throw error
+                } catch (error: Exception) {
+                    onDocumentPreviewClosed()
+                    onError(error)
+                }
             }
+        }
+
+        fun onDocumentPreviewClosed() {
+            _previewingDocumentId.value = null
         }
 
         fun logout() {

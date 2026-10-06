@@ -19,4 +19,5 @@
     <string name="login_contact_support">Contact Support</string>
     <string name="supportPhoneNumber">+919620111667</string>
 
+    <string name="profile_document_preview_failed">Unable to open the document. Please try again.</string>
 </resources>

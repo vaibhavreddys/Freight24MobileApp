@@ -19,6 +19,7 @@ data class TruckDetailDto(
     val make: String?,
     val model: String?,
     val year: String?,
+    val capacityMt: Double? = null,
     val rcCard: DocumentDto?,
     val fcCertificate: DocumentDto?,
     val insurance: DocumentDto?,
