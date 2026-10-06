@@ -9,6 +9,14 @@ import com.freight24.rest.response.ClientOnboardingV2Response
 import com.freight24.rest.response.CreateTruckV2Dto
 import com.freight24.rest.response.CreateTruckV2Response
 import com.freight24.rest.response.TruckOwnerOnboardingV2Response
+import com.freight24.rest.response.TruckOwnerV2Counts
+import com.freight24.rest.response.TruckOwnerV2DetailDto
+import com.freight24.rest.response.TruckOwnerV2DetailResponse
+import com.freight24.rest.response.TruckOwnerV2FieldValidationDto
+import com.freight24.rest.response.TruckOwnerV2PageResponse
+import com.freight24.rest.response.TruckOwnerV2SummaryDto
+import com.freight24.rest.response.TruckOwnerV2ValidationData
+import com.freight24.rest.response.TruckOwnerV2ValidationResponse
 import com.freight24.rest.response.TruckV2Counts
 import com.freight24.rest.response.TruckV2DetailDto
 import com.freight24.rest.response.TruckV2DetailResponse
@@ -234,7 +242,6 @@ class V2RepositoryBoundaryContractTest {
             }
         val repository =
             TruckOwnerRepositoryImpl(
-                api = unusedApi(),
                 v2Api = v2Api,
                 ioDispatcher = Dispatchers.Unconfined,
             )
@@ -248,6 +255,129 @@ class V2RepositoryBoundaryContractTest {
 
         assertTrue(result.isSuccess)
         assertEquals("owner-user-1", forwardedOwnerUserId)
+    }
+
+    @Test
+    fun `truck owner management page forwards filters and maps explicit ids`() = runBlocking {
+        val v2Api =
+            apiProxy<TruckOwnerV2Api> { method, arguments ->
+                assertEquals("getTruckOwners", method)
+                assertEquals("active", arguments[0])
+                assertEquals("pending_docs", arguments[2])
+                assertEquals(2, arguments[3])
+                Response.success(
+                    TruckOwnerV2PageResponse(
+                        success = true,
+                        page = 2,
+                        limit = 30,
+                        counts = TruckOwnerV2Counts(total = 31),
+                        data =
+                            listOf(
+                                TruckOwnerV2SummaryDto(
+                                    id = "owner-user-31",
+                                    userId = "owner-user-31",
+                                    profileId = "owner-profile-31",
+                                    fullName = "ABC Transport",
+                                ),
+                            ),
+                    ),
+                )
+            }
+        val repository = TruckOwnerRepositoryImpl(v2Api, Dispatchers.Unconfined)
+
+        val page =
+            repository.getManagementPage(
+                status = "active",
+                documentStatus = "pending_docs",
+                page = 2,
+            ).getOrThrow()
+
+        assertEquals("owner-user-31", page.items.single().ownerUserId)
+        assertEquals("owner-profile-31", page.items.single().ownerProfileId)
+        assertTrue(page.endOfList)
+    }
+
+    @Test
+    fun `truck owner picker uses basic search and profile id`() = runBlocking {
+        val v2Api =
+            apiProxy<TruckOwnerV2Api> { method, arguments ->
+                assertEquals("searchTruckOwnerOptions", method)
+                assertEquals("ABC", arguments[0])
+                Response.success(
+                    TruckOwnerV2PageResponse(
+                        success = true,
+                        page = 1,
+                        limit = 30,
+                        count = 1,
+                        data =
+                            listOf(
+                                TruckOwnerV2SummaryDto(
+                                    id = "owner-profile-1",
+                                    userId = "owner-user-1",
+                                    profileId = "owner-profile-1",
+                                    fullName = "ABC Transport",
+                                ),
+                            ),
+                    ),
+                )
+            }
+        val repository = TruckOwnerRepositoryImpl(v2Api, Dispatchers.Unconfined)
+
+        val owner = repository.searchPickerOptions("ABC").getOrThrow().items.single()
+
+        assertEquals("owner-user-1", owner.ownerUserId)
+        assertEquals("owner-profile-1", owner.ownerProfileId)
+    }
+
+    @Test
+    fun `truck owner validation forwards user id exclusion`() = runBlocking {
+        val v2Api =
+            apiProxy<TruckOwnerV2Api> { method, arguments ->
+                assertEquals("validateTruckOwner", method)
+                assertEquals("ABCDE1234F", arguments[1])
+                assertEquals("owner-user-1", arguments[4])
+                Response.success(
+                    TruckOwnerV2ValidationResponse(
+                        success = true,
+                        data =
+                            TruckOwnerV2ValidationData(
+                                pan = TruckOwnerV2FieldValidationDto(exists = false),
+                            ),
+                    ),
+                )
+            }
+        val repository = TruckOwnerRepositoryImpl(v2Api, Dispatchers.Unconfined)
+
+        val result = repository.validate(pan = "ABCDE1234F", excludeOwnerUserId = "owner-user-1").getOrThrow()
+
+        assertEquals(false, result.pan?.exists)
+    }
+
+    @Test
+    fun `truck owner status update maps returned detail`() = runBlocking {
+        val v2Api =
+            apiProxy<TruckOwnerV2Api> { method, arguments ->
+                assertEquals("updateTruckOwnerStatus", method)
+                assertEquals("owner-user-1", arguments[0])
+                Response.success(
+                    TruckOwnerV2DetailResponse(
+                        success = true,
+                        data =
+                            TruckOwnerV2DetailDto(
+                                id = "owner-user-1",
+                                profileId = "owner-profile-1",
+                                fullName = "ABC Transport",
+                                status = "active",
+                            ),
+                    ),
+                )
+            }
+        val repository = TruckOwnerRepositoryImpl(v2Api, Dispatchers.Unconfined)
+
+        val owner = repository.updateStatus("owner-user-1", "active").getOrThrow()
+
+        assertEquals("active", owner.status)
+        assertEquals("owner-profile-1", owner.ownerProfileId)
     }
 
     @Test

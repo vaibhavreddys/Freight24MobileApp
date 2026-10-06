@@ -29,6 +29,22 @@ data class TruckOwnerPickerOption(
     val status: String?,
 )
 
+data class TruckOwnerValidation(
+    val phone: TruckOwnerFieldValidation? = null,
+    val pan: TruckOwnerFieldValidation? = null,
+    val aadhaar: TruckOwnerFieldValidation? = null,
+    val gst: TruckOwnerFieldValidation? = null,
+)
+
+data class TruckOwnerFieldValidation(
+    val exists: Boolean,
+    val ownerUserId: String? = null,
+    val ownerProfileId: String? = null,
+    val fullName: String? = null,
+    val status: String? = null,
+    val tagCode: String? = null,
+)
+
 data class TruckOwnerDetails(
     val ownerUserId: String,
     val ownerProfileId: String,
@@ -41,6 +57,9 @@ data class TruckOwnerDetails(
     val gstNumber: String?,
     val status: String,
     val baseLocation: String?,
+    val baseCity: NamedLocation?,
+    val baseArea: NamedLocation?,
+    val baseCityState: String?,
     val panNumber: String?,
     val aadhaarNumber: String?,
     val isTdsApplicable: Boolean?,

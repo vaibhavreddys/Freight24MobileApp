@@ -22,7 +22,6 @@ import com.freight24.rest.api.ProfileApi
 import com.freight24.rest.api.TripApi
 import com.freight24.rest.api.TripHaltingApi
 import com.freight24.rest.api.TripLUChargesApi
-import com.freight24.rest.api.TruckOwnerApi
 import com.freight24.rest.api.TruckOwnerV2Api
 import com.freight24.rest.api.TruckV2Api
 import com.freight24.rest.api.VerificationApi
@@ -137,15 +136,6 @@ object ApiModule {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "TripHaltingApi")
             .create(TripLUChargesApi::class.java)
-    }
-
-    @Provides
-    fun providesTruckOwnerApi(
-        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
-    ): TruckOwnerApi {
-        return retrofitFactory
-            .create(BuildConfig.BASE_URL, "TruckOwnerApi")
-            .create(TruckOwnerApi::class.java)
     }
 
     @Provides

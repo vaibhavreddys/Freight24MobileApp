@@ -6,6 +6,8 @@ import com.freight24.connect.feature.truckowners.profile.domain.DocumentType
 import com.freight24.connect.feature.truckowners.profile.domain.PreferredRoute
 import com.freight24.connect.feature.truckowners.profile.domain.Profile
 import com.freight24.connect.feature.truckowners.profile.domain.ProfileDocument
+import com.freight24.connect.domain.model.TruckOwnerDetails
+import com.freight24.connect.domain.model.VerificationDocument
 import com.freight24.rest.response.BankAccountDetailsDto
 import com.freight24.rest.response.PreferredRouteDto
 import com.freight24.rest.response.ProfileDocumentDto
@@ -19,6 +21,8 @@ fun ProfileDto.toDomain(): Profile =
         baseCityId = baseCityId,
         baseCityName = baseCityName,
         baseCityState = baseCityState,
+        baseAreaId = null,
+        baseAreaName = null,
         baseLocation = baseLocation,
         fullName = fullName,
         emailId = emailId,
@@ -38,6 +42,71 @@ fun ProfileDto.toDomain(): Profile =
         documentsVerificationStatus = documentsVerificationStatus ?: false,
         profileVerificationStatus = profileVerificationStatus,
         preferredRoutes = preferredRoutes?.mapNotNull { it.toDomain() }.orEmpty(),
+    )
+
+fun TruckOwnerDetails.toProfile(): Profile =
+    Profile(
+        id = ownerProfileId,
+        userId = ownerUserId,
+        status = status,
+        baseCityId = baseCity?.id,
+        baseCityName = baseCity?.name,
+        baseCityState = baseCityState,
+        baseAreaId = baseArea?.id,
+        baseAreaName = baseArea?.name,
+        baseLocation = baseLocation,
+        fullName = fullName,
+        emailId = email,
+        phoneNo = phone,
+        alternativePhoneNo = alternatePhones,
+        panNumber = panNumber,
+        aadhaarNumber = aadhaarNumber,
+        isTdsApplicable = isTdsApplicable ?: false,
+        tagCode = tagCode,
+        documents = (mandatoryDocuments + optionalDocuments).map { it.toProfileDocument() },
+        bankAccountDetails =
+            bankAccount?.let {
+                BankAccountDetails(
+                    accountHolderName = it.accountHolderName,
+                    accountNumber = it.accountNumber,
+                    ifscCode = it.ifscCode,
+                    upiId = it.upiId,
+                    bankName = it.bankName,
+                    branchName = it.branchName,
+                )
+            },
+        businessName = businessName,
+        gstNumber = gstNumber,
+        bankAccountVerificationStatus = bankVerified,
+        documentsVerificationStatus = documentsVerified,
+        profileVerificationStatus = profileVerificationStatus,
+        preferredRoutes =
+            preferredRoutes.mapNotNull { route ->
+                val source = route.sourceCity ?: return@mapNotNull null
+                val destination = route.destinationCity ?: return@mapNotNull null
+                PreferredRoute(
+                    id = route.routeId,
+                    priority = route.priority ?: 3,
+                    sourceCityId = source.id,
+                    sourceCityName = source.name,
+                    destCityId = destination.id,
+                    destCityName = destination.name,
+                )
+            },
+    )
+
+private fun VerificationDocument.toProfileDocument(): ProfileDocument =
+    ProfileDocument(
+        docId = documentId,
+        type = type.toDocumentType(),
+        url = url,
+        status =
+            when (status.uppercase()) {
+                "VERIFIED" -> DocumentStatus.VERIFIED
+                "REJECTED" -> DocumentStatus.REJECTED
+                "UPLOADED", "PENDING" -> if (url.isNullOrBlank()) DocumentStatus.PENDING else DocumentStatus.UPLOADED
+                else -> if (url.isNullOrBlank()) DocumentStatus.PENDING else DocumentStatus.UPLOADED
+            },
     )
 
 fun BankAccountDetailsDto.toDomain(): BankAccountDetails =

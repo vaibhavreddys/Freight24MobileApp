@@ -10,11 +10,9 @@ import com.freight24.auth.AuthDataStore
 import com.freight24.common.util.FileUtils
 import com.freight24.connect.feature.trucks.domain.usecases.GetTruckByIdUseCase
 import com.freight24.connect.feature.trucks.domain.usecases.GetTruckByIdUseCaseParams
-import com.freight24.connect.feature.trucks.domain.usecases.GetTruckOwnersUseCase
 import com.freight24.connect.feature.trucks.domain.usecases.UpdateTruckParams
 import com.freight24.connect.feature.trucks.domain.usecases.UpdateTruckUseCase
 import com.freight24.connect.domain.model.TruckDetails
-import com.freight24.rest.response.TruckOwnerDto
 import com.freight24.ui.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,7 +37,6 @@ class EditTruckViewModel
         private val updateTruckUseCase: UpdateTruckUseCase,
         private val getTruckByIdUseCase: GetTruckByIdUseCase,
         private val checkTruckAvailabilityUseCase: com.freight24.connect.feature.trucks.domain.usecases.CheckTruckAvailabilityUseCase,
-        private val getTruckOwnersUseCase: GetTruckOwnersUseCase,
         private val authDataStore: AuthDataStore,
     ) : ViewModel() {
         private val truckId: String = savedStateHandle.get<String>("truckId") ?: ""
@@ -77,30 +74,6 @@ class EditTruckViewModel
         val existingFcStatus = MutableStateFlow<String?>(null)
         val existingInsuranceStatus = MutableStateFlow<String?>(null)
 
-        // Truck Owner State
-        private val _truckOwners = MutableStateFlow<List<TruckOwnerDto>>(emptyList())
-        val truckOwnerQuery = MutableStateFlow("")
-        val selectedTruckOwner = MutableStateFlow<TruckOwnerDto?>(null)
-
-        val truckOwnerSuggestions: StateFlow<List<TruckOwnerDto>> =
-            combine(
-                _truckOwners,
-                truckOwnerQuery,
-                selectedTruckOwner,
-            ) { owners, query, selected ->
-                // If an owner is already selected and the query matches their name, don't show suggestions
-                if (selected != null && query == selected.full_name) {
-                    emptyList()
-                } else if (query.isBlank()) {
-                    emptyList()
-                } else {
-                    owners.filter {
-                        it.full_name.contains(query, ignoreCase = true) ||
-                            it.phone.contains(query)
-                    }.take(5)
-                }
-            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
         // File State
         val rcCardFile = MutableStateFlow<File?>(null)
         val fcCertificateFile = MutableStateFlow<File?>(null)
@@ -126,10 +99,6 @@ class EditTruckViewModel
 
         val isCapacityValid: StateFlow<Boolean> =
             capacityMt.map { (it.toDoubleOrNull() ?: 0.0) > 0.0 }
-                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
-
-        val isOwnerValid: StateFlow<Boolean> =
-            selectedTruckOwner.map { it != null }
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
 
         val isStep1Valid: StateFlow<Boolean> =
@@ -215,7 +184,6 @@ class EditTruckViewModel
             )
 
         init {
-            loadTruckOwners()
             fetchTruckDetails()
         }
 
@@ -256,23 +224,6 @@ class EditTruckViewModel
                         _uiState.value = UiState.Error(error.message ?: "Failed to fetch truck details")
                     }
             }
-        }
-
-        private fun loadTruckOwners() {
-            viewModelScope.launch {
-                getTruckOwnersUseCase()
-                    .onSuccess { owners ->
-                        _truckOwners.value = owners
-                    }
-                    .onFailure { error ->
-                        Log.e(TAG, "Failed to load truck owners", error)
-                    }
-            }
-        }
-
-        fun onTruckOwnerSelected(owner: TruckOwnerDto) {
-            selectedTruckOwner.value = owner
-            truckOwnerQuery.value = owner.full_name
         }
 
         fun nextStep() {
@@ -426,8 +377,6 @@ class EditTruckViewModel
             model.value = ""
             year.value = ""
             capacityMt.value = ""
-            truckOwnerQuery.value = ""
-            selectedTruckOwner.value = null
             rcCardFile.value = null
             fcCertificateFile.value = null
             insuranceFile.value = null

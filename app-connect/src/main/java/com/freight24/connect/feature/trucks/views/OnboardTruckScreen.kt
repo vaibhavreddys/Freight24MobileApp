@@ -349,7 +349,7 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
                         value = truckOwnerQuery,
                         onValueChange = {
                             viewModel.truckOwnerQuery.value = it
-                            if (selectedTruckOwner?.full_name != it) {
+                            if (selectedTruckOwner?.fullName != it) {
                                 viewModel.selectedTruckOwner.value = null
                             }
                         },
@@ -394,14 +394,14 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
                                     ListItem(
                                         headlineContent = {
                                             Text(
-                                                text = owner.full_name,
+                                                text = owner.fullName,
                                                 fontWeight = FontWeight.Bold,
                                                 style = MaterialTheme.typography.bodyLarge,
                                             )
                                         },
                                         supportingContent = {
                                             Text(
-                                                text = owner.phone,
+                                                text = owner.phone.orEmpty(),
                                                 style = MaterialTheme.typography.bodySmall,
                                             )
                                         },

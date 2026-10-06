@@ -10,6 +10,13 @@ import com.freight24.connect.feature.truckowners.domain.usecases.CreateTruckOwne
 import com.freight24.connect.feature.truckowners.domain.usecases.TruckOwnerBankParams
 import com.freight24.connect.feature.truckowners.domain.usecases.TruckOwnerBusinessParams
 import com.freight24.connect.feature.truckowners.domain.usecases.TruckOwnerPersonalParams
+import com.freight24.connect.feature.truckowners.profile.domain.usecase.TruckOwnerBankEditParams
+import com.freight24.connect.feature.truckowners.profile.domain.usecase.TruckOwnerBusinessEditParams
+import com.freight24.connect.feature.truckowners.profile.domain.usecase.TruckOwnerEditException
+import com.freight24.connect.feature.truckowners.profile.domain.usecase.TruckOwnerEditRequest
+import com.freight24.connect.feature.truckowners.profile.domain.usecase.TruckOwnerEditSection
+import com.freight24.connect.feature.truckowners.profile.domain.usecase.TruckOwnerPersonalEditParams
+import com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateTruckOwnerSectionsUseCaseImpl
 import com.freight24.connect.feature.trucks.domain.usecases.AddTruckParams
 import com.freight24.connect.feature.trucks.domain.usecases.AddTruckUseCaseImpl
 import com.freight24.connect.repository.ClientRepository
@@ -107,6 +114,88 @@ class OnboardingMultipartContractTest {
         assertTrue(result.isFailure)
         assertEquals(1, repository.personalCalls)
         assertEquals("owner-user-1", userId)
+    }
+
+    @Test
+    fun `truck owner edit routes files to owning v2 sections and keeps cheque optional`() = runBlocking {
+        val repository = CapturingTruckOwnerRepository()
+        val useCase = UpdateTruckOwnerSectionsUseCaseImpl(repository)
+        val result =
+            useCase(
+                TruckOwnerEditRequest(
+                    ownerUserId = "owner-user-1",
+                    personal =
+                        TruckOwnerPersonalEditParams(
+                            "ABC Transport",
+                            null,
+                            "+919876543210",
+                            emptyList(),
+                            "ABCDE1234F",
+                            "123412341234",
+                            tempPdf("aadhaar-edit"),
+                            tempPdf("pan-edit"),
+                        ),
+                    business =
+                        TruckOwnerBusinessEditParams(
+                            businessName = "ABC Transport",
+                            gstNumber = null,
+                            isTdsApplicable = true,
+                            baseCityId = 1,
+                            baseAreaId = null,
+                            preferredRoutes = emptyList(),
+                            gstFile = tempPdf("gst-edit"),
+                            companyFile = null,
+                            tdsFile = null,
+                        ),
+                    bank =
+                        TruckOwnerBankEditParams(
+                            "ABC Transport",
+                            "123456789",
+                            "HDFC0001234",
+                            null,
+                            null,
+                            null,
+                            chequeFile = null,
+                        ),
+                ),
+            )
+
+        assertTrue(result.isSuccess)
+        assertEquals(setOf("full_name", "phone", "pan_card", "aadhar_card", "aadhaar_file", "pan_file"), repository.editPersonalParts.map(::partName).toSet())
+        assertEquals(setOf("business_name", "is_tds_applicable", "base_city_id", "preferred_routes", "gst_file"), repository.businessParts.map(::partName).toSet())
+        assertEquals(setOf("account_holder_name", "account_number", "ifsc_code"), repository.bankParts.map(::partName).toSet())
+    }
+
+    @Test
+    fun `truck owner edit retry skips sections completed before failure`() = runBlocking {
+        val repository = CapturingTruckOwnerRepository(failBusiness = true)
+        val useCase = UpdateTruckOwnerSectionsUseCaseImpl(repository)
+        val request =
+            TruckOwnerEditRequest(
+                ownerUserId = "owner-user-1",
+                personal =
+                    TruckOwnerPersonalEditParams(
+                        "ABC Transport", null, "+919876543210", emptyList(), "ABCDE1234F", "123412341234", null, null,
+                    ),
+                business =
+                    TruckOwnerBusinessEditParams(null, null, true, null, null, emptyList(), null, null, null),
+                bank =
+                    TruckOwnerBankEditParams("ABC Transport", "123456789", "HDFC0001234", null, null, null, null),
+            )
+
+        val first = useCase(request)
+        val failure = first.exceptionOrNull() as TruckOwnerEditException
+        assertEquals(TruckOwnerEditSection.BUSINESS, failure.failedSection)
+        assertEquals(setOf(TruckOwnerEditSection.PERSONAL), failure.completedSections)
+        assertEquals(1, repository.editPersonalCalls)
+
+        repository.failBusiness = false
+        val retry = useCase(request, failure.completedSections)
+
+        assertTrue(retry.isSuccess)
+        assertEquals(1, repository.editPersonalCalls)
+        assertEquals(2, repository.businessCalls)
+        assertEquals(1, repository.bankCalls)
     }
 
     @Test
@@ -227,13 +316,17 @@ private class CapturingTruckRepository : TruckRepository {
     override suspend fun validateRegistration(registrationNumber: String, excludeTruckId: String?) = error("unused")
 }
 
-private class CapturingTruckOwnerRepository(private val failBusiness: Boolean = false) : TruckOwnerRepository {
+private class CapturingTruckOwnerRepository(var failBusiness: Boolean = false) : TruckOwnerRepository {
     var personalCalls = 0
     var personalParts = emptyList<MultipartBody.Part>()
     var businessParts = emptyList<MultipartBody.Part>()
     var bankParts = emptyList<MultipartBody.Part>()
     var businessUserId: String? = null
     var bankUserId: String? = null
+    var editPersonalCalls = 0
+    var businessCalls = 0
+    var bankCalls = 0
+    var editPersonalParts = emptyList<MultipartBody.Part>()
 
     override suspend fun createPersonalProfile(parts: List<MultipartBody.Part>): Result<TruckOwnerOnboardingV2Response> {
         personalCalls++
@@ -241,20 +334,31 @@ private class CapturingTruckOwnerRepository(private val failBusiness: Boolean = 
         return Result.success(TruckOwnerOnboardingV2Response(true, "Created", data = TruckOwnerOnboardingV2Data("owner-user-1")))
     }
 
+    override suspend fun updatePersonalProfile(ownerUserId: String, parts: List<MultipartBody.Part>): Result<TruckOwnerOnboardingV2Response> {
+        editPersonalCalls++
+        editPersonalParts = parts
+        return Result.success(TruckOwnerOnboardingV2Response(true, "Saved"))
+    }
+
     override suspend fun updateBusinessProfile(ownerUserId: String, parts: List<MultipartBody.Part>): Result<TruckOwnerOnboardingV2Response> {
+        businessCalls++
         businessUserId = ownerUserId
         businessParts = parts
         return if (failBusiness) Result.failure(IllegalStateException("Business failed")) else Result.success(TruckOwnerOnboardingV2Response(true, "Saved"))
     }
 
     override suspend fun updateBankProfile(ownerUserId: String, parts: List<MultipartBody.Part>): Result<TruckOwnerOnboardingV2Response> {
+        bankCalls++
         bankUserId = ownerUserId
         bankParts = parts
         return Result.success(TruckOwnerOnboardingV2Response(true, "Saved"))
     }
 
-    override suspend fun getTruckOwners() = error("unused")
-    override suspend fun searchTruckOwners(query: String) = error("unused")
+    override suspend fun getManagementPage(query: String?, status: String?, documentStatus: String?, page: Int, limit: Int) = error("unused")
+    override suspend fun searchPickerOptions(query: String, page: Int, limit: Int) = error("unused")
+    override suspend fun getDetails(ownerUserId: String) = error("unused")
+    override suspend fun validate(phone: String?, pan: String?, aadhaar: String?, gst: String?, excludeOwnerUserId: String?) = error("unused")
+    override suspend fun updateStatus(ownerUserId: String, status: String) = error("unused")
 }
 
 private class CapturingClientRepository : ClientRepository {

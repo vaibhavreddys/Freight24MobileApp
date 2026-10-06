@@ -15,7 +15,8 @@ import com.freight24.connect.feature.truckowners.profile.util.ProfileFieldValida
 import com.freight24.connect.feature.truckowners.profile.util.ValidationResult
 import com.freight24.common.util.FileUtils
 import com.freight24.connect.repository.LocationRepository
-import com.freight24.rest.api.TruckOwnerApi
+import com.freight24.connect.feature.trucks.domain.usecases.ValidateTruckOwnerParams
+import com.freight24.connect.feature.trucks.domain.usecases.ValidateTruckOwnerUseCase
 import com.freight24.rest.request.PreferredRouteEntry
 import com.freight24.rest.response.CityResult
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -63,7 +64,7 @@ class OnboardTruckOwnerViewModel
     constructor(
         private val createTruckOwnerUseCase: CreateTruckOwnerUseCase,
         private val locationRepository: LocationRepository,
-        private val truckOwnerApi: TruckOwnerApi,
+        private val validateTruckOwnerUseCase: ValidateTruckOwnerUseCase,
         private val savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
         private companion object {
@@ -231,10 +232,15 @@ class OnboardTruckOwnerViewModel
             val pan = panCard.value.trim().uppercase()
             if (pan.length != 10) return
             viewModelScope.launch(Dispatchers.IO) {
-                val response = truckOwnerApi.checkTruckOwnerField("pan_card", pan)
-                if (response.isSuccessful && response.body()?.exists == true) {
-                    _panDuplicateError.value = "PAN already registered with another truck owner"
-                }
+                validateTruckOwnerUseCase(ValidateTruckOwnerParams(pan = pan))
+                    .onSuccess { validation ->
+                        _panDuplicateError.value =
+                            if (validation.pan?.exists == true) {
+                                "PAN already registered with another truck owner"
+                            } else {
+                                null
+                            }
+                    }
             }
         }
 
@@ -259,10 +265,15 @@ class OnboardTruckOwnerViewModel
             val gst = gstNumber.value.trim().uppercase()
             if (gst.length != 15) return
             viewModelScope.launch(Dispatchers.IO) {
-                val response = truckOwnerApi.checkTruckOwnerField("gst_number", gst)
-                if (response.isSuccessful && response.body()?.exists == true) {
-                    _gstDuplicateError.value = "GST already registered with another truck owner"
-                }
+                validateTruckOwnerUseCase(ValidateTruckOwnerParams(gst = gst))
+                    .onSuccess { validation ->
+                        _gstDuplicateError.value =
+                            if (validation.gst?.exists == true) {
+                                "GST already registered with another truck owner"
+                            } else {
+                                null
+                            }
+                    }
             }
         }
 

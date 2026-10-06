@@ -10,6 +10,8 @@ data class Profile(
     val baseCityId: Int?,
     val baseCityName: String?,
     val baseCityState: String?,
+    val baseAreaId: Int?,
+    val baseAreaName: String?,
     val baseLocation: String?,
     val fullName: String?,
     val emailId: String?,

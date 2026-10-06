@@ -6,29 +6,26 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.freight24.common.model.DocumentUploadState
-import com.freight24.common.model.UploadMode
 import com.freight24.common.model.UploadStatus
 import com.freight24.common.util.FileUtils
 import com.freight24.connect.feature.truckowners.profile.domain.DocumentType
 import com.freight24.connect.feature.truckowners.profile.domain.PreferredRoute
 import com.freight24.connect.feature.truckowners.profile.domain.Profile
-import com.freight24.connect.feature.truckowners.profile.domain.ProfileRepository
 import com.freight24.connect.feature.truckowners.profile.domain.usecase.FetchProfileParams
 import com.freight24.connect.feature.truckowners.profile.domain.usecase.FetchProfileUseCase
-import com.freight24.connect.feature.truckowners.profile.domain.usecase.FinalizeIdentityDocumentsUseCase
-import com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateIdentityDocumentParams
-import com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateIdentityDocumentUseCase
-import com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateProfileParams
-import com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateProfileUseCase
+import com.freight24.connect.feature.truckowners.profile.domain.usecase.TruckOwnerBankEditParams
+import com.freight24.connect.feature.truckowners.profile.domain.usecase.TruckOwnerBusinessEditParams
+import com.freight24.connect.feature.truckowners.profile.domain.usecase.TruckOwnerEditException
+import com.freight24.connect.feature.truckowners.profile.domain.usecase.TruckOwnerEditRequest
+import com.freight24.connect.feature.truckowners.profile.domain.usecase.TruckOwnerEditSection
+import com.freight24.connect.feature.truckowners.profile.domain.usecase.TruckOwnerPersonalEditParams
+import com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateTruckOwnerSectionsUseCase
 import com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateTruckOwnerStatusParams
 import com.freight24.connect.feature.truckowners.profile.domain.usecase.UpdateTruckOwnerStatusUseCase
-import com.freight24.connect.feature.truckowners.profile.domain.usecase.UploadIdentityDocumentParams
-import com.freight24.connect.feature.truckowners.profile.domain.usecase.UploadIdentityDocumentUseCase
 import com.freight24.connect.feature.truckowners.profile.util.ProfileDocumentTypeIds
 import com.freight24.connect.repository.LocationRepository
-import com.freight24.rest.api.TruckOwnerApi
-import com.freight24.rest.request.FinalSaveFileRequest
-import com.freight24.rest.request.FinalSaveRequest
+import com.freight24.connect.feature.trucks.domain.usecases.ValidateTruckOwnerParams
+import com.freight24.connect.feature.trucks.domain.usecases.ValidateTruckOwnerUseCase
 import com.freight24.rest.request.PreferredRouteEntry
 import com.freight24.rest.response.CityResult
 import com.freight24.ui.UiState
@@ -49,9 +46,10 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.asRequestBody
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonPrimitive
 import java.io.File
 import java.util.UUID
 import javax.inject.Inject
@@ -82,19 +80,14 @@ internal class ProfileViewModel
     constructor(
         savedStateHandle: SavedStateHandle,
         private val fetchProfileUseCase: FetchProfileUseCase,
-        private val updateProfileUseCase: UpdateProfileUseCase,
+        private val updateTruckOwnerSectionsUseCase: UpdateTruckOwnerSectionsUseCase,
         private val updateTruckOwnerStatusUseCase: UpdateTruckOwnerStatusUseCase,
-        private val uploadIdentityDocumentUseCase: UploadIdentityDocumentUseCase,
-        private val updateIdentityDocumentUseCase: UpdateIdentityDocumentUseCase,
-        private val finalizeIdentityDocumentsUseCase: FinalizeIdentityDocumentsUseCase,
         private val getProfileSignedUrlUseCase: com.freight24.connect.feature.truckowners.profile.domain.usecase.GetProfileSignedUrlUseCase,
-        private val profileRepository: ProfileRepository,
         private val locationRepository: LocationRepository,
-        private val truckOwnerApi: TruckOwnerApi,
+        private val validateTruckOwnerUseCase: ValidateTruckOwnerUseCase,
         @param:ApplicationContext private val context: Context,
     ) : ViewModel() {
         private val ownerUserId: String = checkNotNull(savedStateHandle["ownerUserId"])
-        val sessionId: String = UUID.randomUUID().toString()
 
         private val _uiState = MutableStateFlow<UiState<Profile>>(UiState.Loading)
         val uiState: StateFlow<UiState<Profile>> = _uiState.asStateFlow()
@@ -190,6 +183,10 @@ internal class ProfileViewModel
 
         private val _documentStates = MutableStateFlow<Map<String, DocumentUploadState>>(emptyMap())
         val documentStates: StateFlow<Map<String, DocumentUploadState>> = _documentStates.asStateFlow()
+        private val pendingDocumentFiles = mutableMapOf<String, File>()
+        private var pendingEditRequest: TruckOwnerEditRequest? = null
+        private var pendingEditFingerprint: String? = null
+        private var completedEditSections: Set<TruckOwnerEditSection> = emptySet()
 
         private val _hasChanges = MutableStateFlow(false)
         val hasChanges: StateFlow<Boolean> = _hasChanges.asStateFlow()
@@ -274,6 +271,7 @@ internal class ProfileViewModel
             profile: Profile,
             preserveTemporary: Boolean,
         ) {
+            if (!preserveTemporary) pendingDocumentFiles.clear()
             val previous = _documentStates.value
             val docsByType = profile.documents.associateBy { it.type }
 
@@ -291,10 +289,15 @@ internal class ProfileViewModel
                             existingDocId = existing?.docId,
                             existingFileUrl = existing?.url,
                             existingVerifyStatus = existing?.let { ProfileDocumentTypeIds.verifyStatus(it.status) },
-                            temporaryFileKey = if (preserveTemporary) oldState?.temporaryFileKey else null,
+                            temporaryFileKey =
+                                if (preserveTemporary && pendingDocumentFiles.containsKey(fieldKey)) {
+                                    oldState?.temporaryFileKey
+                                } else {
+                                    null
+                                },
                             uploadStatus =
-                                if (preserveTemporary && oldState?.temporaryFileKey != null) {
-                                    if (oldState.uploadStatus == UploadStatus.ERROR) UploadStatus.ERROR else UploadStatus.DONE
+                                if (preserveTemporary && pendingDocumentFiles.containsKey(fieldKey)) {
+                                    if (oldState?.uploadStatus == UploadStatus.ERROR) UploadStatus.ERROR else UploadStatus.DONE
                                 } else {
                                     UploadStatus.IDLE
                                 },
@@ -305,11 +308,23 @@ internal class ProfileViewModel
         }
 
         private fun populateBaseCity(profile: Profile) {
+            val baseAreaId = profile.baseAreaId
+            val baseAreaName = profile.baseAreaName
             val baseCityId = profile.baseCityId
             val baseCityName = profile.baseCityName
-            val baseLabel = profile.baseLocation?.ifBlank { null } ?: baseCityName
+            val baseLabel = profile.baseLocation?.ifBlank { null } ?: baseAreaName ?: baseCityName
             _baseLocation.value = baseLabel
-            if (baseCityId != null && !baseCityName.isNullOrBlank()) {
+            if (baseAreaId != null && !baseAreaName.isNullOrBlank()) {
+                _baseCity.value =
+                    CityResult(
+                        type = "AREA",
+                        id = baseAreaId,
+                        name = baseAreaName,
+                        city = baseCityName.orEmpty(),
+                        state = profile.baseCityState.orEmpty(),
+                    )
+                baseCityQuery.value = baseLabel.orEmpty()
+            } else if (baseCityId != null && !baseCityName.isNullOrBlank()) {
                 _baseCity.value =
                     CityResult(
                         type = "CITY",
@@ -525,11 +540,15 @@ internal class ProfileViewModel
             val original = originalProfile
             if (original != null && pan == original.panNumber.orEmpty().trim().uppercase()) return
             viewModelScope.launch(Dispatchers.IO) {
-                val response = truckOwnerApi.checkTruckOwnerField("pan_card", pan, excludeId = ownerUserId)
-                if (response.isSuccessful && response.body()?.exists == true) {
-                    _panDuplicateError.value = "PAN already registered with another truck owner"
-                } else if (response.isSuccessful) {
-                    _panDuplicateError.value = null
+                validateTruckOwnerUseCase(
+                    ValidateTruckOwnerParams(pan = pan, excludeOwnerUserId = ownerUserId),
+                ).onSuccess { validation ->
+                    _panDuplicateError.value =
+                        if (validation.pan?.exists == true) {
+                            "PAN already registered with another truck owner"
+                        } else {
+                            null
+                        }
                 }
             }
         }
@@ -540,11 +559,15 @@ internal class ProfileViewModel
             val original = originalProfile
             if (original != null && gst == original.gstNumber.orEmpty().trim().uppercase()) return
             viewModelScope.launch(Dispatchers.IO) {
-                val response = truckOwnerApi.checkTruckOwnerField("gst_number", gst, excludeId = ownerUserId)
-                if (response.isSuccessful && response.body()?.exists == true) {
-                    _gstDuplicateError.value = "GST already registered with another truck owner"
-                } else if (response.isSuccessful) {
-                    _gstDuplicateError.value = null
+                validateTruckOwnerUseCase(
+                    ValidateTruckOwnerParams(gst = gst, excludeOwnerUserId = ownerUserId),
+                ).onSuccess { validation ->
+                    _gstDuplicateError.value =
+                        if (validation.gst?.exists == true) {
+                            "GST already registered with another truck owner"
+                        } else {
+                            null
+                        }
                 }
             }
         }
@@ -557,6 +580,9 @@ internal class ProfileViewModel
         fun cancelEdit() {
             clearFocusErrors()
             _isEditing.value = false
+            pendingEditRequest = null
+            pendingEditFingerprint = null
+            completedEditSections = emptySet()
             originalProfile?.let {
                 populateEditableFields(it)
                 initializeDocumentStates(it, preserveTemporary = false)
@@ -582,34 +608,31 @@ internal class ProfileViewModel
             viewModelScope.launch(Dispatchers.IO) {
                 _isSaving.value = true
                 try {
-                    val targetUserId = original.userId
+                    val fingerprint = editInputFingerprint()
+                    val request =
+                        pendingEditRequest?.takeIf { pendingEditFingerprint == fingerprint }
+                            ?: buildEditRequest(original)
+                    val completed =
+                        if (pendingEditRequest === request) completedEditSections else emptySet()
 
-                    val hasProfileChanges = hasProfileFieldChanges(original)
-                    val hasRouteChanges = hasRouteChanges()
-                    if (hasProfileChanges || hasRouteChanges) {
-                        val request = buildSaveRequest(original)
-
-                        val profileSaveResult = updateProfileUseCase.invoke(UpdateProfileParams(targetUserId, request))
-                        if (profileSaveResult.isFailure) {
-                            val message = profileSaveResult.exceptionOrNull()?.message ?: "Failed to save profile"
-                            _errorEvent.emit(message)
-                            _saveEvent.emit(Result.failure(IllegalStateException(message)))
-                            return@launch
-                        }
+                    val result = updateTruckOwnerSectionsUseCase(request, completed)
+                    if (result.isFailure) {
+                        val error = result.exceptionOrNull()
+                        val sectionError = error as? TruckOwnerEditException
+                        pendingEditRequest = request
+                        pendingEditFingerprint = fingerprint
+                        completedEditSections = sectionError?.completedSections.orEmpty()
+                        refreshOriginalAfterPartialFailure()
+                        val message = error?.message ?: "Failed to save profile"
+                        _errorEvent.emit(message)
+                        _saveEvent.emit(Result.failure(error ?: IllegalStateException(message)))
+                        return@launch
                     }
 
-                    val finalSaveRequest = buildFinalSaveRequest(targetUserId)
-                    if (finalSaveRequest.files.isNotEmpty()) {
-                        val finalSaveResult = finalizeIdentityDocumentsUseCase.invoke(finalSaveRequest)
-                        if (finalSaveResult.isFailure) {
-                            val message = finalSaveResult.exceptionOrNull()?.message ?: "Failed to finalize documents"
-                            _errorEvent.emit(message)
-                            _saveEvent.emit(Result.failure(IllegalStateException(message)))
-                            recomputeHasChanges()
-                            return@launch
-                        }
-                        clearTemporaryFileKeys()
-                    }
+                    pendingEditRequest = null
+                    pendingEditFingerprint = null
+                    completedEditSections = emptySet()
+                    clearPendingDocumentFiles()
 
                     _isEditing.value = false
                     fetchProfile(forceRefresh = true)
@@ -625,42 +648,61 @@ internal class ProfileViewModel
             }
         }
 
-        fun buildFinalSaveRequest(targetUserId: String): FinalSaveRequest {
-            return FinalSaveRequest(
-                user_id = targetUserId,
-                files =
-                    documentStates.value.values
-                        .filter { it.temporaryFileKey != null }
-                        .map { doc ->
-                            FinalSaveFileRequest(
-                                temporaryKey = doc.temporaryFileKey!!,
-                                document_type_id = doc.documentTypeId,
-                            )
-                        },
+        private fun buildEditRequest(original: Profile): TruckOwnerEditRequest {
+            val baseCity = _baseCity.value
+            return TruckOwnerEditRequest(
+                ownerUserId = original.userId,
+                personal =
+                    if (hasPersonalChanges(original)) {
+                        TruckOwnerPersonalEditParams(
+                            fullName = editableFullName.value.trim(),
+                            email = editableEmailId.value.trim().ifBlank { null },
+                            phone = editablePhoneNo.value.trim(),
+                            alternativePhones = listOf(editableAlternativePhone.value.trim()).filter { it.isNotBlank() },
+                            panCard = editablePanNumber.value.trim().uppercase(),
+                            aadhaarCard = editableAadhaarNumber.value.trim(),
+                            aadhaarFile = pendingDocumentFiles[ProfileDocumentTypeIds.fieldKey(DocumentType.AADHAAR)],
+                            panFile = pendingDocumentFiles[ProfileDocumentTypeIds.fieldKey(DocumentType.PAN)],
+                        )
+                    } else {
+                        null
+                    },
+                business =
+                    if (hasBusinessChanges(original)) {
+                        TruckOwnerBusinessEditParams(
+                            businessName = editableBusinessName.value.trim().ifBlank { null },
+                            gstNumber = editableGstNumber.value.trim().uppercase().ifBlank { null },
+                            isTdsApplicable = original.isTdsApplicable,
+                            baseCityId = baseCity?.takeIf { it.type.equals("CITY", ignoreCase = true) }?.id,
+                            baseAreaId = baseCity?.takeIf { it.type.equals("AREA", ignoreCase = true) }?.id,
+                            preferredRoutes = gatherPreferredRouteEntries(),
+                            gstFile = pendingDocumentFiles[ProfileDocumentTypeIds.fieldKey(DocumentType.GST_CERTIFICATE)],
+                            companyFile = pendingDocumentFiles[ProfileDocumentTypeIds.fieldKey(DocumentType.COMPANY_REGISTRATION)],
+                            tdsFile = pendingDocumentFiles[ProfileDocumentTypeIds.fieldKey(DocumentType.TDS_CERTIFICATE)],
+                        )
+                    } else {
+                        null
+                    },
+                bank =
+                    if (hasBankChanges(original)) {
+                        TruckOwnerBankEditParams(
+                            accountHolderName = editableAccountHolderName.value.trim(),
+                            accountNumber = editableAccountNumber.value.trim(),
+                            ifscCode = editableIfscCode.value.trim().uppercase(),
+                            upiId = editableUpiId.value.trim().ifBlank { null },
+                            bankName = editableBankName.value.trim().ifBlank { null },
+                            branchName = editableBranchName.value.trim().ifBlank { null },
+                            chequeFile = pendingDocumentFiles[ProfileDocumentTypeIds.fieldKey(DocumentType.CANCELLED_CHEQUE)],
+                        )
+                    } else {
+                        null
+                    },
             )
         }
 
-        private fun buildSaveRequest(original: Profile): com.freight24.rest.request.UpdateProfileRequest {
-            val baseCity = _baseCity.value
-            return com.freight24.rest.request.UpdateProfileRequest(
-                baseCityId = baseCity?.takeIf { it.type.equals("CITY", ignoreCase = true) }?.id,
-                baseAreaId = baseCity?.takeIf { it.type.equals("AREA", ignoreCase = true) }?.id,
-                full_name = editableFullName.value,
-                email = editableEmailId.value,
-                alt_phones = listOf(editableAlternativePhone.value),
-                pan_card = editablePanNumber.value,
-                aadhar_card = editableAadhaarNumber.value,
-                business_name = editableBusinessName.value,
-                gst_number = editableGstNumber.value,
-                is_tds_applicable = original.isTdsApplicable,
-                account_holder_name = editableAccountHolderName.value,
-                account_number = editableAccountNumber.value,
-                ifsc_code = editableIfscCode.value,
-                upi_id = editableUpiId.value,
-                bank_name = editableBankName.value,
-                branch_name = editableBranchName.value,
-                preferredRoutes = gatherPreferredRouteEntries(),
-            )
+        private suspend fun refreshOriginalAfterPartialFailure() {
+            fetchProfileUseCase(FetchProfileParams(ownerUserId))
+                .onSuccess { originalProfile = it }
         }
 
         private fun gatherPreferredRouteEntries(): List<PreferredRouteEntry> {
@@ -691,9 +733,8 @@ internal class ProfileViewModel
             isPdf: Boolean,
         ) {
             if (uris.isEmpty()) return
-            val original = originalProfile ?: return
             val fieldKey = ProfileDocumentTypeIds.fieldKey(type)
-            val currentState = _documentStates.value[fieldKey] ?: return
+            if (!_documentStates.value.containsKey(fieldKey)) return
 
             viewModelScope.launch(Dispatchers.IO) {
                 updateDocumentState(fieldKey) { state ->
@@ -706,47 +747,16 @@ internal class ProfileViewModel
                         createPdfFile(uris = uris, isPdf = isPdf)
                             ?: throw IllegalStateException("Unable to process selected file")
 
-                    val requestFile = file.asRequestBody("application/pdf".toMediaTypeOrNull())
-                    val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
-
-                    val result =
-                        when (val uploadMode = resolveUploadMode(currentState)) {
-                            UploadMode.ADD -> {
-                                uploadIdentityDocumentUseCase.invoke(
-                                    UploadIdentityDocumentParams(
-                                        userId = original.userId,
-                                        documentTypeId = currentState.documentTypeId,
-                                        documentNumber = "SESSION_$sessionId",
-                                        file = body,
-                                    ),
-                                )
-                            }
-
-                            is UploadMode.UPDATE -> {
-                                updateIdentityDocumentUseCase.invoke(
-                                    UpdateIdentityDocumentParams(
-                                        docId = uploadMode.existingDocId,
-                                        userId = original.userId,
-                                        documentNumber = "SESSION_$sessionId",
-                                        file = body,
-                                    ),
-                                )
-                            }
-                        }
-
-                    result.onSuccess { temporaryKey ->
-                        updateDocumentState(fieldKey) { state ->
-                            state.copy(
-                                temporaryFileKey = temporaryKey,
-                                existingVerifyStatus = null,
-                                uploadStatus = UploadStatus.DONE,
-                            )
-                        }
-                    }.onFailure { error ->
-                        updateDocumentState(fieldKey) { state ->
-                            state.copy(uploadStatus = UploadStatus.ERROR)
-                        }
-                        _errorEvent.emit(error.message ?: "Upload failed")
+                    pendingDocumentFiles[fieldKey] = file
+                    pendingEditRequest = null
+                    pendingEditFingerprint = null
+                    completedEditSections = emptySet()
+                    updateDocumentState(fieldKey) { state ->
+                        state.copy(
+                            temporaryFileKey = file.absolutePath,
+                            existingVerifyStatus = null,
+                            uploadStatus = UploadStatus.DONE,
+                        )
                     }
                 } catch (e: Exception) {
                     updateDocumentState(fieldKey) { state ->
@@ -756,15 +766,6 @@ internal class ProfileViewModel
                 }
 
                 recomputeHasChanges()
-            }
-        }
-
-        private fun resolveUploadMode(currentDoc: DocumentUploadState): UploadMode {
-            val existingDocId = currentDoc.existingDocId?.takeIf { it.isNotBlank() }
-            return if (existingDocId == null) {
-                UploadMode.ADD
-            } else {
-                UploadMode.UPDATE(existingDocId = existingDocId)
             }
         }
 
@@ -791,7 +792,8 @@ internal class ProfileViewModel
             _hasPendingTemporaryUploads.value = hasTemporaryUploads()
         }
 
-        private fun clearTemporaryFileKeys() {
+        private fun clearPendingDocumentFiles() {
+            pendingDocumentFiles.clear()
             _documentStates.value =
                 _documentStates.value.mapValues { (_, state) ->
                     state.copy(temporaryFileKey = null, uploadStatus = UploadStatus.IDLE)
@@ -801,34 +803,75 @@ internal class ProfileViewModel
 
         private fun recomputeHasChanges() {
             val original = originalProfile
-            val textChanged = if (original == null) false else hasProfileFieldChanges(original)
-
             val hasTemporaryUploads = hasTemporaryUploads()
-            val routeChanges = hasRouteChanges()
             _hasPendingTemporaryUploads.value = hasTemporaryUploads
-            _hasChanges.value = textChanged || hasTemporaryUploads || routeChanges
+            _hasChanges.value =
+                original != null &&
+                    (hasPersonalChanges(original) || hasBusinessChanges(original) || hasBankChanges(original))
         }
 
-        private fun hasProfileFieldChanges(original: Profile): Boolean {
+        private fun hasPersonalChanges(original: Profile): Boolean {
             return editableFullName.value != original.fullName.orEmpty() ||
                 editableEmailId.value != original.emailId.orEmpty() ||
                 editablePhoneNo.value != original.phoneNo.orEmpty() ||
                 editableAadhaarNumber.value != original.aadhaarNumber.orEmpty() ||
                 editablePanNumber.value != original.panNumber.orEmpty() ||
                 editableAlternativePhone.value != original.alternativePhoneNo.firstOrNull().orEmpty() ||
-                editableBusinessName.value != original.businessName.orEmpty() ||
+                pendingDocumentFiles.containsKey(ProfileDocumentTypeIds.fieldKey(DocumentType.AADHAAR)) ||
+                pendingDocumentFiles.containsKey(ProfileDocumentTypeIds.fieldKey(DocumentType.PAN))
+        }
+
+        private fun hasBusinessChanges(original: Profile): Boolean {
+            val selectedLocation = _baseCity.value
+            val locationChanged =
+                if (selectedLocation?.type.equals("AREA", ignoreCase = true)) {
+                    selectedLocation?.id != original.baseAreaId
+                } else {
+                    selectedLocation?.id != original.baseCityId || original.baseAreaId != null
+                }
+            return editableBusinessName.value != original.businessName.orEmpty() ||
                 editableGstNumber.value != original.gstNumber.orEmpty() ||
-                editableAccountHolderName.value != original.bankAccountDetails?.accountHolderName.orEmpty() ||
+                locationChanged ||
+                hasRouteChanges() ||
+                pendingDocumentFiles.containsKey(ProfileDocumentTypeIds.fieldKey(DocumentType.GST_CERTIFICATE)) ||
+                pendingDocumentFiles.containsKey(ProfileDocumentTypeIds.fieldKey(DocumentType.COMPANY_REGISTRATION)) ||
+                pendingDocumentFiles.containsKey(ProfileDocumentTypeIds.fieldKey(DocumentType.TDS_CERTIFICATE))
+        }
+
+        private fun hasBankChanges(original: Profile): Boolean {
+            return editableAccountHolderName.value != original.bankAccountDetails?.accountHolderName.orEmpty() ||
                 editableAccountNumber.value != original.bankAccountDetails?.accountNumber.orEmpty() ||
                 editableIfscCode.value != original.bankAccountDetails?.ifscCode.orEmpty() ||
                 editableUpiId.value != original.bankAccountDetails?.upiId.orEmpty() ||
                 editableBankName.value != original.bankAccountDetails?.bankName.orEmpty() ||
                 editableBranchName.value != original.bankAccountDetails?.branchName.orEmpty() ||
-                _baseCity.value?.id != original.baseCityId
+                pendingDocumentFiles.containsKey(ProfileDocumentTypeIds.fieldKey(DocumentType.CANCELLED_CHEQUE))
         }
 
+        private fun editInputFingerprint(): String =
+            listOf(
+                editableFullName.value,
+                editableEmailId.value,
+                editablePhoneNo.value,
+                editableAadhaarNumber.value,
+                editablePanNumber.value,
+                editableAlternativePhone.value,
+                editableBusinessName.value,
+                editableGstNumber.value,
+                editableAccountHolderName.value,
+                editableAccountNumber.value,
+                editableIfscCode.value,
+                editableUpiId.value,
+                editableBankName.value,
+                editableBranchName.value,
+                _baseCity.value?.type,
+                _baseCity.value?.id,
+                gatherPreferredRouteEntries(),
+                pendingDocumentFiles.toSortedMap().mapValues { it.value.absolutePath },
+            ).joinToString("|")
+
         private fun hasTemporaryUploads(): Boolean {
-            return _documentStates.value.values.any { !it.temporaryFileKey.isNullOrBlank() }
+            return pendingDocumentFiles.isNotEmpty()
         }
 
         private fun hasRouteChanges(): Boolean {
@@ -875,7 +918,11 @@ internal class ProfileViewModel
                         _uiState.value = UiState.Success(current.data.copy(status = newStatus))
                     }
                 }.onFailure { error ->
-                    _errorEvent.emit(error.message ?: "Failed to update account status")
+                    _errorEvent.emit(
+                        activationFailureMessage(error)
+                            ?: error.message
+                            ?: "Failed to update account status",
+                    )
                 }
 
                 _isTogglingStatus.value = false
@@ -895,5 +942,21 @@ internal class ProfileViewModel
             val statusCode = apiError?.statusCode ?: legacyHttp?.code ?: return false
             val errorText = apiError?.rawBody ?: legacyHttp?.errorBody
             return statusCode == 404 && errorText?.contains("Route not found", ignoreCase = true) == true
+        }
+
+        private fun activationFailureMessage(error: Throwable): String? {
+            val apiError = error as? com.freight24.network.error.ApiException ?: return null
+            if (apiError.statusCode != 422) return null
+            val details = apiError.details as? JsonObject ?: return null
+            val eligibility = details["activationEligibility"] as? JsonObject ?: return null
+            val missing = eligibility["missingRequirements"] as? JsonArray ?: return null
+            val labels =
+                missing.mapNotNull { item ->
+                    val requirement = item as? JsonObject ?: return@mapNotNull null
+                    requirement["label"]?.jsonPrimitive?.contentOrNull
+                        ?: requirement["message"]?.jsonPrimitive?.contentOrNull
+                }
+            return labels.takeIf { it.isNotEmpty() }
+                ?.joinToString(prefix = "Complete before activation: ")
         }
     }

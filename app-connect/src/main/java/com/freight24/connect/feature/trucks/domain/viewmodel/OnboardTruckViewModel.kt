@@ -10,15 +10,18 @@ import com.freight24.common.util.FileUtils
 import com.freight24.connect.feature.trucks.domain.usecases.AddTruckParams
 import com.freight24.connect.feature.trucks.domain.usecases.AddTruckUseCase
 import com.freight24.connect.feature.trucks.domain.usecases.CreatedTruck
-import com.freight24.connect.feature.trucks.domain.usecases.GetTruckOwnersUseCase
-import com.freight24.rest.response.TruckOwnerDto
+import com.freight24.connect.feature.trucks.domain.usecases.SearchTruckOwnerOptionsUseCase
+import com.freight24.connect.domain.model.TruckOwnerPickerOption
 import com.freight24.ui.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -35,7 +38,7 @@ class OnboardTruckViewModel
     @Inject
     constructor(
         private val addTruckUseCase: AddTruckUseCase,
-        private val getTruckOwnersUseCase: GetTruckOwnersUseCase,
+        private val searchTruckOwnerOptionsUseCase: SearchTruckOwnerOptionsUseCase,
         private val checkTruckAvailabilityUseCase: com.freight24.connect.feature.trucks.domain.usecases.CheckTruckAvailabilityUseCase,
         private val authDataStore: AuthDataStore,
     ) : ViewModel() {
@@ -57,28 +60,10 @@ class OnboardTruckViewModel
         val registrationError: StateFlow<String?> = _registrationError.asStateFlow()
 
         // Truck Owner State
-        private val _truckOwners = MutableStateFlow<List<TruckOwnerDto>>(emptyList())
+        private val _truckOwnerSuggestions = MutableStateFlow<List<TruckOwnerPickerOption>>(emptyList())
         val truckOwnerQuery = MutableStateFlow("")
-        val selectedTruckOwner = MutableStateFlow<TruckOwnerDto?>(null)
-
-        val truckOwnerSuggestions: StateFlow<List<TruckOwnerDto>> =
-            combine(
-                _truckOwners,
-                truckOwnerQuery,
-                selectedTruckOwner,
-            ) { owners, query, selected ->
-                // If an owner is already selected and the query matches their name, don't show suggestions
-                if (selected != null && query == selected.full_name) {
-                    emptyList()
-                } else if (query.isBlank()) {
-                    emptyList()
-                } else {
-                    owners.filter {
-                        it.full_name.contains(query, ignoreCase = true) ||
-                            it.phone.contains(query)
-                    }.take(5)
-                }
-            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        val selectedTruckOwner = MutableStateFlow<TruckOwnerPickerOption?>(null)
+        val truckOwnerSuggestions: StateFlow<List<TruckOwnerPickerOption>> = _truckOwnerSuggestions.asStateFlow()
 
         // File State
         val rcCardFile = MutableStateFlow<File?>(null)
@@ -155,24 +140,38 @@ class OnboardTruckViewModel
             )
 
         init {
-            loadTruckOwners()
+            observeTruckOwnerSearch()
         }
 
-        private fun loadTruckOwners() {
+        @OptIn(kotlinx.coroutines.FlowPreview::class)
+        private fun observeTruckOwnerSearch() {
             viewModelScope.launch {
-                getTruckOwnersUseCase()
-                    .onSuccess { owners ->
-                        _truckOwners.value = owners
-                    }
-                    .onFailure { error ->
-                        Log.e(TAG, "Failed to load truck owners", error)
+                truckOwnerQuery
+                    .debounce(350)
+                    .distinctUntilChanged()
+                    .collectLatest { rawQuery ->
+                        val query = rawQuery.trim()
+                        val selected = selectedTruckOwner.value
+                        if (query.length < 2 || selected?.fullName == query) {
+                            _truckOwnerSuggestions.value = emptyList()
+                            return@collectLatest
+                        }
+                        searchTruckOwnerOptionsUseCase(query, limit = 10)
+                            .onSuccess { page ->
+                                _truckOwnerSuggestions.value = page.items
+                            }
+                            .onFailure { error ->
+                                _truckOwnerSuggestions.value = emptyList()
+                                Log.e(TAG, "Failed to search truck owners", error)
+                            }
                     }
             }
         }
 
-        fun onTruckOwnerSelected(owner: TruckOwnerDto) {
+        fun onTruckOwnerSelected(owner: TruckOwnerPickerOption) {
             selectedTruckOwner.value = owner
-            truckOwnerQuery.value = owner.full_name
+            truckOwnerQuery.value = owner.fullName
+            _truckOwnerSuggestions.value = emptyList()
         }
 
         fun nextStep() {
@@ -225,7 +224,7 @@ class OnboardTruckViewModel
 
         fun submit() {
             val typeId = selectedTruckType.value?.id ?: return
-            val ownerProfileId = selectedTruckOwner.value?.id ?: return
+            val ownerProfileId = selectedTruckOwner.value?.ownerProfileId ?: return
             Log.d(TAG, "Submitting truck: reg=${registrationNumber.value}, type=$typeId, owner=$ownerProfileId")
 
             viewModelScope.launch {

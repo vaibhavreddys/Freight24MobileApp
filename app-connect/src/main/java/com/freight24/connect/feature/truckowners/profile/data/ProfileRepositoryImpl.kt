@@ -3,12 +3,11 @@ package com.freight24.connect.feature.truckowners.profile.data
 import com.freight24.common.di.IoDispatcher
 import com.freight24.connect.feature.truckowners.profile.domain.Profile
 import com.freight24.connect.feature.truckowners.profile.domain.ProfileRepository
-import com.freight24.connect.feature.truckowners.profile.mapper.toDomain
+import com.freight24.connect.feature.truckowners.profile.mapper.toProfile
+import com.freight24.connect.repository.TruckOwnerRepository
 import com.freight24.network.provider.SafeCallProvider
 import com.freight24.rest.api.ProfileApi
-import com.freight24.rest.api.TruckOwnerApi
 import com.freight24.rest.request.FinalSaveRequest
-import com.freight24.rest.request.UpdateTruckOwnerStatusRequest
 import com.freight24.rest.response.IdentityDocumentUploadResponse
 import kotlinx.coroutines.CoroutineDispatcher
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -18,36 +17,21 @@ import javax.inject.Inject
 internal class ProfileRepositoryImpl
     @Inject
     constructor(
-        private val truckOwnerApi: TruckOwnerApi,
+        private val truckOwnerRepository: TruckOwnerRepository,
         private val api: ProfileApi,
         private val documentApi: com.freight24.rest.api.DocumentApi,
         private val safeCallProvider: SafeCallProvider,
         @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) : ProfileRepository {
         override suspend fun getProfile(userId: String): Result<Profile> {
-            return safeCallProvider.safeApiCall(ioDispatcher) {
-                truckOwnerApi.getTruckOwnerProfile(userId)
-            }.map { response ->
-                response.data?.toDomain() ?: throw IllegalStateException("Profile data is null")
-            }
-        }
-
-        override suspend fun updateProfile(
-            id: String,
-            request: com.freight24.rest.request.UpdateProfileRequest,
-        ): Result<Boolean> {
-            return safeCallProvider.safeApiCall(ioDispatcher) {
-                api.updateProfile(id, request)
-            }.map { it.success }
+            return truckOwnerRepository.getDetails(userId).map { it.toProfile() }
         }
 
         override suspend fun updateTruckOwnerStatus(
             userId: String,
             status: String,
         ): Result<Boolean> {
-            return safeCallProvider.safeApiCall(ioDispatcher) {
-                truckOwnerApi.updateTruckOwnerStatus(userId, UpdateTruckOwnerStatusRequest(status))
-            }.map { it.success }
+            return truckOwnerRepository.updateStatus(userId, status).map { true }
         }
 
         override suspend fun uploadIdentityDocument(

@@ -28,11 +28,13 @@ import com.freight24.connect.domain.model.TruckManagementItem
 import com.freight24.connect.domain.model.TruckOwnerBankAccount
 import com.freight24.connect.domain.model.TruckOwnerCounts
 import com.freight24.connect.domain.model.TruckOwnerDetails
+import com.freight24.connect.domain.model.TruckOwnerFieldValidation
 import com.freight24.connect.domain.model.TruckOwnerManagementItem
 import com.freight24.connect.domain.model.TruckOwnerPickerOption
 import com.freight24.connect.domain.model.TruckOwnerPreferredRoute
 import com.freight24.connect.domain.model.TruckOwnerReference
 import com.freight24.connect.domain.model.TruckOwnerTruckStats
+import com.freight24.connect.domain.model.TruckOwnerValidation
 import com.freight24.connect.domain.model.TruckCounts
 import com.freight24.connect.domain.model.VehicleDetails
 import com.freight24.connect.domain.model.VerificationDocument
@@ -47,8 +49,10 @@ import com.freight24.rest.response.ClientV2SummaryDto
 import com.freight24.rest.response.ClientV2PageResponse
 import com.freight24.rest.response.TruckOwnerV2DetailDto
 import com.freight24.rest.response.TruckOwnerV2DocumentDto
+import com.freight24.rest.response.TruckOwnerV2FieldValidationDto
 import com.freight24.rest.response.TruckOwnerV2SummaryDto
 import com.freight24.rest.response.TruckOwnerV2PageResponse
+import com.freight24.rest.response.TruckOwnerV2ValidationData
 import com.freight24.rest.response.TruckV2DetailDto
 import com.freight24.rest.response.TruckV2DocumentDto
 import com.freight24.rest.response.TruckV2SummaryDto
@@ -311,6 +315,9 @@ fun TruckOwnerV2DetailDto.toDomain(): TruckOwnerDetails {
         gstNumber = gstNumber,
         status = status,
         baseLocation = baseLocation,
+        baseCity = baseCity?.toDomain(),
+        baseArea = baseArea?.toDomain(),
+        baseCityState = baseCityState,
         panNumber = panCard,
         aadhaarNumber = aadharCard,
         isTdsApplicable = isTdsApplicable,
@@ -352,6 +359,24 @@ fun TruckOwnerV2DetailDto.toDomain(): TruckOwnerDetails {
         updatedAt = updatedAt,
     )
 }
+
+fun TruckOwnerV2ValidationData.toDomain(): TruckOwnerValidation =
+    TruckOwnerValidation(
+        phone = phone?.toDomain(),
+        pan = pan?.toDomain(),
+        aadhaar = aadhar?.toDomain(),
+        gst = gst?.toDomain(),
+    )
+
+private fun TruckOwnerV2FieldValidationDto.toDomain(): TruckOwnerFieldValidation =
+    TruckOwnerFieldValidation(
+        exists = exists,
+        ownerUserId = trucker?.id,
+        ownerProfileId = trucker?.profileId,
+        fullName = trucker?.fullName,
+        status = trucker?.status,
+        tagCode = trucker?.tagCode,
+    )
 
 fun ClientV2SummaryDto.toManagementItem(): ClientManagementItem =
     ClientManagementItem(

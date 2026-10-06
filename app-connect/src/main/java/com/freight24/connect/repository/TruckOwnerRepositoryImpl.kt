@@ -1,11 +1,13 @@
 package com.freight24.connect.repository
 
 import com.freight24.common.di.IoDispatcher
+import com.freight24.connect.repository.mapper.toDomain
+import com.freight24.connect.repository.mapper.toManagementPage
+import com.freight24.connect.repository.mapper.toPickerPage
 import com.freight24.network.error.toApiException
-import com.freight24.rest.api.TruckOwnerApi
 import com.freight24.rest.api.TruckOwnerV2Api
+import com.freight24.rest.request.UpdateTruckOwnerStatusRequest
 import com.freight24.rest.response.TruckOwnerOnboardingV2Response
-import com.freight24.rest.response.TruckOwnerDto
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import okhttp3.MultipartBody
@@ -15,32 +17,110 @@ import javax.inject.Inject
 class TruckOwnerRepositoryImpl
     @Inject
     constructor(
-        private val api: TruckOwnerApi,
         private val v2Api: TruckOwnerV2Api,
         @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) : TruckOwnerRepository {
-        override suspend fun getTruckOwners(): Result<List<TruckOwnerDto>> =
+        override suspend fun getManagementPage(
+            query: String?,
+            status: String?,
+            documentStatus: String?,
+            page: Int,
+            limit: Int,
+        ) =
             withContext(ioDispatcher) {
                 try {
-                    val response = api.getTruckOwners()
-                    if (response.isSuccessful && response.body() != null) {
-                        Result.success(response.body()!!.data)
+                    val response =
+                        if (query.isNullOrBlank()) {
+                            v2Api.getTruckOwners(
+                                status = status,
+                                documentStatus = documentStatus,
+                                page = page,
+                                limit = limit,
+                            )
+                        } else {
+                            v2Api.searchTruckOwners(query.trim(), page, limit)
+                        }
+                    val body = response.body()
+                    if (response.isSuccessful && body != null && body.success) {
+                        Result.success(body.toManagementPage())
                     } else {
-                        Result.failure(response.toApiException(bodyMessage = response.body()?.message))
+                        Result.failure(response.toApiException())
                     }
                 } catch (e: Exception) {
                     Result.failure(e)
                 }
             }
 
-        override suspend fun searchTruckOwners(query: String): Result<List<TruckOwnerDto>> =
+        override suspend fun searchPickerOptions(
+            query: String,
+            page: Int,
+            limit: Int,
+        ) =
             withContext(ioDispatcher) {
                 try {
-                    val response = api.searchTruckOwners(query)
-                    if (response.isSuccessful && response.body() != null) {
-                        Result.success(response.body()!!.data)
+                    val response = v2Api.searchTruckOwnerOptions(query.trim(), page, limit)
+                    val body = response.body()
+                    if (response.isSuccessful && body != null && body.success) {
+                        Result.success(body.toPickerPage())
                     } else {
-                        Result.failure(response.toApiException(bodyMessage = response.body()?.message))
+                        Result.failure(response.toApiException())
+                    }
+                } catch (e: Exception) {
+                    Result.failure(e)
+                }
+            }
+
+        override suspend fun getDetails(ownerUserId: String) =
+            withContext(ioDispatcher) {
+                try {
+                    val response = v2Api.getTruckOwnerDetail(ownerUserId)
+                    val body = response.body()
+                    val details = body?.data
+                    if (response.isSuccessful && body?.success == true && details != null) {
+                        Result.success(details.toDomain())
+                    } else {
+                        Result.failure(response.toApiException(bodyMessage = body?.message))
+                    }
+                } catch (e: Exception) {
+                    Result.failure(e)
+                }
+            }
+
+        override suspend fun validate(
+            phone: String?,
+            pan: String?,
+            aadhaar: String?,
+            gst: String?,
+            excludeOwnerUserId: String?,
+        ) =
+            withContext(ioDispatcher) {
+                try {
+                    val response = v2Api.validateTruckOwner(phone, pan, aadhaar, gst, excludeOwnerUserId)
+                    val body = response.body()
+                    if (response.isSuccessful && body?.success == true) {
+                        Result.success(body.data.toDomain())
+                    } else {
+                        Result.failure(response.toApiException())
+                    }
+                } catch (e: Exception) {
+                    Result.failure(e)
+                }
+            }
+
+        override suspend fun updateStatus(ownerUserId: String, status: String) =
+            withContext(ioDispatcher) {
+                try {
+                    val response =
+                        v2Api.updateTruckOwnerStatus(
+                            ownerUserId,
+                            UpdateTruckOwnerStatusRequest(status),
+                        )
+                    val body = response.body()
+                    val details = body?.data
+                    if (response.isSuccessful && body?.success == true && details != null) {
+                        Result.success(details.toDomain())
+                    } else {
+                        Result.failure(response.toApiException(bodyMessage = body?.message))
                     }
                 } catch (e: Exception) {
                     Result.failure(e)
@@ -61,6 +141,23 @@ class TruckOwnerRepositoryImpl
                 )
             }
 
+        override suspend fun updatePersonalProfile(
+            ownerUserId: String,
+            parts: List<MultipartBody.Part>,
+        ) = executeOnboardingRequest {
+            v2Api.updatePersonalProfile(
+                ownerUserId,
+                parts.required("full_name"),
+                parts.optional("email"),
+                parts.required("phone"),
+                parts.optional("alt_phones"),
+                parts.required("pan_card"),
+                parts.required("aadhar_card"),
+                parts.optional("aadhaar_file"),
+                parts.optional("pan_file"),
+            )
+        }
+
         override suspend fun updateBusinessProfile(
             ownerUserId: String,
             parts: List<MultipartBody.Part>,
@@ -71,6 +168,7 @@ class TruckOwnerRepositoryImpl
                 parts.optional("gst_number"),
                 parts.required("is_tds_applicable"),
                 parts.optional("base_city_id"),
+                parts.optional("base_area_id"),
                 parts.required("preferred_routes"),
                 parts.optional("gst_file"),
                 parts.optional("company_file"),
@@ -90,7 +188,7 @@ class TruckOwnerRepositoryImpl
                 parts.optional("upi_id"),
                 parts.optional("bank_name"),
                 parts.optional("branch_name"),
-                parts.required("cheque_file"),
+                parts.optional("cheque_file"),
             )
         }
 

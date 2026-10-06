@@ -53,6 +53,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -72,7 +73,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.connect.feature.truckowners.domain.viewmodel.ManageTruckOwnersViewModel
 import com.freight24.connect.feature.truckowners.domain.viewmodel.ManageTruckOwnersViewModel.OwnerFilter
-import com.freight24.rest.response.TruckOwnerDto
+import com.freight24.connect.domain.model.TruckOwnerManagementItem
 import com.freight24.ui.UiState
 import com.freight24.ui.components.DocketCard
 import com.freight24.ui.components.FilterSelectionChip
@@ -80,6 +81,7 @@ import com.freight24.ui.components.FreightEmptyState
 import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.theme.FreightThemeTokens
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 private enum class OwnerSection(val title: String) {
     ACTIVE("Active"),
@@ -89,7 +91,7 @@ private enum class OwnerSection(val title: String) {
 
 private data class SectionItem(
     val section: OwnerSection,
-    val owner: TruckOwnerDto,
+    val owner: TruckOwnerManagementItem,
 )
 
 private sealed interface OwnerListRow {
@@ -111,10 +113,22 @@ fun ManageTruckOwnersScreen(
     val selectedFilter by viewModel.selectedFilter.collectAsStateWithLifecycle()
     val filteredOwners by viewModel.filteredOwners.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val isLoadingMore by viewModel.isLoadingMore.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
     val animatedOwnerIds = remember { mutableStateListOf<String>() }
     var isNavigatingBack by remember { mutableStateOf(false) }
     val navigationInteractionSource = remember { MutableInteractionSource() }
+
+    LaunchedEffect(listState, filteredOwners.size) {
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+            .distinctUntilChanged()
+            .collect { lastVisibleIndex ->
+                val totalItems = listState.layoutInfo.totalItemsCount
+                if (lastVisibleIndex != null && totalItems > 0 && lastVisibleIndex >= totalItems - 4) {
+                    viewModel.loadNextPage()
+                }
+            }
+    }
 
     fun navigateBack() {
         if (isNavigatingBack) return
@@ -211,7 +225,7 @@ fun ManageTruckOwnersScreen(
                                         key = { _, row ->
                                             when (row) {
                                                 is OwnerListRow.Header -> "header_${row.section.name}"
-                                                is OwnerListRow.Owner -> row.item.owner.id
+                                                is OwnerListRow.Owner -> row.item.owner.ownerUserId
                                             }
                                         },
                                     ) { index, row ->
@@ -224,15 +238,25 @@ fun ManageTruckOwnersScreen(
                                                 OwnerCard(
                                                     owner = row.item.owner,
                                                     index = index,
-                                                    shouldAnimate = row.item.owner.id !in animatedOwnerIds,
+                                                    shouldAnimate = row.item.owner.ownerUserId !in animatedOwnerIds,
                                                     onAnimationFinished = {
-                                                        if (row.item.owner.id !in animatedOwnerIds) {
-                                                            animatedOwnerIds.add(row.item.owner.id)
+                                                        if (row.item.owner.ownerUserId !in animatedOwnerIds) {
+                                                            animatedOwnerIds.add(row.item.owner.ownerUserId)
                                                         }
                                                     },
-                                                    onClick = { onTruckOwnerClick(row.item.owner.user_id ?: row.item.owner.id) },
+                                                    onClick = { onTruckOwnerClick(row.item.owner.ownerUserId) },
                                                 )
                                                 Spacer(modifier = Modifier.height(12.dp))
+                                            }
+                                        }
+                                    }
+                                    if (isLoadingMore) {
+                                        item {
+                                            Box(
+                                                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                                contentAlignment = Alignment.Center,
+                                            ) {
+                                                CircularProgressIndicator()
                                             }
                                         }
                                     }
@@ -314,7 +338,7 @@ private fun SearchField(
         singleLine = true,
         placeholder = {
             Text(
-                text = "Search by name or TAG ID",
+                text = "Search by name, phone or TAG ID",
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         },
@@ -401,13 +425,13 @@ private fun SectionHeader(title: String) {
 
 @Composable
 private fun OwnerCard(
-    owner: TruckOwnerDto,
+    owner: TruckOwnerManagementItem,
     index: Int,
     shouldAnimate: Boolean,
     onAnimationFinished: () -> Unit,
     onClick: () -> Unit,
 ) {
-    var visible by remember(owner.id, shouldAnimate) { mutableStateOf(!shouldAnimate) }
+    var visible by remember(owner.ownerUserId, shouldAnimate) { mutableStateOf(!shouldAnimate) }
     val density = LocalDensity.current
     val alpha by animateFloatAsState(
         targetValue =
@@ -425,7 +449,7 @@ private fun OwnerCard(
         label = "owner_card_translation",
     )
 
-    LaunchedEffect(owner.id, shouldAnimate) {
+    LaunchedEffect(owner.ownerUserId, shouldAnimate) {
         if (shouldAnimate) {
             delay(index * 50L)
             visible = true
@@ -444,7 +468,7 @@ private fun OwnerCard(
                 OwnerSection.PENDING -> FreightThemeTokens.colors.warning
                 OwnerSection.INACTIVE -> MaterialTheme.colorScheme.outlineVariant
             },
-        testTag = "owners_card_${owner.id}",
+        testTag = "owners_card_${owner.ownerUserId}",
         onClick = onClick,
         modifier =
             Modifier
@@ -463,7 +487,7 @@ private fun OwnerCard(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = owner.full_name,
+                    text = owner.fullName,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     style =
@@ -489,7 +513,7 @@ private fun OwnerCard(
 }
 
 @Composable
-private fun OwnerAvatar(owner: TruckOwnerDto) {
+private fun OwnerAvatar(owner: TruckOwnerManagementItem) {
     val inactive = owner.ownerSection == OwnerSection.INACTIVE
     Box(
         modifier =
@@ -506,7 +530,7 @@ private fun OwnerAvatar(owner: TruckOwnerDto) {
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = owner.full_name.initials(),
+            text = owner.fullName.initials(),
             style =
                 MaterialTheme.typography.labelLarge.copy(
                     fontWeight = FontWeight.Bold,
@@ -523,7 +547,7 @@ private fun OwnerAvatar(owner: TruckOwnerDto) {
 }
 
 @Composable
-private fun TagText(owner: TruckOwnerDto) {
+private fun TagText(owner: TruckOwnerManagementItem) {
     val warningColor = FreightThemeTokens.colors.warning
 
     if (owner.ownerSection == OwnerSection.PENDING) {
@@ -537,7 +561,7 @@ private fun TagText(owner: TruckOwnerDto) {
         return
     }
 
-    val tag = owner.tag_code.orEmpty().ifBlank { "Not assigned" }
+    val tag = owner.tagCode.orEmpty().ifBlank { "Not assigned" }
     Text(
         text =
             buildAnnotatedString {
@@ -630,12 +654,12 @@ private fun EmptyState(hasSearch: Boolean) {
     }
 }
 
-private fun buildSectionItems(owners: List<TruckOwnerDto>): List<SectionItem> {
+private fun buildSectionItems(owners: List<TruckOwnerManagementItem>): List<SectionItem> {
     val grouped = owners.groupBy { it.ownerSection }
     return buildList {
         OwnerSection.entries.forEach { section ->
             grouped[section]
-                ?.sortedBy { it.full_name.lowercase() }
+                ?.sortedBy { it.fullName.lowercase() }
                 ?.forEach { owner -> add(SectionItem(section = section, owner = owner)) }
         }
     }
@@ -654,7 +678,7 @@ private fun buildListRows(items: List<SectionItem>): List<OwnerListRow> {
     return rows
 }
 
-private val TruckOwnerDto.ownerSection: OwnerSection
+private val TruckOwnerManagementItem.ownerSection: OwnerSection
     get() =
         when (status?.trim()?.lowercase()) {
             "active" -> OwnerSection.ACTIVE
