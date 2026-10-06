@@ -103,6 +103,7 @@ dependencies {
     implementation(project(":core:ui"))
     implementation(project(":core:rest"))
     implementation(project(":core:notifications"))
+    implementation(libs.kotlinx.serialization.json)
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

@@ -70,8 +70,8 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.freight24.common.model.TruckDetail
-import com.freight24.common.model.TruckDocument
+import com.freight24.connect.domain.model.TruckDetails
+import com.freight24.connect.domain.model.TruckDocument
 import com.freight24.connect.feature.trucks.views.TruckDocketCard
 import com.freight24.ui.UiState
 import com.freight24.ui.components.FreightTopAppBar
@@ -304,9 +304,9 @@ internal fun TruckDetailsScreen(
                             onViewClick = { s3Url ->
                                 val documentType =
                                     when (s3Url) {
-                                        state.data.rcCard?.url -> "rc"
-                                        state.data.fcCertificate?.url -> "fc"
-                                        state.data.insurance?.url -> "insurance"
+                                        state.data.documents?.registrationCertificate?.url -> "rc"
+                                        state.data.documents?.fitnessCertificate?.url -> "fc"
+                                        state.data.documents?.insurance?.url -> "insurance"
                                         else -> null
                                     }
                                 if (documentType != null) {
@@ -363,7 +363,7 @@ private fun openAppSettings(context: Context) {
 
 @Composable
 private fun TruckDetailsContent(
-    truck: TruckDetail,
+    truck: TruckDetails,
     onViewClick: (String?) -> Unit,
     onUploadClick: (String) -> Unit,
     onEditClick: (String) -> Unit,
@@ -377,7 +377,7 @@ private fun TruckDetailsContent(
             TruckDocketCard(
                 registrationNumber = truck.registrationNumber,
                 truckType = truck.truckType,
-                availability = null, // detail payload carries no availability
+                availability = truck.availability,
                 isVerified = truck.isVerified,
                 isBlacklisted = truck.isBlacklisted,
                 testTag = "truck_detail_card",
@@ -399,7 +399,7 @@ private fun TruckDetailsContent(
 }
 
 @Composable
-private fun SpecificationsSection(truck: TruckDetail) {
+private fun SpecificationsSection(truck: TruckDetails) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = PanelShape,
@@ -416,11 +416,11 @@ private fun SpecificationsSection(truck: TruckDetail) {
             )
             LedgerRow("BODY TYPE", truck.bodyType)
             LedgerDivider()
-            LedgerRow("MAKE", truck.make)
+            LedgerRow("MAKE", truck.vehicle?.make)
             LedgerDivider()
-            LedgerRow("MODEL", truck.model)
+            LedgerRow("MODEL", truck.vehicle?.model)
             LedgerDivider()
-            LedgerRow("CAPACITY", truck.capacityMt?.let { "${it.toString().removeSuffix(".0")} MT" })
+            LedgerRow("CAPACITY", truck.vehicle?.capacityMt?.let { "${it.toString().removeSuffix(".0")} MT" })
             LedgerDivider()
             LedgerRow("TRUCK TYPE", truck.truckType)
         }
@@ -465,7 +465,7 @@ private fun LedgerDivider() {
 
 @Composable
 private fun DocumentsSection(
-    truck: TruckDetail,
+    truck: TruckDetails,
     onViewClick: (String?) -> Unit,
     onUploadClick: (String) -> Unit,
 ) {
@@ -483,11 +483,11 @@ private fun DocumentsSection(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
             )
-            TruckDocumentRow("RC Book", truck.rcCard, onViewClick, onUploadClick)
+            TruckDocumentRow("RC Book", truck.documents?.registrationCertificate, onViewClick, onUploadClick)
             LedgerDivider()
-            TruckDocumentRow("Insurance Policy", truck.insurance, onViewClick, onUploadClick)
+            TruckDocumentRow("Insurance Policy", truck.documents?.insurance, onViewClick, onUploadClick)
             LedgerDivider()
-            TruckDocumentRow("Fitness Certificate", truck.fcCertificate, onViewClick, onUploadClick)
+            TruckDocumentRow("Fitness Certificate", truck.documents?.fitnessCertificate, onViewClick, onUploadClick)
         }
     }
 }

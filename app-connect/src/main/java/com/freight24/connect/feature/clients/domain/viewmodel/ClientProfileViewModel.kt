@@ -59,7 +59,7 @@ class ClientProfileViewModel
         private val clientApi: ClientApi,
         @param:ApplicationContext private val context: Context,
     ) : ViewModel() {
-        private val userId: String = checkNotNull(savedStateHandle["userId"])
+        private val clientUserId: String = checkNotNull(savedStateHandle["clientUserId"])
         val sessionId: String = UUID.randomUUID().toString()
 
         private val _uiState = MutableStateFlow<UiState<ClientProfileDto>>(UiState.Loading)
@@ -118,7 +118,7 @@ class ClientProfileViewModel
                     _uiState.value = UiState.Loading
                 }
 
-                getClientByUserIdUseCase(userId)
+                getClientByUserIdUseCase(clientUserId)
                     .onSuccess { client ->
                         originalClient = client
                         populateEditableFields(client)
@@ -200,7 +200,7 @@ class ClientProfileViewModel
             val original = originalClient
             if (original != null && pan == original.pan_card.orEmpty().trim().uppercase()) return
             viewModelScope.launch(Dispatchers.IO) {
-                val response = clientApi.checkClientField("pan_card", pan, excludeId = userId)
+                val response = clientApi.checkClientField("pan_card", pan, excludeId = clientUserId)
                 if (response.isSuccessful && response.body()?.exists == true) {
                     _panDuplicateError.value = "PAN already registered with another client"
                 } else if (response.isSuccessful) {
@@ -215,7 +215,7 @@ class ClientProfileViewModel
             val original = originalClient
             if (original != null && gst == original.gst_number.orEmpty().trim().uppercase()) return
             viewModelScope.launch(Dispatchers.IO) {
-                val response = clientApi.checkClientField("gst_number", gst, excludeId = userId)
+                val response = clientApi.checkClientField("gst_number", gst, excludeId = clientUserId)
                 if (response.isSuccessful && response.body()?.exists == true) {
                     _gstDuplicateError.value = "GST already registered with another client"
                 } else if (response.isSuccessful) {
@@ -369,7 +369,7 @@ class ClientProfileViewModel
                     val profileResult =
                         updateClientUseCase(
                             UpdateClientParams(
-                                userId = targetUserId,
+                                clientUserId = targetUserId,
                                 request = request,
                             ),
                         )

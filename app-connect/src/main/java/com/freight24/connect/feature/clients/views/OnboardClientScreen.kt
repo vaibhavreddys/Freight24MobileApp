@@ -56,6 +56,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -168,13 +170,23 @@ fun OnboardClientScreen(
     val companyName by viewModel.companyName.collectAsState()
     val gstNumber by viewModel.gstNumber.collectAsState()
     val branches by viewModel.branches.collectAsState()
+    val clientType by viewModel.clientType.collectAsState()
+    val companyType by viewModel.companyType.collectAsState()
+    val operatingStructure by viewModel.operatingStructure.collectAsState()
+    val states by viewModel.states.collectAsState()
+    val citiesByState by viewModel.citiesByState.collectAsState()
+    val branchTypes by viewModel.branchTypes.collectAsState()
+    val contactRoles by viewModel.contactRoles.collectAsState()
+    val completedStep by viewModel.completedStep.collectAsState()
     val isSaving by viewModel.isSaving.collectAsState()
     val createdClient by viewModel.createdClient.collectAsState()
     val panDuplicateError by viewModel.panDuplicateError.collectAsState()
     val gstDuplicateError by viewModel.gstDuplicateError.collectAsState()
 
-    val aadhaarFile by viewModel.aadhaarFile.collectAsState()
     val panFile by viewModel.panFile.collectAsState()
+    val gstFile by viewModel.gstFile.collectAsState()
+    val companyRegistrationFile by viewModel.companyRegistrationFile.collectAsState()
+    val contractFile by viewModel.contractFile.collectAsState()
 
     var clientExpanded by rememberSaveable { mutableStateOf(true) }
     var documentsExpanded by rememberSaveable { mutableStateOf(true) }
@@ -255,7 +267,7 @@ fun OnboardClientScreen(
         }
     }
 
-    val hasRequiredValues = viewModel.canSubmit()
+    val hasRequiredValues = contactRoles.isNotEmpty() && viewModel.canSubmit()
 
     LaunchedEffect(Unit) {
         viewModel.messageEvent.collect { snackbarHostState.showSnackbar(it) }
@@ -273,7 +285,7 @@ fun OnboardClientScreen(
             fullName.trim().isBlank() -> MissingRequiredField(RequiredClientField.FULL_NAME)
             phoneNumber.trim().isBlank() -> MissingRequiredField(RequiredClientField.PHONE_NUMBER)
             panNumber.trim().isBlank() -> MissingRequiredField(RequiredClientField.PAN_NUMBER)
-            gstNumber.trim().isBlank() -> MissingRequiredField(RequiredClientField.GST_NUMBER)
+            companyName.trim().isBlank() -> MissingRequiredField(RequiredClientField.FULL_NAME)
             branches.isEmpty() -> MissingRequiredField(RequiredClientField.BRANCH_ENTRY)
             else -> {
                 val branchIndex = branches.indexOfFirst { it.branchName.trim().isBlank() || it.branchAddress.trim().isBlank() }
@@ -362,8 +374,22 @@ fun OnboardClientScreen(
                     ) {
                         Spacer(modifier = Modifier.height(10.dp))
                         SectionCard {
+                            SelectionField(
+                                label = "Client Type",
+                                value = if (clientType == "DIRECT_CUSTOMER") "Direct Customer" else "Transporter",
+                                options = listOf("DIRECT_CUSTOMER" to "Direct Customer", "TRANSPORTER" to "Transporter"),
+                                onSelect = viewModel::onClientTypeChanged,
+                            )
+                            InternalDivider()
+                            SelectionField(
+                                label = "Company Type",
+                                value = companyType,
+                                options = listOf("Private Limited", "Public Limited", "LLP", "Partnership", "Sole Proprietor", "Trust", "HUF", "Other").map { it to it },
+                                onSelect = viewModel::onCompanyTypeChanged,
+                            )
+                            InternalDivider()
                             FormField(
-                                label = "Full Name",
+                                label = "Display / Primary Contact Name",
                                 value = fullName,
                                 icon = Icons.Default.Person,
                                 required = true,
@@ -402,9 +428,10 @@ fun OnboardClientScreen(
                             )
                             InternalDivider()
                             FormField(
-                                label = "Company Name",
+                                label = "Legal Company Name",
                                 value = companyName,
                                 icon = Icons.Default.Apartment,
+                                required = true,
                                 fieldType = ClientFieldType.TEXT,
                                 onValueChange = viewModel::onCompanyNameChanged,
                             )
@@ -413,9 +440,8 @@ fun OnboardClientScreen(
                                 label = "GST Number",
                                 value = gstNumber,
                                 icon = Icons.Default.Badge,
-                                required = true,
                                 fieldType = ClientFieldType.GST,
-                                errorMessage = if (saveAttempted && gstNumber.isBlank()) "GST Number is required" else gstDuplicateError,
+                                errorMessage = gstDuplicateError,
                                 onValueChange = viewModel::onGstNumberChanged,
                                 onFocusLost = viewModel::onGstFocusLost,
                             )
@@ -423,7 +449,18 @@ fun OnboardClientScreen(
                     }
                 }
 
-                branches.forEachIndexed { index, branch ->
+                item {
+                    SectionCard {
+                        SelectionField(
+                            label = "Operating Structure",
+                            value = operatingStructure.lowercase().replaceFirstChar(Char::uppercase),
+                            options = listOf("SINGLE" to "Single", "MULTIPLE" to "Multiple", "SKIP" to "Skip branches"),
+                            onSelect = viewModel::onOperatingStructureChanged,
+                        )
+                    }
+                }
+
+                (if (operatingStructure == "MULTIPLE") branches else branches.take(1)).forEachIndexed { index, branch ->
                     item(key = "branch-${branch.id}") {
                         SectionCard {
                             Row(
@@ -431,7 +468,7 @@ fun OnboardClientScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Text(
-                                    text = "Branch ${index + 1}",
+                                    text = if (index == 0) "Registered / Head Office" else "Branch ${index + 1}",
                                     style = MaterialTheme.typography.labelLarge,
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onSurface,
@@ -468,13 +505,53 @@ fun OnboardClientScreen(
                                         )
                                         InternalDivider()
                                         FormField(
-                                            label = "Branch Address",
+                                            label = "Branch Code",
+                                            value = branch.branchCode,
+                                            icon = Icons.Default.Badge,
+                                            fieldType = ClientFieldType.TEXT,
+                                            onValueChange = { viewModel.onBranchCodeChanged(branch.id, it) },
+                                        )
+                                        if (operatingStructure == "MULTIPLE") {
+                                            InternalDivider()
+                                            SelectionField(
+                                                label = "Branch Type",
+                                                value = branchTypes.firstOrNull { it.id == branch.branchTypeId }?.name.orEmpty(),
+                                                options = branchTypes.map { it.id to it.name },
+                                                onSelect = { viewModel.onBranchTypeChanged(branch.id, it) },
+                                            )
+                                        }
+                                        InternalDivider()
+                                        FormField(
+                                            label = "Address Line 1",
                                             value = branch.branchAddress,
                                             icon = Icons.Default.LocationOn,
                                             required = true,
                                             fieldType = ClientFieldType.ADDRESS,
                                             errorMessage = if (saveAttempted && branch.branchAddress.isBlank()) "Branch Address is required" else null,
                                             onValueChange = { viewModel.onBranchAddressChanged(branch.id, it) },
+                                        )
+                                        InternalDivider()
+                                        SelectionField(
+                                            label = "State",
+                                            value = states.firstOrNull { it.id == branch.stateId }?.name.orEmpty(),
+                                            options = states.map { it.id.toString() to it.name },
+                                            onSelect = { viewModel.onBranchStateChanged(branch.id, it.toInt()) },
+                                        )
+                                        InternalDivider()
+                                        SelectionField(
+                                            label = "City",
+                                            value = citiesByState[branch.stateId]?.firstOrNull { it.id == branch.cityId }?.name.orEmpty(),
+                                            options = citiesByState[branch.stateId].orEmpty().map { it.id.toString() to it.name },
+                                            onSelect = { viewModel.onBranchCityChanged(branch.id, it.toInt()) },
+                                        )
+                                        InternalDivider()
+                                        FormField(
+                                            label = "PIN Code",
+                                            value = branch.pinCode,
+                                            icon = Icons.Default.LocationOn,
+                                            required = true,
+                                            fieldType = ClientFieldType.PHONE,
+                                            onValueChange = { viewModel.onBranchPinCodeChanged(branch.id, it) },
                                         )
                                     }
                                 }
@@ -548,24 +625,35 @@ fun OnboardClientScreen(
                                 verticalArrangement = Arrangement.spacedBy(16.dp),
                             ) {
                                 DashedUploadCard(
-                                    title = "Aadhaar Card",
-                                    subtitle = "Camera, JPG or PDF",
-                                    label = "Required",
-                                    isUploaded = aadhaarFile != null,
-                                    onUploadClick = {
-                                        currentTargetPrefix = "AADHAAR"
-                                        showSourcePicker = true
-                                    },
-                                )
-                                DashedUploadCard(
                                     title = "PAN Card",
                                     subtitle = "Camera, JPG or PDF",
-                                    label = "Required",
+                                    label = "Optional",
                                     isUploaded = panFile != null,
                                     onUploadClick = {
                                         currentTargetPrefix = "PAN"
                                         showSourcePicker = true
                                     },
+                                )
+                                DashedUploadCard(
+                                    title = "GST Certificate",
+                                    subtitle = "Camera, JPG or PDF",
+                                    label = "Optional",
+                                    isUploaded = gstFile != null,
+                                    onUploadClick = { currentTargetPrefix = "GST"; showSourcePicker = true },
+                                )
+                                DashedUploadCard(
+                                    title = "Company Registration",
+                                    subtitle = "Camera, JPG or PDF",
+                                    label = "Optional",
+                                    isUploaded = companyRegistrationFile != null,
+                                    onUploadClick = { currentTargetPrefix = "COMPANY"; showSourcePicker = true },
+                                )
+                                DashedUploadCard(
+                                    title = "Client Contract",
+                                    subtitle = "Camera, JPG or PDF",
+                                    label = "Optional",
+                                    isUploaded = contractFile != null,
+                                    onUploadClick = { currentTargetPrefix = "CONTRACT"; showSourcePicker = true },
                                 )
                             }
                         }
@@ -584,7 +672,7 @@ fun OnboardClientScreen(
                                 style = MaterialTheme.typography.bodySmall,
                             )
                         }
-                        OutlinedButton(
+                        if (operatingStructure == "MULTIPLE") OutlinedButton(
                             onClick = {
                                 viewModel.addBranch()
                                 saveAttempted = false
@@ -644,7 +732,14 @@ fun OnboardClientScreen(
                                 color = successColor,
                             )
                             Spacer(modifier = Modifier.width(10.dp))
-                            Text("Saving client...", color = MaterialTheme.colorScheme.onSurface)
+                            Text(
+                                when (completedStep) {
+                                    0 -> "Creating client profile..."
+                                    1 -> "Saving client locations..."
+                                    else -> "Saving client contacts..."
+                                },
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
                         }
                     }
                 }
@@ -789,6 +884,49 @@ private fun InternalDivider() {
         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f),
         thickness = 0.5.dp,
     )
+}
+
+@Composable
+private fun SelectionField(
+    label: String,
+    value: String,
+    options: List<Pair<String, String>>,
+    onSelect: (String) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
+        Text(
+            text = "$label *",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontWeight = FontWeight.Bold,
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        Box(modifier = Modifier.fillMaxWidth()) {
+            OutlinedButton(
+                onClick = { expanded = true },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = options.isNotEmpty(),
+            ) {
+                Text(value.ifBlank { "Select $label" }, modifier = Modifier.weight(1f), textAlign = TextAlign.Start)
+                Icon(Icons.Default.KeyboardArrowDown, contentDescription = null)
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+            ) {
+                options.forEach { (key, text) ->
+                    DropdownMenuItem(
+                        text = { Text(text) },
+                        onClick = {
+                            onSelect(key)
+                            expanded = false
+                        },
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable

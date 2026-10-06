@@ -1,7 +1,6 @@
 package com.freight24.connect.feature.trucks.domain.usecases
 
 import com.freight24.connect.repository.TruckRepository
-import com.freight24.rest.response.AddTruckResponse
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -11,7 +10,7 @@ import javax.inject.Inject
 data class AddTruckParams(
     val registrationNumber: String,
     val truckTypeId: Int,
-    val truckOwnerId: String,
+    val ownerProfileId: String,
     val make: String? = null,
     val model: String? = null,
     val year: String? = null,
@@ -21,8 +20,15 @@ data class AddTruckParams(
     val insurance: File? = null,
 )
 
+data class CreatedTruck(
+    val truckId: String,
+    val registrationNumber: String,
+    val truckType: String?,
+    val status: String,
+)
+
 interface AddTruckUseCase {
-    suspend operator fun invoke(params: AddTruckParams): Result<AddTruckResponse>
+    suspend operator fun invoke(params: AddTruckParams): Result<CreatedTruck>
 }
 
 class AddTruckUseCaseImpl
@@ -30,10 +36,10 @@ class AddTruckUseCaseImpl
     constructor(
         private val repository: TruckRepository,
     ) : AddTruckUseCase {
-        override suspend fun invoke(params: AddTruckParams): Result<AddTruckResponse> {
+        override suspend fun invoke(params: AddTruckParams): Result<CreatedTruck> {
             val registrationNumber = params.registrationNumber.toPart("registration_number")
             val truckTypeId = params.truckTypeId.toString().toPart("truck_type_id")
-            val truckOwnerId = params.truckOwnerId.toPart("truck_owner_id")
+            val ownerProfileId = params.ownerProfileId.toPart("truck_owner_id")
             val make = params.make?.toPart("make")
             val model = params.model?.toPart("model")
             val year = params.year?.toPart("year")
@@ -43,18 +49,32 @@ class AddTruckUseCaseImpl
             val fcCertificate = params.fcCertificate?.toFilePart("fc_certificate")
             val insurance = params.insurance?.toFilePart("insurance")
 
-            return repository.addTruck(
-                registrationNumber,
-                truckTypeId,
-                truckOwnerId,
-                make,
-                model,
-                year,
-                capacityMt,
-                rcCard,
-                fcCertificate,
-                insurance,
-            )
+            return repository
+                .addTruck(
+                    registrationNumber,
+                    truckTypeId,
+                    ownerProfileId,
+                    make,
+                    model,
+                    year,
+                    capacityMt,
+                    rcCard,
+                    fcCertificate,
+                    insurance,
+                ).mapCatching { response ->
+                    if (!response.success) {
+                        throw IllegalStateException(response.message.ifBlank { "Failed to create truck" })
+                    }
+                    val truck = response.data
+                        ?: throw IllegalStateException(response.message.ifBlank { "Truck creation returned no data" })
+
+                    CreatedTruck(
+                        truckId = truck.truckId,
+                        registrationNumber = truck.registrationNumber,
+                        truckType = truck.displayName ?: truck.truckType,
+                        status = truck.status,
+                    )
+                }
         }
 
         private fun String.toPart(name: String): MultipartBody.Part {

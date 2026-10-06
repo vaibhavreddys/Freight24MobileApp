@@ -112,8 +112,8 @@ fun ConnectNavGraph(
                 onAddClientClick = {
                     navHostController.navigate(ConnectDestination.OnboardClient.route)
                 },
-                onClientClick = { userId ->
-                    navHostController.navigate(ConnectDestination.ClientProfile.createRoute(userId))
+                onClientClick = { clientUserId ->
+                    navHostController.navigate(ConnectDestination.ClientProfile.createRoute(clientUserId))
                 },
                 onBackClick = {
                     navHostController.popBackStack()
@@ -125,11 +125,9 @@ fun ConnectNavGraph(
             OnboardClientScreen(
                 onBackClick = { navHostController.popBackStack() },
                 onCloseSuccess = { navHostController.popBackStack() },
-                onViewClientProfile = { userId ->
-                    navHostController.navigate(ConnectDestination.ClientProfile.createRoute(userId)) {
-                        popUpTo(ConnectDestination.OnboardClient.route) {
-                            inclusive = true
-                        }
+                onViewClientProfile = { clientUserId ->
+                    navHostController.navigate(ConnectDestination.ClientProfile.createRoute(clientUserId)) {
+                        popUpTo(ConnectDestination.OnboardClient.route) { inclusive = true }
                     }
                 },
             )
@@ -140,10 +138,10 @@ fun ConnectNavGraph(
                 onAddTruckOwnerClick = {
                     navHostController.navigate(ConnectDestination.OnboardTruckOwner.route)
                 },
-                onTruckOwnerClick = { userId ->
+                onTruckOwnerClick = { ownerUserId ->
                     navHostController.navigate(
                         ConnectDestination.TruckOwnerProfile.createRoute(
-                            userId,
+                            ownerUserId,
                         ),
                     )
                 },
@@ -157,10 +155,10 @@ fun ConnectNavGraph(
             OnboardTruckOwnerScreen(
                 onBackClick = { navHostController.popBackStack() },
                 onCloseSuccess = { navHostController.popBackStack() },
-                onViewTruckOwnerProfile = { userId ->
+                onViewTruckOwnerProfile = { ownerUserId ->
                     navHostController.navigate(
                         ConnectDestination.TruckOwnerProfile.createRoute(
-                            userId,
+                            ownerUserId,
                         ),
                     ) {
                         popUpTo(ConnectDestination.OnboardTruckOwner.route) {
@@ -743,8 +741,8 @@ fun ConnectNavGraph(
                 onCreateTripClick = { id ->
                     navHostController.navigate(ConnectDestination.AssignTruck.createRoute(id))
                 },
-                onViewProfileClick = { userId ->
-                    navHostController.navigate(ConnectDestination.ClientProfile.createRoute(userId))
+                onViewProfileClick = { clientUserId ->
+                    navHostController.navigate(ConnectDestination.ClientProfile.createRoute(clientUserId))
                 },
             )
         }

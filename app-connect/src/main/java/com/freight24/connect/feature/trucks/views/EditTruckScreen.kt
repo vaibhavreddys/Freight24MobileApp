@@ -75,7 +75,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.freight24.rest.response.AddTruckDto
+import com.freight24.connect.domain.model.TruckDetails
 import com.freight24.ui.UiState
 import com.freight24.ui.components.AppDropdown
 import com.freight24.ui.components.DashedUploadCard
@@ -103,12 +103,11 @@ fun EditTruckScreen(
 
     if (uiState is UiState.Success) {
         EditSuccessScreen(
-            truck = (uiState as UiState.Success<AddTruckDto>).data,
+            truck = (uiState as UiState.Success<TruckDetails>).data,
             onDone = {
                 viewModel.resetState()
                 onSuccessAction()
             },
-            truckTypes = viewModel.truckTypes,
         )
     } else {
         Scaffold(
@@ -640,9 +639,8 @@ private fun createTempImageUri(context: Context): Uri {
 
 @Composable
 private fun EditSuccessScreen(
-    truck: AddTruckDto,
+    truck: TruckDetails,
     onDone: () -> Unit,
-    truckTypes: List<com.freight24.connect.feature.trucks.domain.viewmodel.TruckType>,
 ) {
     Column(
         modifier =
@@ -707,8 +705,8 @@ private fun EditSuccessScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = "Truck #${truck.registration_number}", fontWeight = FontWeight.Bold)
-                    Text(text = truckTypes[(truck.truck_type_id) - 1].name, style = MaterialTheme.typography.bodySmall)
+                    Text(text = "Truck #${truck.registrationNumber}", fontWeight = FontWeight.Bold)
+                    Text(text = truck.displayName ?: truck.truckType.orEmpty(), style = MaterialTheme.typography.bodySmall)
                 }
                 Icon(Icons.Default.LocalShipping, contentDescription = null, modifier = Modifier.size(48.dp).alpha(0.3f))
             }

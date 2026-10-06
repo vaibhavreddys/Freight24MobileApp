@@ -6,7 +6,7 @@ import com.freight24.rest.response.ClientProfileDto
 import javax.inject.Inject
 
 data class UpdateClientParams(
-    val userId: String,
+    val clientUserId: String,
     val request: UpdateClientRequest,
 )
 
@@ -21,7 +21,7 @@ class UpdateClientUseCaseImpl
     ) : UpdateClientUseCase {
         override suspend fun invoke(params: UpdateClientParams): Result<ClientProfileDto> {
             return repository.updateClient(
-                userId = params.userId,
+                clientUserId = params.clientUserId,
                 request = params.request,
             )
         }

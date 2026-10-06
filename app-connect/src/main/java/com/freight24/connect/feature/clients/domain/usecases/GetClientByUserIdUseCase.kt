@@ -5,7 +5,7 @@ import com.freight24.rest.response.ClientProfileDto
 import javax.inject.Inject
 
 interface GetClientByUserIdUseCase {
-    suspend operator fun invoke(userId: String): Result<ClientProfileDto>
+    suspend operator fun invoke(clientUserId: String): Result<ClientProfileDto>
 }
 
 class GetClientByUserIdUseCaseImpl
@@ -13,7 +13,7 @@ class GetClientByUserIdUseCaseImpl
     constructor(
         private val repository: ClientRepository,
     ) : GetClientByUserIdUseCase {
-        override suspend fun invoke(userId: String): Result<ClientProfileDto> {
-            return repository.getClientByUserId(userId)
+        override suspend fun invoke(clientUserId: String): Result<ClientProfileDto> {
+            return repository.getClientByUserId(clientUserId)
         }
     }

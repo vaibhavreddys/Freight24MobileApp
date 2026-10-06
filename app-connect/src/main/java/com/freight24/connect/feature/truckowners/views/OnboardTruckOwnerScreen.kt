@@ -1,5 +1,7 @@
 package com.freight24.connect.feature.truckowners.views
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -85,6 +87,7 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -100,7 +103,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.freight24.connect.feature.truckowners.domain.viewmodel.OnboardTruckOwnerViewModel
-import com.freight24.connect.feature.truckowners.profile.domain.DocumentStatus
 import com.freight24.connect.feature.truckowners.profile.domain.DocumentType
 import com.freight24.connect.feature.truckowners.profile.util.ProfileFieldValidators
 import com.freight24.connect.feature.truckowners.profile.util.ValidationResult
@@ -110,6 +112,7 @@ import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.components.RouteChip
 import com.freight24.ui.components.formViewportInsets
 import com.freight24.ui.theme.FreightThemeTokens
+import java.io.File
 
 private enum class InputValidationType {
     NONE,
@@ -166,6 +169,22 @@ fun OnboardTruckOwnerScreen(
     val createdTruckOwner by viewModel.createdTruckOwner.collectAsState()
     val panDuplicateError by viewModel.panDuplicateError.collectAsState()
     val gstDuplicateError by viewModel.gstDuplicateError.collectAsState()
+    val aadhaarFile by viewModel.aadhaarFile.collectAsState()
+    val panFile by viewModel.panFile.collectAsState()
+    val gstFile by viewModel.gstFile.collectAsState()
+    val companyFile by viewModel.companyFile.collectAsState()
+    val tdsFile by viewModel.tdsFile.collectAsState()
+    val chequeFile by viewModel.chequeFile.collectAsState()
+    val completedStep by viewModel.completedStep.collectAsState()
+
+    val context = LocalContext.current
+    var pendingDocumentType by remember { mutableStateOf<String?>(null) }
+    val documentLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            val type = pendingDocumentType
+            if (uri != null && type != null) viewModel.onDocumentSelected(context, uri, type)
+            pendingDocumentType = null
+        }
 
     val canSubmit = viewModel.canSubmit()
     val submitBlockReason = viewModel.submitBlockReason()
@@ -476,7 +495,21 @@ fun OnboardTruckOwnerScreen(
                     icon = Icons.AutoMirrored.Filled.Assignment,
                     initiallyExpanded = true,
                 ) {
-                    DocumentPlaceholderList()
+                    DocumentUploadList(
+                        documents =
+                            listOf(
+                                UploadDocument("AADHAAR", "Aadhaar Card", aadhaarFile, true),
+                                UploadDocument("PAN", "PAN Card", panFile, true),
+                                UploadDocument("GST", "GST Certificate", gstFile, false),
+                                UploadDocument("COMPANY", "Company Registration", companyFile, false),
+                                UploadDocument("TDS", "TDS Certificate", tdsFile, false),
+                                UploadDocument("CHEQUE", "Cancelled Cheque", chequeFile, true),
+                            ),
+                        onSelect = { type ->
+                            pendingDocumentType = type
+                            documentLauncher.launch(arrayOf("application/pdf", "image/*"))
+                        },
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(140.dp))
@@ -488,6 +521,7 @@ fun OnboardTruckOwnerScreen(
                 enabled = canSubmit && !isSaving,
                 isSaving = isSaving,
                 blockReason = submitBlockReason,
+                saveLabel = if (completedStep > 0) "Resume onboarding" else "Create truck owner",
                 modifier = Modifier.align(Alignment.BottomCenter),
             )
 
@@ -506,7 +540,13 @@ fun OnboardTruckOwnerScreen(
                         ) {
                             CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 3.dp)
                             Spacer(modifier = Modifier.width(10.dp))
-                            Text("Saving truck owner...")
+                            Text(
+                                when (completedStep) {
+                                    0 -> "Saving personal details..."
+                                    1 -> "Saving business details..."
+                                    else -> "Saving bank details..."
+                                },
+                            )
                         }
                     }
                 }
@@ -782,19 +822,12 @@ private fun VerificationChip(
 }
 
 @Composable
-private fun DocumentPlaceholderList() {
-    val docs =
-        listOf(
-            PlaceholderDocument(DocumentType.AADHAAR, DocumentStatus.UPLOADED),
-            PlaceholderDocument(DocumentType.PAN, DocumentStatus.VERIFIED),
-            PlaceholderDocument(DocumentType.GST_CERTIFICATE, DocumentStatus.UPLOADED),
-            PlaceholderDocument(DocumentType.COMPANY_REGISTRATION, null),
-            PlaceholderDocument(DocumentType.TDS_CERTIFICATE, DocumentStatus.UPLOADED),
-            PlaceholderDocument(DocumentType.CANCELLED_CHEQUE, DocumentStatus.UPLOADED),
-        )
-
+private fun DocumentUploadList(
+    documents: List<UploadDocument>,
+    onSelect: (String) -> Unit,
+) {
     Column(modifier = Modifier.padding(vertical = 8.dp)) {
-        docs.forEachIndexed { index, item ->
+        documents.forEachIndexed { index, item ->
             Row(
                 modifier =
                     Modifier
@@ -803,34 +836,37 @@ private fun DocumentPlaceholderList() {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
-                    imageVector = docIcon(item.type),
+                    imageVector = Icons.Default.Description,
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Spacer(modifier = Modifier.width(16.dp))
-                Text(
-                    text = item.type.displayName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.weight(1f),
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-
-//                item.status?.let {
-//                    StatusBadge(it)
-//                    Spacer(modifier = Modifier.width(8.dp))
-//                }
-
-                Icon(
-                    imageVector = Icons.Default.CloudUpload,
-                    contentDescription = "Upload disabled",
-                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),
-                    modifier = Modifier.size(24.dp),
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = item.label + if (item.required) " *" else " (Optional)",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                    )
+                    item.file?.let {
+                        Text(
+                            text = it.name,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                        )
+                    }
+                }
+                IconButton(onClick = { onSelect(item.type) }) {
+                    Icon(
+                        imageVector = Icons.Default.CloudUpload,
+                        contentDescription = "Select ${item.label}",
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                }
             }
 
-            if (index < docs.lastIndex) {
+            if (index < documents.lastIndex) {
                 HorizontalDivider(
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
                     thickness = 1.dp,
@@ -842,37 +878,13 @@ private fun DocumentPlaceholderList() {
 }
 
 @Composable
-private fun StatusBadge(status: DocumentStatus) {
-    val (text, color) =
-        when (status) {
-            DocumentStatus.VERIFIED -> "Verified" to MaterialTheme.colorScheme.primary
-            DocumentStatus.UPLOADED -> "Verification Pending" to FreightThemeTokens.colors.warning
-            DocumentStatus.REJECTED -> "Rejected" to MaterialTheme.colorScheme.error
-            DocumentStatus.PENDING -> "Pending" to MaterialTheme.colorScheme.error
-            DocumentStatus.UNKNOWN -> "N/A" to MaterialTheme.colorScheme.onSurfaceVariant
-        }
-
-    Surface(
-        color = color.copy(alpha = 0.1f),
-        shape = RoundedCornerShape(8.dp),
-    ) {
-        Text(
-            text = text,
-            color = color,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.ExtraBold,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-        )
-    }
-}
-
-@Composable
 private fun FloatingActions(
     onCancel: () -> Unit,
     onSave: () -> Unit,
     enabled: Boolean,
     isSaving: Boolean,
     blockReason: String?,
+    saveLabel: String,
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -913,7 +925,7 @@ private fun FloatingActions(
                         color = MaterialTheme.colorScheme.onPrimary,
                     )
                 } else {
-                    Text("Save Changes", fontWeight = FontWeight.Bold)
+                    Text(saveLabel, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -929,9 +941,11 @@ private fun FloatingActions(
     }
 }
 
-private data class PlaceholderDocument(
-    val type: DocumentType,
-    val status: DocumentStatus?,
+private data class UploadDocument(
+    val type: String,
+    val label: String,
+    val file: File?,
+    val required: Boolean,
 )
 
 private fun validationError(

@@ -9,25 +9,12 @@ import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Multipart
-import retrofit2.http.POST
 import retrofit2.http.Part
 import retrofit2.http.Path
+import retrofit2.http.POST
 import retrofit2.http.Query
 
 interface TruckApi {
-    @GET("trucks")
-    suspend fun getTrucks(): Response<TruckResponse>
-
-    @GET("trucks/{id}")
-    suspend fun getTruckDetail(
-        @Path("id") id: String,
-    ): Response<TruckDetailResponse>
-
-    @GET("trucks/check-availability")
-    suspend fun checkTruckAvailability(
-        @Query("registration_number") registrationNumber: String,
-    ): Response<TruckAvailabilityResponse>
-
     @Multipart
     @POST("trucks")
     suspend fun addTruck(
@@ -42,6 +29,19 @@ interface TruckApi {
         @Part fc_certificate: MultipartBody.Part?,
         @Part insurance: MultipartBody.Part?,
     ): Response<AddTruckResponse>
+
+    @GET("trucks")
+    suspend fun getTrucks(): Response<TruckResponse>
+
+    @GET("trucks/{id}")
+    suspend fun getTruckDetail(
+        @Path("id") id: String,
+    ): Response<TruckDetailResponse>
+
+    @GET("trucks/check-availability")
+    suspend fun checkTruckAvailability(
+        @Query("registration_number") registrationNumber: String,
+    ): Response<TruckAvailabilityResponse>
 
     @Multipart
     @retrofit2.http.PUT("trucks/{id}")

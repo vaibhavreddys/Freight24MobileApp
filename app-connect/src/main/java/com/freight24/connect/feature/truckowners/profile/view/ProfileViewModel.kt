@@ -93,7 +93,7 @@ internal class ProfileViewModel
         private val truckOwnerApi: TruckOwnerApi,
         @param:ApplicationContext private val context: Context,
     ) : ViewModel() {
-        private val userId: String = checkNotNull(savedStateHandle["userId"])
+        private val ownerUserId: String = checkNotNull(savedStateHandle["ownerUserId"])
         val sessionId: String = UUID.randomUUID().toString()
 
         private val _uiState = MutableStateFlow<UiState<Profile>>(UiState.Loading)
@@ -231,7 +231,7 @@ internal class ProfileViewModel
                     _uiState.value = UiState.Loading
                 }
 
-                fetchProfileUseCase.invoke(FetchProfileParams(userId))
+                fetchProfileUseCase.invoke(FetchProfileParams(ownerUserId))
                     .onSuccess { profile ->
                         originalProfile = profile
                         populateEditableFields(profile)
@@ -525,7 +525,7 @@ internal class ProfileViewModel
             val original = originalProfile
             if (original != null && pan == original.panNumber.orEmpty().trim().uppercase()) return
             viewModelScope.launch(Dispatchers.IO) {
-                val response = truckOwnerApi.checkTruckOwnerField("pan_card", pan, excludeId = userId)
+                val response = truckOwnerApi.checkTruckOwnerField("pan_card", pan, excludeId = ownerUserId)
                 if (response.isSuccessful && response.body()?.exists == true) {
                     _panDuplicateError.value = "PAN already registered with another truck owner"
                 } else if (response.isSuccessful) {
@@ -540,7 +540,7 @@ internal class ProfileViewModel
             val original = originalProfile
             if (original != null && gst == original.gstNumber.orEmpty().trim().uppercase()) return
             viewModelScope.launch(Dispatchers.IO) {
-                val response = truckOwnerApi.checkTruckOwnerField("gst_number", gst, excludeId = userId)
+                val response = truckOwnerApi.checkTruckOwnerField("gst_number", gst, excludeId = ownerUserId)
                 if (response.isSuccessful && response.body()?.exists == true) {
                     _gstDuplicateError.value = "GST already registered with another truck owner"
                 } else if (response.isSuccessful) {
@@ -890,7 +890,10 @@ internal class ProfileViewModel
             }
 
         private fun Throwable?.isRouteNotFound(): Boolean {
-            val http = this as? com.freight24.network.error.NetworkException.HttpException ?: return false
-            return http.code == 404 && http.errorBody?.contains("Route not found", ignoreCase = true) == true
+            val legacyHttp = this as? com.freight24.network.error.NetworkException.HttpException
+            val apiError = this as? com.freight24.network.error.ApiException
+            val statusCode = apiError?.statusCode ?: legacyHttp?.code ?: return false
+            val errorText = apiError?.rawBody ?: legacyHttp?.errorBody
+            return statusCode == 404 && errorText?.contains("Route not found", ignoreCase = true) == true
         }
     }

@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.freight24.connect.feature.trucks.domain.usecases.SearchTruckUseCase
 import com.freight24.connect.feature.trucks.domain.usecases.SearchTrucksUseCaseParams
-import com.freight24.rest.response.SearchTruckResponse
+import com.freight24.connect.domain.model.TruckAssignmentOption
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -17,7 +17,7 @@ import javax.inject.Inject
 
 data class AssignTruckUiState(
     val query: String = "",
-    val trucks: List<SearchTruckResponse.Truck> = emptyList(),
+    val trucks: List<TruckAssignmentOption> = emptyList(),
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val recentSearches: List<String> = emptyList(), // Placeholder for now
@@ -75,14 +75,11 @@ class AssignTruckViewModel
                 _uiState.update { it.copy(isLoading = true, errorMessage = null) }
                 val result = searchTruckUseCase(SearchTrucksUseCaseParams(query = query))
 
-                // Wait, SearchTruckUseCase return type is Result<List<...>> ?
-                // In SearchTruckUseCase.kt: Result<List<SearchTruckResponse.Truck>>
-
                 if (result.isSuccess) {
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            trucks = result.getOrElse { emptyList() },
+                            trucks = result.getOrThrow().items,
                         )
                     }
                 } else {

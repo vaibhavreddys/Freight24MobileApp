@@ -39,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -54,6 +55,7 @@ import com.freight24.ui.UiState
 import com.freight24.ui.components.FreightEmptyState
 import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.components.PanelShape
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -68,6 +70,7 @@ fun ManageTrucksScreen(
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val filteredTrucks by viewModel.filteredTrucks.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val isLoadingMore by viewModel.isLoadingMore.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
     var isNavigatingBack by remember { mutableStateOf(false) }
     val navigationInteractionSource = remember { MutableInteractionSource() }
@@ -80,6 +83,16 @@ fun ManageTrucksScreen(
                     entry.savedStateHandle.remove<Boolean>("refresh_trucks")
                     viewModel.onRefresh()
                     listState.scrollToItem(0)
+                }
+            }
+    }
+
+    LaunchedEffect(listState, filteredTrucks.size) {
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+            .distinctUntilChanged()
+            .collect { lastVisible ->
+                if (lastVisible != null && lastVisible >= filteredTrucks.lastIndex - 3) {
+                    viewModel.loadNextPage()
                 }
             }
     }
@@ -230,7 +243,7 @@ fun ManageTrucksScreen(
                                             truckType =
                                                 listOfNotNull(
                                                     truck.truckType,
-                                                    truck.capacityMt?.let { "${it.toString().removeSuffix(".0")} MT" },
+                                                    truck.vehicle?.capacityMt?.let { "${it.toString().removeSuffix(".0")} MT" },
                                                 ).joinToString(" · ").ifBlank { null },
                                             availability = truck.availability,
                                             isVerified = truck.isVerified,
@@ -238,6 +251,16 @@ fun ManageTrucksScreen(
                                             testTag = "trucks_card_${truck.registrationNumber}",
                                             onClick = { onTruckClick(truck.truckId) },
                                         )
+                                    }
+                                    if (isLoadingMore) {
+                                        item {
+                                            Box(
+                                                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                                contentAlignment = Alignment.Center,
+                                            ) {
+                                                CircularProgressIndicator()
+                                            }
+                                        }
                                     }
                                 }
                             }

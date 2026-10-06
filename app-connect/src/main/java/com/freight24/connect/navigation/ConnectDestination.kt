@@ -501,14 +501,14 @@ sealed class ConnectDestination(val route: String) {
         fun createRoute(truckId: String) = "edit_truck/$truckId"
     }
 
-    data object ClientProfile : ConnectDestination("client_profile/{userId}") {
-        const val USER_ID_ARG = "userId"
+    data object ClientProfile : ConnectDestination("client_profile/{clientUserId}") {
+        const val CLIENT_USER_ID_ARG = "clientUserId"
         override val arguments =
             listOf(
-                navArgument(USER_ID_ARG) { type = NavType.StringType },
+                navArgument(CLIENT_USER_ID_ARG) { type = NavType.StringType },
             )
 
-        fun createRoute(userId: String) = "client_profile/$userId"
+        fun createRoute(clientUserId: String) = "client_profile/$clientUserId"
     }
 
     data object ManageClients : ConnectDestination("manage_clients")
@@ -539,13 +539,13 @@ sealed class ConnectDestination(val route: String) {
 
     data object QuickAdhocTruck : ConnectDestination("quick_adhoc_truck")
 
-    data object TruckOwnerProfile : ConnectDestination("truck_owner_profile/{userId}") {
-        const val USER_ID_ARG = "userId"
+    data object TruckOwnerProfile : ConnectDestination("truck_owner_profile/{ownerUserId}") {
+        const val OWNER_USER_ID_ARG = "ownerUserId"
         override val arguments =
             listOf(
-                navArgument(USER_ID_ARG) { type = NavType.StringType },
+                navArgument(OWNER_USER_ID_ARG) { type = NavType.StringType },
             )
 
-        fun createRoute(userId: String) = "truck_owner_profile/$userId"
+        fun createRoute(ownerUserId: String) = "truck_owner_profile/$ownerUserId"
     }
 }

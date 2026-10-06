@@ -1,6 +1,7 @@
 package com.freight24.network.provider
 
 import com.freight24.network.error.NetworkException
+import com.freight24.network.error.ApiErrorDecoder
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -59,7 +60,11 @@ class SafeCallProviderImpl
             return when (this) {
                 is HttpException -> {
                     val errorBody = this.response()?.errorBody()?.string()
-                    NetworkException.HttpException(this.code(), errorBody)
+                    ApiErrorDecoder.decode(
+                        statusCode = this.code(),
+                        rawBody = errorBody,
+                        fallbackMessage = this.response()?.message().orEmpty().ifBlank { "Request failed" },
+                    )
                 }
                 is UnknownHostException -> {
                     NetworkException.UnknownHost

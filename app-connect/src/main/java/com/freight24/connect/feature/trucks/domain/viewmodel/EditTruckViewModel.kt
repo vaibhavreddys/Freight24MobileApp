@@ -13,7 +13,7 @@ import com.freight24.connect.feature.trucks.domain.usecases.GetTruckByIdUseCaseP
 import com.freight24.connect.feature.trucks.domain.usecases.GetTruckOwnersUseCase
 import com.freight24.connect.feature.trucks.domain.usecases.UpdateTruckParams
 import com.freight24.connect.feature.trucks.domain.usecases.UpdateTruckUseCase
-import com.freight24.rest.response.AddTruckDto
+import com.freight24.connect.domain.model.TruckDetails
 import com.freight24.rest.response.TruckOwnerDto
 import com.freight24.ui.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -55,8 +55,8 @@ class EditTruckViewModel
 
         private val initialData = MutableStateFlow<InitialData?>(null)
 
-        private val _uiState = MutableStateFlow<UiState<AddTruckDto>>(UiState.Loading)
-        val uiState: StateFlow<UiState<AddTruckDto>> = _uiState.asStateFlow()
+        private val _uiState = MutableStateFlow<UiState<TruckDetails>>(UiState.Loading)
+        val uiState: StateFlow<UiState<TruckDetails>> = _uiState.asStateFlow()
 
         private val _currentStep = MutableStateFlow(1)
         val currentStep: StateFlow<Int> = _currentStep.asStateFlow()
@@ -125,8 +125,8 @@ class EditTruckViewModel
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
 
         val isCapacityValid: StateFlow<Boolean> =
-            capacityMt.map { it.isBlank() || ((it.toDoubleOrNull() ?: 0.0) > 0.0) }
-                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), true)
+            capacityMt.map { (it.toDoubleOrNull() ?: 0.0) > 0.0 }
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
 
         val isOwnerValid: StateFlow<Boolean> =
             selectedTruckOwner.map { it != null }
@@ -227,36 +227,33 @@ class EditTruckViewModel
             viewModelScope.launch {
                 _uiState.value = UiState.Loading
                 getTruckByIdUseCase(GetTruckByIdUseCaseParams(truckId))
-                    .onSuccess { response ->
-                        response.data?.let { truck ->
+                    .onSuccess { truck ->
                             registrationNumber.value = truck.registrationNumber
-                            make.value = truck.make ?: ""
-                            model.value = truck.model ?: ""
-                            year.value = truck.year ?: ""
-                            capacityMt.value = truck.capacityMt?.toString()?.removeSuffix(".0") ?: ""
-                            selectedTruckType.value = truckTypes.find { it.name == truck.truckType }
+                            make.value = truck.vehicle?.make ?: ""
+                            model.value = truck.vehicle?.model ?: ""
+                            year.value = truck.vehicle?.manufacturingYear?.toString() ?: ""
+                            capacityMt.value = truck.vehicle?.capacityMt?.toString()?.removeSuffix(".0") ?: ""
+                            selectedTruckType.value = truckTypes.find { it.id == truck.truckTypeId }
+                                ?: truckTypes.find { it.name == truck.truckType }
 
-                            existingRcStatus.value = truck.rcCard?.status
-                            existingFcStatus.value = truck.fcCertificate?.status
-                            existingInsuranceStatus.value = truck.insurance?.status
+                            existingRcStatus.value = truck.documents?.registrationCertificate?.status
+                            existingFcStatus.value = truck.documents?.fitnessCertificate?.status
+                            existingInsuranceStatus.value = truck.documents?.insurance?.status
 
                             initialData.value =
                                 InitialData(
                                     registrationNumber = truck.registrationNumber,
                                     truckType = selectedTruckType.value,
-                                    make = truck.make ?: "",
-                                    model = truck.model ?: "",
-                                    year = truck.year ?: "",
-                                    capacityMt = truck.capacityMt?.toString()?.removeSuffix(".0") ?: "",
+                                    make = truck.vehicle?.make ?: "",
+                                    model = truck.vehicle?.model ?: "",
+                                    year = truck.vehicle?.manufacturingYear?.toString() ?: "",
+                                    capacityMt = truck.vehicle?.capacityMt?.toString()?.removeSuffix(".0") ?: "",
                                 )
 
                             _uiState.value = UiState.Idle
-                        } ?: run {
-                            _uiState.value = UiState.Error("Truck data not found")
-                        }
                     }
-                    .onFailure {
-                        _uiState.value = UiState.Error("Failed to fetch truck details")
+                    .onFailure { error ->
+                        _uiState.value = UiState.Error(error.message ?: "Failed to fetch truck details")
                     }
             }
         }
@@ -348,15 +345,9 @@ class EditTruckViewModel
                     )
 
                 updateTruckUseCase(params)
-                    .onSuccess { response ->
-                        val data = response.data
-                        if (response.success && data != null) {
-                            Log.d(TAG, "Truck updated successfully: ${data.id}")
-                            _uiState.value = UiState.Success(data)
-                        } else {
-                            Log.w(TAG, "Failed to update truck: ${response.message}")
-                            _uiState.value = UiState.Error(response.message)
-                        }
+                    .onSuccess { truck ->
+                        Log.d(TAG, "Truck updated successfully: ${truck.truckId}")
+                        _uiState.value = UiState.Success(truck)
                     }
                     .onFailure { error ->
                         Log.e(TAG, "Error updating truck", error)
@@ -389,17 +380,16 @@ class EditTruckViewModel
             }
 
             viewModelScope.launch {
-                checkTruckAvailabilityUseCase(reg)
-                    .onSuccess { existingId ->
-                        // If it belongs to a DIFFERENT truck, it's an error
-                        if (existingId != null && existingId != truckId) {
+                checkTruckAvailabilityUseCase(reg, excludeTruckId = truckId)
+                    .onSuccess { validation ->
+                        if (validation.exists) {
                             _registrationError.value = "Registration number already exists"
                         } else {
                             _registrationError.value = null
                         }
                     }
-                    .onFailure {
-                        _registrationError.value = null
+                    .onFailure { error ->
+                        _registrationError.value = error.message ?: "Unable to validate registration number"
                     }
             }
         }
