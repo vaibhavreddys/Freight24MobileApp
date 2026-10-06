@@ -668,13 +668,7 @@ private fun DocumentsSection(
         FleetSectionHeader(
             title = "Documents",
             colors = colors,
-            trailing = {
-                Text(
-                    text = "${trip.tripDocuments.size} lodged",
-                    style = TruckerType.caption,
-                    color = colors.inkMuted,
-                )
-            },
+            trailing = null,
         )
 
         Spacer(modifier = Modifier.height(12.dp))
