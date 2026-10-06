@@ -13,11 +13,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+// Declaration order is the rail order — the specific bays first, "All" last.
 enum class TruckFilter {
-    ALL,
     AVAILABLE,
     ON_TRIP,
     BLACKLISTED,
+    ALL,
 }
 
 @HiltViewModel
@@ -29,7 +30,7 @@ internal class TrucksViewModel
         private val _uiState = MutableStateFlow<UiState<List<Truck>>>(UiState.Loading)
         val uiState: StateFlow<UiState<List<Truck>>> = _uiState.asStateFlow()
 
-        private val _selectedFilter = MutableStateFlow(TruckFilter.ALL)
+        private val _selectedFilter = MutableStateFlow(TruckFilter.AVAILABLE)
         val selectedFilter: StateFlow<TruckFilter> = _selectedFilter.asStateFlow()
 
         private val _isRefreshing = MutableStateFlow(false)

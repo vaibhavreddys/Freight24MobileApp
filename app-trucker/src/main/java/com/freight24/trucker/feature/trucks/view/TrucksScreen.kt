@@ -333,16 +333,20 @@ internal fun RigCard(
             PlateBadge(
                 registration = truck.registrationNumber,
                 colors = colors,
+                // The truck type already names the body ("22 Feet Closed"),
+                // so listing bodyType after it only ever read as a stutter.
                 caption =
                     listOfNotNull(
                         truck.truckType,
-                        truck.bodyType,
                         truck.capacityMt?.let { "${it.toString().removeSuffix(".0")} MT" },
                     )
                         .joinToString(" · ")
                         .ifBlank { null },
                 border = colors.brand,
-                modifier = Modifier.weight(1f, fill = false),
+                // Takes the slack, not just its content: with fill = false the
+                // seal was packed against the plate instead of the far edge,
+                // which only showed on trucks with a short type label.
+                modifier = Modifier.weight(1f),
             )
             Spacer(modifier = Modifier.width(12.dp))
             StampSeal(
@@ -352,9 +356,12 @@ internal fun RigCard(
             )
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        // Symmetric around the rule: 16/13 read as an accident at card size,
+        // and the slack buys nothing — the plate and the verification line are
+        // already two strong horizontals.
+        Spacer(modifier = Modifier.height(11.dp))
         FleetRule(colors = colors)
-        Spacer(modifier = Modifier.height(13.dp))
+        Spacer(modifier = Modifier.height(11.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
