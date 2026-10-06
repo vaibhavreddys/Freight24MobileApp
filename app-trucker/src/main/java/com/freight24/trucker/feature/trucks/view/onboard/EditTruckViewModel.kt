@@ -46,6 +46,7 @@ internal class EditTruckViewModel
             val make: String,
             val model: String,
             val year: String,
+            val capacityMt: String,
         )
 
         private val initialData = MutableStateFlow<InitialData?>(null)
@@ -62,6 +63,7 @@ internal class EditTruckViewModel
         val make = MutableStateFlow("")
         val model = MutableStateFlow("")
         val year = MutableStateFlow("")
+        val capacityMt = MutableStateFlow("")
 
         private val _registrationError = MutableStateFlow<String?>(null)
         val registrationError: StateFlow<String?> = _registrationError.asStateFlow()
@@ -92,28 +94,31 @@ internal class EditTruckViewModel
 
         val isYearValid: StateFlow<Boolean> =
             year.map {
+                if (it.isBlank()) return@map true
                 if (it.length != 4 || !it.all { char -> char.isDigit() }) return@map false
                 val yearsInt = it.toIntOrNull() ?: 0
                 val currentYear = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)
                 yearsInt in 2000..currentYear
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
 
+        val isCapacityValid: StateFlow<Boolean> =
+            capacityMt.map { it.isBlank() || ((it.toDoubleOrNull() ?: 0.0) > 0.0) }
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), true)
+
         val isStep1Valid: StateFlow<Boolean> =
             combine(
                 isRegistrationValid,
                 selectedTruckType,
-                make,
-                model,
                 isYearValid,
                 registrationError,
+                isCapacityValid,
             ) { args: Array<Any?> ->
                 val reg = args[0] as Boolean
                 val type = args[1] as? TruckType
-                val mk = args[2] as String
-                val md = args[3] as String
-                val yr = args[4] as Boolean
-                val regErr = args[5] as? String
-                reg && type != null && mk.isNotBlank() && md.isNotBlank() && yr && regErr == null
+                val yr = args[2] as Boolean
+                val regErr = args[3] as? String
+                val capacity = args[4] as Boolean
+                reg && type != null && yr && regErr == null && capacity
             }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
 
         val isDirty: StateFlow<Boolean> =
@@ -123,6 +128,7 @@ internal class EditTruckViewModel
                 make,
                 model,
                 year,
+                capacityMt,
                 rcCardFile,
                 fcCertificateFile,
                 insuranceFile,
@@ -133,10 +139,11 @@ internal class EditTruckViewModel
                 val mk = args[2] as String
                 val md = args[3] as String
                 val yr = args[4] as String
-                val rcFile = args[5] as? File
-                val fcFile = args[6] as? File
-                val insFile = args[7] as? File
-                val initial = args[8] as? InitialData
+                val capacity = args[5] as String
+                val rcFile = args[6] as? File
+                val fcFile = args[7] as? File
+                val insFile = args[8] as? File
+                val initial = args[9] as? InitialData
 
                 if (initial == null) return@combine false
 
@@ -145,7 +152,8 @@ internal class EditTruckViewModel
                         type != initial.truckType ||
                         mk != initial.make ||
                         md != initial.model ||
-                        yr != initial.year
+                        yr != initial.year ||
+                        capacity != initial.capacityMt
 
                 val filesChanged = rcFile != null || fcFile != null || insFile != null
 
@@ -192,6 +200,7 @@ internal class EditTruckViewModel
                         make.value = truckDetail.make ?: ""
                         model.value = truckDetail.model ?: ""
                         year.value = truckDetail.year ?: ""
+                        capacityMt.value = truckDetail.capacityMt?.toString()?.removeSuffix(".0") ?: ""
                         selectedTruckType.value = truckTypes.find { it.name == truckDetail.truckType }
 
                         val rcUrl = if (!truckDetail.rcCard?.url.isNullOrEmpty()) truckDetail.rcCard?.url else null
@@ -212,6 +221,7 @@ internal class EditTruckViewModel
                                 make = truckDetail.make ?: "",
                                 model = truckDetail.model ?: "",
                                 year = truckDetail.year ?: "",
+                                capacityMt = truckDetail.capacityMt?.toString()?.removeSuffix(".0") ?: "",
                             )
 
                         _uiState.value = UiState.Idle
@@ -292,9 +302,10 @@ internal class EditTruckViewModel
                         truckId = truckId,
                         registrationNumber = registrationNumber.value.replace(" ", "").uppercase(),
                         truckTypeId = typeId,
-                        make = make.value.ifBlank { null },
-                        model = model.value.ifBlank { null },
-                        year = year.value.ifBlank { null },
+                        make = make.value,
+                        model = model.value,
+                        year = year.value,
+                        capacityMt = capacityMt.value,
                         rcCard = rcCardFile.value,
                         fcCertificate = fcCertificateFile.value,
                         insurance = insuranceFile.value,
@@ -391,6 +402,7 @@ internal class EditTruckViewModel
             make.value = ""
             model.value = ""
             year.value = ""
+            capacityMt.value = ""
             rcCardFile.value = null
             fcCertificateFile.value = null
             insuranceFile.value = null

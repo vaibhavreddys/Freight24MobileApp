@@ -18,6 +18,7 @@ internal class UpdateTruckUseCaseImpl
             val make = params.make?.toPart("make")
             val model = params.model?.toPart("model")
             val year = params.year?.toPart("year")
+            val capacityMt = params.capacityMt?.toPart("capacity_mt")
 
             val rcCard = params.rcCard?.toFilePart("rc_card")
             val fcCertificate = params.fcCertificate?.toFilePart("fc_certificate")
@@ -30,6 +31,7 @@ internal class UpdateTruckUseCaseImpl
                 make,
                 model,
                 year,
+                capacityMt,
                 rcCard,
                 fcCertificate,
                 insurance,

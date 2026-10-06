@@ -16,6 +16,7 @@ fun TruckDto.toDomain(): Truck {
         availability = availability,
         truckType = truckType,
         bodyType = bodyType,
+        capacityMt = capacityMt,
     )
 }
 

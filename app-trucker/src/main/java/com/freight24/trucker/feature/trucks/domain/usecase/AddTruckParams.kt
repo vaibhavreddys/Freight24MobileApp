@@ -8,6 +8,7 @@ data class AddTruckParams(
     val make: String?,
     val model: String?,
     val year: String?,
+    val capacityMt: String,
     val rcCard: File?,
     val fcCertificate: File?,
     val insurance: File?,

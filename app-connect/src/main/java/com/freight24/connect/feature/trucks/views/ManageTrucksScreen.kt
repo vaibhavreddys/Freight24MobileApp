@@ -227,7 +227,11 @@ fun ManageTrucksScreen(
                                     items(filteredTrucks, key = { it.truckId }) { truck ->
                                         TruckDocketCard(
                                             registrationNumber = truck.registrationNumber,
-                                            truckType = truck.truckType,
+                                            truckType =
+                                                listOfNotNull(
+                                                    truck.truckType,
+                                                    truck.capacityMt?.let { "${it.toString().removeSuffix(".0")} MT" },
+                                                ).joinToString(" · ").ifBlank { null },
                                             availability = truck.availability,
                                             isVerified = truck.isVerified,
                                             isBlacklisted = truck.isBlacklisted,

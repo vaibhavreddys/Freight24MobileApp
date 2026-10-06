@@ -11,6 +11,7 @@ data class UpdateTruckParams(
     val make: String? = null,
     val model: String? = null,
     val year: String? = null,
+    val capacityMt: String? = null,
     val rcCard: java.io.File? = null,
     val fcCertificate: java.io.File? = null,
     val insurance: java.io.File? = null,

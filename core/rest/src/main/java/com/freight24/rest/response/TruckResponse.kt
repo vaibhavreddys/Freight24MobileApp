@@ -17,4 +17,5 @@ data class TruckDto(
     val availability: String,
     val truckType: String?,
     val bodyType: String?,
+    val capacityMt: Double? = null,
 )

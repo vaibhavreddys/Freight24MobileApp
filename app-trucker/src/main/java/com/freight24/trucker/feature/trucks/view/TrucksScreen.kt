@@ -334,7 +334,11 @@ internal fun RigCard(
                 registration = truck.registrationNumber,
                 colors = colors,
                 caption =
-                    listOfNotNull(truck.truckType, truck.bodyType)
+                    listOfNotNull(
+                        truck.truckType,
+                        truck.bodyType,
+                        truck.capacityMt?.let { "${it.toString().removeSuffix(".0")} MT" },
+                    )
                         .joinToString(" · ")
                         .ifBlank { null },
                 border = colors.brand,

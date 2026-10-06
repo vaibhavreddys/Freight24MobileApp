@@ -305,6 +305,7 @@ private fun BasicInfoStep(viewModel: EditTruckViewModel) {
     val make by viewModel.make.collectAsState()
     val model by viewModel.model.collectAsState()
     val year by viewModel.year.collectAsState()
+    val capacityMt by viewModel.capacityMt.collectAsState()
 
     val isRegistrationValid by viewModel.isRegistrationValid.collectAsState()
     val isYearValid by viewModel.isYearValid.collectAsState()
@@ -383,11 +384,26 @@ private fun BasicInfoStep(viewModel: EditTruckViewModel) {
             focusRequester = truckTypeFocusRequester,
         )
 
+        OutlinedTextField(
+            value = capacityMt,
+            onValueChange = { value ->
+                if (value.count { it == '.' } <= 1 && value.all { it.isDigit() || it == '.' }) {
+                    viewModel.capacityMt.value = value
+                }
+            },
+            label = { Text("Capacity (MT) (optional)") },
+            placeholder = { Text("16") },
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium,
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        )
+
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedTextField(
                 value = make,
                 onValueChange = { viewModel.make.value = it },
-                label = { Text("Make") },
+                label = { Text("Make (optional)") },
                 placeholder = { Text("Volvo") },
                 modifier =
                     Modifier
@@ -399,7 +415,7 @@ private fun BasicInfoStep(viewModel: EditTruckViewModel) {
             OutlinedTextField(
                 value = model,
                 onValueChange = { viewModel.model.value = it },
-                label = { Text("Model") },
+                label = { Text("Model (optional)") },
                 placeholder = { Text("FH Aero") },
                 modifier = Modifier.weight(1f),
                 shape = MaterialTheme.shapes.medium,
@@ -410,7 +426,7 @@ private fun BasicInfoStep(viewModel: EditTruckViewModel) {
         OutlinedTextField(
             value = year,
             onValueChange = { viewModel.updateYear(it) },
-            label = { Text("Year") },
+            label = { Text("Year (optional)") },
             placeholder = { Text("2024") },
             modifier =
                 Modifier

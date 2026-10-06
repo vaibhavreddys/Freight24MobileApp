@@ -502,32 +502,40 @@ private fun SpecificationsSection(
                     modifier = Modifier.weight(1f),
                 )
                 SpecCell(
-                    label = "Make",
-                    value = truck.make?.takeIf { it.isNotBlank() } ?: "—",
+                    label = "Capacity",
+                    value = truck.capacityMt?.let { "${it.toString().removeSuffix(".0")} MT" } ?: "—",
                     colors = colors,
                     modifier = Modifier.weight(1f),
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 SpecCell(
+                    label = "Make",
+                    value = truck.make?.takeIf { it.isNotBlank() } ?: "—",
+                    colors = colors,
+                    modifier = Modifier.weight(1f),
+                )
+                SpecCell(
                     label = "Model",
                     value = truck.model?.takeIf { it.isNotBlank() } ?: "—",
                     colors = colors,
                     modifier = Modifier.weight(1f),
                 )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 SpecCell(
                     label = "Year",
                     value = truck.year?.takeIf { it.isNotBlank() } ?: "—",
                     colors = colors,
                     modifier = Modifier.weight(1f),
                 )
+                SpecCell(
+                    label = "Class",
+                    value = truck.truckType?.takeIf { it.isNotBlank() } ?: "—",
+                    colors = colors,
+                    modifier = Modifier.weight(1f),
+                )
             }
-            SpecCell(
-                label = "Class",
-                value = truck.truckType?.takeIf { it.isNotBlank() } ?: "—",
-                colors = colors,
-                modifier = Modifier.fillMaxWidth(),
-            )
         }
     }
 }
