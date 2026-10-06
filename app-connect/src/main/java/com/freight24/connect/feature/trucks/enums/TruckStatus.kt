@@ -1,6 +1,6 @@
 package com.freight24.connect.feature.trucks.enums
 
-import com.freight24.rest.response.SearchTruckResponse
+import com.freight24.connect.domain.model.TruckAssignmentOption
 
 enum class TruckStatus(val displayText: String) {
     BLACKLISTED("Blacklisted"),
@@ -10,11 +10,11 @@ enum class TruckStatus(val displayText: String) {
     ;
 
     companion object {
-        fun from(truck: SearchTruckResponse.Truck): TruckStatus {
+        fun from(truck: TruckAssignmentOption): TruckStatus {
             return when {
                 truck.isBlacklisted -> BLACKLISTED
                 truck.status.lowercase() == "inactive" -> IN_ACTIVE
-                truck.availability.lowercase() == "on_trip" -> IN_TRANSIT
+                truck.availability.equals("on_trip", ignoreCase = true) -> IN_TRANSIT
                 else -> AVAILABLE
             }
         }

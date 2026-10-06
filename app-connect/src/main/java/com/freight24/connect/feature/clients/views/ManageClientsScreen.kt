@@ -104,10 +104,7 @@ fun ManageClientsScreen(
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
             ) {
-                Icon(
-                    Icons.Default.Add,
-                    contentDescription = "Onboard New Client",
-                )
+                Icon(Icons.Default.Add, contentDescription = "Onboard New Client")
             }
         },
     ) { paddingValues ->

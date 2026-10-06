@@ -4,6 +4,7 @@ import com.freight24.common.di.IoDispatcher
 import com.freight24.database.dao.LeadsCacheDao
 import com.freight24.database.entity.LeadCityEntity
 import com.freight24.database.entity.LeadTruckTypeEntity
+import com.freight24.network.error.toApiException
 import com.freight24.rest.api.IndentsApi
 import com.freight24.rest.api.LeadsApi
 import com.freight24.rest.api.LocationApi
@@ -18,8 +19,6 @@ import com.freight24.rest.response.LeadSummaryData
 import com.freight24.rest.response.LeadTruckTypeDto
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
-import org.json.JSONObject
-import retrofit2.Response
 import javax.inject.Inject
 
 class LeadsRepositoryImpl
@@ -51,7 +50,7 @@ class LeadsRepositoryImpl
                             ),
                         )
                     } else {
-                        Result.failure(Exception(extractErrorMessage(response, body?.message)))
+                        Result.failure(response.toApiException(bodyMessage = body?.message))
                     }
                 } catch (e: Exception) {
                     Result.failure(e)
@@ -66,7 +65,7 @@ class LeadsRepositoryImpl
                     if (response.isSuccessful && body != null) {
                         Result.success(body.data)
                     } else {
-                        Result.failure(Exception(extractErrorMessage(response, body?.message)))
+                        Result.failure(response.toApiException(bodyMessage = body?.message))
                     }
                 } catch (e: Exception) {
                     Result.failure(e)
@@ -81,7 +80,7 @@ class LeadsRepositoryImpl
                     if (response.isSuccessful && body != null) {
                         Result.success(body.data)
                     } else {
-                        Result.failure(Exception(extractErrorMessage(response, body?.message)))
+                        Result.failure(response.toApiException(bodyMessage = body?.message))
                     }
                 } catch (e: Exception) {
                     Result.failure(e)
@@ -99,7 +98,7 @@ class LeadsRepositoryImpl
                     if (response.isSuccessful && body != null) {
                         Result.success(body.data)
                     } else {
-                        Result.failure(Exception(extractErrorMessage(response, body?.message)))
+                        Result.failure(response.toApiException(bodyMessage = body?.message))
                     }
                 } catch (e: Exception) {
                     Result.failure(e)
@@ -117,7 +116,7 @@ class LeadsRepositoryImpl
                     if (response.isSuccessful && body != null) {
                         Result.success(body.data)
                     } else {
-                        Result.failure(Exception(extractErrorMessage(response, body?.message)))
+                        Result.failure(response.toApiException(bodyMessage = body?.message))
                     }
                 } catch (e: Exception) {
                     Result.failure(e)
@@ -132,7 +131,7 @@ class LeadsRepositoryImpl
                     if (response.isSuccessful && body != null && body.success) {
                         Result.success(true)
                     } else {
-                        Result.failure(Exception(extractErrorMessage(response, body?.message)))
+                        Result.failure(response.toApiException(bodyMessage = body?.message))
                     }
                 } catch (e: Exception) {
                     Result.failure(e)
@@ -150,7 +149,7 @@ class LeadsRepositoryImpl
                     if (response.isSuccessful && body != null) {
                         Result.success(body.data)
                     } else {
-                        Result.failure(Exception(extractErrorMessage(response, body?.message)))
+                        Result.failure(response.toApiException(bodyMessage = body?.message))
                     }
                 } catch (e: Exception) {
                     Result.failure(e)
@@ -198,7 +197,7 @@ class LeadsRepositoryImpl
                         }
                         Result.success(cities)
                     } else {
-                        Result.failure(Exception(extractErrorMessage(response)))
+                        Result.failure(response.toApiException())
                     }
                 } catch (e: Exception) {
                     Result.failure(e)
@@ -248,23 +247,6 @@ class LeadsRepositoryImpl
             }
 
         private fun LeadTruckTypeEntity.toDto() = LeadTruckTypeDto(id = id, truckType = truckType, displayName = displayName)
-
-        private fun extractErrorMessage(
-            response: Response<*>,
-            bodyMessage: String? = null,
-        ): String {
-            bodyMessage?.takeIf { it.isNotBlank() }?.let { return it }
-
-            val rawError = response.errorBody()?.string().orEmpty()
-            if (rawError.isNotBlank()) {
-                runCatching { JSONObject(rawError).optString("message") }
-                    .getOrNull()
-                    ?.takeIf { it.isNotBlank() }
-                    ?.let { return it }
-            }
-
-            return response.message().ifBlank { "Request failed" }
-        }
 
         companion object {
             private const val CACHE_TTL_MS = 24L * 60 * 60 * 1000

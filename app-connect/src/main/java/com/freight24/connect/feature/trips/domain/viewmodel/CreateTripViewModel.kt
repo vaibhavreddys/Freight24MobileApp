@@ -11,7 +11,7 @@ import com.freight24.connect.feature.trucks.domain.usecases.GetTruckByIdUseCase
 import com.freight24.connect.feature.trucks.domain.usecases.GetTruckByIdUseCaseParams
 import com.freight24.rest.response.CreatedTripResponse
 import com.freight24.rest.response.IndentResponse
-import com.freight24.rest.response.TruckDetailDto
+import com.freight24.connect.domain.model.TruckDetails
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,7 +25,7 @@ data class CreateTripUiState(
     val isCreating: Boolean = false,
     val errorMessage: String? = null,
     val indent: IndentResponse.Indent? = null,
-    val truck: TruckDetailDto? = null,
+    val truck: TruckDetails? = null,
     val driverName: String = "",
     val driverPhone: String = "",
     val expectedLoadingDate: String = "", // UI only for now as API doesn't support it
@@ -121,7 +121,7 @@ internal class CreateTripViewModel
                     it.copy(
                         isLoading = false,
                         indent = indentResult.getOrNull()?.data,
-                        truck = truckResult.getOrNull()?.data,
+                        truck = truckResult.getOrNull(),
                         errorMessage =
                             if (indentResult.isFailure || truckResult.isFailure) {
                                 "Failed to load details: ${indentResult.exceptionOrNull()?.message ?: ""} ${truckResult.exceptionOrNull()?.message ?: ""}"

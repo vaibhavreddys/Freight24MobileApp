@@ -1,20 +1,23 @@
 package com.freight24.connect.feature.truckowners.domain.viewmodel
 
+import android.content.Context
+import android.net.Uri
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.freight24.connect.feature.truckowners.domain.usecases.CreateTruckOwnerParams
 import com.freight24.connect.feature.truckowners.domain.usecases.CreateTruckOwnerUseCase
+import com.freight24.connect.feature.truckowners.domain.usecases.TruckOwnerBankParams
+import com.freight24.connect.feature.truckowners.domain.usecases.TruckOwnerBusinessParams
+import com.freight24.connect.feature.truckowners.domain.usecases.TruckOwnerPersonalParams
 import com.freight24.connect.feature.truckowners.profile.domain.PreferredRoute
 import com.freight24.connect.feature.truckowners.profile.util.ProfileFieldValidators
 import com.freight24.connect.feature.truckowners.profile.util.ValidationResult
-import com.freight24.connect.feature.trucks.domain.usecases.GetTruckOwnersUseCase
+import com.freight24.common.util.FileUtils
 import com.freight24.connect.repository.LocationRepository
 import com.freight24.rest.api.TruckOwnerApi
 import com.freight24.rest.request.PreferredRouteEntry
-import com.freight24.rest.request.UpdateProfileRequest
 import com.freight24.rest.response.CityResult
-import com.freight24.rest.response.TruckOwnerDto
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -31,6 +34,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.io.File
 import java.util.UUID
 import javax.inject.Inject
 
@@ -58,12 +62,15 @@ class OnboardTruckOwnerViewModel
     @Inject
     constructor(
         private val createTruckOwnerUseCase: CreateTruckOwnerUseCase,
-        private val getTruckOwnersUseCase: GetTruckOwnersUseCase,
         private val locationRepository: LocationRepository,
         private val truckOwnerApi: TruckOwnerApi,
+        private val savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
         private companion object {
             const val TAG = "OnboardTruckOwnerVM"
+            const val USER_ID_KEY = "truck_owner_onboarding_user_id"
+            const val COMPLETED_STEP_KEY = "truck_owner_onboarding_completed_step"
+            const val OWNER_NAME_KEY = "truck_owner_onboarding_name"
         }
 
         val fullName = MutableStateFlow("")
@@ -81,6 +88,15 @@ class OnboardTruckOwnerViewModel
         val upiId = MutableStateFlow("")
         val bankName = MutableStateFlow("")
         val branchName = MutableStateFlow("")
+        val aadhaarFile = MutableStateFlow<File?>(null)
+        val panFile = MutableStateFlow<File?>(null)
+        val gstFile = MutableStateFlow<File?>(null)
+        val companyFile = MutableStateFlow<File?>(null)
+        val tdsFile = MutableStateFlow<File?>(null)
+        val chequeFile = MutableStateFlow<File?>(null)
+
+        private val _completedStep = MutableStateFlow(savedStateHandle[COMPLETED_STEP_KEY] ?: 0)
+        val completedStep: StateFlow<Int> = _completedStep.asStateFlow()
 
         private val _baseCity = MutableStateFlow<CityResult?>(null)
         val baseCity: StateFlow<CityResult?> = _baseCity.asStateFlow()
@@ -512,7 +528,30 @@ class OnboardTruckOwnerViewModel
                 upiId.value.isNotBlank() ||
                 bankName.value.isNotBlank() ||
                 branchName.value.isNotBlank() ||
-                !isTdsApplicable.value
+                !isTdsApplicable.value ||
+                listOf(aadhaarFile, panFile, gstFile, companyFile, tdsFile, chequeFile).any { it.value != null }
+        }
+
+        fun onDocumentSelected(
+            context: Context,
+            uri: Uri,
+            type: String,
+        ) {
+            viewModelScope.launch(Dispatchers.IO) {
+                val file = FileUtils.getFileFromUri(context, uri)
+                if (file == null) {
+                    _messageEvent.emit("Failed to process document")
+                    return@launch
+                }
+                when (type) {
+                    "AADHAAR" -> aadhaarFile.value = file
+                    "PAN" -> panFile.value = file
+                    "GST" -> gstFile.value = file
+                    "COMPANY" -> companyFile.value = file
+                    "TDS" -> tdsFile.value = file
+                    "CHEQUE" -> chequeFile.value = file
+                }
+            }
         }
 
         fun canSubmit(): Boolean {
@@ -538,60 +577,105 @@ class OnboardTruckOwnerViewModel
 
             viewModelScope.launch {
                 _isSaving.value = true
+                try {
+                    var userId: String? = savedStateHandle[USER_ID_KEY]
 
-                val normalizedPhone = phone.value.trim()
-                val normalizedAltPhone = alternativePhone.value.trim()
-                val request =
-                    UpdateProfileRequest(
-                        baseCityId = _baseCity.value?.id,
-                        full_name = fullName.value.trim(),
-                        email = email.value.trim().ifBlank { null },
-                        phone = if (normalizedPhone.length == 10) "+91$normalizedPhone" else normalizedPhone,
-                        alt_phones = normalizedAltPhone.ifBlank { null }?.let { listOf(it) },
-                        pan_card = panCard.value.trim().uppercase().ifBlank { null },
-                        aadhar_card = aadharCard.value.trim().ifBlank { null },
-                        business_name = businessName.value.trim().ifBlank { null },
-                        gst_number = gstNumber.value.trim().uppercase().ifBlank { null },
-                        is_tds_applicable = isTdsApplicable.value,
-                        account_holder_name = accountHolderName.value.trim().ifBlank { null },
-                        account_number = accountNumber.value.trim().ifBlank { null },
-                        ifsc_code = ifscCode.value.trim().uppercase().ifBlank { null },
-                        upi_id = upiId.value.trim().lowercase().ifBlank { null },
-                        bank_name = bankName.value.trim().ifBlank { null },
-                        branch_name = branchName.value.trim().ifBlank { null },
-                        preferredRoutes = gatherPreferredRouteEntries(),
-                    )
-
-                createTruckOwnerUseCase(CreateTruckOwnerParams(request))
-                    .onSuccess {
-                        val matchedOwner = resolveCreatedTruckOwner(request.phone.orEmpty())
-                        _createdTruckOwner.value =
-                            CreatedTruckOwnerState(
+                    if (_completedStep.value < 1) {
+                        val normalizedPhone = phone.value.trim().let { if (it.length == 10) "+91$it" else it }
+                        userId = createTruckOwnerUseCase.createPersonal(
+                            TruckOwnerPersonalParams(
                                 fullName = fullName.value.trim(),
-                                userId = matchedOwner?.user_id,
-                            )
-                        _messageEvent.emit("Truck owner created successfully")
-                    }
-                    .onFailure { throwable ->
-                        _messageEvent.emit(throwable.message ?: "Failed to create truck owner")
+                                email = email.value.trim().ifBlank { null },
+                                phone = normalizedPhone,
+                                alternativePhone = alternativePhone.value.trim().ifBlank { null },
+                                panCard = panCard.value.trim().uppercase(),
+                                aadhaarCard = aadharCard.value.trim(),
+                                aadhaarFile = requireNotNull(aadhaarFile.value),
+                                panFile = requireNotNull(panFile.value),
+                            ),
+                        ).getOrElse {
+                            _messageEvent.emit(it.message ?: "Failed to save personal details")
+                            return@launch
+                        }
+                        savedStateHandle[USER_ID_KEY] = userId
+                        savedStateHandle[OWNER_NAME_KEY] = fullName.value.trim()
+                        setCompletedStep(1)
                     }
 
-                _isSaving.value = false
+                    val resolvedUserId = requireNotNull(userId)
+                    if (_completedStep.value < 2) {
+                        createTruckOwnerUseCase.saveBusiness(
+                            resolvedUserId,
+                            TruckOwnerBusinessParams(
+                                businessName = businessName.value.trim().ifBlank { null },
+                                gstNumber = gstNumber.value.trim().uppercase().ifBlank { null },
+                                isTdsApplicable = isTdsApplicable.value,
+                                baseCityId = _baseCity.value?.id,
+                                preferredRoutes = gatherPreferredRouteEntries(),
+                                gstFile = gstFile.value,
+                                companyFile = companyFile.value,
+                                tdsFile = tdsFile.value,
+                            ),
+                        ).getOrElse {
+                            _messageEvent.emit("Personal details saved. ${it.message ?: "Failed to save business details"}")
+                            return@launch
+                        }
+                        setCompletedStep(2)
+                    }
+
+                    createTruckOwnerUseCase.saveBank(
+                        resolvedUserId,
+                        TruckOwnerBankParams(
+                            accountHolderName = accountHolderName.value.trim(),
+                            accountNumber = accountNumber.value.trim(),
+                            ifscCode = ifscCode.value.trim().uppercase(),
+                            upiId = upiId.value.trim().lowercase().ifBlank { null },
+                            bankName = bankName.value.trim().ifBlank { null },
+                            branchName = branchName.value.trim().ifBlank { null },
+                            chequeFile = requireNotNull(chequeFile.value),
+                        ),
+                    ).getOrElse {
+                        _messageEvent.emit("Profile saved. ${it.message ?: "Failed to save bank details"}")
+                        return@launch
+                    }
+
+                    val ownerName = (savedStateHandle[OWNER_NAME_KEY] as String?).orEmpty().ifBlank { fullName.value.trim() }
+                    _createdTruckOwner.value = CreatedTruckOwnerState(ownerName, resolvedUserId)
+                    savedStateHandle.remove<String>(USER_ID_KEY)
+                    savedStateHandle.remove<Int>(COMPLETED_STEP_KEY)
+                    savedStateHandle.remove<String>(OWNER_NAME_KEY)
+                    _completedStep.value = 0
+                    _messageEvent.emit("Truck owner created successfully")
+                } finally {
+                    _isSaving.value = false
+                }
             }
         }
 
+        private fun setCompletedStep(step: Int) {
+            _completedStep.value = step
+            savedStateHandle[COMPLETED_STEP_KEY] = step
+        }
+
         private fun mandatoryValidationError(): String? {
-            if (fullName.value.trim().isBlank()) return "Full name is required"
-            if (phone.value.trim().isBlank()) return "Phone number is required"
-            if (aadharCard.value.trim().isBlank()) return "Aadhaar number is required"
-            if (panCard.value.trim().isBlank()) return "PAN number is required"
+            if (_completedStep.value < 1) {
+                if (fullName.value.trim().isBlank()) return "Full name is required"
+                if (phone.value.trim().isBlank()) return "Phone number is required"
+                if (aadharCard.value.trim().isBlank()) return "Aadhaar number is required"
+                if (panCard.value.trim().isBlank()) return "PAN number is required"
+                if (aadhaarFile.value == null) return "Aadhaar document is required"
+                if (panFile.value == null) return "PAN document is required"
+            }
             if (accountHolderName.value.trim().isBlank()) return "Account holder name is required"
             if (accountNumber.value.trim().isBlank()) return "Account number is required"
             if (ifscCode.value.trim().isBlank()) return "IFSC code is required"
+            if (chequeFile.value == null) return "Cancelled cheque is required"
 
-            when (ProfileFieldValidators.validateIndianPhone(phone.value.trim())) {
-                is ValidationResult.Error -> return "Enter a valid primary phone number"
-                ValidationResult.Success -> Unit
+            if (_completedStep.value < 1) {
+                when (ProfileFieldValidators.validateIndianPhone(phone.value.trim())) {
+                    is ValidationResult.Error -> return "Enter a valid primary phone number"
+                    ValidationResult.Success -> Unit
+                }
             }
 
             if (aadharCard.value.isNotBlank()) {
@@ -672,17 +756,6 @@ class OnboardTruckOwnerViewModel
                 "Medium" -> 2
                 else -> 3
             }
-
-        private suspend fun resolveCreatedTruckOwner(phoneNumber: String): TruckOwnerDto? {
-            val normalized = phoneNumber.trim()
-            val local = normalized.removePrefix("+91")
-            return getTruckOwnersUseCase()
-                .getOrNull()
-                ?.lastOrNull { owner ->
-                    owner.phone == normalized ||
-                        owner.phone.removePrefix("+91") == local
-                }
-        }
 
         fun consumeCreatedTruckOwner() {
             _createdTruckOwner.value = null

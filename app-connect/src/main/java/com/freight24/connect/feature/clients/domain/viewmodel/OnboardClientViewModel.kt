@@ -2,20 +2,24 @@ package com.freight24.connect.feature.clients.domain.viewmodel
 
 import android.content.Context
 import android.net.Uri
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.freight24.common.util.FileUtils
-import com.freight24.connect.feature.clients.domain.usecases.CreateClientParams
+import com.freight24.connect.feature.clients.domain.usecases.ClientBranchV2Params
+import com.freight24.connect.feature.clients.domain.usecases.ClientContactV2Params
+import com.freight24.connect.feature.clients.domain.usecases.ClientContactScopeV2Params
+import com.freight24.connect.feature.clients.domain.usecases.ClientLocationsV2Params
+import com.freight24.connect.feature.clients.domain.usecases.ClientProfileV2Params
 import com.freight24.connect.feature.clients.domain.usecases.CreateClientUseCase
-import com.freight24.connect.feature.clients.domain.usecases.GetClientsUseCase
-import com.freight24.connect.feature.truckowners.profile.domain.usecase.UploadIdentityDocumentParams
-import com.freight24.connect.feature.truckowners.profile.domain.usecase.UploadIdentityDocumentUseCase
+import com.freight24.connect.repository.ClientRepository
 import com.freight24.connect.feature.truckowners.profile.util.ProfileFieldValidators
 import com.freight24.connect.feature.truckowners.profile.util.ValidationResult
 import com.freight24.rest.api.ClientApi
-import com.freight24.rest.request.ClientBranchRequest
-import com.freight24.rest.request.UpdateClientRequest
-import com.freight24.rest.response.ClientDto
+import com.freight24.rest.response.BranchTypeOptionDto
+import com.freight24.rest.response.CityOptionDto
+import com.freight24.rest.response.ContactRoleOptionDto
+import com.freight24.rest.response.StateOptionDto
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -26,556 +30,362 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
 import javax.inject.Inject
 
 @HiltViewModel
-class OnboardClientViewModel
-    @Inject
-    constructor(
-        private val createClientUseCase: CreateClientUseCase,
-        private val getClientsUseCase: GetClientsUseCase,
-        private val uploadIdentityDocumentUseCase: UploadIdentityDocumentUseCase,
-        private val clientApi: ClientApi,
-    ) : ViewModel() {
-        val fullName = MutableStateFlow("")
-        val phoneNumber = MutableStateFlow("")
-        val panNumber = MutableStateFlow("")
-        val email = MutableStateFlow("")
-        val companyName = MutableStateFlow("")
-        val gstNumber = MutableStateFlow("")
-        val branches = MutableStateFlow<List<BranchFormState>>(emptyList())
+class OnboardClientViewModel @Inject constructor(
+    private val createClientUseCase: CreateClientUseCase,
+    private val repository: ClientRepository,
+    private val clientApi: ClientApi,
+    private val savedStateHandle: SavedStateHandle,
+) : ViewModel() {
+    private companion object {
+        const val CLIENT_ID_KEY = "client_onboarding_client_id"
+        const val USER_ID_KEY = "client_onboarding_user_id"
+        const val STEP_KEY = "client_onboarding_step"
+    }
 
-        // Document State
-        val aadhaarFile = MutableStateFlow<File?>(null)
-        val panFile = MutableStateFlow<File?>(null)
+    val clientType = MutableStateFlow("DIRECT_CUSTOMER")
+    val companyType = MutableStateFlow("Private Limited")
+    val operatingStructure = MutableStateFlow("SINGLE")
+    val fullName = MutableStateFlow("")
+    val phoneNumber = MutableStateFlow("")
+    val panNumber = MutableStateFlow("")
+    val email = MutableStateFlow("")
+    val companyName = MutableStateFlow("")
+    val gstNumber = MutableStateFlow("")
+    val branches = MutableStateFlow(listOf(BranchFormState(id = 1)))
 
-        private var nextBranchId = 1
+    val panFile = MutableStateFlow<File?>(null)
+    val gstFile = MutableStateFlow<File?>(null)
+    val companyRegistrationFile = MutableStateFlow<File?>(null)
+    val contractFile = MutableStateFlow<File?>(null)
 
-        private val _isSaving = MutableStateFlow(false)
-        val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
+    private val _states = MutableStateFlow<List<StateOptionDto>>(emptyList())
+    val states: StateFlow<List<StateOptionDto>> = _states.asStateFlow()
+    private val _citiesByState = MutableStateFlow<Map<Int, List<CityOptionDto>>>(emptyMap())
+    val citiesByState: StateFlow<Map<Int, List<CityOptionDto>>> = _citiesByState.asStateFlow()
+    private val _branchTypes = MutableStateFlow<List<BranchTypeOptionDto>>(emptyList())
+    val branchTypes: StateFlow<List<BranchTypeOptionDto>> = _branchTypes.asStateFlow()
+    private val _contactRoles = MutableStateFlow<List<ContactRoleOptionDto>>(emptyList())
+    val contactRoles: StateFlow<List<ContactRoleOptionDto>> = _contactRoles.asStateFlow()
 
-        private val _messageEvent = MutableSharedFlow<String>()
-        val messageEvent: SharedFlow<String> = _messageEvent.asSharedFlow()
+    private var nextBranchId = 2
+    private val _isSaving = MutableStateFlow(false)
+    val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
+    private val _completedStep = MutableStateFlow(savedStateHandle[STEP_KEY] ?: 0)
+    val completedStep: StateFlow<Int> = _completedStep.asStateFlow()
+    private val _messageEvent = MutableSharedFlow<String>()
+    val messageEvent: SharedFlow<String> = _messageEvent.asSharedFlow()
+    private val _createdClient = MutableStateFlow<CreatedClientState?>(null)
+    val createdClient: StateFlow<CreatedClientState?> = _createdClient.asStateFlow()
+    private val _panDuplicateError = MutableStateFlow<String?>(null)
+    val panDuplicateError: StateFlow<String?> = _panDuplicateError.asStateFlow()
+    private val _gstDuplicateError = MutableStateFlow<String?>(null)
+    val gstDuplicateError: StateFlow<String?> = _gstDuplicateError.asStateFlow()
 
-        private val _createdClient = MutableStateFlow<CreatedClientState?>(null)
-        val createdClient: StateFlow<CreatedClientState?> = _createdClient.asStateFlow()
+    init {
+        loadMasterData()
+    }
 
-        private val _panDuplicateError = MutableStateFlow<String?>(null)
-        val panDuplicateError: StateFlow<String?> = _panDuplicateError.asStateFlow()
-
-        private val _gstDuplicateError = MutableStateFlow<String?>(null)
-        val gstDuplicateError: StateFlow<String?> = _gstDuplicateError.asStateFlow()
-
-        private val _saveAttempted = MutableStateFlow(false)
-        val saveAttempted: StateFlow<Boolean> = _saveAttempted.asStateFlow()
-
-        fun onFullNameChanged(input: String) {
-            fullName.value = sanitizePersonName(input)
+    private fun loadMasterData() {
+        viewModelScope.launch {
+            repository.getStates().onSuccess { _states.value = it }
+            repository.getBranchTypes().onSuccess { types ->
+                _branchTypes.value = types
+                val defaultType = types.firstOrNull { it.code == "HEAD_OFFICE" } ?: types.firstOrNull()
+                if (defaultType != null) branches.update { list -> list.map { it.copy(branchTypeId = defaultType.id) } }
+            }
+            repository.getContactRoles().onSuccess { _contactRoles.value = it }
         }
+    }
 
-        fun onPhoneNumberChanged(input: String) {
-            phoneNumber.value = input.filter(Char::isDigit).take(10)
-        }
+    fun onClientTypeChanged(value: String) { clientType.value = value }
+    fun onCompanyTypeChanged(value: String) { companyType.value = value }
+    fun onOperatingStructureChanged(value: String) { operatingStructure.value = value }
+    fun onFullNameChanged(input: String) { fullName.value = sanitizePersonName(input) }
+    fun onPhoneNumberChanged(input: String) { phoneNumber.value = input.filter(Char::isDigit).take(10) }
+    fun onEmailChanged(input: String) { email.value = input.lowercase().filter { it.isLetterOrDigit() || it in "@._+-" }.take(80) }
+    fun onCompanyNameChanged(input: String) { companyName.value = sanitizeText(input, 100) }
 
-        fun onPanNumberChanged(input: String) {
-            val candidate = input.uppercase().filter(Char::isLetterOrDigit).take(10)
-            if (isPanPrefix(candidate)) panNumber.value = candidate
-            _panDuplicateError.value = null
-        }
+    fun onPanNumberChanged(input: String) {
+        val value = input.uppercase().filter(Char::isLetterOrDigit).take(10)
+        if (isPanPrefix(value)) panNumber.value = value
+        _panDuplicateError.value = null
+    }
 
-        fun onPanFocusLost() {
-            val pan = panNumber.value.trim().uppercase()
-            if (pan.length != 10) return
-            viewModelScope.launch(Dispatchers.IO) {
-                val response = clientApi.checkClientField("pan_card", pan)
-                if (response.isSuccessful && response.body()?.exists == true) {
-                    _panDuplicateError.value = "PAN already registered with another client"
-                }
+    fun onGstNumberChanged(input: String) {
+        val value = input.uppercase().filter(Char::isLetterOrDigit).take(15)
+        if (isGstPrefix(value)) gstNumber.value = value
+        _gstDuplicateError.value = null
+    }
+
+    fun onPanFocusLost() = checkDuplicate("pan_card", panNumber.value, _panDuplicateError, "PAN already registered with another client")
+    fun onGstFocusLost() {
+        if (gstNumber.value.isNotBlank()) checkDuplicate("gst_number", gstNumber.value, _gstDuplicateError, "GST already registered with another client")
+    }
+
+    private fun checkDuplicate(field: String, value: String, target: MutableStateFlow<String?>, message: String) {
+        if ((field == "pan_card" && value.length != 10) || (field == "gst_number" && value.length != 15)) return
+        viewModelScope.launch(Dispatchers.IO) {
+            runCatching { clientApi.checkClientField(field, value) }.getOrNull()?.let { response ->
+                if (response.isSuccessful && response.body()?.exists == true) target.value = message
             }
         }
+    }
 
-        fun onEmailChanged(input: String) {
-            val filtered = input.lowercase().filter { it.isLetterOrDigit() || it in "@._+-" }.take(80)
-            if (filtered.count { it == '@' } <= 1) {
-                email.value = filtered
-            }
+    fun addBranch() {
+        val defaultType = _branchTypes.value.firstOrNull()?.id.orEmpty()
+        branches.update { it + BranchFormState(id = nextBranchId++, branchTypeId = defaultType) }
+    }
+
+    fun onBranchNameChanged(id: Int, value: String) = updateBranch(id) { it.copy(branchName = sanitizeText(value, 80)) }
+    fun onBranchCodeChanged(id: Int, value: String) = updateBranch(id) { it.copy(branchCode = value.uppercase().filter { c -> c.isLetterOrDigit() || c == '-' }.take(20)) }
+    fun onBranchAddressChanged(id: Int, value: String) = updateBranch(id) { it.copy(branchAddress = sanitizeAddress(value)) }
+    fun onBranchPinCodeChanged(id: Int, value: String) = updateBranch(id) { it.copy(pinCode = value.filter(Char::isDigit).take(6)) }
+    fun onBranchTypeChanged(id: Int, typeId: String) = updateBranch(id) { it.copy(branchTypeId = typeId) }
+
+    fun onBranchStateChanged(id: Int, stateId: Int) {
+        updateBranch(id) { it.copy(stateId = stateId, cityId = null) }
+        if (_citiesByState.value[stateId] == null) {
+            viewModelScope.launch { repository.getCities(stateId).onSuccess { cities -> _citiesByState.update { it + (stateId to cities) } } }
         }
+    }
 
-        fun onCompanyNameChanged(input: String) {
-            companyName.value = sanitizeText(input, maxLength = 80)
-        }
+    fun onBranchCityChanged(id: Int, cityId: Int) = updateBranch(id) { it.copy(cityId = cityId) }
+    fun onPaymentContactNameChanged(id: Int, value: String) = updateBranch(id) { it.copy(paymentContactName = sanitizePersonName(value)) }
+    fun onPaymentContactNumberChanged(id: Int, value: String) = updateBranch(id) { it.copy(paymentContactNumber = phoneDigits(value)) }
+    fun onTrafficContactNameChanged(id: Int, value: String) = updateBranch(id) { it.copy(trafficContactName = sanitizePersonName(value)) }
+    fun onTrafficContactNumberChanged(id: Int, value: String) = updateBranch(id) { it.copy(trafficContactNumber = phoneDigits(value)) }
+    fun onPodContactNameChanged(id: Int, value: String) = updateBranch(id) { it.copy(podContactName = sanitizePersonName(value)) }
+    fun onPodContactNumberChanged(id: Int, value: String) = updateBranch(id) { it.copy(podContactNumber = phoneDigits(value)) }
+    fun onTrackingContactNameChanged(id: Int, value: String) = updateBranch(id) { it.copy(trackingContactName = sanitizePersonName(value)) }
+    fun onTrackingContactNumberChanged(id: Int, value: String) = updateBranch(id) { it.copy(trackingContactNumber = phoneDigits(value)) }
+    fun copyPaymentFromPrimary(id: Int) = updateBranch(id) { it.copy(paymentContactName = fullName.value, paymentContactNumber = phoneNumber.value) }
+    fun copyTrafficFromPrimary(id: Int) = updateBranch(id) { it.copy(trafficContactName = fullName.value, trafficContactNumber = phoneNumber.value) }
+    fun copyPodFromPrimary(id: Int) = updateBranch(id) { it.copy(podContactName = fullName.value, podContactNumber = phoneNumber.value) }
+    fun copyTrackingFromPrimary(id: Int) = updateBranch(id) { it.copy(trackingContactName = fullName.value, trackingContactNumber = phoneNumber.value) }
 
-        fun onGstNumberChanged(input: String) {
-            val candidate = input.uppercase().filter(Char::isLetterOrDigit).take(15)
-            if (isGstPrefix(candidate)) gstNumber.value = candidate
-            _gstDuplicateError.value = null
-        }
-
-        fun onGstFocusLost() {
-            val gst = gstNumber.value.trim().uppercase()
-            if (gst.length != 15) return
-            viewModelScope.launch(Dispatchers.IO) {
-                val response = clientApi.checkClientField("gst_number", gst)
-                if (response.isSuccessful && response.body()?.exists == true) {
-                    _gstDuplicateError.value = "GST already registered with another client"
-                }
-            }
-        }
-
-        fun addBranch() {
-            branches.update { current ->
-                current + BranchFormState(id = nextBranchId++)
-            }
-        }
-
-        fun onBranchNameChanged(
-            branchId: Int,
-            input: String,
-        ) {
-            updateBranch(branchId) { it.copy(branchName = sanitizeText(input, maxLength = 80)) }
-        }
-
-        fun onBranchAddressChanged(
-            branchId: Int,
-            input: String,
-        ) {
-            updateBranch(branchId) { it.copy(branchAddress = sanitizeAddress(input)) }
-        }
-
-        fun onPaymentContactNameChanged(
-            branchId: Int,
-            input: String,
-        ) {
-            updateBranch(branchId) { it.copy(paymentContactName = sanitizePersonName(input)) }
-        }
-
-        fun onPaymentContactNumberChanged(
-            branchId: Int,
-            input: String,
-        ) {
-            updateBranch(branchId) { it.copy(paymentContactNumber = input.filter(Char::isDigit).take(10)) }
-        }
-
-        fun onTrafficContactNameChanged(
-            branchId: Int,
-            input: String,
-        ) {
-            updateBranch(branchId) { it.copy(trafficContactName = sanitizePersonName(input)) }
-        }
-
-        fun onTrafficContactNumberChanged(
-            branchId: Int,
-            input: String,
-        ) {
-            updateBranch(branchId) { it.copy(trafficContactNumber = input.filter(Char::isDigit).take(10)) }
-        }
-
-        fun onPodContactNameChanged(
-            branchId: Int,
-            input: String,
-        ) {
-            updateBranch(branchId) { it.copy(podContactName = sanitizePersonName(input)) }
-        }
-
-        fun onPodContactNumberChanged(
-            branchId: Int,
-            input: String,
-        ) {
-            updateBranch(branchId) { it.copy(podContactNumber = input.filter(Char::isDigit).take(10)) }
-        }
-
-        fun onTrackingContactNameChanged(
-            branchId: Int,
-            input: String,
-        ) {
-            updateBranch(branchId) { it.copy(trackingContactName = sanitizePersonName(input)) }
-        }
-
-        fun onTrackingContactNumberChanged(
-            branchId: Int,
-            input: String,
-        ) {
-            updateBranch(branchId) { it.copy(trackingContactNumber = input.filter(Char::isDigit).take(10)) }
-        }
-
-        fun copyPaymentFromPrimary(branchId: Int) {
-            updateBranch(branchId) {
-                it.copy(
-                    paymentContactName = fullName.value.trim(),
-                    paymentContactNumber = phoneNumber.value.trim(),
-                )
-            }
-        }
-
-        fun copyTrafficFromPrimary(branchId: Int) {
-            updateBranch(branchId) {
-                it.copy(
-                    trafficContactName = fullName.value.trim(),
-                    trafficContactNumber = phoneNumber.value.trim(),
-                )
-            }
-        }
-
-        fun copyPodFromPrimary(branchId: Int) {
-            updateBranch(branchId) {
-                it.copy(
-                    podContactName = fullName.value.trim(),
-                    podContactNumber = phoneNumber.value.trim(),
-                )
-            }
-        }
-
-        fun copyTrackingFromPrimary(branchId: Int) {
-            updateBranch(branchId) {
-                it.copy(
-                    trackingContactName = fullName.value.trim(),
-                    trackingContactNumber = phoneNumber.value.trim(),
-                )
-            }
-        }
-
-        fun onFileSelected(
-            context: Context,
-            uris: List<Uri>,
-            type: String,
-            isPdf: Boolean,
-            onSuccess: () -> Unit,
-        ) {
-            if (uris.isEmpty()) return
-            viewModelScope.launch {
-                _isSaving.value = true
-                try {
-                    val file =
-                        if (isPdf) {
-                            FileUtils.getFileFromUri(context, uris.first())
-                        } else {
-                            FileUtils.convertImageToPdf(context, uris)
-                        }
-                    if (file != null) {
-                        when (type) {
-                            "AADHAAR" -> aadhaarFile.value = file
-                            "PAN" -> panFile.value = file
-                        }
-                        onSuccess()
-                    } else {
-                        _messageEvent.emit("Failed to process document")
+    fun onFileSelected(context: Context, uris: List<Uri>, type: String, isPdf: Boolean, onSuccess: () -> Unit) {
+        if (uris.isEmpty()) return
+        viewModelScope.launch {
+            _isSaving.value = true
+            try {
+                val file = if (isPdf) FileUtils.getFileFromUri(context, uris.first()) else FileUtils.convertImageToPdf(context, uris)
+                if (file == null) {
+                    _messageEvent.emit("Failed to process document")
+                } else {
+                    when (type) {
+                        "PAN" -> panFile.value = file
+                        "GST" -> gstFile.value = file
+                        "COMPANY" -> companyRegistrationFile.value = file
+                        "CONTRACT" -> contractFile.value = file
                     }
-                } catch (e: Exception) {
-                    _messageEvent.emit(e.message ?: "Failed to process document")
-                } finally {
-                    _isSaving.value = false
+                    onSuccess()
                 }
-            }
-        }
-
-        fun hasRequiredFields(): Boolean = requiredValidationMessage() == null
-
-        fun canSubmit(): Boolean = !_isSaving.value && hasRequiredFields()
-
-        fun submitBlockReason(): String? = requiredValidationMessage()
-
-        fun clearDuplicateErrors() {
-            _panDuplicateError.value = null
-            _gstDuplicateError.value = null
-        }
-
-        fun validationMessage(): String? {
-            requiredValidationMessage()?.let { return it }
-
-            if (email.value.isNotBlank()) {
-                when (val result = ProfileFieldValidators.validateEmail(email.value.trim())) {
-                    is ValidationResult.Error -> return result.message
-                    ValidationResult.Success -> Unit
-                }
-            }
-
-            branches.value.forEachIndexed { index, branch ->
-                contactPhoneValues(branch).forEach { phone ->
-                    if (phone.isNotBlank()) {
-                        val error = phoneValidation(phone, showIncompleteError = true)
-                        if (error != null) {
-                            return "Branch ${index + 1}: $error"
-                        }
-                    }
-                }
-            }
-
-            return null
-        }
-
-        fun submit() {
-            if (_isSaving.value) return
-            _saveAttempted.value = true
-            val blockReason = validationMessage()
-            if (blockReason != null) {
-                viewModelScope.launch { _messageEvent.emit(blockReason) }
-                return
-            }
-
-            viewModelScope.launch {
-                _isSaving.value = true
-
-                val request =
-                    UpdateClientRequest(
-                        full_name = fullName.value.trim(),
-                        phone_number = phoneNumber.value.trim(),
-                        pan_card = panNumber.value.trim().uppercase(),
-                        email = email.value.trim().ifBlank { null },
-                        company_name = companyName.value.trim().ifBlank { null },
-                        gst_number = gstNumber.value.trim().uppercase(),
-                        branches = buildBranchesPayload(),
-                    )
-
-                createClientUseCase(CreateClientParams(request))
-                    .onSuccess {
-                        val created = resolveCreatedClient(phoneNumber.value.trim())
-                        val userId = created?.userId
-
-                        if (userId.isNullOrEmpty()) {
-                            _messageEvent.emit("Client created but failed to resolve ID for document upload")
-                            return@onSuccess
-                        }
-
-                        // Upload documents if selected
-                        val uploadResult = uploadDocuments(userId)
-                        if (uploadResult.isFailure) {
-                            _messageEvent.emit("Client created but document upload failed: ${uploadResult.exceptionOrNull()?.message}")
-                            return@onSuccess
-                        }
-
-                        _createdClient.value =
-                            CreatedClientState(
-                                fullName = fullName.value.trim(),
-                                userId = userId,
-                            )
-                        _messageEvent.emit("Client created successfully")
-                    }
-                    .onFailure { error ->
-                        _messageEvent.emit(error.message ?: "Failed to create client")
-                    }
-
+            } finally {
                 _isSaving.value = false
             }
         }
+    }
 
-        fun consumeCreatedClient() {
-            _createdClient.value = null
+    fun canSubmit(): Boolean = !_isSaving.value && validationMessage() == null
+    fun submitBlockReason(): String? = validationMessage()
+    fun clearDuplicateErrors() { _panDuplicateError.value = null; _gstDuplicateError.value = null }
+
+    fun validationMessage(): String? {
+        val registered = branches.value.firstOrNull() ?: return "Registered address is required"
+        if (_completedStep.value < 1) {
+            if (companyName.value.isBlank()) return "Legal company name is required"
+            if (fullName.value.isBlank()) return "Display or primary contact name is required"
+            if (companyType.value.isBlank()) return "Company type is required"
+            if (panNumber.value.isBlank()) return "PAN number is required"
+            if (phoneNumber.value.isBlank()) return "Company phone is required"
+            if (registered.branchAddress.isBlank()) return "Registered address is required"
+            if (registered.stateId == null) return "Registered state is required"
+            if (registered.cityId == null) return "Registered city is required"
+            if (!registered.pinCode.matches(Regex("^[1-9][0-9]{5}$"))) return "Enter a valid registered PIN code"
+            if (_panDuplicateError.value != null) return _panDuplicateError.value
+            if (_gstDuplicateError.value != null) return _gstDuplicateError.value
+            when (val result = ProfileFieldValidators.validatePan(panNumber.value)) {
+                is ValidationResult.Error -> return result.message
+                ValidationResult.Success -> Unit
+            }
+            if (gstNumber.value.isNotBlank()) when (val result = ProfileFieldValidators.validateGst(gstNumber.value)) {
+                is ValidationResult.Error -> return result.message
+                ValidationResult.Success -> Unit
+            }
         }
+        if (operatingStructure.value == "MULTIPLE" && _completedStep.value < 2) {
+            branches.value.forEachIndexed { index, branch ->
+                if (branch.branchName.isBlank()) return "Branch ${index + 1}: name is required"
+                if (branch.branchTypeId.isBlank()) return "Branch ${index + 1}: type is required"
+                if (branch.branchAddress.isBlank() || branch.stateId == null || branch.cityId == null) return "Branch ${index + 1}: complete address is required"
+                if (!branch.pinCode.matches(Regex("^[1-9][0-9]{5}$"))) return "Branch ${index + 1}: valid PIN code is required"
+            }
+        }
+        if (operatingStructure.value == "SINGLE" && _completedStep.value < 2 && registered.branchName.isBlank()) {
+            return "Head office name is required"
+        }
+        if (_contactRoles.value.isEmpty()) return "Contact roles are still loading"
+        if (fullName.value.isBlank()) return "Primary contact name is required"
+        if (phoneNumber.value.isBlank()) return "Primary contact phone is required"
+        when (val result = ProfileFieldValidators.validateIndianPhone(phoneNumber.value)) {
+            is ValidationResult.Error -> return result.message
+            ValidationResult.Success -> Unit
+        }
+        if (email.value.isNotBlank()) when (val result = ProfileFieldValidators.validateEmail(email.value)) {
+            is ValidationResult.Error -> return result.message
+            ValidationResult.Success -> Unit
+        }
+        contactPhoneValues().forEach { if (it.isNotBlank() && it.length != 10) return "Contact phone must be 10 digits" }
+        return null
+    }
 
-        private suspend fun uploadDocuments(userId: String): Result<Unit> {
+    fun submit() {
+        if (_isSaving.value) return
+        validationMessage()?.let { error -> viewModelScope.launch { _messageEvent.emit(error) }; return }
+        viewModelScope.launch {
+            _isSaving.value = true
             try {
-                aadhaarFile.value?.let { file ->
-                    val result =
-                        uploadIdentityDocumentUseCase(
-                            UploadIdentityDocumentParams(
-                                userId = userId,
-                                documentTypeId = 1, // Aadhaar Card
-                                documentNumber = "", // Might need this if the API requires it
-                                file = file.toMultipartPart("file"),
-                            ),
-                        )
-                    if (result.isFailure) return Result.failure(Exception("Aadhaar upload failed: ${result.exceptionOrNull()?.message}"))
+                val registered = branches.value.first()
+                var clientId: String? = savedStateHandle[CLIENT_ID_KEY]
+                var userId: String? = savedStateHandle[USER_ID_KEY]
+                if (_completedStep.value < 1) {
+                    val created = createClientUseCase.createProfile(
+                        ClientProfileV2Params(
+                            clientType.value, companyName.value.trim(), fullName.value.trim(), companyType.value,
+                            panNumber.value, gstNumber.value.ifBlank { null }, email.value.ifBlank { null }, apiPhone(phoneNumber.value),
+                            registered.branchAddress, requireNotNull(registered.cityId), requireNotNull(registered.stateId), registered.pinCode,
+                            panFile.value, gstFile.value, companyRegistrationFile.value, contractFile.value,
+                        ),
+                    ).getOrElse { _messageEvent.emit(it.message ?: "Failed to create client profile"); return@launch }
+                    clientId = created.clientId
+                    userId = created.userId
+                    savedStateHandle[CLIENT_ID_KEY] = clientId
+                    savedStateHandle[USER_ID_KEY] = userId
+                    setStep(1)
                 }
 
-                panFile.value?.let { file ->
-                    val result =
-                        uploadIdentityDocumentUseCase(
-                            UploadIdentityDocumentParams(
-                                userId = userId,
-                                documentTypeId = 2, // PAN Card
-                                documentNumber = "",
-                                file = file.toMultipartPart("file"),
-                            ),
-                        )
-                    if (result.isFailure) return Result.failure(Exception("PAN upload failed: ${result.exceptionOrNull()?.message}"))
+                val resolvedClientId = requireNotNull(clientId)
+                var createdBranches = emptyList<com.freight24.rest.response.ClientOnboardingBranchDto>()
+                if (_completedStep.value < 2) {
+                    createdBranches = createClientUseCase.saveLocations(
+                        resolvedClientId,
+                        ClientLocationsV2Params(
+                            operatingStructure.value,
+                            branches.value.first().branchName.ifBlank { "${companyName.value} - Head Office" },
+                            if (operatingStructure.value == "MULTIPLE") {
+                                branches.value.map { branch ->
+                                    ClientBranchV2Params(
+                                        branch.branchName, branch.branchCode.ifBlank { null }, branch.branchTypeId,
+                                        branch.branchAddress, requireNotNull(branch.cityId), requireNotNull(branch.stateId), branch.pinCode,
+                                        null,
+                                    )
+                                }
+                            } else {
+                                emptyList()
+                            },
+                        ),
+                    ).getOrElse { _messageEvent.emit("Client profile saved. ${it.message ?: "Failed to save locations"}"); return@launch }
+                    savedStateHandle["client_onboarding_branches"] = ArrayList(createdBranches.map { it.id })
+                    setStep(2)
                 }
-                return Result.success(Unit)
-            } catch (e: Exception) {
-                return Result.failure(e)
-            }
-        }
 
-        private fun File.toMultipartPart(name: String): MultipartBody.Part {
-            val mimeType = if (extension.equals("pdf", ignoreCase = true)) "application/pdf" else "application/octet-stream"
-            val requestBody = this.asRequestBody(mimeType.toMediaTypeOrNull())
-            return MultipartBody.Part.createFormData(name, this.name, requestBody)
-        }
-
-        private fun updateBranch(
-            branchId: Int,
-            updater: (BranchFormState) -> BranchFormState,
-        ) {
-            branches.update { list ->
-                list.map { branch ->
-                    if (branch.id == branchId) updater(branch) else branch
+                val branchIds = createdBranches.map { it.id }.ifEmpty { savedStateHandle.get<ArrayList<String>>("client_onboarding_branches").orEmpty() }
+                val contacts = runCatching { buildContacts(branchIds) }.getOrElse {
+                    _messageEvent.emit(it.message ?: "Failed to prepare client contacts")
+                    return@launch
                 }
-            }
-        }
-
-        private fun requiredValidationMessage(): String? {
-            if (fullName.value.trim().isBlank()) return "Full Name is required"
-            if (phoneNumber.value.trim().isBlank()) return "Phone Number is required"
-            if (panNumber.value.trim().isBlank()) return "PAN Number is required"
-            if (gstNumber.value.trim().isBlank()) return "GST Number is required"
-
-            phoneValidation(phoneNumber.value, showIncompleteError = true)?.let { return it }
-
-            when (val result = ProfileFieldValidators.validatePan(panNumber.value.trim())) {
-                is ValidationResult.Error -> return result.message
-                ValidationResult.Success -> Unit
-            }
-
-            when (val result = ProfileFieldValidators.validateGst(gstNumber.value.trim())) {
-                is ValidationResult.Error -> return result.message
-                ValidationResult.Success -> Unit
-            }
-
-            if (branches.value.isEmpty()) return "At least one branch is required"
-
-            if (panNumber.value.trim().length == 10 && _panDuplicateError.value != null) {
-                return "PAN already registered with another client"
-            }
-
-            if (gstNumber.value.trim().length == 15 && _gstDuplicateError.value != null) {
-                return "GST already registered with another client"
-            }
-
-            branches.value.forEachIndexed { index, branch ->
-                if (branch.branchName.trim().isBlank()) return "Branch ${index + 1}: Branch Name is required"
-                if (branch.branchAddress.trim().isBlank()) return "Branch ${index + 1}: Branch Address is required"
-            }
-
-            return null
-        }
-
-        private fun buildBranchesPayload(): Map<String, ClientBranchRequest> {
-            val payload = LinkedHashMap<String, ClientBranchRequest>()
-            branches.value.forEachIndexed { index, branch ->
-                payload[(index + 1).toString()] =
-                    ClientBranchRequest(
-                        branch_name = branch.branchName.trim(),
-                        branch_address = branch.branchAddress.trim(),
-                        payment_contact_name = branch.paymentContactName.trim().ifBlank { null },
-                        payment_contact_number = branch.paymentContactNumber.trim().ifBlank { null },
-                        traffic_contact_name = branch.trafficContactName.trim().ifBlank { null },
-                        traffic_contact_number = branch.trafficContactNumber.trim().ifBlank { null },
-                        pod_contact_name = branch.podContactName.trim().ifBlank { null },
-                        pod_contact_number = branch.podContactNumber.trim().ifBlank { null },
-                        tracking_contact_name = branch.trackingContactName.trim().ifBlank { null },
-                        tracking_contact_number = branch.trackingContactNumber.trim().ifBlank { null },
-                    )
-            }
-            return payload
-        }
-
-        private suspend fun resolveCreatedClient(phone: String): ClientDto? {
-            val normalized = phone.removePrefix("+91")
-            return getClientsUseCase()
-                .getOrNull()
-                ?.lastOrNull { client ->
-                    client.phoneNumber.removePrefix("+91") == normalized
-                }
-        }
-
-        private fun contactPhoneValues(branch: BranchFormState): List<String> {
-            return listOf(
-                branch.paymentContactNumber.trim(),
-                branch.trafficContactNumber.trim(),
-                branch.podContactNumber.trim(),
-                branch.trackingContactNumber.trim(),
-            )
-        }
-
-        private fun phoneValidation(
-            value: String,
-            showIncompleteError: Boolean,
-        ): String? {
-            if (value.isBlank()) return null
-            return when {
-                value.length < 10 && showIncompleteError -> "Phone must be 10 digits"
-                value.length == 10 -> {
-                    when (val result = ProfileFieldValidators.validateIndianPhone(value)) {
-                        is ValidationResult.Error -> result.message
-                        ValidationResult.Success -> null
+                contacts.forEach { contact ->
+                    createClientUseCase.createContact(resolvedClientId, contact).getOrElse {
+                        _messageEvent.emit("Client and locations saved. ${it.message ?: "Failed to save contacts"}")
+                        return@launch
                     }
                 }
-                else -> null
+
+                val resolvedUserId = requireNotNull(userId)
+                _createdClient.value = CreatedClientState(companyName.value.trim(), resolvedUserId)
+                clearProgress()
+                _messageEvent.emit("Client created successfully")
+            } finally {
+                _isSaving.value = false
             }
         }
-
-        private fun sanitizePersonName(input: String): String {
-            return input
-                .filter { it.isLetter() || it == ' ' || it == '.' }
-                .replace(Regex("\\s+"), " ")
-                .take(60)
-                .trimStart()
-        }
-
-        private fun sanitizeText(
-            input: String,
-            maxLength: Int,
-        ): String {
-            return input
-                .filter { it.isLetterOrDigit() || it in " .,&()-/" }
-                .replace(Regex("\\s+"), " ")
-                .take(maxLength)
-                .trimStart()
-        }
-
-        private fun sanitizeAddress(input: String): String {
-            return input
-                .filter { it.isLetterOrDigit() || it in " .,&()/#-," }
-                .replace(Regex("[ ]{2,}"), " ")
-                .take(160)
-                .trimStart()
-        }
-
-        private fun isPanPrefix(value: String): Boolean {
-            return value.withIndex().all { (index, c) ->
-                when {
-                    index in 0..4 -> c.isLetter()
-                    index in 5..8 -> c.isDigit()
-                    index == 9 -> c.isLetter()
-                    else -> false
-                }
-            }
-        }
-
-        private fun isGstPrefix(value: String): Boolean {
-            return value.withIndex().all { (index, c) ->
-                when {
-                    index in 0..1 -> c.isDigit()
-                    index in 2..6 -> c.isLetter()
-                    index in 7..10 -> c.isDigit()
-                    index == 11 -> c.isLetter()
-                    index == 12 -> c.isLetterOrDigit() && c != '0'
-                    index == 13 -> c == 'Z'
-                    index == 14 -> c.isLetterOrDigit()
-                    else -> false
-                }
-            }
-        }
-
-        data class BranchFormState(
-            val id: Int,
-            val branchName: String = "",
-            val branchAddress: String = "",
-            val paymentContactName: String = "",
-            val paymentContactNumber: String = "",
-            val trafficContactName: String = "",
-            val trafficContactNumber: String = "",
-            val podContactName: String = "",
-            val podContactNumber: String = "",
-            val trackingContactName: String = "",
-            val trackingContactNumber: String = "",
-        )
-
-        data class CreatedClientState(
-            val fullName: String,
-            val userId: String?,
-        )
     }
+
+    private fun buildContacts(branchIds: List<String>): List<ClientContactV2Params> {
+        data class Draft(val name: String, val phone: String, val code: String, val branchIndex: Int)
+        val drafts = mutableListOf<Draft>()
+        branches.value.forEachIndexed { index, branch ->
+            listOf(
+                Draft(branch.paymentContactName, branch.paymentContactNumber, "PAYMENT", index),
+                Draft(branch.trafficContactName, branch.trafficContactNumber, "OPERATIONS", index),
+                Draft(branch.podContactName, branch.podContactNumber, "POD", index),
+                Draft(branch.trackingContactName, branch.trackingContactNumber, "TRACKING", index),
+            ).filterTo(drafts) { it.name.isNotBlank() && it.phone.isNotBlank() }
+        }
+        if (drafts.isEmpty()) drafts += Draft(fullName.value, phoneNumber.value, "OPERATIONS", 0)
+        return drafts.groupBy { "${it.phone}:${it.name}" }.map { (_, group) ->
+            val scopeGroups = if (operatingStructure.value == "SKIP") mapOf(-1 to group) else group.groupBy { it.branchIndex }
+            val assignments = scopeGroups.map { (branchIndex, scopedDrafts) ->
+                val branchId = if (branchIndex < 0) null else branchIds.getOrNull(branchIndex)
+                val applicable = if (branchId == null) setOf("CLIENT", "BOTH") else setOf("BRANCH", "BOTH")
+                val roles = _contactRoles.value.filter { it.applicableTo.uppercase() in applicable }
+                val roleIds = scopedDrafts.mapNotNull { draft ->
+                    roles.firstOrNull { role -> role.code.uppercase() == draft.code || role.code.uppercase().contains(draft.code) }?.id
+                }.distinct().ifEmpty { listOfNotNull(roles.firstOrNull()?.id) }
+                if (roleIds.isEmpty()) error("No active contact role is configured for ${if (branchId == null) "client" else "branch"} contacts")
+                ClientContactScopeV2Params(branchId = branchId, roleIds = roleIds)
+            }
+            ClientContactV2Params(
+                fullName = group.first().name,
+                phone = apiPhone(group.first().phone).orEmpty(),
+                isPrimary = group.first().phone == phoneNumber.value,
+                assignments = assignments,
+            )
+        }
+    }
+
+    private fun setStep(step: Int) { _completedStep.value = step; savedStateHandle[STEP_KEY] = step }
+    private fun clearProgress() {
+        savedStateHandle.remove<String>(CLIENT_ID_KEY)
+        savedStateHandle.remove<String>(USER_ID_KEY)
+        savedStateHandle.remove<Int>(STEP_KEY)
+        savedStateHandle.remove<ArrayList<String>>("client_onboarding_branches")
+        _completedStep.value = 0
+    }
+
+    fun consumeCreatedClient() { _createdClient.value = null }
+    private fun updateBranch(id: Int, update: (BranchFormState) -> BranchFormState) { branches.update { list -> list.map { if (it.id == id) update(it) else it } } }
+    private fun contactPhoneValues() = branches.value.flatMap { listOf(it.paymentContactNumber, it.trafficContactNumber, it.podContactNumber, it.trackingContactNumber) }
+    private fun phoneDigits(value: String) = value.filter(Char::isDigit).take(10)
+    private fun apiPhone(value: String): String? = value.trim().ifBlank { null }?.let { if (it.length == 10) "+91$it" else it }
+    private fun sanitizePersonName(value: String) = value.filter { it.isLetter() || it == ' ' || it == '.' }.replace(Regex("\\s+"), " ").take(60).trimStart()
+    private fun sanitizeText(value: String, max: Int) = value.filter { it.isLetterOrDigit() || it in " .,&()-/" }.replace(Regex("\\s+"), " ").take(max).trimStart()
+    private fun sanitizeAddress(value: String) = value.filter { it.isLetterOrDigit() || it in " .,&()/#-," }.replace(Regex("[ ]{2,}"), " ").take(180).trimStart()
+    private fun isPanPrefix(value: String) = value.withIndex().all { (i, c) -> if (i in 5..8) c.isDigit() else c.isLetter() }
+    private fun isGstPrefix(value: String) = value.withIndex().all { (i, c) -> when { i in 0..1 -> c.isDigit(); i in 2..6 || i == 11 -> c.isLetter(); i in 7..10 -> c.isDigit(); i == 13 -> c == 'Z'; else -> c.isLetterOrDigit() } }
+
+    data class BranchFormState(
+        val id: Int,
+        val branchName: String = "",
+        val branchCode: String = "",
+        val branchTypeId: String = "",
+        val branchAddress: String = "",
+        val stateId: Int? = null,
+        val cityId: Int? = null,
+        val pinCode: String = "",
+        val paymentContactName: String = "",
+        val paymentContactNumber: String = "",
+        val trafficContactName: String = "",
+        val trafficContactNumber: String = "",
+        val podContactName: String = "",
+        val podContactNumber: String = "",
+        val trackingContactName: String = "",
+        val trackingContactNumber: String = "",
+    )
+
+    data class CreatedClientState(val fullName: String, val userId: String?)
+}

@@ -5,8 +5,7 @@ import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.freight24.common.model.TruckDetail
-import com.freight24.common.model.TruckDocument
+import com.freight24.connect.domain.model.TruckDetails
 import com.freight24.connect.feature.trucks.domain.usecases.GetTruckByIdUseCase
 import com.freight24.connect.feature.trucks.domain.usecases.GetTruckByIdUseCaseParams
 import com.freight24.connect.feature.trucks.domain.usecases.GetTruckDocumentSignedUrlParams
@@ -32,8 +31,8 @@ internal class TruckDetailsViewModel
     ) : ViewModel() {
         private val truckId: String = checkNotNull(savedStateHandle["truckId"])
 
-        private val _uiState = MutableStateFlow<UiState<TruckDetail>>(UiState.Loading)
-        val uiState: StateFlow<UiState<TruckDetail>> = _uiState.asStateFlow()
+        private val _uiState = MutableStateFlow<UiState<TruckDetails>>(UiState.Loading)
+        val uiState: StateFlow<UiState<TruckDetails>> = _uiState.asStateFlow()
 
         private val _isRefreshing = MutableStateFlow(false)
         val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
@@ -69,12 +68,8 @@ internal class TruckDetailsViewModel
                 }
 
                 getTruckByIdUseCase(GetTruckByIdUseCaseParams(truckId))
-                    .onSuccess { response ->
-                        response.data?.let { dto ->
-                            _uiState.value = UiState.Success(dto.toDomain())
-                        } ?: run {
-                            _uiState.value = UiState.Error("Empty response data")
-                        }
+                    .onSuccess { truck ->
+                        _uiState.value = UiState.Success(truck)
                     }
                     .onFailure { error ->
                         _uiState.value = UiState.Error(error.message ?: "Failed to fetch truck details")
@@ -120,27 +115,3 @@ internal class TruckDetailsViewModel
             }
         }
     }
-
-private fun com.freight24.rest.response.TruckDetailDto.toDomain() =
-    TruckDetail(
-        truckId = this.truckId,
-        registrationNumber = this.registrationNumber,
-        isVerified = this.isVerified,
-        truckType = this.truckType,
-        bodyType = this.bodyType,
-        displayName = this.displayName,
-        make = this.make,
-        model = this.model,
-        year = this.year,
-        capacityMt = this.capacityMt,
-        rcCard = this.rcCard?.toDomain(),
-        fcCertificate = this.fcCertificate?.toDomain(),
-        insurance = this.insurance?.toDomain(),
-        isBlacklisted = this.isBlacklisted,
-    )
-
-private fun com.freight24.rest.response.DocumentDto.toDomain() =
-    TruckDocument(
-        url = this.url,
-        status = this.status,
-    )

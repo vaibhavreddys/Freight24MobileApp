@@ -22,8 +22,9 @@ import com.freight24.rest.api.ProfileApi
 import com.freight24.rest.api.TripApi
 import com.freight24.rest.api.TripHaltingApi
 import com.freight24.rest.api.TripLUChargesApi
-import com.freight24.rest.api.TruckApi
 import com.freight24.rest.api.TruckOwnerApi
+import com.freight24.rest.api.TruckOwnerV2Api
+import com.freight24.rest.api.TruckV2Api
 import com.freight24.rest.api.VerificationApi
 import dagger.Module
 import dagger.Provides
@@ -94,12 +95,12 @@ object ApiModule {
     }
 
     @Provides
-    fun providesTruckApi(
+    fun providesTruckV2Api(
         @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
-    ): TruckApi {
+    ): TruckV2Api {
         return retrofitFactory
-            .create(BuildConfig.BASE_URL, "TruckApi")
-            .create(TruckApi::class.java)
+            .create(BuildConfig.BASE_URL, "TruckV2Api")
+            .create(TruckV2Api::class.java)
     }
 
     @Provides
@@ -145,6 +146,15 @@ object ApiModule {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "TruckOwnerApi")
             .create(TruckOwnerApi::class.java)
+    }
+
+    @Provides
+    fun providesTruckOwnerV2Api(
+        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
+    ): TruckOwnerV2Api {
+        return retrofitFactory
+            .create(BuildConfig.BASE_URL, "TruckOwnerV2Api")
+            .create(TruckOwnerV2Api::class.java)
     }
 
     @Provides

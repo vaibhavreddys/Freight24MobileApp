@@ -9,8 +9,8 @@ import com.freight24.auth.AuthDataStore
 import com.freight24.common.util.FileUtils
 import com.freight24.connect.feature.trucks.domain.usecases.AddTruckParams
 import com.freight24.connect.feature.trucks.domain.usecases.AddTruckUseCase
+import com.freight24.connect.feature.trucks.domain.usecases.CreatedTruck
 import com.freight24.connect.feature.trucks.domain.usecases.GetTruckOwnersUseCase
-import com.freight24.rest.response.AddTruckDto
 import com.freight24.rest.response.TruckOwnerDto
 import com.freight24.ui.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -39,8 +39,8 @@ class OnboardTruckViewModel
         private val checkTruckAvailabilityUseCase: com.freight24.connect.feature.trucks.domain.usecases.CheckTruckAvailabilityUseCase,
         private val authDataStore: AuthDataStore,
     ) : ViewModel() {
-        private val _uiState = MutableStateFlow<UiState<AddTruckDto>>(UiState.Idle)
-        val uiState: StateFlow<UiState<AddTruckDto>> = _uiState.asStateFlow()
+        private val _uiState = MutableStateFlow<UiState<CreatedTruck>>(UiState.Idle)
+        val uiState: StateFlow<UiState<CreatedTruck>> = _uiState.asStateFlow()
 
         private val _currentStep = MutableStateFlow(1)
         val currentStep: StateFlow<Int> = _currentStep.asStateFlow()
@@ -225,8 +225,8 @@ class OnboardTruckViewModel
 
         fun submit() {
             val typeId = selectedTruckType.value?.id ?: return
-            val ownerId = selectedTruckOwner.value?.id ?: return
-            Log.d(TAG, "Submitting truck: reg=${registrationNumber.value}, type=$typeId, owner=$ownerId")
+            val ownerProfileId = selectedTruckOwner.value?.id ?: return
+            Log.d(TAG, "Submitting truck: reg=${registrationNumber.value}, type=$typeId, owner=$ownerProfileId")
 
             viewModelScope.launch {
                 _uiState.value = UiState.Loading
@@ -235,7 +235,7 @@ class OnboardTruckViewModel
                     AddTruckParams(
                         registrationNumber = registrationNumber.value.replace(" ", "").uppercase(),
                         truckTypeId = typeId,
-                        truckOwnerId = ownerId,
+                        ownerProfileId = ownerProfileId,
                         make = make.value.ifBlank { null },
                         model = model.value.ifBlank { null },
                         year = year.value.ifBlank { null },
@@ -246,15 +246,9 @@ class OnboardTruckViewModel
                     )
 
                 addTruckUseCase(params)
-                    .onSuccess { response ->
-                        val data = response.data
-                        if (response.success && data != null) {
-                            Log.d(TAG, "Truck added successfully: ${data.id}")
-                            _uiState.value = UiState.Success(data)
-                        } else {
-                            Log.w(TAG, "Failed to add truck: ${response.message}")
-                            _uiState.value = UiState.Error(response.message)
-                        }
+                    .onSuccess { truck ->
+                        Log.d(TAG, "Truck added successfully: ${truck.truckId}")
+                        _uiState.value = UiState.Success(truck)
                     }
                     .onFailure { error ->
                         Log.e(TAG, "Error adding truck", error)
@@ -288,15 +282,15 @@ class OnboardTruckViewModel
 
             viewModelScope.launch {
                 checkTruckAvailabilityUseCase(reg)
-                    .onSuccess { existingId ->
-                        if (existingId != null) {
+                    .onSuccess { validation ->
+                        if (validation.exists) {
                             _registrationError.value = "Registration number already exists"
                         } else {
                             _registrationError.value = null
                         }
                     }
-                    .onFailure {
-                        _registrationError.value = null
+                    .onFailure { error ->
+                        _registrationError.value = error.message ?: "Unable to validate registration number"
                     }
             }
         }

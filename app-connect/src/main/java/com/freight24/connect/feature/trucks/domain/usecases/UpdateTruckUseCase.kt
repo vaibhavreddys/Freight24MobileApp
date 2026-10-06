@@ -3,7 +3,7 @@ package com.freight24.connect.feature.trucks.domain.usecases
 import com.freight24.common.usecase.UseCase
 import com.freight24.common.usecase.UseCaseParams
 import com.freight24.connect.repository.TruckRepository
-import com.freight24.rest.response.AddTruckResponse
+import com.freight24.connect.domain.model.TruckDetails
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -23,14 +23,14 @@ data class UpdateTruckParams(
     val insurance: File? = null,
 ) : UseCaseParams
 
-interface UpdateTruckUseCase : UseCase<UpdateTruckParams, AddTruckResponse>
+interface UpdateTruckUseCase : UseCase<UpdateTruckParams, TruckDetails>
 
 class UpdateTruckUseCaseImpl
     @Inject
     constructor(
         private val repository: TruckRepository,
     ) : UpdateTruckUseCase {
-        override suspend fun invoke(params: UpdateTruckParams): Result<AddTruckResponse> {
+        override suspend fun invoke(params: UpdateTruckParams): Result<TruckDetails> {
             val registrationNumber = params.registrationNumber.toPart("registration_number")
             val truckTypeId = params.truckTypeId.toString().toPart("truck_type_id")
             val make = params.make?.toPart("make")
@@ -43,7 +43,7 @@ class UpdateTruckUseCaseImpl
             val insurance = params.insurance?.toFilePart("insurance")
 
             return repository.updateTruck(
-                id = params.truckId,
+                truckId = params.truckId,
                 registrationNumber = registrationNumber,
                 truckTypeId = truckTypeId,
                 make = make,

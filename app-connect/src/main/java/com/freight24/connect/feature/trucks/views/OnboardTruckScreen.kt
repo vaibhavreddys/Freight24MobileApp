@@ -81,9 +81,9 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.freight24.connect.feature.trucks.domain.usecases.CreatedTruck
 import com.freight24.connect.feature.trucks.domain.viewmodel.OnboardTruckViewModel
 import com.freight24.connect.feature.trucks.domain.viewmodel.TruckType
-import com.freight24.rest.response.AddTruckDto
 import com.freight24.ui.UiState
 import com.freight24.ui.components.AppDropdown
 import com.freight24.ui.components.DashedUploadCard
@@ -119,14 +119,13 @@ fun OnboardTruckScreen(
             onSuccessAction()
         }
         OnboardSuccessScreen(
-            truck = (uiState as UiState.Success<AddTruckDto>).data,
+            truck = (uiState as UiState.Success<CreatedTruck>).data,
             onViewFleet = {
                 viewModel.resetState()
                 navController.previousBackStackEntry?.savedStateHandle?.set("refresh_trucks", true)
                 onSuccessAction()
             },
             onAddAnother = { viewModel.resetState() },
-            truckTypes = viewModel.truckTypes,
         )
     } else {
         Scaffold(
@@ -703,10 +702,9 @@ private fun createTempImageUri(context: Context): Uri {
 
 @Composable
 private fun OnboardSuccessScreen(
-    truck: AddTruckDto,
+    truck: CreatedTruck,
     onViewFleet: () -> Unit,
     onAddAnother: () -> Unit,
-    truckTypes: List<TruckType>,
 ) {
     Column(
         modifier =
@@ -771,15 +769,15 @@ private fun OnboardSuccessScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = "Truck #${truck.registration_number}", fontWeight = FontWeight.Bold)
-                    Text(text = truckTypes[(truck.truck_type_id) - 1].name, style = MaterialTheme.typography.bodySmall)
+                    Text(text = "Truck #${truck.registrationNumber}", fontWeight = FontWeight.Bold)
+                    Text(text = truck.truckType ?: "Truck type unavailable", style = MaterialTheme.typography.bodySmall)
                     Spacer(Modifier.height(8.dp))
                     Surface(
                         color = MaterialTheme.colorScheme.primary,
                         shape = RoundedCornerShape(4.dp),
                     ) {
                         Text(
-                            text = "● ACTIVE",
+                            text = if (truck.status.equals("active", ignoreCase = true)) "ACTIVE" else "PENDING VERIFICATION",
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,

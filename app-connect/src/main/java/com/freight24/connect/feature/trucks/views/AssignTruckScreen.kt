@@ -28,7 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.connect.feature.trucks.domain.viewmodel.AssignTruckEvent
 import com.freight24.connect.feature.trucks.domain.viewmodel.AssignTruckViewModel
 import com.freight24.connect.feature.trucks.enums.TruckStatus
-import com.freight24.rest.response.SearchTruckResponse
+import com.freight24.connect.domain.model.TruckAssignmentOption
 import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.theme.FreightThemeTokens
 import java.util.Locale
@@ -164,12 +164,12 @@ fun AssignTruckScreen(
 
 @Composable
 fun TruckItem(
-    truck: SearchTruckResponse.Truck,
+    truck: TruckAssignmentOption,
     onSelect: () -> Unit,
 ) {
     val isEnabled =
         !truck.isBlacklisted &&
-            truck.availability.lowercase() != "on_trip" &&
+            !truck.availability.equals("on_trip", ignoreCase = true) &&
             truck.status.lowercase() != "inactive"
     val statusText = TruckStatus.from(truck).displayText
     val colorScheme = MaterialTheme.colorScheme
@@ -220,7 +220,7 @@ fun TruckItem(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = truck.owner.tagCode,
+                        text = truck.ownerTagCode.orEmpty(),
                         style = MaterialTheme.typography.bodySmall,
                         color = colorScheme.onSurfaceVariant,
                     )
@@ -229,13 +229,13 @@ fun TruckItem(
                 Spacer(modifier = Modifier.height(2.dp))
 
                 Text(
-                    text = truck.displayName,
+                    text = truck.displayName ?: truck.truckType.orEmpty(),
                     style = MaterialTheme.typography.bodySmall,
                     color = colorScheme.onSurfaceVariant,
                 )
 
                 Text(
-                    text = "Owner: ${truck.owner.name}",
+                    text = "Owner: ${truck.ownerName.orEmpty()}",
                     style = MaterialTheme.typography.bodySmall,
                     color = colorScheme.onSurfaceVariant,
                 )
