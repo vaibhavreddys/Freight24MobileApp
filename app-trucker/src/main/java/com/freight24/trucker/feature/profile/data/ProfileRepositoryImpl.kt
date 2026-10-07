@@ -3,9 +3,11 @@ package com.freight24.trucker.feature.profile.data
 import com.freight24.common.di.IoDispatcher
 import com.freight24.network.provider.SafeCallProvider
 import com.freight24.rest.request.FinalSaveRequest
+import com.freight24.rest.request.DiscardTemporaryDocumentsRequest
 import com.freight24.rest.response.IdentityDocumentUploadResponse
 import com.freight24.trucker.feature.profile.domain.Profile
 import com.freight24.trucker.feature.profile.domain.ProfileRepository
+import com.freight24.trucker.feature.profile.domain.BankLookupDetails
 import com.freight24.trucker.feature.profile.mapper.toDomain
 import kotlinx.coroutines.CoroutineDispatcher
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -20,6 +22,16 @@ internal class ProfileRepositoryImpl
         private val safeCallProvider: SafeCallProvider,
         @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) : ProfileRepository {
+        override suspend fun lookupIfsc(ifsc: String): Result<BankLookupDetails> {
+            return safeCallProvider.safeApiCall(ioDispatcher) {
+                api.validateIfsc(ifsc)
+            }.map { response ->
+                val bank = response.data?.takeIf { it.valid }?.bank
+                    ?: throw IllegalArgumentException("Enter a valid IFSC code")
+                BankLookupDetails(bankName = bank.name, branchName = bank.branch)
+            }
+        }
+
         override suspend fun getProfile(): Result<Profile> {
             return safeCallProvider.safeApiCall(ioDispatcher) {
                 api.getProfile()
@@ -68,6 +80,12 @@ internal class ProfileRepositoryImpl
         override suspend fun finalizeIdentityDocuments(request: FinalSaveRequest): Result<Boolean> {
             return safeCallProvider.safeApiCall(ioDispatcher) {
                 api.finalizeIdentityDocuments(request)
+            }.map { it.success }
+        }
+
+        override suspend fun discardTemporaryDocuments(userId: String, temporaryKeys: List<String>): Result<Boolean> {
+            return safeCallProvider.safeApiCall(ioDispatcher) {
+                api.discardTemporaryDocuments(DiscardTemporaryDocumentsRequest(userId, temporaryKeys))
             }.map { it.success }
         }
 

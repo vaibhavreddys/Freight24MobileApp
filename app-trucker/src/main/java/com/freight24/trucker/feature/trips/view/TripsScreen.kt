@@ -88,7 +88,7 @@ fun TripsScreen(
                 if (trips.isEmpty()) {
                     item(key = "empty") {
                         Box(
-                            modifier = Modifier.fillParentMaxHeight(),
+                            modifier = Modifier.fillParentMaxSize(),
                             contentAlignment = Alignment.Center,
                         ) {
                             if (isInitialLoading) {

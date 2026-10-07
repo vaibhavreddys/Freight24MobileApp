@@ -104,6 +104,20 @@ internal fun TrucksScreen(
         }
     }
 
+    if (uiState is UiState.Loading) {
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .background(colors.canvas),
+            contentAlignment = Alignment.Center,
+        ) {
+            CircularProgressIndicator(color = colors.brand)
+        }
+        return
+    }
+
     PullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = { viewModel.onRefresh() },
@@ -135,14 +149,12 @@ internal fun TrucksScreen(
                 )
             }
 
-            Box(modifier = Modifier.fillMaxSize()) {
+            Box(
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                contentAlignment = Alignment.Center,
+            ) {
                 when (val state = uiState) {
-                    is UiState.Loading -> {
-                        CircularProgressIndicator(
-                            color = colors.brand,
-                            modifier = Modifier.align(Alignment.Center),
-                        )
-                    }
+                    is UiState.Loading -> Unit
                     is UiState.Error -> {
                         Column(
                             modifier =

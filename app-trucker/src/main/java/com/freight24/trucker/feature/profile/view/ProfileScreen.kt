@@ -148,7 +148,7 @@ internal fun ProfileScreen(
         launch {
             viewModel.uploadEvent.collect { result ->
                 result.onSuccess {
-                    snackbarHostState.showSnackbar("Document uploaded successfully")
+                    snackbarHostState.showSnackbar("Document staged. Save changes to finish.")
                 }.onFailure { error ->
                     snackbarHostState.showSnackbar(error.message ?: "Upload failed")
                 }
@@ -258,6 +258,8 @@ private fun ProfileMainContent(
     val completion by viewModel.completion.collectAsState()
     val hasPendingTemporaryUploads by viewModel.hasPendingTemporaryUploads.collectAsState()
     val isSaving by viewModel.isSaving.collectAsState()
+    val bankValidationErrors by viewModel.bankValidationErrors.collectAsState()
+    val isIfscLookupInProgress by viewModel.isIfscLookupInProgress.collectAsState()
     val changeCount by viewModel.changeCount.collectAsState()
     val baseCity by viewModel.baseCity.collectAsState()
     val baseCityQuery by viewModel.baseCityQuery.collectAsState()
@@ -436,6 +438,8 @@ private fun ProfileMainContent(
                 title = "Personal information",
                 icon = Icons.Default.Person,
                 badge = if (isVerified) SectionBadge.VERIFIED else SectionBadge.UNVERIFIED,
+                expandForEditing = isEditing,
+                accent = ProfileSectionAccent.PERSONAL,
             ) {
                 ProfileField(
                     label = "Full name",
@@ -489,8 +493,8 @@ private fun ProfileMainContent(
                     label = "Aadhaar number",
                     value = viewModel.editableAadhaarNumber.collectAsState().value,
                     isEditing = isEditing,
-                    isEditable = !isVerified,
-                    isLocked = isVerified,
+                    isEditable = documentStates[ProfileDocumentTypeIds.fieldKey(DocumentType.AADHAAR)]?.existingVerifyStatus != "verified",
+                    isLocked = documentStates[ProfileDocumentTypeIds.fieldKey(DocumentType.AADHAAR)]?.existingVerifyStatus == "verified",
                     lockedReason = "Verified",
                     validationType = ValidationType.AADHAAR,
                     documentTone = documentTone(DocumentType.AADHAAR, documentStates),
@@ -504,8 +508,8 @@ private fun ProfileMainContent(
                     label = "PAN number",
                     value = viewModel.editablePanNumber.collectAsState().value,
                     isEditing = isEditing,
-                    isEditable = !isVerified,
-                    isLocked = isVerified,
+                    isEditable = documentStates[ProfileDocumentTypeIds.fieldKey(DocumentType.PAN)]?.existingVerifyStatus != "verified",
+                    isLocked = documentStates[ProfileDocumentTypeIds.fieldKey(DocumentType.PAN)]?.existingVerifyStatus == "verified",
                     lockedReason = "Verified",
                     validationType = ValidationType.PAN,
                     documentTone = documentTone(DocumentType.PAN, documentStates),
@@ -526,6 +530,8 @@ private fun ProfileMainContent(
             ProfileSection(
                 title = "Business details",
                 icon = Icons.Default.Business,
+                expandForEditing = isEditing,
+                accent = ProfileSectionAccent.BUSINESS,
             ) {
                 ProfileField(
                     label = "Company name",
@@ -654,6 +660,8 @@ private fun ProfileMainContent(
                 title = "Banking",
                 icon = Icons.Default.AccountBalance,
                 badge = if (profile.bankAccountVerificationStatus) SectionBadge.VERIFIED else SectionBadge.UNVERIFIED,
+                expandForEditing = isEditing,
+                accent = ProfileSectionAccent.BANKING,
             ) {
                 ProfileField(
                     label = "Account holder",
@@ -662,9 +670,11 @@ private fun ProfileMainContent(
                     isEditable = !profile.bankAccountVerificationStatus,
                     isLocked = profile.bankAccountVerificationStatus,
                     lockedReason = "Locked",
+                    isRequired = isEditing && !profile.bankAccountVerificationStatus,
+                    duplicateError = bankValidationErrors["accountHolder"],
                     onValueChange = {
                         viewModel.editableAccountHolderName.value = it
-                        viewModel.onFieldChanged()
+                        viewModel.onBankFieldChanged()
                     },
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -678,9 +688,11 @@ private fun ProfileMainContent(
                     lockedReason = "Locked",
                     validationType = ValidationType.ACCOUNT_NUMBER,
                     documentTone = documentTone(DocumentType.CANCELLED_CHEQUE, documentStates),
+                    isRequired = isEditing && !profile.bankAccountVerificationStatus,
+                    duplicateError = bankValidationErrors["accountNumber"],
                     onValueChange = {
                         viewModel.editableAccountNumber.value = it
-                        viewModel.onFieldChanged()
+                        viewModel.onBankFieldChanged()
                     },
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -692,10 +704,10 @@ private fun ProfileMainContent(
                     isLocked = profile.bankAccountVerificationStatus,
                     lockedReason = "Locked",
                     validationType = ValidationType.IFSC,
-                    onValueChange = {
-                        viewModel.editableIfscCode.value = it.uppercase()
-                        viewModel.onFieldChanged()
-                    },
+                    isRequired = isEditing && !profile.bankAccountVerificationStatus,
+                    duplicateError = bankValidationErrors["ifsc"],
+                    onValueChange = viewModel::onIfscChanged,
+                    onFocusLost = viewModel::onIfscFocusLost,
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 ProfileField(
@@ -708,20 +720,50 @@ private fun ProfileMainContent(
                     validationType = ValidationType.UPI,
                     onValueChange = {
                         viewModel.editableUpiId.value = it.lowercase()
-                        viewModel.onFieldChanged()
+                        viewModel.onBankFieldChanged()
                     },
                 )
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 ProfileField(
-                    label = "Bank and branch",
-                    value =
-                        listOfNotNull(
-                            viewModel.editableBankName.collectAsState().value.takeIf { it.isNotBlank() },
-                            viewModel.editableBranchName.collectAsState().value.takeIf { it.isNotBlank() },
-                        ).joinToString(" · ").ifEmpty { "Not added" },
+                    label = "Bank name",
+                    value = if (isIfscLookupInProgress) "Looking up bank…" else viewModel.editableBankName.collectAsState().value,
                     isEditing = false,
                     isEditable = false,
+                    isRequired = isEditing && !profile.bankAccountVerificationStatus,
+                    duplicateError = bankValidationErrors["bankName"],
                     onValueChange = { },
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                ProfileField(
+                    label = "Branch name",
+                    value = if (isIfscLookupInProgress) "Looking up branch…" else viewModel.editableBranchName.collectAsState().value,
+                    isEditing = false,
+                    isEditable = false,
+                    isRequired = isEditing && !profile.bankAccountVerificationStatus,
+                    duplicateError = bankValidationErrors["branchName"],
+                    onValueChange = { },
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                val message = stringResource(R.string.profile_document_preview_failed)
+                DocumentList(
+                    documentTypes = listOf(DocumentType.CANCELLED_CHEQUE),
+                    documents = profile.documents,
+                    documentStates = documentStates,
+                    isEditing = isEditing,
+                    previewingDocumentId = previewingDocumentId,
+                    mandatoryTypes = setOf(DocumentType.CANCELLED_CHEQUE),
+                    lockedTypes = if (profile.bankAccountVerificationStatus) setOf(DocumentType.CANCELLED_CHEQUE) else emptySet(),
+                    onDocumentView = { documentId ->
+                        viewModel.getSignedUrl(
+                            documentId = documentId,
+                            onUrlReady = { signedUrl -> documentPreviewLauncher.launch(getPdfLaunchIntent(signedUrl, context)) },
+                            onError = { scope.launch { snackbarHostState.showSnackbar(message) } },
+                        )
+                    },
+                    onDocumentUpload = { type ->
+                        pickingDocumentType = type
+                        showSourcePicker = true
+                    },
                 )
             }
 
@@ -730,6 +772,8 @@ private fun ProfileMainContent(
             ProfileSection(
                 title = "Documents",
                 icon = Icons.AutoMirrored.Filled.Assignment,
+                expandForEditing = isEditing,
+                accent = ProfileSectionAccent.DOCUMENTS,
                 // Derived from the document list itself. The old badge came from
                 // `documentsVerificationStatus`, a single flag shared with
                 // Business Details, so it could read "Verified" above rows that
@@ -739,15 +783,16 @@ private fun ProfileMainContent(
                 // used the primary-green tone here, which read as a positive
                 // state — the opposite of what "2 of 6 missing" means.
                 badgeTone =
-                    if (completion.isComplete) StatusTone.VERIFIED else StatusTone.PENDING,
+                    if (completion.isComplete) StatusTone.VERIFIED else StatusTone.WARNING,
             ) {
                 val message = stringResource(R.string.profile_document_preview_failed)
                 DocumentList(
-                    documentTypes = documentTypes,
+                    documentTypes = documentTypes.filterNot { it == DocumentType.CANCELLED_CHEQUE },
                     documents = profile.documents,
                     documentStates = documentStates,
                     isEditing = isEditing,
                     previewingDocumentId = previewingDocumentId,
+                    mandatoryTypes = ProfileDocumentTypeIds.mandatoryIdentityDocumentTypes,
                     onDocumentView = { documentId ->
                         viewModel.getSignedUrl(
                             documentId = documentId,
@@ -839,6 +884,7 @@ private fun ProfileMainContent(
                 hasChanges = hasChanges,
                 changeCount = changeCount,
                 isSaving = isSaving,
+                bankingValid = bankValidationErrors.isEmpty() && !isIfscLookupInProgress,
                 onSave = { viewModel.saveProfile() },
                 onCancel = {
                     if (hasPendingTemporaryUploads) {
@@ -1144,6 +1190,7 @@ private fun EditActions(
     hasChanges: Boolean,
     changeCount: Int,
     isSaving: Boolean,
+    bankingValid: Boolean,
     onSave: () -> Unit,
     onCancel: () -> Unit,
 ) {
@@ -1161,6 +1208,7 @@ private fun EditActions(
                 text =
                     when {
                         isSaving -> "Saving your changes…"
+                        !bankingValid -> "Complete the required banking fields to save"
                         changeCount > 0 ->
                             "$changeCount ${if (changeCount == 1) "change" else "changes"} to save"
                         else -> "No changes to save yet"
@@ -1189,7 +1237,7 @@ private fun EditActions(
                 }
                 Button(
                     onClick = onSave,
-                    enabled = hasChanges && !isSaving,
+                    enabled = hasChanges && bankingValid && !isSaving,
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(10.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),

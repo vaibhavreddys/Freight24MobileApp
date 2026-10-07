@@ -13,3 +13,9 @@ data class FinalSaveRequest(
     val user_id: String?,
     val files: List<FinalSaveFileRequest>,
 )
+
+@Serializable
+data class DiscardTemporaryDocumentsRequest(
+    val user_id: String,
+    val temporaryKeys: List<String>,
+)

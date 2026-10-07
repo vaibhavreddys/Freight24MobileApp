@@ -24,6 +24,8 @@ import com.freight24.trucker.feature.profile.domain.usecase.UpdateProfileUseCase
 import com.freight24.trucker.feature.profile.domain.usecase.UploadIdentityDocumentParams
 import com.freight24.trucker.feature.profile.domain.usecase.UploadIdentityDocumentUseCase
 import com.freight24.trucker.feature.profile.util.ProfileDocumentTypeIds
+import com.freight24.trucker.feature.profile.util.ProfileFieldValidators
+import com.freight24.trucker.feature.profile.util.ValidationResult
 import com.freight24.ui.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -133,6 +135,12 @@ internal class ProfileViewModel
 
         private val _isRefreshing = MutableStateFlow(false)
         val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
+        private val _bankValidationErrors = MutableStateFlow<Map<String, String>>(emptyMap())
+        val bankValidationErrors: StateFlow<Map<String, String>> = _bankValidationErrors.asStateFlow()
+
+        private val _isIfscLookupInProgress = MutableStateFlow(false)
+        val isIfscLookupInProgress: StateFlow<Boolean> = _isIfscLookupInProgress.asStateFlow()
 
         private var originalProfile: Profile? = null
 
@@ -324,11 +332,11 @@ internal class ProfileViewModel
             val previous = _documentStates.value
             val docsByType = profile.documents.associateBy { it.type }
 
-            val requiredTypes = ProfileDocumentTypeIds.requiredDocumentTypes(profile.isTdsApplicable)
-            _documentTypes.value = requiredTypes
+            val applicableTypes = ProfileDocumentTypeIds.applicableDocumentTypes(profile.isTdsApplicable)
+            _documentTypes.value = applicableTypes
 
             val nextStates =
-                requiredTypes.associate { type ->
+                applicableTypes.associate { type ->
                     val fieldKey = ProfileDocumentTypeIds.fieldKey(type)
                     val existing = docsByType[type]
                     val oldState = previous[fieldKey]
@@ -610,7 +618,10 @@ internal class ProfileViewModel
         }
 
         fun cancelEdit() {
+            val temporaryKeys = _documentStates.value.values.mapNotNull { it.temporaryFileKey }
+            val userId = originalProfile?.userId
             clearFocusErrors()
+            _bankValidationErrors.value = emptyMap()
             _isEditing.value = false
             originalProfile?.let {
                 populateEditableFields(it)
@@ -619,6 +630,11 @@ internal class ProfileViewModel
             }
             discardRouteChanges()
             recomputeHasChanges()
+            if (userId != null && temporaryKeys.isNotEmpty()) {
+                viewModelScope.launch(Dispatchers.IO) {
+                    profileRepository.discardTemporaryDocuments(userId, temporaryKeys)
+                }
+            }
         }
 
         fun getUserInitials(): String {
@@ -633,6 +649,15 @@ internal class ProfileViewModel
         fun saveProfile() {
             val original = originalProfile ?: return
             if (_isSaving.value) return
+
+            val bankErrors = validateBankChanges(original)
+            if (bankErrors.isNotEmpty()) {
+                _bankValidationErrors.value = bankErrors
+                viewModelScope.launch {
+                    _saveEvent.emit(Result.failure(IllegalStateException("Complete all required banking fields before saving")))
+                }
+                return
+            }
 
             viewModelScope.launch(Dispatchers.IO) {
                 _isSaving.value = true
@@ -696,25 +721,118 @@ internal class ProfileViewModel
 
         private fun buildSaveRequest(original: Profile): com.freight24.rest.request.UpdateProfileRequest {
             val baseCity = _baseCity.value
+            val bank = original.bankAccountDetails
             return com.freight24.rest.request.UpdateProfileRequest(
-                baseCityId = baseCity?.takeIf { it.type.equals("CITY", ignoreCase = true) }?.id,
-                baseAreaId = baseCity?.takeIf { it.type.equals("AREA", ignoreCase = true) }?.id,
-                full_name = editableFullName.value,
-                email = editableEmailId.value,
-                alt_phones = listOf(editableAlternativePhone.value),
-                pan_card = editablePanNumber.value,
-                aadhar_card = editableAadhaarNumber.value,
-                business_name = editableBusinessName.value,
-                gst_number = editableGstNumber.value,
-                is_tds_applicable = original.isTdsApplicable,
-                account_holder_name = editableAccountHolderName.value,
-                account_number = editableAccountNumber.value,
-                ifsc_code = editableIfscCode.value,
-                upi_id = editableUpiId.value,
-                bank_name = editableBankName.value,
-                branch_name = editableBranchName.value,
-                preferredRoutes = gatherPreferredRouteEntries(),
+                baseCityId = baseCity?.takeIf { it.id != original.baseCityId && it.type.equals("CITY", ignoreCase = true) }?.id,
+                baseAreaId = baseCity?.takeIf { it.id != original.baseCityId && it.type.equals("AREA", ignoreCase = true) }?.id,
+                full_name = changedValue(editableFullName.value, original.fullName),
+                email = changedValue(editableEmailId.value, original.emailId),
+                alt_phones =
+                    changedValue(editableAlternativePhone.value, original.alternativePhoneNo.firstOrNull())
+                        ?.let { value -> listOf(value).filter(String::isNotBlank) },
+                pan_card = changedValue(editablePanNumber.value, original.panNumber),
+                aadhar_card = changedValue(editableAadhaarNumber.value, original.aadhaarNumber),
+                business_name = changedValue(editableBusinessName.value, original.businessName),
+                gst_number = changedValue(editableGstNumber.value, original.gstNumber),
+                account_holder_name = changedValue(editableAccountHolderName.value, bank?.accountHolderName),
+                account_number = changedValue(editableAccountNumber.value, bank?.accountNumber),
+                ifsc_code = changedValue(editableIfscCode.value, bank?.ifscCode),
+                upi_id = changedValue(editableUpiId.value, bank?.upiId),
+                bank_name = changedValue(editableBankName.value, bank?.bankName),
+                branch_name = changedValue(editableBranchName.value, bank?.branchName),
+                preferredRoutes = gatherPreferredRouteEntries().takeIf { hasRouteChanges() },
             )
+        }
+
+        private fun changedValue(edited: String, stored: String?): String? {
+            val normalizedEdited = edited.trim()
+            return normalizedEdited.takeIf { it != stored.orEmpty().trim() }
+        }
+
+        fun onIfscChanged(value: String) {
+            editableIfscCode.value = value
+            val originalIfsc = originalProfile?.bankAccountDetails?.ifscCode.orEmpty()
+            if (!value.equals(originalIfsc, ignoreCase = true)) {
+                editableBankName.value = ""
+                editableBranchName.value = ""
+            }
+            recomputeHasChanges()
+            refreshBankValidationErrors()
+        }
+
+        fun onBankFieldChanged() {
+            recomputeHasChanges()
+            refreshBankValidationErrors()
+        }
+
+        fun onIfscFocusLost() {
+            val ifsc = editableIfscCode.value.trim().uppercase()
+            if (ifsc.isBlank()) {
+                _bankValidationErrors.value = _bankValidationErrors.value + ("ifsc" to "IFSC code is required")
+                return
+            }
+            val formatResult = ProfileFieldValidators.validateIfsc(ifsc)
+            if (formatResult is ValidationResult.Error) {
+                _bankValidationErrors.value = _bankValidationErrors.value + ("ifsc" to formatResult.message)
+                return
+            }
+
+            val originalBank = originalProfile?.bankAccountDetails
+            if (ifsc.equals(originalBank?.ifscCode, ignoreCase = true) &&
+                editableBankName.value.isNotBlank() && editableBranchName.value.isNotBlank()
+            ) return
+
+            viewModelScope.launch(Dispatchers.IO) {
+                _isIfscLookupInProgress.value = true
+                var lookupError: String? = null
+                profileRepository.lookupIfsc(ifsc)
+                    .onSuccess { bank ->
+                        editableBankName.value = bank.bankName
+                        editableBranchName.value = bank.branchName
+                        recomputeHasChanges()
+                    }
+                    .onFailure { error ->
+                        editableBankName.value = ""
+                        editableBranchName.value = ""
+                        lookupError = error.message ?: "Unable to verify IFSC code"
+                    }
+                _isIfscLookupInProgress.value = false
+                refreshBankValidationErrors()
+                if (lookupError != null) {
+                    _bankValidationErrors.value = _bankValidationErrors.value + ("ifsc" to lookupError!!)
+                }
+            }
+        }
+
+        private fun refreshBankValidationErrors() {
+            val original = originalProfile ?: return
+            _bankValidationErrors.value = validateBankChanges(original)
+        }
+
+        private fun validateBankChanges(original: Profile): Map<String, String> {
+            val bank = original.bankAccountDetails
+            val hasBankChanges =
+                editableAccountHolderName.value.trim() != bank?.accountHolderName.orEmpty().trim() ||
+                    editableAccountNumber.value.trim() != bank?.accountNumber.orEmpty().trim() ||
+                    !editableIfscCode.value.trim().equals(bank?.ifscCode.orEmpty().trim(), ignoreCase = true) ||
+                    editableUpiId.value.trim() != bank?.upiId.orEmpty().trim() ||
+                    editableBankName.value.trim() != bank?.bankName.orEmpty().trim() ||
+                    editableBranchName.value.trim() != bank?.branchName.orEmpty().trim()
+            if (!hasBankChanges) return emptyMap()
+
+            val errors = mutableMapOf<String, String>()
+            if (editableAccountHolderName.value.isBlank()) errors["accountHolder"] = "Account holder name is required"
+            if (editableAccountNumber.value.isBlank()) errors["accountNumber"] = "Account number is required"
+            if (editableIfscCode.value.isBlank()) errors["ifsc"] = "IFSC code is required"
+            if (editableBankName.value.isBlank()) errors["bankName"] = "Validate IFSC to load the bank name"
+            if (editableBranchName.value.isBlank()) errors["branchName"] = "Validate IFSC to load the branch name"
+            if (_isIfscLookupInProgress.value) errors["ifsc"] = "Wait for IFSC validation to finish"
+
+            val ifscResult = ProfileFieldValidators.validateIfsc(editableIfscCode.value)
+            if (editableIfscCode.value.isNotBlank() && ifscResult is ValidationResult.Error) {
+                errors["ifsc"] = ifscResult.message
+            }
+            return errors
         }
 
         private fun gatherPreferredRouteEntries(): List<PreferredRouteEntry> {
@@ -748,6 +866,15 @@ internal class ProfileViewModel
             val original = originalProfile ?: return
             val fieldKey = ProfileDocumentTypeIds.fieldKey(type)
             val currentState = _documentStates.value[fieldKey] ?: return
+
+            if (currentState.existingVerifyStatus == "verified" ||
+                (type == DocumentType.CANCELLED_CHEQUE && original.bankAccountVerificationStatus)
+            ) {
+                viewModelScope.launch {
+                    _uploadEvent.emit(Result.failure(IllegalStateException("Verified documents cannot be replaced")))
+                }
+                return
+            }
 
             viewModelScope.launch(Dispatchers.IO) {
                 updateDocumentState(fieldKey) { state ->
@@ -785,12 +912,16 @@ internal class ProfileViewModel
                         }
 
                     result.onSuccess { temporaryKey ->
+                        val replacedTemporaryKey = currentState.temporaryFileKey
                         updateDocumentState(fieldKey) { state ->
                             state.copy(
                                 temporaryFileKey = temporaryKey,
                                 existingVerifyStatus = null,
                                 uploadStatus = UploadStatus.DONE,
                             )
+                        }
+                        if (replacedTemporaryKey != null && replacedTemporaryKey != temporaryKey) {
+                            profileRepository.discardTemporaryDocuments(original.userId, listOf(replacedTemporaryKey))
                         }
                         _uploadEvent.emit(Result.success(Unit))
                     }.onFailure { error ->
@@ -851,10 +982,12 @@ internal class ProfileViewModel
             _completion.value =
                 ProfileCompletion(
                     uploaded =
-                        _documentStates.value.values.count { state ->
-                            !state.existingFileUrl.isNullOrBlank() || !state.temporaryFileKey.isNullOrBlank()
+                        ProfileDocumentTypeIds.mandatoryIdentityDocumentTypes.count { type ->
+                            val state = _documentStates.value[ProfileDocumentTypeIds.fieldKey(type)]
+                            state != null &&
+                                (!state.existingFileUrl.isNullOrBlank() || !state.temporaryFileKey.isNullOrBlank())
                         },
-                    total = _documentTypes.value.size,
+                    total = ProfileDocumentTypeIds.mandatoryIdentityDocumentTypes.size,
                 )
         }
 

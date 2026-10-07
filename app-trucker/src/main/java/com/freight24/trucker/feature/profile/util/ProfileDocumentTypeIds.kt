@@ -35,7 +35,9 @@ object ProfileDocumentTypeIds {
      * TDS is omitted when [isTdsApplicable] is false so we never ask for — or
      * let them upload — a certificate that does not apply to them.
      */
-    fun requiredDocumentTypes(isTdsApplicable: Boolean): List<DocumentType> =
+    val mandatoryIdentityDocumentTypes = setOf(DocumentType.AADHAAR, DocumentType.PAN)
+
+    fun applicableDocumentTypes(isTdsApplicable: Boolean): List<DocumentType> =
         allDocumentTypes.filterNot { it == DocumentType.TDS_CERTIFICATE && !isTdsApplicable }
 
     fun documentTypeId(type: DocumentType): Int? =

@@ -1,6 +1,7 @@
 package com.freight24.trucker.feature.profile.view
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -37,6 +38,12 @@ enum class StatusTone {
      */
     PENDING,
 
+    /** Required data has not been supplied yet. */
+    MISSING,
+
+    /** Attention is needed at section level, but no submission was rejected. */
+    WARNING,
+
     /** Submitted and refused — user must correct and resubmit. */
     REJECTED,
 
@@ -49,7 +56,11 @@ internal fun StatusTone.colors(): Pair<Color, Color> {
     val tokens = FreightThemeTokens.colors
     return when (this) {
         StatusTone.VERIFIED -> tokens.surfaceSuccess to tokens.onSurfaceSuccess
-        StatusTone.PENDING -> tokens.surfaceWarning to tokens.onSurfaceWarning
+        StatusTone.PENDING ->
+            if (isSystemInDarkTheme()) Color(0xFF24445D) to Color(0xFFD3E9FA)
+            else Color(0xFFDCECF8) to Color(0xFF174A68)
+        StatusTone.MISSING -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
+        StatusTone.WARNING -> tokens.surfaceWarning to tokens.onSurfaceWarning
         StatusTone.REJECTED -> MaterialTheme.colorScheme.errorContainer to MaterialTheme.colorScheme.onErrorContainer
         StatusTone.NEUTRAL -> MaterialTheme.colorScheme.surfaceVariant to MaterialTheme.colorScheme.onSurfaceVariant
     }
@@ -130,10 +141,8 @@ internal fun documentTone(
 internal fun DocumentTone.statusTone(): StatusTone =
     when (this) {
         DocumentTone.VERIFIED -> StatusTone.VERIFIED
-        // MISSING shares PENDING's tone deliberately. An absent document is not
-        // a success, and the earlier primary-green "Not uploaded" chip read as
-        // one — a green chip next to a green "Verified" chip said nothing useful.
-        DocumentTone.PENDING, DocumentTone.MISSING -> StatusTone.PENDING
+        DocumentTone.PENDING -> StatusTone.PENDING
+        DocumentTone.MISSING -> StatusTone.MISSING
         DocumentTone.REJECTED -> StatusTone.REJECTED
     }
 
@@ -165,7 +174,7 @@ internal enum class SectionBadge {
     UNVERIFIED,
 }
 
-internal fun SectionBadge.tone(): StatusTone = if (this == SectionBadge.VERIFIED) StatusTone.VERIFIED else StatusTone.PENDING
+internal fun SectionBadge.tone(): StatusTone = if (this == SectionBadge.VERIFIED) StatusTone.VERIFIED else StatusTone.WARNING
 
 internal fun SectionBadge.label(): String = if (this == SectionBadge.VERIFIED) "Verified" else "Unverified"
 

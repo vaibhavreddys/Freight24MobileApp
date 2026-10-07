@@ -81,6 +81,7 @@ internal fun ProfileField(
     showAsLabelOnly: Boolean = false,
     onFocusLost: (() -> Unit)? = null,
     duplicateError: String? = null,
+    isRequired: Boolean = false,
     /**
      * Read-only verification hint for the document backing this value. Lets the
      * field answer "what is my number and is it accepted?" without sending the
@@ -151,7 +152,7 @@ internal fun ProfileField(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = label,
+                text = if (isRequired) "$label *" else label,
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.weight(1f),
@@ -312,6 +313,14 @@ internal fun ProfileField(
                 fontWeight = FontWeight.SemiBold,
                 color = if (value.isEmpty()) MaterialTheme.colorScheme.outline else MaterialTheme.colorScheme.onSurface,
             )
+            if (duplicateError != null) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = duplicateError,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
         }
     }
 }

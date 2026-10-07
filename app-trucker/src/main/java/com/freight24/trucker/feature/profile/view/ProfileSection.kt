@@ -29,13 +29,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
@@ -57,15 +60,22 @@ internal fun ProfileSection(
     badgeText: String? = null,
     badgeTone: StatusTone? = null,
     initiallyExpanded: Boolean = false,
+    expandForEditing: Boolean = false,
+    accent: ProfileSectionAccent = ProfileSectionAccent.PERSONAL,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     var isExpanded by rememberSaveable(title) { mutableStateOf(initiallyExpanded) }
+    val accentColors = profileSectionAccentColors(accent)
+
+    LaunchedEffect(expandForEditing) {
+        if (expandForEditing) isExpanded = true
+    }
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        border = BorderStroke(1.dp, accentColors.border),
     ) {
         Column {
             Row(
@@ -89,13 +99,13 @@ internal fun ProfileSection(
                         Modifier
                             .size(32.dp)
                             .clip(RoundedCornerShape(9.dp))
-                            .background(MaterialTheme.colorScheme.primaryContainer),
+                            .background(accentColors.container),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        tint = accentColors.content,
                         modifier = Modifier.size(18.dp).decorative(),
                     )
                 }
@@ -137,6 +147,45 @@ internal fun ProfileSection(
             }
         }
     }
+}
+
+internal enum class ProfileSectionAccent {
+    PERSONAL,
+    BUSINESS,
+    BANKING,
+    DOCUMENTS,
+}
+
+private data class ProfileSectionAccentColors(
+    val container: Color,
+    val content: Color,
+    val border: Color,
+)
+
+@Composable
+private fun profileSectionAccentColors(accent: ProfileSectionAccent): ProfileSectionAccentColors {
+    val dark = isSystemInDarkTheme()
+    val (container, content) =
+        when (accent) {
+            ProfileSectionAccent.PERSONAL ->
+                if (dark) Color(0xFF234B35) to Color(0xFFC7EBD2)
+                else Color(0xFFD7EFDD) to Color(0xFF174A2B)
+            ProfileSectionAccent.BUSINESS ->
+                if (dark) Color(0xFF24445D) to Color(0xFFD3E9FA)
+                else Color(0xFFDCECF8) to Color(0xFF174A68)
+            ProfileSectionAccent.BANKING ->
+                if (dark) Color(0xFF59451C) to Color(0xFFFFE3A3)
+                else Color(0xFFF8E8BD) to Color(0xFF654A00)
+            ProfileSectionAccent.DOCUMENTS ->
+                if (dark) Color(0xFF5B3038) to Color(0xFFFFD9DF)
+                else Color(0xFFF6DFE4) to Color(0xFF71323E)
+        }
+
+    return ProfileSectionAccentColors(
+        container = container,
+        content = content,
+        border = container.copy(alpha = if (dark) 0.85f else 0.95f),
+    )
 }
 
 /** Compact lock affordance explaining why a field cannot be edited. */

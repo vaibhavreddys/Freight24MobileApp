@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.trips.views
+
 import android.Manifest
 import android.content.Context
 import android.content.Intent
@@ -103,22 +104,25 @@ fun TripDetailsScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
+    val shareTitle =
+        stringResource(
+            if (uiState.sharedDocumentType.equals("loading_memo", ignoreCase = true)) {
+                R.string.trip_share_loading_memo
+            } else {
+                R.string.trip_share_lr
+            },
+        )
+
+    val shareDocFailed = stringResource(R.string.trip_share_document_failed)
+
     LaunchedEffect(uiState.sharedDocumentFile, uiState.documentShareFailed) {
         val file = uiState.sharedDocumentFile
         if (file != null || uiState.documentShareFailed) {
-            val shareTitle =
-                context.getString(
-                    if (uiState.sharedDocumentType.equals("loading_memo", ignoreCase = true)) {
-                        R.string.trip_share_loading_memo
-                    } else {
-                        R.string.trip_share_lr
-                    },
-                )
             val failed =
                 uiState.documentShareFailed ||
                     (file != null && shareTripDocumentPdf(context, file, shareTitle).isFailure)
             if (failed) {
-                snackbarHostState.showSnackbar(context.getString(R.string.trip_share_document_failed))
+                snackbarHostState.showSnackbar(shareDocFailed)
             }
             viewModel.onEvent(TripDetailsEvent.DocumentShareHandled)
         }

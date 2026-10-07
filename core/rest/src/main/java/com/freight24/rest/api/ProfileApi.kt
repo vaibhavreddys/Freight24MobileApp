@@ -1,9 +1,11 @@
 package com.freight24.rest.api
 
 import com.freight24.rest.request.FinalSaveRequest
+import com.freight24.rest.request.DiscardTemporaryDocumentsRequest
 import com.freight24.rest.response.BaseResponse
 import com.freight24.rest.response.IdentityDocumentUploadResponse
 import com.freight24.rest.response.ProfileResponse
+import com.freight24.rest.response.IfscValidationResponse
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -13,8 +15,14 @@ import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Part
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface ProfileApi {
+    @GET("bank/ifsc/validate")
+    suspend fun validateIfsc(
+        @Query("ifsc") ifsc: String,
+    ): Response<IfscValidationResponse>
+
     @GET("truck-owners/profile")
     suspend fun getProfile(): Response<ProfileResponse>
 
@@ -63,5 +71,10 @@ interface ProfileApi {
     @POST("documents/identity/final-save")
     suspend fun finalizeIdentityDocuments(
         @Body request: FinalSaveRequest,
+    ): Response<BaseResponse>
+
+    @POST("documents/identity/discard-temporary")
+    suspend fun discardTemporaryDocuments(
+        @Body request: DiscardTemporaryDocumentsRequest,
     ): Response<BaseResponse>
 }

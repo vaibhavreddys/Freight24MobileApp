@@ -20,11 +20,13 @@ import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.outlined.CloudUpload
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -58,6 +60,8 @@ internal fun DocumentList(
     onDocumentView: (String) -> Unit,
     onDocumentUpload: (DocumentType) -> Unit,
     previewingDocumentId: String? = null,
+    mandatoryTypes: Set<DocumentType> = emptySet(),
+    lockedTypes: Set<DocumentType> = emptySet(),
 ) {
     Column {
         documentTypes.forEachIndexed { index, type ->
@@ -68,16 +72,15 @@ internal fun DocumentList(
             val uploadStatus = uploadState?.uploadStatus ?: UploadStatus.IDLE
             val tone = documentTone(uploadState, doc?.status, !existingUrl.isNullOrEmpty())
             val canView = !doc?.docId.isNullOrBlank() && !existingUrl.isNullOrEmpty()
+            val isLocked = type in lockedTypes || uploadState?.existingVerifyStatus == "verified"
 
             Row(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .clickable(enabled = previewingDocumentId == null) {
+                        .clickable(enabled = previewingDocumentId == null && canView) {
                             when {
-                                isEditing -> onDocumentUpload(type)
                                 canView -> onDocumentView(doc!!.docId!!)
-                                else -> onDocumentUpload(type)
                             }
                         }
                         .heightIn(min = 48.dp)
@@ -101,14 +104,20 @@ internal fun DocumentList(
                 }
                 Spacer(modifier = Modifier.width(10.dp))
 
-                Text(
-                    text = type.displayName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
-                )
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = type.displayName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text = if (type in mandatoryTypes) "Required" else "Optional",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
 
                 Spacer(modifier = Modifier.width(8.dp))
 
@@ -134,22 +143,31 @@ internal fun DocumentList(
                         modifier = Modifier.size(20.dp),
                         strokeWidth = 2.dp,
                     )
+                } else if (isEditing && !isLocked) {
+                    IconButton(
+                        onClick = { onDocumentUpload(type) },
+                        modifier = Modifier.size(32.dp),
+                    ) {
+                        Icon(
+                            imageVector = if (uploadStatus == UploadStatus.ERROR) Icons.Default.Refresh else Icons.Outlined.CloudUpload,
+                            contentDescription = "Upload ${type.displayName}",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
                 } else {
                     Icon(
                         imageVector =
                             when {
-                                uploadStatus == UploadStatus.ERROR -> Icons.Default.Refresh
+                                isLocked -> Icons.Default.Lock
                                 canView -> Icons.AutoMirrored.Filled.KeyboardArrowRight
-                                // Outlined variants only: the filled cloud sat next to
-                                // outlined chevrons at double the visual weight, which
-                                // made the action look more important than the row.
                                 else -> Icons.Outlined.CloudUpload
                             },
                         contentDescription =
                             when {
-                                uploadStatus == UploadStatus.ERROR -> "Retry upload"
+                                isLocked -> "Verified document locked"
                                 canView -> "View ${type.displayName}"
-                                else -> "Upload ${type.displayName}"
+                                else -> "${type.displayName} not uploaded"
                             },
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(20.dp),
