@@ -40,21 +40,37 @@ fun TruckerHomeScreen(navController: NavHostController) {
     val profileViewModel: ProfileViewModel = hiltViewModel()
     val isProfileEditing by profileViewModel.isEditing.collectAsState()
 
+    // Read here only to decide whether back collapses a city card first. The
+    // card list itself stays in LoadBoardScreen, which scrolls the collapsed
+    // header back into view.
+    val expandedCityId by loadBoardViewModel.expandedCityId.collectAsState()
+
     // HOIST SCROLL STATE
     val loadBoardListState = rememberLazyListState()
     val tripsListState = rememberLazyListState()
 
     val isProfileTab = selectedTab == TruckerTab.Profile
+    val isLoadsTab = selectedTab == TruckerTab.Loads
 
-    // Single back handler, priority-ordered. Editing is a destructive mode, so
-    // back cancels the edit rather than falling through to the tab switch that
-    // would silently discard staged uploads. Two separate BackHandlers would
-    // both be enabled on the Profile tab while editing and rely on
-    // last-registered-wins, which is too implicit to rely on.
+    // Back handler, priority-ordered. Editing is a destructive mode, so back
+    // cancels the edit rather than falling through to the tab switch that
+    // would silently discard staged uploads. An expanded city card is the next
+    // layer out: it owns a whole indent list, so back collapses it instead of
+    // making the user scroll back up to the header to close it. Only when
+    // neither is active does back fall back to the tab switch, and on the Loads
+    // tab with nothing expanded it is left unhandled so the app exits.
+    //
+    // These conditions are mutually exclusive rather than layered, so the
+    // last-registered-wins BackHandler ordering never has to be relied on:
+    // the collapse handler needs the Loads tab, the tab switch needs anything
+    // but the Loads tab.
     BackHandler(enabled = isProfileTab && isProfileEditing) {
         profileViewModel.cancelEdit()
     }
-    BackHandler(enabled = selectedTab != TruckerTab.Loads) {
+    BackHandler(enabled = isLoadsTab && expandedCityId != null) {
+        loadBoardViewModel.collapseExpandedCity()
+    }
+    BackHandler(enabled = !isLoadsTab) {
         selectedTab = TruckerTab.Loads
     }
 

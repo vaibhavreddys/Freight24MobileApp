@@ -109,6 +109,18 @@ fun LoadBoardScreen(
                     listState.animateScrollToItem(targetIndex)
                 }
             }
+        } else if (current == null && prev != null) {
+            // A city collapsed. Its indent rows are gone, so a scroll offset
+            // parked inside them now points past the end of a much shorter
+            // list and the user would be dropped at the bottom staring at
+            // unrelated cities. Bring the header they just collapsed back into
+            // view instead: it is the visible confirmation that back worked,
+            // and it leaves them parked where a second back press exits from.
+            val collapsedIndex = viewModel.indexOfCity(prev)
+            if (collapsedIndex >= 0) {
+                kotlinx.coroutines.yield()
+                listState.animateScrollToItem(collapsedIndex)
+            }
         }
 
         previousExpandedCityId.value = current

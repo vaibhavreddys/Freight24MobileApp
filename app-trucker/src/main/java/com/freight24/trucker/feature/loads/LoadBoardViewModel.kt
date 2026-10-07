@@ -244,15 +244,7 @@ class LoadBoardViewModel
                     if (otherIndex != -1) {
                         val otherCity = currentItems[otherIndex] as LoadBoardItem.CityItem
                         // Remove its children
-                        val nextIndex = otherIndex + 1
-                        while (nextIndex < currentItems.size &&
-                            (
-                                currentItems[nextIndex] is LoadBoardItem.LoadItem ||
-                                    currentItems[nextIndex] is LoadBoardItem.ShowMoreItem
-                            )
-                        ) {
-                            currentItems.removeAt(nextIndex)
-                        }
+                        removeChildrenOfCityAt(currentItems, otherIndex)
                         // Mark as collapsed
                         currentItems[otherIndex] = otherCity.copy(expanded = false)
                     }
@@ -273,15 +265,8 @@ class LoadBoardViewModel
 
                 // Defensive cleanup for race conditions where async responses may have inserted
                 // children while the city was collapsed.
-                val nextIndex = updatedIndex + 1
-                while (nextIndex < currentItems.size &&
-                    (
-                        currentItems[nextIndex] is LoadBoardItem.LoadItem ||
-                            currentItems[nextIndex] is LoadBoardItem.ShowMoreItem
-                    )
-                ) {
-                    currentItems.removeAt(nextIndex)
-                }
+                removeChildrenOfCityAt(currentItems, updatedIndex)
+
 
                 insertCachedLoadsForCity(
                     currentItems = currentItems,
@@ -293,18 +278,66 @@ class LoadBoardViewModel
                 _expandedCityId.value = null
                 cityPages.remove(cityId)
                 // Remove children of THIS city
-                val nextIndex = updatedIndex + 1
-                while (nextIndex < currentItems.size &&
-                    (
-                        currentItems[nextIndex] is LoadBoardItem.LoadItem ||
-                            currentItems[nextIndex] is LoadBoardItem.ShowMoreItem
-                    )
-                ) {
-                    currentItems.removeAt(nextIndex)
-                }
+                removeChildrenOfCityAt(currentItems, updatedIndex)
+
             }
 
             publishItems(currentItems)
+        }
+
+        /**
+         * Collapses whichever city is currently expanded, without needing its
+         * list index. This is the programmatic equivalent of tapping an expanded
+         * city card, and exists so the Loads tab back handler can dismiss the
+         * card the user opened without making them scroll back up to its header.
+         * No-op when nothing is expanded.
+         */
+        fun collapseExpandedCity() {
+            val cityId = _expandedCityId.value ?: return
+
+            val currentItems = _items.value.toMutableList()
+            val index =
+                currentItems.indexOfFirst {
+                    it is LoadBoardItem.CityItem && it.cityId == cityId
+                }
+
+            _expandedCityId.value = null
+            cityPages.remove(cityId)
+
+            if (index == -1) {
+                // The header vanished underneath us (filtered out by the city
+                // search, or dropped by a refresh). Clearing the pointer above is
+                // still required, otherwise back would keep being swallowed for
+                // a card that is no longer on screen.
+                return
+            }
+
+            val cityItem = currentItems[index] as LoadBoardItem.CityItem
+            currentItems[index] = cityItem.copy(expanded = false)
+            removeChildrenOfCityAt(currentItems, index)
+
+            publishItems(currentItems)
+        }
+
+        /**
+         * Drops the indent rows and the "show more" row that belong to the city
+         * header at [cityHeaderIndex]. Children are stored flat directly after
+         * their own header, so this is a forward scan that stops at the next
+         * city header or the end of the list.
+         */
+        private fun removeChildrenOfCityAt(
+            currentItems: MutableList<LoadBoardItem>,
+            cityHeaderIndex: Int,
+        ) {
+            var nextIndex = cityHeaderIndex + 1
+            while (nextIndex < currentItems.size &&
+                (
+                    currentItems[nextIndex] is LoadBoardItem.LoadItem ||
+                        currentItems[nextIndex] is LoadBoardItem.ShowMoreItem
+                )
+            ) {
+                currentItems.removeAt(nextIndex)
+            }
         }
 
         private fun fetchLoadsForCity(
