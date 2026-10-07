@@ -67,8 +67,8 @@ fun ConnectIndentCard(
     status: String,
     fromCity: String,
     toCity: String,
-    clientCostFormatted: String,
-    negotiatedCostFormatted: String,
+    clientCostFormatted: String?,
+    negotiatedCostFormatted: String?,
     truckDisplay: String,
     weightDisplay: String,
     materialDisplay: String,
@@ -88,8 +88,10 @@ fun ConnectIndentCard(
     footer: (@Composable () -> Unit)? = null,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val showClientCost = clientCostFormatted.hasPositiveCost()
-    val showNegotiatedCost = negotiatedCostFormatted.hasPositiveCost()
+    val visibleClientCost = clientCostFormatted?.takeIf { it.hasPositiveCost() }
+    val visibleNegotiatedCost = negotiatedCostFormatted?.takeIf { it.hasPositiveCost() }
+    val showClientCost = visibleClientCost != null
+    val showNegotiatedCost = visibleNegotiatedCost != null
 
     DocketCard(
         accent = docketStatusAccent(status),
@@ -154,7 +156,7 @@ fun ConnectIndentCard(
                 Spacer(Modifier.width(10.dp))
                 Column(horizontalAlignment = Alignment.End) {
                     if (showClientCost) {
-                        CostLine(label = stringResource(R.string.client_cost), value = clientCostFormatted)
+                        CostLine(label = stringResource(R.string.client_cost), value = visibleClientCost)
                     }
                     if (showClientCost && showNegotiatedCost) {
                         Spacer(Modifier.height(4.dp))
@@ -162,7 +164,7 @@ fun ConnectIndentCard(
                     if (showNegotiatedCost) {
                         CostLine(
                             label = stringResource(R.string.target_cost),
-                            value = negotiatedCostFormatted,
+                            value = visibleNegotiatedCost,
                             emphasised = true,
                         )
                     }
