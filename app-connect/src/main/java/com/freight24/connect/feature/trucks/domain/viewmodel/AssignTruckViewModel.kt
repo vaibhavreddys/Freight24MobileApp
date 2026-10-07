@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.freight24.connect.feature.trucks.domain.usecases.SearchTruckUseCase
 import com.freight24.connect.feature.trucks.domain.usecases.SearchTrucksUseCaseParams
+import com.freight24.connect.feature.trucks.enums.TruckStatus
 import com.freight24.connect.domain.model.TruckAssignmentOption
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -79,7 +80,7 @@ class AssignTruckViewModel
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            trucks = result.getOrThrow().items,
+                            trucks = result.getOrThrow().items.sortedByDescending { TruckStatus.from(it).isAssignable },
                         )
                     }
                 } else {

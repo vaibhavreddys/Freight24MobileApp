@@ -4,10 +4,14 @@ import com.freight24.connect.domain.model.TruckAssignmentOption
 
 enum class TruckStatus(val displayText: String) {
     BLACKLISTED("Blacklisted"),
-    IN_ACTIVE("In Active"),
+    IN_ACTIVE("Unavailable"),
     IN_TRANSIT("In Transit"),
     AVAILABLE("Available"),
     ;
+
+    /** Only AVAILABLE trucks can be assigned to a trip. */
+    val isAssignable: Boolean
+        get() = this == AVAILABLE
 
     companion object {
         fun from(truck: TruckAssignmentOption): TruckStatus {

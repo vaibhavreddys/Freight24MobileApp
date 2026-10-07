@@ -152,8 +152,12 @@ fun AssignTruckScreen(
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     contentPadding = PaddingValues(bottom = 16.dp),
+                    modifier =
+                        Modifier
+                            .testTag("assign_truck_results_list")
+                            .semantics { testTagsAsResourceId = true },
                 ) {
-                    items(uiState.trucks) { truck ->
+                    items(uiState.trucks, key = { it.truckId }) { truck ->
                         TruckItem(truck = truck, onSelect = { onTruckSelected(truck.truckId, truck.registrationNumber) })
                     }
                 }
@@ -167,11 +171,9 @@ fun TruckItem(
     truck: TruckAssignmentOption,
     onSelect: () -> Unit,
 ) {
-    val isEnabled =
-        !truck.isBlacklisted &&
-            !truck.availability.equals("on_trip", ignoreCase = true) &&
-            truck.status.lowercase() != "inactive"
-    val statusText = TruckStatus.from(truck).displayText
+    val status = TruckStatus.from(truck)
+    val isEnabled = status.isAssignable
+    val statusText = status.displayText
     val colorScheme = MaterialTheme.colorScheme
     val extendedColors = FreightThemeTokens.colors
     val statusColor = if (isEnabled) extendedColors.success else colorScheme.error
