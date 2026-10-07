@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.clients.views
+
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
@@ -113,6 +114,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.freight24.common.util.DocumentUploadPolicy
 import com.freight24.connect.feature.clients.domain.viewmodel.OnboardClientViewModel
 import com.freight24.ui.components.DashedUploadCard
 import com.freight24.ui.components.FreightTopAppBar
@@ -211,7 +213,7 @@ fun OnboardClientScreen(
 
     val galleryLauncher =
         rememberLauncherForActivityResult(
-            ActivityResultContracts.PickMultipleVisualMedia(),
+            ActivityResultContracts.PickMultipleVisualMedia(DocumentUploadPolicy.MAX_IMAGES),
         ) { uris ->
             if (uris.isNotEmpty()) {
                 pendingUris = uris

@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -51,6 +52,12 @@ class LoadBoardViewModel
         /** True until the first board fetch settles; drives the initial spinner. */
         private val _isInitialLoading = MutableStateFlow(true)
         val isInitialLoading: StateFlow<Boolean> = _isInitialLoading.asStateFlow()
+
+        private val _searchQuery = MutableStateFlow("")
+        val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+        private val _isSearchVisible = MutableStateFlow(false)
+        val isSearchVisible: StateFlow<Boolean> = _isSearchVisible.asStateFlow()
 
         private val interestedLoadIds = mutableSetOf<String>()
         private val loadingInterestedLoadIds = mutableSetOf<String>()
@@ -126,52 +133,85 @@ class LoadBoardViewModel
         }
 
         private fun updateCityList(summaryList: List<com.freight24.common.model.CityLoadSummary>) {
-            citySummaries = summaryList
-            val newItems = mutableListOf<LoadBoardItem>()
-            summaryList.forEach { summary ->
+            citySummaries =
+                summaryList.sortedWith(
+                    compareBy<com.freight24.common.model.CityLoadSummary> {
+                        it.cityName.trim().lowercase(Locale.ROOT)
+                    }.thenBy { it.cityName.trim() }
+                        .thenBy { it.cityId },
+                )
+
+            citySummaries.forEach { summary ->
                 cityTotalLoads[summary.cityId] = summary.totalLoads
                 cityLoadCache.putIfAbsent(
                     summary.cityId,
                     summary.initialLoads.map { it.toUi() }.distinctBy { it.id }.toMutableList(),
                 )
+            }
 
-                val isExpanded = _expandedCityId.value == summary.cityId
-                newItems.add(
-                    LoadBoardItem.CityItem(
-                        cityId = summary.cityId,
-                        cityName = summary.cityName,
-                        totalLoads = summary.totalLoads,
-                        expanded = isExpanded,
-                    ),
-                )
+            rebuildVisibleCityList()
+        }
 
-                // If this city is expanded, populate it with initial loads immediately
-                if (isExpanded) {
-                    val cachedLoads = cityLoadCache[summary.cityId].orEmpty()
-                    cityLoadedCounts[summary.cityId] = cachedLoads.size
+        private fun rebuildVisibleCityList() {
+            val query = _searchQuery.value.trim()
+            val newItems = mutableListOf<LoadBoardItem>()
+            citySummaries
+                .asSequence()
+                .filter { summary ->
+                    query.isEmpty() || summary.cityName.contains(query, ignoreCase = true)
+                }.forEach { summary ->
 
-                    cachedLoads.forEach { load ->
-                        newItems.add(
-                            LoadBoardItem.LoadItem(
-                                cityId = summary.cityId,
-                                load = load.decorateInterestState(),
-                            ),
-                        )
-                    }
+                    val isExpanded = _expandedCityId.value == summary.cityId
+                    newItems.add(
+                        LoadBoardItem.CityItem(
+                            cityId = summary.cityId,
+                            cityName = summary.cityName,
+                            totalLoads = summary.totalLoads,
+                            expanded = isExpanded,
+                        ),
+                    )
 
-                    // Add Show More if there are more loads
-                    if ((cityTotalLoads[summary.cityId] ?: summary.totalLoads) > cachedLoads.size) {
-                        newItems.add(
-                            LoadBoardItem.ShowMoreItem(
-                                cityId = summary.cityId,
-                                loadedCount = cachedLoads.size,
-                                totalCount = cityTotalLoads[summary.cityId] ?: summary.totalLoads,
-                            ),
-                        )
+                    // If this city is expanded, populate it with initial loads immediately
+                    if (isExpanded) {
+                        val cachedLoads = cityLoadCache[summary.cityId].orEmpty()
+                        cityLoadedCounts[summary.cityId] = cachedLoads.size
+
+                        cachedLoads.forEach { load ->
+                            newItems.add(
+                                LoadBoardItem.LoadItem(
+                                    cityId = summary.cityId,
+                                    load = load.decorateInterestState(),
+                                ),
+                            )
+                        }
+
+                        // Add Show More if there are more loads
+                        if ((cityTotalLoads[summary.cityId] ?: summary.totalLoads) > cachedLoads.size) {
+                            newItems.add(
+                                LoadBoardItem.ShowMoreItem(
+                                    cityId = summary.cityId,
+                                    loadedCount = cachedLoads.size,
+                                    totalCount = cityTotalLoads[summary.cityId] ?: summary.totalLoads,
+                                ),
+                            )
+                        }
                     }
                 }
-            }
             publishItems(newItems)
+        }
+
+        fun onSearchClick() {
+            val isVisible = !_isSearchVisible.value
+            _isSearchVisible.value = isVisible
+            if (!isVisible) {
+                _searchQuery.value = ""
+                rebuildVisibleCityList()
+            }
+        }
+
+        fun onSearchQueryChanged(query: String) {
+            _searchQuery.value = query
+            rebuildVisibleCityList()
         }
 
         fun onCityClicked(cityId: String) {

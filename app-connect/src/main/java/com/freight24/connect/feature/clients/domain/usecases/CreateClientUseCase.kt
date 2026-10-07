@@ -1,5 +1,7 @@
 package com.freight24.connect.feature.clients.domain.usecases
 
+import com.freight24.common.util.DocumentUploadException
+import com.freight24.common.util.DocumentUploadPolicy
 import com.freight24.connect.repository.ClientRepository
 import com.freight24.rest.response.ClientContactAssignmentRequest
 import com.freight24.rest.response.ClientContactCreateRequest
@@ -78,29 +80,33 @@ class CreateClientUseCaseImpl
     @Inject
     constructor(private val repository: ClientRepository) : CreateClientUseCase {
         override suspend fun createProfile(params: ClientProfileV2Params): Result<CreatedClientV2> {
-            val parts = buildList {
-                add(params.clientType.toPart("client_type"))
-                add(params.companyName.toPart("company_name"))
-                params.displayName?.let { add(it.toPart("display_name")) }
-                add(params.companyType.toPart("company_type"))
-                add(params.panCard.toPart("pan_card"))
-                params.gstNumber?.let { add(it.toPart("gst_number")) }
-                params.email?.let { add(it.toPart("company_email")) }
-                params.phone?.let { add(it.toPart("company_phone")) }
-                add(params.addressLine1.toPart("registered_address_line1"))
-                add(params.cityId.toString().toPart("registered_city_id"))
-                add(params.stateId.toString().toPart("registered_state_id"))
-                add(params.pinCode.toPart("registered_pin_code"))
-                add("true".toPart("billing_same_as_registered"))
-                add("true".toPart("default_pod_same_as_registered"))
-                params.panFile?.let { add(it.toFilePart("pan_file")) }
-                params.gstFile?.let { add(it.toFilePart("gst_certificate_file")) }
-                params.companyRegistrationFile?.let { add(it.toFilePart("company_registration_file")) }
-                params.contractFile?.let { add(it.toFilePart("contract_file")) }
-            }
-            return repository.createClientV2(parts).mapCatching { response ->
-                val data = response.data ?: error("Client creation returned no data")
-                CreatedClientV2(data.clientId, data.userId ?: error("Client creation returned no user ID"))
+            try {
+                val parts = buildList {
+                    add(params.clientType.toPart("client_type"))
+                    add(params.companyName.toPart("company_name"))
+                    params.displayName?.let { add(it.toPart("display_name")) }
+                    add(params.companyType.toPart("company_type"))
+                    add(params.panCard.toPart("pan_card"))
+                    params.gstNumber?.let { add(it.toPart("gst_number")) }
+                    params.email?.let { add(it.toPart("company_email")) }
+                    params.phone?.let { add(it.toPart("company_phone")) }
+                    add(params.addressLine1.toPart("registered_address_line1"))
+                    add(params.cityId.toString().toPart("registered_city_id"))
+                    add(params.stateId.toString().toPart("registered_state_id"))
+                    add(params.pinCode.toPart("registered_pin_code"))
+                    add("true".toPart("billing_same_as_registered"))
+                    add("true".toPart("default_pod_same_as_registered"))
+                    params.panFile?.let { add(it.toFilePart("pan_file")) }
+                    params.gstFile?.let { add(it.toFilePart("gst_certificate_file")) }
+                    params.companyRegistrationFile?.let { add(it.toFilePart("company_registration_file")) }
+                    params.contractFile?.let { add(it.toFilePart("contract_file")) }
+                }
+                return repository.createClientV2(parts).mapCatching { response ->
+                    val data = response.data ?: error("Client creation returned no data")
+                    CreatedClientV2(data.clientId, data.userId ?: error("Client creation returned no user ID"))
+                }
+            } catch (error: DocumentUploadException) {
+                return Result.failure(error)
             }
         }
 
@@ -163,6 +169,7 @@ class CreateClientUseCaseImpl
 
         private fun File.toFilePart(name: String): MultipartBody.Part {
             val mime = if (extension.equals("pdf", true)) "application/pdf" else "application/octet-stream"
+            DocumentUploadPolicy.validateFile(this)
             return MultipartBody.Part.createFormData(name, this.name, asRequestBody(mime.toMediaTypeOrNull()))
         }
     }

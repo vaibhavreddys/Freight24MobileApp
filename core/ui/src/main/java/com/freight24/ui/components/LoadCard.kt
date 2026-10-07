@@ -96,67 +96,63 @@ fun LoadCard(
         // Box to allow overlaying tooltip
         Box(modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(16.dp)) {
-                // ───── Route + Price ─────
-                // Price is the dominant region (truckers scan earnings first):
-                // a primaryContainer chip anchors the top-right while the route
-                // keeps the left. Posted recency sits above it as a quiet pill.
+                // Keep route names independent of the price and recency widths.
                 Row(
-                    verticalAlignment = Alignment.Top,
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    RouteIndicatorWithCities(
-                        fromCity = sourceCity,
-                        toCity = destinationCity,
-                    )
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    Column(horizontalAlignment = Alignment.End) {
-                        Surface(
-                            color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                            shape = MaterialTheme.shapes.small,
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        shape = MaterialTheme.shapes.small,
+                        modifier = Modifier.weight(1f, fill = false),
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            ) {
-                                Box(
-                                    modifier =
-                                        Modifier
-                                            .size(6.dp)
-                                            .background(
-                                                color = extended.success,
-                                                shape = CircleShape,
-                                            ),
-                                )
-                                Spacer(Modifier.width(6.dp))
-                                Text(
-                                    text = postedTime,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
+                            Box(
+                                modifier = Modifier.size(6.dp).background(extended.success, CircleShape),
+                            )
+                            Spacer(Modifier.width(6.dp))
+                            Text(
+                                text = postedTime,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Ellipsis,
+                            )
                         }
-                        // A backend amount that formats to ₹0 (blank, "--", or
-                        // numeric 0) means "no usable price" — hide the chip
-                        // entirely. The detail sheet carries the agent note.
-                        val formattedPrice = remember(price) { formatCurrency(price) }
-                        if (formattedPrice != "₹0") {
-                            Spacer(Modifier.height(8.dp))
-                            Surface(
-                                color = MaterialTheme.colorScheme.primaryContainer,
-                                shape = MaterialTheme.shapes.medium,
-                            ) {
-                                Text(
-                                    text = formattedPrice,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                )
-                            }
+                    }
+                    val formattedPrice = remember(price) { formatCurrency(price) }
+                    if (formattedPrice != "₹0") {
+                        Spacer(Modifier.width(8.dp))
+                        Surface(
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            shape = MaterialTheme.shapes.medium,
+                            modifier = Modifier.weight(1f, fill = false),
+                        ) {
+                            Text(
+                                text = formattedPrice,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Ellipsis,
+                            )
                         }
                     }
                 }
+
+                Spacer(Modifier.height(12.dp))
+                RouteIndicatorWithCities(
+                    fromCity = sourceCity,
+                    toCity = destinationCity,
+                    modifier = Modifier.fillMaxWidth(),
+                    maxCityLines = 2,
+                )
 
                 Spacer(Modifier.height(12.dp))
                 HorizontalDivider(

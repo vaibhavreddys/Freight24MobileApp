@@ -50,6 +50,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.freight24.common.util.DocumentUploadPolicy
 import com.freight24.connect.R
 import com.freight24.connect.feature.trips.domain.viewmodel.TripDetailsEvent
 import com.freight24.connect.feature.trips.domain.viewmodel.TripDetailsViewModel
@@ -134,7 +135,7 @@ fun TripDetailsScreen(
 
     val imagePickerLauncher =
         rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.PickMultipleVisualMedia(),
+            contract = ActivityResultContracts.PickMultipleVisualMedia(DocumentUploadPolicy.MAX_IMAGES),
             onResult = { uris ->
                 if (uris.isNotEmpty()) {
                     viewModel.onEvent(TripDetailsEvent.OnFilesPicked(uris, isPdf = false))

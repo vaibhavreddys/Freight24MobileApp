@@ -1,5 +1,7 @@
 package com.freight24.connect.feature.truckowners.domain.usecases
 
+import com.freight24.common.util.DocumentUploadException
+import com.freight24.common.util.DocumentUploadPolicy
 import com.freight24.connect.repository.TruckOwnerRepository
 import com.freight24.rest.request.PreferredRouteEntry
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -57,55 +59,67 @@ class CreateTruckOwnerUseCaseImpl
         private val repository: TruckOwnerRepository,
     ) : CreateTruckOwnerUseCase {
         override suspend fun createPersonal(params: TruckOwnerPersonalParams): Result<String> {
-            val parts = buildList {
-                add(params.fullName.toPart("full_name"))
-                params.email?.let { add(it.toPart("email")) }
-                add(params.phone.toPart("phone"))
-                params.alternativePhone?.let { add(it.toPart("alt_phones")) }
-                add(params.panCard.toPart("pan_card"))
-                add(params.aadhaarCard.toPart("aadhar_card"))
-                add(params.aadhaarFile.toFilePart("aadhaar_file"))
-                add(params.panFile.toFilePart("pan_file"))
-            }
-            return repository.createPersonalProfile(parts).mapCatching {
-                it.data?.id ?: error("Truck owner creation returned no user ID")
+            try {
+                val parts = buildList {
+                    add(params.fullName.toPart("full_name"))
+                    params.email?.let { add(it.toPart("email")) }
+                    add(params.phone.toPart("phone"))
+                    params.alternativePhone?.let { add(it.toPart("alt_phones")) }
+                    add(params.panCard.toPart("pan_card"))
+                    add(params.aadhaarCard.toPart("aadhar_card"))
+                    add(params.aadhaarFile.toFilePart("aadhaar_file"))
+                    add(params.panFile.toFilePart("pan_file"))
+                }
+                return repository.createPersonalProfile(parts).mapCatching {
+                    it.data?.id ?: error("Truck owner creation returned no user ID")
+                }
+            } catch (error: DocumentUploadException) {
+                return Result.failure(error)
             }
         }
 
         override suspend fun saveBusiness(ownerUserId: String, params: TruckOwnerBusinessParams): Result<Unit> {
-            val routes = buildJsonArray {
-                params.preferredRoutes.forEach { route ->
-                    add(buildJsonObject {
-                        put("source_city_id", route.sourceCityId)
-                        put("destination_city_id", route.destinationCityId)
-                        put("priority", route.priority)
-                    })
+            try {
+                val routes = buildJsonArray {
+                    params.preferredRoutes.forEach { route ->
+                        add(buildJsonObject {
+                            put("source_city_id", route.sourceCityId)
+                            put("destination_city_id", route.destinationCityId)
+                            put("priority", route.priority)
+                        })
+                    }
+                }.toString()
+                val parts = buildList {
+                    params.businessName?.let { add(it.toPart("business_name")) }
+                    params.gstNumber?.let { add(it.toPart("gst_number")) }
+                    add(params.isTdsApplicable.toString().toPart("is_tds_applicable"))
+                    params.baseCityId?.let { add(it.toString().toPart("base_city_id")) }
+                    add(routes.toPart("preferred_routes"))
+                    params.gstFile?.let { add(it.toFilePart("gst_file")) }
+                    params.companyFile?.let { add(it.toFilePart("company_file")) }
+                    params.tdsFile?.let { add(it.toFilePart("tds_file")) }
                 }
-            }.toString()
-            val parts = buildList {
-                params.businessName?.let { add(it.toPart("business_name")) }
-                params.gstNumber?.let { add(it.toPart("gst_number")) }
-                add(params.isTdsApplicable.toString().toPart("is_tds_applicable"))
-                params.baseCityId?.let { add(it.toString().toPart("base_city_id")) }
-                add(routes.toPart("preferred_routes"))
-                params.gstFile?.let { add(it.toFilePart("gst_file")) }
-                params.companyFile?.let { add(it.toFilePart("company_file")) }
-                params.tdsFile?.let { add(it.toFilePart("tds_file")) }
+                return repository.updateBusinessProfile(ownerUserId, parts).map { Unit }
+            } catch (error: DocumentUploadException) {
+                return Result.failure(error)
             }
-            return repository.updateBusinessProfile(ownerUserId, parts).map { Unit }
         }
 
         override suspend fun saveBank(ownerUserId: String, params: TruckOwnerBankParams): Result<Unit> {
-            val parts = buildList {
-                add(params.accountHolderName.toPart("account_holder_name"))
-                add(params.accountNumber.toPart("account_number"))
-                add(params.ifscCode.toPart("ifsc_code"))
-                params.upiId?.let { add(it.toPart("upi_id")) }
-                params.bankName?.let { add(it.toPart("bank_name")) }
-                params.branchName?.let { add(it.toPart("branch_name")) }
-                add(params.chequeFile.toFilePart("cheque_file"))
+            try {
+                val parts = buildList {
+                    add(params.accountHolderName.toPart("account_holder_name"))
+                    add(params.accountNumber.toPart("account_number"))
+                    add(params.ifscCode.toPart("ifsc_code"))
+                    params.upiId?.let { add(it.toPart("upi_id")) }
+                    params.bankName?.let { add(it.toPart("bank_name")) }
+                    params.branchName?.let { add(it.toPart("branch_name")) }
+                    add(params.chequeFile.toFilePart("cheque_file"))
+                }
+                return repository.updateBankProfile(ownerUserId, parts).map { Unit }
+            } catch (error: DocumentUploadException) {
+                return Result.failure(error)
             }
-            return repository.updateBankProfile(ownerUserId, parts).map { Unit }
         }
 
         private fun String.toPart(name: String): MultipartBody.Part =
@@ -113,6 +127,7 @@ class CreateTruckOwnerUseCaseImpl
 
         private fun File.toFilePart(name: String): MultipartBody.Part {
             val mimeType = if (extension.equals("pdf", true)) "application/pdf" else "application/octet-stream"
+            DocumentUploadPolicy.validateFile(this)
             return MultipartBody.Part.createFormData(name, this.name, asRequestBody(mimeType.toMediaTypeOrNull()))
         }
     }

@@ -98,6 +98,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.freight24.common.util.DocumentUploadPolicy
 import com.freight24.trucker.BuildConfig
 import com.freight24.trucker.R
 import com.freight24.trucker.feature.profile.domain.DocumentType
@@ -283,6 +284,7 @@ private fun ProfileMainContent(
     var tempCameraUri by remember { mutableStateOf<Uri?>(null) }
     var pickingUris by remember { mutableStateOf<List<Uri>>(emptyList()) }
     var isPdfPending by rememberSaveable { mutableStateOf(false) }
+    var uploadRequested by remember { mutableStateOf(false) }
     var showCancelConfirmDialog by rememberSaveable { mutableStateOf(false) }
 
     val sourceSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -290,6 +292,17 @@ private fun ProfileMainContent(
         pickingDocumentType
             ?.let { type -> documentStates[com.freight24.trucker.feature.profile.util.ProfileDocumentTypeIds.fieldKey(type)]?.uploadStatus }
             ?: UploadStatus.IDLE
+
+    val isPreparingDocument = pickingDocumentType
+        ?.let { type -> documentStates[com.freight24.trucker.feature.profile.util.ProfileDocumentTypeIds.fieldKey(type)]?.isPreparingDocument }
+        ?: false
+    LaunchedEffect(selectedUploadStatus, uploadRequested) {
+        if (uploadRequested && (selectedUploadStatus == UploadStatus.DONE || selectedUploadStatus == UploadStatus.ERROR)) {
+            pickingUris = emptyList()
+            pickingDocumentType = null
+            uploadRequested = false
+        }
+    }
 
     val documentPickerLauncher =
         rememberLauncherForActivityResult(
@@ -305,7 +318,7 @@ private fun ProfileMainContent(
 
     val imagePickerLauncher =
         rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.PickMultipleVisualMedia(),
+            contract = ActivityResultContracts.PickMultipleVisualMedia(DocumentUploadPolicy.MAX_IMAGES),
         ) { uris ->
             if (uris.isNotEmpty()) {
                 pickingUris = uris
@@ -395,13 +408,15 @@ private fun ProfileMainContent(
             selectedUris = pickingUris,
             isPdf = isPdfPending,
             isUploading = selectedUploadStatus == UploadStatus.UPLOADING,
+            progressText = stringResource(
+                if (isPreparingDocument) com.freight24.ui.R.string.upload_preparing else com.freight24.ui.R.string.upload_in_progress,
+            ),
             uploadButtonText = "Confirm Upload",
             onUploadClick = {
                 pickingDocumentType?.let { type ->
+                    uploadRequested = true
                     viewModel.uploadDocument(pickingUris, type, isPdf = isPdfPending)
                 }
-                pickingUris = emptyList()
-                pickingDocumentType = null
             },
             onDismiss = {
                 pickingUris = emptyList()

@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.trips.views
+
 import android.Manifest
 import android.content.Context
 import android.content.Intent
@@ -34,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.freight24.common.util.DocumentUploadPolicy
 import com.freight24.connect.feature.trips.domain.viewmodel.LuChargesEvent
 import com.freight24.connect.feature.trips.domain.viewmodel.LuChargesViewModel
 import com.freight24.connect.feature.trips.domain.viewmodel.LuChargesViewModelImpl
@@ -88,7 +90,7 @@ fun LuChargesScreen(
 
     val imagePickerLauncher =
         rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.PickMultipleVisualMedia(),
+            contract = ActivityResultContracts.PickMultipleVisualMedia(DocumentUploadPolicy.MAX_IMAGES),
             onResult = { uris ->
                 if (uris.isNotEmpty()) {
                     viewModel.onEvent(LuChargesEvent.OnFilePicked(uris, isPdf = false))

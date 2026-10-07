@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.trucks.views
+
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
@@ -75,6 +76,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.freight24.common.util.DocumentUploadPolicy
 import com.freight24.connect.domain.model.TruckDetails
 import com.freight24.ui.UiState
 import com.freight24.ui.components.AppDropdown
@@ -452,7 +454,7 @@ private fun DocumentsStep(viewModel: com.freight24.connect.feature.trucks.domain
 
     val galleryLauncher =
         rememberLauncherForActivityResult(
-            ActivityResultContracts.PickMultipleVisualMedia(),
+            ActivityResultContracts.PickMultipleVisualMedia(DocumentUploadPolicy.MAX_IMAGES),
         ) { uris ->
             if (uris.isNotEmpty()) {
                 pendingUris = uris

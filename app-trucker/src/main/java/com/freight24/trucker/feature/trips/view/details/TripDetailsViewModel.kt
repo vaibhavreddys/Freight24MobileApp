@@ -18,6 +18,7 @@ import com.freight24.trucker.feature.trips.domain.usecase.UploadPodUseCaseDataPa
 import com.freight24.ui.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +27,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 internal enum class UploadStatus {
@@ -62,6 +64,8 @@ internal class TripDetailsViewModel
 
         private val _isUploading = MutableStateFlow(false)
         val isUploading: StateFlow<Boolean> = _isUploading.asStateFlow()
+        private val _isPreparingDocument = MutableStateFlow(false)
+        val isPreparingDocument: StateFlow<Boolean> = _isPreparingDocument.asStateFlow()
 
         private val _uploadStatus = MutableStateFlow(UploadStatus.IDLE)
         val uploadStatus: StateFlow<UploadStatus> = _uploadStatus.asStateFlow()
@@ -71,6 +75,9 @@ internal class TripDetailsViewModel
 
         private val _isRefreshing = MutableStateFlow(false)
         val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
+        private val _previewingDocumentId = MutableStateFlow<String?>(null)
+        val previewingDocumentId: StateFlow<String?> = _previewingDocumentId.asStateFlow()
 
         private var cachedTripDetail: TripDetail? = null
 
@@ -169,13 +176,12 @@ internal class TripDetailsViewModel
          */
         private fun uploadDocument(isPod: Boolean) {
             val uris = _selectedUris.value
-            if (uris.isEmpty()) return
+            if (uris.isEmpty() || !_isUploading.compareAndSet(false, true)) return
             val isPdfSelection = _isPdf.value
+            _isPreparingDocument.value = true
+            _uploadStatus.value = UploadStatus.UPLOADING
 
             viewModelScope.launch(Dispatchers.IO) {
-                _isUploading.value = true
-                _uploadStatus.value = UploadStatus.UPLOADING
-
                 try {
                     val file =
                         if (isPdfSelection) {
@@ -190,6 +196,7 @@ internal class TripDetailsViewModel
                         return@launch
                     }
 
+                    _isPreparingDocument.value = false
                     val result =
                         if (isPod) {
                             val existingPodId =
@@ -226,6 +233,7 @@ internal class TripDetailsViewModel
                     _uploadStatus.value = UploadStatus.ERROR
                     _errorEvent.emit(toDisplayMessage(e, "An error occurred during upload"))
                 } finally {
+                    _isPreparingDocument.value = false
                     _isUploading.value = false
                 }
             }
@@ -235,14 +243,33 @@ internal class TripDetailsViewModel
             documentId: String,
             onUrlReady: (String) -> Unit,
         ) {
-            viewModelScope.launch(Dispatchers.IO) {
-                getSignedDocumentUseCase(GetSignedDocumentParams(tripId, documentId))
-                    .onSuccess { url ->
-                        onUrlReady(url)
-                    }
-                    .onFailure { error ->
-                        _errorEvent.emit(toDisplayMessage(error, "Failed to get document URL"))
-                    }
+            if (!_previewingDocumentId.compareAndSet(null, documentId)) return
+
+            viewModelScope.launch {
+                try {
+                    val signedUrl =
+                        withContext(Dispatchers.IO) {
+                            getSignedDocumentUseCase(GetSignedDocumentParams(tripId, documentId)).getOrThrow()
+                        }
+                    onUrlReady(signedUrl)
+                } catch (error: CancellationException) {
+                    onDocumentPreviewClosed()
+                    throw error
+                } catch (error: Exception) {
+                    onDocumentPreviewClosed()
+                    _errorEvent.emit(toDisplayMessage(error, "Failed to get document URL"))
+                }
+            }
+        }
+
+        fun onDocumentPreviewClosed() {
+            _previewingDocumentId.value = null
+        }
+
+        fun onDocumentPreviewLaunchFailed(error: Throwable) {
+            onDocumentPreviewClosed()
+            viewModelScope.launch {
+                _errorEvent.emit(toDisplayMessage(error, "Unable to open document"))
             }
         }
 

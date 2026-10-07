@@ -69,9 +69,7 @@ fun TruckerHomeScreen(navController: NavHostController) {
                 // becomes a close affordance.
                 title = if (isProfileTab && isProfileEditing) "Edit profile" else getFormattedTabName(selectedTab.id),
                 showSearch = selectedTab.id == "loads",
-                onSearchClick = {
-                    // TODO: trigger search
-                },
+                onSearchClick = loadBoardViewModel::onSearchClick,
                 trailingActionIcon =
                     when {
                         !isProfileTab -> null

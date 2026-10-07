@@ -1,4 +1,5 @@
 package com.freight24.trucker.feature.trucks.view.onboard
+
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
@@ -83,6 +84,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.freight24.common.util.DocumentUploadPolicy
 import com.freight24.rest.response.AddTruckDto
 import com.freight24.ui.UiState
 import com.freight24.ui.components.AppDropdown
@@ -467,7 +469,7 @@ private fun DocumentsStep(viewModel: EditTruckViewModel) {
     // 1. Gallery Launcher (Photo Picker)
     val galleryLauncher =
         rememberLauncherForActivityResult(
-            ActivityResultContracts.PickMultipleVisualMedia(),
+            ActivityResultContracts.PickMultipleVisualMedia(DocumentUploadPolicy.MAX_IMAGES),
         ) { uris ->
             Log.d(TAG, "Gallery result: $uris for $currentTargetPrefix")
             if (uris.isNotEmpty()) {

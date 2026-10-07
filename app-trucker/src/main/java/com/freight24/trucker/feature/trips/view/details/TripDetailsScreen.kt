@@ -64,6 +64,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -77,6 +78,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.freight24.common.util.DocumentUploadPolicy
 import com.freight24.common.model.TripDetail
 import com.freight24.common.model.TripFinancials
 import com.freight24.common.model.TruckerPayment
@@ -149,9 +151,17 @@ internal fun TripDetailsScreen(
     val selectedUris by viewModel.selectedUris.collectAsState()
     val isPdf by viewModel.isPdf.collectAsState()
     val isUploading by viewModel.isUploading.collectAsState()
+    val isPreparingDocument by viewModel.isPreparingDocument.collectAsState()
     val uploadStatus by viewModel.uploadStatus.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val previewingDocumentId by viewModel.previewingDocumentId.collectAsState()
     val context = LocalContext.current
+
+    val documentPreviewLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.StartActivityForResult(),
+            onResult = { viewModel.onDocumentPreviewClosed() },
+        )
 
     var showSourcePicker by rememberSaveable { mutableStateOf(false) }
     // Which document the current pick → confirm cycle is for: "lr" or "pod".
@@ -170,7 +180,7 @@ internal fun TripDetailsScreen(
 
     val imagePickerLauncher =
         rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.PickMultipleVisualMedia(),
+            contract = ActivityResultContracts.PickMultipleVisualMedia(DocumentUploadPolicy.MAX_IMAGES),
             onResult = { uris ->
                 if (uris.isNotEmpty()) {
                     viewModel.resetUploadError()
@@ -267,6 +277,9 @@ internal fun TripDetailsScreen(
             selectedUris = selectedUris,
             isPdf = isPdf,
             isUploading = isUploading,
+            progressText = stringResource(
+                if (isPreparingDocument) com.freight24.ui.R.string.upload_preparing else com.freight24.ui.R.string.upload_in_progress,
+            ),
             uploadButtonText = "Confirm Upload",
             onUploadClick = {
                 if (uploadTargetDoc == "pod") {
@@ -274,7 +287,6 @@ internal fun TripDetailsScreen(
                 } else {
                     viewModel.uploadLR()
                 }
-                viewModel.clearSelection()
             },
             onDismiss = {
                 viewModel.clearSelection()
@@ -470,6 +482,7 @@ internal fun TripDetailsScreen(
                             trip = state.data,
                             uploadStatus = uploadStatus,
                             uploadTargetDoc = uploadTargetDoc,
+                            previewingDocumentId = previewingDocumentId,
                             colors = colors,
                             onUploadClick = { docType ->
                                 uploadTargetDoc = docType
@@ -477,7 +490,9 @@ internal fun TripDetailsScreen(
                             },
                             onViewClick = { documentId ->
                                 viewModel.fetchSignedUrl(documentId) { url ->
-                                    context.startActivity(getPdfLaunchIntent(url, context))
+                                    runCatching {
+                                        documentPreviewLauncher.launch(getPdfLaunchIntent(url, context))
+                                    }.onFailure(viewModel::onDocumentPreviewLaunchFailed)
                                 }
                             },
                         )
@@ -528,6 +543,7 @@ internal fun TripDossier(
     trip: TripDetail,
     uploadStatus: UploadStatus,
     uploadTargetDoc: String,
+    previewingDocumentId: String?,
     colors: TruckerColors,
     onUploadClick: (String) -> Unit,
     onViewClick: (String) -> Unit,
@@ -550,6 +566,7 @@ internal fun TripDossier(
             trip = trip,
             uploadStatus = uploadStatus,
             uploadTargetDoc = uploadTargetDoc,
+            previewingDocumentId = previewingDocumentId,
             colors = colors,
             onUploadClick = onUploadClick,
             onViewClick = onViewClick,
@@ -650,6 +667,7 @@ private fun DocumentsSection(
     trip: TripDetail,
     uploadStatus: UploadStatus,
     uploadTargetDoc: String,
+    previewingDocumentId: String?,
     colors: TruckerColors,
     onUploadClick: (String) -> Unit,
     onViewClick: (String) -> Unit,
@@ -815,14 +833,18 @@ private fun DocumentsSection(
                                     null
                                 },
                             onRowClick =
-                                if (!needsUpload && effectiveStatus != "uploading") {
-                                    { doc.id?.let(onViewClick) }
+                                if (
+                                    effectiveStatus != "uploading" &&
+                                    previewingDocumentId == null &&
+                                    !doc.id.isNullOrBlank()
+                                ) {
+                                    { onViewClick(requireNotNull(doc.id)) }
                                 } else {
                                     null
                                 },
                         )
 
-                        if (effectiveStatus == "uploading") {
+                        if (effectiveStatus == "uploading" || previewingDocumentId == doc.id) {
                             LinearProgressIndicator(
                                 modifier =
                                     Modifier

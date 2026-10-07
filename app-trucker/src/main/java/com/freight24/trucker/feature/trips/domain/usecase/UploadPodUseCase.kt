@@ -1,6 +1,8 @@
 package com.freight24.trucker.feature.trips.domain.usecase
 
 import android.webkit.MimeTypeMap
+import com.freight24.common.util.DocumentUploadException
+import com.freight24.common.util.DocumentUploadPolicy
 import com.freight24.common.model.TripDetail
 import com.freight24.common.usecase.UseCase
 import com.freight24.common.usecase.UseCaseParams
@@ -32,28 +34,33 @@ internal class UploadPodUseCaseImpl
         private val repository: TripRepository,
     ) : UploadPodUseCase {
         override suspend fun invoke(params: UploadPodUseCaseDataParams): Result<TripDetail> {
-            val mimeType =
-                if (params.file.extension.equals("pdf", ignoreCase = true)) {
-                    "application/pdf"
-                } else {
-                    getMimeType(params.file.absolutePath) ?: "application/octet-stream"
-                }
-            val requestFile = params.file.asRequestBody(mimeType.toMediaTypeOrNull())
+            try {
+                val mimeType =
+                    if (params.file.extension.equals("pdf", ignoreCase = true)) {
+                        "application/pdf"
+                    } else {
+                        getMimeType(params.file.absolutePath) ?: "application/octet-stream"
+                    }
+                DocumentUploadPolicy.validateFile(params.file)
+                val requestFile = params.file.asRequestBody(mimeType.toMediaTypeOrNull())
 
-            val filePart =
-                MultipartBody.Part.createFormData(
-                    "file", // The name expected by the server for the file field
-                    params.file.name, // The actual file name
-                    requestFile,
+                val filePart =
+                    MultipartBody.Part.createFormData(
+                        "file", // The name expected by the server for the file field
+                        params.file.name, // The actual file name
+                        requestFile,
+                    )
+
+                return repository.uploadPod(
+                    params.tripId,
+                    filePart,
+                    params.podType.toRequestBody("text/plain".toMediaType()),
+                    params.notes?.toRequestBody("text/plain".toMediaType()),
+                    params.replaceDocumentId,
                 )
-
-            return repository.uploadPod(
-                params.tripId,
-                filePart,
-                params.podType.toRequestBody("text/plain".toMediaType()),
-                params.notes?.toRequestBody("text/plain".toMediaType()),
-                params.replaceDocumentId,
-            )
+            } catch (error: DocumentUploadException) {
+                return Result.failure(error)
+            }
         }
 
         private fun getMimeType(url: String): String? {

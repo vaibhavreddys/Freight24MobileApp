@@ -142,54 +142,62 @@ internal class LuChargesViewModelImpl
             }
 
             viewModelScope.launch(Dispatchers.IO) {
-                val file: File? =
-                    if (state.isPdf) {
-                        val uri =
-                            state.selectedUris.firstOrNull() ?: run {
+                try {
+                    val file: File? =
+                        if (state.isPdf) {
+                            val uri =
+                                state.selectedUris.firstOrNull() ?: run {
+                                    _uiState.update { it.copy(loadingProcessing = false, unloadingProcessing = false) }
+                                    return@launch
+                                }
+                            FileUtils.getFileFromUri(context, uri)
+                        } else {
+                            if (state.selectedUris.isEmpty()) {
                                 _uiState.update { it.copy(loadingProcessing = false, unloadingProcessing = false) }
                                 return@launch
                             }
-                        FileUtils.getFileFromUri(context, uri)
-                    } else {
-                        if (state.selectedUris.isEmpty()) {
-                            _uiState.update { it.copy(loadingProcessing = false, unloadingProcessing = false) }
-                            return@launch
+                            FileUtils.convertImageToPdf(context, state.selectedUris)
                         }
-                        FileUtils.convertImageToPdf(context, state.selectedUris)
+
+                    if (file != null) {
+                        val sizeKb = file.length() / 1024
+                        val sizeMb = sizeKb / 1024.0
+                        Log.d(
+                            "LuCharges",
+                            "Converted ${if (docType == LuDocType.LOADING) "loading" else "unloading"} file: ${file.name}, size=${file.length()} bytes ($sizeKb KB / ${"%.1f".format(
+                                sizeMb,
+                            )} MB)",
+                        )
                     }
 
-                if (file != null) {
-                    val sizeKb = file.length() / 1024
-                    val sizeMb = sizeKb / 1024.0
-                    Log.d(
-                        "LuCharges",
-                        "Converted ${if (docType == LuDocType.LOADING) "loading" else "unloading"} file: ${file.name}, size=${file.length()} bytes ($sizeKb KB / ${"%.1f".format(
-                            sizeMb,
-                        )} MB)",
-                    )
-                }
-
-                _uiState.update { currentState ->
-                    val updated =
-                        when (docType) {
-                            LuDocType.LOADING ->
-                                currentState.copy(
-                                    loadingDocument = file,
-                                    loadingShowReupload = false,
-                                    loadingProcessing = false,
-                                )
-                            LuDocType.UNLOADING ->
-                                currentState.copy(
-                                    unloadingDocument = file,
-                                    unloadingShowReupload = false,
-                                    unloadingProcessing = false,
-                                )
-                        }
-                    updated.copy(
-                        showFileConfirmation = false,
-                        selectedUris = emptyList(),
-                        selectedDocType = null,
-                    ).updateChanges()
+                    _uiState.update { currentState ->
+                        val updated =
+                            when (docType) {
+                                LuDocType.LOADING ->
+                                    currentState.copy(
+                                        loadingDocument = file,
+                                        loadingShowReupload = false,
+                                        loadingProcessing = false,
+                                    )
+                                LuDocType.UNLOADING ->
+                                    currentState.copy(
+                                        unloadingDocument = file,
+                                        unloadingShowReupload = false,
+                                        unloadingProcessing = false,
+                                    )
+                            }
+                        updated.copy(
+                            showFileConfirmation = false,
+                            selectedUris = emptyList(),
+                            selectedDocType = null,
+                        ).updateChanges()
+                    }
+                } catch (error: kotlinx.coroutines.CancellationException) {
+                    throw error
+                } catch (error: Exception) {
+                    _uiState.update { it.copy(error = error.message ?: "Failed to process document") }
+                } finally {
+                    _uiState.update { it.copy(loadingProcessing = false, unloadingProcessing = false) }
                 }
             }
         }

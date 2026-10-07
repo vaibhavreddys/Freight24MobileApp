@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.truckowners.profile.view
+
 import android.Manifest
 import android.content.Context
 import android.content.Intent
@@ -108,6 +109,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.freight24.common.util.DocumentUploadPolicy
 import com.freight24.common.model.DocumentUploadState
 import com.freight24.common.model.UploadStatus
 import com.freight24.connect.feature.truckowners.profile.domain.DocumentStatus
@@ -335,7 +337,7 @@ private fun ProfileMainContent(
 
     val imagePickerLauncher =
         rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.PickMultipleVisualMedia(),
+            contract = ActivityResultContracts.PickMultipleVisualMedia(DocumentUploadPolicy.MAX_IMAGES),
         ) { uris ->
             if (uris.isNotEmpty()) {
                 pickingUris = uris

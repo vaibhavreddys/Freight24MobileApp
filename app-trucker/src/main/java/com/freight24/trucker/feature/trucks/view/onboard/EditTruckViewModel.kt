@@ -253,7 +253,8 @@ internal class EditTruckViewModel
             isPdf: Boolean,
             onSuccess: () -> Unit,
         ) {
-            if (uris.isEmpty()) return
+            if (uris.isEmpty() || _uiState.value is UiState.Loading) return
+            _uiState.value = UiState.Loading
             Log.d(TAG, "File selected: $type, uris size: ${uris.size}")
             viewModelScope.launch {
                 try {
@@ -272,10 +273,15 @@ internal class EditTruckViewModel
                         }
                         onSuccess()
                     } else {
-                        Log.e(TAG, "Failed to process file for $type")
+                        _uiState.value = UiState.Error("Failed to process document")
                     }
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     Log.e(TAG, "Error processing file", e)
+                    _uiState.value = UiState.Error(e.message ?: "Failed to process document")
+                } finally {
+                    if (_uiState.value is UiState.Loading) _uiState.value = UiState.Idle
                 }
             }
         }
