@@ -347,6 +347,7 @@ fun IndentDetailsScreen(
                 if (it.status.equals("open", true) || it.status.equals("READY_FOR_ASSIGNMENT", true)) {
                     BottomActionBar(
                         status = it.status,
+                        canEdit = uiState.canEdit,
                         onAssignClick = { viewModel.onEvent(IndentDetailsEvent.ShowAssignDialog) },
                         onCreateTripClick = {
                             val clientMissing = it.indentGroupDetails.clientTripCost?.let { cost -> cost <= 0 } ?: true
@@ -517,6 +518,7 @@ fun IndentDetailsScreen(
 @Composable
 private fun BottomActionBar(
     status: String,
+    canEdit: Boolean,
     onAssignClick: () -> Unit,
     onCreateTripClick: () -> Unit,
     onEditClick: () -> Unit,
@@ -536,24 +538,31 @@ private fun BottomActionBar(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(
-                onClick = onEditClick,
-                modifier =
-                    Modifier
-                        .size(48.dp)
-                        .background(colorScheme.surfaceVariant, CircleShape)
-                        .docketTag("indent_details_edit_button")
-                        .semantics { contentDescription = "Edit indent" },
-            ) {
-                Icon(
-                    Icons.Default.Edit,
-                    contentDescription = null,
-                    tint = colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
+            // Only an indent the operator raised, or had cloned to them, is theirs
+            // to correct. The backend refuses an edit from anyone else, so the
+            // button is withheld rather than left to fail on tap. The `OTHER`
+            // ownership type is the backend's own default for "not yours"
+            // (backendapi/src/routes/indents.js:1625).
+            if (canEdit) {
+                IconButton(
+                    onClick = onEditClick,
+                    modifier =
+                        Modifier
+                            .size(48.dp)
+                            .background(colorScheme.surfaceVariant, CircleShape)
+                            .docketTag("indent_details_edit_button")
+                            .semantics { contentDescription = "Edit indent" },
+                ) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = null,
+                        tint = colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
 
-            Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+            }
 
             Button(
                 onClick = {

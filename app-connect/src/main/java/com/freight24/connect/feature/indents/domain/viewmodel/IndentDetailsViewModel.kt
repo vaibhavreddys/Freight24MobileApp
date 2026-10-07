@@ -31,6 +31,13 @@ data class IndentDetailsUiState(
     val isSuitableTrucksSheetVisible: Boolean = false,
     val isSuitableTrucksLoading: Boolean = false,
     val suitableTrucksList: com.freight24.rest.response.SearchTruckerResponse.TruckerData? = null,
+    /**
+     * Whether this operator may correct the indent — i.e. they raised it, it was
+     * cloned to them, or they hold an admin / operations_manager role. Mirrors the
+     * check the backend runs on `PUT /api/v1/indents/:id`, so the edit control is
+     * withheld only where the write would actually be refused.
+     */
+    val canEdit: Boolean = false,
 )
 
 sealed class IndentDetailsEvent {

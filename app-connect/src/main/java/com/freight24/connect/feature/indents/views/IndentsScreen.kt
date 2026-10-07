@@ -248,8 +248,8 @@ fun IndentsList(
                 status = indent.status,
                 fromCity = loadingLocation?.areaName ?: loadingLocation?.cityName ?: "Unknown",
                 toCity = unloadingLocation?.areaName ?: unloadingLocation?.cityName ?: "Unknown",
-                clientCostFormatted = formatCurrency(indent.indentGroupDetails.clientTripCost),
-                negotiatedCostFormatted = formatCurrency(indent.negotiatedTripCost),
+                clientCostFormatted = formatCurrencyOrNull(indent.indentGroupDetails.clientTripCost),
+                negotiatedCostFormatted = formatCurrencyOrNull(indent.negotiatedTripCost),
                 truckDisplay = indent.indentGroupDetails.truckType?.displayName ?: "N/A",
                 weightDisplay = formatLoadWeight(indent.indentGroupDetails.loadWeight, "MT"),
                 materialDisplay = indent.indentGroupDetails.material.replaceFirstChar { it.uppercase() },
@@ -331,3 +331,12 @@ fun formatCurrency(amount: Double?): String {
     if (amount == null) return "₹0"
     return "₹${"%,.0f".format(amount)}"
 }
+
+/**
+ * [formatCurrency] for the places a missing rate should leave no trace at all
+ * rather than print `₹0`. An unset rate and a zero rate both mean "not agreed
+ * yet", and a card that advertises a rate of nothing is worse than one that
+ * simply omits the line — the operator cannot tell the two apart on the docket.
+ */
+fun formatCurrencyOrNull(amount: Double?): String? =
+    if (amount == null || amount <= 0.0) null else formatCurrency(amount)

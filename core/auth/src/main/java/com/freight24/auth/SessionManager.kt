@@ -103,6 +103,28 @@ class SessionManager
             }
         }
 
+        /**
+         * True when the session carries one of the roles the backend treats as
+         * all-powerful on operational records — `admin` or `operations_manager`.
+         *
+         * These two are the roles the API exempts from ownership checks when it
+         * writes to another operator's record, e.g. the indent update at
+         * `PUT /api/v1/indents/:id`, which admits either the assignee or these
+         * roles. UI that gates an action behind ownership should use this so it
+         * never withholds a write the server would have accepted.
+         */
+        fun isAdminOrOpsManager(): Boolean {
+            val candidates =
+                buildList {
+                    getActiveRole()?.let { add(it) }
+                    addAll(getRoles())
+                }
+            return candidates.any { role ->
+                val normalized = role.trim().lowercase()
+                normalized == ADMIN_ROLE || normalized == OPS_MANAGER_ROLE
+            }
+        }
+
         suspend fun ensureInstallationId(): String = authDataStore.ensureInstallationId()
 
         suspend fun saveSession(
@@ -309,5 +331,11 @@ class SessionManager
 
             /** `employee_profiles.designation` for the same role. */
             const val FLEET_EXEC_ROLE = "fleet_exec"
+
+            /** Backend `roles.name` that bypasses record-ownership checks. */
+            const val ADMIN_ROLE = "admin"
+
+            /** Second backend role with the same ownership exemption. */
+            const val OPS_MANAGER_ROLE = "operations_manager"
         }
     }

@@ -51,7 +51,7 @@ import com.freight24.connect.feature.inbox.domain.viewmodel.InboxViewModel
 import com.freight24.connect.feature.inbox.domain.viewmodel.InboxViewModelImpl
 import com.freight24.connect.feature.indents.views.ConnectIndentCard
 import com.freight24.connect.feature.indents.views.docketTag
-import com.freight24.connect.feature.indents.views.formatCurrency
+import com.freight24.connect.feature.indents.views.formatCurrencyOrNull
 import com.freight24.rest.response.IndentInterestInboxResponse
 import com.freight24.ui.components.FreightEmptyState
 import com.freight24.ui.components.FreightTopAppBar
@@ -178,8 +178,8 @@ fun IndentInterestCard(
             indentData.load.unloading.area
                 ?: indentData.load.unloading.city
                 ?: "Unknown",
-        clientCostFormatted = formatCurrency(indentData.load.pricing.clientCost),
-        negotiatedCostFormatted = formatCurrency(indentData.load.pricing.negotiatedCost),
+        clientCostFormatted = formatCurrencyOrNull(indentData.load.pricing.clientCost),
+        negotiatedCostFormatted = formatCurrencyOrNull(indentData.load.pricing.negotiatedCost),
         truckDisplay = indentData.load.truck.displayName,
         weightDisplay = formatLoadWeight(indentData.load.weight, "MT"),
         materialDisplay = indentData.load.material,

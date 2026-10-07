@@ -3,6 +3,7 @@ package com.freight24.connect.feature.indents.domain.viewmodel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.freight24.auth.SessionManager
 import com.freight24.common.util.formatIndianCurrency
 import com.freight24.connect.feature.findTrucks.domain.usecases.FindTrucksUseCase
 import com.freight24.connect.feature.findTrucks.domain.usecases.FindTrucksUseCaseDataParams
@@ -16,6 +17,7 @@ import com.freight24.connect.feature.indents.domain.usecases.GetIndentByIdUseCas
 import com.freight24.connect.feature.indents.domain.usecases.GetIndentByIdUseCaseParams
 import com.freight24.connect.feature.indents.domain.usecases.TruckerInterestInboxUseCase
 import com.freight24.connect.feature.indents.domain.usecases.TruckerInterestInboxUseCaseParams
+import com.freight24.rest.response.IndentResponse
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,9 +36,16 @@ class IndentDetailsViewModelImpl
         private val truckerInterestInboxUseCase: TruckerInterestInboxUseCase,
         private val withdrawInterestUseCase: WithDrawInterestUseCase,
         private val findTrucksUseCase: FindTrucksUseCase,
+        sessionManager: SessionManager,
     ) : ViewModel(), IndentDetailsViewModel {
         private val _uiState = MutableStateFlow(IndentDetailsUiState())
         override val uiState: StateFlow<IndentDetailsUiState> = _uiState.asStateFlow()
+
+        /**
+         * Roles the backend exempts from record ownership on
+         * `PUT /api/v1/indents/:id`. Resolved once — roles do not change mid-session.
+         */
+        private val canOverrideOwnership = sessionManager.isAdminOrOpsManager()
 
         private var currentIndentId: String? = null
 
@@ -200,6 +209,18 @@ class IndentDetailsViewModelImpl
             }
         }
 
+        /**
+         * True when the backend's ownership type says this indent is the caller's —
+         * `CREATED_BY_ME` or `CLONED_TO_ME`.
+         *
+         * A missing type is treated as not-theirs. The detail endpoint sends the
+         * field on every response, so an absent value means the payload predates
+         * it, and withholding the control is the safe reading: it only ever hides
+         * an edit that would have been refused anyway.
+         */
+        private fun IndentResponse.Indent?.isOwnedByCaller(): Boolean =
+            this?.indentOwnership?.let { !it.equals(OWNERSHIP_OTHER, ignoreCase = true) && it.isNotBlank() } == true
+
         private fun loadIndent(
             indentId: String,
             isPullToRefresh: Boolean = false,
@@ -222,11 +243,13 @@ class IndentDetailsViewModelImpl
 
                 if (result.isSuccess) {
                     val response = result.getOrNull()
+                    val indent = response?.data
                     _uiState.update {
                         it.copy(
                             isLoading = false,
                             isRefreshing = false,
-                            indent = response?.data,
+                            indent = indent,
+                            canEdit = canOverrideOwnership || indent.isOwnedByCaller(),
                         )
                     }
                 } else {
@@ -246,6 +269,11 @@ class IndentDetailsViewModelImpl
                     }
                 }
             }
+        }
+
+        private companion object {
+            /** Backend `indentOwnership` value for an indent belonging to someone else. */
+            const val OWNERSHIP_OTHER = "OTHER"
         }
 
         private fun confirmAssignment() {

@@ -67,8 +67,12 @@ fun ConnectIndentCard(
     status: String,
     fromCity: String,
     toCity: String,
-    clientCostFormatted: String,
-    negotiatedCostFormatted: String,
+    /**
+     * Null omits the line entirely. Produced by [formatCurrencyOrNull], so a rate
+     * that was never agreed prints nothing instead of `₹0`.
+     */
+    clientCostFormatted: String?,
+    negotiatedCostFormatted: String?,
     truckDisplay: String,
     weightDisplay: String,
     materialDisplay: String,
@@ -149,10 +153,16 @@ fun ConnectIndentCard(
 
             Spacer(Modifier.width(10.dp))
 
-            Column(horizontalAlignment = Alignment.End) {
-                CostLine(label = stringResource(R.string.client_cost), value = clientCostFormatted)
-                Spacer(Modifier.height(4.dp))
-                CostLine(label = stringResource(R.string.target_cost), value = negotiatedCostFormatted, emphasised = true)
+            if (clientCostFormatted != null || negotiatedCostFormatted != null) {
+                Column(horizontalAlignment = Alignment.End) {
+                    clientCostFormatted?.let {
+                        CostLine(label = stringResource(R.string.client_cost), value = it)
+                        Spacer(Modifier.height(4.dp))
+                    }
+                    negotiatedCostFormatted?.let {
+                        CostLine(label = stringResource(R.string.target_cost), value = it, emphasised = true)
+                    }
+                }
             }
         }
 
