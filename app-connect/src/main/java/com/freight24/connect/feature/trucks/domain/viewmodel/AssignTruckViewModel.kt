@@ -32,6 +32,18 @@ sealed class AssignTruckEvent {
     object ClearSearch : AssignTruckEvent()
 }
 
+/**
+ * Characters needed before the screen searches.
+ *
+ * Two, not three: an Indian registration opens with the state code, so `KA`
+ * already means "every truck registered in Karnataka". Requiring a third
+ * character made the operator type past the one token that carries that meaning.
+ *
+ * The endpoint itself accepts any length — this is a client-side floor, and the
+ * only thing standing between a keystroke and a request.
+ */
+private const val MIN_QUERY_LENGTH = 2
+
 @HiltViewModel
 class AssignTruckViewModel
     @Inject
@@ -49,7 +61,7 @@ class AssignTruckViewModel
                     _uiState.update { it.copy(query = event.query) }
                     // Debounce search
                     searchJob?.cancel()
-                    if (event.query.length >= 3) {
+                    if (event.query.length >= MIN_QUERY_LENGTH) {
                         searchJob =
                             viewModelScope.launch {
                                 delay(500) // 500ms debounce
@@ -61,7 +73,7 @@ class AssignTruckViewModel
                 }
                 is AssignTruckEvent.Search -> {
                     searchJob?.cancel()
-                    if (_uiState.value.query.length >= 3) {
+                    if (_uiState.value.query.length >= MIN_QUERY_LENGTH) {
                         performSearch(_uiState.value.query)
                     }
                 }
