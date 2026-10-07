@@ -36,7 +36,7 @@ import androidx.navigation.NavController
 import com.freight24.connect.feature.indents.domain.viewmodel.SearchSelectionEvent
 import com.freight24.connect.feature.indents.domain.viewmodel.SearchSelectionViewModel
 import com.freight24.connect.feature.indents.domain.viewmodel.SearchSelectionViewModelImpl
-import com.freight24.rest.response.ClientDto
+import com.freight24.connect.domain.model.ClientPickerOption
 import com.freight24.rest.response.LocationDto
 import com.freight24.ui.components.FreightTopAppBar
 import kotlinx.serialization.encodeToString
@@ -172,7 +172,7 @@ fun SearchSelectionScreen(
                                         },
                                     )
                                 }
-                                is ClientDto -> {
+                                is ClientPickerOption -> {
                                     ClientListItem(
                                         client = item,
                                         onClick = {
@@ -220,7 +220,7 @@ private fun LocationListItem(
 
 @Composable
 private fun ClientListItem(
-    client: ClientDto,
+    client: ClientPickerOption,
     onClick: () -> Unit,
 ) {
     ListItem(
@@ -233,7 +233,7 @@ private fun ClientListItem(
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    text = client.tagCode,
+                    text = client.displayName ?: client.companyPhone.orEmpty(),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

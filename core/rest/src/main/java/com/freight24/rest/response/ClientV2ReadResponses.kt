@@ -127,6 +127,7 @@ data class ClientV2DetailContactDto(
     val isActive: Boolean = true,
     val clientRoles: List<ClientV2RoleDto> = emptyList(),
     val branchAssignments: List<ClientV2BranchAssignmentDto> = emptyList(),
+    val role: ClientV2RoleDto? = null,
 )
 
 @Serializable
@@ -151,8 +152,50 @@ data class ClientV2DetailBranchDto(
     val branchCode: String? = null,
     val branchType: ClientBranchTypeV2Dto? = null,
     val status: String? = null,
+    val address: ClientV2BranchAddressDto? = null,
+    val billingAddress: ClientV2BranchBillingAddressDto? = null,
+    val gst: ClientV2BranchGstDto? = null,
+    val pod: ClientV2BranchPodDto? = null,
     val contacts: List<ClientV2DetailContactDto> = emptyList(),
     val documents: List<ClientV2DocumentDto> = emptyList(),
+)
+
+@Serializable
+data class ClientV2BranchAddressDto(
+    val line1: String? = null,
+    val line2: String? = null,
+    val area: V2NamedIdDto? = null,
+    val city: V2NamedIdDto? = null,
+    val state: V2NamedIdDto? = null,
+    val pinCode: String? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+)
+
+@Serializable
+data class ClientV2BranchBillingAddressDto(
+    val sameAsBranch: Boolean? = null,
+    val line1: String? = null,
+    val line2: String? = null,
+    val area: V2NamedIdDto? = null,
+    val city: V2NamedIdDto? = null,
+    val state: V2NamedIdDto? = null,
+    val pinCode: String? = null,
+)
+
+@Serializable
+data class ClientV2BranchGstDto(
+    val gstin: String? = null,
+    val legalName: String? = null,
+    val addressSameAsBranch: Boolean? = null,
+    val address: ClientV2BranchAddressDto? = null,
+    val registrationStatus: String? = null,
+)
+
+@Serializable
+data class ClientV2BranchPodDto(
+    val sameAsBranch: Boolean? = null,
+    val address: ClientV2BranchAddressDto? = null,
 )
 
 @Serializable

@@ -7,7 +7,6 @@ import com.freight24.network.di.AuthenticatedNetwork
 import com.freight24.network.di.DefaultNetwork
 import com.freight24.rest.api.AdhocTruckApi
 import com.freight24.rest.api.AuthSessionApi
-import com.freight24.rest.api.ClientApi
 import com.freight24.rest.api.ClientV2Api
 import com.freight24.rest.api.DocumentApi
 import com.freight24.rest.api.EmployeesApi
@@ -18,7 +17,7 @@ import com.freight24.rest.api.LeadsApi
 import com.freight24.rest.api.LocationApi
 import com.freight24.rest.api.LoginConnectApi
 import com.freight24.rest.api.NotificationServiceApi
-import com.freight24.rest.api.ProfileApi
+import com.freight24.rest.api.ReferenceDataApi
 import com.freight24.rest.api.TripApi
 import com.freight24.rest.api.TripHaltingApi
 import com.freight24.rest.api.TripLUChargesApi
@@ -70,19 +69,8 @@ object ApiModule {
             .create(LocationApi::class.java)
     }
 
-    @Provides
-    fun providesClientApi(
-        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
-    ): ClientApi {
-        return retrofitFactory
-            .create(BuildConfig.BASE_URL, "ClientApi")
-            .create(ClientApi::class.java)
-    }
-
     /**
-     * v2 client reads (branches + contacts) used by the indent flow's client
-     * pickers. Separate from [ClientApi], which still serves the legacy
-     * `/api/v1/client` screens.
+     * V2 client management reads plus branch/contact lookups used by App Connect.
      */
     @Provides
     fun providesClientV2Api(
@@ -91,6 +79,15 @@ object ApiModule {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "ClientV2Api")
             .create(ClientV2Api::class.java)
+    }
+
+    @Provides
+    fun providesReferenceDataApi(
+        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
+    ): ReferenceDataApi {
+        return retrofitFactory
+            .create(BuildConfig.BASE_URL, "ReferenceDataApi")
+            .create(ReferenceDataApi::class.java)
     }
 
     @Provides
@@ -145,15 +142,6 @@ object ApiModule {
         return retrofitFactory
             .create(BuildConfig.BASE_URL, "TruckOwnerV2Api")
             .create(TruckOwnerV2Api::class.java)
-    }
-
-    @Provides
-    fun providesProfileApi(
-        @AuthenticatedNetwork retrofitFactory: RetrofitFactory,
-    ): ProfileApi {
-        return retrofitFactory
-            .create(BuildConfig.BASE_URL, "TruckOwnerProfileApi")
-            .create(ProfileApi::class.java)
     }
 
     @Provides

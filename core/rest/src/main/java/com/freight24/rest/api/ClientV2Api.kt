@@ -2,14 +2,12 @@ package com.freight24.rest.api
 
 import com.freight24.rest.response.ClientBranchesResponse
 import com.freight24.rest.response.ClientContactsResponse
-import com.freight24.rest.response.BranchTypeOptionDto
-import com.freight24.rest.response.CityOptionDto
 import com.freight24.rest.response.ClientContactCreateRequest
 import com.freight24.rest.response.ClientContactCreateResponse
 import com.freight24.rest.response.ClientOnboardingV2Response
-import com.freight24.rest.response.ContactRoleOptionDto
-import com.freight24.rest.response.MasterDataListResponse
-import com.freight24.rest.response.StateOptionDto
+import com.freight24.rest.response.ClientV2DetailResponse
+import com.freight24.rest.response.ClientV2PageResponse
+import com.freight24.rest.response.ClientV2ValidationResponse
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -22,18 +20,23 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 /**
- * Read-only slice of the v2 client API — just what the indent flow needs to
- * populate its client branch and contact pickers.
- *
- * The rest of the v2 surface (client create/update, onboarding, documents,
- * verification, branch write ops) is deliberately **not** modelled here. The
- * existing [ClientApi] still serves the legacy `/api/v1/client` screens; moving
- * those across is a separate migration.
- *
- * Paths are host-absolute (leading `/`) because the Retrofit base URL ends in
- * `/api/v1/` while these routes are mounted at `/api/v2/client`.
+ * V2 client operations. Paths are host-absolute because the Retrofit base URL
+ * ends in `/api/v1/`.
  */
 interface ClientV2Api {
+    @GET("/api/v2/client")
+    suspend fun getClients(
+        @Query("status") status: String? = null,
+        @Query("search") search: String? = null,
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = 30,
+    ): Response<ClientV2PageResponse>
+
+    @GET("/api/v2/client/{clientId}")
+    suspend fun getClientDetail(
+        @Path("clientId") clientId: String,
+    ): Response<ClientV2DetailResponse>
+
     @Multipart
     @POST("/api/v2/client")
     suspend fun createClient(
@@ -53,23 +56,11 @@ interface ClientV2Api {
         @Body request: ClientContactCreateRequest,
     ): Response<ClientContactCreateResponse>
 
-    @GET("/api/v1/locations/states")
-    suspend fun getStates(): Response<MasterDataListResponse<StateOptionDto>>
-
-    @GET("/api/v1/locations/cities")
-    suspend fun getCities(
-        @Query("state_id") stateId: Int,
-    ): Response<MasterDataListResponse<CityOptionDto>>
-
-    @GET("/api/v1/masterData/branch-types")
-    suspend fun getBranchTypes(
-        @Query("is_active") isActive: Boolean = true,
-    ): Response<MasterDataListResponse<BranchTypeOptionDto>>
-
-    @GET("/api/v1/masterData/contact-roles")
-    suspend fun getContactRoles(
-        @Query("is_active") isActive: Boolean = true,
-    ): Response<MasterDataListResponse<ContactRoleOptionDto>>
+    @GET("/api/v2/client/validate")
+    suspend fun validateClient(
+        @Query("pan_card") panCard: String? = null,
+        @Query("gst_number") gstNumber: String? = null,
+    ): Response<ClientV2ValidationResponse>
 
     /** Active and inactive branches alike — the caller filters on [status]. */
     @GET("/api/v2/client/{clientId}/branches")

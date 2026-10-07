@@ -450,11 +450,7 @@ fun IndentDetailsScreen(
                             clientPhone = groupDetails.clientProfile?.phoneNumber,
                             callLines = groupDetails.indentContacts.toDocketCallLines(),
                             onViewProfileClick = {
-                                val userId =
-                                    groupDetails.clientProfile?.userId
-                                        ?: groupDetails.clientProfile?.id
-                                        ?: return@ConsignorClause
-                                onViewProfileClick(userId)
+                                onViewProfileClick(groupDetails.clientId)
                             },
                             onCall = { dialNumber ->
                                 context.startActivity(

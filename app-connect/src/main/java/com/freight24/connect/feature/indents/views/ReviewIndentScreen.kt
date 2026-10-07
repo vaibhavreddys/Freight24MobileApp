@@ -196,14 +196,14 @@ fun ReviewIndentScreen(
                         uiState.selectedClient?.let { client ->
                             listOfNotNull(
                                 client.companyName.takeIf { it.isNotBlank() },
-                                client.tagCode.takeIf { it.isNotBlank() },
+                                client.displayName?.takeIf { it.isNotBlank() },
                             ).joinToString(" · ")
                         },
                 )
                 LedgerDivider()
                 LedgerRow(
                     label = "Client phone",
-                    value = uiState.selectedClient?.phoneNumber,
+                    value = uiState.selectedClient?.companyPhone ?: uiState.selectedClient?.primaryContactPhone,
                 )
                 LedgerDivider()
                 LedgerRow(

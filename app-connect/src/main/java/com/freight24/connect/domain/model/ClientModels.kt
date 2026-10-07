@@ -1,5 +1,7 @@
 package com.freight24.connect.domain.model
 
+import kotlinx.serialization.Serializable
+
 data class ClientManagementItem(
     val clientId: String,
     val clientUserId: String,
@@ -26,6 +28,7 @@ data class ClientManagementItem(
     val updatedAt: String?,
 )
 
+@Serializable
 data class ClientPickerOption(
     val clientId: String,
     val clientUserId: String,
@@ -122,8 +125,19 @@ data class ClientBranch(
     val branchTypeCode: String?,
     val branchTypeName: String?,
     val status: String?,
+    val address: ClientAddress?,
+    val billingAddress: ClientAddress?,
+    val gst: ClientBranchGst?,
+    val podAddress: ClientAddress?,
     val contacts: List<ClientContact>,
     val documents: List<VerificationDocument>,
+)
+
+data class ClientBranchGst(
+    val gstin: String?,
+    val legalName: String?,
+    val registrationStatus: String?,
+    val address: ClientAddress?,
 )
 
 data class ClientDocumentSummary(

@@ -6,6 +6,17 @@ import com.freight24.rest.api.TruckOwnerV2Api
 import com.freight24.rest.api.TruckV2Api
 import com.freight24.rest.response.ClientOnboardingV2Data
 import com.freight24.rest.response.ClientOnboardingV2Response
+import com.freight24.rest.response.ClientV2CompanyDto
+import com.freight24.rest.response.ClientV2Counts
+import com.freight24.rest.response.ClientV2DetailDto
+import com.freight24.rest.response.ClientV2DetailResponse
+import com.freight24.rest.response.ClientV2PageResponse
+import com.freight24.rest.response.ClientV2SummaryDto
+import com.freight24.rest.response.ClientV2FieldValidationDto
+import com.freight24.rest.response.ClientV2ValidationData
+import com.freight24.rest.response.ClientV2ValidationResponse
+import com.freight24.rest.response.SignedDocument
+import com.freight24.rest.api.DocumentApi
 import com.freight24.rest.response.CreateTruckV2Dto
 import com.freight24.rest.response.CreateTruckV2Response
 import com.freight24.rest.response.TruckOwnerOnboardingV2Response
@@ -396,8 +407,9 @@ class V2RepositoryBoundaryContractTest {
             }
         val repository =
             ClientRepositoryImpl(
-                api = unusedApi(),
                 v2Api = v2Api,
+                documentApi = unusedApi(),
+                referenceDataApi = unusedApi(),
                 ioDispatcher = Dispatchers.Unconfined,
             )
 
@@ -410,6 +422,120 @@ class V2RepositoryBoundaryContractTest {
         assertTrue(result.isSuccess)
         assertEquals("client-profile-1", result.getOrThrow().data?.clientId)
         assertEquals("client-profile-1", forwardedClientId)
+    }
+
+    @Test
+    fun `client duplicate validation uses the v2 validation contract`() = runBlocking {
+        val v2Api =
+            apiProxy<ClientV2Api> { method, arguments ->
+                assertEquals("validateClient", method)
+                assertEquals("ABCDE1234F", arguments[0])
+                assertEquals(null, arguments[1])
+                Response.success(
+                    ClientV2ValidationResponse(
+                        success = true,
+                        data =
+                            ClientV2ValidationData(
+                                pan_card = ClientV2FieldValidationDto(exists = true),
+                            ),
+                    ),
+                )
+            }
+        val repository = ClientRepositoryImpl(v2Api, unusedApi(), unusedApi(), Dispatchers.Unconfined)
+
+        val exists = repository.isClientFieldRegistered("pan_card", "ABCDE1234F").getOrThrow()
+
+        assertTrue(exists)
+    }
+
+    @Test
+    fun `client management page forwards server search and profile identifiers`() = runBlocking {
+        val v2Api =
+            apiProxy<ClientV2Api> { method, arguments ->
+                assertEquals("getClients", method)
+                assertEquals("active", arguments[0])
+                assertEquals("Acme", arguments[1])
+                assertEquals(2, arguments[2])
+                Response.success(
+                    ClientV2PageResponse(
+                        success = true,
+                        page = 2,
+                        limit = 30,
+                        counts = ClientV2Counts(total = 31, active = 31),
+                        data = listOf(ClientV2SummaryDto("client-profile-31", "client-user-31", companyName = "Acme")),
+                    ),
+                )
+            }
+        val repository = ClientRepositoryImpl(v2Api, unusedApi(), unusedApi(), Dispatchers.Unconfined)
+
+        val page = repository.getManagementPage("Acme", "active", page = 2).getOrThrow()
+
+        assertEquals("client-profile-31", page.items.single().clientId)
+        assertEquals("client-user-31", page.items.single().clientUserId)
+        assertTrue(page.endOfList)
+    }
+
+    @Test
+    fun `client picker and detail retain client profile id namespace`() = runBlocking {
+        val v2Api =
+            apiProxy<ClientV2Api> { method, arguments ->
+                when (method) {
+                    "getClients" ->
+                        Response.success(
+                            ClientV2PageResponse(
+                                success = true,
+                                page = 1,
+                                limit = 30,
+                                counts = ClientV2Counts(total = 1, active = 1),
+                                data = listOf(ClientV2SummaryDto("client-profile-1", "client-user-1", companyName = "Acme")),
+                            ),
+                        )
+                    "getClientDetail" -> {
+                        assertEquals("client-profile-1", arguments[0])
+                        Response.success(
+                            ClientV2DetailResponse(
+                                success = true,
+                                data = ClientV2DetailDto(
+                                    id = "client-user-1",
+                                    clientId = "client-profile-1",
+                                    company = ClientV2CompanyDto("Acme"),
+                                ),
+                            ),
+                        )
+                    }
+                    else -> error("Unexpected ClientV2Api call: $method")
+                }
+            }
+        val repository = ClientRepositoryImpl(v2Api, unusedApi(), unusedApi(), Dispatchers.Unconfined)
+
+        val picker = repository.searchPickerOptions("Acme").getOrThrow().items.single()
+        val detail = repository.getDetails(picker.clientId).getOrThrow()
+
+        assertEquals("client-profile-1", picker.clientId)
+        assertEquals("client-profile-1", detail.clientId)
+        assertEquals("client-user-1", detail.clientUserId)
+    }
+
+    @Test
+    fun `client document preview uses resource scoped client and branch routes`() = runBlocking {
+        val documentApi =
+            apiProxy<DocumentApi> { method, arguments ->
+                when (method) {
+                    "getClientDocumentSignedUrl" -> {
+                        assertEquals(listOf("client-profile-1", "client-doc-1"), arguments.take(2))
+                        Response.success(SignedDocument(SignedDocument.Document("client-doc-1", "https://signed/client", 600)))
+                    }
+                    "getClientBranchDocumentSignedUrl" -> {
+                        assertEquals(listOf("client-profile-1", "branch-1", "branch-doc-1"), arguments.take(3))
+                        Response.success(SignedDocument(SignedDocument.Document("branch-doc-1", "https://signed/branch", 600)))
+                    }
+                    else -> error("Unexpected DocumentApi call: $method")
+                }
+            }
+        val repository = ClientRepositoryImpl(unusedApi(), documentApi, unusedApi(), Dispatchers.Unconfined)
+
+        assertEquals("https://signed/client", repository.getClientDocumentSignedUrl("client-profile-1", "client-doc-1").getOrThrow())
+        assertEquals("https://signed/branch", repository.getBranchDocumentSignedUrl("client-profile-1", "branch-1", "branch-doc-1").getOrThrow())
     }
 
     private fun part(name: String, value: String): MultipartBody.Part =

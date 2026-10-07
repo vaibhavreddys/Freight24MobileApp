@@ -15,7 +15,6 @@ import com.freight24.connect.feature.clients.domain.usecases.CreateClientUseCase
 import com.freight24.connect.repository.ClientRepository
 import com.freight24.connect.feature.truckowners.profile.util.ProfileFieldValidators
 import com.freight24.connect.feature.truckowners.profile.util.ValidationResult
-import com.freight24.rest.api.ClientApi
 import com.freight24.rest.response.BranchTypeOptionDto
 import com.freight24.rest.response.CityOptionDto
 import com.freight24.rest.response.ContactRoleOptionDto
@@ -37,7 +36,6 @@ import javax.inject.Inject
 class OnboardClientViewModel @Inject constructor(
     private val createClientUseCase: CreateClientUseCase,
     private val repository: ClientRepository,
-    private val clientApi: ClientApi,
     private val savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
     private companion object {
@@ -129,9 +127,8 @@ class OnboardClientViewModel @Inject constructor(
     private fun checkDuplicate(field: String, value: String, target: MutableStateFlow<String?>, message: String) {
         if ((field == "pan_card" && value.length != 10) || (field == "gst_number" && value.length != 15)) return
         viewModelScope.launch(Dispatchers.IO) {
-            runCatching { clientApi.checkClientField(field, value) }.getOrNull()?.let { response ->
-                if (response.isSuccessful && response.body()?.exists == true) target.value = message
-            }
+            repository.isClientFieldRegistered(field, value)
+                .onSuccess { exists -> if (exists) target.value = message }
         }
     }
 

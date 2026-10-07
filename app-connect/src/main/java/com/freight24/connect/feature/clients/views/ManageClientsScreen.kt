@@ -16,9 +16,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Search
@@ -27,7 +27,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -37,6 +36,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,28 +48,40 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.navigation.NavController
 import com.freight24.connect.feature.clients.domain.viewmodel.ManageClientsViewModel
 import com.freight24.ui.UiState
 import com.freight24.ui.components.ClientHeaderCard
 import com.freight24.ui.components.FreightEmptyState
 import com.freight24.ui.components.FreightTopAppBar
+import kotlinx.coroutines.flow.distinctUntilChanged
+import androidx.compose.runtime.snapshotFlow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ManageClientsScreen(
-    navController: NavController,
     viewModel: ManageClientsViewModel = hiltViewModel(),
-    onAddClientClick: () -> Unit,
     onClientClick: (String) -> Unit,
     onBackClick: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
-    val filteredClients by viewModel.filteredClients.collectAsState()
+    val clients by viewModel.clients.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val isLoadingMore by viewModel.isLoadingMore.collectAsState()
+    val listState = rememberLazyListState()
     var isNavigatingBack by remember { mutableStateOf(false) }
     val navigationInteractionSource = remember { MutableInteractionSource() }
+
+    LaunchedEffect(listState, clients.size) {
+        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+            .distinctUntilChanged()
+            .collect { lastVisibleIndex ->
+                val totalItems = listState.layoutInfo.totalItemsCount
+                if (lastVisibleIndex != null && totalItems > 0 && lastVisibleIndex >= totalItems - 4) {
+                    viewModel.loadNextPage()
+                }
+            }
+    }
 
     fun navigateBack() {
         if (isNavigatingBack) return
@@ -97,15 +109,6 @@ fun ManageClientsScreen(
                     }
                 },
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { if (!isNavigatingBack) onAddClientClick() },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Onboard New Client")
-            }
         },
     ) { paddingValues ->
         Box(
@@ -197,14 +200,14 @@ fun ManageClientsScreen(
                             }
                         }
                         is UiState.Success -> {
-                            if (filteredClients.isEmpty()) {
+                            if (clients.isEmpty()) {
                                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                     FreightEmptyState(
                                         icon = Icons.Default.Business,
                                         title = if (searchQuery.isEmpty()) "No clients yet" else "No matching clients",
                                         subtitle =
                                             if (searchQuery.isEmpty()) {
-                                                "Onboard your first client to start creating indents"
+                                                "No clients are available"
                                             } else {
                                                 "Try a different name, company or phone"
                                             },
@@ -212,22 +215,33 @@ fun ManageClientsScreen(
                                 }
                             } else {
                                 LazyColumn(
+                                    state = listState,
                                     contentPadding = PaddingValues(end = 16.dp, bottom = 16.dp, start = 16.dp),
                                     verticalArrangement = Arrangement.spacedBy(12.dp),
                                     modifier = Modifier.fillMaxSize(),
                                 ) {
-                                    items(filteredClients, key = { it.userId }) { client ->
+                                    items(clients, key = { it.clientId }) { client ->
                                         ClientHeaderCard(
                                             companyName = client.companyName,
-                                            fullName = client.fullName,
-                                            phone = client.phoneNumber,
-                                            status = client.status,
+                                            fullName = client.displayName.orEmpty(),
+                                            phone = client.companyPhone.orEmpty(),
+                                            status = client.status.orEmpty(),
                                             showPhone = false,
                                             modifier =
                                                 Modifier.clickable {
-                                                    onClientClick(client.userId)
+                                                    onClientClick(client.clientId)
                                                 },
                                         )
+                                    }
+                                    if (isLoadingMore) {
+                                        item {
+                                            Box(
+                                                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                                contentAlignment = Alignment.Center,
+                                            ) {
+                                                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                                            }
+                                        }
                                     }
                                 }
                             }

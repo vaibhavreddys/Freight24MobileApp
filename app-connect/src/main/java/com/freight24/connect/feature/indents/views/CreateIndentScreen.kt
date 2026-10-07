@@ -60,7 +60,7 @@ import com.freight24.connect.feature.indents.domain.viewmodel.CreateIndentUiStat
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentContactRole
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsViewModel
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsViewModelImpl
-import com.freight24.rest.response.ClientDto
+import com.freight24.connect.domain.model.ClientPickerOption
 import com.freight24.rest.response.LocationDto
 import com.freight24.rest.response.TruckCategoryDto
 import com.freight24.rest.response.TruckTypeDto
@@ -147,7 +147,7 @@ fun CreateIndentScreen(
         savedStateHandle?.getStateFlow<String?>("selected_client", null)
             ?.collect { json ->
                 json?.let {
-                    val client = Json.decodeFromString<ClientDto>(it)
+                    val client = Json.decodeFromString<ClientPickerOption>(it)
                     viewModel.onEvent(CreateIndentEvent.SelectClient(client))
                     savedStateHandle.remove<String>("selected_client")
                 }
@@ -557,7 +557,7 @@ private fun ConsignorClause(
         uiState.selectedClient?.let { client ->
             listOfNotNull(
                 client.companyName.takeIf { it.isNotBlank() },
-                client.tagCode.takeIf { it.isNotBlank() },
+                client.displayName?.takeIf { it.isNotBlank() },
             ).joinToString(" · ")
         }.orEmpty()
 

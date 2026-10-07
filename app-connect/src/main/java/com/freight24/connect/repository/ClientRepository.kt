@@ -1,10 +1,12 @@
 package com.freight24.connect.repository
 
-import com.freight24.rest.request.UpdateClientRequest
+import com.freight24.connect.domain.model.ClientCounts
+import com.freight24.connect.domain.model.ClientDetails
+import com.freight24.connect.domain.model.ClientManagementItem
+import com.freight24.connect.domain.model.ClientPickerOption
+import com.freight24.connect.domain.model.EntityPage
 import com.freight24.rest.response.ClientBranchV2Dto
 import com.freight24.rest.response.ClientContactV2Dto
-import com.freight24.rest.response.ClientDto
-import com.freight24.rest.response.ClientProfileDto
 import com.freight24.rest.response.BranchTypeOptionDto
 import com.freight24.rest.response.CityOptionDto
 import com.freight24.rest.response.ClientContactCreateRequest
@@ -14,13 +16,24 @@ import com.freight24.rest.response.StateOptionDto
 import okhttp3.MultipartBody
 
 interface ClientRepository {
-    suspend fun getClients(): Result<List<ClientDto>>
+    suspend fun getManagementPage(
+        query: String? = null,
+        status: String? = null,
+        page: Int = 1,
+        limit: Int = 30,
+    ): Result<EntityPage<ClientManagementItem, ClientCounts>>
 
-    suspend fun searchClients(query: String): Result<List<ClientDto>>
+    suspend fun searchPickerOptions(
+        query: String,
+        page: Int = 1,
+        limit: Int = 30,
+    ): Result<EntityPage<ClientPickerOption, ClientCounts>>
 
-    suspend fun getClientByUserId(clientUserId: String): Result<ClientProfileDto>
+    suspend fun getDetails(clientId: String): Result<ClientDetails>
 
-    suspend fun createClient(request: UpdateClientRequest): Result<Boolean>
+    suspend fun getClientDocumentSignedUrl(clientId: String, documentId: String): Result<String>
+
+    suspend fun getBranchDocumentSignedUrl(clientId: String, branchId: String, documentId: String): Result<String>
 
     suspend fun createClientV2(parts: List<MultipartBody.Part>): Result<ClientOnboardingV2Response>
 
@@ -42,10 +55,7 @@ interface ClientRepository {
 
     suspend fun getContactRoles(): Result<List<ContactRoleOptionDto>>
 
-    suspend fun updateClient(
-        clientUserId: String,
-        request: UpdateClientRequest,
-    ): Result<ClientProfileDto>
+    suspend fun isClientFieldRegistered(field: String, value: String): Result<Boolean>
 
     /**
      * Branches of a client, from `/api/v2/client/:clientId/branches`.

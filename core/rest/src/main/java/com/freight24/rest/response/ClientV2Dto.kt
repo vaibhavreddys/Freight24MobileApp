@@ -7,10 +7,8 @@ import kotlinx.serialization.Serializable
  * Client branch and contact reads from the v2 client API (backend commits
  * `aeee64a` + `60b47bc`).
  *
- * **Naming:** every type here carries a `V2` suffix. The legacy v1 client
- * responses in `ClientProfileResponse.kt` already define a `ClientBranchDto`
- * with a completely different shape (`branch_address`, `pod_contact_name`, …);
- * these are not interchangeable and must not be confused.
+ * **Naming:** every type here carries a `V2` suffix so branch/contact endpoint
+ * payloads remain distinct from the nested client-detail response types.
  *
  * **Path note:** these live under `/api/v2/client`, while the app's Retrofit
  * base URL ends in `/api/v1/`. The endpoints therefore declare host-absolute

@@ -3,7 +3,7 @@ package com.freight24.connect.feature.indents.domain.viewmodel
 import androidx.compose.runtime.Immutable
 import com.freight24.rest.response.ClientBranchV2Dto
 import com.freight24.rest.response.ClientContactV2Dto
-import com.freight24.rest.response.ClientDto
+import com.freight24.connect.domain.model.ClientPickerOption
 import com.freight24.rest.response.LocationDto
 import com.freight24.rest.response.MaterialDto
 import com.freight24.rest.response.TruckCategoryDto
@@ -55,8 +55,8 @@ data class CreateIndentUiState(
     val toLocationSearchResults: List<LocationDto> = emptyList(),
     val selectedToLocation: LocationDto? = null,
     val clientQuery: String = "",
-    val clientSearchResults: List<ClientDto> = emptyList(),
-    val selectedClient: ClientDto? = null,
+    val clientSearchResults: List<ClientPickerOption> = emptyList(),
+    val selectedClient: ClientPickerOption? = null,
     // --- Client branch + contact roles (backend commits 1030f9c / aeee64a) ---
     val branches: List<ClientBranchV2Dto> = emptyList(),
     val isLoadingBranches: Boolean = false,
@@ -135,7 +135,7 @@ sealed class CreateIndentEvent {
 
     data class SelectToLocation(val location: LocationDto) : CreateIndentEvent()
 
-    data class SelectClient(val client: ClientDto) : CreateIndentEvent()
+    data class SelectClient(val client: ClientPickerOption) : CreateIndentEvent()
 
     /** `null` clears the branch back to "not set" (the backend allows null). */
     data class SelectBranch(val branch: ClientBranchV2Dto?) : CreateIndentEvent()

@@ -6,19 +6,13 @@ import com.freight24.connect.feature.truckowners.profile.domain.ProfileRepositor
 import com.freight24.connect.feature.truckowners.profile.mapper.toProfile
 import com.freight24.connect.repository.TruckOwnerRepository
 import com.freight24.network.provider.SafeCallProvider
-import com.freight24.rest.api.ProfileApi
-import com.freight24.rest.request.FinalSaveRequest
-import com.freight24.rest.response.IdentityDocumentUploadResponse
 import kotlinx.coroutines.CoroutineDispatcher
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.RequestBody.Companion.toRequestBody
 import javax.inject.Inject
 
 internal class ProfileRepositoryImpl
     @Inject
     constructor(
         private val truckOwnerRepository: TruckOwnerRepository,
-        private val api: ProfileApi,
         private val documentApi: com.freight24.rest.api.DocumentApi,
         private val safeCallProvider: SafeCallProvider,
         @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
@@ -34,48 +28,9 @@ internal class ProfileRepositoryImpl
             return truckOwnerRepository.updateStatus(userId, status).map { true }
         }
 
-        override suspend fun uploadIdentityDocument(
-            userId: String,
-            documentTypeId: Int,
-            documentNumber: String,
-            file: okhttp3.MultipartBody.Part,
-        ): Result<String> {
-            return safeCallProvider.safeApiCall(ioDispatcher) {
-                val documentNumberBody = documentNumber.toRequestBody("text/plain".toMediaTypeOrNull())
-                api.uploadIdentityDocumentWithTemporaryKey(file, documentTypeId, userId, documentNumberBody)
-            }.map { response ->
-                response.extractTemporaryFileKey()
-            }
-        }
-
-        override suspend fun updateIdentityDocument(
-            docId: String,
-            userId: String,
-            documentNumber: String,
-            file: okhttp3.MultipartBody.Part,
-        ): Result<String> {
-            return safeCallProvider.safeApiCall(ioDispatcher) {
-                val documentNumberBody = documentNumber.toRequestBody("text/plain".toMediaTypeOrNull())
-                api.updateIdentityDocumentWithTemporaryKey(docId, userId, file, documentNumberBody)
-            }.map { response ->
-                response.extractTemporaryFileKey()
-            }
-        }
-
-        override suspend fun finalizeIdentityDocuments(request: FinalSaveRequest): Result<Boolean> {
-            return safeCallProvider.safeApiCall(ioDispatcher) {
-                api.finalizeIdentityDocuments(request)
-            }.map { it.success }
-        }
-
         override suspend fun getIdentityDocumentSignedUrl(documentId: String): Result<String> {
             return safeCallProvider.safeApiCall(ioDispatcher) {
                 documentApi.getIdentityDocumentSignedUrl(documentId)
             }.map { it.data.signedUrl }
-        }
-
-        private fun IdentityDocumentUploadResponse.extractTemporaryFileKey(): String {
-            val key = data?.temporaryFileKey ?: data?.fileKey
-            return key ?: throw IllegalStateException("temporaryFileKey missing in upload response")
         }
     }

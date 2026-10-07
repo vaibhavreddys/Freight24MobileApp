@@ -542,8 +542,41 @@ private fun ClientV2DetailBranchDto.toDomain() =
         branchTypeCode = branchType?.code,
         branchTypeName = branchType?.name,
         status = status,
+        address = address?.toDomain(),
+        billingAddress = billingAddress?.toDomain(),
+        gst = gst?.let {
+            com.freight24.connect.domain.model.ClientBranchGst(
+                gstin = it.gstin,
+                legalName = it.legalName,
+                registrationStatus = it.registrationStatus,
+                address = it.address?.toDomain(),
+            )
+        },
+        podAddress = pod?.address?.toDomain(),
         contacts = contacts.map { it.toDomain() },
         documents = documents.map { it.toDomain() },
+    )
+
+private fun com.freight24.rest.response.ClientV2BranchAddressDto.toDomain() =
+    ClientAddress(
+        line1 = line1,
+        line2 = line2,
+        area = area?.toDomain(),
+        city = city?.toDomain(),
+        state = state?.toDomain(),
+        pinCode = pinCode,
+        sameAsRegistered = null,
+    )
+
+private fun com.freight24.rest.response.ClientV2BranchBillingAddressDto.toDomain() =
+    ClientAddress(
+        line1 = line1,
+        line2 = line2,
+        area = area?.toDomain(),
+        city = city?.toDomain(),
+        state = state?.toDomain(),
+        pinCode = pinCode,
+        sameAsRegistered = sameAsBranch,
     )
 
 private fun ClientV2DocumentDto.toDomain() =

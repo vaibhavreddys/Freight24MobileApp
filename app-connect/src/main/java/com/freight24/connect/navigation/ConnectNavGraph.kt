@@ -14,7 +14,6 @@ import com.freight24.connect.enum.ConnectTab
 import com.freight24.connect.feature.adhocTruck.views.QuickAdhocTruckScreen
 import com.freight24.connect.feature.clients.views.ClientProfileScreen
 import com.freight24.connect.feature.clients.views.ManageClientsScreen
-import com.freight24.connect.feature.clients.views.OnboardClientScreen
 import com.freight24.connect.feature.home.HomeScreen
 import com.freight24.connect.feature.inbox.views.InboxScreen
 import com.freight24.connect.feature.indents.views.CloneIndentScreen
@@ -108,27 +107,11 @@ fun ConnectNavGraph(
 
         composable(ConnectDestination.ManageClients.route) {
             ManageClientsScreen(
-                navController = navHostController,
-                onAddClientClick = {
-                    navHostController.navigate(ConnectDestination.OnboardClient.route)
-                },
-                onClientClick = { clientUserId ->
-                    navHostController.navigate(ConnectDestination.ClientProfile.createRoute(clientUserId))
+                onClientClick = { clientId ->
+                    navHostController.navigate(ConnectDestination.ClientProfile.createRoute(clientId))
                 },
                 onBackClick = {
                     navHostController.popBackStack()
-                },
-            )
-        }
-
-        composable(ConnectDestination.OnboardClient.route) {
-            OnboardClientScreen(
-                onBackClick = { navHostController.popBackStack() },
-                onCloseSuccess = { navHostController.popBackStack() },
-                onViewClientProfile = { clientUserId ->
-                    navHostController.navigate(ConnectDestination.ClientProfile.createRoute(clientUserId)) {
-                        popUpTo(ConnectDestination.OnboardClient.route) { inclusive = true }
-                    }
                 },
             )
         }
@@ -741,8 +724,8 @@ fun ConnectNavGraph(
                 onCreateTripClick = { id ->
                     navHostController.navigate(ConnectDestination.AssignTruck.createRoute(id))
                 },
-                onViewProfileClick = { clientUserId ->
-                    navHostController.navigate(ConnectDestination.ClientProfile.createRoute(clientUserId))
+                onViewProfileClick = { clientId ->
+                    navHostController.navigate(ConnectDestination.ClientProfile.createRoute(clientId))
                 },
             )
         }

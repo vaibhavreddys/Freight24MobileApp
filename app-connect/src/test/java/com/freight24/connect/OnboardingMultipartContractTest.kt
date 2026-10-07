@@ -22,7 +22,6 @@ import com.freight24.connect.feature.trucks.domain.usecases.AddTruckUseCaseImpl
 import com.freight24.connect.repository.ClientRepository
 import com.freight24.connect.repository.TruckOwnerRepository
 import com.freight24.connect.repository.TruckRepository
-import com.freight24.rest.request.UpdateClientRequest
 import com.freight24.rest.response.*
 import kotlinx.coroutines.runBlocking
 import okhttp3.MultipartBody
@@ -383,15 +382,16 @@ private class CapturingClientRepository : ClientRepository {
         return Result.success(Unit)
     }
 
-    override suspend fun getClients() = error("unused")
-    override suspend fun searchClients(query: String) = error("unused")
-    override suspend fun getClientByUserId(clientUserId: String) = error("unused")
-    override suspend fun createClient(request: UpdateClientRequest) = error("unused")
+    override suspend fun getManagementPage(query: String?, status: String?, page: Int, limit: Int) = error("unused")
+    override suspend fun searchPickerOptions(query: String, page: Int, limit: Int) = error("unused")
+    override suspend fun getDetails(clientId: String) = error("unused")
+    override suspend fun getClientDocumentSignedUrl(clientId: String, documentId: String) = error("unused")
+    override suspend fun getBranchDocumentSignedUrl(clientId: String, branchId: String, documentId: String) = error("unused")
     override suspend fun getStates() = error("unused")
     override suspend fun getCities(stateId: Int) = error("unused")
     override suspend fun getBranchTypes() = error("unused")
     override suspend fun getContactRoles() = error("unused")
-    override suspend fun updateClient(clientUserId: String, request: UpdateClientRequest) = error("unused")
+    override suspend fun isClientFieldRegistered(field: String, value: String) = error("unused")
     override suspend fun getClientBranches(clientId: String) = error("unused")
     override suspend fun getClientContacts(clientId: String) = error("unused")
 }

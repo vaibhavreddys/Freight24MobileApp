@@ -2,13 +2,11 @@ package com.freight24.connect.repository
 
 import com.freight24.common.di.IoDispatcher
 import com.freight24.network.error.toApiException
-import com.freight24.rest.api.ClientApi
 import com.freight24.rest.api.ClientV2Api
-import com.freight24.rest.request.UpdateClientRequest
+import com.freight24.rest.api.DocumentApi
+import com.freight24.rest.api.ReferenceDataApi
 import com.freight24.rest.response.ClientBranchV2Dto
 import com.freight24.rest.response.ClientContactV2Dto
-import com.freight24.rest.response.ClientDto
-import com.freight24.rest.response.ClientProfileDto
 import com.freight24.rest.response.BranchTypeOptionDto
 import com.freight24.rest.response.CityOptionDto
 import com.freight24.rest.response.ClientContactCreateRequest
@@ -19,50 +17,33 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import okhttp3.MultipartBody
 import retrofit2.Response
+import com.freight24.connect.repository.mapper.toDomain
+import com.freight24.connect.repository.mapper.toManagementPage
+import com.freight24.connect.repository.mapper.toPickerPage
 import javax.inject.Inject
 
 class ClientRepositoryImpl
     @Inject
     constructor(
-        private val api: ClientApi,
         private val v2Api: ClientV2Api,
+        private val documentApi: DocumentApi,
+        private val referenceDataApi: ReferenceDataApi,
         @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) : ClientRepository {
-        override suspend fun getClients(): Result<List<ClientDto>> =
-            withContext(ioDispatcher) {
-                try {
-                    val response = api.getClientList()
-                    if (response.isSuccessful && response.body() != null) {
-                        Result.success(response.body()!!.data)
-                    } else {
-                        Result.failure(response.toApiException())
-                    }
-                } catch (e: Exception) {
-                    Result.failure(e)
-                }
-            }
+        override suspend fun getManagementPage(query: String?, status: String?, page: Int, limit: Int) =
+            loadClientPage(query, status, page, limit) { it.toManagementPage() }
 
-        override suspend fun searchClients(query: String): Result<List<ClientDto>> =
-            withContext(ioDispatcher) {
-                try {
-                    val response = api.searchClients(query)
-                    if (response.isSuccessful && response.body() != null) {
-                        Result.success(response.body()!!.data)
-                    } else {
-                        Result.failure(response.toApiException())
-                    }
-                } catch (e: Exception) {
-                    Result.failure(e)
-                }
-            }
+        override suspend fun searchPickerOptions(query: String, page: Int, limit: Int) =
+            loadClientPage(query, "active", page, limit) { it.toPickerPage() }
 
-        override suspend fun getClientByUserId(clientUserId: String): Result<ClientProfileDto> =
+        override suspend fun getDetails(clientId: String) =
             withContext(ioDispatcher) {
                 try {
-                    val response = api.getClientByUserId(clientUserId)
+                    val response = v2Api.getClientDetail(clientId)
                     val body = response.body()
-                    if (response.isSuccessful && body != null) {
-                        Result.success(body.data)
+                    val data = body?.data
+                    if (response.isSuccessful && body?.success == true && data != null) {
+                        Result.success(data.toDomain())
                     } else {
                         Result.failure(response.toApiException(bodyMessage = body?.message))
                     }
@@ -71,19 +52,11 @@ class ClientRepositoryImpl
                 }
             }
 
-        override suspend fun createClient(request: UpdateClientRequest): Result<Boolean> =
-            withContext(ioDispatcher) {
-                try {
-                    val response = api.createClient(request)
-                    if (response.isSuccessful && response.body() != null) {
-                        Result.success(true)
-                    } else {
-                        Result.failure(response.toApiException(bodyMessage = response.body()?.message))
-                    }
-                } catch (e: Exception) {
-                    Result.failure(e)
-                }
-            }
+        override suspend fun getClientDocumentSignedUrl(clientId: String, documentId: String) =
+            loadSignedUrl { documentApi.getClientDocumentSignedUrl(clientId, documentId) }
+
+        override suspend fun getBranchDocumentSignedUrl(clientId: String, branchId: String, documentId: String) =
+            loadSignedUrl { documentApi.getClientBranchDocumentSignedUrl(clientId, branchId, documentId) }
 
         override suspend fun createClientV2(parts: List<MultipartBody.Part>) =
             execute { v2Api.createClient(parts) }
@@ -111,13 +84,38 @@ class ClientRepositoryImpl
                 }
             }
 
-        override suspend fun getStates() = loadList { v2Api.getStates() }
+        override suspend fun getStates() = loadList { referenceDataApi.getStates() }
 
-        override suspend fun getCities(stateId: Int) = loadList { v2Api.getCities(stateId) }
+        override suspend fun getCities(stateId: Int) = loadList { referenceDataApi.getCities(stateId) }
 
-        override suspend fun getBranchTypes() = loadList { v2Api.getBranchTypes() }
+        override suspend fun getBranchTypes() = loadList { referenceDataApi.getBranchTypes() }
 
-        override suspend fun getContactRoles() = loadList { v2Api.getContactRoles() }
+        override suspend fun getContactRoles() = loadList { referenceDataApi.getContactRoles() }
+
+        override suspend fun isClientFieldRegistered(field: String, value: String): Result<Boolean> =
+            withContext(ioDispatcher) {
+                try {
+                    val response =
+                        when (field) {
+                            "pan_card" -> v2Api.validateClient(panCard = value)
+                            "gst_number" -> v2Api.validateClient(gstNumber = value)
+                            else -> return@withContext Result.failure(IllegalArgumentException("Unsupported client field: $field"))
+                        }
+                    val body = response.body()
+                    val validation =
+                        when (field) {
+                            "pan_card" -> body?.data?.pan_card
+                            else -> body?.data?.gst_number
+                        }
+                    if (response.isSuccessful && body?.success == true && validation != null) {
+                        Result.success(validation.exists)
+                    } else {
+                        Result.failure(response.toApiException())
+                    }
+                } catch (e: Exception) {
+                    Result.failure(e)
+                }
+            }
 
         private suspend fun execute(
             request: suspend () -> Response<ClientOnboardingV2Response>,
@@ -153,18 +151,38 @@ class ClientRepositoryImpl
                 }
             }
 
-        override suspend fun updateClient(
-            clientUserId: String,
-            request: UpdateClientRequest,
-        ): Result<ClientProfileDto> =
+        private suspend fun <T> loadClientPage(
+            query: String?,
+            status: String?,
+            page: Int,
+            limit: Int,
+            mapper: (com.freight24.rest.response.ClientV2PageResponse) -> T,
+        ): Result<T> =
             withContext(ioDispatcher) {
                 try {
-                    val response = api.updateClient(clientUserId, request)
+                    val response = v2Api.getClients(status = status, search = query, page = page, limit = limit)
+                    val body = response.body()
+                    if (response.isSuccessful && body?.success == true) {
+                        Result.success(mapper(body))
+                    } else {
+                        Result.failure(response.toApiException())
+                    }
+                } catch (e: Exception) {
+                    Result.failure(e)
+                }
+            }
+
+        private suspend fun loadSignedUrl(
+            request: suspend () -> Response<com.freight24.rest.response.SignedDocument>,
+        ): Result<String> =
+            withContext(ioDispatcher) {
+                try {
+                    val response = request()
                     val body = response.body()
                     if (response.isSuccessful && body != null) {
-                        Result.success(body.data)
+                        Result.success(body.data.signedUrl)
                     } else {
-                        Result.failure(response.toApiException(bodyMessage = body?.message))
+                        Result.failure(response.toApiException())
                     }
                 } catch (e: Exception) {
                     Result.failure(e)
