@@ -74,6 +74,9 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -84,6 +87,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.freight24.common.util.DocumentUploadPolicy
 import com.freight24.connect.feature.trucks.domain.usecases.CreatedTruck
+import com.freight24.connect.feature.trucks.enums.TruckOwnerStatus
 import com.freight24.connect.feature.trucks.domain.viewmodel.OnboardTruckViewModel
 import com.freight24.connect.feature.trucks.domain.viewmodel.TruckType
 import com.freight24.ui.UiState
@@ -300,6 +304,22 @@ private fun StepIndicator(currentStep: Int) {
 }
 
 @Composable
+private fun InactiveOwnerBadge(label: String) {
+    Surface(
+        shape = RoundedCornerShape(4.dp),
+        color = colorScheme.surfaceVariant,
+    ) {
+        Text(
+            text = label,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Medium,
+            color = colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
 private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
     val registrationNumber by viewModel.registrationNumber.collectAsState()
     val selectedTruckType by viewModel.selectedTruckType.collectAsState()
@@ -364,7 +384,11 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
                                 tint = extendedColors.success,
                             )
                         },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .testTag("onboard_truck_owner_field")
+                                .semantics { testTagsAsResourceId = true },
                         shape = MaterialTheme.shapes.medium,
                         singleLine = true,
                         colors =
@@ -393,13 +417,24 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
                         ) {
                             Column {
                                 truckOwnerSuggestions.forEach { owner ->
+                                    val ownerStatus = TruckOwnerStatus.from(owner.status)
+                                    val isSelectable = ownerStatus.isSelectable
+
                                     ListItem(
                                         headlineContent = {
-                                            Text(
-                                                text = owner.fullName,
-                                                fontWeight = FontWeight.Bold,
-                                                style = MaterialTheme.typography.bodyLarge,
-                                            )
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Text(
+                                                    text = owner.fullName,
+                                                    fontWeight = FontWeight.Bold,
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                )
+                                                if (!isSelectable) {
+                                                    Spacer(modifier = Modifier.width(8.dp))
+                                                    InactiveOwnerBadge(
+                                                        label = ownerStatus.displayText,
+                                                    )
+                                                }
+                                            }
                                         },
                                         supportingContent = {
                                             Text(
@@ -408,10 +443,14 @@ private fun BasicInfoStep(viewModel: OnboardTruckViewModel) {
                                             )
                                         },
                                         modifier =
-                                            Modifier.clickable {
-                                                viewModel.onTruckOwnerSelected(owner)
-                                                focusManager.clearFocus()
-                                            },
+                                            Modifier
+                                                .testTag("onboard_truck_owner_option_${owner.ownerProfileId}")
+                                                .semantics { testTagsAsResourceId = true }
+                                                .alpha(if (isSelectable) 1f else 0.45f)
+                                                .clickable(enabled = isSelectable) {
+                                                    viewModel.onTruckOwnerSelected(owner)
+                                                    focusManager.clearFocus()
+                                                },
                                         colors =
                                             ListItemDefaults.colors(
                                                 containerColor = colorScheme.surface.copy(alpha = 0f),

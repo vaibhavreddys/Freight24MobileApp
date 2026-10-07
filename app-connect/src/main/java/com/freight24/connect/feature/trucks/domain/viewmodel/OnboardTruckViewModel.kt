@@ -11,6 +11,7 @@ import com.freight24.connect.feature.trucks.domain.usecases.AddTruckParams
 import com.freight24.connect.feature.trucks.domain.usecases.AddTruckUseCase
 import com.freight24.connect.feature.trucks.domain.usecases.CreatedTruck
 import com.freight24.connect.feature.trucks.domain.usecases.SearchTruckOwnerOptionsUseCase
+import com.freight24.connect.feature.trucks.enums.TruckOwnerStatus
 import com.freight24.connect.domain.model.TruckOwnerPickerOption
 import com.freight24.ui.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -92,8 +93,9 @@ class OnboardTruckViewModel
             capacityMt.map { (it.toDoubleOrNull() ?: 0.0) > 0.0 }
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
 
+        // A truck can only be added under an ACTIVE truck owner.
         val isOwnerValid: StateFlow<Boolean> =
-            selectedTruckOwner.map { it != null }
+            selectedTruckOwner.map { it != null && TruckOwnerStatus.from(it.status).isSelectable }
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
 
         val isStep1Valid: StateFlow<Boolean> =
@@ -169,6 +171,12 @@ class OnboardTruckViewModel
         }
 
         fun onTruckOwnerSelected(owner: TruckOwnerPickerOption) {
+            // Defence in depth: the suggestion row is already disabled for inactive
+            // owners, but never let one become the selected owner.
+            if (!TruckOwnerStatus.from(owner.status).isSelectable) {
+                Log.w(TAG, "Blocked selection of inactive truck owner: ${owner.fullName}")
+                return
+            }
             selectedTruckOwner.value = owner
             truckOwnerQuery.value = owner.fullName
             _truckOwnerSuggestions.value = emptyList()
