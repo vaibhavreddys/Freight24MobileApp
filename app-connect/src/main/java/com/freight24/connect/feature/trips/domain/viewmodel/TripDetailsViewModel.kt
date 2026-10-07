@@ -8,6 +8,7 @@ import java.io.File
 
 data class TripDetailsUiState(
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
     val errorMessage: String? = null,
     val trip: TripDataResponse? = null,
     val selectedUris: List<Uri> = emptyList(),
@@ -39,6 +40,9 @@ sealed class TripDetailsEvent {
     data object UploadLR : TripDetailsEvent()
 
     data object Refresh : TripDetailsEvent()
+
+    /** Pull-to-refresh; keeps the current trip on screen instead of showing the full-page loader. */
+    data object PullToRefresh : TripDetailsEvent()
 
     data class ShareDocument(val documentId: String) : TripDetailsEvent()
 

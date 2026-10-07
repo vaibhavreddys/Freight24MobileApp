@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Call
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Route
+import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.runtime.Composable
@@ -22,8 +23,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -32,6 +37,7 @@ import com.freight24.connect.feature.trips.domain.viewmodel.CreateTripUiState
 import com.freight24.connect.feature.trips.domain.viewmodel.CreateTripViewModel
 import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.components.formViewportInsets
+import com.freight24.ui.components.rememberCallAction
 import com.freight24.ui.theme.FreightThemeTokens
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -308,6 +314,10 @@ fun SelectedTruckCard(uiState: CreateTripUiState) {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         val extendedColors = FreightThemeTokens.colors
+        val owner = uiState.truck?.owner
+        val ownerPhone = owner?.phone?.takeIf { it.isNotBlank() }
+        val callOwner = rememberCallAction(ownerPhone.orEmpty())
+
         Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
@@ -361,6 +371,64 @@ fun SelectedTruckCard(uiState: CreateTripUiState) {
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Bold,
                         )
+                    }
+                }
+            }
+
+            val ownerName = owner?.name?.takeIf { it.isNotBlank() }
+            if (ownerName != null || ownerPhone != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Surface(
+                    color = extendedColors.success.copy(alpha = 0.12f),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "TRUCK OWNER",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = extendedColors.success,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Text(
+                                ownerName ?: "Not available",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            if (ownerPhone != null) {
+                                Text(
+                                    text = ownerPhone,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                )
+                            }
+                        }
+                        if (ownerPhone != null) {
+                            TextButton(
+                                onClick = callOwner,
+                                modifier =
+                                    Modifier
+                                        .testTag("create_trip_call_owner")
+                                        .semantics { testTagsAsResourceId = true },
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Phone,
+                                    contentDescription = "Call truck owner",
+                                    modifier = Modifier.size(18.dp),
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Call")
+                            }
+                        }
                     }
                 }
             }

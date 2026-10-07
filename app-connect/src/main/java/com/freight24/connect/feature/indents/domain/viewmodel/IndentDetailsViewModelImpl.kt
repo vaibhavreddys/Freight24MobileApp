@@ -49,6 +49,9 @@ class IndentDetailsViewModelImpl
                 is IndentDetailsEvent.Refresh -> {
                     currentIndentId?.let { loadIndent(it) }
                 }
+                is IndentDetailsEvent.PullToRefresh -> {
+                    currentIndentId?.let { loadIndent(it, isPullToRefresh = true) }
+                }
                 is IndentDetailsEvent.ClearError -> {
                     _uiState.update { it.copy(errorMessage = null) }
                 }
@@ -197,9 +200,20 @@ class IndentDetailsViewModelImpl
             }
         }
 
-        private fun loadIndent(indentId: String) {
+        private fun loadIndent(
+            indentId: String,
+            isPullToRefresh: Boolean = false,
+        ) {
             viewModelScope.launch {
-                _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+                // A pull-to-refresh must not blank the indent already on screen, so it
+                // drives isRefreshing (the swipe indicator) instead of isLoading.
+                _uiState.update {
+                    if (isPullToRefresh) {
+                        it.copy(isRefreshing = true)
+                    } else {
+                        it.copy(isLoading = true, errorMessage = null)
+                    }
+                }
 
                 val result =
                     getIndentByIdUseCase.invoke(
@@ -211,6 +225,7 @@ class IndentDetailsViewModelImpl
                     _uiState.update {
                         it.copy(
                             isLoading = false,
+                            isRefreshing = false,
                             indent = response?.data,
                         )
                     }
@@ -218,7 +233,15 @@ class IndentDetailsViewModelImpl
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            errorMessage = result.exceptionOrNull()?.message ?: "Failed to load indent details",
+                            isRefreshing = false,
+                            // On refresh keep the stale indent visible; only surface the
+                            // error when there is nothing to fall back to.
+                            errorMessage =
+                                if (isPullToRefresh && it.indent != null) {
+                                    null
+                                } else {
+                                    result.exceptionOrNull()?.message ?: "Failed to load indent details"
+                                },
                         )
                     }
                 }

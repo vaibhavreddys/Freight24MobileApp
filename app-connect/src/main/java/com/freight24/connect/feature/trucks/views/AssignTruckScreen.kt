@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocalShipping
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -95,6 +96,23 @@ fun AssignTruckScreen(
                         contentDescription = "Search",
                         tint = colorScheme.onSurfaceVariant,
                     )
+                },
+                trailingIcon = {
+                    if (uiState.query.isNotEmpty()) {
+                        IconButton(
+                            onClick = { viewModel.onEvent(AssignTruckEvent.ClearSearch) },
+                            modifier =
+                                Modifier
+                                    .testTag("assign_truck_clear_search")
+                                    .semantics { testTagsAsResourceId = true },
+                        ) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = "Clear search",
+                                tint = colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
                 },
                 shape = MaterialTheme.shapes.medium,
                 colors =

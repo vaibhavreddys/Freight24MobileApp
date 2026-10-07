@@ -68,6 +68,7 @@ internal class TripDetailsViewModelImpl
                     uploadLR()
                 }
                 TripDetailsEvent.Refresh -> loadTrip()
+                TripDetailsEvent.PullToRefresh -> loadTrip(isPullToRefresh = true)
                 is TripDetailsEvent.ShareDocument -> shareDocument(event.documentId)
                 TripDetailsEvent.DocumentShareHandled -> {
                     _uiState.update { it.copy(sharedDocumentFile = null, documentShareFailed = false, sharingDocumentId = null) }
@@ -271,9 +272,20 @@ internal class TripDetailsViewModelImpl
             }
         }
 
-        private fun loadTrip(id: String = tripId) {
+        private fun loadTrip(
+            id: String = tripId,
+            isPullToRefresh: Boolean = false,
+        ) {
             viewModelScope.launch {
-                _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+                // A pull-to-refresh must not blank the trip already on screen, so it
+                // drives isRefreshing (the swipe indicator) instead of isLoading.
+                _uiState.update {
+                    if (isPullToRefresh) {
+                        it.copy(isRefreshing = true)
+                    } else {
+                        it.copy(isLoading = true, errorMessage = null)
+                    }
+                }
 
                 val result = tripDetailsUseCase(TripDetailsUseCaseDataParams(tripId = id))
 
@@ -282,6 +294,7 @@ internal class TripDetailsViewModelImpl
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
+                                isRefreshing = false,
                                 trip = response,
                             )
                         }
@@ -290,7 +303,10 @@ internal class TripDetailsViewModelImpl
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                errorMessage = error.message ?: "Unknown error",
+                                isRefreshing = false,
+                                // On refresh keep the stale trip visible; only surface the
+                                // error when there is nothing to fall back to.
+                                errorMessage = if (isPullToRefresh && it.trip != null) null else error.message ?: "Unknown error",
                             )
                         }
                     },

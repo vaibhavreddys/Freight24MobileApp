@@ -14,6 +14,7 @@ interface IndentDetailsViewModel {
 @Immutable
 data class IndentDetailsUiState(
     val isLoading: Boolean = false,
+    val isRefreshing: Boolean = false,
     val isAssigning: Boolean = false,
     val errorMessage: String? = null,
     val indent: IndentResponse.Indent? = null,
@@ -36,6 +37,9 @@ sealed class IndentDetailsEvent {
     data class LoadIndent(val indentId: String) : IndentDetailsEvent()
 
     object Refresh : IndentDetailsEvent()
+
+    /** Pull-to-refresh; keeps the loaded indent on screen instead of showing the full-page loader. */
+    object PullToRefresh : IndentDetailsEvent()
 
     object ClearError : IndentDetailsEvent()
 

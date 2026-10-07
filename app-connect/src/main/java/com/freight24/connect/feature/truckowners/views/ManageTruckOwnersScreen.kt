@@ -646,7 +646,7 @@ private fun EmptyState(hasSearch: Boolean) {
             title = if (hasSearch) "No matching truck owners" else "No truck owners yet",
             subtitle =
                 if (hasSearch) {
-                    "Try a different name or TAG ID"
+                    "Try a different name or phone number or a TAG ID"
                 } else {
                     "Onboard your first truck owner to get started"
                 },
