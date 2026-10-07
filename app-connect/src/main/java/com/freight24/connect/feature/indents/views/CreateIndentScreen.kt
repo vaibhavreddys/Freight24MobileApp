@@ -985,6 +985,7 @@ fun MoneyRuleField(
     supportingText: String? = null,
     trailingLabel: String? = null,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     /**
      * Drops any fractional part, for the rate fields the backend stores as whole
      * rupees. Without it a pasted or IME-inserted `40000.5` would round-trip into
@@ -1019,6 +1020,7 @@ fun MoneyRuleField(
         supportingText = supportingText,
         trailingLabel = trailingLabel,
         modifier = modifier,
+        enabled = enabled,
     )
 }
 

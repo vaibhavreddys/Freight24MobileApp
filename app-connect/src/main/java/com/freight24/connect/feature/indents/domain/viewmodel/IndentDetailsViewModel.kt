@@ -1,6 +1,7 @@
 package com.freight24.connect.feature.indents.domain.viewmodel
 
 import androidx.compose.runtime.Immutable
+import com.freight24.common.util.negotiatedCostExceedsClientError
 import com.freight24.rest.response.IndentResponse
 import com.freight24.rest.response.TruckerInboxInterestResponse
 import kotlinx.coroutines.flow.StateFlow
@@ -38,7 +39,52 @@ data class IndentDetailsUiState(
      * withheld only where the write would actually be refused.
      */
     val canEdit: Boolean = false,
-)
+) {
+    /** The client rate as a number, or null when the field is blank or half-typed. */
+    val assignClientCostAmount: Int?
+        get() = assignClientCost.replace(",", "").toIntOrNull()
+
+    /** The target rate as a number, or null when the field is blank or half-typed. */
+    val assignNegotiatedCostAmount: Int?
+        get() = assignNegotiatedCost.replace(",", "").toIntOrNull()
+
+    /**
+     * True when either rate is absent or not a positive amount.
+     *
+     * A blank field and a typed `0` mean the same thing here — the rate was never
+     * agreed — and both must block. The backend would accept a zero: its
+     * `isPositiveNumber` guard is `v >= 0` (backendapi/src/routes/indents.js:1826),
+     * so `0` would sail through and publish an indent to the load board with no
+     * rate on it. That is why this check lives here rather than being left to the
+     * server.
+     *
+     * Note this is independent of [isNegotiatedSameAsClient]: that switch mirrors
+     * the client rate into the target field, so it resolves a missing target only
+     * once the client rate is itself positive.
+     */
+    val assignRatesMissing: Boolean
+        get() = (assignClientCostAmount ?: 0) <= 0 || (assignNegotiatedCostAmount ?: 0) <= 0
+
+    /** Which rates still need a value, for naming them in the operator's message. */
+    val assignMissingRateLabels: List<String>
+        get() = buildList {
+            if ((assignClientCostAmount ?: 0) <= 0) add("client cost")
+            if ((assignNegotiatedCostAmount ?: 0) <= 0) add("target cost")
+        }
+
+    /**
+     * The one rule for whether the indent may go live, read by both the sheet's
+     * confirm button and the ViewModel's submit path so they cannot disagree.
+     *
+     * Mirrors [negotiatedCostExceedsClientError] rather than re-deriving the
+     * comparison; that helper returns null when either side is unparseable, which
+     * [assignRatesMissing] already covers.
+     */
+    val canConfirmAssignment: Boolean
+        get() =
+            !assignRatesMissing &&
+                negotiatedCostExceedsClientError(assignNegotiatedCost, assignClientCost) == null
+}
 
 sealed class IndentDetailsEvent {
     data class LoadIndent(val indentId: String) : IndentDetailsEvent()

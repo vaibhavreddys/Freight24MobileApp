@@ -66,11 +66,17 @@ class IndentDetailsViewModelImpl
                 }
                 is IndentDetailsEvent.ShowAssignDialog -> {
                     val indent = _uiState.value.indent
+                    // A stored rate of 0 means "never agreed", the same reading the
+                    // indent cards take when they hide a zero cost. Prefilling "0"
+                    // would present an absence as a number the operator just typed.
+                    fun rate(value: Double?): String =
+                        value?.takeIf { it > 0.0 }?.toInt()?.toString()?.let(::formatIndianCurrency).orEmpty()
+
                     _uiState.update {
                         it.copy(
                             isAssignDialogVisible = true,
-                            assignClientCost = indent?.indentGroupDetails?.clientTripCost?.toInt()?.toString()?.let(::formatIndianCurrency) ?: "",
-                            assignNegotiatedCost = indent?.negotiatedTripCost?.toInt()?.toString()?.let(::formatIndianCurrency) ?: "",
+                            assignClientCost = rate(indent?.indentGroupDetails?.clientTripCost),
+                            assignNegotiatedCost = rate(indent?.negotiatedTripCost),
                             assignNotes = "",
                             isNegotiatedSameAsClient = false,
                         )
@@ -280,6 +286,25 @@ class IndentDetailsViewModelImpl
             val indentId = currentIndentId ?: return
             val state = _uiState.value
 
+            // The sheet's confirm button is already disabled when this fails; this is
+            // the backstop, so a stale or replayed event can never publish an indent
+            // with a blank or zero rate. Costs are parsed once here and reused in the
+            // payload so the guard and the request cannot read different values.
+            if (!state.canConfirmAssignment) {
+                _uiState.update {
+                    it.copy(
+                        errorMessage =
+                            if (state.assignRatesMissing) {
+                                val missing = state.assignMissingRateLabels.joinToString(" and ")
+                                "Enter a $missing above 0 before marking this ready"
+                            } else {
+                                "The target cost can not exceed the client cost"
+                            },
+                    )
+                }
+                return
+            }
+
             viewModelScope.launch {
                 _uiState.update { it.copy(isAssigning = true, errorMessage = null) }
 
@@ -287,8 +312,8 @@ class IndentDetailsViewModelImpl
                     assignIndentUseCase.invoke(
                         AssignIndentUseCaseParams(
                             id = indentId,
-                            clientTripCost = state.assignClientCost.replace(",", "").toIntOrNull(),
-                            negotiatedTripCost = state.assignNegotiatedCost.replace(",", "").toIntOrNull(),
+                            clientTripCost = state.assignClientCostAmount,
+                            negotiatedTripCost = state.assignNegotiatedCostAmount,
                             notes = state.assignNotes,
                         ),
                     )
