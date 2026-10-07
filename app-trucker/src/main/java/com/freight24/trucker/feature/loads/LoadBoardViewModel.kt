@@ -267,7 +267,6 @@ class LoadBoardViewModel
                 // children while the city was collapsed.
                 removeChildrenOfCityAt(currentItems, updatedIndex)
 
-
                 insertCachedLoadsForCity(
                     currentItems = currentItems,
                     cityId = cityId,
@@ -279,7 +278,6 @@ class LoadBoardViewModel
                 cityPages.remove(cityId)
                 // Remove children of THIS city
                 removeChildrenOfCityAt(currentItems, updatedIndex)
-
             }
 
             publishItems(currentItems)

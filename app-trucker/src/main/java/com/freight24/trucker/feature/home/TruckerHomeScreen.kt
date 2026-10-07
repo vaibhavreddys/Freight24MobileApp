@@ -1,5 +1,7 @@
 package com.freight24.trucker.feature.home
 
+import android.os.SystemClock
+import android.view.ViewConfiguration
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Box
@@ -14,7 +16,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -44,6 +48,43 @@ fun TruckerHomeScreen(navController: NavHostController) {
     // card list itself stays in LoadBoardScreen, which scrolls the collapsed
     // header back into view.
     val expandedCityId by loadBoardViewModel.expandedCityId.collectAsState()
+
+    // Double-tapping the already-selected Loads tab refreshes the board, for
+    // users who are scrolled deep into the city list and cannot reach the pull
+    // gesture. Comparing tap timestamps beats wrapping the nav item in a
+    // double-tap gesture detector: NavigationBarItem owns its own clickable, so
+    // a detector placed around it never sees the events that clickable
+    // consumes.
+    var lastLoadsTapAt by remember { mutableLongStateOf(0L) }
+    val doubleTapTimeoutMs = remember { ViewConfiguration.getDoubleTapTimeout() }
+
+    val onTabSelected: (TruckerTab) -> Unit = { tab ->
+        val wasAlreadySelected = tab == selectedTab
+        selectedTab = tab
+
+        when {
+            // Switching tabs is a plain selection and must not leave a stale
+            // double-tap window behind for the user to fall into.
+            tab != TruckerTab.Loads || !wasAlreadySelected -> lastLoadsTapAt = 0L
+
+            else -> {
+                val now = SystemClock.uptimeMillis()
+                if (now - lastLoadsTapAt <= doubleTapTimeoutMs) {
+                    lastLoadsTapAt = 0L
+                    // Same entry point as the pull gesture, so the refresh
+                    // spinner still appears: PullToRefreshBox is driven by the
+                    // ViewModel's isRefreshing rather than by its own drag
+                    // state.
+                    loadBoardViewModel.onRefresh()
+                } else {
+                    // First tap of the pair. A single tap on the active tab is
+                    // already a no-op, so holding the time here changes nothing
+                    // the user can see until the second tap lands.
+                    lastLoadsTapAt = now
+                }
+            }
+        }
+    }
 
     // HOIST SCROLL STATE
     val loadBoardListState = rememberLazyListState()
@@ -77,15 +118,13 @@ fun TruckerHomeScreen(navController: NavHostController) {
     FreightBottomNavScaffold(
         items = TruckerTab.entries,
         selectedItem = selectedTab,
-        onItemSelected = { selectedTab = it },
+        onItemSelected = onTabSelected,
         bottomBarEnabled = !(isProfileTab && isProfileEditing),
         topBar = {
             AppTopBar(
                 // The title is the primary edit-mode signal now that the pencil
                 // becomes a close affordance.
                 title = if (isProfileTab && isProfileEditing) "Edit profile" else getFormattedTabName(selectedTab.id),
-                showSearch = selectedTab.id == "loads",
-                onSearchClick = loadBoardViewModel::onSearchClick,
                 trailingActionIcon =
                     when {
                         !isProfileTab -> null
