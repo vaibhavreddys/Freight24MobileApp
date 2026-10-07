@@ -253,6 +253,16 @@ fun IndentsList(
                 truckDisplay = indent.indentGroupDetails.truckType?.displayName ?: "N/A",
                 weightDisplay = formatLoadWeight(indent.indentGroupDetails.loadWeight, "MT"),
                 materialDisplay = indent.indentGroupDetails.material.replaceFirstChar { it.uppercase() },
+                interestCount =
+                    if (
+                        indent.canProgress ||
+                        indent.canEdit ||
+                        indent.indentOwnership == "CREATED_BY_ME"
+                    ) {
+                        indent.metrics?.interestCount
+                    } else {
+                        null
+                    },
                 showAdmin = showAdmin,
                 adminName = fleetExecutive?.name,
                 onCallClick =

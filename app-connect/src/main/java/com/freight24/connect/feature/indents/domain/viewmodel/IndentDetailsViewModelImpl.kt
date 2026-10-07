@@ -13,11 +13,12 @@ import com.freight24.connect.feature.indents.domain.usecases.AssignIndentUseCase
 import com.freight24.connect.feature.indents.domain.usecases.AssignIndentUseCaseParams
 import com.freight24.connect.feature.indents.domain.usecases.CancelIndentUseCase
 import com.freight24.connect.feature.indents.domain.usecases.CancelIndentUseCaseParams
+import com.freight24.connect.feature.indents.domain.usecases.ReopenIndentUseCase
+import com.freight24.connect.feature.indents.domain.usecases.ReopenIndentUseCaseParams
 import com.freight24.connect.feature.indents.domain.usecases.GetIndentByIdUseCase
 import com.freight24.connect.feature.indents.domain.usecases.GetIndentByIdUseCaseParams
 import com.freight24.connect.feature.indents.domain.usecases.TruckerInterestInboxUseCase
 import com.freight24.connect.feature.indents.domain.usecases.TruckerInterestInboxUseCaseParams
-import com.freight24.rest.response.IndentResponse
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,6 +34,7 @@ class IndentDetailsViewModelImpl
         private val getIndentByIdUseCase: GetIndentByIdUseCase,
         private val assignIndentUseCase: AssignIndentUseCase,
         private val cancelIndentUseCase: CancelIndentUseCase,
+        private val reopenIndentUseCase: ReopenIndentUseCase,
         private val truckerInterestInboxUseCase: TruckerInterestInboxUseCase,
         private val withdrawInterestUseCase: WithDrawInterestUseCase,
         private val findTrucksUseCase: FindTrucksUseCase,
@@ -41,13 +43,12 @@ class IndentDetailsViewModelImpl
         private val _uiState = MutableStateFlow(IndentDetailsUiState())
         override val uiState: StateFlow<IndentDetailsUiState> = _uiState.asStateFlow()
 
-        /**
-         * Roles the backend exempts from record ownership on
-         * `PUT /api/v1/indents/:id`. Resolved once — roles do not change mid-session.
-         */
-        private val canOverrideOwnership = sessionManager.isAdminOrOpsManager()
-
         private var currentIndentId: String? = null
+        private val isAdmin =
+            buildList {
+                sessionManager.getActiveRole()?.let(::add)
+                addAll(sessionManager.getRoles())
+            }.any { it.trim().equals("admin", ignoreCase = true) }
 
         override fun onEvent(event: IndentDetailsEvent) {
             when (event) {
@@ -66,17 +67,11 @@ class IndentDetailsViewModelImpl
                 }
                 is IndentDetailsEvent.ShowAssignDialog -> {
                     val indent = _uiState.value.indent
-                    // A stored rate of 0 means "never agreed", the same reading the
-                    // indent cards take when they hide a zero cost. Prefilling "0"
-                    // would present an absence as a number the operator just typed.
-                    fun rate(value: Double?): String =
-                        value?.takeIf { it > 0.0 }?.toInt()?.toString()?.let(::formatIndianCurrency).orEmpty()
-
                     _uiState.update {
                         it.copy(
                             isAssignDialogVisible = true,
-                            assignClientCost = rate(indent?.indentGroupDetails?.clientTripCost),
-                            assignNegotiatedCost = rate(indent?.negotiatedTripCost),
+                            assignClientCost = indent?.indentGroupDetails?.clientTripCost?.toInt()?.toString()?.let(::formatIndianCurrency) ?: "",
+                            assignNegotiatedCost = indent?.negotiatedTripCost?.toInt()?.toString()?.let(::formatIndianCurrency) ?: "",
                             assignNotes = "",
                             isNegotiatedSameAsClient = false,
                         )
@@ -108,13 +103,26 @@ class IndentDetailsViewModelImpl
                     confirmAssignment()
                 }
                 is IndentDetailsEvent.ShowCancelDialog -> {
-                    _uiState.update { it.copy(isCancelDialogVisible = true) }
+                    _uiState.update { it.copy(isCancelDialogVisible = true, lifecycleReasonCode = "", lifecycleRemarks = "") }
                 }
                 is IndentDetailsEvent.HideCancelDialog -> {
                     _uiState.update { it.copy(isCancelDialogVisible = false) }
                 }
                 is IndentDetailsEvent.ConfirmCancel -> {
                     confirmCancel()
+                }
+                is IndentDetailsEvent.ShowReopenDialog -> {
+                    _uiState.update { it.copy(isReopenDialogVisible = true, lifecycleReasonCode = "", lifecycleRemarks = "") }
+                }
+                is IndentDetailsEvent.HideReopenDialog -> {
+                    _uiState.update { it.copy(isReopenDialogVisible = false) }
+                }
+                is IndentDetailsEvent.ConfirmReopen -> confirmReopen()
+                is IndentDetailsEvent.UpdateLifecycleReason -> {
+                    _uiState.update { it.copy(lifecycleReasonCode = event.reasonCode) }
+                }
+                is IndentDetailsEvent.UpdateLifecycleRemarks -> {
+                    _uiState.update { it.copy(lifecycleRemarks = event.remarks) }
                 }
                 is IndentDetailsEvent.ShowTruckerSheet -> {
                     Log.d("FCM_DEBUG", "ShowTruckerSheet event received, opening sheet")
@@ -215,18 +223,6 @@ class IndentDetailsViewModelImpl
             }
         }
 
-        /**
-         * True when the backend's ownership type says this indent is the caller's —
-         * `CREATED_BY_ME` or `CLONED_TO_ME`.
-         *
-         * A missing type is treated as not-theirs. The detail endpoint sends the
-         * field on every response, so an absent value means the payload predates
-         * it, and withholding the control is the safe reading: it only ever hides
-         * an edit that would have been refused anyway.
-         */
-        private fun IndentResponse.Indent?.isOwnedByCaller(): Boolean =
-            this?.indentOwnership?.let { !it.equals(OWNERSHIP_OTHER, ignoreCase = true) && it.isNotBlank() } == true
-
         private fun loadIndent(
             indentId: String,
             isPullToRefresh: Boolean = false,
@@ -255,7 +251,11 @@ class IndentDetailsViewModelImpl
                             isLoading = false,
                             isRefreshing = false,
                             indent = indent,
-                            canEdit = canOverrideOwnership || indent.isOwnedByCaller(),
+                            canProgressIndent =
+                                indent?.canProgress == true ||
+                                    indent?.canEdit == true ||
+                                    indent?.indentOwnership == "CREATED_BY_ME" ||
+                                    isAdmin,
                         )
                     }
                 } else {
@@ -277,33 +277,9 @@ class IndentDetailsViewModelImpl
             }
         }
 
-        private companion object {
-            /** Backend `indentOwnership` value for an indent belonging to someone else. */
-            const val OWNERSHIP_OTHER = "OTHER"
-        }
-
         private fun confirmAssignment() {
             val indentId = currentIndentId ?: return
             val state = _uiState.value
-
-            // The sheet's confirm button is already disabled when this fails; this is
-            // the backstop, so a stale or replayed event can never publish an indent
-            // with a blank or zero rate. Costs are parsed once here and reused in the
-            // payload so the guard and the request cannot read different values.
-            if (!state.canConfirmAssignment) {
-                _uiState.update {
-                    it.copy(
-                        errorMessage =
-                            if (state.assignRatesMissing) {
-                                val missing = state.assignMissingRateLabels.joinToString(" and ")
-                                "Enter a $missing above 0 before marking this ready"
-                            } else {
-                                "The target cost can not exceed the client cost"
-                            },
-                    )
-                }
-                return
-            }
 
             viewModelScope.launch {
                 _uiState.update { it.copy(isAssigning = true, errorMessage = null) }
@@ -312,8 +288,8 @@ class IndentDetailsViewModelImpl
                     assignIndentUseCase.invoke(
                         AssignIndentUseCaseParams(
                             id = indentId,
-                            clientTripCost = state.assignClientCostAmount,
-                            negotiatedTripCost = state.assignNegotiatedCostAmount,
+                            clientTripCost = state.assignClientCost.replace(",", "").toIntOrNull(),
+                            negotiatedTripCost = state.assignNegotiatedCost.replace(",", "").toIntOrNull(),
                             notes = state.assignNotes,
                         ),
                     )
@@ -345,7 +321,11 @@ class IndentDetailsViewModelImpl
 
                 val result =
                     cancelIndentUseCase.invoke(
-                        CancelIndentUseCaseParams(id = indentId),
+                        CancelIndentUseCaseParams(
+                            id = indentId,
+                            reasonCode = _uiState.value.lifecycleReasonCode,
+                            remarks = _uiState.value.lifecycleRemarks.trim().ifBlank { null },
+                        ),
                     )
 
                 if (result.isSuccess) {
@@ -360,8 +340,34 @@ class IndentDetailsViewModelImpl
                     _uiState.update {
                         it.copy(
                             isCanceling = false,
-                            isCancelDialogVisible = false,
                             errorMessage = result.exceptionOrNull()?.message ?: "Failed to cancel indent",
+                        )
+                    }
+                }
+            }
+        }
+
+        private fun confirmReopen() {
+            val indentId = currentIndentId ?: return
+            val state = _uiState.value
+
+            viewModelScope.launch {
+                _uiState.update { it.copy(isCanceling = true, errorMessage = null) }
+                val result = reopenIndentUseCase(
+                    ReopenIndentUseCaseParams(
+                        id = indentId,
+                        reasonCode = state.lifecycleReasonCode,
+                        remarks = state.lifecycleRemarks.trim().ifBlank { null },
+                    ),
+                )
+                if (result.isSuccess) {
+                    _uiState.update { it.copy(isCanceling = false, isReopenDialogVisible = false) }
+                    loadIndent(indentId)
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            isCanceling = false,
+                            errorMessage = result.exceptionOrNull()?.message ?: "Failed to reopen indent",
                         )
                     }
                 }

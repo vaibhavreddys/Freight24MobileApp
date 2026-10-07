@@ -18,6 +18,8 @@ data class IndentResponse(
         val hideCostInfo: Boolean,
         val fleetExecutive: FleetExecutive? = null,
         val indentOwnership: String? = null,
+        val canEdit: Boolean = false,
+        val canProgress: Boolean = false,
         val indentGroupDetails: IndentGroupDetails,
         val metrics: Metrics? = null,
     )

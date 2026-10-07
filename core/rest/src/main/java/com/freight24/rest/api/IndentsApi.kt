@@ -3,6 +3,7 @@ package com.freight24.rest.api
 import com.freight24.rest.request.CloneIndentRequest
 import com.freight24.rest.request.CreateIndentRequest
 import com.freight24.rest.request.IndentInterestRequest
+import com.freight24.rest.request.IndentLifecycleRequest
 import com.freight24.rest.request.UpdateIndentGroupRequest
 import com.freight24.rest.request.UpdateIndentRequest
 import com.freight24.rest.response.BaseResponse
@@ -75,6 +76,18 @@ interface IndentsApi {
         @Path("id") id: String,
         @Body request: UpdateIndentRequest,
     ): Response<IndentResponse>
+
+    @POST("indents/{id}/cancel")
+    suspend fun cancelIndent(
+        @Path("id") id: String,
+        @Body request: IndentLifecycleRequest,
+    ): Response<BaseResponse>
+
+    @POST("indents/{id}/reopen")
+    suspend fun reopenIndent(
+        @Path("id") id: String,
+        @Body request: IndentLifecycleRequest,
+    ): Response<BaseResponse>
 
     /**
      * Group-level update — the only write path that can change an indent's

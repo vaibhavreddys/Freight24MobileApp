@@ -3,6 +3,7 @@ package com.freight24.connect.repository
 import com.freight24.rest.request.CreateIndentRequest
 import com.freight24.rest.request.UpdateIndentGroupRequest
 import com.freight24.rest.request.UpdateIndentRequest
+import com.freight24.rest.request.IndentLifecycleRequest
 import com.freight24.rest.response.GetIndentsResponse
 import com.freight24.rest.response.IndentResponse
 import com.freight24.rest.response.MaterialDto
@@ -25,6 +26,10 @@ interface IndentRepository {
         id: String,
         request: UpdateIndentRequest,
     ): Result<IndentResponse>
+
+    suspend fun cancelIndent(id: String, request: IndentLifecycleRequest): Result<Unit>
+
+    suspend fun reopenIndent(id: String, request: IndentLifecycleRequest): Result<Unit>
 
     /**
      * Group-level update — the only write path that can change an indent's

@@ -246,9 +246,11 @@ fun RouteAndFinancialsSection(
     isCostVisible: Boolean,
     hasError: Boolean = false,
 ) {
+    val hasClientCost = clientCost.hasPositiveCost()
+    val hasNegotiatedCost = negotiatedCost.hasPositiveCost()
     val marginAmount = calculateMargin(clientCost, negotiatedCost)
-    val hasMargin = marginAmount > 0
-    val hasCosts = clientCost.isNotBlank() || negotiatedCost.isNotBlank()
+    val hasMargin = hasClientCost && hasNegotiatedCost && marginAmount > 0
+    val hasCosts = hasClientCost || hasNegotiatedCost
 
     IndentDetailSection(
         number = number,
@@ -268,15 +270,19 @@ fun RouteAndFinancialsSection(
 
         if (hasCosts) {
             Spacer(modifier = Modifier.height(8.dp))
-            LedgerLine(
-                label = stringResource(R.string.client_cost),
-                value = formatInr(clientCost),
-            )
-            LedgerLine(
-                label = stringResource(R.string.target_cost),
-                value = formatInr(negotiatedCost),
-                emphasis = true,
-            )
+            if (hasClientCost) {
+                LedgerLine(
+                    label = stringResource(R.string.client_cost),
+                    value = formatInr(clientCost),
+                )
+            }
+            if (hasNegotiatedCost) {
+                LedgerLine(
+                    label = stringResource(R.string.target_cost),
+                    value = formatInr(negotiatedCost),
+                    emphasis = true,
+                )
+            }
             if (hasMargin && isCostVisible) {
                 LedgerLine(
                     label = stringResource(R.string.margin),
@@ -389,6 +395,12 @@ private fun formatInr(amount: String): String {
         "₹$amount"
     }
 }
+
+private fun String.hasPositiveCost(): Boolean =
+    replace(",", "")
+        .toDoubleOrNull()
+        ?.let { it > 0.0 }
+        ?: false
 
 private fun formatNumber(amount: Double): String {
     return "%,.0f".format(amount)

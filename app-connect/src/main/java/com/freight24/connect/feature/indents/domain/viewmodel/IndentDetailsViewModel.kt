@@ -19,13 +19,17 @@ data class IndentDetailsUiState(
     val isAssigning: Boolean = false,
     val errorMessage: String? = null,
     val indent: IndentResponse.Indent? = null,
+    val canProgressIndent: Boolean = false,
     val isAssignDialogVisible: Boolean = false,
     val assignClientCost: String = "",
     val assignNegotiatedCost: String = "",
     val assignNotes: String = "",
     val isNegotiatedSameAsClient: Boolean = false,
     val isCancelDialogVisible: Boolean = false,
+    val isReopenDialogVisible: Boolean = false,
     val isCanceling: Boolean = false,
+    val lifecycleReasonCode: String = "",
+    val lifecycleRemarks: String = "",
     val isTruckerSheetVisible: Boolean = false,
     val isTruckerListLoading: Boolean = false,
     val truckerList: List<TruckerInboxInterestResponse.TruckerInboxInterestInfo> = emptyList(),
@@ -114,6 +118,16 @@ sealed class IndentDetailsEvent {
     object HideCancelDialog : IndentDetailsEvent()
 
     object ConfirmCancel : IndentDetailsEvent()
+
+    object ShowReopenDialog : IndentDetailsEvent()
+
+    object HideReopenDialog : IndentDetailsEvent()
+
+    object ConfirmReopen : IndentDetailsEvent()
+
+    data class UpdateLifecycleReason(val reasonCode: String) : IndentDetailsEvent()
+
+    data class UpdateLifecycleRemarks(val remarks: String) : IndentDetailsEvent()
 
     object ShowTruckerSheet : IndentDetailsEvent()
 

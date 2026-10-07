@@ -6,6 +6,8 @@ import com.freight24.rest.request.CloneIndentRequest
 import com.freight24.rest.request.CreateIndentRequest
 import com.freight24.rest.request.UpdateIndentGroupRequest
 import com.freight24.rest.request.UpdateIndentRequest
+import com.freight24.rest.request.IndentLifecycleRequest
+import com.freight24.network.error.toApiException
 import com.freight24.rest.response.GetIndentsResponse
 import com.freight24.rest.response.IndentResponse
 import com.freight24.rest.response.MaterialDto
@@ -91,6 +93,33 @@ class IndentRepositoryImpl
                         Result.success(response.body()!!)
                     } else {
                         Result.failure(Exception(response.message()))
+                    }
+                } catch (e: Exception) {
+                    Result.failure(e)
+                }
+            }
+
+        override suspend fun cancelIndent(
+            id: String,
+            request: IndentLifecycleRequest,
+        ): Result<Unit> = executeLifecycleRequest { api.cancelIndent(id, request) }
+
+        override suspend fun reopenIndent(
+            id: String,
+            request: IndentLifecycleRequest,
+        ): Result<Unit> = executeLifecycleRequest { api.reopenIndent(id, request) }
+
+        private suspend fun executeLifecycleRequest(
+            request: suspend () -> retrofit2.Response<com.freight24.rest.response.BaseResponse>,
+        ): Result<Unit> =
+            withContext(ioDispatcher) {
+                try {
+                    val response = request()
+                    val body = response.body()
+                    if (response.isSuccessful && body?.success == true) {
+                        Result.success(Unit)
+                    } else {
+                        Result.failure(response.toApiException(bodyMessage = body?.message))
                     }
                 } catch (e: Exception) {
                     Result.failure(e)

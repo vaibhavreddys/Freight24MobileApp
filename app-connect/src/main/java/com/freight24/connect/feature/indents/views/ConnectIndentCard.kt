@@ -67,15 +67,12 @@ fun ConnectIndentCard(
     status: String,
     fromCity: String,
     toCity: String,
-    /**
-     * Null omits the line entirely. Produced by [formatCurrencyOrNull], so a rate
-     * that was never agreed prints nothing instead of `₹0`.
-     */
-    clientCostFormatted: String?,
-    negotiatedCostFormatted: String?,
+    clientCostFormatted: String,
+    negotiatedCostFormatted: String,
     truckDisplay: String,
     weightDisplay: String,
     materialDisplay: String,
+    interestCount: Int? = null,
     showAdmin: Boolean = false,
     adminName: String? = null,
     onClick: () -> Unit,
@@ -91,6 +88,8 @@ fun ConnectIndentCard(
     footer: (@Composable () -> Unit)? = null,
 ) {
     val scheme = MaterialTheme.colorScheme
+    val showClientCost = clientCostFormatted.hasPositiveCost()
+    val showNegotiatedCost = negotiatedCostFormatted.hasPositiveCost()
 
     DocketCard(
         accent = docketStatusAccent(status),
@@ -151,16 +150,21 @@ fun ConnectIndentCard(
                 modifier = Modifier.weight(1f),
             )
 
-            Spacer(Modifier.width(10.dp))
-
-            if (clientCostFormatted != null || negotiatedCostFormatted != null) {
+            if (showClientCost || showNegotiatedCost) {
+                Spacer(Modifier.width(10.dp))
                 Column(horizontalAlignment = Alignment.End) {
-                    clientCostFormatted?.let {
-                        CostLine(label = stringResource(R.string.client_cost), value = it)
+                    if (showClientCost) {
+                        CostLine(label = stringResource(R.string.client_cost), value = clientCostFormatted)
+                    }
+                    if (showClientCost && showNegotiatedCost) {
                         Spacer(Modifier.height(4.dp))
                     }
-                    negotiatedCostFormatted?.let {
-                        CostLine(label = stringResource(R.string.target_cost), value = it, emphasised = true)
+                    if (showNegotiatedCost) {
+                        CostLine(
+                            label = stringResource(R.string.target_cost),
+                            value = negotiatedCostFormatted,
+                            emphasised = true,
+                        )
                     }
                 }
             }
@@ -193,8 +197,21 @@ fun ConnectIndentCard(
                 )
             }
 
-            if (onCallClick != null) {
+            if (interestCount != null && interestCount > 0) {
                 Spacer(Modifier.weight(1f))
+                MetaTag(
+                    text = if (interestCount == 1) "1 interested" else "$interestCount interested",
+                    container = scheme.primaryContainer,
+                    content = scheme.onPrimaryContainer,
+                )
+            }
+
+            if (onCallClick != null) {
+                if (interestCount == null || interestCount <= 0) {
+                    Spacer(Modifier.weight(1f))
+                } else {
+                    Spacer(Modifier.width(4.dp))
+                }
                 CallPill(onClick = onCallClick)
             }
         }
@@ -264,6 +281,12 @@ fun ConnectIndentCard(
         }
     }
 }
+
+private fun String.hasPositiveCost(): Boolean =
+    filter { it.isDigit() || it == '.' || it == '-' }
+        .toDoubleOrNull()
+        ?.let { it > 0.0 }
+        ?: false
 
 /**
  * The route at card scale: an 8dp pickup ring, a 10dp dashed run, an 8dp
