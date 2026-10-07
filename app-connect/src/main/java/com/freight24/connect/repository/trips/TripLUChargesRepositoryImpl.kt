@@ -2,6 +2,7 @@ package com.freight24.connect.repository.trips
 
 import android.util.Log
 import android.webkit.MimeTypeMap
+import com.freight24.common.util.DocumentUploadPolicy
 import com.freight24.common.di.IoDispatcher
 import com.freight24.connect.feature.trips.domain.model.LuChargeRequest
 import com.freight24.rest.api.TripLUChargesApi
@@ -97,6 +98,7 @@ class TripLUChargesRepositoryImpl
                 } else {
                     getMimeType(this) ?: "application/octet-stream"
                 }
+            DocumentUploadPolicy.validateFile(this)
             val requestBody = asRequestBody(mimeType.toMediaTypeOrNull())
 
             return MultipartBody.Part.createFormData(

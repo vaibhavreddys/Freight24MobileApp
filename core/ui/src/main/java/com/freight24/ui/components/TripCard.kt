@@ -1,5 +1,9 @@
 package com.freight24.ui.components
 
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +24,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.freight24.common.model.Trip
 import com.freight24.ui.trucker.FleetCard
 import com.freight24.ui.trucker.FleetRule
@@ -103,25 +108,57 @@ fun TripCard(
                     contentDescription = "trip_row_${trip.id}"
                 },
     ) {
-        // 1 — which truck. Plate hugs the left, date pins to the right.
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            PlateBadge(
-                registration = trip.registrationNumber,
-                colors = colors,
-                caption = trip.truckType,
-                modifier = Modifier.weight(1f),
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = trip.createdAt,
-                style = TruckerType.caption,
-                color = colors.inkMuted,
-                maxLines = 1,
-                textAlign = androidx.compose.ui.text.style.TextAlign.End,
-            )
+        // Stack the header only when the full plate and date cannot fit together.
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+            val measurer = rememberTextMeasurer()
+            val density = LocalDensity.current
+            val plateWidth = measurer.measure(
+                trip.registrationNumber.uppercase(),
+                style = TruckerType.captionStrong.copy(letterSpacing = 1.2.sp),
+                softWrap = false,
+            ).size.width
+            val dateWidth = measurer.measure(trip.createdAt, style = TruckerType.caption, softWrap = false).size.width
+            val requiredWidth = with(density) { (plateWidth + dateWidth).toDp() } + 30.dp
+            if (requiredWidth > maxWidth) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = trip.createdAt,
+                        style = TruckerType.caption,
+                        color = colors.inkMuted,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    PlateBadge(
+                        registration = trip.registrationNumber,
+                        colors = colors,
+                        caption = trip.truckType,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    PlateBadge(
+                        registration = trip.registrationNumber,
+                        colors = colors,
+                        caption = trip.truckType,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = trip.createdAt,
+                        style = TruckerType.caption,
+                        color = colors.inkMuted,
+                        maxLines = 1,
+                        textAlign = TextAlign.End,
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -132,6 +169,7 @@ fun TripCard(
             to = trip.destination,
             colors = colors,
             progress = if (stageIndex < 0) 0f else (stageIndex + 1).toFloat() / tripStageCount(),
+            stacked = true,
         )
 
         Spacer(modifier = Modifier.height(16.dp))

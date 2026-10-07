@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.freight24.common.util.DocumentUploadPolicy
 import com.freight24.common.util.FileUtils
 import com.freight24.rest.api.TruckOwnerApi
 import com.freight24.rest.repository.LocationRepository
@@ -68,6 +69,7 @@ internal data class DocumentUploadState(
     val existingVerifyStatus: String?,
     val temporaryFileKey: String?,
     val uploadStatus: UploadStatus = UploadStatus.IDLE,
+    val isPreparingDocument: Boolean = false,
 )
 
 internal data class StagedRoute(
@@ -866,6 +868,7 @@ internal class ProfileViewModel
             val original = originalProfile ?: return
             val fieldKey = ProfileDocumentTypeIds.fieldKey(type)
             val currentState = _documentStates.value[fieldKey] ?: return
+            if (currentState.uploadStatus == UploadStatus.UPLOADING) return
 
             if (currentState.existingVerifyStatus == "verified" ||
                 (type == DocumentType.CANCELLED_CHEQUE && original.bankAccountVerificationStatus)
@@ -876,10 +879,10 @@ internal class ProfileViewModel
                 return
             }
 
+            updateDocumentState(fieldKey) { state ->
+                state.copy(uploadStatus = UploadStatus.UPLOADING, isPreparingDocument = true, existingVerifyStatus = null)
+            }
             viewModelScope.launch(Dispatchers.IO) {
-                updateDocumentState(fieldKey) { state ->
-                    state.copy(uploadStatus = UploadStatus.UPLOADING, existingVerifyStatus = null)
-                }
                 recomputeHasChanges()
 
                 try {
@@ -887,6 +890,8 @@ internal class ProfileViewModel
                         createPdfFile(uris = uris, isPdf = isPdf)
                             ?: throw IllegalStateException("Unable to process selected file")
 
+                    DocumentUploadPolicy.validateFile(file)
+                    updateDocumentState(fieldKey) { it.copy(isPreparingDocument = false) }
                     val requestFile = file.asRequestBody("application/pdf".toMediaTypeOrNull())
                     val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
 
@@ -918,6 +923,7 @@ internal class ProfileViewModel
                                 temporaryFileKey = temporaryKey,
                                 existingVerifyStatus = null,
                                 uploadStatus = UploadStatus.DONE,
+                                isPreparingDocument = false,
                             )
                         }
                         if (replacedTemporaryKey != null && replacedTemporaryKey != temporaryKey) {
@@ -926,13 +932,13 @@ internal class ProfileViewModel
                         _uploadEvent.emit(Result.success(Unit))
                     }.onFailure { error ->
                         updateDocumentState(fieldKey) { state ->
-                            state.copy(uploadStatus = UploadStatus.ERROR)
+                            state.copy(uploadStatus = UploadStatus.ERROR, isPreparingDocument = false)
                         }
                         _uploadEvent.emit(Result.failure(error))
                     }
                 } catch (e: Exception) {
                     updateDocumentState(fieldKey) { state ->
-                        state.copy(uploadStatus = UploadStatus.ERROR)
+                        state.copy(uploadStatus = UploadStatus.ERROR, isPreparingDocument = false)
                     }
                     _uploadEvent.emit(Result.failure(e))
                 }

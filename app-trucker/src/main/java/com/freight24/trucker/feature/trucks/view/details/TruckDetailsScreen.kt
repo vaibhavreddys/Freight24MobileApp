@@ -48,11 +48,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.freight24.common.util.DocumentUploadPolicy
 import com.freight24.common.model.TruckDetail
 import com.freight24.common.model.TruckDocument
 import com.freight24.ui.UiState
@@ -107,6 +109,7 @@ internal fun TruckDetailsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val isUploading by viewModel.isUploading.collectAsState()
+    val isPreparingDocument by viewModel.isPreparingDocument.collectAsState()
     val colors = rememberTruckerColors()
 
     LaunchedEffect(Unit) {
@@ -128,7 +131,7 @@ internal fun TruckDetailsScreen(
 
     val photoPickerLauncher =
         rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.PickMultipleVisualMedia(),
+            contract = ActivityResultContracts.PickMultipleVisualMedia(DocumentUploadPolicy.MAX_IMAGES),
             onResult = { uris ->
                 if (uris.isNotEmpty()) {
                     viewModel.onFilesPicked(uris, false, currentDocumentType ?: "")
@@ -230,6 +233,9 @@ internal fun TruckDetailsScreen(
             selectedUris = selectedUris,
             isPdf = viewModel.isPdf.value,
             isUploading = isUploading,
+            progressText = stringResource(
+                if (isPreparingDocument) com.freight24.ui.R.string.upload_preparing else com.freight24.ui.R.string.upload_in_progress,
+            ),
             uploadButtonText = "Upload Now",
             onUploadClick = { viewModel.uploadDocuments() },
             onDismiss = { viewModel.clearSelection() },

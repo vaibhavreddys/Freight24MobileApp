@@ -181,6 +181,10 @@ class OnboardClientViewModel @Inject constructor(
                     }
                     onSuccess()
                 }
+            } catch (error: kotlinx.coroutines.CancellationException) {
+                throw error
+            } catch (error: Exception) {
+                _messageEvent.emit(error.message ?: "Failed to process document")
             } finally {
                 _isSaving.value = false
             }

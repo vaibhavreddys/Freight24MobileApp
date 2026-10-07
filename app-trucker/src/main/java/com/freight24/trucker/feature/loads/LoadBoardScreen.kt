@@ -50,6 +50,8 @@ import com.freight24.ui.components.FreightEmptyState
 import com.freight24.ui.components.LoadCard
 import com.freight24.ui.components.LoadDetailBottomSheet
 import com.freight24.ui.theme.FreightThemeTokens
+import com.freight24.ui.trucker.FleetSearchField
+import com.freight24.ui.trucker.rememberTruckerColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,7 +63,10 @@ fun LoadBoardScreen(
     val items by viewModel.items.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val isInitialLoading by viewModel.isInitialLoading.collectAsState()
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    val isSearchVisible by viewModel.isSearchVisible.collectAsState()
     val previousExpandedCityId = remember { mutableStateOf<Int?>(null) }
+    val truckerColors = rememberTruckerColors()
 
     val expandedCityId by viewModel.expandedCityId.collectAsState()
     val context = LocalContext.current
@@ -115,204 +120,224 @@ fun LoadBoardScreen(
                 .fillMaxSize()
                 .padding(paddingValues),
     ) {
-        PullToRefreshBox(
-            isRefreshing = isRefreshing,
-            onRefresh = { viewModel.onRefresh() },
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize(),
-                contentPadding =
-                    PaddingValues(
-                        top = 16.dp,
-                        start = 16.dp,
-                        end = 16.dp,
-                        bottom = 24.dp,
-                    ),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+        Column(modifier = Modifier.fillMaxSize()) {
+            if (isSearchVisible) {
+                FleetSearchField(
+                    value = searchQuery,
+                    onValueChange = viewModel::onSearchQueryChanged,
+                    placeholder = "Search cities",
+                    colors = truckerColors,
+                    modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+                )
+            }
+
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = { viewModel.onRefresh() },
+                modifier = Modifier.weight(1f),
             ) {
-                if (items.isEmpty()) {
-                    item(key = "empty") {
-                        Box(
-                            modifier =
-                                Modifier
-                                    .fillParentMaxSize()
-                                    .semantics(mergeDescendants = true) { contentDescription = "loads_empty_state" },
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            if (isInitialLoading) {
-                                CircularProgressIndicator()
-                            } else {
-                                FreightEmptyState(
-                                    icon = Icons.Default.LocalShipping,
-                                    title = "No loads available right now",
-                                    subtitle = "Pull to refresh — new loads appear here the moment agents post them",
-                                )
-                            }
-                        }
-                    }
-                } else {
-                    // Board status strip — dominant secondary region answering
-                    // "what's live?" before the city list (Purpose First +
-                    // System Status Visibility). Tonal surfaceContainerLow keeps
-                    // it subordinate to the load cards themselves.
-                    item(key = "board_header") {
-                        val cityCount = items.filterIsInstance<LoadBoardItem.CityItem>().size
-                        val totalLoads = items.filterIsInstance<LoadBoardItem.CityItem>().sumOf { it.totalLoads }
-                        val extended = FreightThemeTokens.colors
-                        Surface(
-                            color = MaterialTheme.colorScheme.surfaceContainerLow,
-                            shape = MaterialTheme.shapes.medium,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding =
+                        PaddingValues(
+                            top = 16.dp,
+                            start = 16.dp,
+                            end = 16.dp,
+                            bottom = 24.dp,
+                        ),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    if (items.isEmpty()) {
+                        item(key = "empty") {
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .fillParentMaxSize()
+                                        .semantics(mergeDescendants = true) { contentDescription = "loads_empty_state" },
+                                contentAlignment = Alignment.Center,
                             ) {
-                                Box(
-                                    modifier =
-                                        Modifier
-                                            .size(8.dp)
-                                            .background(color = extended.success, shape = CircleShape),
-                                )
-                                Spacer(Modifier.width(10.dp))
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = "LIVE BOARD • $cityCount ${if (cityCount == 1) "city" else "cities"} • $totalLoads ${if (totalLoads == 1) "load" else "loads"}",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                    )
-                                    Text(
-                                        text = "Tap a city to see its loads",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
+                                if (isInitialLoading) {
+                                    CircularProgressIndicator()
+                                } else {
+                                    if (searchQuery.isNotBlank()) {
+                                        FreightEmptyState(
+                                            icon = Icons.Default.LocalShipping,
+                                            title = "No matching cities",
+                                            subtitle = "Try another city name",
+                                        )
+                                    } else {
+                                        FreightEmptyState(
+                                            icon = Icons.Default.LocalShipping,
+                                            title = "No loads available right now",
+                                            subtitle = "Pull to refresh — new loads appear here the moment agents post them",
+                                        )
+                                    }
                                 }
                             }
                         }
-                    }
-                    items(
-                        items = items,
-                        key = {
-                            when (it) {
-                                is LoadBoardItem.CityItem -> "city-${it.cityId}-${it.cityName}"
-                                is LoadBoardItem.LoadItem -> "load-${it.cityId}-${it.load.id}"
-                                is LoadBoardItem.ShowMoreItem -> "show-more-${it.cityId}"
-                            }
-                        },
-                        contentType = {
-                            when (it) {
-                                is LoadBoardItem.CityItem -> "city"
-                                is LoadBoardItem.LoadItem -> "load"
-                                is LoadBoardItem.ShowMoreItem -> "show_more"
-                            }
-                        },
-                    ) { item ->
-                        when (item) {
-                            is LoadBoardItem.CityItem ->
-                                CityCard(
-                                    cityName = item.cityName,
-                                    listingCount = item.totalLoads,
-                                    expanded = item.expanded,
-                                    onClick = { viewModel.onCityClicked(item.cityId) },
-                                    modifier =
-                                        Modifier
-                                            // No placement animation on the city
-                                            // card itself: the previous-expanded
-                                            // card kept its body rendered under
-                                            // the new expanded card for the
-                                            // duration of the tween, and the
-                                            // tween left a "ghost" header from
-                                            // the next city stacked under the
-                                            // collapsed previous one. Letting
-                                            // the LazyColumn re-layout the
-                                            // header instantly removes the
-                                            // artefact.
-                                            //
-                                            // mergeDescendants is set on the
-                                            // inner Card by CityCard so the
-                                            // whole row is one tap target; no
-                                            // extra contentDescription is added
-                                            // here because cityId is encoded in
-                                            // the child Text content and a
-                                            // duplicate semantics node was being
-                                            // emitted during the collapse /
-                                            // expand transition.
-                                            .testTag("city_card")
-                                            .semantics {
-                                                testTagsAsResourceId = true
-                                            },
-                                )
-
-                            is LoadBoardItem.LoadItem ->
-                                LoadCard(
-                                    sourceCity = item.load.sourceCity,
-                                    destinationCity = item.load.destinationCity,
-                                    postedTime = item.load.postedTime,
-                                    price = item.load.price,
-                                    truckInfo = item.load.truckInfo,
-                                    commodity = item.load.commodity,
-                                    loadWeight = item.load.loadWeight,
-                                    f24AgentName = item.load.f24AgentName,
-                                    isBookmarked = item.load.isInterested,
-                                    isBookmarkLoading = item.load.isInterestLoading,
-                                    modifier =
-                                        Modifier
-                                            // No animateItem on the load rows:
-                                            // when a previous expanded city
-                                            // collapses and a new one expands in
-                                            // the same frame, animateItem kept
-                                            // the disappearing rows rendered
-                                            // under the new header for the
-                                            // duration of the tween — visible as
-                                            // a "ghost" of the previous city's
-                                            // loads. Without animateItem the
-                                            // LazyColumn settles to the new
-                                            // layout immediately.
-                                            //
-                                            // mergeDescendants / contentDescription
-                                            // removed here for the same reason as
-                                            // the city card above: a
-                                            // mergeDescendants wrapper was leaving
-                                            // a stale semantic node across the
-                                            // collapse/expand transition.
-                                            .testTag("load_card")
-                                            .semantics {
-                                                testTagsAsResourceId = true
-                                            },
-                                    onClick = {
-                                        viewModel.onLoadCardClicked(
-                                            indentId = item.load.id,
-                                            tripPrice = item.load.price,
-                                        )
-                                    },
-                                    onCallClick = {
-                                        val phone = item.load.f24AgentPhone.trim()
-                                        if (phone.isNotEmpty() && phone != "--") {
-                                            val intent = Intent(Intent.ACTION_DIAL, "tel:$phone".toUri())
-                                            context.startActivity(intent)
-                                        }
-                                    },
-                                    onBookmarkClick = {
-                                        viewModel.onBookmarkClicked(item.load.id)
-                                    },
-                                )
-
-                            is LoadBoardItem.ShowMoreItem -> {
-                                TextButton(
-                                    onClick = { viewModel.onShowMoreClicked(item.cityId) },
-                                    modifier =
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .testTag("show_more_btn")
-                                            .semantics { testTagsAsResourceId = true },
+                    } else {
+                        // Board status strip — dominant secondary region answering
+                        // "what's live?" before the city list (Purpose First +
+                        // System Status Visibility). Tonal surfaceContainerLow keeps
+                        // it subordinate to the load cards themselves.
+                        item(key = "board_header") {
+                            val cityCount = items.filterIsInstance<LoadBoardItem.CityItem>().size
+                            val totalLoads = items.filterIsInstance<LoadBoardItem.CityItem>().sumOf { it.totalLoads }
+                            val extended = FreightThemeTokens.colors
+                            Surface(
+                                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                                shape = MaterialTheme.shapes.medium,
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
                                 ) {
-                                    Text(
-                                        text = "Show more (${item.loadedCount} of ${item.totalCount})",
-                                        style = MaterialTheme.typography.labelLarge,
-                                        color = MaterialTheme.colorScheme.primary,
+                                    Box(
+                                        modifier =
+                                            Modifier
+                                                .size(8.dp)
+                                                .background(color = extended.success, shape = CircleShape),
                                     )
+                                    Spacer(Modifier.width(10.dp))
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "LIVE BOARD • $cityCount ${if (cityCount == 1) "city" else "cities"} • $totalLoads ${if (totalLoads == 1) "load" else "loads"}",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                        )
+                                        Text(
+                                            text = "Tap a city to see its loads",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        items(
+                            items = items,
+                            key = {
+                                when (it) {
+                                    is LoadBoardItem.CityItem -> "city-${it.cityId}-${it.cityName}"
+                                    is LoadBoardItem.LoadItem -> "load-${it.cityId}-${it.load.id}"
+                                    is LoadBoardItem.ShowMoreItem -> "show-more-${it.cityId}"
+                                }
+                            },
+                            contentType = {
+                                when (it) {
+                                    is LoadBoardItem.CityItem -> "city"
+                                    is LoadBoardItem.LoadItem -> "load"
+                                    is LoadBoardItem.ShowMoreItem -> "show_more"
+                                }
+                            },
+                        ) { item ->
+                            when (item) {
+                                is LoadBoardItem.CityItem ->
+                                    CityCard(
+                                        cityName = item.cityName,
+                                        listingCount = item.totalLoads,
+                                        expanded = item.expanded,
+                                        onClick = { viewModel.onCityClicked(item.cityId) },
+                                        modifier =
+                                            Modifier
+                                                // No placement animation on the city
+                                                // card itself: the previous-expanded
+                                                // card kept its body rendered under
+                                                // the new expanded card for the
+                                                // duration of the tween, and the
+                                                // tween left a "ghost" header from
+                                                // the next city stacked under the
+                                                // collapsed previous one. Letting
+                                                // the LazyColumn re-layout the
+                                                // header instantly removes the
+                                                // artefact.
+                                                //
+                                                // mergeDescendants is set on the
+                                                // inner Card by CityCard so the
+                                                // whole row is one tap target; no
+                                                // extra contentDescription is added
+                                                // here because cityId is encoded in
+                                                // the child Text content and a
+                                                // duplicate semantics node was being
+                                                // emitted during the collapse /
+                                                // expand transition.
+                                                .testTag("city_card")
+                                                .semantics {
+                                                    testTagsAsResourceId = true
+                                                },
+                                    )
+
+                                is LoadBoardItem.LoadItem ->
+                                    LoadCard(
+                                        sourceCity = item.load.sourceCity,
+                                        destinationCity = item.load.destinationCity,
+                                        postedTime = item.load.postedTime,
+                                        price = item.load.price,
+                                        truckInfo = item.load.truckInfo,
+                                        commodity = item.load.commodity,
+                                        loadWeight = item.load.loadWeight,
+                                        f24AgentName = item.load.f24AgentName,
+                                        isBookmarked = item.load.isInterested,
+                                        isBookmarkLoading = item.load.isInterestLoading,
+                                        modifier =
+                                            Modifier
+                                                // No animateItem on the load rows:
+                                                // when a previous expanded city
+                                                // collapses and a new one expands in
+                                                // the same frame, animateItem kept
+                                                // the disappearing rows rendered
+                                                // under the new header for the
+                                                // duration of the tween — visible as
+                                                // a "ghost" of the previous city's
+                                                // loads. Without animateItem the
+                                                // LazyColumn settles to the new
+                                                // layout immediately.
+                                                //
+                                                // mergeDescendants / contentDescription
+                                                // removed here for the same reason as
+                                                // the city card above: a
+                                                // mergeDescendants wrapper was leaving
+                                                // a stale semantic node across the
+                                                // collapse/expand transition.
+                                                .testTag("load_card")
+                                                .semantics {
+                                                    testTagsAsResourceId = true
+                                                },
+                                        onClick = {
+                                            viewModel.onLoadCardClicked(
+                                                indentId = item.load.id,
+                                                tripPrice = item.load.price,
+                                            )
+                                        },
+                                        onCallClick = {
+                                            val phone = item.load.f24AgentPhone.trim()
+                                            if (phone.isNotEmpty() && phone != "--") {
+                                                val intent = Intent(Intent.ACTION_DIAL, "tel:$phone".toUri())
+                                                context.startActivity(intent)
+                                            }
+                                        },
+                                        onBookmarkClick = {
+                                            viewModel.onBookmarkClicked(item.load.id)
+                                        },
+                                    )
+
+                                is LoadBoardItem.ShowMoreItem -> {
+                                    TextButton(
+                                        onClick = { viewModel.onShowMoreClicked(item.cityId) },
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .testTag("show_more_btn")
+                                                .semantics { testTagsAsResourceId = true },
+                                    ) {
+                                        Text(
+                                            text = "Show more (${item.loadedCount} of ${item.totalCount})",
+                                            style = MaterialTheme.typography.labelLarge,
+                                            color = MaterialTheme.colorScheme.primary,
+                                        )
+                                    }
                                 }
                             }
                         }

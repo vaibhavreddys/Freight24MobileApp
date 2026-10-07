@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -24,6 +26,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ErrorOutline
@@ -349,7 +352,52 @@ fun RoadSpine(
     colors: TruckerColors,
     modifier: Modifier = Modifier,
     progress: Float = 1f,
+    stacked: Boolean = false,
 ) {
+    if (stacked) {
+        Column(modifier = modifier.fillMaxWidth()) {
+            Row(modifier = Modifier.height(IntrinsicSize.Min)) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.width(12.dp).fillMaxHeight().padding(top = 6.dp),
+                ) {
+                    Box(modifier = Modifier.size(12.dp).background(colors.brand, CircleShape))
+                    DashedRoad(
+                        colors = colors,
+                        progress = progress,
+                        vertical = true,
+                        modifier = Modifier.width(2.dp).weight(1f),
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    text = from,
+                    style = TruckerType.bodyStrong,
+                    color = colors.ink,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f).padding(bottom = 12.dp),
+                )
+            }
+            Row(verticalAlignment = Alignment.Top) {
+                val destinationColor = if (progress >= 1f) colors.brand else colors.line
+                Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(12.dp)) {
+                    Box(Modifier.width(2.dp).height(6.dp).background(destinationColor))
+                    Box(Modifier.size(12.dp).background(destinationColor, CircleShape))
+                }
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    text = to,
+                    style = TruckerType.bodyStrong,
+                    color = colors.ink,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+        return
+    }
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -388,23 +436,29 @@ private fun DashedRoad(
     colors: TruckerColors,
     progress: Float,
     modifier: Modifier = Modifier,
+    vertical: Boolean = false,
 ) {
     val dash = PathEffect.dashPathEffect(floatArrayOf(9f, 8f), 0f)
-    Canvas(modifier = modifier.height(2.dp)) {
-        val midY = size.height / 2f
-        val split = size.width * progress.coerceIn(0f, 1f)
+    Canvas(modifier = if (vertical) modifier else modifier.height(2.dp)) {
+        val start = if (vertical) Offset(size.width / 2f, 0f) else Offset(0f, size.height / 2f)
+        val end = if (vertical) Offset(size.width / 2f, size.height) else Offset(size.width, size.height / 2f)
+        val split = if (vertical) {
+            Offset(size.width / 2f, size.height * progress.coerceIn(0f, 1f))
+        } else {
+            Offset(size.width * progress.coerceIn(0f, 1f), size.height / 2f)
+        }
         drawLine(
             color = colors.brand,
-            start = Offset(0f, midY),
-            end = Offset(split, midY),
-            strokeWidth = size.height,
+            start = start,
+            end = split,
+            strokeWidth = if (vertical) size.width else size.height,
             pathEffect = dash,
         )
         drawLine(
             color = colors.line,
-            start = Offset(split, midY),
-            end = Offset(size.width, midY),
-            strokeWidth = size.height,
+            start = split,
+            end = end,
+            strokeWidth = if (vertical) size.width else size.height,
             pathEffect = dash,
         )
     }

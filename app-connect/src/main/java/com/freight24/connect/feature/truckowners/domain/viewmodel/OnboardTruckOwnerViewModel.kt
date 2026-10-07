@@ -549,18 +549,24 @@ class OnboardTruckOwnerViewModel
             type: String,
         ) {
             viewModelScope.launch(Dispatchers.IO) {
-                val file = FileUtils.getFileFromUri(context, uri)
-                if (file == null) {
-                    _messageEvent.emit("Failed to process document")
-                    return@launch
-                }
-                when (type) {
-                    "AADHAAR" -> aadhaarFile.value = file
-                    "PAN" -> panFile.value = file
-                    "GST" -> gstFile.value = file
-                    "COMPANY" -> companyFile.value = file
-                    "TDS" -> tdsFile.value = file
-                    "CHEQUE" -> chequeFile.value = file
+                try {
+                    val file = FileUtils.getFileFromUri(context, uri)
+                    if (file == null) {
+                        _messageEvent.emit("Failed to process document")
+                        return@launch
+                    }
+                    when (type) {
+                        "AADHAAR" -> aadhaarFile.value = file
+                        "PAN" -> panFile.value = file
+                        "GST" -> gstFile.value = file
+                        "COMPANY" -> companyFile.value = file
+                        "TDS" -> tdsFile.value = file
+                        "CHEQUE" -> chequeFile.value = file
+                    }
+                } catch (error: kotlinx.coroutines.CancellationException) {
+                    throw error
+                } catch (error: Exception) {
+                    _messageEvent.emit(error.message ?: "Failed to process document")
                 }
             }
         }

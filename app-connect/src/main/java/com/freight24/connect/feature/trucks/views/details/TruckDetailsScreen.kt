@@ -1,4 +1,5 @@
 package com.freight24.connect.feature.trucks.views.details
+
 import android.Manifest
 import android.content.Context
 import android.content.Intent
@@ -70,6 +71,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.freight24.common.util.DocumentUploadPolicy
 import com.freight24.connect.domain.model.TruckDetails
 import com.freight24.connect.domain.model.TruckDocument
 import com.freight24.connect.feature.trucks.views.TruckDocketCard
@@ -117,7 +119,7 @@ internal fun TruckDetailsScreen(
 
     val photoPickerLauncher =
         rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.PickMultipleVisualMedia(),
+            contract = ActivityResultContracts.PickMultipleVisualMedia(DocumentUploadPolicy.MAX_IMAGES),
             onResult = { uris ->
                 if (uris.isNotEmpty()) {
                     viewModel.onFilesPicked(uris, false, currentDocumentType ?: "")

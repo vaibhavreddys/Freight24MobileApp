@@ -1,0 +1,8 @@
+<resources>
+    <string name="upload_preparing">Preparing document…</string>
+    <string name="upload_in_progress">Uploading document…</string>
+    <string name="upload_processing">Processing document…</string>
+    <string name="upload_please_wait">Please wait</string>
+    <string name="upload_pdf_too_large">Document must be 3 MB or smaller. Please choose a smaller PDF.</string>
+    <string name="upload_too_many_images">Select up to %1$d images per document. Please choose your images again.</string>
+</resources>

@@ -23,8 +23,10 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -36,13 +38,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.rememberAsyncImagePainter
+import com.freight24.common.util.DocumentUploadPolicy
 import com.freight24.ui.theme.FreightThemeTokens
 import java.util.Locale
 
-private const val LARGE_FILE_THRESHOLD_BYTES = 7L * 1024L * 1024L
+private const val LARGE_FILE_THRESHOLD_BYTES = DocumentUploadPolicy.MAX_FILE_SIZE_BYTES
 
 private data class FileMeta(
     val name: String?,
@@ -59,6 +63,7 @@ fun FileConfirmationSheet(
     onUploadClick: () -> Unit,
     onDismiss: () -> Unit,
     sheetState: SheetState = rememberModalBottomSheetState(),
+    progressText: String? = null,
 ) {
     if (selectedUris.isEmpty()) return
 
@@ -68,9 +73,14 @@ fun FileConfirmationSheet(
             selectedUris.firstOrNull()?.let { uri -> resolveFileMeta(context, uri) }
         }
 
+    val tooManyImages = !isPdf && selectedUris.size > DocumentUploadPolicy.MAX_IMAGES
+    val oversizedPdf = isPdf && (firstFileMeta?.sizeBytes ?: 0L) > LARGE_FILE_THRESHOLD_BYTES
+
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
+        onDismissRequest = { if (!isUploading) onDismiss() },
         sheetState = sheetState,
+        sheetGesturesEnabled = !isUploading,
+        properties = ModalBottomSheetProperties(shouldDismissOnBackPress = !isUploading),
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
         Column(
@@ -140,7 +150,7 @@ fun FileConfirmationSheet(
                 if (isLarge) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Large file — may upload slowly",
+                        text = stringResource(com.freight24.ui.R.string.upload_pdf_too_large),
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall,
                     )
@@ -174,19 +184,41 @@ fun FileConfirmationSheet(
                 }
             }
 
+            if (tooManyImages) {
+                Text(
+                    text = stringResource(com.freight24.ui.R.string.upload_too_many_images, DocumentUploadPolicy.MAX_IMAGES),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
+
+            if (isUploading) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                Text(
+                    text = progressText ?: stringResource(com.freight24.ui.R.string.upload_processing),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(top = 8.dp, bottom = 16.dp),
+                )
+            }
 
             Button(
                 onClick = onUploadClick,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = FreightThemeTokens.colors.success),
-                enabled = !isUploading,
+                enabled = !isUploading && !tooManyImages && !oversizedPdf,
             ) {
                 if (isUploading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(20.dp),
                         color = MaterialTheme.colorScheme.onPrimary,
+                    )
+                    Text(
+                        text = stringResource(com.freight24.ui.R.string.upload_please_wait),
+                        modifier = Modifier.padding(start = 8.dp),
                     )
                 } else {
                     Text(uploadButtonText, color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Bold)

@@ -1,8 +1,9 @@
 package com.freight24.trucker.feature.trucks.view.details
 
+import com.freight24.common.util.DocumentUploadPolicy
+import com.freight24.common.util.FileUtils
+
 import android.content.Context
-import android.graphics.BitmapFactory
-import android.graphics.pdf.PdfDocument
 import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -17,18 +18,14 @@ import com.freight24.trucker.feature.trucks.domain.usecase.UpdateTruckDocumentsU
 import com.freight24.ui.UiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
-import java.io.File
-import java.io.FileOutputStream
 import javax.inject.Inject
 
 @HiltViewModel
@@ -51,6 +48,8 @@ internal class TruckDetailsViewModel
 
         private val _isUploading = MutableStateFlow(false)
         val isUploading: StateFlow<Boolean> = _isUploading.asStateFlow()
+        private val _isPreparingDocument = MutableStateFlow(false)
+        val isPreparingDocument: StateFlow<Boolean> = _isPreparingDocument.asStateFlow()
 
         private val _selectedUris = MutableStateFlow<List<Uri>>(emptyList())
         val selectedUris: StateFlow<List<Uri>> = _selectedUris.asStateFlow()
@@ -114,19 +113,21 @@ internal class TruckDetailsViewModel
         fun uploadDocuments() {
             val uris = _selectedUris.value
             val docType = _currentDocumentType.value ?: return
-            if (uris.isEmpty()) return
+            if (uris.isEmpty() || !_isUploading.compareAndSet(false, true)) return
+            _isPreparingDocument.value = true
 
             viewModelScope.launch {
-                _isUploading.value = true
                 try {
                     val file =
                         if (_isPdf.value) {
-                            getFileFromUri(uris.first(), docType)
+                            FileUtils.getFileFromUri(context, uris.first())
                         } else {
-                            convertImagesToPdf(uris, docType)
+                            FileUtils.convertImageToPdf(context, uris)
                         }
 
                     if (file != null) {
+                        DocumentUploadPolicy.validateFile(file)
+                        _isPreparingDocument.value = false
                         val requestFile = file.asRequestBody("application/pdf".toMediaTypeOrNull())
                         val partName =
                             when (docType.lowercase()) {
@@ -154,65 +155,19 @@ internal class TruckDetailsViewModel
                             .onFailure { error ->
                                 _errorEvent.emit(error.message ?: "Upload failed")
                             }
+                    } else {
+                        _errorEvent.emit("Unable to read the selected document")
                     }
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     _errorEvent.emit(e.message ?: "Upload error")
                 } finally {
+                    _isPreparingDocument.value = false
                     _isUploading.value = false
                 }
             }
         }
-
-        private suspend fun getFileFromUri(
-            uri: Uri,
-            docType: String,
-        ): File? =
-            withContext(Dispatchers.IO) {
-                try {
-                    val inputStream = context.contentResolver.openInputStream(uri)
-                    val file = File(context.cacheDir, "temp_${docType.replace(" ", "_")}.pdf")
-                    val outputStream = FileOutputStream(file)
-                    inputStream?.use { input ->
-                        outputStream.use { output ->
-                            input.copyTo(output)
-                        }
-                    }
-                    file
-                } catch (e: Exception) {
-                    null
-                }
-            }
-
-        private suspend fun convertImagesToPdf(
-            uris: List<Uri>,
-            docType: String,
-        ): File? =
-            withContext(Dispatchers.IO) {
-                try {
-                    val pdfDocument = PdfDocument()
-                    uris.forEachIndexed { index, uri ->
-                        val inputStream = context.contentResolver.openInputStream(uri)
-                        val bitmap = BitmapFactory.decodeStream(inputStream)
-                        if (bitmap != null) {
-                            val pageInfo = PdfDocument.PageInfo.Builder(bitmap.width, bitmap.height, index + 1).create()
-                            val page = pdfDocument.startPage(pageInfo)
-                            page.canvas.drawBitmap(bitmap, 0f, 0f, null)
-                            pdfDocument.finishPage(page)
-                            bitmap.recycle()
-                        }
-                        inputStream?.close()
-                    }
-
-                    val file = File(context.cacheDir, "temp_${docType.replace(" ", "_")}_converted.pdf")
-                    val outputStream = FileOutputStream(file)
-                    pdfDocument.writeTo(outputStream)
-                    pdfDocument.close()
-                    outputStream.close()
-                    file
-                } catch (e: Exception) {
-                    null
-                }
-            }
 
         fun fetchSignedUrl(
             documentType: String,

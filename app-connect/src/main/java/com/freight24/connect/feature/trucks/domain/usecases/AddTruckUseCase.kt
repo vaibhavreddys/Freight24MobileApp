@@ -1,5 +1,7 @@
 package com.freight24.connect.feature.trucks.domain.usecases
 
+import com.freight24.common.util.DocumentUploadException
+import com.freight24.common.util.DocumentUploadPolicy
 import com.freight24.connect.repository.TruckRepository
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -37,44 +39,48 @@ class AddTruckUseCaseImpl
         private val repository: TruckRepository,
     ) : AddTruckUseCase {
         override suspend fun invoke(params: AddTruckParams): Result<CreatedTruck> {
-            val registrationNumber = params.registrationNumber.toPart("registration_number")
-            val truckTypeId = params.truckTypeId.toString().toPart("truck_type_id")
-            val ownerProfileId = params.ownerProfileId.toPart("truck_owner_id")
-            val make = params.make?.toPart("make")
-            val model = params.model?.toPart("model")
-            val year = params.year?.toPart("year")
-            val capacityMt = params.capacityMt?.toPart("capacity_mt")
+            try {
+                val registrationNumber = params.registrationNumber.toPart("registration_number")
+                val truckTypeId = params.truckTypeId.toString().toPart("truck_type_id")
+                val ownerProfileId = params.ownerProfileId.toPart("truck_owner_id")
+                val make = params.make?.toPart("make")
+                val model = params.model?.toPart("model")
+                val year = params.year?.toPart("year")
+                val capacityMt = params.capacityMt?.toPart("capacity_mt")
 
-            val rcCard = params.rcCard?.toFilePart("rc_card")
-            val fcCertificate = params.fcCertificate?.toFilePart("fc_certificate")
-            val insurance = params.insurance?.toFilePart("insurance")
+                val rcCard = params.rcCard?.toFilePart("rc_card")
+                val fcCertificate = params.fcCertificate?.toFilePart("fc_certificate")
+                val insurance = params.insurance?.toFilePart("insurance")
 
-            return repository
-                .addTruck(
-                    registrationNumber,
-                    truckTypeId,
-                    ownerProfileId,
-                    make,
-                    model,
-                    year,
-                    capacityMt,
-                    rcCard,
-                    fcCertificate,
-                    insurance,
-                ).mapCatching { response ->
-                    if (!response.success) {
-                        throw IllegalStateException(response.message.ifBlank { "Failed to create truck" })
+                return repository
+                    .addTruck(
+                        registrationNumber,
+                        truckTypeId,
+                        ownerProfileId,
+                        make,
+                        model,
+                        year,
+                        capacityMt,
+                        rcCard,
+                        fcCertificate,
+                        insurance,
+                    ).mapCatching { response ->
+                        if (!response.success) {
+                            throw IllegalStateException(response.message.ifBlank { "Failed to create truck" })
+                        }
+                        val truck = response.data
+                            ?: throw IllegalStateException(response.message.ifBlank { "Truck creation returned no data" })
+
+                        CreatedTruck(
+                            truckId = truck.truckId,
+                            registrationNumber = truck.registrationNumber,
+                            truckType = truck.displayName ?: truck.truckType,
+                            status = truck.status,
+                        )
                     }
-                    val truck = response.data
-                        ?: throw IllegalStateException(response.message.ifBlank { "Truck creation returned no data" })
-
-                    CreatedTruck(
-                        truckId = truck.truckId,
-                        registrationNumber = truck.registrationNumber,
-                        truckType = truck.displayName ?: truck.truckType,
-                        status = truck.status,
-                    )
-                }
+            } catch (error: DocumentUploadException) {
+                return Result.failure(error)
+            }
         }
 
         private fun String.toPart(name: String): MultipartBody.Part {
@@ -83,6 +89,7 @@ class AddTruckUseCaseImpl
 
         private fun File.toFilePart(name: String): MultipartBody.Part {
             val mimeType = if (extension.equals("pdf", ignoreCase = true)) "application/pdf" else "application/octet-stream"
+            DocumentUploadPolicy.validateFile(this)
             val requestBody = this.asRequestBody(mimeType.toMediaTypeOrNull())
             return MultipartBody.Part.createFormData(name, this.name, requestBody)
         }

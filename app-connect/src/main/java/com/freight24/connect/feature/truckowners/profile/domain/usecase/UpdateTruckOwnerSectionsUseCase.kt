@@ -1,5 +1,6 @@
 package com.freight24.connect.feature.truckowners.profile.domain.usecase
 
+import com.freight24.common.util.DocumentUploadPolicy
 import com.freight24.connect.repository.TruckOwnerRepository
 import com.freight24.rest.request.PreferredRouteEntry
 import kotlinx.serialization.json.buildJsonArray
@@ -101,7 +102,11 @@ class UpdateTruckOwnerSectionsUseCaseImpl
 
             operations.forEach { (section, operation) ->
                 if (section in completed) return@forEach
-                val result = operation()
+                val result = try {
+                    operation()
+                } catch (error: com.freight24.common.util.DocumentUploadException) {
+                    Result.failure(error)
+                }
                 if (result.isFailure) {
                     return Result.failure(
                         TruckOwnerEditException(
@@ -166,6 +171,7 @@ class UpdateTruckOwnerSectionsUseCaseImpl
 
         private fun File.toFilePart(name: String): MultipartBody.Part {
             val mimeType = if (extension.equals("pdf", true)) "application/pdf" else "application/octet-stream"
+            DocumentUploadPolicy.validateFile(this)
             return MultipartBody.Part.createFormData(name, this.name, asRequestBody(mimeType.toMediaTypeOrNull()))
         }
     }
