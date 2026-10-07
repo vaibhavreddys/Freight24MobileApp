@@ -1,6 +1,8 @@
 package com.freight24.connect.feature.indents.domain.viewmodel
 
 import androidx.compose.runtime.Immutable
+import com.freight24.common.util.negotiatedCostExceedsClientError
+import com.freight24.common.util.proposedCostExceedsClientError
 import com.freight24.rest.response.IndentResponse
 import kotlinx.coroutines.flow.StateFlow
 
@@ -33,7 +35,26 @@ data class CloneIndentUiState(
     val tatRequired: Boolean = false,
     val tatHours: String = "",
     val remarks: String = "",
-)
+) {
+    /**
+     * Why the negotiated cost is unusable, or null when it is fine. Flags live on
+     * the field itself rather than only at submit.
+     */
+    val negotiatedCostError: String?
+        get() = negotiatedCostExceedsClientError(negotiatedCost, clientCost)
+
+    /** Same, for the business-proposed cost. */
+    val proposedCostError: String?
+        get() = proposedCostExceedsClientError(businessProposedCost, clientCost)
+
+    /**
+     * The first breach across the rate fields, or null when every one of them is
+     * within the client cost. The review button is gated on this so the operator
+     * cannot walk into the review screen carrying a rate the backend will refuse.
+     */
+    val costError: String?
+        get() = negotiatedCostError ?: proposedCostError
+}
 
 sealed class CloneIndentEvent {
     data class LoadIndent(

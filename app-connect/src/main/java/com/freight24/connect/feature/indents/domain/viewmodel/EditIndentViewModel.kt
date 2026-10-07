@@ -3,6 +3,7 @@ package com.freight24.connect.feature.indents.domain.viewmodel
 import androidx.compose.runtime.Immutable
 import com.freight24.rest.response.ClientContactV2Dto
 import com.freight24.rest.response.IndentResponse
+import com.freight24.rest.response.MaterialDto
 import kotlinx.coroutines.flow.StateFlow
 
 interface EditIndentViewModel {
@@ -34,6 +35,8 @@ data class EditIndentUiState(
     val commercialsChanged: Boolean = false,
     /** True when the term fields differ. Colours clause 06's spine. */
     val termsChanged: Boolean = false,
+    /** True when the cargo fields differ. Colours clause 04's spine. */
+    val cargoChanged: Boolean = false,
     // Editable fields — accepted by PUT /api/v1/indents/:id
     val clientCost: String = "",
     val negotiatedCost: String = "",
@@ -52,6 +55,19 @@ data class EditIndentUiState(
     val tatRequired: Boolean = false,
     val tatHours: String = "",
     val remarks: String = "",
+    /**
+     * Cargo. Both are `NOT NULL` on `indent_groups`, so unlike every field
+     * above these may not be cleared — [loadWeightError] / [materialError] gate
+     * the save rather than letting the server refuse the whole correction.
+     */
+    val loadWeight: String = "",
+    val material: String = "",
+    val materials: List<MaterialDto> = emptyList(),
+    val isLoadingMaterials: Boolean = false,
+    /** Non-null when [loadWeight] cannot be filed as-is. */
+    val loadWeightError: String? = null,
+    /** Non-null when [material] cannot be filed as-is. */
+    val materialError: String? = null,
     // Contact roles — editable only through PUT /api/v1/indents/groups/:id
     val contacts: List<ClientContactV2Dto> = emptyList(),
     val isLoadingContacts: Boolean = false,
@@ -99,6 +115,8 @@ sealed class EditIndentEvent {
         val tatRequired: Boolean? = null,
         val tatHours: String? = null,
         val remarks: String? = null,
+        val loadWeight: String? = null,
+        val material: String? = null,
     ) : EditIndentEvent()
 
     /** `null` clears the role. Placement can be cleared then re-set, but not omitted at save. */

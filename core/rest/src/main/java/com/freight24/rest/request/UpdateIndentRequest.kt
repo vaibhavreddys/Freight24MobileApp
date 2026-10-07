@@ -18,4 +18,8 @@ data class UpdateIndentRequest(
     @SerialName("tat_enabled") val tatEnabled: Boolean? = null,
     @SerialName("tat_hours") val tatHours: Int? = null,
     @SerialName("special_requirements") val remarks: String? = null,
+    // Cargo — both land on indent_groups. Double, not Int: the column is
+    // DECIMAL(10,2), so fractional tonnages such as 12.5 are legal.
+    @SerialName("load_weight") val loadWeight: Double? = null,
+    @SerialName("material") val material: String? = null,
 )

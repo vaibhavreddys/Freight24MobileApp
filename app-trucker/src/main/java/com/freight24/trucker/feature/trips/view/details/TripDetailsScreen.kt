@@ -408,7 +408,7 @@ internal fun TripDetailsScreen(
                                 }
                                 else -> {
                                     FleetNotice(
-                                        text = "Once the LR is verified you can mark this trip unloaded.",
+                                        text = "Once the LR is verified advance will be processed.",
                                         tone = FleetTone.ACCENT,
                                         colors = colors,
                                     )

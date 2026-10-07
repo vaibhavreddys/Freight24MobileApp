@@ -984,6 +984,13 @@ fun MoneyRuleField(
     isError: Boolean = false,
     supportingText: String? = null,
     trailingLabel: String? = null,
+    modifier: Modifier = Modifier,
+    /**
+     * Drops any fractional part, for the rate fields the backend stores as whole
+     * rupees. Without it a pasted or IME-inserted `40000.5` would round-trip into
+     * the field even though the number keypad offers no `.` key.
+     */
+    wholeRupeesOnly: Boolean = false,
 ) {
     var field by remember { mutableStateOf(TextFieldValue(raw, TextRange(raw.length))) }
     LaunchedEffect(raw) {
@@ -996,7 +1003,10 @@ fun MoneyRuleField(
         label = label,
         value = field,
         onValueChange = { newValue ->
-            val plain = newValue.text.replace(",", "")
+            val plain =
+                newValue.text
+                    .replace(",", "")
+                    .let { if (wholeRupeesOnly) it.substringBefore('.') else it }
             val formatted = formatIndianCurrency(plain)
             val commaDiff = formatted.count { it == ',' } - field.text.count { it == ',' }
             val cursor = (newValue.selection.start + commaDiff).coerceIn(0, formatted.length)
@@ -1008,6 +1018,7 @@ fun MoneyRuleField(
         isError = isError,
         supportingText = supportingText,
         trailingLabel = trailingLabel,
+        modifier = modifier,
     )
 }
 

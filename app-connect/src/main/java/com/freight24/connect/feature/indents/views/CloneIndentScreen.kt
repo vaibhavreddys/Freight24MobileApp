@@ -74,7 +74,9 @@ fun CloneIndentScreen(
                     Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
-                enabled = uiState.indent != null,
+                // A rate above the client cost is refused downstream, so the review
+                // step is closed rather than letting it fail after the fact.
+                enabled = uiState.indent != null && uiState.costError == null,
             ) {
                 Text("Review Clone Indent")
             }
@@ -236,6 +238,13 @@ fun CloneOptionalFieldsSection(
 ) {
     var expanded by remember { mutableStateOf(true) }
 
+    // Flagged live, exactly as Create does: the rule turns red and states the
+    // breach under the offending field rather than failing at submit time. Both
+    // come off the state so the field flags and the review button can never
+    // disagree about whether the rates are valid.
+    val negotiatedError = uiState.negotiatedCostError
+    val proposedError = uiState.proposedCostError
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
@@ -269,28 +278,37 @@ fun CloneOptionalFieldsSection(
                     modifier = Modifier.padding(top = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    OutlinedTextField(
-                        value = uiState.clientCost,
-                        onValueChange = { onEvent(CloneIndentEvent.UpdateField(clientCost = it)) },
-                        label = { Text("Client Cost (₹)") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth(),
+                    MoneyRuleField(
+                        label = "Client Cost",
+                        raw = uiState.clientCost,
+                        testTag = "clone_indent_client_cost_field",
+                        onCommit = { onEvent(CloneIndentEvent.UpdateField(clientCost = it)) },
+                        trailingLabel = "INR",
+                        wholeRupeesOnly = true,
                     )
 
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        OutlinedTextField(
-                            value = uiState.negotiatedCost,
-                            onValueChange = { onEvent(CloneIndentEvent.UpdateField(negotiatedCost = it)) },
-                            label = { Text("Negotiated Cost (₹)") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        MoneyRuleField(
+                            label = "Negotiated Cost",
+                            raw = uiState.negotiatedCost,
+                            testTag = "clone_indent_negotiated_cost_field",
+                            onCommit = { onEvent(CloneIndentEvent.UpdateField(negotiatedCost = it)) },
+                            trailingLabel = "INR",
                             modifier = Modifier.weight(1f),
+                            isError = negotiatedError != null,
+                            supportingText = negotiatedError,
+                            wholeRupeesOnly = true,
                         )
-                        OutlinedTextField(
-                            value = uiState.businessProposedCost,
-                            onValueChange = { onEvent(CloneIndentEvent.UpdateField(businessProposedCost = it)) },
-                            label = { Text("Proposed Cost (₹)") },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        MoneyRuleField(
+                            label = "Proposed Cost",
+                            raw = uiState.businessProposedCost,
+                            testTag = "clone_indent_proposed_cost_field",
+                            onCommit = { onEvent(CloneIndentEvent.UpdateField(businessProposedCost = it)) },
+                            trailingLabel = "INR",
                             modifier = Modifier.weight(1f),
+                            isError = proposedError != null,
+                            supportingText = proposedError,
+                            wholeRupeesOnly = true,
                         )
                     }
 

@@ -2,6 +2,7 @@ package com.freight24.connect.feature.indents.domain.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.freight24.common.util.formatIndianCurrency
 import com.freight24.connect.feature.indents.domain.usecases.CloneIndentUseCase
 import com.freight24.connect.feature.indents.domain.usecases.ClonedIndentUseCaseParams
 import com.freight24.connect.feature.indents.domain.usecases.GetIndentByIdUseCase
@@ -79,9 +80,12 @@ class CloneIndentViewModelImpl
                             it.copy(
                                 isLoading = false,
                                 indent = indent,
-                                clientCost = details.clientTripCost?.toString() ?: "",
-                                negotiatedCost = indent.negotiatedTripCost?.toString() ?: "",
-                                businessProposedCost = details.businessProposedCost?.toString() ?: "",
+                                // Whole rupees, Indian-grouped — the same shape the field
+                                // formats to, so the loaded value renders unedited. The
+                                // backend returns these as decimals (`40000.0`).
+                                clientCost = details.clientTripCost?.toInt()?.toString()?.let(::formatIndianCurrency).orEmpty(),
+                                negotiatedCost = indent.negotiatedTripCost?.toInt()?.toString()?.let(::formatIndianCurrency).orEmpty(),
+                                businessProposedCost = details.businessProposedCost?.toInt()?.toString()?.let(::formatIndianCurrency).orEmpty(),
                                 vehicleHeight = details.vehicleHeight?.toString() ?: "",
                                 flooringType = details.flooringType ?: "steel",
                                 tarpaulinRequired = details.tarpaulingRequired,

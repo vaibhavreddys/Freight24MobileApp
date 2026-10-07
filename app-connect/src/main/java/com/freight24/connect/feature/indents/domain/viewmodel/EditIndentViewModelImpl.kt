@@ -3,9 +3,11 @@ package com.freight24.connect.feature.indents.domain.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.freight24.common.util.formatIndianCurrency
+import com.freight24.common.util.formatWeightValue
 import com.freight24.connect.feature.indents.domain.usecases.GetClientContactsUseCase
 import com.freight24.connect.feature.indents.domain.usecases.GetIndentByIdUseCase
 import com.freight24.connect.feature.indents.domain.usecases.GetIndentByIdUseCaseParams
+import com.freight24.connect.feature.indents.domain.usecases.GetMaterialsUseCase
 import com.freight24.connect.feature.indents.domain.usecases.UpdateIndentGroupUseCase
 import com.freight24.connect.feature.indents.domain.usecases.UpdateIndentGroupUseCaseParams
 import com.freight24.connect.feature.indents.domain.usecases.UpdateIndentUseCase
@@ -32,6 +34,7 @@ class EditIndentViewModelImpl
         private val updateIndentUseCase: UpdateIndentUseCase,
         private val updateIndentGroupUseCase: UpdateIndentGroupUseCase,
         private val getClientContactsUseCase: GetClientContactsUseCase,
+        private val getMaterialsUseCase: GetMaterialsUseCase,
     ) : ViewModel(), EditIndentViewModel {
         private val _uiState = MutableStateFlow(EditIndentUiState())
         override val uiState: StateFlow<EditIndentUiState> = _uiState.asStateFlow()
@@ -60,6 +63,8 @@ class EditIndentViewModelImpl
                                 tatRequired = event.tatRequired ?: state.tatRequired,
                                 tatHours = event.tatHours ?: state.tatHours,
                                 remarks = event.remarks ?: state.remarks,
+                                loadWeight = event.loadWeight ?: state.loadWeight,
+                                material = event.material ?: state.material,
                             )
                         next.withDiff()
                     }
@@ -112,9 +117,12 @@ class EditIndentViewModelImpl
                                 tatRequired = details.tatEnabled,
                                 tatHours = details.tatHours?.toString() ?: "",
                                 remarks = details.specialRequirements ?: "",
+                                loadWeight = formatWeightValue(details.loadWeight),
+                                material = details.material,
                             )
                         }
                         loadContacts(indent)
+                        loadMaterials()
                     }
                 } else {
                     _uiState.update {
@@ -165,11 +173,36 @@ class EditIndentViewModelImpl
             }
         }
 
+        /**
+         * The category list behind the material picker. Fetched with the indent,
+         * not on sheet open, for the reason [GetMaterialsUseCase] documents.
+         */
+        private fun loadMaterials() {
+            viewModelScope.launch {
+                _uiState.update { it.copy(isLoadingMaterials = true) }
+                val result = getMaterialsUseCase.invoke()
+                _uiState.update {
+                    it.copy(
+                        materials = result.getOrElse { emptyList() },
+                        isLoadingMaterials = false,
+                    )
+                }
+            }
+        }
+
         private fun submitUpdate() {
             val indentId = currentIndentId ?: return
             val originalIndent = _uiState.value.indent ?: return
             val originalDetails = originalIndent.indentGroupDetails
             val currentState = _uiState.value
+
+            // Cargo is `NOT NULL`, so a half-typed correction would be refused by the
+            // server as a 400 on the *whole* body — taking the commercials and
+            // terms down with it. Refuse here instead, naming the cargo field.
+            currentState.cargoValidationError()?.let { error ->
+                _uiState.update { it.copy(errorMessage = error) }
+                return
+            }
 
             viewModelScope.launch {
                 _uiState.update { it.copy(isSubmitting = true, errorMessage = null) }
@@ -244,6 +277,12 @@ class EditIndentViewModelImpl
                                 currentState.flooringType.normalizedFlooringType(),
                                 originalDetails.flooringType.normalizedFlooringType(),
                             ),
+                        loadWeight =
+                            compareFields(
+                                currentState.loadWeight.trim().toDoubleOrNull(),
+                                originalDetails.loadWeight,
+                            ),
+                        material = compareFields(currentState.material.trim(), originalDetails.material),
                     )
 
                 // Contacts may have been the only edit; the group call already saved them.
@@ -289,6 +328,8 @@ class EditIndentViewModelImpl
                 request.tarpaulingRequired == null &&
                 request.remarks == null &&
                 request.flooringType == null &&
+                request.loadWeight == null &&
+                request.material == null &&
                 request.status == null &&
                 request.notes == null &&
                 request.luIncludedInTripCost == null
@@ -326,6 +367,22 @@ private fun EditIndentUiState.withPreselectedContacts(
     )
 }
 
+/**
+ * The first cargo field this slip cannot file, phrased for a snackbar.
+ *
+ * Reads the same two error strings the fields already show, rather than
+ * re-deriving them: the rules live in [withDiff] and a second copy here would
+ * be free to disagree with what the operator can see on the clause.
+ *
+ * Cargo is the one clause that cannot be left blank — both columns are
+ * `NOT NULL` — so it is the one whose state can make a whole correction
+ * unsavable. Checked before the PUT rather than after, because the server
+ * rejects the entire body and the commercials and terms the operator *did* fill
+ * in would be lost with it.
+ */
+private fun EditIndentUiState.cargoValidationError(): String? =
+    loadWeightError?.let { "Cargo weight: $it" } ?: materialError?.let { "Material: $it" }
+
 /** Blank and null mean the same thing to this form: absent text renders as `""`. */
 private fun textChanged(
     current: String?,
@@ -348,11 +405,12 @@ private fun String?.normalizedFlooringType(): String =
 
 /**
  * Recomputes everything the screen derives from "has the operator changed
- * anything": the save button, the header tally, the call-sheet marker and
- * clause 05's spine.
+ * anything" — the save button, the header tally, the call-sheet marker, clause
+ * 04's and 05's spines — plus the cargo field errors, which live here so the
+ * submit guard and the red fields can never disagree about what is fileable.
  *
- * All four are computed here, once. They used to be computed twice — a copy in
- * the ViewModel and another in `EditIndentScreen` — and the two drifted apart.
+ * All of it is computed here, once. It used to be computed twice — a copy in the
+ * ViewModel and another in `EditIndentScreen` — and the two drifted apart.
  * The screen's copy compared raw values, so:
  *
  *  - every text field the indent left null counted as an edit, because the form
@@ -384,6 +442,14 @@ private fun EditIndentUiState.withDiff(): EditIndentUiState {
         flooringType.normalizedFlooringType() != details.flooringType.normalizedFlooringType()
     val remarksChanged = textChanged(remarks, details.specialRequirements)
 
+    // The form shows the weight without trailing zeros (`2.0` prints as `2`), so
+    // comparing the raw strings against `loadWeight.toString()` would report a
+    // whole-tonnage weight as edited on every open. Both sides go through
+    // formatWeightValue for the same reason.
+    val loadWeightChanged =
+        formatWeightValue(loadWeight.trim().toDoubleOrNull()) != formatWeightValue(details.loadWeight)
+    val materialChanged = textChanged(material, details.material)
+
     val rolesChanged =
         IndentContactRole.entries.any { role ->
             contactFor(role)?.id != originalContactId(role)
@@ -401,17 +467,34 @@ private fun EditIndentUiState.withDiff(): EditIndentUiState {
             vehicleHeightChanged,
             flooringChanged,
             remarksChanged,
+            loadWeightChanged,
+            materialChanged,
         ).count { it } + if (rolesChanged) 1 else 0
+
+    // Errors surface as the fields turn red while typing, not only on submit —
+    // the save button stays live either way, so a silent 400 on submit would be
+    // the first time the operator heard their cargo was unfileable.
+    val weight = loadWeight.trim()
+    val weightValue = weight.toDoubleOrNull()
 
     return copy(
         hasChanges = fieldCount > 0,
         changedFieldCount = fieldCount,
         contactsChanged = rolesChanged,
+        loadWeightError =
+            when {
+                weight.isEmpty() -> "Required"
+                weightValue == null -> "Enter a number"
+                weightValue <= 0 -> "Must be above zero"
+                else -> null
+            },
+        materialError = if (material.isBlank()) "Required" else null,
         commercialsChanged =
             clientCostChanged || businessCostChanged ||
                 negotiatedChanged || hideCostChanged,
         termsChanged =
             tatRequiredChanged || tatHoursChanged || tarpaulinChanged ||
                 vehicleHeightChanged || flooringChanged || remarksChanged,
+        cargoChanged = loadWeightChanged || materialChanged,
     )
 }

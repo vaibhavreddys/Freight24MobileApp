@@ -47,7 +47,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.freight24.common.util.formatLoadWeight
 import com.freight24.common.util.negotiatedCostExceedsClientError
 import com.freight24.connect.R
 import com.freight24.connect.feature.indents.domain.viewmodel.EditIndentEvent
@@ -67,12 +66,14 @@ import kotlinx.coroutines.launch
 // The split is the point, and it follows the two write paths the backend
 // actually offers:
 //
-//   • clauses 02–04 (lane, vehicle, cargo) are facts of the raised indent.
-//     Nothing accepts a change to them, so they print as a read-only ledger
-//     rather than as greyed-out inputs.
+//   • clauses 02–03 (lane, vehicle) are facts of the raised indent. Nothing
+//     accepts a change to them, so they print as a read-only ledger rather than
+//     as greyed-out inputs.
 //   • clause 01's client and branch are equally fixed, but its CALL SHEET is
 //     not: `PUT /api/v1/indents/groups/:id` can reassign the contact roles.
-//   • clauses 05–06 are the fields `PUT /api/v1/indents/:id` accepts.
+//   • clauses 04–06 are the fields `PUT /api/v1/indents/:id` accepts. Cargo
+//     joins them here: both columns are `NOT NULL`, so unlike the rest of the
+//     slip it is validated before the request rather than refused by it.
 //
 // The group call is fired first and aborts the save if it is refused, so a
 // rejection (group no longer OPEN, or caller not the creator / an admin /
@@ -198,6 +199,7 @@ private fun EditIndentContent(
 ) {
     val scheme = MaterialTheme.colorScheme
     var contactSheetRole by remember { mutableStateOf<IndentContactRole?>(null) }
+    var showMaterialSheet by remember { mutableStateOf(false) }
 
     Scaffold(
         containerColor = scheme.background,
@@ -283,6 +285,7 @@ private fun EditIndentContent(
                     uiState = uiState,
                     onEvent = onEvent,
                     onContactClick = { contactSheetRole = it },
+                    onMaterialClick = { showMaterialSheet = true },
                     paddingValues = paddingValues,
                 )
         }
@@ -297,6 +300,16 @@ private fun EditIndentContent(
             onDismiss = { contactSheetRole = null },
         )
     }
+
+    if (showMaterialSheet) {
+        MaterialPickerSheet(
+            materials = uiState.materials,
+            selectedName = uiState.material,
+            isLoading = uiState.isLoadingMaterials,
+            onSelect = { onEvent(EditIndentEvent.UpdateField(material = it)) },
+            onDismiss = { showMaterialSheet = false },
+        )
+    }
 }
 
 @Composable
@@ -304,6 +317,7 @@ private fun EditSlip(
     uiState: EditIndentUiState,
     onEvent: (EditIndentEvent) -> Unit,
     onContactClick: (IndentContactRole) -> Unit,
+    onMaterialClick: () -> Unit,
     paddingValues: PaddingValues,
 ) {
     val indent = uiState.indent!!
@@ -492,22 +506,30 @@ private fun EditSlip(
         ClauseDocket(
             number = 4,
             title = stringResource(R.string.cargo),
-            state = ClauseState.COMPLETE,
+            state = if (uiState.cargoChanged) ClauseState.FILLED else ClauseState.COMPLETE,
             testTag = "edit_indent_clause_cargo",
-            trailing = { LockedStamp() },
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                LedgerRow(
-                    label = stringResource(R.string.weight),
-                    value = formatLoadWeight(details.loadWeight, "MT"),
-                    modifier = Modifier.weight(1f),
-                )
-                LedgerRow(
-                    label = stringResource(R.string.material),
-                    value = details.material,
-                    modifier = Modifier.weight(1f),
-                )
-            }
+            RuledField(
+                label = stringResource(R.string.weight),
+                value = uiState.loadWeight,
+                onValueChange = { onEvent(EditIndentEvent.UpdateField(loadWeight = it)) },
+                testTag = "edit_indent_weight_field",
+                placeholder = "0.00",
+                keyboardType = KeyboardType.Decimal,
+                isError = uiState.loadWeightError != null,
+                supportingText = uiState.loadWeightError,
+                trailingLabel = stringResource(R.string.weight_mt),
+            )
+            Spacer(Modifier.height(18.dp))
+            DocketPicker(
+                label = stringResource(R.string.material),
+                value = uiState.material,
+                onClick = onMaterialClick,
+                testTag = "edit_indent_material_field",
+                placeholder = "Choose or type a category",
+                isError = uiState.materialError != null,
+                supportingText = uiState.materialError,
+            )
         }
 
         ClauseDocket(
@@ -694,8 +716,8 @@ private fun EditHead(
 
         Text(
             text =
-                "The lane, vehicle and cargo are fixed once an indent is raised. " +
-                    "The call sheet, commercials and terms can be corrected here.",
+                "The lane and vehicle are fixed once an indent is raised. " +
+                    "The call sheet, cargo, commercials and terms can be corrected here.",
             style = MaterialTheme.typography.bodySmall,
             color = scheme.onSurfaceVariant,
         )

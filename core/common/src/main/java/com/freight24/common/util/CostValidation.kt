@@ -9,8 +9,28 @@ package com.freight24.common.util
 fun negotiatedCostExceedsClientError(
     negotiatedCost: String,
     clientCost: String,
+): String? = costExceedsClientError(negotiatedCost, clientCost)
+
+/**
+ * The same check for the business-proposed cost, which is the other figure that
+ * must never sit above what the client pays.
+ */
+fun proposedCostExceedsClientError(
+    proposedCost: String,
+    clientCost: String,
+): String? = costExceedsClientError(proposedCost, clientCost)
+
+/**
+ * Returns an error message if [cost] is a valid number that exceeds [clientCost].
+ * Returns null when either side is empty or not a valid number, or when [cost] is
+ * within the client cost. The check tolerates formatted input (commas) since
+ * these fields are formatted as Indian currency.
+ */
+private fun costExceedsClientError(
+    cost: String,
+    clientCost: String,
 ): String? {
-    val negotiated = negotiatedCost.replace(",", "").toDoubleOrNull() ?: return null
+    val value = cost.replace(",", "").toDoubleOrNull() ?: return null
     val client = clientCost.replace(",", "").toDoubleOrNull() ?: return null
-    return if (negotiated > client) "This cost can not exceed Client Cost" else null
+    return if (value > client) "This cost can not exceed Client Cost" else null
 }
