@@ -42,9 +42,14 @@ internal fun PdfViewerScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     val isLrDocument = uiState.documentType.equals("lr", ignoreCase = true)
+    val isEpodDocument = uiState.documentType.equals("epod", ignoreCase = true)
     val shareTitle =
         stringResource(
-            if (isLrDocument) R.string.trip_share_lr else R.string.trip_share_loading_memo,
+            when {
+                isLrDocument -> R.string.trip_share_lr
+                isEpodDocument -> R.string.trip_share_epod
+                else -> R.string.trip_share_loading_memo
+            },
         )
 
     // Navigate back when approval/rejection is successful
@@ -61,7 +66,13 @@ internal fun PdfViewerScreen(
                 FreightTopAppBar(
                     title = {
                         Text(
-                            stringResource(if (isLrDocument) R.string.trip_lr_preview_title else R.string.trip_loading_memo),
+                            stringResource(
+                                when {
+                                    isLrDocument -> R.string.trip_lr_preview_title
+                                    isEpodDocument -> R.string.trip_epod_preview_title
+                                    else -> R.string.trip_loading_memo
+                                },
+                            ),
                             fontWeight = FontWeight.Bold,
                         )
                     },

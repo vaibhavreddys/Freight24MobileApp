@@ -734,6 +734,9 @@ fun TripDocumentsSection(
     ) {
         val lrDoc = documents.find { it.type.lowercase() == "lr" }
         val memoDoc = documents.find { it.type.lowercase() == "loading_memo" }
+        val epodDoc = documents.find {
+            it.type.equals("pod", ignoreCase = true) && it.podType.equals("epod", ignoreCase = true)
+        }
         val isLrUploadEnabled =
             truckerStatus.equals("LOADING", ignoreCase = true) ||
                 (
@@ -774,6 +777,14 @@ fun TripDocumentsSection(
             isShareEnabled = sharingDocumentId == null,
             shareLabel = stringResource(R.string.trip_share_loading_memo),
         )
+
+        epodDoc?.let { document ->
+            DocumentCard(
+                title = stringResource(R.string.trip_epod),
+                doc = document,
+                onCardClick = { docId, status -> onDocClick(docId, status, "epod") },
+            )
+        }
     }
 }
 

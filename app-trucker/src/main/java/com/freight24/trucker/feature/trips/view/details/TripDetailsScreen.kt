@@ -373,8 +373,13 @@ internal fun TripDetailsScreen(
                 val lrDoc = trip.tripDocuments.find { it.documentType.lowercase() == "lr" }
                 val lrStatus = lrDoc?.verificationStatus?.lowercase()
                 val lrRemarks = lrDoc?.verificationRemarks
+                val podNotice = trip.tripDocuments.podBottomNotice(
+                    netPayable = trip.financials?.netPayable,
+                    totalPaidAmount = trip.financials?.totalPaidAmount,
+                )
 
                 Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier =
                         Modifier
                             .fillMaxWidth()
@@ -382,6 +387,19 @@ internal fun TripDetailsScreen(
                             .padding(horizontal = 16.dp, vertical = 12.dp)
                             .navigationBarsPadding(),
                 ) {
+                    if (podNotice != null) {
+                        FleetNotice(
+                            text = stringResource(
+                                when (podNotice) {
+                                    PodBottomNotice.AWAITING_HARD_COPY -> com.freight24.trucker.R.string.trip_awaiting_hard_copy_pod
+                                    PodBottomNotice.VERIFICATION_IN_PROGRESS -> com.freight24.trucker.R.string.trip_hard_copy_pod_verification
+                                    PodBottomNotice.PAYMENT_PROCESSING -> com.freight24.trucker.R.string.trip_payment_processing
+                                },
+                            ),
+                            tone = FleetTone.ACCENT,
+                            colors = colors,
+                        )
+                    }
                     when (rawStatus) {
                         "ASSIGNED" -> {
                             TruckerPrimaryButton(

@@ -89,4 +89,7 @@
     <string name="trip_loading_memo">Loading Memo</string>
     <string name="trip_share_loading_memo">Share Loading Memo</string>
     <string name="trip_lr_preview_title">Lorry Receipt</string>
+    <string name="trip_epod">Electronic Proof of Delivery (ePOD)</string>
+    <string name="trip_epod_preview_title">ePOD</string>
+    <string name="trip_share_epod">Share ePOD</string>
 </resources>

@@ -23,4 +23,7 @@
     <string name="trip_employee_contact_label">Trip Contact</string>
     <string name="trip_employee_contact_fallback">Freight24 Contact</string>
     <string name="trip_employee_call_us">Call Us</string>
+    <string name="trip_awaiting_hard_copy_pod">Thank you for uploading the ePOD. Awaiting receipt of the hard-copy POD.</string>
+    <string name="trip_hard_copy_pod_verification">Hard-copy POD received. Verification is in progress.</string>
+    <string name="trip_payment_processing">Payment processing is in progress.</string>
 </resources>
