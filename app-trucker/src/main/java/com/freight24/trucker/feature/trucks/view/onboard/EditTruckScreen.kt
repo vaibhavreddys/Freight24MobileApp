@@ -91,7 +91,7 @@ import com.freight24.ui.components.AppDropdown
 import com.freight24.ui.components.DashedUploadCard
 import com.freight24.ui.components.FreightCenterAlignedTopAppBar
 import com.freight24.ui.components.formViewportInsets
-import com.freight24.ui.components.getPdfLaunchIntent
+import com.freight24.ui.components.launchPdfPreview
 import com.freight24.ui.theme.FreightThemeTokens
 import kotlinx.coroutines.launch
 import java.io.File
@@ -612,7 +612,7 @@ private fun DocumentsStep(viewModel: EditTruckViewModel) {
             },
             onViewClick = {
                 viewModel.fetchSignedUrl("rc") { signedUrl ->
-                    context.startActivity(getPdfLaunchIntent(signedUrl, context))
+                    launchPdfPreview(signedUrl, context)
                 }
             },
         )
@@ -631,7 +631,7 @@ private fun DocumentsStep(viewModel: EditTruckViewModel) {
             },
             onViewClick = {
                 viewModel.fetchSignedUrl("insurance") { signedUrl ->
-                    context.startActivity(getPdfLaunchIntent(signedUrl, context))
+                    launchPdfPreview(signedUrl, context)
                 }
             },
         )
@@ -650,7 +650,7 @@ private fun DocumentsStep(viewModel: EditTruckViewModel) {
             },
             onViewClick = {
                 viewModel.fetchSignedUrl("fc") { signedUrl ->
-                    context.startActivity(getPdfLaunchIntent(signedUrl, context))
+                    launchPdfPreview(signedUrl, context)
                 }
             },
         )

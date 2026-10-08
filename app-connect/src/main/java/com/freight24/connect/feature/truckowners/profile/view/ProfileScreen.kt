@@ -129,6 +129,7 @@ import com.freight24.ui.components.PanelShape
 import com.freight24.ui.components.RouteChip
 import com.freight24.ui.components.TagShape
 import com.freight24.ui.components.formViewportInsets
+import com.freight24.ui.components.launchPdfPreview
 import com.freight24.ui.theme.FreightThemeTokens
 import kotlinx.coroutines.launch
 import java.io.File
@@ -802,7 +803,7 @@ private fun ProfileMainContent(
                     isEditing = isEditing,
                     onDocumentView = { documentId ->
                         viewModel.getSignedUrl(documentId) { signedUrl ->
-                            context.startActivity(com.freight24.ui.components.getPdfLaunchIntent(signedUrl, context))
+                            launchPdfPreview(signedUrl, context)
                         }
                     },
                     onDocumentUpload = { type ->

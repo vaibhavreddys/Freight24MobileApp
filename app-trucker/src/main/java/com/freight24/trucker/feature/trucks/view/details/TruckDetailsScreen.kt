@@ -60,7 +60,7 @@ import com.freight24.common.model.TruckDocument
 import com.freight24.ui.UiState
 import com.freight24.ui.components.FileConfirmationSheet
 import com.freight24.ui.components.FileSourcePickerSheet
-import com.freight24.ui.components.getPdfLaunchIntent
+import com.freight24.ui.components.launchPdfPreview
 import com.freight24.ui.trucker.DocWalletRow
 import com.freight24.ui.trucker.FleetCardShape
 import com.freight24.ui.trucker.FleetEmptyState
@@ -327,7 +327,7 @@ internal fun TruckDetailsScreen(
                                 }
                             if (documentType != null) {
                                 viewModel.fetchSignedUrl(documentType) { signedUrl ->
-                                    context.startActivity(getPdfLaunchIntent(signedUrl, context))
+                                    launchPdfPreview(signedUrl, context)
                                 }
                             }
                         },

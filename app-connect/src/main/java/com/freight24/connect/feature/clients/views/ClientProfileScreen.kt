@@ -63,7 +63,7 @@ import com.freight24.connect.feature.clients.domain.viewmodel.ClientProfileViewM
 import com.freight24.connect.domain.model.VerificationDocument
 import com.freight24.ui.UiState
 import com.freight24.ui.components.FreightTopAppBar
-import com.freight24.ui.components.getPdfLaunchIntent
+import com.freight24.ui.components.launchPdfPreview
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -166,7 +166,7 @@ private fun ClientProfileContent(client: ClientDetails, viewModel: ClientProfile
                 DocumentRow(document) {
                     val id = document.documentId ?: return@DocumentRow
                     viewModel.getDocumentSignedUrl(id) { url ->
-                        context.startActivity(getPdfLaunchIntent(url, context))
+                        launchPdfPreview(url, context)
                     }
                 }
             }
@@ -259,7 +259,7 @@ private fun BranchBlock(branch: ClientBranch, viewModel: ClientProfileViewModel)
                     DocumentRow(document) {
                         val id = document.documentId ?: return@DocumentRow
                         viewModel.getDocumentSignedUrl(id, branch.branchId) { url ->
-                            context.startActivity(getPdfLaunchIntent(url, context))
+                            launchPdfPreview(url, context)
                         }
                     }
                 }

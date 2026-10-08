@@ -113,7 +113,7 @@ import com.freight24.ui.components.PerforationRule
 import com.freight24.ui.components.RouteIndicatorWithCities
 import com.freight24.ui.components.TagShape
 import com.freight24.ui.components.formViewportInsets
-import com.freight24.ui.components.getPdfLaunchIntent
+import com.freight24.ui.components.launchPdfPreview
 import com.freight24.ui.theme.FreightThemeTokens
 import kotlinx.coroutines.launch
 import java.text.DateFormat
@@ -2433,7 +2433,7 @@ private fun openVerificationDocument(
 ) {
     if (document.s3Url.isNullOrBlank()) return
     viewModel.getSignedUrl(document) { signedUrl ->
-        context.startActivity(getPdfLaunchIntent(signedUrl, context))
+        launchPdfPreview(signedUrl, context)
     }
 }
 

@@ -79,7 +79,7 @@ import com.freight24.ui.UiState
 import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.components.PanelShape
 import com.freight24.ui.components.TagShape
-import com.freight24.ui.components.getPdfLaunchIntent
+import com.freight24.ui.components.launchPdfPreview
 import com.freight24.ui.theme.FreightThemeTokens
 import kotlinx.coroutines.launch
 import java.io.File
@@ -313,7 +313,7 @@ internal fun TruckDetailsScreen(
                                     }
                                 if (documentType != null) {
                                     viewModel.fetchSignedUrl(documentType) { signedUrl ->
-                                        context.startActivity(getPdfLaunchIntent(signedUrl, context))
+                                        launchPdfPreview(signedUrl, context)
                                     }
                                 }
                             },
