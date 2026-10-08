@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -31,13 +32,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
@@ -47,9 +46,12 @@ import com.freight24.common.util.formatWeightValue
 import com.freight24.common.util.negotiatedCostExceedsClientError
 import com.freight24.connect.R
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsEvent
+import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsUiState
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsViewModel
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsViewModelImpl
 import com.freight24.ui.components.FreightTopAppBar
+import com.freight24.ui.components.MetaTag
+import com.freight24.ui.components.PerforationRule
 import com.freight24.ui.components.formViewportInsets
 import com.freight24.ui.theme.FreightThemeTokens
 import kotlinx.coroutines.flow.first
@@ -96,27 +98,6 @@ fun IndentDetailsScreen(
         }
     }
 
-    var assignClientCostFieldValue by remember {
-        mutableStateOf(TextFieldValue(uiState.assignClientCost, TextRange(uiState.assignClientCost.length)))
-    }
-    LaunchedEffect(uiState.assignClientCost) {
-        if (assignClientCostFieldValue.text != uiState.assignClientCost) {
-            assignClientCostFieldValue = TextFieldValue(uiState.assignClientCost, TextRange(uiState.assignClientCost.length))
-        }
-    }
-    var assignNegotiatedCostFieldValue by remember {
-        mutableStateOf(
-            TextFieldValue(
-                uiState.assignNegotiatedCost,
-                TextRange(uiState.assignNegotiatedCost.length),
-            ),
-        )
-    }
-    LaunchedEffect(uiState.assignNegotiatedCost) {
-        if (assignNegotiatedCostFieldValue.text != uiState.assignNegotiatedCost) {
-            assignNegotiatedCostFieldValue = TextFieldValue(uiState.assignNegotiatedCost, TextRange(uiState.assignNegotiatedCost.length))
-        }
-    }
     val assignNegotiatedCostError =
         if (uiState.isNegotiatedSameAsClient) {
             null
@@ -125,86 +106,23 @@ fun IndentDetailsScreen(
         }
 
     if (uiState.isAssignDialogVisible) {
-        AlertDialog(
+        val assignSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
             onDismissRequest = { viewModel.onEvent(IndentDetailsEvent.HideAssignDialog) },
-            title = { Text("Confirm Assignment") },
-            text = {
-                Column(
-                    modifier = Modifier.verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    OutlinedTextField(
-                        value = assignClientCostFieldValue,
-                        onValueChange = { newValue ->
-                            val rawText = newValue.text.replace(",", "")
-                            val formatted = formatIndianCurrency(rawText)
-
-                            val commaDiff = formatted.count { it == ',' } - assignClientCostFieldValue.text.count { it == ',' }
-                            val newCursor = (newValue.selection.start + commaDiff).coerceIn(0, formatted.length)
-
-                            assignClientCostFieldValue = TextFieldValue(formatted, TextRange(newCursor))
-                            viewModel.onEvent(IndentDetailsEvent.UpdateAssignField(clientCost = formatted))
-                        },
-                        label = { Text(stringResource(R.string.client_cost)) },
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(
-                            checked = uiState.isNegotiatedSameAsClient,
-                            onCheckedChange = { viewModel.onEvent(IndentDetailsEvent.UpdateAssignField(isNegotiatedSameAsClient = it)) },
-                        )
-                        Text(stringResource(R.string.neg_cost_same_as_client))
-                    }
-                    OutlinedTextField(
-                        value = assignNegotiatedCostFieldValue,
-                        onValueChange = { newValue ->
-                            val rawText = newValue.text.replace(",", "")
-                            val formatted = formatIndianCurrency(rawText)
-
-                            val commaDiff = formatted.count { it == ',' } - assignNegotiatedCostFieldValue.text.count { it == ',' }
-                            val newCursor = (newValue.selection.start + commaDiff).coerceIn(0, formatted.length)
-
-                            assignNegotiatedCostFieldValue = TextFieldValue(formatted, TextRange(newCursor))
-                            viewModel.onEvent(IndentDetailsEvent.UpdateAssignField(negotiatedCost = formatted))
-                        },
-                        label = { stringResource(R.string.target_cost) },
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = KeyboardType.Number),
-                        enabled = !uiState.isNegotiatedSameAsClient,
-                        isError = assignNegotiatedCostError != null,
-                        supportingText = assignNegotiatedCostError?.let { msg -> { Text(msg) } },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    OutlinedTextField(
-                        value = uiState.assignNotes,
-                        onValueChange = { viewModel.onEvent(IndentDetailsEvent.UpdateAssignField(notes = it)) },
-                        label = { Text(stringResource(R.string.notes)) },
-                        modifier = Modifier.fillMaxWidth(),
-                        minLines = 3,
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = { viewModel.onEvent(IndentDetailsEvent.ConfirmAssignment) },
-                    enabled = !uiState.isAssigning && assignNegotiatedCostError == null,
-                ) {
-                    if (uiState.isAssigning) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp).padding(end = 8.dp),
-                            color = colorScheme.onPrimary,
-                            strokeWidth = 2.dp,
-                        )
-                    }
-                    Text(stringResource(R.string.confirm))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.onEvent(IndentDetailsEvent.HideAssignDialog) }) {
-                    Text(stringResource(R.string.cancel))
-                }
-            },
-        )
+            sheetState = assignSheetState,
+            containerColor = colorScheme.surface,
+            dragHandle = { BottomSheetDefaults.DragHandle() },
+        ) {
+            AssignRateSheet(
+                uiState = uiState,
+                indentCode =
+                    uiState.indent?.indentCode?.let {
+                        if (it.startsWith("#")) it else "#$it"
+                    } ?: "This indent",
+                marginError = assignNegotiatedCostError,
+                onEvent = viewModel::onEvent,
+            )
+        }
     }
 
     val lifecycleDialogVisible = uiState.isCancelDialogVisible || uiState.isReopenDialogVisible
@@ -609,6 +527,254 @@ fun IndentDetailsScreen(
         }
     }
 }
+
+/**
+ * The rate card an operator fills in to push an indent onto the load board.
+ *
+ * This was a stock [AlertDialog] holding three boxed `OutlinedTextField`s and a
+ * bare `Checkbox` — the one surface on this screen that ignored the docket
+ * language the rest of it is built from, and the only place in the app still
+ * formatting Indian currency by hand.
+ *
+ * It is a sheet now because the job needs the keyboard: two rates, a note, and a
+ * confirm, with real room to see what the margin does as they type. The fields
+ * are the same ruled controls the Create and Edit indents use, so grouping,
+ * caret behaviour and the "cannot exceed client cost" rule are shared rather than
+ * reimplemented.
+ */
+@Composable
+private fun AssignRateSheet(
+    uiState: IndentDetailsUiState,
+    indentCode: String,
+    marginError: String?,
+    onEvent: (IndentDetailsEvent) -> Unit,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val extended = FreightThemeTokens.colors
+    // Read from the state's own parsed amounts rather than re-parsing the raw
+    // strings here, so the margin can never disagree with the rule the confirm
+    // button and the ViewModel submit path are already using.
+    val client = uiState.assignClientCostAmount
+    val target = uiState.assignNegotiatedCostAmount
+    val margin = if (client != null && target != null) client - target else null
+
+    // The rate card scrolls; the actions below it do not.
+    //
+    // BoxWithConstraints is what makes that split hold: the sheet hands its content
+    // the full screen height, and `imePadding` alone would only pad the bottom of
+    // an unbounded column — pushing "Mark Ready" below the keyboard instead of
+    // leaving room for it. Reading maxHeight here is the height that actually
+    // remains once the IME is subtracted, so the scroll region can be capped to it
+    // and the actions stay pinned in view while a field is focused.
+    BoxWithConstraints(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .imePadding()
+                .padding(bottom = 20.dp),
+    ) {
+        val actionBlockHeight = 70.dp
+        // Captured here: inside the nested Column the BoxWithConstraints receiver
+        // is no longer the implicit one.
+        val scrollableHeight = (maxHeight - actionBlockHeight).coerceAtLeast(140.dp)
+
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier =
+                    Modifier
+                        .heightIn(max = scrollableHeight)
+                        .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(18.dp),
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "Ready for assignment",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = scheme.onSurface,
+                            modifier = Modifier.weight(1f),
+                        )
+                        MetaTag(
+                            text = "GOES LIVE",
+                            container = scheme.primaryContainer,
+                            content = scheme.onPrimaryContainer,
+                            hatch = true,
+                        )
+                    }
+                    Text(
+                        text =
+                            "$indentCode becomes visible on the load board and truck owners " +
+                                "can express interest.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = scheme.onSurfaceVariant,
+                    )
+                }
+
+                MoneyRuleField(
+                    label = stringResource(R.string.client_cost),
+                    raw = uiState.assignClientCost,
+                    testTag = "indent_details_assign_client_cost_field",
+                    onCommit = { onEvent(IndentDetailsEvent.UpdateAssignField(clientCost = it)) },
+                    trailingLabel = "INR",
+                    wholeRupeesOnly = true,
+                )
+
+                MoneyRuleField(
+                    label = stringResource(R.string.target_cost),
+                    raw = uiState.assignNegotiatedCost,
+                    testTag = "indent_details_assign_target_cost_field",
+                    onCommit = { onEvent(IndentDetailsEvent.UpdateAssignField(negotiatedCost = it)) },
+                    trailingLabel = "INR",
+                    wholeRupeesOnly = true,
+                    enabled = !uiState.isNegotiatedSameAsClient,
+                    isError = marginError != null,
+                    supportingText = marginError,
+                )
+
+                // Deliberately left enabled even while the target breaches the client
+                // cost: turning it on rewrites the target to the client rate, so it is
+                // the recovery from that error rather than something to disable during it.
+                DocketSwitchRow(
+                    title = "Target equals client cost",
+                    description = "Nothing is held back — the truck earns the full rate.",
+                    checked = uiState.isNegotiatedSameAsClient,
+                    onCheckedChange = { onEvent(IndentDetailsEvent.UpdateAssignField(isNegotiatedSameAsClient = it)) },
+                    testTag = "indent_details_assign_same_as_client_switch",
+                )
+
+                // Suppressed while a rate is unset: "Margin 0" on a card where neither
+                // rate has been entered reads as a real result rather than "not yet".
+                if (margin != null && margin >= 0 && !uiState.assignRatesMissing) {
+                    Surface(
+                        color = extended.success.copy(alpha = 0.12f),
+                        shape = MaterialTheme.shapes.small,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = "Margin",
+                                style =
+                                    MaterialTheme.typography.labelSmall.copy(
+                                        letterSpacing = 1.3.sp,
+                                    ),
+                                fontWeight = FontWeight.Bold,
+                                color = extended.success,
+                            )
+                            Spacer(Modifier.width(12.dp))
+                            // Invisible flex spacer, so the amount sits hard
+                            // against the trailing edge. Putting the amount in
+                            // the weighted slot instead would left-align it
+                            // immediately after the label.
+                            Text(
+                                text = "",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = scheme.onSurface,
+                                modifier = Modifier.weight(1f),
+                            )
+                            Text(
+                                text = margin.toIndianAmount(),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = scheme.onSurface,
+                            )
+                        }
+                    }
+                }
+
+                PerforationRule()
+
+                RuledField(
+                    label = stringResource(R.string.notes),
+                    value = uiState.assignNotes,
+                    onValueChange = { onEvent(IndentDetailsEvent.UpdateAssignField(notes = it)) },
+                    testTag = "indent_details_assign_notes_field",
+                    placeholder = "Anything the truckers should read first",
+                    minLines = 2,
+                )
+            }
+
+            Spacer(Modifier.height(18.dp))
+
+            // A calm line rather than red rules under both fields on open: an empty
+            // rate is the normal starting state, not a mistake the operator has made
+            // yet. It names what is still needed and disappears the moment it is.
+            if (uiState.assignRatesMissing) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Info,
+                        contentDescription = null,
+                        tint = scheme.onSurfaceVariant,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text =
+                            "Both rates must be above 0 — " +
+                                "${uiState.assignMissingRateLabels.joinToString(" and ")} still not set.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = scheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TextButton(
+                    onClick = { onEvent(IndentDetailsEvent.HideAssignDialog) },
+                    modifier = Modifier.height(52.dp),
+                ) {
+                    Text("Not now")
+                }
+                Button(
+                    onClick = { onEvent(IndentDetailsEvent.ConfirmAssignment) },
+                    enabled = !uiState.isAssigning && uiState.canConfirmAssignment,
+                    shape = MaterialTheme.shapes.large,
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor = scheme.primary,
+                            contentColor = scheme.onPrimary,
+                        ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp),
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .height(52.dp)
+                            .docketTag("indent_details_assign_confirm_button")
+                            .semantics { contentDescription = "Mark ready for assignment" },
+                ) {
+                    if (uiState.isAssigning) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            color = scheme.onPrimary,
+                            strokeWidth = 2.dp,
+                        )
+                        Spacer(Modifier.width(10.dp))
+                    }
+                    Text(
+                        text = if (uiState.isAssigning) "Filing…" else "Mark Ready",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** Whole rupees, Indian-grouped — the same shape the fields render. */
+private fun Int.toIndianAmount(): String = toString().let(::formatIndianCurrency)
 
 @Composable
 private fun BottomActionBar(

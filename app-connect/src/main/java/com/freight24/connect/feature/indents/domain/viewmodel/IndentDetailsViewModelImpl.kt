@@ -19,6 +19,7 @@ import com.freight24.connect.feature.indents.domain.usecases.GetIndentByIdUseCas
 import com.freight24.connect.feature.indents.domain.usecases.GetIndentByIdUseCaseParams
 import com.freight24.connect.feature.indents.domain.usecases.TruckerInterestInboxUseCase
 import com.freight24.connect.feature.indents.domain.usecases.TruckerInterestInboxUseCaseParams
+import com.freight24.rest.response.IndentResponse
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -44,11 +45,12 @@ class IndentDetailsViewModelImpl
         override val uiState: StateFlow<IndentDetailsUiState> = _uiState.asStateFlow()
 
         private var currentIndentId: String? = null
-        private val isAdmin =
-            buildList {
-                sessionManager.getActiveRole()?.let(::add)
-                addAll(sessionManager.getRoles())
-            }.any { it.trim().equals("admin", ignoreCase = true) }
+
+        /**
+         * Roles the backend exempts from record ownership on
+         * `PUT /api/v1/indents/:id`. Resolved once — roles do not change mid-session.
+         */
+        private val canOverrideOwnership = sessionManager.isAdminOrOpsManager()
 
         override fun onEvent(event: IndentDetailsEvent) {
             when (event) {
@@ -67,11 +69,18 @@ class IndentDetailsViewModelImpl
                 }
                 is IndentDetailsEvent.ShowAssignDialog -> {
                     val indent = _uiState.value.indent
+
+                    // A stored rate of 0 means "never agreed", the same reading the
+                    // indent cards take when they hide a zero cost. Prefilling "0"
+                    // would present an absence as a number the operator just typed.
+                    fun rate(value: Double?): String =
+                        value?.takeIf { it > 0.0 }?.toInt()?.toString()?.let(::formatIndianCurrency).orEmpty()
+
                     _uiState.update {
                         it.copy(
                             isAssignDialogVisible = true,
-                            assignClientCost = indent?.indentGroupDetails?.clientTripCost?.toInt()?.toString()?.let(::formatIndianCurrency) ?: "",
-                            assignNegotiatedCost = indent?.negotiatedTripCost?.toInt()?.toString()?.let(::formatIndianCurrency) ?: "",
+                            assignClientCost = rate(indent?.indentGroupDetails?.clientTripCost),
+                            assignNegotiatedCost = rate(indent?.negotiatedTripCost),
                             assignNotes = "",
                             isNegotiatedSameAsClient = false,
                         )
@@ -255,7 +264,8 @@ class IndentDetailsViewModelImpl
                                 indent?.canProgress == true ||
                                     indent?.canEdit == true ||
                                     indent?.indentOwnership == "CREATED_BY_ME" ||
-                                    isAdmin,
+                                    canOverrideOwnership,
+                            canEdit = canOverrideOwnership || indent.isOwnedByCaller(),
                         )
                     }
                 } else {
@@ -277,9 +287,45 @@ class IndentDetailsViewModelImpl
             }
         }
 
+        /**
+         * True when the backend's ownership type says this indent is the caller's —
+         * `CREATED_BY_ME` or `CLONED_TO_ME`.
+         *
+         * A missing type is treated as not-theirs. The detail endpoint sends the
+         * field on every response, so an absent value means the payload predates
+         * it, and withholding the control is the safe reading: it only ever hides
+         * an edit that would have been refused anyway.
+         */
+        private fun IndentResponse.Indent?.isOwnedByCaller(): Boolean =
+            this?.indentOwnership?.let { !it.equals(OWNERSHIP_OTHER, ignoreCase = true) && it.isNotBlank() } == true
+
+        private companion object {
+            /** Backend `indentOwnership` value for an indent belonging to someone else. */
+            const val OWNERSHIP_OTHER = "OTHER"
+        }
+
         private fun confirmAssignment() {
             val indentId = currentIndentId ?: return
             val state = _uiState.value
+
+            // The sheet's confirm button is already disabled when this fails; this is
+            // the backstop, so a stale or replayed event can never publish an indent
+            // with a blank or zero rate. Costs are parsed once here and reused in the
+            // payload so the guard and the request cannot read different values.
+            if (!state.canConfirmAssignment) {
+                _uiState.update {
+                    it.copy(
+                        errorMessage =
+                            if (state.assignRatesMissing) {
+                                val missing = state.assignMissingRateLabels.joinToString(" and ")
+                                "Enter a $missing above 0 before marking this ready"
+                            } else {
+                                "The target cost can not exceed the client cost"
+                            },
+                    )
+                }
+                return
+            }
 
             viewModelScope.launch {
                 _uiState.update { it.copy(isAssigning = true, errorMessage = null) }
@@ -288,8 +334,8 @@ class IndentDetailsViewModelImpl
                     assignIndentUseCase.invoke(
                         AssignIndentUseCaseParams(
                             id = indentId,
-                            clientTripCost = state.assignClientCost.replace(",", "").toIntOrNull(),
-                            negotiatedTripCost = state.assignNegotiatedCost.replace(",", "").toIntOrNull(),
+                            clientTripCost = state.assignClientCostAmount,
+                            negotiatedTripCost = state.assignNegotiatedCostAmount,
                             notes = state.assignNotes,
                         ),
                     )
