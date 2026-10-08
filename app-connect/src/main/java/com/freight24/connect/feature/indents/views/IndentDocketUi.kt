@@ -517,6 +517,8 @@ fun DocketPicker(
                 style = MaterialTheme.typography.bodySmall,
                 color = if (isError) scheme.error else scheme.onSurfaceVariant,
             )
+            PerforationRule()
+            Spacer(Modifier.height(14.dp))
         }
     }
 }

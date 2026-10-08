@@ -452,8 +452,8 @@ fun BranchPickerSheet(
             return@PickerSheetScaffold
         }
 
-        SheetListHint("${branches.size} branches on file")
-        Spacer(Modifier.height(4.dp))
+//        SheetListHint("${branches.size} branches on file")
+//        Spacer(Modifier.height(4.dp))
 
         LazyColumn(modifier = Modifier.heightIn(max = 320.dp)) {
             items(branches, key = { it.id }) { branch ->
@@ -521,9 +521,9 @@ fun ContactPickerSheet(
             Text(
                 text =
                     if (role.required) {
-                        "This is required for truck owner providing a vehicle."
+                        "Truck Owners will need this."
                     } else {
-                        "Leave empty if the client has not nominated one."
+                        ""
                     },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

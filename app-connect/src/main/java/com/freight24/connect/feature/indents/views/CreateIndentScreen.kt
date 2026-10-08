@@ -607,13 +607,10 @@ private fun ConsignorClause(
                     !clientSelected -> null
                     uiState.isLoadingBranches -> "Loading branches…"
                     uiState.branches.isEmpty() -> "This client has no branches on file."
-                    else -> "Optional. Inactive branches cannot be selected."
+                    else -> null
                 },
         )
-
         Spacer(Modifier.height(18.dp))
-        PerforationRule()
-        Spacer(Modifier.height(14.dp))
 
         Text(
             text = "CALL SHEET",
@@ -623,7 +620,7 @@ private fun ConsignorClause(
         )
         Spacer(Modifier.height(2.dp))
         Text(
-            text = "Who the driver rings, and for what.",
+            text = "Contact details for Truck Owners.",
             style = MaterialTheme.typography.bodySmall,
             color = scheme.onSurfaceVariant,
         )
