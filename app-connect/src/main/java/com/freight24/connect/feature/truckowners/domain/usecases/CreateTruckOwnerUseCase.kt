@@ -42,7 +42,7 @@ data class TruckOwnerBankParams(
     val upiId: String?,
     val bankName: String?,
     val branchName: String?,
-    val chequeFile: File,
+    val chequeFile: File?,
 )
 
 interface CreateTruckOwnerUseCase {
@@ -114,7 +114,7 @@ class CreateTruckOwnerUseCaseImpl
                     params.upiId?.let { add(it.toPart("upi_id")) }
                     params.bankName?.let { add(it.toPart("bank_name")) }
                     params.branchName?.let { add(it.toPart("branch_name")) }
-                    add(params.chequeFile.toFilePart("cheque_file"))
+                    params.chequeFile?.let { add(it.toFilePart("cheque_file")) }
                 }
                 return repository.updateBankProfile(ownerUserId, parts).map { Unit }
             } catch (error: DocumentUploadException) {

@@ -33,6 +33,19 @@ import java.io.File
 
 class OnboardingMultipartContractTest {
     @Test
+    fun `onboarding bank save omits optional cheque`() = runBlocking {
+        val repository = CapturingTruckOwnerRepository()
+        CreateTruckOwnerUseCaseImpl(repository).saveBank(
+            "owner-user-1",
+            TruckOwnerBankParams("ABC Transport", "123456789", "HDFC0001234", null, null, null, null),
+        ).getOrThrow()
+        assertEquals(
+            setOf("account_holder_name", "account_number", "ifsc_code"),
+            repository.bankParts.map(::partName).toSet(),
+        )
+    }
+
+    @Test
     fun `truck creation sends required fields and omits absent optional fields`() = runBlocking {
         val repository = CapturingTruckRepository()
         val result = AddTruckUseCaseImpl(repository)(

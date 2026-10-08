@@ -184,6 +184,30 @@ class OnboardTruckOwnerViewModel
         private val _gstDuplicateError = MutableStateFlow<String?>(null)
         val gstDuplicateError: StateFlow<String?> = _gstDuplicateError.asStateFlow()
 
+        val validationError: StateFlow<String?> =
+            combine(
+                listOf<StateFlow<Any?>>(
+                    fullName,
+                    phone,
+                    aadharCard,
+                    panCard,
+                    gstNumber,
+                    accountHolderName,
+                    accountNumber,
+                    ifscCode,
+                    upiId,
+                    bankName,
+                    branchName,
+                    aadhaarFile,
+                    panFile,
+                    chequeFile,
+                    completedStep,
+                    panDuplicateError,
+                    gstDuplicateError,
+                ),
+            ) { mandatoryValidationError() }
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), mandatoryValidationError())
+
         private val _saveAttempted = MutableStateFlow(false)
         val saveAttempted: StateFlow<Boolean> = _saveAttempted.asStateFlow()
 
@@ -640,20 +664,12 @@ class OnboardTruckOwnerViewModel
                         setCompletedStep(2)
                     }
 
-                    createTruckOwnerUseCase.saveBank(
-                        resolvedUserId,
-                        TruckOwnerBankParams(
-                            accountHolderName = accountHolderName.value.trim(),
-                            accountNumber = accountNumber.value.trim(),
-                            ifscCode = ifscCode.value.trim().uppercase(),
-                            upiId = upiId.value.trim().lowercase().ifBlank { null },
-                            bankName = bankName.value.trim().ifBlank { null },
-                            branchName = branchName.value.trim().ifBlank { null },
-                            chequeFile = requireNotNull(chequeFile.value),
-                        ),
-                    ).getOrElse {
-                        _messageEvent.emit("Profile saved. ${it.message ?: "Failed to save bank details"}")
-                        return@launch
+                    val banking = bankParams()
+                    if (banking.hasDetails()) {
+                        createTruckOwnerUseCase.saveBank(resolvedUserId, banking).getOrElse {
+                            _messageEvent.emit("Profile saved. ${it.message ?: "Failed to save bank details"}")
+                            return@launch
+                        }
                     }
 
                     val ownerName = (savedStateHandle[OWNER_NAME_KEY] as String?).orEmpty().ifBlank { fullName.value.trim() }
@@ -674,6 +690,16 @@ class OnboardTruckOwnerViewModel
             savedStateHandle[COMPLETED_STEP_KEY] = step
         }
 
+        private fun bankParams() = TruckOwnerBankParams(
+            accountHolderName = accountHolderName.value.trim(),
+            accountNumber = accountNumber.value.trim(),
+            ifscCode = ifscCode.value.trim().uppercase(),
+            upiId = upiId.value.trim().lowercase().ifBlank { null },
+            bankName = bankName.value.trim().ifBlank { null },
+            branchName = branchName.value.trim().ifBlank { null },
+            chequeFile = chequeFile.value,
+        )
+
         private fun mandatoryValidationError(): String? {
             if (_completedStep.value < 1) {
                 if (fullName.value.trim().isBlank()) return "Full name is required"
@@ -683,10 +709,7 @@ class OnboardTruckOwnerViewModel
                 if (aadhaarFile.value == null) return "Aadhaar document is required"
                 if (panFile.value == null) return "PAN document is required"
             }
-            if (accountHolderName.value.trim().isBlank()) return "Account holder name is required"
-            if (accountNumber.value.trim().isBlank()) return "Account number is required"
-            if (ifscCode.value.trim().isBlank()) return "IFSC code is required"
-            if (chequeFile.value == null) return "Cancelled cheque is required"
+            bankParams().validationError()?.let { return it }
 
             if (_completedStep.value < 1) {
                 when (ProfileFieldValidators.validateIndianPhone(phone.value.trim())) {

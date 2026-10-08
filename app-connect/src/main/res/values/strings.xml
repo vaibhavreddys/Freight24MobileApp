@@ -92,4 +92,5 @@
     <string name="trip_epod">Electronic Proof of Delivery (ePOD)</string>
     <string name="trip_epod_preview_title">ePOD</string>
     <string name="trip_share_epod">Share ePOD</string>
+    <string name="onboarding_banking_optional">BANKING INFORMATION (OPTIONAL)</string>
 </resources>

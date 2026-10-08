@@ -1,4 +1,7 @@
 package com.freight24.connect.feature.truckowners.views
+
+import androidx.compose.ui.res.stringResource
+import com.freight24.connect.R
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -186,8 +189,8 @@ fun OnboardTruckOwnerScreen(
             pendingDocumentType = null
         }
 
-    val canSubmit = viewModel.canSubmit()
-    val submitBlockReason = viewModel.submitBlockReason()
+    val submitBlockReason by viewModel.validationError.collectAsState()
+    val canSubmit = submitBlockReason == null
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -435,7 +438,7 @@ fun OnboardTruckOwnerScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 ProfileSection(
-                    title = "BANKING INFORMATION",
+                    title = stringResource(R.string.onboarding_banking_optional),
                     icon = Icons.Default.AccountBalance,
                     initiallyExpanded = true,
                 ) {
@@ -443,7 +446,7 @@ fun OnboardTruckOwnerScreen(
                         label = "ACCOUNT HOLDER",
                         value = accountHolderName,
                         leadingIcon = Icons.Default.Person,
-                        required = true,
+                        required = false,
                         onValueChange = viewModel::onAccountHolderNameChanged,
                     )
                     DividerLine()
@@ -452,7 +455,7 @@ fun OnboardTruckOwnerScreen(
                         value = accountNumber,
                         leadingIcon = Icons.Default.CreditCard,
                         validationType = InputValidationType.ACCOUNT_NUMBER,
-                        required = true,
+                        required = false,
                         onValueChange = viewModel::onAccountNumberChanged,
                     )
                     DividerLine()
@@ -461,7 +464,7 @@ fun OnboardTruckOwnerScreen(
                         value = ifscCode,
                         leadingIcon = Icons.Default.Badge,
                         validationType = InputValidationType.IFSC,
-                        required = true,
+                        required = false,
                         onValueChange = viewModel::onIfscChanged,
                     )
                     DividerLine()
@@ -503,7 +506,7 @@ fun OnboardTruckOwnerScreen(
                                 UploadDocument("GST", "GST Certificate", gstFile, false),
                                 UploadDocument("COMPANY", "Company Registration", companyFile, false),
                                 UploadDocument("TDS", "TDS Certificate", tdsFile, false),
-                                UploadDocument("CHEQUE", "Cancelled Cheque", chequeFile, true),
+                                UploadDocument("CHEQUE", "Cancelled Cheque", chequeFile, false),
                             ),
                         onSelect = { type ->
                             pendingDocumentType = type
