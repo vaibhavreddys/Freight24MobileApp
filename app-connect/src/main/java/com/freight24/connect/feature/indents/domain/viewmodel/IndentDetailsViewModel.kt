@@ -48,7 +48,7 @@ data class IndentDetailsUiState(
     val assignClientCostAmount: Int?
         get() = assignClientCost.replace(",", "").toIntOrNull()
 
-    /** The target rate as a number, or null when the field is blank or half-typed. */
+    /** The negotiated rate as a number, or null when the field is blank or half-typed. */
     val assignNegotiatedCostAmount: Int?
         get() = assignNegotiatedCost.replace(",", "").toIntOrNull()
 
@@ -63,8 +63,8 @@ data class IndentDetailsUiState(
      * server.
      *
      * Note this is independent of [isNegotiatedSameAsClient]: that switch mirrors
-     * the client rate into the target field, so it resolves a missing target only
-     * once the client rate is itself positive.
+     * the client rate into the negotiated field, so it resolves a missing negotiated
+     * rate only once the client rate is itself positive.
      */
     val assignRatesMissing: Boolean
         get() = (assignClientCostAmount ?: 0) <= 0 || (assignNegotiatedCostAmount ?: 0) <= 0
@@ -73,7 +73,7 @@ data class IndentDetailsUiState(
     val assignMissingRateLabels: List<String>
         get() = buildList {
             if ((assignClientCostAmount ?: 0) <= 0) add("client cost")
-            if ((assignNegotiatedCostAmount ?: 0) <= 0) add("target cost")
+            if ((assignNegotiatedCostAmount ?: 0) <= 0) add("negotiated cost")
         }
 
     /**

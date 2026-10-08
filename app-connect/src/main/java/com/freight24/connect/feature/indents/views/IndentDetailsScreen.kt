@@ -633,11 +633,11 @@ private fun AssignRateSheet(
                     supportingText = marginError,
                 )
 
-                // Deliberately left enabled even while the target breaches the client
-                // cost: turning it on rewrites the target to the client rate, so it is
+                // Deliberately left enabled even while the negotiated cost breaches the client
+                // cost: turning it on rewrites the negotiated rate to the client rate, so it is
                 // the recovery from that error rather than something to disable during it.
                 DocketSwitchRow(
-                    title = "Target equals client cost",
+                    title = "Negotiated cost equals client cost",
                     description = "Nothing is held back — the truck earns the full rate.",
                     checked = uiState.isNegotiatedSameAsClient,
                     onCheckedChange = { onEvent(IndentDetailsEvent.UpdateAssignField(isNegotiatedSameAsClient = it)) },

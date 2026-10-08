@@ -320,7 +320,7 @@ class IndentDetailsViewModelImpl
                                 val missing = state.assignMissingRateLabels.joinToString(" and ")
                                 "Enter a $missing above 0 before marking this ready"
                             } else {
-                                "The target cost can not exceed the client cost"
+                                "The negotiated cost can not exceed the client cost"
                             },
                     )
                 }
