@@ -3,8 +3,10 @@ package com.freight24.trucker.feature.trucks.view.onboard
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.freight24.common.state.FormDraft
 import com.freight24.common.util.FileUtils
 import com.freight24.rest.response.AddTruckDto
 import com.freight24.trucker.feature.trucks.domain.usecase.AddTruckParams
@@ -16,13 +18,38 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 import java.io.File
 import javax.inject.Inject
 
+@Serializable
 data class TruckType(val id: Int, val name: String)
+
+/**
+ * The truck-onboarding form as it survives process death. See
+ * [FormDraft] — only the typed scalars and the picked truck type are carried
+ * across.
+ *
+ * Uploaded document [File]s are deliberately absent. A path into the app's
+ * cache is not a durable reference: the upload may have been cleared, and a
+ * draft that came back pointing at a missing file would be worse than one that
+ * asks for the document again.
+ */
+@Serializable
+internal data class OnboardTruckDraft(
+    val registrationNumber: String = "",
+    val make: String = "",
+    val model: String = "",
+    val year: String = "",
+    val capacityMt: String = "",
+    val selectedTruckType: TruckType? = null,
+    val currentStep: Int = 1,
+)
 
 private const val TAG = "OnboardTruckVM"
 
@@ -32,20 +59,27 @@ internal class OnboardTruckViewModel
     constructor(
         private val addTruckUseCase: AddTruckUseCase,
         private val checkTruckAvailabilityUseCase: com.freight24.trucker.feature.trucks.domain.usecase.CheckTruckAvailabilityUseCase,
+        private val savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow<UiState<AddTruckDto>>(UiState.Idle)
         val uiState: StateFlow<UiState<AddTruckDto>> = _uiState.asStateFlow()
 
-        private val _currentStep = MutableStateFlow(1)
+        private val draft = FormDraft(savedStateHandle, DRAFT_KEY, OnboardTruckDraft.serializer())
+        private val restored = draft.restore()
+
+        // Restored before the flows are handed out, so the first frame the screen
+        // composes already shows the operator's half-finished truck rather than a
+        // blank form they would then overwrite.
+        private val _currentStep = MutableStateFlow(restored?.currentStep ?: 1)
         val currentStep: StateFlow<Int> = _currentStep.asStateFlow()
 
         // Form State
-        val registrationNumber = MutableStateFlow("")
-        val selectedTruckType = MutableStateFlow<TruckType?>(null)
-        val make = MutableStateFlow("")
-        val model = MutableStateFlow("")
-        val year = MutableStateFlow("")
-        val capacityMt = MutableStateFlow("")
+        val registrationNumber = MutableStateFlow(restored?.registrationNumber ?: "")
+        val selectedTruckType = MutableStateFlow(restored?.selectedTruckType)
+        val make = MutableStateFlow(restored?.make ?: "")
+        val model = MutableStateFlow(restored?.model ?: "")
+        val year = MutableStateFlow(restored?.year ?: "")
+        val capacityMt = MutableStateFlow(restored?.capacityMt ?: "")
 
         private val _registrationError = MutableStateFlow<String?>(null)
         val registrationError: StateFlow<String?> = _registrationError.asStateFlow()
@@ -117,6 +151,39 @@ internal class OnboardTruckViewModel
                 TruckType(8, "16 Whl Open"),
                 TruckType(9, "18 Whl Open"),
             )
+
+        init {
+            // One writer for the whole form. Every field is a separate
+            // StateFlow here rather than a single state object, so this
+            // combines them to avoid a persist call per keystroke per field.
+            combine(
+                registrationNumber,
+                make,
+                model,
+                year,
+                capacityMt,
+                selectedTruckType,
+                _currentStep,
+            ) { values: Array<Any?> ->
+                // The vararg overload packs the flows into an array, so the
+                // transform takes one parameter rather than seven.
+                @Suppress("UNCHECKED_CAST")
+                OnboardTruckDraft(
+                    registrationNumber = values[0] as String,
+                    make = values[1] as String,
+                    model = values[2] as String,
+                    year = values[3] as String,
+                    capacityMt = values[4] as String,
+                    selectedTruckType = values[5] as TruckType?,
+                    currentStep = values[6] as Int,
+                )
+            }.onEach { draft.save(it) }
+                .launchIn(viewModelScope)
+        }
+
+        private companion object {
+            const val DRAFT_KEY = "trucker_onboard_truck_draft"
+        }
 
         fun nextStep() {
             if (_currentStep.value < 2) {
@@ -196,6 +263,11 @@ internal class OnboardTruckViewModel
                         val data = response.data
                         if (response.success && data != null) {
                             Log.d(TAG, "Truck added successfully: ${data.id}")
+                            // The truck exists now, so the draft is spent.
+                            // Retired first, or the state update below would
+                            // write it straight back and the next onboard would
+                            // open pre-filled with this truck's details.
+                            draft.clear()
                             _uiState.value = UiState.Success(data)
                         } else {
                             Log.w(TAG, "Failed to add truck: ${response.message}")

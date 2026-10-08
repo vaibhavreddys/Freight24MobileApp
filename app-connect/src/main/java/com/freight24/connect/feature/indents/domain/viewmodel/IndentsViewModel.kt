@@ -122,7 +122,111 @@ data class CreateIndentUiState(
     /** True while the client's branch/contact directory is still loading. */
     val isLoadingClientDirectory: Boolean
         get() = isLoadingBranches || isLoadingContacts
+
+    /**
+     * The subset of this state that survives the process being killed while the
+     * form sits in the background.
+     *
+     * Only what the operator typed or picked is carried across. Search results,
+     * loading flags, the branch/contact lists and the catalog lists are all
+     * deliberately left out: they are refetched on return (see
+     * [IndentsViewModelImpl.loadClientDirectory]) and carrying them would bloat
+     * the instance-state bundle that is written on every keystroke. Transient
+     * outcomes — errors, the submitting flag, the post-submit receipt — are left
+     * out for a different reason: replaying a stale error or a stale receipt on
+     * return is worse than starting clean.
+     */
+    fun toDraft(): CreateIndentDraft =
+        CreateIndentDraft(
+            fromLocationQuery = fromLocationQuery,
+            selectedFromLocation = selectedFromLocation,
+            toLocationQuery = toLocationQuery,
+            selectedToLocation = selectedToLocation,
+            clientQuery = clientQuery,
+            selectedClient = selectedClient,
+            selectedBranch = selectedBranch,
+            placementContact = placementContact,
+            paymentContact = paymentContact,
+            operationsContact = operationsContact,
+            podContact = podContact,
+            materialName = materialName,
+            weight = weight,
+            selectedTruckType = selectedTruckType,
+            clientCost = clientCost,
+            negotiatedCost = negotiatedCost,
+            businessProposedCost = businessProposedCost,
+            vehicleHeight = vehicleHeight,
+            flooringType = flooringType,
+            tatRequired = tatRequired,
+            tatHours = tatHours,
+            tarpaulinRequired = tarpaulinRequired,
+            hideCost = hideCost,
+            remarks = remarks,
+        )
 }
+
+/**
+ * Serialized form of [CreateIndentUiState] — see [CreateIndentUiState.toDraft].
+ *
+ * Every field is nullable or defaulted so that a draft written by an older
+ * build still decodes after fields are added or removed.
+ */
+@kotlinx.serialization.Serializable
+data class CreateIndentDraft(
+    val fromLocationQuery: String = "",
+    val selectedFromLocation: LocationDto? = null,
+    val toLocationQuery: String = "",
+    val selectedToLocation: LocationDto? = null,
+    val clientQuery: String = "",
+    val selectedClient: ClientPickerOption? = null,
+    val selectedBranch: ClientBranchV2Dto? = null,
+    val placementContact: ClientContactV2Dto? = null,
+    val paymentContact: ClientContactV2Dto? = null,
+    val operationsContact: ClientContactV2Dto? = null,
+    val podContact: ClientContactV2Dto? = null,
+    val materialName: String = "",
+    val weight: String = "",
+    val selectedTruckType: TruckTypeDto? = null,
+    val clientCost: String = "",
+    val negotiatedCost: String = "",
+    val businessProposedCost: String = "",
+    val vehicleHeight: String = "",
+    val flooringType: String = DEFAULT_FLOORING_TYPE,
+    val tatRequired: Boolean = false,
+    val tatHours: String = "",
+    val tarpaulinRequired: Boolean = false,
+    val hideCost: Boolean = false,
+    val remarks: String = "",
+)
+
+/** Applies a restored [draft] over a fresh [CreateIndentUiState]. */
+fun CreateIndentUiState.withDraft(draft: CreateIndentDraft): CreateIndentUiState =
+    copy(
+        fromLocationQuery = draft.fromLocationQuery,
+        selectedFromLocation = draft.selectedFromLocation,
+        toLocationQuery = draft.toLocationQuery,
+        selectedToLocation = draft.selectedToLocation,
+        clientQuery = draft.clientQuery,
+        selectedClient = draft.selectedClient,
+        selectedBranch = draft.selectedBranch,
+        placementContact = draft.placementContact,
+        paymentContact = draft.paymentContact,
+        operationsContact = draft.operationsContact,
+        podContact = draft.podContact,
+        materialName = draft.materialName,
+        weight = draft.weight,
+        selectedTruckType = draft.selectedTruckType,
+        clientCost = draft.clientCost,
+        negotiatedCost = draft.negotiatedCost,
+        businessProposedCost = draft.businessProposedCost,
+        vehicleHeight = draft.vehicleHeight,
+        flooringType = draft.flooringType,
+        tatRequired = draft.tatRequired,
+        tatHours = draft.tatHours,
+        tarpaulinRequired = draft.tarpaulinRequired,
+        hideCost = draft.hideCost,
+        remarks = draft.remarks,
+    )
 
 sealed class CreateIndentEvent {
     data class SearchFromLocation(val query: String) : CreateIndentEvent()

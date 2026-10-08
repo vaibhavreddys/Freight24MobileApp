@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.freight24.common.state.FormDraft
 import com.freight24.common.util.FileUtils
 import com.freight24.rest.response.AddTruckDto
 import com.freight24.trucker.feature.trucks.domain.usecase.FetchTruckDetailUseCase
@@ -20,13 +21,33 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 import java.io.File
 import javax.inject.Inject
 
 private const val TAG = "EditTruckVM"
+
+/**
+ * The truck-edit form as it survives process death. See [FormDraft].
+ *
+ * Covers staged changes only — not the truck's existing document state, and not
+ * the [File]s queued for upload, whose cache paths are not durable references.
+ */
+@Serializable
+internal data class EditTruckDraft(
+    val registrationNumber: String = "",
+    val make: String = "",
+    val model: String = "",
+    val year: String = "",
+    val capacityMt: String = "",
+    val selectedTruckType: TruckType? = null,
+    val currentStep: Int = 1,
+)
 
 @HiltViewModel
 internal class EditTruckViewModel
@@ -54,16 +75,24 @@ internal class EditTruckViewModel
         private val _uiState = MutableStateFlow<UiState<AddTruckDto>>(UiState.Loading)
         val uiState: StateFlow<UiState<AddTruckDto>> = _uiState.asStateFlow()
 
-        private val _currentStep = MutableStateFlow(1)
+        // Edit's draft covers only what the operator has actually changed.
+        // Existing-document status and URLs are intentionally excluded: they are
+        // the truck's current state from the server, and carrying them in a draft
+        // would let a stale copy outlive an upload elsewhere in the app. They are
+        // refetched by loadTruck() when the screen reopens.
+        private val draft = FormDraft(savedStateHandle, DRAFT_KEY, EditTruckDraft.serializer())
+        private val restored = draft.restore()
+
+        private val _currentStep = MutableStateFlow(restored?.currentStep ?: 1)
         val currentStep: StateFlow<Int> = _currentStep.asStateFlow()
 
         // Form State
-        val registrationNumber = MutableStateFlow("")
-        val selectedTruckType = MutableStateFlow<TruckType?>(null)
-        val make = MutableStateFlow("")
-        val model = MutableStateFlow("")
-        val year = MutableStateFlow("")
-        val capacityMt = MutableStateFlow("")
+        val registrationNumber = MutableStateFlow(restored?.registrationNumber ?: "")
+        val selectedTruckType = MutableStateFlow(restored?.selectedTruckType)
+        val make = MutableStateFlow(restored?.make ?: "")
+        val model = MutableStateFlow(restored?.model ?: "")
+        val year = MutableStateFlow(restored?.year ?: "")
+        val capacityMt = MutableStateFlow(restored?.capacityMt ?: "")
 
         private val _registrationError = MutableStateFlow<String?>(null)
         val registrationError: StateFlow<String?> = _registrationError.asStateFlow()
@@ -232,6 +261,39 @@ internal class EditTruckViewModel
             }
         }
 
+        init {
+            // One writer for the whole form. These fields are separate
+            // StateFlows rather than a single state object, so combining them
+            // keeps this to one draft write per edit instead of one per field.
+            combine(
+                registrationNumber,
+                make,
+                model,
+                year,
+                capacityMt,
+                selectedTruckType,
+                _currentStep,
+            ) { values: Array<Any?> ->
+                // The vararg overload packs the flows into an array, so the
+                // transform takes one parameter rather than seven.
+                @Suppress("UNCHECKED_CAST")
+                EditTruckDraft(
+                    registrationNumber = values[0] as String,
+                    make = values[1] as String,
+                    model = values[2] as String,
+                    year = values[3] as String,
+                    capacityMt = values[4] as String,
+                    selectedTruckType = values[5] as TruckType?,
+                    currentStep = values[6] as Int,
+                )
+            }.onEach { draft.save(it) }
+                .launchIn(viewModelScope)
+        }
+
+        private companion object {
+            const val DRAFT_KEY = "trucker_edit_truck_draft"
+        }
+
         fun nextStep() {
             if (_currentStep.value < 2) {
                 _currentStep.value++
@@ -322,6 +384,11 @@ internal class EditTruckViewModel
                         val data = response.data
                         if (response.success && data != null) {
                             Log.d(TAG, "Truck updated successfully: ${data.id}")
+                            // Saved edits are now the truck's real state. Retired
+                            // first, or the state update below would write the
+                            // draft back and reopening Edit would show the edits
+                            // as if they were still unsaved.
+                            draft.clear()
                             _uiState.value = UiState.Success(data)
                         } else {
                             Log.w(TAG, "Failed to update truck: ${response.message}")

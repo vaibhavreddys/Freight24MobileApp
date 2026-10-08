@@ -1,7 +1,9 @@
 package com.freight24.connect.feature.indents.domain.viewmodel
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.freight24.common.state.FormDraft
 import com.freight24.connect.feature.indents.domain.usecases.CreateIndentUseCase
 import com.freight24.connect.feature.indents.domain.usecases.GetClientBranchesUseCase
 import com.freight24.connect.feature.indents.domain.usecases.GetClientContactsUseCase
@@ -19,6 +21,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -35,8 +40,11 @@ class IndentsViewModelImpl
         private val createIndentUseCase: CreateIndentUseCase,
         private val getClientBranchesUseCase: GetClientBranchesUseCase,
         private val getClientContactsUseCase: GetClientContactsUseCase,
+        private val savedStateHandle: SavedStateHandle,
     ) : ViewModel(), IndentsViewModel {
-        private val _uiState = MutableStateFlow(CreateIndentUiState())
+        private val draft = FormDraft(savedStateHandle, DRAFT_KEY, CreateIndentDraft.serializer())
+
+        private val _uiState = MutableStateFlow(draft.restore()?.let { CreateIndentUiState().withDraft(it) } ?: CreateIndentUiState())
         override val uiState: StateFlow<CreateIndentUiState>
             get() = _uiState.asStateFlow()
 
@@ -45,6 +53,21 @@ class IndentsViewModelImpl
         init {
             loadTruckTypes()
             loadMaterials()
+
+            // A restored draft carries the selected branch and contacts but not
+            // the lists they came from, so the pickers behind them would open
+            // empty until the user tapped a client again. Refill the directory
+            // for whoever the draft came back with, or the restored selections
+            // look inconsistent with the choices on offer.
+            _uiState.value.selectedClient?.let { loadClientDirectory(it.clientId) }
+
+            // drop(1): the restore above is already the initial value. Without
+            // this the empty starting state would be written over the saved
+            // draft before the operator touched anything.
+            _uiState
+                .drop(1)
+                .onEach { draft.save(it.toDraft()) }
+                .launchIn(viewModelScope)
         }
 
         private fun loadTruckTypes() {
@@ -353,6 +376,12 @@ class IndentsViewModelImpl
                     val result = createIndentUseCase.invoke(request)
                     if (result.isSuccess) {
                         val indentResponse = result.getOrNull()
+                        // The indent exists now, so the draft is spent. Retiring
+                        // it first means the state update below cannot re-save
+                        // it — otherwise this same form would come back filled
+                        // in if the operator started another indent and the
+                        // process died part-way through the second one.
+                        draft.clear()
                         _uiState.update {
                             it.copy(
                                 isSubmitting = false,
@@ -417,5 +446,10 @@ class IndentsViewModelImpl
                 return false
             }
             return true
+        }
+
+        private companion object {
+            /** Saved-state key for this form's draft. Namespaced to the feature. */
+            const val DRAFT_KEY = "connect_create_indent_draft"
         }
     }

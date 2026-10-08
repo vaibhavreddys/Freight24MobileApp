@@ -35,11 +35,14 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -175,10 +178,27 @@ fun CreateIndentContent(
     onNavigateToReview: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    val fieldErrors = remember { mutableStateOf(emptySet<String>()) }
-    var showBranchSheet by remember { mutableStateOf(false) }
-    var showMaterialSheet by remember { mutableStateOf(false) }
-    var contactSheetRole by remember { mutableStateOf<IndentContactRole?>(null) }
+    // rememberSaveable, not remember: these decide which sheet is open, so
+    // losing them on a configuration change closed the sheet under the operator
+    // and dropped them back at the top of a long form.
+    //
+    // fieldErrors needs an explicit saver because a Set is not a type the
+    // instance-state bundle accepts — the default saver would throw the first
+    // time the screen was saved. Round-tripping through a List keeps the
+    // mutableStateOf shape the validation block below already writes to.
+    val fieldErrors =
+        rememberSaveable(
+            saver =
+                Saver<MutableState<Set<String>>, Any>(
+                    save = { it.value.toList() },
+                    restore = { mutableStateOf((it as List<*>).filterIsInstance<String>().toSet()) },
+                ),
+        ) {
+            mutableStateOf(emptySet<String>())
+        }
+    var showBranchSheet by rememberSaveable { mutableStateOf(false) }
+    var showMaterialSheet by rememberSaveable { mutableStateOf(false) }
+    var contactSheetRole by rememberSaveable { mutableStateOf<IndentContactRole?>(null) }
 
     fun validate(): Boolean {
         val errors = mutableSetOf<String>()
@@ -217,7 +237,7 @@ fun CreateIndentContent(
     }
 
     fun clearError(key: String) {
-        fieldErrors.value -= key
+        fieldErrors.value = fieldErrors.value - key
     }
 
     val errors = fieldErrors.value
