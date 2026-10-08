@@ -184,7 +184,7 @@ fun TruckV2SummaryDto.toManagementItem(): TruckManagementItem =
         isBlacklisted = isBlacklisted,
         availability = availability,
         owner = owner?.let {
-            TruckOwnerReference(name = it.name, phone = it.phone, tagCode = it.tagCode)
+            TruckOwnerReference(name = it.name, phone = it.phone, tagCode = it.tagCode, status = it.status)
         },
         vehicle = vehicle?.let {
             VehicleDetails(
@@ -233,7 +233,7 @@ fun TruckV2DetailDto.toDomain(): TruckDetails =
         activationEligibility = activationEligibility?.toDomain(),
         availability = availability,
         owner = owner?.let {
-            TruckOwnerReference(name = it.name, phone = it.phone, tagCode = it.tagCode)
+            TruckOwnerReference(name = it.name, phone = it.phone, tagCode = it.tagCode, status = it.status)
         },
         vehicle = vehicle?.let {
             VehicleDetails(

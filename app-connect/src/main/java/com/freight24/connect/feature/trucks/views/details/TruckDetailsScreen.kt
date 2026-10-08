@@ -387,6 +387,10 @@ private fun TruckDetailsContent(
         }
 
         item {
+            OwnerSection(truck)
+        }
+
+        item {
             SpecificationsSection(truck)
         }
 
@@ -396,6 +400,81 @@ private fun TruckDetailsContent(
 
         item {
             Spacer(Modifier.height(4.dp))
+        }
+    }
+}
+
+@Composable
+private fun OwnerSection(truck: TruckDetails) {
+    Surface(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .testTag("truck_detail_owner_section")
+                .semantics { testTagsAsResourceId = true },
+        shape = PanelShape,
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+    ) {
+        Column(modifier = Modifier.padding(vertical = 10.dp)) {
+            Text(
+                text = "TRUCK OWNER",
+                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.1.sp),
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+            )
+            LedgerRow("NAME", truck.owner?.name)
+            LedgerDivider()
+            LedgerRow("PHONE", truck.owner?.phone)
+            LedgerDivider()
+            OwnerStatusRow(truck.owner?.status)
+        }
+    }
+}
+
+/**
+ * Owner account state, stamped rather than spelled out: same chip language the
+ * document rows already use, so the page keeps one status vocabulary.
+ * An inactive owner is a state that needs attention (not an error), so it wears
+ * the warning token; unknown/absent status stays neutral.
+ */
+@Composable
+private fun OwnerStatusRow(status: String?) {
+    val ext = FreightThemeTokens.colors
+    val scheme = MaterialTheme.colorScheme
+    val normalized = status?.trim()?.lowercase()
+    val (container, content, label) =
+        when (normalized) {
+            "active" -> Triple(ext.surfaceSuccess, ext.onSurfaceSuccess, "ACTIVE")
+            "inactive" -> Triple(ext.surfaceWarning, ext.onSurfaceWarning, "INACTIVE")
+            else -> Triple(scheme.surfaceContainerHighest, scheme.onSurfaceVariant, "UNKNOWN")
+        }
+
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .testTag("truck_detail_owner_status")
+                .semantics { testTagsAsResourceId = true },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "ACCOUNT STATUS",
+            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.1.sp),
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        Surface(shape = TagShape, color = container) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+                fontWeight = FontWeight.Bold,
+                color = content,
+                modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp),
+            )
         }
     }
 }

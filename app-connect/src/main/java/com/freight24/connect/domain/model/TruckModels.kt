@@ -55,6 +55,8 @@ data class TruckOwnerReference(
     val name: String?,
     val phone: String?,
     val tagCode: String?,
+    /** 'active' | 'inactive' — the owner's account state on the partner book. */
+    val status: String? = null,
 )
 
 data class VehicleDetails(
