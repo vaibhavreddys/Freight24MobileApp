@@ -29,6 +29,7 @@ data class TruckAssignmentOption(
     val bodyType: String?,
     val displayName: String?,
     val capacityMt: Double?,
+    val ownerStatus: String? = null,
 )
 
 data class TruckDetails(

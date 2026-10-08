@@ -406,6 +406,7 @@ fun TripDetailsScreen(
                             )
                         }
                         Button(
+                            enabled = !uiState.isUpdatingStatus && !uiState.isLoading && !uiState.isRefreshing,
                             onClick = {
                                 if (nextStatus == "UPLOAD_LR") {
                                     showSourcePicker = true
@@ -427,7 +428,14 @@ fun TripDetailsScreen(
                                     contentColor = colorScheme.onPrimary,
                                 ),
                         ) {
-                            Text(buttonText, style = MaterialTheme.typography.titleMedium)
+                            if (uiState.isUpdatingStatus) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp,
+                                )
+                            } else {
+                                Text(buttonText, style = MaterialTheme.typography.titleMedium)
+                            }
                         }
                     }
                 }

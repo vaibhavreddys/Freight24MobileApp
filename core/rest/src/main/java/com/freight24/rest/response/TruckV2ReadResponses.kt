@@ -43,6 +43,7 @@ data class TruckV2OwnerDto(
     val name: String? = null,
     val phone: String? = null,
     val tagCode: String? = null,
+    val status: String? = null,
 )
 
 @Serializable

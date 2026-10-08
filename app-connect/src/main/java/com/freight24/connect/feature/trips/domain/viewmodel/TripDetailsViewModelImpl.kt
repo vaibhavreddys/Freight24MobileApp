@@ -19,6 +19,7 @@ import com.freight24.connect.feature.trips.domain.usecase.UploadLrUseCaseDataPar
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -44,6 +45,7 @@ internal class TripDetailsViewModelImpl
         private val _uiState = MutableStateFlow(TripDetailsUiState())
         override val uiState: StateFlow<TripDetailsUiState> = _uiState.asStateFlow()
         private var paymentTransactionsJob: Job? = null
+        private var tripLoadJob: Job? = null
 
         init {
             loadTrip()
@@ -185,9 +187,12 @@ internal class TripDetailsViewModelImpl
         }
 
         private fun updateStatus(newStatus: String) {
+            if (_uiState.value.isUpdatingStatus) return
+            tripLoadJob?.cancel()
+            _uiState.update {
+                it.copy(isUpdatingStatus = true, isRefreshing = false, errorMessage = null)
+            }
             viewModelScope.launch {
-                _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-
                 val result =
                     updateTruckerUseCase(
                         UpdateTruckerUseCaseDataParams(
@@ -202,14 +207,17 @@ internal class TripDetailsViewModelImpl
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                trip = response,
+                                isUpdatingStatus = false,
+                                trip = response.copy(truckerStatus = newStatus),
                             )
                         }
+                        loadTrip(isPullToRefresh = true, confirmedStatus = newStatus)
                     },
                     onFailure = { error ->
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
+                                isUpdatingStatus = false,
                                 errorMessage = error.message ?: "Update failed",
                             )
                         }
@@ -275,8 +283,11 @@ internal class TripDetailsViewModelImpl
         private fun loadTrip(
             id: String = tripId,
             isPullToRefresh: Boolean = false,
+            confirmedStatus: String? = null,
         ) {
-            viewModelScope.launch {
+            if (_uiState.value.isUpdatingStatus) return
+            tripLoadJob?.cancel()
+            tripLoadJob = viewModelScope.launch {
                 // A pull-to-refresh must not blank the trip already on screen, so it
                 // drives isRefreshing (the swipe indicator) instead of isLoading.
                 _uiState.update {
@@ -288,6 +299,9 @@ internal class TripDetailsViewModelImpl
                 }
 
                 val result = tripDetailsUseCase(TripDetailsUseCaseDataParams(tripId = id))
+                // Repositories can wrap cancellation in Result; a cancelled request
+                // must still not replace the trip loaded by a newer request.
+                coroutineContext.ensureActive()
 
                 result.fold(
                     onSuccess = { response ->
@@ -295,7 +309,7 @@ internal class TripDetailsViewModelImpl
                             it.copy(
                                 isLoading = false,
                                 isRefreshing = false,
-                                trip = response,
+                                trip = confirmedStatus?.let { status -> response.copy(truckerStatus = status) } ?: response,
                             )
                         }
                     },

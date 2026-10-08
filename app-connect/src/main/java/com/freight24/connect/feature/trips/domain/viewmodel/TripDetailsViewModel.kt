@@ -9,6 +9,7 @@ import java.io.File
 data class TripDetailsUiState(
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
+    val isUpdatingStatus: Boolean = false,
     val errorMessage: String? = null,
     val trip: TripDataResponse? = null,
     val selectedUris: List<Uri> = emptyList(),

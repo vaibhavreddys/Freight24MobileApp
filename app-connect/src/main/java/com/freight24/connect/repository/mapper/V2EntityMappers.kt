@@ -215,6 +215,7 @@ fun TruckV2SummaryDto.toAssignmentOption(): TruckAssignmentOption =
         ownerName = owner?.name,
         ownerPhone = owner?.phone,
         ownerTagCode = owner?.tagCode,
+        ownerStatus = owner?.status,
         truckType = truckType,
         bodyType = bodyType,
         displayName = displayName,
