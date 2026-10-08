@@ -57,7 +57,7 @@ class IndentRepositoryImpl
         ): Result<GetIndentsResponse> =
             withContext(ioDispatcher) {
                 try {
-                    val response = api.getMyIndents(status)
+                    val response = api.getMyIndents(status, page, limit)
                     if (response.isSuccessful && response.body() != null) {
                         Result.success(response.body()!!)
                     } else {
@@ -160,10 +160,11 @@ class IndentRepositoryImpl
         override suspend fun getAllIndents(
             page: Int,
             limit: Int,
+            status: String?,
         ): Result<GetIndentsResponse> =
             withContext(ioDispatcher) {
                 try {
-                    val response = api.getAllIndents(page, limit)
+                    val response = api.getAllIndents(page, limit, status)
                     if (response.isSuccessful && response.body() != null) {
                         Result.success(response.body()!!)
                     } else {

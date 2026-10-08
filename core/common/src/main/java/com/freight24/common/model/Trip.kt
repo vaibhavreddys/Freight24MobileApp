@@ -106,7 +106,10 @@ data class TripLocation(
     val address: String?,
 ) {
     fun toDisplayString(): String {
-        return listOfNotNull(area, city).joinToString(", ").ifEmpty { address ?: "Unknown" }
+        return area?.trim()?.takeIf { it.isNotEmpty() }
+            ?: city?.trim()?.takeIf { it.isNotEmpty() }
+            ?: address?.trim()?.takeIf { it.isNotEmpty() }
+            ?: "Unknown"
     }
 }
 

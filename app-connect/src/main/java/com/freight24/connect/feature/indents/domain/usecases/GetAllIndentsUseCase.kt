@@ -10,6 +10,7 @@ data class GetAllIndentsUseCaseParams(
     val page: Int,
     val limit: Int,
     val inactive: Boolean = false,
+    val status: String? = null,
 ) : UseCaseParams
 
 interface GetAllIndentsUseCase : UseCase<GetAllIndentsUseCaseParams, GetIndentsResponse>
@@ -23,7 +24,7 @@ class GetAllIndentsUseCaseImpl
             return if (params.inactive) {
                 repository.getInactiveIndents(params.page, params.limit)
             } else {
-                repository.getAllIndents(params.page, params.limit)
+                repository.getAllIndents(params.page, params.limit, params.status)
             }
         }
     }

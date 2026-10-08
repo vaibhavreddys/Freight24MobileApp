@@ -73,7 +73,7 @@ data class IndentDetailsUiState(
     val assignMissingRateLabels: List<String>
         get() = buildList {
             if ((assignClientCostAmount ?: 0) <= 0) add("client cost")
-            if ((assignNegotiatedCostAmount ?: 0) <= 0) add("negotiated cost")
+            if ((assignNegotiatedCostAmount ?: 0) <= 0) add("target cost")
         }
 
     /**

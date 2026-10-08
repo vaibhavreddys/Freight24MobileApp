@@ -11,7 +11,7 @@
     <string name="client">Client</string>
     <string name="branch">Branch</string>
     <string name="client_cost">Client cost</string>
-    <string name="target_cost">Negotiated cost</string>
+    <string name="target_cost">Target cost</string>
     <string name="trucker_cost">Trucker cost</string>
     <string name="business_proposed_cost">Business proposed cost</string>
     <string name="margin">Margin</string>
@@ -47,7 +47,7 @@
     <string name="hide_cost_from_load_board">Hide cost from the load board</string>
     <string name="truck_owners_see_the_load_without_the_rate">Truck owners see the load without the rate.</string>
     <string name="terms">Terms</string>
-    <string name="neg_cost_same_as_client">The negotiated cost is the same as the client cost</string>
+    <string name="neg_cost_same_as_client">The target cost is the same as the client cost</string>
     <string name="notes">Notes</string>
     <string name="confirm">Confirm</string>
     <string name="cancel">Cancel</string>
@@ -93,4 +93,8 @@
     <string name="trip_epod_preview_title">ePOD</string>
     <string name="trip_share_epod">Share ePOD</string>
     <string name="onboarding_banking_optional">BANKING INFORMATION (OPTIONAL)</string>
+    <string name="indent_ownership_mine">Mine</string>
+    <string name="indent_ownership_other">Other</string>
+    <string name="create_trip_trucker_tag_code">Tag code: %1$s</string>
+    <string name="create_trip_driver_phone_invalid">Enter a 10-digit mobile number starting with 6, 7, 8 or 9.</string>
 </resources>

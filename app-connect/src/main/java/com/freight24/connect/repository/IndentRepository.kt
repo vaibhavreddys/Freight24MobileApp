@@ -53,6 +53,7 @@ interface IndentRepository {
     suspend fun getAllIndents(
         page: Int,
         limit: Int,
+        status: String? = null,
     ): Result<GetIndentsResponse>
 
     suspend fun getInactiveIndents(

@@ -79,6 +79,9 @@ fun ConnectIndentCard(
     onCloneClick: () -> Unit = {},
     modifier: Modifier = Modifier,
     onCallClick: (() -> Unit)? = null,
+    ownershipLabel: String? = null,
+    isMine: Boolean = false,
+    muted: Boolean = false,
     /**
      * Optional detachable footer, rendered below the cargo row behind its own
      * [PerforationRule]. The Interest Inbox uses this to hang its expandable
@@ -95,6 +98,7 @@ fun ConnectIndentCard(
 
     DocketCard(
         accent = docketStatusAccent(status),
+        containerColor = if (muted) scheme.surfaceContainerLow else scheme.surface,
         testTag = "indent_card",
         onClick = onClick,
         modifier = modifier.padding(horizontal = 12.dp, vertical = 5.dp),
@@ -136,6 +140,15 @@ fun ConnectIndentCard(
                 text = postedTime,
                 container = scheme.surfaceContainerHighest,
                 content = scheme.onSurfaceVariant,
+            )
+        }
+
+        if (ownershipLabel != null) {
+            Spacer(Modifier.height(6.dp))
+            MetaTag(
+                text = ownershipLabel,
+                container = if (isMine) scheme.primaryContainer else scheme.surfaceContainerHighest,
+                content = if (isMine) scheme.onPrimaryContainer else scheme.onSurfaceVariant,
             )
         }
 

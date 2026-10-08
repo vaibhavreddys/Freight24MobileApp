@@ -8,6 +8,7 @@ import javax.inject.Inject
 
 enum class TripTypes(val filter: String?, val displayText: String) {
     ALL(null, "All Trips"),
+    ASSIGNED("ASSIGNED", "Assigned"),
     IN_TRANSIT("IN_TRANSIT", "In Transit"),
     LR_NOT_UPLOADED("LR_NOT_UPLOADED", "Upload LR Pending"),
     LR_PENDING_REVIEW("LR_PENDING_REVIEW", "Review LR"),

@@ -383,6 +383,11 @@ fun TripDetailsScreen(
             val trip = uiState.trip
             val truckerStatus = trip?.truckerStatus ?: ""
             val showTripStatus = (trip?.status ?: "").equals("active", true)
+            val isLrVerified =
+                trip?.documents
+                    ?.firstOrNull { it.type.equals("lr", ignoreCase = true) }
+                    ?.status
+                    ?.equals("verified", ignoreCase = true) == true
             val (buttonText, nextStatus) =
                 when (truckerStatus.uppercase()) {
                     "ASSIGNED" -> stringResource(R.string.trip_update_to_loading) to "LOADING"
@@ -405,8 +410,20 @@ fun TripDetailsScreen(
                                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp),
                             )
                         }
+                        if (nextStatus == "UNLOADED" && !isLrVerified) {
+                            Text(
+                                text = "LR must be verified before marking this trip as unloaded.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = colorScheme.error,
+                                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp),
+                            )
+                        }
                         Button(
-                            enabled = !uiState.isUpdatingStatus && !uiState.isLoading && !uiState.isRefreshing,
+                            enabled =
+                                !uiState.isUpdatingStatus &&
+                                    !uiState.isLoading &&
+                                    !uiState.isRefreshing &&
+                                    (nextStatus != "UNLOADED" || isLrVerified),
                             onClick = {
                                 if (nextStatus == "UPLOAD_LR") {
                                     showSourcePicker = true
