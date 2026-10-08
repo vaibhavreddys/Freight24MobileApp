@@ -26,4 +26,5 @@
     <string name="trip_awaiting_hard_copy_pod">Thank you for uploading the ePOD. Awaiting receipt of the hard-copy POD.</string>
     <string name="trip_hard_copy_pod_verification">Hard-copy POD received. Verification is in progress.</string>
     <string name="trip_payment_processing">Payment processing is in progress.</string>
+    <string name="trip_log_payment_completed">Payment completed</string>
 </resources>

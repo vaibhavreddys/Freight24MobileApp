@@ -112,6 +112,7 @@ interface IndentsApi {
     suspend fun getAllIndents(
         @Query("page") page: Int,
         @Query("limit") limit: Int,
+        @Query("status") status: String? = null,
     ): Response<GetIndentsResponse>
 
     @GET("indents/groups/inactive")

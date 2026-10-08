@@ -188,6 +188,20 @@ internal class TripDetailsViewModelImpl
 
         private fun updateStatus(newStatus: String) {
             if (_uiState.value.isUpdatingStatus) return
+            if (
+                newStatus == "UNLOADED" &&
+                _uiState.value.trip
+                    ?.documents
+                    ?.none {
+                        it.type.equals("lr", ignoreCase = true) &&
+                            it.status.equals("verified", ignoreCase = true)
+                    } != false
+            ) {
+                _uiState.update {
+                    it.copy(errorMessage = "LR must be verified before marking this trip as unloaded")
+                }
+                return
+            }
             tripLoadJob?.cancel()
             _uiState.update {
                 it.copy(isUpdatingStatus = true, isRefreshing = false, errorMessage = null)

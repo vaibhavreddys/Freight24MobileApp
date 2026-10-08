@@ -125,6 +125,8 @@ fun TruckerHomeScreen(navController: NavHostController) {
                 // The title is the primary edit-mode signal now that the pencil
                 // becomes a close affordance.
                 title = if (isProfileTab && isProfileEditing) "Edit profile" else getFormattedTabName(selectedTab.id),
+                showSearch = isLoadsTab,
+                onSearchClick = loadBoardViewModel::onSearchClick,
                 trailingActionIcon =
                     when {
                         !isProfileTab -> null

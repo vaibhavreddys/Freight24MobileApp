@@ -22,6 +22,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -31,6 +32,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.common.util.DateTimeUtils.formatRelativeTime
 import com.freight24.common.util.formatLoadWeight
+import com.freight24.connect.R
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentStatusFilter
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentTab
 import com.freight24.connect.feature.indents.domain.viewmodel.IndentsListEvent
@@ -117,13 +119,13 @@ fun IndentsContent(
             ) {
                 IndentTabSwitcher(
                     selectedTab = uiState.selectedTab,
+                    showReadyForAssignment = uiState.statusFilter == IndentStatusFilter.ACTIVE,
                     onTabSelected = { onEvent(IndentsListEvent.SelectTab(it)) },
                 )
                 if (uiState.selectedTab == IndentTab.ALL) {
                     Spacer(modifier = Modifier.width(12.dp))
                     SearchBarTrigger(
                         onClick = onSearchClick,
-                        modifier = Modifier.weight(1f),
                     )
                 }
             }
@@ -142,6 +144,7 @@ fun IndentsContent(
                     onIndentClick = onIndentClick,
                     onCloneClick = onCloneClick,
                     modifier = Modifier.fillMaxSize(),
+                    showOwnership = uiState.selectedTab == IndentTab.ALL,
                 )
             }
         }
@@ -153,34 +156,25 @@ fun SearchBarTrigger(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
+    IconButton(
+        onClick = onClick,
         modifier =
             modifier
-                .height(36.dp)
-                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(16.dp))
-                .clickable { onClick() }
-                .padding(horizontal = 12.dp),
-        contentAlignment = Alignment.CenterStart,
+                .size(40.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = Icons.Default.Search,
-                contentDescription = "Search",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Search indents",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        Icon(
+            imageVector = Icons.Default.Search,
+            contentDescription = "Search indents",
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
 @Composable
 fun IndentTabSwitcher(
     selectedTab: IndentTab,
+    showReadyForAssignment: Boolean,
     onTabSelected: (IndentTab) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -196,6 +190,16 @@ fun IndentTabSwitcher(
                 Modifier.docketTag("indents_filter_mine")
                     .semantics { selected = selectedTab == IndentTab.MINE },
         )
+        if (showReadyForAssignment) {
+            FilterSelectionChip(
+                label = "Ready",
+                isSelected = selectedTab == IndentTab.READY_FOR_ASSIGNMENT,
+                onClick = { onTabSelected(IndentTab.READY_FOR_ASSIGNMENT) },
+                modifier =
+                    Modifier.docketTag("indents_filter_ready")
+                        .semantics { selected = selectedTab == IndentTab.READY_FOR_ASSIGNMENT },
+            )
+        }
         FilterSelectionChip(
             label = "All",
             isSelected = selectedTab == IndentTab.ALL,
@@ -213,6 +217,7 @@ fun IndentsList(
     onIndentClick: (String) -> Unit,
     onCloneClick: (String, String) -> Unit,
     modifier: Modifier = Modifier,
+    showOwnership: Boolean = false,
 ) {
     val context = LocalContext.current
 
@@ -239,7 +244,8 @@ fun IndentsList(
             val unloadingLocation = indent.indentGroupDetails.indentLocations.find { it.locationType == "unloading" }
             val clientProfile = indent.indentGroupDetails.clientProfile
             val fleetExecutive = indent.fleetExecutive
-            val showAdmin = indent.indentOwnership == "OTHER"
+            val ownership = indentCardOwnership(indent.indentOwnership)
+            val showAdmin = ownership == IndentCardOwnership.OTHER
 
             ConnectIndentCard(
                 companyName = clientProfile?.companyName ?: clientProfile?.fullName ?: "Unknown",
@@ -265,6 +271,17 @@ fun IndentsList(
                     },
                 showAdmin = showAdmin,
                 adminName = fleetExecutive?.name,
+                ownershipLabel = if (showOwnership) {
+                    when (ownership) {
+                        IndentCardOwnership.MINE -> stringResource(R.string.indent_ownership_mine)
+                        IndentCardOwnership.OTHER -> stringResource(R.string.indent_ownership_other)
+                        null -> null
+                    }
+                } else {
+                    null
+                },
+                isMine = ownership == IndentCardOwnership.MINE,
+                muted = showOwnership && ownership == IndentCardOwnership.MINE,
                 onCallClick =
                     clientProfile?.phoneNumber?.takeIf { it.isNotBlank() }?.let { phone ->
                         {

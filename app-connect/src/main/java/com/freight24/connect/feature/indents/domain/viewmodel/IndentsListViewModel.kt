@@ -22,6 +22,7 @@ data class IndentsListUiState(
 enum class IndentTab {
     MINE,
     ALL,
+    READY_FOR_ASSIGNMENT,
 }
 
 enum class IndentStatusFilter {

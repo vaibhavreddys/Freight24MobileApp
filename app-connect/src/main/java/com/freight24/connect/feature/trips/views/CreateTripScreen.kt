@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
@@ -35,10 +36,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.connect.feature.trips.domain.viewmodel.CreateTripEvent
 import com.freight24.connect.feature.trips.domain.viewmodel.CreateTripUiState
 import com.freight24.connect.feature.trips.domain.viewmodel.CreateTripViewModel
+import com.freight24.connect.feature.trips.domain.viewmodel.isValidDriverPhone
 import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.components.formViewportInsets
 import com.freight24.ui.components.rememberCallAction
 import com.freight24.ui.theme.FreightThemeTokens
+import com.freight24.connect.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -293,7 +296,11 @@ fun IndentInfoCard(uiState: CreateTripUiState) {
                         fontWeight = FontWeight.SemiBold,
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    Text("NEGOTIATED COST", style = MaterialTheme.typography.labelSmall, color = colorScheme.onSurfaceVariant)
+                    Text(
+                        stringResource(R.string.target_cost).uppercase(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colorScheme.onSurfaceVariant
+                    )
                     Text(
                         "₹${formatCurrency(uiState.indent?.negotiatedTripCost)}",
                         style = MaterialTheme.typography.titleMedium,
@@ -316,6 +323,7 @@ fun SelectedTruckCard(uiState: CreateTripUiState) {
         val extendedColors = FreightThemeTokens.colors
         val owner = uiState.truck?.owner
         val ownerPhone = owner?.phone?.takeIf { it.isNotBlank() }
+        val ownerTagCode = owner?.tagCode?.trim()?.takeIf { it.isNotEmpty() }
         val callOwner = rememberCallAction(ownerPhone.orEmpty())
 
         Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
@@ -376,7 +384,7 @@ fun SelectedTruckCard(uiState: CreateTripUiState) {
             }
 
             val ownerName = owner?.name?.takeIf { it.isNotBlank() }
-            if (ownerName != null || ownerPhone != null) {
+            if (ownerName != null || ownerPhone != null || ownerTagCode != null) {
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Surface(
@@ -403,6 +411,13 @@ fun SelectedTruckCard(uiState: CreateTripUiState) {
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
+                            if (ownerTagCode != null) {
+                                Text(
+                                    text = stringResource(R.string.create_trip_trucker_tag_code, ownerTagCode),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = colorScheme.onSurfaceVariant,
+                                )
+                            }
                             if (ownerPhone != null) {
                                 Text(
                                     text = ownerPhone,
@@ -446,7 +461,8 @@ internal fun DriverDetailsCard(
         colors = CardDefaults.cardColors(containerColor = colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
-        val isPhoneValid = uiState.driverPhone.matches(Regex("^\\+?[0-9]{10,15}$"))
+        val isPhoneValid = isValidDriverPhone(uiState.driverPhone)
+        val showPhoneError = !isPhoneValid && (uiState.driverPhone.isNotBlank() || uiState.showDriverPhoneError)
 
         Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -477,27 +493,12 @@ internal fun DriverDetailsCard(
             OutlinedTextField(
                 value = uiState.driverPhone,
                 onValueChange = { newValue ->
-                    // Keep only digits and an optional leading '+' so IME-inserted
-                    // spaces/separators can never break the E.164-style validation.
-                    val filtered =
-                        if (newValue.startsWith("+")) {
-                            "+" + newValue.drop(1).filter { it.isDigit() }
-                        } else {
-                            newValue.filter { it.isDigit() }
-                        }
-
-                    // Limit to 15 chars (E.164 international standard max length)
-                    val limited = filtered.take(15)
-
-                    // Update state only if value actually changed
-                    if (limited != uiState.driverPhone) {
-                        viewModel.onEvent(CreateTripEvent.UpdateDriverPhone(limited))
-                    }
+                    viewModel.onEvent(CreateTripEvent.UpdateDriverPhone(newValue))
                 },
-                isError = uiState.driverPhone.isNotBlank() && !isPhoneValid,
+                isError = showPhoneError,
                 supportingText = {
-                    if (!isPhoneValid && uiState.driverPhone.isNotBlank()) {
-                        Text("Enter a valid phone number", color = colorScheme.error)
+                    if (showPhoneError) {
+                        Text(stringResource(R.string.create_trip_driver_phone_invalid), color = colorScheme.error)
                     }
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),

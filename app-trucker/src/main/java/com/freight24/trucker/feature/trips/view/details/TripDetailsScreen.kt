@@ -1368,20 +1368,15 @@ private fun TripLogSection(
 ) {
     val stages = listOf("ASSIGNED", "LOADING", "IN_TRANSIT", "UNLOADED", "INVOICED", "PAID")
 
-    val filteredEvents =
-        trip.statusEvents
-            .filter { !it.details.isNullOrBlank() }
-            .filter { it.oldStatus != it.newStatus }
-
-    val completedStatuses = filteredEvents.mapNotNull { it.newStatus }.distinct()
-    val currentStageIndex = completedStatuses.maxOfOrNull { stages.indexOf(it.uppercase()) } ?: tripStageIndex(trip.status)
+    val filteredEvents = tripLogEvents(trip.statusEvents)
+    val currentStageIndex = tripLogStageIndex(trip.truckerStatus ?: trip.status, filteredEvents)
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         FleetSectionHeader(title = "Trip Log", colors = colors)
 
         Spacer(modifier = Modifier.height(14.dp))
 
-        if (filteredEvents.isEmpty()) {
+        if (filteredEvents.isEmpty() && currentStageIndex < 0) {
             Text(
                 text = "No checkpoints recorded yet.",
                 style = TruckerType.body,
@@ -1390,7 +1385,8 @@ private fun TripLogSection(
         } else {
             val rows =
                 stages.mapIndexed { index, stage ->
-                    val event = filteredEvents.firstOrNull { it.newStatus?.uppercase() == stage }
+                    val stageEvents = filteredEvents.filter { tripStageIndex(it.newStatus.orEmpty()) == index }
+                    val event = stageEvents.firstOrNull { !it.details.isNullOrBlank() } ?: stageEvents.firstOrNull()
                     val state =
                         when {
                             index < currentStageIndex -> LogState.CLEARED
@@ -1404,6 +1400,7 @@ private fun TripLogSection(
                             tripStageLabel(index),
                             when {
                                 event != null && !event.details.isNullOrBlank() -> event.details!!
+                                stage == "PAID" && state != LogState.AHEAD -> stringResource(com.freight24.trucker.R.string.trip_log_payment_completed)
                                 state == LogState.CURRENT -> "In progress"
                                 state == LogState.CLEARED -> "Cleared"
                                 else -> "Waiting for update"

@@ -28,6 +28,7 @@ data class CreateTripUiState(
     val truck: TruckDetails? = null,
     val driverName: String = "",
     val driverPhone: String = "",
+    val showDriverPhoneError: Boolean = false,
     val expectedLoadingDate: String = "", // UI only for now as API doesn't support it
     val createdTrip: CreatedTripResponse.TripData? = null,
     val snackbarMessage: String? = null,
@@ -80,7 +81,7 @@ internal class CreateTripViewModel
                     _uiState.update { it.copy(driverName = event.name) }
                 }
                 is CreateTripEvent.UpdateDriverPhone -> {
-                    _uiState.update { it.copy(driverPhone = event.phone) }
+                    _uiState.update { it.copy(driverPhone = normalizeDriverPhoneInput(event.phone), showDriverPhoneError = false) }
                 }
                 is CreateTripEvent.UpdateExpectedLoadingDate -> {
                     _uiState.update { it.copy(expectedLoadingDate = event.date) }
@@ -138,8 +139,8 @@ internal class CreateTripViewModel
             val tId = truckId ?: return
             val state = _uiState.value
 
-            if (state.driverPhone.isEmpty()) {
-                _uiState.update { it.copy(snackbarMessage = "Please update driver phone number") }
+            if (!isValidDriverPhone(state.driverPhone)) {
+                _uiState.update { it.copy(showDriverPhoneError = true) }
                 return
             }
 

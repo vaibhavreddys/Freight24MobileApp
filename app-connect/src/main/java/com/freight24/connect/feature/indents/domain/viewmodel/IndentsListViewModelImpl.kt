@@ -7,6 +7,7 @@ import com.freight24.connect.feature.indents.domain.usecases.GetAllIndentsUseCas
 import com.freight24.connect.feature.indents.domain.usecases.GetMyIndentsUseCase
 import com.freight24.connect.feature.indents.domain.usecases.GetMyIndentsUseCaseParams
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,6 +24,7 @@ class IndentsListViewModelImpl
     ) : ViewModel(), IndentsListViewModel {
         private val _uiState = MutableStateFlow(IndentsListUiState())
         override val uiState: StateFlow<IndentsListUiState> = _uiState.asStateFlow()
+        private var loadJob: Job? = null
 
         init {
             loadIndents()
@@ -36,7 +38,20 @@ class IndentsListViewModelImpl
                 }
                 is IndentsListEvent.SelectStatusFilter -> {
                     if (_uiState.value.statusFilter == event.filter) return
-                    _uiState.update { it.copy(statusFilter = event.filter) }
+                    _uiState.update {
+                        it.copy(
+                            statusFilter = event.filter,
+                            selectedTab =
+                                if (
+                                    event.filter == IndentStatusFilter.INACTIVE &&
+                                    it.selectedTab == IndentTab.READY_FOR_ASSIGNMENT
+                                ) {
+                                    IndentTab.MINE
+                                } else {
+                                    it.selectedTab
+                                },
+                        )
+                    }
                     loadIndents()
                 }
                 is IndentsListEvent.RefreshIndents -> {
@@ -49,7 +64,8 @@ class IndentsListViewModelImpl
         }
 
         private fun loadIndents() {
-            viewModelScope.launch {
+            loadJob?.cancel()
+            loadJob = viewModelScope.launch {
                 _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
                 val result =
@@ -68,6 +84,14 @@ class IndentsListViewModelImpl
                                     page = 1,
                                     limit = 50,
                                     inactive = _uiState.value.statusFilter == IndentStatusFilter.INACTIVE,
+                                ),
+                            )
+                        IndentTab.READY_FOR_ASSIGNMENT ->
+                            getMyIndentsUseCase.invoke(
+                                GetMyIndentsUseCaseParams(
+                                    status = "READY_FOR_ASSIGNMENT",
+                                    page = 1,
+                                    limit = 50,
                                 ),
                             )
                     }

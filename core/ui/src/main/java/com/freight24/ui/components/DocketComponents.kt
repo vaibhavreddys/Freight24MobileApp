@@ -103,6 +103,7 @@ fun DocketCard(
             top = 13.dp,
             bottom = 12.dp,
         ),
+    containerColor: Color = MaterialTheme.colorScheme.surface,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val foldTone = MaterialTheme.colorScheme.surfaceContainerHighest
@@ -118,7 +119,7 @@ fun DocketCard(
                     .semantics { testTagsAsResourceId = true }
                     .then(clickableModifier),
             shape = DocketShape,
-            color = MaterialTheme.colorScheme.surface,
+            color = containerColor,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
         ) {
             Box {
