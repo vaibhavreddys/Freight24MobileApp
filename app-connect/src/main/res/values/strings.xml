@@ -11,7 +11,7 @@
     <string name="client">Client</string>
     <string name="branch">Branch</string>
     <string name="client_cost">Client cost</string>
-    <string name="target_cost">Negotiated cost</string>
+    <string name="target_cost">Target cost</string>
     <string name="trucker_cost">Trucker cost</string>
     <string name="business_proposed_cost">Business proposed cost</string>
     <string name="margin">Margin</string>
@@ -47,7 +47,7 @@
     <string name="hide_cost_from_load_board">Hide cost from the load board</string>
     <string name="truck_owners_see_the_load_without_the_rate">Truck owners see the load without the rate.</string>
     <string name="terms">Terms</string>
-    <string name="neg_cost_same_as_client">The negotiated cost is the same as the client cost</string>
+    <string name="neg_cost_same_as_client">The target cost is the same as the client cost</string>
     <string name="notes">Notes</string>
     <string name="confirm">Confirm</string>
     <string name="cancel">Cancel</string>
