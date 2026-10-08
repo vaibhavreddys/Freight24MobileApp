@@ -419,6 +419,7 @@ fun ClientV2SummaryDto.toPickerOption(): ClientPickerOption =
     ClientPickerOption(
         clientId = id,
         clientUserId = userId,
+        tagCode = tagCode,
         companyName = companyName,
         displayName = displayName,
         companyPhone = companyPhone,

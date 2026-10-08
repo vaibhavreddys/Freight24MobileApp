@@ -32,6 +32,7 @@ data class ClientManagementItem(
 data class ClientPickerOption(
     val clientId: String,
     val clientUserId: String,
+    val tagCode: String?,
     val companyName: String,
     val displayName: String?,
     val companyPhone: String?,

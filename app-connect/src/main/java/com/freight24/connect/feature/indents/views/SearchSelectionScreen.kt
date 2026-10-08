@@ -29,7 +29,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
@@ -223,8 +227,22 @@ private fun ClientListItem(
     client: ClientPickerOption,
     onClick: () -> Unit,
 ) {
+    // Second line stays a single line: contact identity, then the client's
+    // public tag code, separated by a bullet (same convention as the quick
+    // adhoc truck owner rows). Blank segments are dropped so a client with
+    // neither display name nor phone does not lead with a dangling bullet.
+    val subtitle =
+        buildList {
+            add(client.displayName ?: client.companyPhone.orEmpty())
+            client.tagCode?.let(::add)
+        }.filter { it.isNotBlank() }.joinToString(" • ")
+
     ListItem(
-        modifier = Modifier.clickable(onClick = onClick),
+        modifier =
+            Modifier
+                .clickable(onClick = onClick)
+                .testTag("search_selection_client_${client.clientId}")
+                .semantics { testTagsAsResourceId = true },
         headlineContent = {
             Column {
                 Text(
@@ -232,11 +250,15 @@ private fun ClientListItem(
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
                 )
-                Text(
-                    text = client.displayName ?: client.companyPhone.orEmpty(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                if (subtitle.isNotBlank()) {
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
         },
     )

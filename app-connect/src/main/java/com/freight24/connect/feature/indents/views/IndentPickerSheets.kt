@@ -521,7 +521,7 @@ fun ContactPickerSheet(
             Text(
                 text =
                     if (role.required) {
-                        "The driver needs someone to ring on arrival."
+                        "This is required for truck owner providing a vehicle."
                     } else {
                         "Leave empty if the client has not nominated one."
                     },

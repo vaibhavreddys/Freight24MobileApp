@@ -22,6 +22,7 @@ data class ClientV2Counts(
 data class ClientV2SummaryDto(
     val id: String,
     val userId: String,
+    val tagCode: String? = null,
     val clientType: String? = null,
     val companyName: String,
     val displayName: String? = null,
