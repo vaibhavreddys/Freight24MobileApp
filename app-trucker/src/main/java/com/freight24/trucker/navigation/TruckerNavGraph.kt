@@ -3,6 +3,7 @@ package com.freight24.trucker.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -13,6 +14,8 @@ import com.freight24.trucker.feature.home.TruckerHomeScreen
 import com.freight24.trucker.feature.login.view.signin.LoginScreen
 import com.freight24.trucker.feature.login.view.verify.VerifyOtpScreen
 import com.freight24.trucker.feature.profile.view.AppSettingsViewModel
+import com.freight24.trucker.feature.profile.view.BaseCitySearchScreen
+import com.freight24.trucker.feature.profile.view.ProfileViewModel
 import com.freight24.trucker.feature.trips.view.details.TripDetailsScreen
 import com.freight24.trucker.feature.trucks.view.details.TruckDetailsScreen
 import com.freight24.trucker.feature.trucks.view.onboard.OnboardTruckScreen
@@ -133,6 +136,22 @@ fun TruckerNavGraph(
                 onThemeChange = viewModel::setTheme,
                 onDarkModeChange = viewModel::setDarkMode,
                 onBackClick = { navController.popBackStack() },
+            )
+        }
+
+        composable(TruckerDestination.BaseCitySearch.route) { backStackEntry ->
+            val mainEntry =
+                remember(backStackEntry) {
+                    navController.getBackStackEntry(TruckerDestination.Main.route)
+                }
+            val profileViewModel: ProfileViewModel = hiltViewModel(mainEntry)
+
+            BaseCitySearchScreen(
+                onBackClick = { navController.popBackStack() },
+                onCitySelected = { city ->
+                    profileViewModel.onBaseCitySelected(city)
+                    navController.popBackStack()
+                },
             )
         }
     }

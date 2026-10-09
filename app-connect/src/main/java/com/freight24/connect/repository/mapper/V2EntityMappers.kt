@@ -210,6 +210,7 @@ fun TruckV2SummaryDto.toAssignmentOption(): TruckAssignmentOption =
         truckId = truckId,
         registrationNumber = registrationNumber,
         status = status,
+        isVerified = isVerified,
         isBlacklisted = isBlacklisted,
         availability = availability,
         ownerName = owner?.name,

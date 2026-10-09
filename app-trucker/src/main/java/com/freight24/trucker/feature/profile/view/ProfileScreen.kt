@@ -37,6 +37,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountBalance
@@ -107,7 +108,6 @@ import com.freight24.trucker.feature.profile.util.ProfileDocumentTypeIds
 import com.freight24.trucker.ui.components.rememberCallAction
 import com.freight24.ui.UiState
 import com.freight24.ui.components.AddRouteBottomSheet
-import com.freight24.ui.components.CitySearchField
 import com.freight24.ui.components.ProfileUtilityRow
 import com.freight24.ui.components.RouteChip
 import com.freight24.ui.components.formViewportInsets
@@ -122,6 +122,7 @@ import java.io.File
 internal fun ProfileScreen(
     paddingValues: PaddingValues,
     viewModel: ProfileViewModel = hiltViewModel(),
+    onBaseLocationClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -199,6 +200,7 @@ internal fun ProfileScreen(
                             gstDuplicateError = gstDuplicateError,
                             hasChanges = hasChanges,
                             snackbarHostState = snackbarHostState,
+                            onBaseLocationClick = onBaseLocationClick,
                             onSettingsClick = onSettingsClick,
                         )
                     }
@@ -251,6 +253,7 @@ private fun ProfileMainContent(
     gstDuplicateError: String?,
     hasChanges: Boolean,
     snackbarHostState: SnackbarHostState,
+    onBaseLocationClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {},
 ) {
     val documentStates by viewModel.documentStates.collectAsState()
@@ -263,9 +266,6 @@ private fun ProfileMainContent(
     val isIfscLookupInProgress by viewModel.isIfscLookupInProgress.collectAsState()
     val changeCount by viewModel.changeCount.collectAsState()
     val baseCity by viewModel.baseCity.collectAsState()
-    val baseCityQuery by viewModel.baseCityQuery.collectAsState()
-    val baseCitySuggestions by viewModel.baseCitySuggestions.collectAsState()
-    val baseCityLoading by viewModel.baseCitySearchLoading.collectAsState()
     val baseLocation by viewModel.baseLocation.collectAsState()
     val visibleRoutes by viewModel.visibleRoutes.collectAsState()
     val context = LocalContext.current
@@ -436,6 +436,7 @@ private fun ProfileMainContent(
         ) {
             ProfileHeaderCard(
                 fullName = viewModel.editableFullName.collectAsState().value,
+                businessName = viewModel.editableBusinessName.collectAsState().value,
                 partnerId = profile.tagCode.orEmpty(),
                 initials = viewModel.getUserInitials(),
                 role = "Truck Owner",
@@ -581,24 +582,42 @@ private fun ProfileMainContent(
                 ProfileField(
                     label = "Base location",
                     value = baseLocation?.takeIf { it.isNotBlank() } ?: baseCity?.city.orEmpty(),
-                    isEditing = isEditing,
-                    isEditable = true,
-                    onValueChange = { },
+                    isEditing = false,
                     valueContent = {
-                        // Read mode must fall back to the plain value. Returning
-                        // nothing here left the row blank, because valueContent
-                        // replaces the default value rendering entirely.
                         if (isEditing) {
-                            CitySearchField(
-                                query = baseCityQuery,
-                                onQueryChange = viewModel::onBaseCityQueryChanged,
-                                suggestions = baseCitySuggestions,
-                                onCitySelected = viewModel::onBaseCitySelected,
-                                isLoading = baseCityLoading,
-                                label = "Base location",
-                                selectAllOnFocus = true,
+                            Surface(
+                                onClick = onBaseLocationClick,
+                                shape = RoundedCornerShape(10.dp),
+                                color = MaterialTheme.colorScheme.surface,
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                                 modifier = Modifier.fillMaxWidth(),
-                            )
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        text =
+                                            baseLocation?.takeIf { it.isNotBlank() }
+                                                ?: baseCity?.city
+                                                ?: "Select city",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color =
+                                            if (baseLocation.isNullOrBlank() && baseCity == null) {
+                                                MaterialTheme.colorScheme.onSurfaceVariant
+                                            } else {
+                                                MaterialTheme.colorScheme.onSurface
+                                            },
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                        contentDescription = "Select base location",
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
                         } else {
                             Text(
                                 text =
@@ -722,8 +741,21 @@ private fun ProfileMainContent(
                     isRequired = isEditing && !profile.bankAccountVerificationStatus,
                     duplicateError = bankValidationErrors["ifsc"],
                     onValueChange = viewModel::onIfscChanged,
-                    onFocusLost = viewModel::onIfscFocusLost,
                 )
+                if (isEditing && isIfscLookupInProgress) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.profile_ifsc_lookup_progress),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 ProfileField(
                     label = "UPI ID",
@@ -741,7 +773,7 @@ private fun ProfileMainContent(
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 ProfileField(
                     label = "Bank name",
-                    value = if (isIfscLookupInProgress) "Looking up bank…" else viewModel.editableBankName.collectAsState().value,
+                    value = if (isIfscLookupInProgress) stringResource(R.string.profile_ifsc_bank_loading) else viewModel.editableBankName.collectAsState().value,
                     isEditing = false,
                     isEditable = false,
                     isRequired = isEditing && !profile.bankAccountVerificationStatus,
@@ -751,7 +783,7 @@ private fun ProfileMainContent(
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 ProfileField(
                     label = "Branch name",
-                    value = if (isIfscLookupInProgress) "Looking up branch…" else viewModel.editableBranchName.collectAsState().value,
+                    value = if (isIfscLookupInProgress) stringResource(R.string.profile_ifsc_branch_loading) else viewModel.editableBranchName.collectAsState().value,
                     isEditing = false,
                     isEditable = false,
                     isRequired = isEditing && !profile.bankAccountVerificationStatus,
@@ -769,8 +801,8 @@ private fun ProfileMainContent(
                     mandatoryTypes = setOf(DocumentType.CANCELLED_CHEQUE),
                     lockedTypes = if (profile.bankAccountVerificationStatus) setOf(DocumentType.CANCELLED_CHEQUE) else emptySet(),
                     onDocumentView = { documentId ->
-                        viewModel.getSignedUrl(
-                            documentId = documentId,
+                        viewModel.getCancelledChequeSignedUrl(
+                            bankAccountId = documentId,
                             onUrlReady = { signedUrl -> documentPreviewLauncher.launch(getPdfLaunchIntent(signedUrl, context)) },
                             onError = { scope.launch { snackbarHostState.showSnackbar(message) } },
                         )
@@ -837,10 +869,9 @@ private fun ProfileMainContent(
                 addressLines =
                     listOf(
                         "Adarsh Building,",
-                        "#313, 1st Floor, 7th Cross road,",
-                        "Dr.Shivaram Karanth Nagar",
-                        "RK Hegde Nagar, Bengaluru",
-                        "Karnataka - 560064",
+                        "#313, 1st floor, 7th Cross Rd,",
+                        "Dr.Shivaram Karanth Nagar, RK Hegde Nagar, Bengaluru, Karnataka 560077",
+                        "Near BBMP Public Park",
                         "Phone: 9620111667"
                     ),
             )

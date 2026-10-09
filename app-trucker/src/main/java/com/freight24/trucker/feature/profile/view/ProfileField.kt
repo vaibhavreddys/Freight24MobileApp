@@ -22,17 +22,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.OffsetMapping
-import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.freight24.trucker.feature.profile.util.ProfileFieldValidators
 import com.freight24.trucker.feature.profile.util.ValidationResult
+import com.freight24.common.util.formatIndianMobileNumber
+import com.freight24.ui.trucker.AadhaarVisualTransformation
+import com.freight24.ui.trucker.IndianPhoneVisualTransformation
 
 /**
  * Enum representing the type of validation for profile fields.
@@ -99,7 +99,7 @@ internal fun ProfileField(
         val filteredValue =
             when (validationType) {
                 ValidationType.AADHAAR -> newValue.filter { it.isDigit() }.take(12)
-                ValidationType.PHONE -> newValue.filter { it.isDigit() }.take(10)
+                ValidationType.PHONE -> formatIndianMobileNumber(newValue).replace(" ", "")
                 ValidationType.ACCOUNT_NUMBER -> newValue.filter { it.isDigit() }.take(18)
                 ValidationType.IFSC -> newValue.uppercase().filter { it.isLetterOrDigit() }.take(11)
                 ValidationType.PAN -> newValue.uppercase().filter { it.isLetterOrDigit() }.take(10)
@@ -197,44 +197,8 @@ internal fun ProfileField(
 
                 val visualTransformation =
                     when (validationType) {
-                        ValidationType.AADHAAR ->
-                            VisualTransformation { text ->
-                                val transformed = ProfileFieldValidators.formatAadhaar(text.text)
-                                TransformedText(
-                                    AnnotatedString(transformed),
-                                    object : OffsetMapping {
-                                        override fun originalToTransformed(offset: Int): Int {
-                                            if (offset <= 4) return offset
-                                            if (offset <= 8) return offset + 1
-                                            return offset + 2
-                                        }
-
-                                        override fun transformedToOriginal(offset: Int): Int {
-                                            if (offset <= 4) return offset
-                                            if (offset <= 9) return offset - 1
-                                            return offset - 2
-                                        }
-                                    },
-                                )
-                            }
-                        ValidationType.PHONE ->
-                            VisualTransformation { text ->
-                                val transformed = ProfileFieldValidators.formatPhone(text.text)
-                                TransformedText(
-                                    AnnotatedString(transformed),
-                                    object : OffsetMapping {
-                                        override fun originalToTransformed(offset: Int): Int {
-                                            if (offset <= 5) return offset
-                                            return offset + 1
-                                        }
-
-                                        override fun transformedToOriginal(offset: Int): Int {
-                                            if (offset <= 5) return offset
-                                            return offset - 1
-                                        }
-                                    },
-                                )
-                            }
+                        ValidationType.AADHAAR -> AadhaarVisualTransformation
+                        ValidationType.PHONE -> IndianPhoneVisualTransformation
                         else -> VisualTransformation.None
                     }
 

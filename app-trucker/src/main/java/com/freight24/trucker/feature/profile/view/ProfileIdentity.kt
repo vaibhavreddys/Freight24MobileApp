@@ -42,6 +42,7 @@ internal fun ProfileHeaderCard(
     role: String,
     isVerified: Boolean,
     isActive: Boolean,
+    businessName: String? = null,
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -71,7 +72,7 @@ internal fun ProfileHeaderCard(
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = fullName.ifBlank { "Member" },
+                        text = profileHeaderName(businessName, fullName),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimary,
@@ -120,6 +121,10 @@ internal fun ProfileHeaderCard(
         }
     }
 }
+
+internal fun profileHeaderName(businessName: String?, fullName: String): String =
+    businessName?.trim()?.takeIf { it.isNotEmpty() }
+        ?: fullName.trim().ifBlank { "Member" }
 
 @Composable
 private fun HeaderPill(

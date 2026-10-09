@@ -177,6 +177,9 @@ fun TruckerHomeScreen(navController: NavHostController) {
                     ProfileScreen(
                         paddingValues = paddingValues,
                         viewModel = profileViewModel,
+                        onBaseLocationClick = {
+                            navController.navigate(TruckerDestination.BaseCitySearch.route)
+                        },
                         onSettingsClick = {
                             navController.navigate(TruckerDestination.Settings.route)
                         },

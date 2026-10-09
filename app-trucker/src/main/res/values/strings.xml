@@ -27,4 +27,7 @@
     <string name="trip_hard_copy_pod_verification">Hard-copy POD received. Verification is in progress.</string>
     <string name="trip_payment_processing">Payment processing is in progress.</string>
     <string name="trip_log_payment_completed">Payment completed</string>
+    <string name="profile_ifsc_lookup_progress">Fetching bank and branch details...</string>
+    <string name="profile_ifsc_bank_loading">Fetching bank name...</string>
+    <string name="profile_ifsc_branch_loading">Fetching branch name...</string>
 </resources>

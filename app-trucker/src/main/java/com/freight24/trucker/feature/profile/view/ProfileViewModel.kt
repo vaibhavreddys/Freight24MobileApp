@@ -33,6 +33,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -68,6 +70,7 @@ internal data class DocumentUploadState(
     val existingFileUrl: String?,
     val existingVerifyStatus: String?,
     val temporaryFileKey: String?,
+    val pendingLocalFile: File? = null,
     val uploadStatus: UploadStatus = UploadStatus.IDLE,
     val isPreparingDocument: Boolean = false,
 )
@@ -143,6 +146,7 @@ internal class ProfileViewModel
 
         private val _isIfscLookupInProgress = MutableStateFlow(false)
         val isIfscLookupInProgress: StateFlow<Boolean> = _isIfscLookupInProgress.asStateFlow()
+        private var ifscLookupJob: Job? = null
 
         private var originalProfile: Profile? = null
 
@@ -163,14 +167,8 @@ internal class ProfileViewModel
 
         private val _baseCity = MutableStateFlow<CityResult?>(null)
         val baseCity: StateFlow<CityResult?> = _baseCity.asStateFlow()
-        val baseCityQuery = MutableStateFlow("")
-        private val _baseCitySuggestions = MutableStateFlow<List<CityResult>>(emptyList())
-        val baseCitySuggestions: StateFlow<List<CityResult>> = _baseCitySuggestions.asStateFlow()
-        private val _baseCitySearchLoading = MutableStateFlow(false)
-        val baseCitySearchLoading: StateFlow<Boolean> = _baseCitySearchLoading.asStateFlow()
         private val _baseLocation = MutableStateFlow<String?>(null)
         val baseLocation: StateFlow<String?> = _baseLocation.asStateFlow()
-        private val _baseCitySearchSkip = MutableStateFlow<String?>(null)
 
         private val _committedRoutes = MutableStateFlow<List<PreferredRoute>>(emptyList())
         private val _routesToAdd = MutableStateFlow<List<StagedRoute>>(emptyList())
@@ -341,6 +339,7 @@ internal class ProfileViewModel
                 applicableTypes.associate { type ->
                     val fieldKey = ProfileDocumentTypeIds.fieldKey(type)
                     val existing = docsByType[type]
+                    val bank = profile.bankAccountDetails.takeIf { type == DocumentType.CANCELLED_CHEQUE }
                     val oldState = previous[fieldKey]
                     val documentTypeId = ProfileDocumentTypeIds.documentTypeId(type) ?: 0
 
@@ -348,12 +347,14 @@ internal class ProfileViewModel
                         DocumentUploadState(
                             fieldKey = fieldKey,
                             documentTypeId = documentTypeId,
-                            existingDocId = existing?.docId,
-                            existingFileUrl = existing?.url,
-                            existingVerifyStatus = existing?.let { ProfileDocumentTypeIds.verifyStatus(it.status) },
+                            existingDocId = bank?.id ?: existing?.docId,
+                            existingFileUrl = bank?.chequeImageUrl ?: existing?.url,
+                            existingVerifyStatus = bank?.verificationStatus?.lowercase()
+                                ?: existing?.let { ProfileDocumentTypeIds.verifyStatus(it.status) },
                             temporaryFileKey = if (preserveTemporary) oldState?.temporaryFileKey else null,
+                            pendingLocalFile = if (preserveTemporary) oldState?.pendingLocalFile else null,
                             uploadStatus =
-                                if (preserveTemporary && oldState?.temporaryFileKey != null) {
+                                if (preserveTemporary && (oldState?.temporaryFileKey != null || oldState?.pendingLocalFile != null)) {
                                     if (oldState.uploadStatus == UploadStatus.ERROR) UploadStatus.ERROR else UploadStatus.DONE
                                 } else {
                                     UploadStatus.IDLE
@@ -381,17 +382,13 @@ internal class ProfileViewModel
                         city = baseCityName,
                         state = profile.baseCityState.orEmpty(),
                     )
-                baseCityQuery.value = baseLabel.orEmpty()
             } else {
                 _baseCity.value = null
-                baseCityQuery.value = baseLabel.orEmpty()
             }
-            _baseCitySuggestions.value = emptyList()
         }
 
         private fun initCitySearchDebounce() {
             listOf(
-                baseCityQuery to "base",
                 fromCityQuery to "from",
                 toCityQuery to "to",
             ).forEach { (queryFlow, target) ->
@@ -416,16 +413,13 @@ internal class ProfileViewModel
             viewModelScope.launch(Dispatchers.IO) {
                 val loading =
                     when (target) {
-                        "base" -> _baseCitySearchLoading
                         "from" -> _fromCityLoading
                         else -> _toCityLoading
                     }
                 loading.value = true
-                val type = if (target == "base") null else "CITY"
-                locationRepository.searchCities(query, type)
+                locationRepository.searchCities(query, "CITY")
                     .onSuccess { results ->
                         when (target) {
-                            "base" -> _baseCitySuggestions.value = results
                             "from" -> _fromCitySuggestions.value = results
                             else -> _toCitySuggestions.value = results
                         }
@@ -440,7 +434,6 @@ internal class ProfileViewModel
         ): Boolean {
             val skipFlow =
                 when (target) {
-                    "base" -> _baseCitySearchSkip
                     "from" -> _fromCitySearchSkip
                     else -> _toCitySearchSkip
                 }
@@ -453,24 +446,9 @@ internal class ProfileViewModel
             }
         }
 
-        fun onBaseCityQueryChanged(query: String) {
-            baseCityQuery.value = query
-            if (query.isBlank()) {
-                _baseCitySuggestions.value = emptyList()
-                _baseLocation.value = null
-            }
-            if (_baseCity.value?.name != query) {
-                _baseCity.value = null
-            }
-            recomputeHasChanges()
-        }
-
         fun onBaseCitySelected(city: CityResult) {
             _baseCity.value = city
-            baseCityQuery.value = city.name
-            _baseCitySuggestions.value = emptyList()
             _baseLocation.value = city.name
-            _baseCitySearchSkip.value = city.name
             recomputeHasChanges()
         }
 
@@ -620,6 +598,8 @@ internal class ProfileViewModel
         }
 
         fun cancelEdit() {
+            ifscLookupJob?.cancel()
+            _isIfscLookupInProgress.value = false
             val temporaryKeys = _documentStates.value.values.mapNotNull { it.temporaryFileKey }
             val userId = originalProfile?.userId
             clearFocusErrors()
@@ -667,6 +647,7 @@ internal class ProfileViewModel
                     val targetUserId = original.userId
 
                     val hasProfileChanges = hasProfileFieldChanges(original)
+                    val hasBankChanges = hasBankChanges(original)
                     val hasRouteChanges = hasRouteChanges()
                     if (hasProfileChanges || hasRouteChanges) {
                         val request = buildSaveRequest(original)
@@ -689,6 +670,30 @@ internal class ProfileViewModel
                             return@launch
                         }
                         clearTemporaryFileKeys()
+                    }
+
+                    if (hasBankChanges) {
+                        val chequeFile = _documentStates.value[
+                            ProfileDocumentTypeIds.fieldKey(DocumentType.CANCELLED_CHEQUE)
+                        ]?.pendingLocalFile
+                        val bankSaveResult = profileRepository.saveBankAccount(
+                            userId = targetUserId,
+                            accountId = original.bankAccountDetails?.id,
+                            accountHolderName = editableAccountHolderName.value.trim(),
+                            accountNumber = editableAccountNumber.value.trim(),
+                            ifscCode = editableIfscCode.value.trim(),
+                            upiId = editableUpiId.value.trim(),
+                            bankName = editableBankName.value.trim(),
+                            branchName = editableBranchName.value.trim(),
+                            chequeFile = chequeFile,
+                        )
+                        if (bankSaveResult.isFailure || bankSaveResult.getOrNull() != true) {
+                            val message = bankSaveResult.exceptionOrNull()?.message ?: "Failed to save banking information"
+                            _saveEvent.emit(Result.failure(IllegalStateException(message)))
+                            recomputeHasChanges()
+                            return@launch
+                        }
+                        clearPendingChequeFile()
                     }
 
                     _isEditing.value = false
@@ -723,7 +728,6 @@ internal class ProfileViewModel
 
         private fun buildSaveRequest(original: Profile): com.freight24.rest.request.UpdateProfileRequest {
             val baseCity = _baseCity.value
-            val bank = original.bankAccountDetails
             return com.freight24.rest.request.UpdateProfileRequest(
                 baseCityId = baseCity?.takeIf { it.id != original.baseCityId && it.type.equals("CITY", ignoreCase = true) }?.id,
                 baseAreaId = baseCity?.takeIf { it.id != original.baseCityId && it.type.equals("AREA", ignoreCase = true) }?.id,
@@ -736,12 +740,6 @@ internal class ProfileViewModel
                 aadhar_card = changedValue(editableAadhaarNumber.value, original.aadhaarNumber),
                 business_name = changedValue(editableBusinessName.value, original.businessName),
                 gst_number = changedValue(editableGstNumber.value, original.gstNumber),
-                account_holder_name = changedValue(editableAccountHolderName.value, bank?.accountHolderName),
-                account_number = changedValue(editableAccountNumber.value, bank?.accountNumber),
-                ifsc_code = changedValue(editableIfscCode.value, bank?.ifscCode),
-                upi_id = changedValue(editableUpiId.value, bank?.upiId),
-                bank_name = changedValue(editableBankName.value, bank?.bankName),
-                branch_name = changedValue(editableBranchName.value, bank?.branchName),
                 preferredRoutes = gatherPreferredRouteEntries().takeIf { hasRouteChanges() },
             )
         }
@@ -752,14 +750,22 @@ internal class ProfileViewModel
         }
 
         fun onIfscChanged(value: String) {
-            editableIfscCode.value = value
-            val originalIfsc = originalProfile?.bankAccountDetails?.ifscCode.orEmpty()
-            if (!value.equals(originalIfsc, ignoreCase = true)) {
+            val code = value.uppercase().filter { it in 'A'..'Z' || it in '0'..'9' }.take(11)
+            if (code == editableIfscCode.value) return
+            ifscLookupJob?.cancel()
+            _isIfscLookupInProgress.value = false
+            editableIfscCode.value = code
+            val originalBank = originalProfile?.bankAccountDetails
+            if (code.equals(originalBank?.ifscCode, ignoreCase = true)) {
+                editableBankName.value = originalBank?.bankName.orEmpty()
+                editableBranchName.value = originalBank?.branchName.orEmpty()
+            } else {
                 editableBankName.value = ""
                 editableBranchName.value = ""
             }
             recomputeHasChanges()
             refreshBankValidationErrors()
+            ifscLookupCode(code)?.let(::lookupIfsc)
         }
 
         fun onBankFieldChanged() {
@@ -767,27 +773,26 @@ internal class ProfileViewModel
             refreshBankValidationErrors()
         }
 
-        fun onIfscFocusLost() {
-            val ifsc = editableIfscCode.value.trim().uppercase()
-            if (ifsc.isBlank()) {
-                _bankValidationErrors.value = _bankValidationErrors.value + ("ifsc" to "IFSC code is required")
-                return
-            }
-            val formatResult = ProfileFieldValidators.validateIfsc(ifsc)
-            if (formatResult is ValidationResult.Error) {
-                _bankValidationErrors.value = _bankValidationErrors.value + ("ifsc" to formatResult.message)
-                return
-            }
-
+        private fun lookupIfsc(ifsc: String) {
             val originalBank = originalProfile?.bankAccountDetails
             if (ifsc.equals(originalBank?.ifscCode, ignoreCase = true) &&
                 editableBankName.value.isNotBlank() && editableBranchName.value.isNotBlank()
             ) return
 
-            viewModelScope.launch(Dispatchers.IO) {
-                _isIfscLookupInProgress.value = true
+            _isIfscLookupInProgress.value = true
+            refreshBankValidationErrors()
+            ifscLookupJob = viewModelScope.launch {
                 var lookupError: String? = null
-                profileRepository.lookupIfsc(ifsc)
+                val result = try {
+                    withContext(Dispatchers.IO) { profileRepository.lookupIfsc(ifsc) }
+                } catch (error: CancellationException) {
+                    throw error
+                } catch (error: Exception) {
+                    Result.failure(error)
+                }
+                coroutineContext.ensureActive()
+                if (!_isEditing.value || editableIfscCode.value != ifsc) return@launch
+                result
                     .onSuccess { bank ->
                         editableBankName.value = bank.bankName
                         editableBranchName.value = bank.branchName
@@ -813,13 +818,7 @@ internal class ProfileViewModel
 
         private fun validateBankChanges(original: Profile): Map<String, String> {
             val bank = original.bankAccountDetails
-            val hasBankChanges =
-                editableAccountHolderName.value.trim() != bank?.accountHolderName.orEmpty().trim() ||
-                    editableAccountNumber.value.trim() != bank?.accountNumber.orEmpty().trim() ||
-                    !editableIfscCode.value.trim().equals(bank?.ifscCode.orEmpty().trim(), ignoreCase = true) ||
-                    editableUpiId.value.trim() != bank?.upiId.orEmpty().trim() ||
-                    editableBankName.value.trim() != bank?.bankName.orEmpty().trim() ||
-                    editableBranchName.value.trim() != bank?.branchName.orEmpty().trim()
+            val hasBankChanges = hasBankChanges(original)
             if (!hasBankChanges) return emptyMap()
 
             val errors = mutableMapOf<String, String>()
@@ -828,6 +827,10 @@ internal class ProfileViewModel
             if (editableIfscCode.value.isBlank()) errors["ifsc"] = "IFSC code is required"
             if (editableBankName.value.isBlank()) errors["bankName"] = "Validate IFSC to load the bank name"
             if (editableBranchName.value.isBlank()) errors["branchName"] = "Validate IFSC to load the branch name"
+            val chequeState = _documentStates.value[ProfileDocumentTypeIds.fieldKey(DocumentType.CANCELLED_CHEQUE)]
+            if (chequeState?.existingFileUrl.isNullOrBlank() && chequeState?.pendingLocalFile == null) {
+                errors["cheque"] = "Cancelled cheque is required"
+            }
             if (_isIfscLookupInProgress.value) errors["ifsc"] = "Wait for IFSC validation to finish"
 
             val ifscResult = ProfileFieldValidators.validateIfsc(editableIfscCode.value)
@@ -892,6 +895,19 @@ internal class ProfileViewModel
 
                     DocumentUploadPolicy.validateFile(file)
                     updateDocumentState(fieldKey) { it.copy(isPreparingDocument = false) }
+                    if (type == DocumentType.CANCELLED_CHEQUE) {
+                        updateDocumentState(fieldKey) { state ->
+                            state.copy(
+                                pendingLocalFile = file,
+                                existingVerifyStatus = null,
+                                uploadStatus = UploadStatus.DONE,
+                                isPreparingDocument = false,
+                            )
+                        }
+                        _uploadEvent.emit(Result.success(Unit))
+                        recomputeHasChanges()
+                        return@launch
+                    }
                     val requestFile = file.asRequestBody("application/pdf".toMediaTypeOrNull())
                     val body = MultipartBody.Part.createFormData("file", file.name, requestFile)
 
@@ -978,6 +994,13 @@ internal class ProfileViewModel
             recomputeDocumentDerivedState()
         }
 
+        private fun clearPendingChequeFile() {
+            val fieldKey = ProfileDocumentTypeIds.fieldKey(DocumentType.CANCELLED_CHEQUE)
+            updateDocumentState(fieldKey) { state ->
+                state.copy(pendingLocalFile = null, uploadStatus = UploadStatus.IDLE)
+            }
+        }
+
         /**
          * Single writer for the two values derived from document state.
          * [recomputeHasChanges] also touches them; routing both through here
@@ -991,7 +1014,7 @@ internal class ProfileViewModel
                         ProfileDocumentTypeIds.mandatoryIdentityDocumentTypes.count { type ->
                             val state = _documentStates.value[ProfileDocumentTypeIds.fieldKey(type)]
                             state != null &&
-                                (!state.existingFileUrl.isNullOrBlank() || !state.temporaryFileKey.isNullOrBlank())
+                                (!state.existingFileUrl.isNullOrBlank() || !state.temporaryFileKey.isNullOrBlank() || state.pendingLocalFile != null)
                         },
                     total = ProfileDocumentTypeIds.mandatoryIdentityDocumentTypes.size,
                 )
@@ -1011,12 +1034,12 @@ internal class ProfileViewModel
          */
         private fun countChanges(original: Profile): Int =
             countProfileFieldChanges(original) +
+                countBankChanges(original) +
                 stagedDocumentCount() +
                 _routesToAdd.value.size +
                 _routeIdsToDelete.value.size
 
         private fun countProfileFieldChanges(original: Profile): Int {
-            val bank = original.bankAccountDetails
             val editedVsStored =
                 listOf(
                     editableFullName.value to original.fullName.orEmpty(),
@@ -1027,12 +1050,6 @@ internal class ProfileViewModel
                     editableAlternativePhone.value to original.alternativePhoneNo.firstOrNull().orEmpty(),
                     editableBusinessName.value to original.businessName.orEmpty(),
                     editableGstNumber.value to original.gstNumber.orEmpty(),
-                    editableAccountHolderName.value to bank?.accountHolderName.orEmpty(),
-                    editableAccountNumber.value to bank?.accountNumber.orEmpty(),
-                    editableIfscCode.value to bank?.ifscCode.orEmpty(),
-                    editableUpiId.value to bank?.upiId.orEmpty(),
-                    editableBankName.value to bank?.bankName.orEmpty(),
-                    editableBranchName.value to bank?.branchName.orEmpty(),
                 )
             return editedVsStored.count { (edited, stored) -> edited != stored } +
                 if (_baseCity.value?.id != original.baseCityId) 1 else 0
@@ -1040,10 +1057,28 @@ internal class ProfileViewModel
 
         private fun hasProfileFieldChanges(original: Profile): Boolean = countProfileFieldChanges(original) > 0
 
-        private fun stagedDocumentCount(): Int = _documentStates.value.values.count { !it.temporaryFileKey.isNullOrBlank() }
+        private fun countBankChanges(original: Profile): Int {
+            val bank = original.bankAccountDetails
+            return listOf(
+                editableAccountHolderName.value.trim() to bank?.accountHolderName.orEmpty().trim(),
+                editableAccountNumber.value.trim() to bank?.accountNumber.orEmpty().trim(),
+                editableIfscCode.value.trim().uppercase() to bank?.ifscCode.orEmpty().trim().uppercase(),
+                editableUpiId.value.trim() to bank?.upiId.orEmpty().trim(),
+                editableBankName.value.trim() to bank?.bankName.orEmpty().trim(),
+                editableBranchName.value.trim() to bank?.branchName.orEmpty().trim(),
+            ).count { (edited, stored) -> edited != stored }
+        }
+
+        private fun hasBankChanges(original: Profile): Boolean =
+            countBankChanges(original) > 0 ||
+                _documentStates.value[ProfileDocumentTypeIds.fieldKey(DocumentType.CANCELLED_CHEQUE)]?.pendingLocalFile != null
+
+        private fun stagedDocumentCount(): Int = _documentStates.value.values.count {
+            !it.temporaryFileKey.isNullOrBlank() || it.pendingLocalFile != null
+        }
 
         private fun hasTemporaryUploads(): Boolean {
-            return _documentStates.value.values.any { !it.temporaryFileKey.isNullOrBlank() }
+            return _documentStates.value.values.any { !it.temporaryFileKey.isNullOrBlank() || it.pendingLocalFile != null }
         }
 
         private fun hasRouteChanges(): Boolean {
@@ -1060,6 +1095,28 @@ internal class ProfileViewModel
                 try {
                     val signedUrl = withContext(Dispatchers.IO) {
                         getProfileSignedUrlUseCase.invoke(documentId).getOrThrow()
+                    }
+                    onUrlReady(signedUrl)
+                } catch (error: CancellationException) {
+                    onDocumentPreviewClosed()
+                    throw error
+                } catch (error: Exception) {
+                    onDocumentPreviewClosed()
+                    onError(error)
+                }
+            }
+        }
+
+        fun getCancelledChequeSignedUrl(
+            bankAccountId: String,
+            onUrlReady: (String) -> Unit,
+            onError: (Throwable) -> Unit,
+        ) {
+            if (!_previewingDocumentId.compareAndSet(null, bankAccountId)) return
+            viewModelScope.launch {
+                try {
+                    val signedUrl = withContext(Dispatchers.IO) {
+                        profileRepository.getCancelledChequeSignedUrl(bankAccountId).getOrThrow()
                     }
                     onUrlReady(signedUrl)
                 } catch (error: CancellationException) {

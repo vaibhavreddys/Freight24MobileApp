@@ -12,6 +12,9 @@ import com.freight24.trucker.feature.profile.mapper.toDomain
 import kotlinx.coroutines.CoroutineDispatcher
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.MultipartBody
+import java.io.File
 import javax.inject.Inject
 
 internal class ProfileRepositoryImpl
@@ -94,6 +97,52 @@ internal class ProfileRepositoryImpl
                 documentApi.getIdentityDocumentSignedUrl(documentId)
             }.map { it.data.signedUrl }
         }
+
+        override suspend fun saveBankAccount(
+            userId: String,
+            accountId: String?,
+            accountHolderName: String,
+            accountNumber: String,
+            ifscCode: String,
+            upiId: String,
+            bankName: String,
+            branchName: String,
+            chequeFile: File?,
+        ): Result<Boolean> {
+            val parts = mutableListOf(
+                textPart("user_id", userId),
+                textPart("account_holder_name", accountHolderName),
+                textPart("account_number", accountNumber),
+                textPart("ifsc_code", ifscCode),
+                textPart("upi_id", upiId),
+                textPart("bank_name", bankName),
+                textPart("branch_name", branchName),
+                textPart("is_primary", "true"),
+            )
+            chequeFile?.let { file ->
+                parts += MultipartBody.Part.createFormData(
+                    "cheque_file",
+                    file.name,
+                    file.asRequestBody("application/pdf".toMediaTypeOrNull()),
+                )
+            }
+            return safeCallProvider.safeApiCall(ioDispatcher) {
+                if (accountId.isNullOrBlank()) {
+                    api.addBankAccount(parts)
+                } else {
+                    api.updateBankAccount(accountId, userId, parts)
+                }
+            }.map { it.success }
+        }
+
+        override suspend fun getCancelledChequeSignedUrl(bankAccountId: String): Result<String> {
+            return safeCallProvider.safeApiCall(ioDispatcher) {
+                documentApi.getCancelledChequeSignedUrl(bankAccountId)
+            }.map { it.data.signedUrl }
+        }
+
+        private fun textPart(name: String, value: String): MultipartBody.Part =
+            MultipartBody.Part.createFormData(name, value)
 
         private fun IdentityDocumentUploadResponse.extractTemporaryFileKey(): String {
             val key = data?.temporaryFileKey ?: data?.fileKey

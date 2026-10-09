@@ -69,9 +69,10 @@ internal fun DocumentList(
             val uploadState = documentStates[fieldKey]
             val doc = documents.find { it.type == type }
             val existingUrl = uploadState?.existingFileUrl ?: doc?.url
+            val existingDocumentId = uploadState?.existingDocId ?: doc?.docId
             val uploadStatus = uploadState?.uploadStatus ?: UploadStatus.IDLE
             val tone = documentTone(uploadState, doc?.status, !existingUrl.isNullOrEmpty())
-            val canView = !doc?.docId.isNullOrBlank() && !existingUrl.isNullOrEmpty()
+            val canView = !existingDocumentId.isNullOrBlank() && !existingUrl.isNullOrEmpty()
             val isLocked = type in lockedTypes || uploadState?.existingVerifyStatus == "verified"
 
             Row(
@@ -80,7 +81,7 @@ internal fun DocumentList(
                         .fillMaxWidth()
                         .clickable(enabled = previewingDocumentId == null && canView) {
                             when {
-                                canView -> onDocumentView(doc!!.docId!!)
+                                canView -> onDocumentView(existingDocumentId!!)
                             }
                         }
                         .heightIn(min = 48.dp)
@@ -138,7 +139,7 @@ internal fun DocumentList(
 
                 Spacer(modifier = Modifier.width(6.dp))
 
-                if (previewingDocumentId != null && previewingDocumentId == doc?.docId) {
+                if (previewingDocumentId != null && previewingDocumentId == existingDocumentId) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(20.dp),
                         strokeWidth = 2.dp,

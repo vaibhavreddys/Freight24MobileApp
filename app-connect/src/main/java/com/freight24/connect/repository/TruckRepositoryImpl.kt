@@ -59,7 +59,9 @@ class TruckRepositoryImpl
         ): Result<EntityPage<TruckAssignmentOption, TruckCounts>> =
             withContext(ioDispatcher) {
                 try {
-                    val response = v2Api.searchTrucks(query.trim(), "active", null, page, limit)
+                    // Keep unverified/inactive matches visible so operations can
+                    // identify the record and understand why it cannot be assigned.
+                    val response = v2Api.searchTrucks(query.trim(), null, null, page, limit)
                     val body = response.body()
                     if (response.isSuccessful && body?.success == true) {
                         Result.success(body.toAssignmentPage())

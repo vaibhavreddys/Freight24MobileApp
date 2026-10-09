@@ -20,6 +20,7 @@ data class TruckAssignmentOption(
     val truckId: String,
     val registrationNumber: String,
     val status: String,
+    val isVerified: Boolean,
     val isBlacklisted: Boolean,
     val availability: String?,
     val ownerName: String?,

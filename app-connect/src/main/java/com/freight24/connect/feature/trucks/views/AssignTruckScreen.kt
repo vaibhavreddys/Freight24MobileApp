@@ -282,7 +282,9 @@ fun TruckItem(
 
             // Select Button
             Button(
-                onClick = onSelect,
+                onClick = {
+                    if (isEnabled) onSelect()
+                },
                 colors =
                     ButtonDefaults.buttonColors(
                         containerColor = buttonColor,
@@ -296,7 +298,7 @@ fun TruckItem(
                 modifier = Modifier.height(36.dp),
             ) {
                 Text(
-                    text = "Select",
+                    text = if (isEnabled) "Select" else "Blocked",
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Bold,
                 )

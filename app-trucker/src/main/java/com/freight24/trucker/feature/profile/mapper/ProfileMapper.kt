@@ -10,6 +10,9 @@ import com.freight24.trucker.feature.profile.domain.DocumentType
 import com.freight24.trucker.feature.profile.domain.PreferredRoute
 import com.freight24.trucker.feature.profile.domain.Profile
 import com.freight24.trucker.feature.profile.domain.ProfileDocument
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonPrimitive
 
 fun ProfileDto.toDomain(): Profile =
     Profile(
@@ -22,7 +25,7 @@ fun ProfileDto.toDomain(): Profile =
         fullName = fullName,
         emailId = emailId,
         phoneNo = phoneNo,
-        alternativePhoneNo = alternativePhoneNo.orEmpty(),
+        alternativePhoneNo = normalizeAlternativePhoneNumbers(alternativePhoneNo.orEmpty()),
         // Map both panCard and panNumber to domain's panNumber
         panNumber = panCard ?: panNumber,
         // Map both aadharCard and aadhaarNumber to domain's aadhaarNumber
@@ -40,14 +43,35 @@ fun ProfileDto.toDomain(): Profile =
         preferredRoutes = preferredRoutes?.mapNotNull { it.toDomain() }.orEmpty(),
     )
 
+internal fun normalizeAlternativePhoneNumbers(values: List<String>): List<String> {
+    fun decode(value: String): List<String>? = runCatching {
+        when (val parsed = Json.parseToJsonElement(value)) {
+            is JsonArray -> parsed.mapNotNull { (it as? JsonPrimitive)?.takeIf { phone -> phone.isString }?.content }
+            is JsonPrimitive -> if (parsed.isString) listOf(parsed.content) else null
+            else -> null
+        }
+    }.getOrNull()
+
+    // Some responses split a JSON-encoded phone array at its commas. Joining
+    // those fragments restores the array so it can be decoded structurally.
+    val joined = values.joinToString(",").trim()
+    val decoded = if (joined.startsWith("[")) decode(joined) else null
+    return (decoded ?: values.flatMap { decode(it) ?: listOf(it) })
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+}
+
 fun BankAccountDetailsDto.toDomain(): BankAccountDetails =
     BankAccountDetails(
+        id = id,
         accountHolderName = accountHolderName,
         accountNumber = accountNumber,
         ifscCode = ifscCode,
         upiId = upiId,
         bankName = bankName,
         branchName = branchName,
+        chequeImageUrl = chequeImageUrl,
+        verificationStatus = verificationStatus,
     )
 
 fun ProfileDocumentDto.toDomain(): ProfileDocument =
