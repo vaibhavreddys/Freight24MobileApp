@@ -289,7 +289,7 @@ fun CloneOptionalFieldsSection(
 
                     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         MoneyRuleField(
-                            label = "Negotiated Cost",
+                            label = "Target Cost",
                             raw = uiState.negotiatedCost,
                             testTag = "clone_indent_negotiated_cost_field",
                             onCommit = { onEvent(CloneIndentEvent.UpdateField(negotiatedCost = it)) },

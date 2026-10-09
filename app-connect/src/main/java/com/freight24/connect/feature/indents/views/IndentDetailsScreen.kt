@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Info
@@ -28,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -373,6 +375,7 @@ fun IndentDetailsScreen(
                             }
                         },
                         onEditClick = { onEditClick(indentId) },
+                        onShareClick = { shareIndentOnWhatsApp(context, buildIndentShareMessage(it)) },
                     )
                 }
             }
@@ -597,7 +600,7 @@ private fun AssignRateSheet(
                             modifier = Modifier.weight(1f),
                         )
                         MetaTag(
-                            text = "GOES LIVE",
+                            text = indentCode,
                             container = scheme.primaryContainer,
                             content = scheme.onPrimaryContainer,
                             hatch = true,
@@ -605,8 +608,7 @@ private fun AssignRateSheet(
                     }
                     Text(
                         text =
-                            "$indentCode becomes visible on the load board and truck owners " +
-                                "can express interest.",
+                            "This indent will be removed from the load board",
                         style = MaterialTheme.typography.bodySmall,
                         color = scheme.onSurfaceVariant,
                     )
@@ -783,6 +785,7 @@ private fun BottomActionBar(
     onAssignClick: () -> Unit,
     onCreateTripClick: () -> Unit,
     onEditClick: () -> Unit,
+    onShareClick: () -> Unit,
 ) {
     val colorScheme = MaterialTheme.colorScheme
 
@@ -799,22 +802,12 @@ private fun BottomActionBar(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(
+            BarIconButton(
+                icon = Icons.Default.Edit,
+                contentDescription = "Edit indent",
+                testTag = "indent_details_edit_button",
                 onClick = onEditClick,
-                modifier =
-                    Modifier
-                        .size(48.dp)
-                        .background(colorScheme.surfaceVariant, CircleShape)
-                        .docketTag("indent_details_edit_button")
-                        .semantics { contentDescription = "Edit indent" },
-            ) {
-                Icon(
-                    Icons.Default.Edit,
-                    contentDescription = null,
-                    tint = colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
+            )
 
             if (canProgressIndent) {
                 Spacer(modifier = Modifier.width(4.dp))
@@ -823,10 +816,12 @@ private fun BottomActionBar(
                     onClick = {
                         if (status.equals("open", true)) onAssignClick() else onCreateTripClick()
                     },
+                    // min, not fixed: at large font scales even a one-line label
+                    // can wrap, and a fixed height clipped the overflow mid-line.
                     modifier =
                         Modifier
                             .weight(1f)
-                            .height(52.dp),
+                            .heightIn(min = 52.dp),
                     shape = MaterialTheme.shapes.large,
                     colors =
                         ButtonDefaults.buttonColors(
@@ -836,13 +831,53 @@ private fun BottomActionBar(
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp),
                 ) {
                     Text(
-                        text = if (status.equals("open", true)) "Mark Ready for Assignment" else "Create Trip",
+                        // Same wording the assign sheet's confirm button uses for
+                        // this same action, and short enough to stay on one line
+                        // between the two icon buttons.
+                        text = if (status.equals("open", true)) "Mark Ready" else "Create Trip",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                     )
                 }
+            } else {
+                // Keeps the share icon on the trailing edge when there is no
+                // primary action to flex between the two of them.
+                Spacer(modifier = Modifier.weight(1f))
             }
+
+            BarIconButton(
+                icon = Icons.Default.Share,
+                contentDescription = "Share indent",
+                testTag = "indent_details_share_button",
+                onClick = onShareClick,
+            )
         }
+    }
+}
+
+/** One of the bar's round, flat icon controls — edit and share are the same device. */
+@Composable
+private fun BarIconButton(
+    icon: ImageVector,
+    contentDescription: String,
+    testTag: String,
+    onClick: () -> Unit,
+) {
+    IconButton(
+        onClick = onClick,
+        modifier =
+            Modifier
+                .size(48.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)
+                .docketTag(testTag)
+                .semantics { this.contentDescription = contentDescription },
+    ) {
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp),
+        )
     }
 }
 

@@ -833,12 +833,15 @@ private fun ProfileMainContent(
             Spacer(modifier = Modifier.height(12.dp))
 
             CourierAddressCard(
-                companyName = "Freight24",
+                companyName = "Freight24 Logistics Pvt Ltd",
                 addressLines =
                     listOf(
-                        "4th Floor, #3, Srirampur Cross Road,",
-                        "Jakkuru, Bengaluru,",
+                        "Adarsh Building,",
+                        "#313, 1st Floor, 7th Cross road,",
+                        "Dr.Shivaram Karanth Nagar",
+                        "RK Hegde Nagar, Bengaluru",
                         "Karnataka - 560064",
+                        "Phone: 9620111667"
                     ),
             )
 
@@ -1000,6 +1003,14 @@ private fun CourierAddressCard(
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f),
                 )
+                if (isCopied) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Address copied",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = FreightThemeTokens.colors.onSurfaceSuccess,
+                    )
+                }
                 IconButton(
                     onClick = {
                         clipboardManager.setText(AnnotatedString(fullAddress))
@@ -1042,14 +1053,6 @@ private fun CourierAddressCard(
                         text = line,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                if (isCopied) {
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = "Address copied",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = FreightThemeTokens.colors.onSurfaceSuccess,
                     )
                 }
             }
