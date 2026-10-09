@@ -26,4 +26,6 @@ sealed class TruckerDestination(val route: String) {
     }
 
     object Settings : TruckerDestination("settings")
+
+    object BaseCitySearch : TruckerDestination("profile/base-city")
 }

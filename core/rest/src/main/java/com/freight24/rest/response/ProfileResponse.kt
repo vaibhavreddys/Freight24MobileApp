@@ -48,12 +48,15 @@ data class ProfileDto(
 
 @Serializable
 data class BankAccountDetailsDto(
+    val id: String? = null,
     val accountHolderName: String?,
     val accountNumber: String?,
     val ifscCode: String?,
     val upiId: String?,
     val bankName: String?,
     val branchName: String?,
+    val chequeImageUrl: String? = null,
+    val verificationStatus: String? = null,
 )
 
 @Serializable

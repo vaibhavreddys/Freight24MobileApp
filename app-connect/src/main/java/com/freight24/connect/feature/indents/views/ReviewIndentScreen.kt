@@ -304,7 +304,7 @@ fun ReviewIndentScreen(
                 }
                 LedgerDivider()
                 LedgerRow(
-                    label = "Negotiated trip cost",
+                    label = "Target cost",
                     value = uiState.negotiatedCost.takeIf { it.isNotBlank() }?.let { "₹$it" },
                 )
                 LedgerDivider()

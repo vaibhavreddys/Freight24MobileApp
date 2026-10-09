@@ -30,12 +30,15 @@ data class Profile(
 )
 
 data class BankAccountDetails(
+    val id: String?,
     val accountHolderName: String?,
     val accountNumber: String?,
     val ifscCode: String?,
     val upiId: String?,
     val bankName: String?,
     val branchName: String?,
+    val chequeImageUrl: String?,
+    val verificationStatus: String?,
 )
 
 data class ProfileDocument(

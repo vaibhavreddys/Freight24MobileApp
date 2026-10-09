@@ -425,7 +425,7 @@ fun IndentDetailsScreen(
                                     val clientMissing = currentIndent.indentGroupDetails.clientTripCost?.let { it <= 0 } ?: true
                                     val negotiatedMissing = currentIndent.negotiatedTripCost?.let { it <= 0 } ?: true
                                     if (clientMissing) add("Client trip cost")
-                                    if (negotiatedMissing) add("Negotiated trip cost")
+                                    if (negotiatedMissing) add("Target trip cost")
                                 }
                             Card(
                                 modifier = Modifier.fillMaxWidth(),

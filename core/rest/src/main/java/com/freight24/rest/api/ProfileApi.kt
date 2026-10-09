@@ -77,4 +77,18 @@ interface ProfileApi {
     suspend fun discardTemporaryDocuments(
         @Body request: DiscardTemporaryDocumentsRequest,
     ): Response<BaseResponse>
+
+    @Multipart
+    @POST("documents/bank/add")
+    suspend fun addBankAccount(
+        @Part parts: List<MultipartBody.Part>,
+    ): Response<BaseResponse>
+
+    @Multipart
+    @PUT("documents/bank/update/{accountId}/{userId}")
+    suspend fun updateBankAccount(
+        @Path("accountId") accountId: String,
+        @Path("userId") userId: String,
+        @Part parts: List<MultipartBody.Part>,
+    ): Response<BaseResponse>
 }

@@ -11,6 +11,11 @@ interface DocumentApi {
         @Path("documentId") documentId: String,
     ): Response<SignedDocument>
 
+    @GET("documents/bank/{bankId}/cheque/signed-url")
+    suspend fun getCancelledChequeSignedUrl(
+        @Path("bankId") bankId: String,
+    ): Response<SignedDocument>
+
     @GET("documents/trucks/{truckId}/documents/{documentType}/signed-url")
     suspend fun getTruckDocumentSignedUrl(
         @Path("truckId") truckId: String,
