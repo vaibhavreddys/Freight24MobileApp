@@ -41,6 +41,8 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    // RefreshOnForeground + collectAsStateWithLifecycle
+    implementation(libs.androidx.lifecycle.runtime.compose)
     // Pdf Viewer For Android (Lightweight Compose PDF Viewer)
     implementation(libs.pdf.viewer)
 

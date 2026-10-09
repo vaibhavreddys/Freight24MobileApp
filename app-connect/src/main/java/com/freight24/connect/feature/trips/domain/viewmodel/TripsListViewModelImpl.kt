@@ -37,14 +37,24 @@ internal class TripsListViewModelImpl
                     }
                 }
                 TripsListEvent.Refresh -> fetchTrips()
+                TripsListEvent.SilentRefresh -> fetchTrips(isRefresh = true)
             }
         }
 
-        private fun fetchTrips() {
+        /**
+         * [isRefresh] is the silent path taken when the screen returns to the
+         * foreground: trips already on screen stay put while this reloads, and a
+         * failure leaves them there instead of replacing a populated screen with
+         * an error. Only the empty screen falls back to the loading and error
+         * states, which is the same contract as the first load.
+         */
+        private fun fetchTrips(isRefresh: Boolean = false) {
             fetchJob?.cancel()
             fetchJob =
                 viewModelScope.launch {
-                    _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+                    _uiState.update {
+                        if (isRefresh && it.trips.isNotEmpty()) it else it.copy(isLoading = true, errorMessage = null)
+                    }
 
                     val result =
                         getMyTripsUseCase(
@@ -60,6 +70,7 @@ internal class TripsListViewModelImpl
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
+                                    errorMessage = null,
                                     trips = response.data,
                                 )
                             }
@@ -68,7 +79,12 @@ internal class TripsListViewModelImpl
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
-                                    errorMessage = error.message ?: "Unknown error",
+                                    errorMessage =
+                                        if (it.trips.isNotEmpty()) {
+                                            null
+                                        } else {
+                                            error.message ?: "Unknown error"
+                                        },
                                 )
                             }
                         },

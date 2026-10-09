@@ -7,16 +7,12 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.connect.feature.trips.domain.viewmodel.FilteredTripsViewModelImpl
 import com.freight24.connect.feature.trips.domain.viewmodel.TripsListEvent
@@ -24,6 +20,7 @@ import com.freight24.connect.feature.trips.domain.viewmodel.TripsListViewModel
 import com.freight24.connect.feature.trips.views.components.TripListItem
 import com.freight24.ui.components.FreightEmptyState
 import com.freight24.ui.components.FreightTopAppBar
+import com.freight24.ui.components.RefreshOnForeground
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,18 +31,8 @@ fun FilteredTripsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val colorScheme = MaterialTheme.colorScheme
-    val lifecycleOwner = LocalLifecycleOwner.current
 
-    DisposableEffect(lifecycleOwner) {
-        val observer =
-            LifecycleEventObserver { _, event ->
-                if (event == Lifecycle.Event.ON_RESUME) {
-                    viewModel.onEvent(TripsListEvent.Refresh)
-                }
-            }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
+    RefreshOnForeground { viewModel.onEvent(TripsListEvent.SilentRefresh) }
 
     Scaffold(
         topBar = {
@@ -75,9 +62,12 @@ fun FilteredTripsScreen(
                     .fillMaxSize()
                     .padding(paddingValues),
         ) {
-            if (uiState.isLoading) {
+            // Gated on emptiness: a foreground refresh reloads while this screen
+            // is still resumed, so an ungated spinner replaced the whole list on
+            // every app switch. Same shape as DashboardScreen's gate.
+            if (uiState.isLoading && uiState.trips.isEmpty()) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            } else if (uiState.errorMessage != null) {
+            } else if (uiState.errorMessage != null && uiState.trips.isEmpty()) {
                 Text(
                     text = uiState.errorMessage!!,
                     color = MaterialTheme.colorScheme.error,

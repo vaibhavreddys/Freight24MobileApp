@@ -54,6 +54,7 @@ import com.freight24.connect.feature.indents.domain.viewmodel.IndentDetailsViewM
 import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.components.MetaTag
 import com.freight24.ui.components.PerforationRule
+import com.freight24.ui.components.RefreshOnForeground
 import com.freight24.ui.components.formViewportInsets
 import com.freight24.ui.theme.FreightThemeTokens
 import kotlinx.coroutines.flow.first
@@ -99,6 +100,8 @@ fun IndentDetailsScreen(
             viewModel.onEvent(IndentDetailsEvent.ShowTruckerSheet)
         }
     }
+
+    RefreshOnForeground { viewModel.onEvent(IndentDetailsEvent.Refresh) }
 
     val assignNegotiatedCostError =
         if (uiState.isNegotiatedSameAsClient) {

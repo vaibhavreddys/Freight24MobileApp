@@ -13,6 +13,12 @@ data class InboxUiState(
 sealed class InboxEvent {
     data object Refresh : InboxEvent()
 
+    /**
+     * Reloads when the screen comes back to the foreground, keeping the interests
+     * already on screen and ignoring failures.
+     */
+    data object SilentRefresh : InboxEvent()
+
     data class RejectInterest(
         val interestId: String,
         val remarks: String? = null,

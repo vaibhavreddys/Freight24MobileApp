@@ -69,7 +69,9 @@ internal class TripDetailsViewModelImpl
                 TripDetailsEvent.UploadLR -> {
                     uploadLR()
                 }
-                TripDetailsEvent.Refresh -> loadTrip()
+                // Silent: the dossier stays on screen while it reloads and a
+                // failure leaves it there rather than blanking the page.
+                TripDetailsEvent.Refresh -> loadTrip(isPullToRefresh = true)
                 TripDetailsEvent.PullToRefresh -> loadTrip(isPullToRefresh = true)
                 is TripDetailsEvent.ShareDocument -> shareDocument(event.documentId)
                 TripDetailsEvent.DocumentShareHandled -> {

@@ -291,6 +291,11 @@ internal class ProfileViewModel
 
                 fetchProfileUseCase.invoke(com.freight24.common.usecase.EmptyUseCaseParams)
                     .onSuccess { profile ->
+                        // An identical payload must not re-seed the form: the side
+                        // effects below are not protected by equality, so they
+                        // would clear staged edits even though nothing changed.
+                        if (profile == originalProfile) return@onSuccess
+
                         originalProfile = profile
                         populateEditableFields(profile)
                         initializeDocumentStates(profile, preserveTemporary = _isEditing.value)
@@ -301,6 +306,9 @@ internal class ProfileViewModel
                         recomputeHasChanges()
                     }
                     .onFailure { error ->
+                        // Keep the profile on screen when a silent reload fails;
+                        // only a cold start with nothing to show becomes an error.
+                        if (forceRefresh && _uiState.value is UiState.Success) return@onFailure
                         _uiState.value = UiState.Error(error.message ?: "Failed to fetch profile")
                     }
 
@@ -1139,7 +1147,17 @@ internal class ProfileViewModel
             }
         }
 
+        /**
+         * Refuses to reload while the user is editing.
+         *
+         * [fetchProfile] is not a pure state swap: it rewrites every editable
+         * field, re-seeds `originalProfile` and calls [resetRouteStaging], which
+         * discards staged route additions and deletions. A foreground refresh
+         * landing mid-edit would therefore throw away unsaved work without any
+         * warning, so it is skipped until the edit is saved or cancelled.
+         */
         fun onRefresh() {
+            if (_isEditing.value) return
             fetchProfile(forceRefresh = true)
         }
 

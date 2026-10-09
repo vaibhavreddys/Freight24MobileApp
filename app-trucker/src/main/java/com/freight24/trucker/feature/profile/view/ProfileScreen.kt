@@ -109,6 +109,7 @@ import com.freight24.trucker.ui.components.rememberCallAction
 import com.freight24.ui.UiState
 import com.freight24.ui.components.AddRouteBottomSheet
 import com.freight24.ui.components.ProfileUtilityRow
+import com.freight24.ui.components.RefreshOnForeground
 import com.freight24.ui.components.RouteChip
 import com.freight24.ui.components.formViewportInsets
 import com.freight24.ui.components.getPdfLaunchIntent
@@ -166,6 +167,10 @@ internal fun ProfileScreen(
             }
         }
     }
+
+    // No-op while editing — ProfileViewModel.onRefresh() declines then, so a
+    // backgrounded app switch cannot discard a half-finished edit.
+    RefreshOnForeground { viewModel.onRefresh() }
 
     PullToRefreshBox(
         isRefreshing = isRefreshing,

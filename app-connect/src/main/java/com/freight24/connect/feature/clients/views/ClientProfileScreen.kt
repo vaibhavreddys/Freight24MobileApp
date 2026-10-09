@@ -63,6 +63,7 @@ import com.freight24.connect.feature.clients.domain.viewmodel.ClientProfileViewM
 import com.freight24.connect.domain.model.VerificationDocument
 import com.freight24.ui.UiState
 import com.freight24.ui.components.FreightTopAppBar
+import com.freight24.ui.components.RefreshOnForeground
 import com.freight24.ui.components.launchPdfPreview
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -74,6 +75,8 @@ fun ClientProfileScreen(
     val state by viewModel.uiState.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val snackbar = remember { SnackbarHostState() }
+
+    RefreshOnForeground { viewModel.onRefresh() }
 
     LaunchedEffect(Unit) {
         viewModel.errorEvent.collect { snackbar.showSnackbar(it, duration = SnackbarDuration.Short) }

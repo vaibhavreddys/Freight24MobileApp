@@ -78,6 +78,7 @@ import com.freight24.connect.feature.trucks.views.TruckDocketCard
 import com.freight24.ui.UiState
 import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.components.PanelShape
+import com.freight24.ui.components.RefreshOnForeground
 import com.freight24.ui.components.TagShape
 import com.freight24.ui.components.launchPdfPreview
 import com.freight24.ui.theme.FreightThemeTokens
@@ -111,6 +112,8 @@ internal fun TruckDetailsScreen(
             snackbarHostState.showSnackbar(error)
         }
     }
+
+    RefreshOnForeground { viewModel.onRefresh() }
 
     var showSourcePicker by rememberSaveable { mutableStateOf(false) }
     var currentDocumentType by rememberSaveable { mutableStateOf<String?>(null) }

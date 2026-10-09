@@ -67,7 +67,12 @@ class ClientProfileViewModel
                 if (refresh) _isRefreshing.value = true else _uiState.value = UiState.Loading
                 getClientDetailsUseCase(clientId)
                     .onSuccess { _uiState.value = UiState.Success(it) }
-                    .onFailure { _uiState.value = UiState.Error(it.message ?: "Failed to load client profile") }
+                    .onFailure {
+                        // A silent reload must not replace a profile that is
+                        // already on screen with an error card.
+                        if (refresh && _uiState.value is UiState.Success) return@onFailure
+                        _uiState.value = UiState.Error(it.message ?: "Failed to load client profile")
+                    }
                 _isRefreshing.value = false
             }
         }

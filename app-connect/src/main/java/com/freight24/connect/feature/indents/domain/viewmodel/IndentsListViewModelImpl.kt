@@ -57,16 +57,28 @@ class IndentsListViewModelImpl
                 is IndentsListEvent.RefreshIndents -> {
                     loadIndents()
                 }
+                is IndentsListEvent.SilentRefreshIndents -> {
+                    loadIndents(isRefresh = true)
+                }
                 is IndentsListEvent.ClearError -> {
                     _uiState.update { it.copy(errorMessage = null) }
                 }
             }
         }
 
-        private fun loadIndents() {
+        /**
+         * [isRefresh] is the silent path taken when the screen returns to the
+         * foreground: indents already on screen stay put while this reloads, and
+         * a failure leaves them there instead of replacing a populated screen
+         * with an error. Only the empty screen falls back to the loading and
+         * error states, which is the same contract as the first load.
+         */
+        private fun loadIndents(isRefresh: Boolean = false) {
             loadJob?.cancel()
             loadJob = viewModelScope.launch {
-                _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+                _uiState.update {
+                    if (isRefresh && it.indents.isNotEmpty()) it else it.copy(isLoading = true, errorMessage = null)
+                }
 
                 val result =
                     when (_uiState.value.selectedTab) {
@@ -108,7 +120,12 @@ class IndentsListViewModelImpl
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            errorMessage = result.exceptionOrNull()?.message ?: "Failed to load indents",
+                            errorMessage =
+                                if (it.indents.isNotEmpty()) {
+                                    null
+                                } else {
+                                    result.exceptionOrNull()?.message ?: "Failed to load indents"
+                                },
                         )
                     }
                 }

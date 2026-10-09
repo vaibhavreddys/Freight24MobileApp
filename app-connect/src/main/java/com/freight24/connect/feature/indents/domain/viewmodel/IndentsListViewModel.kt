@@ -37,5 +37,13 @@ sealed class IndentsListEvent {
 
     object RefreshIndents : IndentsListEvent()
 
+    /**
+     * Reloads when the screen comes back to the foreground, keeping the indents
+     * already on screen and ignoring failures. Separate from [RefreshIndents]
+     * because the pull-to-refresh gesture drives the loading indicator off the
+     * same flag, and an app switch must not put that indicator on screen.
+     */
+    object SilentRefreshIndents : IndentsListEvent()
+
     object ClearError : IndentsListEvent()
 }

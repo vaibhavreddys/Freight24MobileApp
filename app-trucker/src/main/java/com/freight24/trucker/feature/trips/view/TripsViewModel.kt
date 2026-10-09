@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -57,14 +58,21 @@ internal class TripsViewModel
 
         private fun observeCachedTrips() {
             viewModelScope.launch {
-                useCase.observeTrips().collect { trips ->
-                    _allTrips.value = trips
-                    applyFilter()
-                    calculateCounts()
-                    if (trips.isNotEmpty()) {
-                        _isInitialLoading.value = false
+                useCase.observeTrips()
+                    // Room re-emits whenever a fetch rewrites rows, and the write
+                    // path is delete-then-insert, so an unchanged trip list still
+                    // arrives as a fresh List instance. Without this the filter and
+                    // the counts are recomputed on every app switch for nothing,
+                    // and the list is republished with no actual change.
+                    .distinctUntilChanged()
+                    .collect { trips ->
+                        _allTrips.value = trips
+                        applyFilter()
+                        calculateCounts()
+                        if (trips.isNotEmpty()) {
+                            _isInitialLoading.value = false
+                        }
                     }
-                }
             }
         }
 

@@ -59,7 +59,9 @@ class IndentDetailsViewModelImpl
                     loadIndent(event.indentId)
                 }
                 is IndentDetailsEvent.Refresh -> {
-                    currentIndentId?.let { loadIndent(it) }
+                    // Silent: the docket stays on screen while it reloads, and a
+                    // failure leaves it there instead of blanking the page.
+                    currentIndentId?.let { loadIndent(it, isPullToRefresh = true) }
                 }
                 is IndentDetailsEvent.PullToRefresh -> {
                     currentIndentId?.let { loadIndent(it, isPullToRefresh = true) }

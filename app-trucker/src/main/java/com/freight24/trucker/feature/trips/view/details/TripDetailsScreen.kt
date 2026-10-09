@@ -87,6 +87,7 @@ import com.freight24.ui.UiState
 import com.freight24.ui.components.FileConfirmationSheet
 import com.freight24.ui.components.FileSourcePickerSheet
 import com.freight24.ui.components.formatStageName
+import com.freight24.ui.components.RefreshOnForeground
 import com.freight24.ui.components.getPdfLaunchIntent
 import com.freight24.ui.components.tripStageTone
 import com.freight24.ui.trucker.DocWalletRow
@@ -156,6 +157,9 @@ internal fun TripDetailsScreen(
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val previewingDocumentId by viewModel.previewingDocumentId.collectAsState()
     val context = LocalContext.current
+
+    // loadTripDetail keeps the cached dossier on screen, so this is silent.
+    RefreshOnForeground { viewModel.onRefresh() }
 
     val documentPreviewLauncher =
         rememberLauncherForActivityResult(
@@ -694,6 +698,7 @@ private fun DocumentsSection(
     val podDoc = trip.tripDocuments.find { it.documentType.lowercase() == "pod" }
     val lrMissing = lrDoc == null
     val lrRejected = lrDoc?.verificationStatus?.lowercase() == "rejected"
+    val podRejected = podDoc?.verificationStatus?.lowercase() == "rejected"
     // Upload progress belongs to whichever document the current pick → confirm
     // cycle is for — the other rows must not flicker to "Sending"/"Failed".
     val isPodUpload = uploadTargetDoc == "pod"
@@ -709,12 +714,25 @@ private fun DocumentsSection(
     val showPodSlot = podDoc == null && trip.truckerStatus?.uppercase() == "UNLOADED"
     // What the header counts: the lodged documents plus the open slots, and how
     // many of those the driver still owes something on.
-    val requiredCount = listOf(showLrSlot, showPodSlot).count { it }
-    val documentCount = trip.tripDocuments.size + requiredCount
+    //
+    // A rejected document is owed even though it is already on file — the driver
+    // still has to upload a replacement. It is counted separately from the open
+    // slots because that is where it actually lives: a rejected document already
+    // has its row from the loop below, carrying a "Rejected" seal and an "Upload
+    // again" action. Counting the slots alone therefore reported nothing owed for
+    // a rejected LR or POD, so the section came back folded away with no "Action
+    // Required" chip and the driver left to wonder where the rejection went.
+    val openSlotCount = listOf(showLrSlot, showPodSlot).count { it }
+    val rejectedCount = listOf(lrRejected, podRejected).count { it }
+    val requiredCount = openSlotCount + rejectedCount
+    // Rejected documents are already inside `tripDocuments`, so only the open
+    // slots add to the total. Folding rejections in here would double-count them.
+    val documentCount = trip.tripDocuments.size + openSlotCount
     // Nothing owed → folded away, the header line is the whole answer. Something
     // owed → open, so the thing to act on is the first thing on screen. Keyed on
-    // [requiredCount] so a slot opening (unloading, a rejected LR) re-evaluates
-    // the default, while a manual toggle on an unchanged section survives.
+    // [requiredCount] so a slot opening (unloading) or a document being rejected
+    // re-evaluates the default, while a manual toggle on an unchanged section
+    // survives.
     var expanded by rememberSaveable(requiredCount) { mutableStateOf(requiredCount > 0) }
 
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -874,7 +892,11 @@ private fun DocumentsSection(
                         }
                     }
 
-                    // The LR slot — always visible while the trip can still take one.
+                    // The LR slot — the open one, offered while the trip can still
+                    // take an LR. A rejected LR is NOT this row: it is already on
+                    // file, so it renders from the documents loop above with a
+                    // "Rejected" seal and an "Upload again" action, and this block
+                    // never sees it (it is gated on the LR being absent).
                     if (showLrSlot) {
                         DocWalletRow(
                             title = "Lorry Receipt (LR)",
@@ -882,13 +904,12 @@ private fun DocumentsSection(
                                 when {
                                     lrUploading -> "Uploading the LR now…"
                                     lrFailed -> "Upload failed. Try again."
-                                    lrRejected -> "Rejected. Upload a fresh copy to move this trip forward."
                                     else -> "Required before this trip can move into transit."
                                 },
                             icon = if (lrUploading) Icons.Filled.HourglassEmpty else Icons.Filled.CloudUpload,
                             colors = colors,
-                            sealText = if (lrRejected) "Rejected" else "Required",
-                            sealTone = if (lrRejected) FleetTone.ERROR else FleetTone.ACCENT,
+                            sealText = "Required",
+                            sealTone = FleetTone.ACCENT,
                             actionIcon = if (lrUploading) null else Icons.Filled.CloudUpload,
                             actionContentDescription = "Upload LR",
                             onActionClick =

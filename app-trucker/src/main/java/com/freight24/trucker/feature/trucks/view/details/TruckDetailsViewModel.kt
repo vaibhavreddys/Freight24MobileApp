@@ -83,6 +83,10 @@ internal class TruckDetailsViewModel
                         _uiState.value = UiState.Success(detail)
                     }
                     .onFailure { error ->
+                        // A silent reload must not replace a dossier that is
+                        // already on screen with a retry card; only a cold start
+                        // with nothing to show becomes an error.
+                        if (forceRefresh && _uiState.value is UiState.Success) return@onFailure
                         _uiState.value = UiState.Error(error.message ?: "Failed to fetch truck details")
                     }
 

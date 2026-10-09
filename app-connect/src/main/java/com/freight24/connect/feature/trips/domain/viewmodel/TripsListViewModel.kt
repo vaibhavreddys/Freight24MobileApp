@@ -15,6 +15,14 @@ sealed class TripsListEvent {
     data class SelectFilter(val filter: TripTypes) : TripsListEvent()
 
     data object Refresh : TripsListEvent()
+
+    /**
+     * Reloads when the screen comes back to the foreground, keeping the trips
+     * already on screen and ignoring failures. Separate from [Refresh] because
+     * the pull-to-refresh gesture drives the loading indicator off the same flag,
+     * and an app switch must not put that indicator on screen.
+     */
+    data object SilentRefresh : TripsListEvent()
 }
 
 interface TripsListViewModel {

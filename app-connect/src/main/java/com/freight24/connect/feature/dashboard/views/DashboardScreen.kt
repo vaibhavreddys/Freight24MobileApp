@@ -14,7 +14,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -23,7 +22,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
@@ -31,13 +29,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import com.freight24.connect.feature.dashboard.domain.viewmodel.DashboardEvent
 import com.freight24.connect.feature.dashboard.domain.viewmodel.DashboardViewModel
 import com.freight24.connect.feature.dashboard.domain.viewmodel.DashboardViewModelImpl
 import com.freight24.connect.feature.trips.domain.usecase.TripTypes
 import com.freight24.rest.response.DashboardDataResponse
+import com.freight24.ui.components.RefreshOnForeground
 import com.freight24.ui.components.BoundaryBadge
 import com.freight24.ui.components.BoundaryBadgeTone
 
@@ -62,7 +59,6 @@ fun DashboardScreen(
     val colorScheme = MaterialTheme.colorScheme
     val scrollState = rememberScrollState()
     val pullToRefreshState = rememberPullToRefreshState()
-    val lifecycleOwner = LocalLifecycleOwner.current
 
     LaunchedEffect(pullToRefreshState) {
         snapshotFlow { pullToRefreshState.distanceFraction }
@@ -73,16 +69,7 @@ fun DashboardScreen(
         onRefreshingChange(uiState.isRefreshing)
     }
 
-    DisposableEffect(lifecycleOwner) {
-        val observer =
-            LifecycleEventObserver { _, event ->
-                if (event == Lifecycle.Event.ON_RESUME) {
-                    viewModel.onEvent(DashboardEvent.Refresh)
-                }
-            }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
+    RefreshOnForeground { viewModel.onEvent(DashboardEvent.Refresh) }
 
     PullToRefreshBox(
         isRefreshing = uiState.isRefreshing,

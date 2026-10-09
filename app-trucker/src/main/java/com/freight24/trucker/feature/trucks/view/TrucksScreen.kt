@@ -48,6 +48,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.freight24.common.model.Truck
 import com.freight24.ui.UiState
+import com.freight24.ui.components.RefreshOnForeground
 import com.freight24.ui.trucker.FleetCard
 import com.freight24.ui.trucker.FleetEmptyState
 import com.freight24.ui.trucker.FleetFilterEntry
@@ -103,6 +104,10 @@ internal fun TrucksScreen(
             listState.scrollToItem(0)
         }
     }
+
+    // onRefresh() never enters UiState.Loading once trucks are loaded, so
+    // returning to the tab does not blank the list.
+    RefreshOnForeground { viewModel.onRefresh() }
 
     if (uiState is UiState.Loading) {
         Box(

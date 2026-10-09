@@ -30,6 +30,7 @@ internal class InboxViewModelImpl
         override fun onEvent(event: InboxEvent) {
             when (event) {
                 InboxEvent.Refresh -> loadInbox()
+                InboxEvent.SilentRefresh -> loadInbox(isRefresh = true)
                 is InboxEvent.RejectInterest -> rejectInterest(event)
             }
         }
@@ -59,15 +60,25 @@ internal class InboxViewModelImpl
             }
         }
 
-        private fun loadInbox() {
+        /**
+         * [isRefresh] is the silent path taken when the screen returns to the
+         * foreground: interests already on screen stay put while this reloads,
+         * and a failure leaves them there instead of replacing a populated screen
+         * with an error. Only the empty screen falls back to the loading and error
+         * states, which is the same contract as the first load.
+         */
+        private fun loadInbox(isRefresh: Boolean = false) {
             viewModelScope.launch {
-                _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+                _uiState.update {
+                    if (isRefresh && it.data.isNotEmpty()) it else it.copy(isLoading = true, errorMessage = null)
+                }
                 val result = inboxUseCase(InboxUseCaseParams(null))
                 result.fold(
                     onSuccess = { response ->
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
+                                errorMessage = null,
                                 data = response.data,
                                 totalIndents = response.totalIndents,
                             )
@@ -77,7 +88,12 @@ internal class InboxViewModelImpl
                         _uiState.update {
                             it.copy(
                                 isLoading = false,
-                                errorMessage = error.message ?: "Failed to load inbox",
+                                errorMessage =
+                                    if (it.data.isNotEmpty()) {
+                                        null
+                                    } else {
+                                        error.message ?: "Failed to load inbox"
+                                    },
                             )
                         }
                     },

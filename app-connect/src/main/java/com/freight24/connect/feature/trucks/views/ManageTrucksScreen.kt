@@ -52,6 +52,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.freight24.connect.feature.trucks.domain.viewmodel.ManageTrucksViewModel
 import com.freight24.ui.UiState
+import com.freight24.ui.components.RefreshOnForeground
 import com.freight24.ui.components.FreightEmptyState
 import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.components.PanelShape
@@ -86,6 +87,10 @@ fun ManageTrucksScreen(
                 }
             }
     }
+
+    // loadFirstPage(refresh = true) rewinds to page 1 and swallows errors while
+    // the rows already on screen are kept, so this is silent.
+    RefreshOnForeground { viewModel.onRefresh() }
 
     LaunchedEffect(listState, filteredTrucks.size) {
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
