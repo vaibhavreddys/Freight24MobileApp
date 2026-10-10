@@ -20,10 +20,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.freight24.ui.trucker.TruckerColors
+import com.freight24.ui.trucker.rememberTruckerColors
 
 /**
  * A reusable filter chip component for consistent selection UI across the app.
  * This matches the design used in the Trips tab but with reduced default sizes.
+ *
+ * The selected fill is [TruckerColors.brand] — the same token the trucker Trips
+ * rail and the profile header select with — so one chip means one thing across
+ * both modules. It used to be Material's `onPrimaryContainer`, which resolved to
+ * near-black in light and mint in dark, reading as a different product from the
+ * forest green used everywhere else.
  */
 @Composable
 fun FilterSelectionChip(
@@ -34,16 +42,18 @@ fun FilterSelectionChip(
     leadingIcon: ImageVector? = null,
     count: Int? = null,
 ) {
+    val colors = rememberTruckerColors()
+
     val backgroundColor =
         if (isSelected) {
-            MaterialTheme.colorScheme.primary
+            colors.brand
         } else {
             MaterialTheme.colorScheme.surface
         }
 
     val textColor =
         if (isSelected) {
-            MaterialTheme.colorScheme.onPrimary
+            colors.onBrand
         } else {
             MaterialTheme.colorScheme.onSurfaceVariant
         }
@@ -89,9 +99,9 @@ fun FilterSelectionChip(
                 Surface(
                     color =
                         if (isSelected) {
-                            MaterialTheme.colorScheme.surface
+                            colors.surface
                         } else {
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                            colors.brandSoft
                         },
                     shape = RoundedCornerShape(50),
                 ) {
@@ -99,12 +109,7 @@ fun FilterSelectionChip(
                         text = count.toString(),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
-                        color =
-                            if (isSelected) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.primary
-                            },
+                        color = colors.brand,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                     )
                 }

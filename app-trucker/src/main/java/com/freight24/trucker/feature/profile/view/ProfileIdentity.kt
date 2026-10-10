@@ -25,14 +25,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.freight24.ui.trucker.TruckerColors
+import com.freight24.ui.trucker.rememberTruckerColors
 
 /**
  * Identity header.
  *
- * Now an inverted (primary-filled) block rather than a white card on a near-white
+ * Now an inverted (brand-filled) block rather than a white card on a near-white
  * background: the old card (#F7F9F4) sat three values off the page background
  * (#F4F6F1), so elevation shadow was doing all the separation work. Inverting
  * also gives the screen a single clear anchor and lets the name sit on one line.
+ *
+ * Filled with [TruckerColors.brand] rather than Material's `primary`, which is
+ * what the Trips filter rail selects with — the two used to disagree, so the
+ * header and the tab rail read as different brands.
  */
 @Composable
 internal fun ProfileHeaderCard(
@@ -44,11 +50,12 @@ internal fun ProfileHeaderCard(
     isActive: Boolean,
     businessName: String? = null,
 ) {
+    val colors = rememberTruckerColors()
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.primary,
-        contentColor = MaterialTheme.colorScheme.onPrimary,
+        color = colors.brand,
+        contentColor = colors.onBrand,
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -57,14 +64,14 @@ internal fun ProfileHeaderCard(
                         Modifier
                             .size(56.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.16f)),
+                            .background(colors.onBrand.copy(alpha = 0.16f)),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         text = initials,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimary,
+                        color = colors.onBrand,
                     )
                 }
 
@@ -75,7 +82,7 @@ internal fun ProfileHeaderCard(
                         text = profileHeaderName(businessName, fullName),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimary,
+                        color = colors.onBrand,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -83,7 +90,7 @@ internal fun ProfileHeaderCard(
                     Text(
                         text = role,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.75f),
+                        color = colors.onBrand.copy(alpha = 0.75f),
                     )
                 }
             }
@@ -95,10 +102,10 @@ internal fun ProfileHeaderCard(
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 HeaderPill(
                     text = if (isActive) "Active" else "Inactive",
-                    container = MaterialTheme.colorScheme.onPrimary.copy(alpha = if (isActive) 0.18f else 0.10f),
+                    container = colors.onBrand.copy(alpha = if (isActive) 0.18f else 0.10f),
                     content =
                         if (isActive) {
-                            MaterialTheme.colorScheme.onPrimary
+                            colors.onBrand
                         } else {
                             MaterialTheme.colorScheme.error
                         },
@@ -106,15 +113,15 @@ internal fun ProfileHeaderCard(
                 if (isVerified) {
                     HeaderPill(
                         text = "ID verified",
-                        container = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.18f),
-                        content = MaterialTheme.colorScheme.onPrimary,
+                        container = colors.onBrand.copy(alpha = 0.18f),
+                        content = colors.onBrand,
                     )
                 }
                 if (partnerId.isNotBlank()) {
                     HeaderPill(
                         text = partnerId,
-                        container = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.10f),
-                        content = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f),
+                        container = colors.onBrand.copy(alpha = 0.10f),
+                        content = colors.onBrand.copy(alpha = 0.85f),
                     )
                 }
             }
