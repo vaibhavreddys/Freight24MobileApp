@@ -22,7 +22,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import com.freight24.ui.components.RefreshOnForeground
 import com.freight24.ui.components.TripCard
 import com.freight24.ui.trucker.FleetEmptyState
 import com.freight24.ui.trucker.FleetFilterEntry
@@ -55,10 +54,6 @@ fun TripsScreen(
     val isInitialLoading by viewModel.isInitialLoading.collectAsState()
 
     val colors = rememberTruckerColors()
-
-    // onRefresh() only drives isRefreshing, and the list is republished from the
-    // cache only when it actually differs — so returning to the tab is silent.
-    RefreshOnForeground { viewModel.onRefresh() }
 
     PullToRefreshBox(
         isRefreshing = isRefreshing,

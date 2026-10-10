@@ -75,7 +75,6 @@ import com.freight24.connect.feature.truckowners.domain.viewmodel.ManageTruckOwn
 import com.freight24.connect.feature.truckowners.domain.viewmodel.ManageTruckOwnersViewModel.OwnerFilter
 import com.freight24.connect.domain.model.TruckOwnerManagementItem
 import com.freight24.ui.UiState
-import com.freight24.ui.components.RefreshOnForeground
 import com.freight24.ui.components.DocketCard
 import com.freight24.ui.components.FilterSelectionChip
 import com.freight24.ui.components.FreightEmptyState
@@ -140,10 +139,6 @@ fun ManageTruckOwnersScreen(
     BackHandler(enabled = !isNavigatingBack) {
         navigateBack()
     }
-
-    // loadFirstPage(refresh = true) rewinds to page 1 and swallows errors while
-    // the rows already on screen are kept, so this is silent.
-    RefreshOnForeground { viewModel.onRefresh() }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,

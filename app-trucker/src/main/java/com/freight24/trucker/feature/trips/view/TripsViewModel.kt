@@ -62,7 +62,7 @@ internal class TripsViewModel
                     // Room re-emits whenever a fetch rewrites rows, and the write
                     // path is delete-then-insert, so an unchanged trip list still
                     // arrives as a fresh List instance. Without this the filter and
-                    // the counts are recomputed on every app switch for nothing,
+                    // the counts are recomputed on every re-emission for nothing,
                     // and the list is republished with no actual change.
                     .distinctUntilChanged()
                     .collect { trips ->

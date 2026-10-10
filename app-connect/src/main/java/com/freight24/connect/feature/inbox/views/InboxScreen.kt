@@ -55,7 +55,6 @@ import com.freight24.connect.feature.indents.views.formatCurrencyOrNull
 import com.freight24.rest.response.IndentInterestInboxResponse
 import com.freight24.ui.components.FreightEmptyState
 import com.freight24.ui.components.FreightTopAppBar
-import com.freight24.ui.components.RefreshOnForeground
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,8 +64,6 @@ fun InboxScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val colorScheme = MaterialTheme.colorScheme
-
-    RefreshOnForeground { viewModel.onEvent(InboxEvent.SilentRefresh) }
 
     Scaffold(
         topBar = {
@@ -103,8 +100,8 @@ fun InboxScreen(
         containerColor = colorScheme.background,
     ) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues).fillMaxSize()) {
-            // Gated on emptiness so a silent foreground refresh cannot blank a
-            // populated inbox; same shape as DashboardScreen's gate.
+            // Gated on emptiness so a reload cannot blank a populated inbox;
+            // same shape as DashboardScreen's gate.
             if (uiState.isLoading && uiState.data.isEmpty()) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             } else if (uiState.errorMessage != null && uiState.data.isEmpty()) {

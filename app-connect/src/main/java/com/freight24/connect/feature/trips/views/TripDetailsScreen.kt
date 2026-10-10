@@ -62,7 +62,6 @@ import com.freight24.rest.response.TripDataResponse
 import com.freight24.ui.components.FileConfirmationSheet
 import com.freight24.ui.components.FileSourcePickerSheet
 import com.freight24.ui.components.FreightTopAppBar
-import com.freight24.ui.components.RefreshOnForeground
 import com.freight24.ui.components.formViewportInsets
 import com.freight24.ui.components.rememberCallAction
 import kotlinx.coroutines.launch
@@ -101,10 +100,6 @@ fun TripDetailsScreen(
             navController.currentBackStackEntry?.savedStateHandle?.set("refresh", false)
         }
     }
-
-    // TripDetailsEvent.Refresh is the silent path: the dossier stays on screen
-    // while it reloads and a failure leaves it there.
-    RefreshOnForeground { viewModel.onEvent(TripDetailsEvent.Refresh) }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()

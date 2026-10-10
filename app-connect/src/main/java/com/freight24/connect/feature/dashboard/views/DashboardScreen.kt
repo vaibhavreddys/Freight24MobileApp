@@ -34,7 +34,6 @@ import com.freight24.connect.feature.dashboard.domain.viewmodel.DashboardViewMod
 import com.freight24.connect.feature.dashboard.domain.viewmodel.DashboardViewModelImpl
 import com.freight24.connect.feature.trips.domain.usecase.TripTypes
 import com.freight24.rest.response.DashboardDataResponse
-import com.freight24.ui.components.RefreshOnForeground
 import com.freight24.ui.components.BoundaryBadge
 import com.freight24.ui.components.BoundaryBadgeTone
 
@@ -69,7 +68,8 @@ fun DashboardScreen(
         onRefreshingChange(uiState.isRefreshing)
     }
 
-    RefreshOnForeground { viewModel.onEvent(DashboardEvent.Refresh) }
+    // No ON_RESUME refresh here — see FilteredTripsScreen for why. Pull-to-refresh
+    // (onRefresh) is the only path that drives DashboardEvent.Refresh.
 
     PullToRefreshBox(
         isRefreshing = uiState.isRefreshing,

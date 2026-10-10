@@ -15,12 +15,10 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.freight24.connect.feature.trips.domain.viewmodel.FilteredTripsViewModelImpl
-import com.freight24.connect.feature.trips.domain.viewmodel.TripsListEvent
 import com.freight24.connect.feature.trips.domain.viewmodel.TripsListViewModel
 import com.freight24.connect.feature.trips.views.components.TripListItem
 import com.freight24.ui.components.FreightEmptyState
 import com.freight24.ui.components.FreightTopAppBar
-import com.freight24.ui.components.RefreshOnForeground
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,8 +29,11 @@ fun FilteredTripsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val colorScheme = MaterialTheme.colorScheme
-
-    RefreshOnForeground { viewModel.onEvent(TripsListEvent.SilentRefresh) }
+    // No ON_RESUME refresh here. NavHost registers a PredictiveBackHandler that
+    // caps this entry at STARTED for the duration of every back gesture and
+    // restores it to RESUMED when the gesture is cancelled, so an ON_RESUME
+    // observer fires on a cancelled swipe as well as on a real return. Foreground
+    // refresh belongs behind RefreshOnForeground's STOP-gated contract instead.
 
     Scaffold(
         topBar = {
@@ -62,9 +63,8 @@ fun FilteredTripsScreen(
                     .fillMaxSize()
                     .padding(paddingValues),
         ) {
-            // Gated on emptiness: a foreground refresh reloads while this screen
-            // is still resumed, so an ungated spinner replaced the whole list on
-            // every app switch. Same shape as DashboardScreen's gate.
+            // Gated on emptiness: a reload that leaves the rows in place must not
+            // replace the whole list with a spinner. Same shape as DashboardScreen's gate.
             if (uiState.isLoading && uiState.trips.isEmpty()) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             } else if (uiState.errorMessage != null && uiState.trips.isEmpty()) {

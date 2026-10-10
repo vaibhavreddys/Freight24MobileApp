@@ -50,7 +50,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.freight24.connect.feature.clients.domain.viewmodel.ManageClientsViewModel
 import com.freight24.ui.UiState
-import com.freight24.ui.components.RefreshOnForeground
 import com.freight24.ui.components.ClientHeaderCard
 import com.freight24.ui.components.FreightEmptyState
 import com.freight24.ui.components.FreightTopAppBar
@@ -93,10 +92,6 @@ fun ManageClientsScreen(
     BackHandler(enabled = !isNavigatingBack) {
         navigateBack()
     }
-
-    // loadFirstPage(refresh = true) rewinds to page 1 and swallows errors while
-    // the rows already on screen are kept, so this is silent.
-    RefreshOnForeground { viewModel.onRefresh() }
 
     Scaffold(
         topBar = {

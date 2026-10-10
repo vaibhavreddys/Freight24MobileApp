@@ -66,7 +66,6 @@ import com.freight24.ui.components.FreightTopAppBar
 import com.freight24.ui.components.MetaTag
 import com.freight24.ui.components.PanelShape
 import com.freight24.ui.components.PerforationRule
-import com.freight24.ui.components.RefreshOnForeground
 import com.freight24.ui.components.TagShape
 import com.freight24.ui.theme.FreightThemeTokens
 
@@ -137,10 +136,6 @@ fun LeadsScreen(
     val hasMore = viewModel.hasMore.collectAsStateWithLifecycle().value
     val error = viewModel.error.collectAsStateWithLifecycle().value
     val canViewAssignee = viewModel.canViewAssignee
-
-    // refresh() already decides between a spinner and a silent reload based on
-    // whether leads are on screen, so an app switch costs nothing visually.
-    RefreshOnForeground { viewModel.refresh() }
 
     Scaffold(
         topBar = {

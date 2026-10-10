@@ -60,7 +60,6 @@ import com.freight24.common.model.TruckDocument
 import com.freight24.ui.UiState
 import com.freight24.ui.components.FileConfirmationSheet
 import com.freight24.ui.components.FileSourcePickerSheet
-import com.freight24.ui.components.RefreshOnForeground
 import com.freight24.ui.components.launchPdfPreview
 import com.freight24.ui.trucker.DocWalletRow
 import com.freight24.ui.trucker.FleetCardShape
@@ -112,8 +111,6 @@ internal fun TruckDetailsScreen(
     val isUploading by viewModel.isUploading.collectAsState()
     val isPreparingDocument by viewModel.isPreparingDocument.collectAsState()
     val colors = rememberTruckerColors()
-
-    RefreshOnForeground { viewModel.onRefresh() }
 
     LaunchedEffect(Unit) {
         viewModel.uploadSuccess.collect {

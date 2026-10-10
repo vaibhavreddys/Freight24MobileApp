@@ -42,7 +42,6 @@ import com.freight24.connect.feature.indents.domain.viewmodel.IndentsListViewMod
 import com.freight24.rest.response.IndentResponse
 import com.freight24.ui.components.FilterSelectionChip
 import com.freight24.ui.components.FreightEmptyState
-import com.freight24.ui.components.RefreshOnForeground
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,9 +72,6 @@ fun IndentsScreen(
     LaunchedEffect(uiState.isLoading) {
         onRefreshingChange(uiState.isLoading)
     }
-
-    RefreshOnForeground { viewModel.onEvent(IndentsListEvent.SilentRefreshIndents) }
-
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),

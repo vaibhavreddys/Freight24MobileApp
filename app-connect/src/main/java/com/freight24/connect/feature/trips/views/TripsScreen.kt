@@ -29,7 +29,6 @@ import com.freight24.connect.feature.trips.domain.viewmodel.TripsListViewModelIm
 import com.freight24.connect.feature.trips.views.components.TripListItem
 import com.freight24.ui.components.FilterSelectionChip
 import com.freight24.ui.components.FreightEmptyState
-import com.freight24.ui.components.RefreshOnForeground
 import kotlinx.coroutines.flow.collect
 
 @Composable
@@ -61,8 +60,6 @@ fun TripsScreen(
     LaunchedEffect(uiState.isLoading) {
         onRefreshingChange(uiState.isLoading)
     }
-
-    RefreshOnForeground { viewModel.onEvent(TripsListEvent.SilentRefresh) }
 
     Scaffold(
         modifier =

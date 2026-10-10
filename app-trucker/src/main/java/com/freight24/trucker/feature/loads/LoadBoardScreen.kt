@@ -49,7 +49,6 @@ import com.freight24.ui.components.CityCard
 import com.freight24.ui.components.FreightEmptyState
 import com.freight24.ui.components.LoadCard
 import com.freight24.ui.components.LoadDetailBottomSheet
-import com.freight24.ui.components.RefreshOnForeground
 import com.freight24.ui.theme.FreightThemeTokens
 import com.freight24.ui.trucker.FleetSearchField
 import com.freight24.ui.trucker.rememberTruckerColors
@@ -87,10 +86,6 @@ fun LoadBoardScreen(
             snackbarHostState.showSnackbar(message, duration = SnackbarDuration.Short)
         }
     }
-
-    // onRefresh() drives _isRefreshing, not _isInitialLoading, so the board
-    // stays on screen and the spinner that replaces an empty board never appears.
-    RefreshOnForeground { viewModel.onRefresh() }
 
     LaunchedEffect(expandedCityId, items) {
         val prev = previousExpandedCityId.value
